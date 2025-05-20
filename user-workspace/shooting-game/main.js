@@ -39,8 +39,8 @@ class Target {
   }
 
   update() {
-    this.x += this.speed;
-    if (this.x - this.radius > canvasWidth) {
+    this.y += this.speed;
+    if (this.y - this.radius > canvasHeight) {
       this.hit = true; // mark for removal if off screen
     }
   }
@@ -56,7 +56,6 @@ class Target {
   }
 }
 
-// Bullet class
 class Bullet {
   constructor(x, y, targetX, targetY) {
     this.x = x;
@@ -95,15 +94,15 @@ class Bullet {
 }
 
 function spawnTarget() {
-  const y = getRandomInt(targetRadius, canvasHeight - targetRadius);
-  const x = -targetRadius;
+  const x = getRandomInt(targetRadius, canvasWidth - targetRadius);
+  const y = -targetRadius;
   const speed = targetSpeed + Math.random(); // slight speed variation
   targets.push(new Target(x, y, speed));
 }
 
 function drawGun() {
-  const gunWidth = 60;
-  const gunHeight = 20;
+  const gunWidth = 20;
+  const gunHeight = 60;
   const gunX = canvasWidth / 2 - gunWidth / 2;
   const gunY = canvasHeight - gunHeight - 10;
 
@@ -115,8 +114,8 @@ function drawGun() {
 
   // Gun barrel
   ctx.beginPath();
-  ctx.moveTo(canvasWidth / 2, gunY);
-  ctx.lineTo(canvasWidth / 2, gunY - 30);
+  ctx.moveTo(gunX + gunWidth / 2, gunY);
+  ctx.lineTo(gunX + gunWidth / 2, gunY - 30);
   ctx.lineWidth = 6;
   ctx.stroke();
 }
@@ -181,10 +180,14 @@ function shoot(x, y) {
   ammo--;
   ammoEl.textContent = ammo;
 
-  // Create a bullet from gun position to click position
-  const gunX = canvasWidth / 2;
-  const gunY = canvasHeight - 30;
-  bullets.push(new Bullet(gunX, gunY, x, y));
+  // Create a bullet from gun barrel tip to click position
+  const gunWidth = 20;
+  const gunHeight = 60;
+  const gunX = canvasWidth / 2 - gunWidth / 2;
+  const gunY = canvasHeight - gunHeight - 10;
+  const bulletStartX = gunX + gunWidth / 2;
+  const bulletStartY = gunY;
+  bullets.push(new Bullet(bulletStartX, bulletStartY, x, y));
 }
 
 function reload() {
