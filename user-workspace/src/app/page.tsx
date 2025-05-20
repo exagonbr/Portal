@@ -19,6 +19,7 @@ const navLinksGroup2 = [
   { name: "Careers", href: "/careers/" },
   { name: "Updates", href: "/updates/" },
   { name: "Shop", href: "https://shop.spacex.com/" },
+  { name: "Shooting Game", href: "/shooting-game/" },
 ];
 
 const footerLinks = [
