@@ -1,25 +1,6 @@
-export interface Course {
-  id: string;
-  name: string;
-  description: string;
-  professor: string;
-  schedule: {
-    days: string[];
-    time: string;
-  };
-  materials: Material[];
-  students: Student[];
-}
+import { Course } from '../types/education';
 
-export interface Material {
-  id: string;
-  title: string;
-  type: 'pdf' | 'video' | 'assignment';
-  url: string;
-  dueDate?: string;
-}
-
-export interface Student {
+interface SimplifiedStudent {
   id: string;
   name: string;
   email: string;
@@ -31,12 +12,27 @@ export interface Student {
   };
 }
 
-export interface Professor {
+interface LiveClass {
   id: string;
-  name: string;
-  email: string;
-  department: string;
-  courses: string[]; // Course IDs
+  courseId: string;
+  title: string;
+  date: string;
+  time: string;
+  status: 'scheduled' | 'in-progress' | 'completed';
+  meetingUrl: string;
+}
+
+interface ChatMessage {
+  id: string;
+  sender: string;
+  content: string;
+  timestamp: string;
+}
+
+interface Chat {
+  id: string;
+  participants: string[];
+  messages: ChatMessage[];
 }
 
 export const mockCourses: Course[] = [
@@ -44,84 +40,69 @@ export const mockCourses: Course[] = [
     id: '1',
     name: 'Matemática Avançada',
     description: 'Curso de matemática avançada para ensino médio',
-    professor: 'John Smith',
-    schedule: {
-      days: ['Segunda', 'Quarta'],
-      time: '14:00 - 15:30'
+    level: 'BASIC',
+    cycle: 'Anos Finais',
+    stage: '9º ano',
+    institution: {
+      id: '1',
+      name: 'Escola Municipal São José',
+      type: 'UNIVERSITY',
+      characteristics: [
+        'Ensino fundamental completo',
+        'Laboratório de matemática',
+        'Professores especializados'
+      ]
     },
-    materials: [
-      {
-        id: 'm1',
-        title: 'Introdução a Cálculo',
-        type: 'pdf',
-        url: '/materials/calc-intro.pdf'
-      },
-      {
-        id: 'm2',
-        title: 'Exercícios Semana 1',
-        type: 'assignment',
-        url: '/assignments/week1',
-        dueDate: '2024-03-10'
-      }
-    ],
-    students: [
-      {
-        id: 's1',
-        name: 'Sarah Johnson',
-        email: 'student@edu.com',
-        progress: 75,
-        grades: {
-          assignments: 85,
-          tests: 78,
-          participation: 90
-        }
-      }
-    ]
+    duration: '1 ano letivo',
+    schedule: {
+      startDate: '2024-02-01',
+      endDate: '2024-12-15',
+      classDays: ['Segunda', 'Quarta', 'Sexta'],
+      classTime: '14:00 - 15:30'
+    }
   },
   {
     id: '2',
     name: 'Física Básica',
     description: 'Introdução aos conceitos fundamentais de física',
-    professor: 'John Smith',
-    schedule: {
-      days: ['Terça', 'Quinta'],
-      time: '10:00 - 11:30'
+    level: 'BASIC',
+    cycle: 'Anos Finais',
+    stage: '9º ano',
+    institution: {
+      id: '1',
+      name: 'Escola Municipal São José',
+      type: 'UNIVERSITY',
+      characteristics: [
+        'Ensino fundamental completo',
+        'Laboratório de física',
+        'Professores especializados'
+      ]
     },
-    materials: [
-      {
-        id: 'm3',
-        title: 'Leis de Newton',
-        type: 'pdf',
-        url: '/materials/newton-laws.pdf'
-      }
-    ],
-    students: [
-      {
-        id: 's1',
-        name: 'Sarah Johnson',
-        email: 'student@edu.com',
-        progress: 60,
-        grades: {
-          assignments: 75,
-          tests: 82,
-          participation: 85
-        }
-      }
-    ]
+    duration: '1 ano letivo',
+    schedule: {
+      startDate: '2024-02-01',
+      endDate: '2024-12-15',
+      classDays: ['Terça', 'Quinta'],
+      classTime: '10:00 - 11:30'
+    }
   }
 ];
 
-export const mockProfessors: Professor[] = [
+export const mockStudents: SimplifiedStudent[] = [
   {
-    id: 'p1',
-    name: 'John Smith',
-    email: 'teacher@edu.com',
-    department: 'Ciências Exatas',
-    courses: ['1', '2']
+    id: 's1',
+    name: 'Sarah Johnson',
+    email: 'student@edu.com',
+    progress: 75,
+    grades: {
+      assignments: 85,
+      tests: 78,
+      participation: 90
+    }
   }
 ];
 
-export const mockLiveClasses = [
+export const mockLiveClasses: LiveClass[] = [
   {
     id: 'l1',
     courseId: '1',
@@ -142,7 +123,7 @@ export const mockLiveClasses = [
   }
 ];
 
-export const mockChats = [
+export const mockChats: Chat[] = [
   {
     id: 'c1',
     participants: ['p1', 's1'],

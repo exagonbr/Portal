@@ -18,7 +18,6 @@ export default function CourseCard({
   isEnrolled = false 
 }: CourseCardProps) {
   const [showDetails, setShowDetails] = useState(false)
-  const isProfessional = course.level === 'PROFESSIONAL'
 
   const getLevelBadgeColor = (level: keyof typeof EDUCATION_LEVELS) => {
     const colors = {
@@ -55,7 +54,7 @@ export default function CourseCard({
   const schedule = formatSchedule(course.schedule)
 
   return (
-    <div className={`card ${isProfessional ? 'course-card-professional' : ''}`}>
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -64,11 +63,11 @@ export default function CourseCard({
             <p className="mt-1 text-sm text-gray-500">{course.institution.name}</p>
           </div>
           <div className="flex space-x-2">
-            <span className={`status-badge ${getLevelBadgeColor(course.level)}`}>
-              {course.level}
+            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getLevelBadgeColor(course.level)}`}>
+              {EDUCATION_LEVELS[course.level]}
             </span>
             {course.modality && (
-              <span className={`status-badge ${getModalityBadgeColor(course.modality)}`}>
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getModalityBadgeColor(course.modality)}`}>
                 {EDUCATION_MODALITIES[course.modality].name}
               </span>
             )}
@@ -96,7 +95,7 @@ export default function CourseCard({
         <div>
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="text-sm text-blue-600 hover:text-blue-500 font-medium flex items-center touch-target"
+            className="text-sm text-blue-600 hover:text-blue-500 font-medium flex items-center"
             aria-expanded={showDetails}
           >
             {showDetails ? 'Menos detalhes' : 'Mais detalhes'}
@@ -178,7 +177,7 @@ export default function CourseCard({
           {isEnrolled ? (
             <button
               onClick={onViewDetails}
-              className="flex-1 touch-target py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               aria-label={`Ver detalhes do curso ${course.name}`}
             >
               Ver Detalhes
@@ -187,14 +186,14 @@ export default function CourseCard({
             <>
               <button
                 onClick={onEnroll}
-                className="flex-1 touch-target py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 aria-label={`Inscrever-se no curso ${course.name}`}
               >
                 Inscrever-se
               </button>
               <button
                 onClick={onViewDetails}
-                className="flex-1 touch-target py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                 aria-label={`Mais informações sobre o curso ${course.name}`}
               >
                 Mais Informações
