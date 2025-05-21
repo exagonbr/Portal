@@ -37,7 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null)
       const user = await authService.login({ email, password })
       setUser(user)
-      router.push('/dashboard')
     } catch (error) {
       console.error('Login failed:', error)
       setError('Login failed. Please check your credentials.')
@@ -52,7 +51,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       await authService.logout()
       setUser(null)
-      router.push('/')
     } catch (error) {
       console.error('Logout failed:', error)
       setError('Logout failed')
@@ -67,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null)
       const user = await authService.register(name, email, password, type)
       setUser(user)
-      router.push('/dashboard')
     } catch (error) {
       console.error('Registration failed:', error)
       setError('Registration failed. Please try again.')

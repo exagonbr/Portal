@@ -6,18 +6,18 @@ import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
 const studentNavigation = [
-  { name: 'Dashboard', href: '../dashboard' },
-  { name: 'Meus Cursos', href: '../courses' },
-  { name: 'Aulas ao Vivo', href: '../live' },
-  { name: 'Materiais', href: '../lessons' },
-  { name: 'Chat', href: '../chat' }
+  { name: 'Dashboard', href: '/dashboard/student' },
+  { name: 'Meus Cursos', href: '/courses' },
+  { name: 'Aulas ao Vivo', href: '/live' },
+  { name: 'Materiais', href: '/lessons' },
+  { name: 'Chat', href: '/chat' }
 ]
 
 const teacherNavigation = [
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Minhas Turmas', href: '/classes' },
+  { name: 'Dashboard', href: '/dashboard/teacher' },
+  { name: 'Minhas Turmas', href: '/courses' },
   { name: 'Aulas ao Vivo', href: '/live' },
-  { name: 'Material Didático', href: '/materials' },
+  { name: 'Material Didático', href: '/lessons' },
   { name: 'Chat', href: '/chat' }
 ]
 
