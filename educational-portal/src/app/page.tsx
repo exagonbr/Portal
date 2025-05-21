@@ -1,13 +1,38 @@
-import Link from 'next/link'
+'use client';
+import Link from 'next/link';
+import SimpleCarousel from '@/components/SimpleCarousel';
 
 export default function HomePage() {
+  const carouselImages = [
+    {
+      src: '/carousel-images/education1.jpg',
+      alt: 'Educação e Tecnologia',
+      title: 'Inovação no Ensino'
+    },
+    {
+      src: '/carousel-images/education2.jpg',
+      alt: 'Cultura e Aprendizado',
+      title: 'Cultura e Conhecimento'
+    },
+    {
+      src: '/carousel-images/education3.jpg',
+      alt: 'Desenvolvimento Educacional',
+      title: 'Desenvolvimento Contínuo'
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen">
+      {/* Carousel Section */}
+      <div className="w-full h-[400px] relative mb-8">
+        <SimpleCarousel images={carouselImages} autoplaySpeed={5000} />
+      </div>
+
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-            <span className="block">Portal Educacional</span>
-            <span className="block text-blue-600">Aprendizado Simplificado</span>
+          <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
+            <span className="block text-gray-900">Portal Educacional</span>
+            <span className="block text-[#2B4B6F]">Aprendizado Simplificado</span>
           </h1>
           <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
             Uma plataforma completa para professores e alunos gerenciarem suas atividades educacionais.
@@ -17,17 +42,9 @@ export default function HomePage() {
             <div className="rounded-md shadow">
               <Link
                 href="/login"
-                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-[#2B4B6F] hover:bg-[#1a365d] transition-colors duration-200 md:py-4 md:text-lg md:px-10"
               >
                 Entrar
-              </Link>
-            </div>
-            <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
-              <Link
-                href="/register"
-                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
-              >
-                Registrar
               </Link>
             </div>
           </div>
@@ -38,10 +55,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {/* Feature 1 */}
             <div className="pt-6">
-              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="-mt-6">
                   <div>
-                    <span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+                    <span className="inline-flex items-center justify-center p-3 bg-[#2B4B6F] rounded-md shadow-lg">
                       <svg
                         className="h-6 w-6 text-white"
                         fill="none"
@@ -69,10 +86,10 @@ export default function HomePage() {
 
             {/* Feature 2 */}
             <div className="pt-6">
-              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="-mt-6">
                   <div>
-                    <span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+                    <span className="inline-flex items-center justify-center p-3 bg-[#2B4B6F] rounded-md shadow-lg">
                       <svg
                         className="h-6 w-6 text-white"
                         fill="none"
@@ -100,10 +117,10 @@ export default function HomePage() {
 
             {/* Feature 3 */}
             <div className="pt-6">
-              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="-mt-6">
                   <div>
-                    <span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+                    <span className="inline-flex items-center justify-center p-3 bg-[#2B4B6F] rounded-md shadow-lg">
                       <svg
                         className="h-6 w-6 text-white"
                         fill="none"
@@ -132,5 +149,5 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
