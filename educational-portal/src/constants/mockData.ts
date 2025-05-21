@@ -84,6 +84,18 @@ interface ClassSession {
 
 export const mockTeachers: Teacher[] = [
   {
+    id: 't3',
+    name: 'Prof. Ricardo Oliveira',
+    email: 'ricardo.oliveira@edu.com',
+    subjects: ['Biologia', 'Química'],
+    courses: ['1', '2'],
+    department: 'Ciências Naturais',
+    availability: {
+      days: ['Segunda', 'Quarta', 'Sexta'],
+      hours: '13:00 - 22:00'
+    }
+  },
+  {
     id: 't1',
     name: 'Prof. Carlos Silva',
     email: 'carlos.silva@edu.com',
@@ -110,6 +122,18 @@ export const mockTeachers: Teacher[] = [
 ];
 
 export const mockStudents: SimplifiedStudent[] = [
+  {
+    id: 's4',
+    name: 'Julia Costa',
+    email: 'julia.c@edu.com',
+    progress: 92,
+    grades: {
+      assignments: 95,
+      tests: 88,
+      participation: 98
+    },
+    enrolledCourses: ['1', '2']
+  },
   {
     id: 's1',
     name: 'Sarah Johnson',
