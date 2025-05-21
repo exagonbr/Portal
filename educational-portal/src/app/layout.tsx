@@ -1,5 +1,6 @@
 import './globals.css'
 import LayoutWrapper from '@/components/LayoutWrapper'
+import { AppProviders } from '@/providers/AppProviders'
 
 export const metadata = {
   title: 'Educational Portal',
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
-        <LayoutWrapper>{children}</LayoutWrapper>
+        <AppProviders>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </AppProviders>
       </body>
     </html>
   )
