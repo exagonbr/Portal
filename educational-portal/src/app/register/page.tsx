@@ -2,156 +2,143 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    type: 'student' as 'student' | 'teacher'
-  })
+export default function Register() {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [type, setType] = useState<'student' | 'teacher'>('student')
   const [error, setError] = useState('')
-  const { register, loading } = useAuth()
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
+  const [loading, setLoading] = useState(false)
+  const { register } = useAuth()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('As senhas não coincidem')
-      return
-    }
+    setLoading(true)
 
     try {
-      await register(formData.name, formData.email, formData.password, formData.type)
+      await register(name, email, password, type)
+      router.push('/dashboard')
     } catch (err) {
-      setError('Falha no registro. Por favor, tente novamente.')
+      setError('Erro ao criar conta. Por favor, tente novamente.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Criar nova conta
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Ou{' '}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              faça login aqui
-            </Link>
-          </p>
+    <div className="min-h-screen bg-[#F7FAFC] flex flex-col justify-center items-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-[#1B365D]">EduPortal</h1>
+          <p className="text-gray-600 mt-2">Portal Educacional</p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+        {/* Register Card */}
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <h2 className="text-2xl font-bold text-[#1B365D] mb-6">Criar Conta</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="name" className="sr-only">
-                Nome completo
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                Nome Completo
               </label>
               <input
                 id="name"
-                name="name"
                 type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-field w-full"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Nome completo"
-                value={formData.name}
-                onChange={handleChange}
               />
             </div>
+
             <div>
-              <label htmlFor="email" className="sr-only">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input-field w-full"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
-                value={formData.email}
-                onChange={handleChange}
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Senha
               </label>
               <input
                 id="password"
-                name="password"
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-field w-full"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Senha"
-                value={formData.password}
-                onChange={handleChange}
+                minLength={6}
               />
             </div>
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">
-                Confirmar senha
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Confirmar senha"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="type" className="sr-only">
-                Tipo de usuário
-              </label>
-              <select
-                id="type"
-                name="type"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                value={formData.type}
-                onChange={handleChange}
-              >
-                <option value="student">Aluno</option>
-                <option value="teacher">Professor</option>
-              </select>
-            </div>
-          </div>
 
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Conta
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    value="student"
+                    checked={type === 'student'}
+                    onChange={(e) => setType(e.target.value as 'student' | 'teacher')}
+                    className="mr-2"
+                  />
+                  Aluno
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    value="teacher"
+                    checked={type === 'teacher'}
+                    onChange={(e) => setType(e.target.value as 'student' | 'teacher')}
+                    className="mr-2"
+                  />
+                  Professor
+                </label>
+              </div>
+            </div>
 
-          <div>
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                loading
-                  ? 'bg-blue-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-              }`}
+              className="btn-primary w-full flex justify-center items-center"
             >
-              {loading ? 'Registrando...' : 'Registrar'}
+              {loading ? (
+                <div className="loading-spinner h-5 w-5 mr-2"></div>
+              ) : null}
+              Criar Conta
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
+
+        <div className="text-center mt-4">
+          <Link href="/login" className="text-[#1B365D] hover:text-[#2A4C80] text-sm">
+            Já tem uma conta? Faça login
+          </Link>
+        </div>
       </div>
     </div>
   )
