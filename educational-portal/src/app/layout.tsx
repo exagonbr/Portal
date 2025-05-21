@@ -1,10 +1,13 @@
 import './globals.css'
-import { AppProviders } from '@/providers/AppProviders'
+import { Inter } from 'next/font/google'
+import { AuthProvider } from '@/contexts/AuthContext'
 import MainNavigation from '@/components/MainNavigation'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   title: 'Portal Educacional',
-  description: 'Portal educacional com cursos, materiais e avaliações',
+  description: 'Plataforma de ensino online',
 }
 
 export default function RootLayout({
@@ -14,13 +17,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body>
-        <AppProviders>
+      <body className={inter.className}>
+        <AuthProvider>
           <MainNavigation />
-          <main className="min-h-screen bg-gray-50 pt-16">
+          <main className="pt-16">
             {children}
           </main>
-        </AppProviders>
+        </AuthProvider>
       </body>
     </html>
   )

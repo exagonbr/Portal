@@ -1,98 +1,136 @@
-'use client'
+import Link from 'next/link'
 
-import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
-
-export default function Home() {
-  const [activeTab, setActiveTab] = useState('login')
-  const { login } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    try {
-      await login(email, password)
-    } catch (err: any) {
-      setError(err.message || 'Error logging in')
-    }
-  }
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#2B4B6B] to-gray-100">
-      {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="flex justify-center mb-8">
-              <div className="relative w-64 h-16">
-                <span className="text-4xl font-bold" style={{ color: '#BBEB6B' }}>SABER</span>
-                <span className="text-4xl font-bold text-white">CON</span>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+            <span className="block">Portal Educacional</span>
+            <span className="block text-blue-600">Aprendizado Simplificado</span>
+          </h1>
+          <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            Uma plataforma completa para professores e alunos gerenciarem suas atividades educacionais.
+            Acesse suas aulas, materiais e muito mais.
+          </p>
+          <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
+            <div className="rounded-md shadow">
+              <Link
+                href="/login"
+                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+              >
+                Entrar
+              </Link>
             </div>
-            <p className="mt-3 max-w-md mx-auto text-base text-white sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-              Uma plataforma moderna para alunos e professores se conectarem, aprenderem e crescerem juntos.
-            </p>
-          </div>
-
-          {/* Auth Section */}
-          <div className="mt-16 bg-white rounded-lg shadow-xl max-w-md mx-auto overflow-hidden">
-            <div className="flex border-b border-gray-200">
-            </div>
-
-            <div className="p-6">
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-                    {error}
-                  </div>
-                )}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    E-mail
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#2B4B6B] focus:border-[#2B4B6B]"
-                    placeholder="Digite seu e-mail"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Senha
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#2B4B6B] focus:border-[#2B4B6B]"
-                    placeholder="Digite sua senha"
-                  />
-                </div>
-                <div>
-                  <button
-                    type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#2B4B6B] hover:bg-[#1a3b5b] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2B4B6B]"
-                  >
-                    Entrar
-                  </button>
-                </div>
-                <div className="text-sm text-center text-gray-600 mt-4">
-                  Use estas credenciais de teste:<br/>
-                  Professor: teacher@edu.com / teacher123<br/>
-                  Aluno: student@edu.com / student123
-                </div>
-              </form>
+            <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
+              <Link
+                href="/register"
+                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
+              >
+                Registrar
+              </Link>
             </div>
           </div>
         </div>
-      </section>
+
+        {/* Features */}
+        <div className="mt-24">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Feature 1 */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+                      <svg
+                        className="h-6 w-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                    Gestão de Cursos
+                  </h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Organize seus cursos, materiais e atividades em um só lugar.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+                      <svg
+                        className="h-6 w-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                    Aulas ao Vivo
+                  </h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Participe de aulas ao vivo interativas com seus professores e colegas.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-blue-500 rounded-md shadow-lg">
+                      <svg
+                        className="h-6 w-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
+                    Acompanhamento de Progresso
+                  </h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Monitore seu desempenho e progresso em cada curso.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
