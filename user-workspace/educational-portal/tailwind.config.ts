@@ -9,9 +9,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#1a1a1a',
-        secondary: '#ffffff',
-        accent: '#3b82f6',
+        primary: '#000000', // SABERCON black background
+        secondary: '#ffffff', // SABERCON white text
+        accent: '#0066cc', // SABERCON blue accent
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
