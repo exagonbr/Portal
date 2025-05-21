@@ -8,16 +8,13 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        primary: '#000000', // SABERCON black background
-        secondary: '#ffffff', // SABERCON white text
-        accent: '#0066cc', // SABERCON blue accent
-      },
-      fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
     },
   },
   plugins: [],
 }
+
 export default config

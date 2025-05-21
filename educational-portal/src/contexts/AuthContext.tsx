@@ -2,27 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { authService } from '@/services/auth'
-
-interface User {
-  id: string
-  name: string
-  email: string
-  type: 'student' | 'teacher'
-}
-
-interface AuthContextType {
-  user: User | null
-  loading: boolean
-  login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
-}
+import { authService } from '../services/auth'
+import { User, AuthContextType } from '../types/auth'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -37,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Auth check failed:', error)
+      setError('Authentication check failed')
     } finally {
       setLoading(false)
     }
@@ -45,14 +34,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true)
-      console.log('AuthContext: Attempting login with:', { email, password });
-      const user = await authService.login({ 
-        email, 
-        password 
-      })
-      console.log('AuthContext: Login successful:', user);
+      setError(null)
+      const user = await authService.login({ email, password })
       setUser(user)
       router.push('/dashboard')
+    } catch (error) {
+      console.error('Login failed:', error)
+      setError('Login failed. Please check your credentials.')
+      throw error
     } finally {
       setLoading(false)
     }
@@ -64,13 +53,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authService.logout()
       setUser(null)
       router.push('/')
+    } catch (error) {
+      console.error('Logout failed:', error)
+      setError('Logout failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const register = async (name: string, email: string, password: string, type: 'student' | 'teacher') => {
+    try {
+      setLoading(true)
+      setError(null)
+      const user = await authService.register(name, email, password, type)
+      setUser(user)
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Registration failed:', error)
+      setError('Registration failed. Please try again.')
+      throw error
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   )
