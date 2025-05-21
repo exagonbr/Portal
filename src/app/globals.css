@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-blue: #2B4B6F;
+  --secondary-blue: #6B7C93;
+  --background-start: #F7FAFC;
+  --background-end: #EDF2F7;
+}
+
+body {
+  background: linear-gradient(135deg, var(--background-start) 0%, var(--background-end) 100%);
+  min-height: 100vh;
+}
+
+.logo-text {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+}
+
+.logo-text-primary {
+  color: var(--primary-blue);
+}
+
+.logo-text-secondary {
+  color: var(--secondary-blue);
+}
+
+.header-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.button-primary {
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.button-primary:hover {
+  background-color: #1a365d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(27, 54, 93, 0.2);
+}
+
+.button-primary:active {
+  transform: translateY(0);
+}
+
+.button-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #E2E8F0;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  color: #2D3748;
+  background-color: white;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(43, 75, 111, 0.1);
+}
+
+.input-field::placeholder {
+  color: #A0AEC0;
+}
+
+.loading-spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid var(--primary-blue);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.login-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
