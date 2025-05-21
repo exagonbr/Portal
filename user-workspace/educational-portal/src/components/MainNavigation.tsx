@@ -13,11 +13,11 @@ const publicNavigation = [
 ]
 
 const studentNavigation = [
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Meus Cursos', href: '/courses' },
-  { name: 'Aulas ao Vivo', href: '/live' },
-  { name: 'Materiais', href: '/lessons' },
-  { name: 'Chat', href: '/chat' }
+  { name: 'Dashboard', href: '../dashboard' },
+  { name: 'Meus Cursos', href: '../courses' },
+  { name: 'Aulas ao Vivo', href: '../live' },
+  { name: 'Materiais', href: '../lessons' },
+  { name: 'Chat', href: '../chat' }
 ]
 
 const teacherNavigation = [
@@ -155,18 +155,6 @@ export default function MainNavigation() {
               </>
             ) : (
               <div className="flex space-x-4">
-                <Link
-                  href="/"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Entrar
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Criar Conta
-                </Link>
               </div>
             )}
           </div>

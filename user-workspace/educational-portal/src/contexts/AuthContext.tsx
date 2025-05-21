@@ -15,7 +15,6 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -46,18 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true)
-      const user = await authService.login({ email, password })
-      setUser(user)
-      router.push('/dashboard')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const register = async (name: string, email: string, password: string, type: 'student' | 'teacher') => {
-    try {
-      setLoading(true)
-      const user = await authService.register({ name, email, password, type })
+      console.log('AuthContext: Attempting login with:', { email, password });
+      const user = await authService.login({ 
+        email, 
+        password 
+      })
+      console.log('AuthContext: Login successful:', user);
       setUser(user)
       router.push('/dashboard')
     } finally {
@@ -77,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

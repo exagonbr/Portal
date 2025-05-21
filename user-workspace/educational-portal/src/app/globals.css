@@ -3,52 +3,157 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-rgb: 0, 0, 0;
+  /* Updated color palette with better contrast ratios */
+  --primary-rgb: 37, 99, 235;     /* Blue-600 */
+  --secondary-rgb: 71, 85, 105;   /* Slate-600 */
+  --success-rgb: 22, 163, 74;     /* Green-600 */
+  --warning-rgb: 217, 119, 6;     /* Amber-600 */
+  --danger-rgb: 220, 38, 38;      /* Red-600 */
+  --background-rgb: 255, 255, 255;
+  --text-rgb: 17, 24, 39;         /* Gray-900 */
 }
 
+/* Base styles */
 body {
-  color: rgb(var(--foreground-rgb));
+  color: rgb(var(--text-rgb));
   background: rgb(var(--background-rgb));
+}
+
+/* Improved focus styles for better accessibility */
+*:focus-visible {
+  outline: 2px solid rgb(var(--primary-rgb));
+  outline-offset: 2px;
+  border-radius: 0.25rem;
 }
 
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: rgb(241, 245, 249); /* Slate-100 */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333333;
-  border-radius: 3px;
+  background: rgb(var(--secondary-rgb));
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #444444;
+  background: rgb(51, 65, 85); /* Slate-700 */
 }
 
-/* Custom styles for chat messages */
+/* Enterprise feature indicators */
+.enterprise-feature {
+  @apply relative;
+}
+
+.enterprise-feature::before {
+  content: '';
+  @apply absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full;
+  box-shadow: 0 0 0 3px rgb(var(--background-rgb));
+}
+
+/* Accessibility improvements */
+.sr-only {
+  @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+}
+
+/* Touch-friendly interactive elements */
+.touch-target {
+  @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+}
+
+/* Enhanced card styles */
+.card {
+  @apply bg-white rounded-lg shadow-md overflow-hidden transition-shadow duration-200;
+}
+
+.card:hover {
+  @apply shadow-lg;
+}
+
+/* Professional course emphasis */
+.course-card-professional {
+  @apply ring-2 ring-blue-600 ring-offset-2;
+}
+
+/* Improved section separation */
+.section-divider {
+  @apply my-8 border-t border-gray-200;
+}
+
+/* Mobile-friendly navigation */
+.mobile-nav-item {
+  @apply p-4 flex items-center space-x-3 text-gray-700 hover:bg-gray-50 active:bg-gray-100;
+}
+
+/* Enhanced form elements */
+.form-input {
+  @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500;
+  min-height: 44px; /* Touch-friendly */
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+/* Grid layouts */
+.dashboard-grid {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Status indicators */
+.status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-badge-warning {
+  @apply bg-amber-100 text-amber-800;
+}
+
+.status-badge-error {
+  @apply bg-red-100 text-red-800;
+}
+
+/* Institution information */
+.institution-info {
+  @apply space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200;
+}
+
+/* Keyboard navigation improvements */
+[role="button"],
+[role="tab"],
+button {
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}
+
+/* Message bubbles with better contrast */
 .message-bubble {
-  max-width: 80%;
-  word-wrap: break-word;
+  @apply max-w-[80%] rounded-lg p-4 shadow-sm;
 }
 
-/* Custom aspect ratio for video containers */
+.message-bubble-sent {
+  @apply bg-blue-600 text-white ml-auto;
+}
+
+.message-bubble-received {
+  @apply bg-gray-100 text-gray-900;
+}
+
+/* Video container aspect ratio */
 .aspect-w-16 {
-  position: relative;
+  @apply relative;
   padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
 }
 
 .aspect-w-16 > * {
-  position: absolute;
-  height: 100%;
-  width: 100%;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  @apply absolute inset-0 w-full h-full;
 }

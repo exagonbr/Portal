@@ -33,56 +33,101 @@ export default function StudentProgress({ student, course, progress }: StudentPr
 
   return (
     <div className="bg-white shadow rounded-lg">
-      {/* Header */}
+      {/* Enhanced Header with Enterprise Features */}
       <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900">Progresso do Aluno</h2>
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-            isValid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-          }`}>
-            {isValid ? 'Regular' : 'Atenção Necessária'}
-          </span>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900" id="student-progress-title">
+              Progresso do Aluno
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              {student.name} • {age} anos • {student.currentStage}
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <span 
+              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                isValid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+              }`}
+              role="status"
+            >
+              {isValid ? 'Regular' : 'Atenção Necessária'}
+            </span>
+            {student.specialNeeds && (
+              <span 
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                role="status"
+              >
+                Adaptações Especiais
+              </span>
+            )}
+          </div>
         </div>
-        <p className="mt-1 text-sm text-gray-500">
-          {student.name} • {age} anos • {student.currentStage}
-        </p>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Enhanced Navigation Tabs */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex">
-          {['overview', 'details', 'next-steps'].map((tab) => (
+        <nav className="-mb-px flex" role="tablist" aria-label="Progresso do estudante">
+          {[
+            { id: 'overview', label: 'Visão Geral' },
+            { id: 'details', label: 'Detalhes' },
+            { id: 'next-steps', label: 'Próximos Passos' }
+          ].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab as typeof activeTab)}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`${
-                activeTab === tab
+                activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm capitalize`}
+              } whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors`}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`${tab.id}-panel`}
+              id={`${tab.id}-tab`}
             >
-              {tab.replace('-', ' ')}
+              {tab.label}
             </button>
           ))}
         </nav>
       </div>
 
-      {/* Content */}
-      <div className="px-6 py-4">
+      {/* Enhanced Content with ARIA roles */}
+      <div className="px-6 py-4" aria-labelledby="student-progress-title">
         {activeTab === 'overview' && (
-          <div className="space-y-6">
-            {/* Progress Bar */}
+          <div 
+            className="space-y-6"
+            role="tabpanel"
+            id="overview-panel"
+            aria-labelledby="overview-tab"
+          >
+            {/* Enhanced Progress Bar */}
             <div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Progresso Geral</span>
-                <span className="text-sm font-medium text-gray-900">{progress.progress}%</span>
+                <span className="text-sm font-medium text-gray-700" id="progress-label">
+                  Progresso Geral
+                </span>
+                <span 
+                  className="text-sm font-medium text-gray-900"
+                  aria-labelledby="progress-label"
+                >
+                  {progress.progress}%
+                </span>
               </div>
-              <div className="mt-2 relative">
-                <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+              <div 
+                className="mt-2 relative"
+                role="progressbar"
+                aria-valuenow={progress.progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <div className="overflow-hidden h-3 text-xs flex rounded bg-gray-200">
                   <div
                     style={{ width: `${progress.progress}%` }}
-                    className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${
-                      progress.progress >= 75 ? 'bg-green-500' : 'bg-blue-500'
+                    className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500 ${
+                      progress.progress >= 75 ? 'bg-green-500' : 
+                      progress.progress >= 50 ? 'bg-blue-500' : 
+                      'bg-yellow-500'
                     }`}
                   />
                 </div>

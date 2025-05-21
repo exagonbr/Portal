@@ -48,16 +48,18 @@ export default function LoginForm() {
     validationRules,
     async (formData) => {
       try {
+        console.log('LoginForm: Attempting login with:', formData.email);
         await login(formData.email, formData.password)
         showToast({
           type: 'success',
           message: 'Login realizado com sucesso!'
         })
         router.push('/dashboard')
-      } catch (error) {
+      } catch (error: any) {
+        console.error('LoginForm: Login failed:', error);
         showToast({
           type: 'error',
-          message: 'Erro ao fazer login. Verifique suas credenciais.'
+          message: error.message || 'Erro ao fazer login. Verifique suas credenciais.'
         })
       }
     }
