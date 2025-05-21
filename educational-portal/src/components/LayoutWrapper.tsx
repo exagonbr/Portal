@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LayoutWrapper({
   children,
@@ -9,6 +10,7 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname()
   const isAuthPage = pathname === '/login' || pathname === '/register'
+  const isIndexPage = pathname === '/'
 
   if (isAuthPage) {
     return children
@@ -19,16 +21,23 @@ export default function LayoutWrapper({
       <header className="header-shadow sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-8">
-            <div className="logo-text">
+            <Link href="/" className="logo-text">
               <span className="logo-text-primary">SABER</span>
               <span className="logo-text-secondary">CON</span>
-            </div>
+            </Link>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
-            <a href="/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors">Dashboard</a>
-            <a href="/courses" className="text-gray-600 hover:text-gray-900 transition-colors">Courses</a>
-            <a href="/assignments" className="text-gray-600 hover:text-gray-900 transition-colors">Assignments</a>
-            <button className="button-primary">Get Started</button>
+            {!isIndexPage ? (
+              <>
+                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors">Dashboard</Link>
+                <Link href="/courses" className="text-gray-600 hover:text-gray-900 transition-colors">Courses</Link>
+                <Link href="/assignments" className="text-gray-600 hover:text-gray-900 transition-colors">Assignments</Link>
+              </>
+            ) : (
+              <Link href="/login" className="button-primary">
+                Acessar Plataforma
+              </Link>
+            )}
           </nav>
         </div>
       </header>
