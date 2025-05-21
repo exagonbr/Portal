@@ -3,7 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
+  /* Sabercon color scheme */
+  --primary-color: #1B365D; /* Navy blue from Sabercon */
+  --primary-light: #2A4C80;
+  --primary-dark: #122642;
+  --secondary-color: #FFFFFF;
+  --text-primary: #1B365D;
+  --text-secondary: #4A5568;
+  --background-light: #F7FAFC;
+  --foreground-rgb: 27, 54, 93;
   --background-rgb: 255, 255, 255;
 }
 
@@ -12,7 +20,72 @@ body {
   background: rgb(var(--background-rgb));
 }
 
+/* Common components */
+.btn-primary {
+  @apply bg-[#1B365D] text-white px-4 py-2 rounded-md hover:bg-[#2A4C80] transition-colors;
+}
+
+.btn-secondary {
+  @apply bg-white text-[#1B365D] border border-[#1B365D] px-4 py-2 rounded-md hover:bg-[#F7FAFC] transition-colors;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-100;
+}
+
+.input-field {
+  @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B365D] focus:border-transparent;
+}
+
+.nav-link {
+  @apply text-[#1B365D] hover:text-[#2A4C80] transition-colors;
+}
+
+.nav-link.active {
+  @apply font-bold text-[#1B365D];
+}
+
+.section-title {
+  @apply text-2xl font-bold text-[#1B365D] mb-4;
+}
+
 .loading-spinner {
   @apply animate-spin rounded-full border-4 border-gray-300;
-  border-top-color: #3b82f6;
+  border-top-color: #1B365D;
+}
+
+/* Dashboard layouts */
+.dashboard-container {
+  @apply min-h-screen bg-[#F7FAFC];
+}
+
+.dashboard-sidebar {
+  @apply fixed left-0 top-0 h-full w-64 bg-[#1B365D] text-white p-6;
+}
+
+.dashboard-content {
+  @apply ml-64 p-8;
+}
+
+.dashboard-header {
+  @apply bg-white shadow-sm mb-6 p-4;
+}
+
+/* Teacher specific */
+.teacher-course-card {
+  @apply card hover:shadow-lg cursor-pointer;
+}
+
+/* Student specific */
+.student-progress-card {
+  @apply card bg-[#1B365D] text-white;
+}
+
+/* Course content */
+.course-section {
+  @apply border-l-4 border-[#1B365D] pl-4 my-4;
+}
+
+.material-item {
+  @apply flex items-center space-x-2 p-2 hover:bg-[#F7FAFC] rounded-md cursor-pointer;
 }

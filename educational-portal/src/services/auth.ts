@@ -4,8 +4,16 @@ import { mockStudents, mockTeachers } from '../constants/mockData';
 // Mock user storage
 let currentUser: User | null = null;
 
+// Fixed test password
+const TEST_PASSWORD = 'teste123';
+
 export const authService = {
   login: async ({ email, password }: { email: string; password: string }): Promise<User> => {
+    // Verify password
+    if (password !== TEST_PASSWORD) {
+      throw new Error('Invalid credentials');
+    }
+
     // Mock authentication logic
     const teacher = mockTeachers.find(t => t.email === email);
     if (teacher) {
