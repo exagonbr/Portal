@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
-import { LoadingSpinner } from '@/app/loading'
+import { useAuth } from '../contexts/AuthContext'
+import { LoadingSpinner } from '../app/loading'
 
 const publicNavigation = [
   { name: 'Início', href: '/' },
@@ -13,18 +13,20 @@ const publicNavigation = [
 ]
 
 const studentNavigation = [
-  { name: 'Dashboard', href: '../dashboard' },
-  { name: 'Meus Cursos', href: '../courses' },
-  { name: 'Aulas ao Vivo', href: '../live' },
-  { name: 'Materiais', href: '../lessons' },
-  { name: 'Chat', href: '../chat' }
+  { name: 'Dashboard', href: '/dashboard/student' },
+  { name: 'Meus Cursos', href: '/courses' },
+  { name: 'Tarefas', href: '/assignments' },
+  { name: 'Aulas ao Vivo', href: '/live' },
+  { name: 'Material de Estudo', href: '/lessons' },
+  { name: 'Chat', href: '/chat' }
 ]
 
 const teacherNavigation = [
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'Minhas Turmas', href: '/classes' },
+  { name: 'Dashboard', href: '/dashboard/teacher' },
+  { name: 'Cursos', href: '/courses' },
+  { name: 'Tarefas', href: '/assignments' },
   { name: 'Aulas ao Vivo', href: '/live' },
-  { name: 'Material Didático', href: '/materials' },
+  { name: 'Material Didático', href: '/lessons' },
   { name: 'Chat', href: '/chat' }
 ]
 
@@ -34,6 +36,7 @@ export default function MainNavigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
 
+  // Determine which navigation to use based on user type
   const navigation = user 
     ? user.type === 'student' 
       ? studentNavigation 
@@ -128,6 +131,13 @@ export default function MainNavigation() {
                     <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                       <div className="py-1" role="menu">
                         <Link
+                          href={`/dashboard/${user.type}`}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                        >
+                          Dashboard
+                        </Link>
+                        <Link
                           href="/profile"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
@@ -155,6 +165,18 @@ export default function MainNavigation() {
               </>
             ) : (
               <div className="flex space-x-4">
+                <Link
+                  href="/login"
+                  className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/register"
+                  className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Cadastrar
+                </Link>
               </div>
             )}
           </div>
@@ -235,6 +257,12 @@ export default function MainNavigation() {
               </div>
             </div>
             <div className="mt-3 space-y-1">
+              <Link
+                href={`/dashboard/${user.type}`}
+                className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              >
+                Dashboard
+              </Link>
               <Link
                 href="/profile"
                 className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
