@@ -3,11 +3,15 @@
 @tailwind utilities;
 
 :root {
-  /* Sabercon color scheme */
-  --primary-color: #1B365D; /* Navy blue from Sabercon */
+  /* Enhanced color scheme */
+  --primary-color: #1B365D;
   --primary-light: #2A4C80;
   --primary-dark: #122642;
-  --secondary-color: #FFFFFF;
+  --secondary-color: #FF6B6B;
+  --accent-color: #4ECDC4;
+  --success-color: #2ECC71;
+  --warning-color: #F1C40F;
+  --error-color: #E74C3C;
   --text-primary: #1B365D;
   --text-secondary: #4A5568;
   --background-light: #F7FAFC;
@@ -15,38 +19,69 @@
   --background-rgb: 255, 255, 255;
 }
 
+/* Base styles */
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
 }
 
-/* Common components */
+/* Enhanced animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Common components with animations */
 .btn-primary {
-  @apply bg-[#1B365D] text-white px-4 py-2 rounded-md hover:bg-[#2A4C80] transition-colors;
+  @apply bg-[#1B365D] text-white px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 hover:bg-[#2A4C80] focus:ring-2 focus:ring-offset-2 focus:ring-[#1B365D];
 }
 
 .btn-secondary {
-  @apply bg-white text-[#1B365D] border border-[#1B365D] px-4 py-2 rounded-md hover:bg-[#F7FAFC] transition-colors;
+  @apply bg-white text-[#1B365D] border border-[#1B365D] px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 hover:bg-[#F7FAFC] focus:ring-2 focus:ring-offset-2 focus:ring-[#1B365D];
 }
 
 .card {
-  @apply bg-white rounded-lg shadow-md p-6 border border-gray-100;
+  @apply bg-white rounded-lg shadow-md p-6 border border-gray-100 transition-all duration-300 hover:shadow-lg;
+  animation: fadeIn 0.5s ease-out;
 }
 
 .input-field {
-  @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B365D] focus:border-transparent;
+  @apply border border-gray-300 rounded-md px-3 py-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#1B365D] focus:border-transparent;
 }
 
 .nav-link {
-  @apply text-[#1B365D] hover:text-[#2A4C80] transition-colors;
+  @apply text-[#1B365D] transition-all duration-300 hover:text-[#2A4C80];
 }
 
 .nav-link.active {
-  @apply font-bold text-[#1B365D];
+  @apply font-bold text-[#1B365D] relative;
+}
+
+.nav-link.active::after {
+  content: '';
+  @apply absolute bottom-0 left-0 w-full h-0.5 bg-[#1B365D] transform scale-x-0 transition-transform duration-300;
+  animation: slideIn 0.3s forwards;
 }
 
 .section-title {
-  @apply text-2xl font-bold text-[#1B365D] mb-4;
+  @apply text-2xl font-bold text-[#1B365D] mb-4 relative;
+}
+
+.section-title::after {
+  content: '';
+  @apply absolute bottom-0 left-0 w-16 h-1 bg-[#4ECDC4] rounded;
+  animation: slideIn 0.5s ease-out;
 }
 
 .loading-spinner {
@@ -54,38 +89,17 @@ body {
   border-top-color: #1B365D;
 }
 
-/* Dashboard layouts */
+/* Enhanced dashboard layouts */
 .dashboard-container {
-  @apply min-h-screen bg-[#F7FAFC];
+  @apply min-h-screen bg-[#F7FAFC] transition-all duration-300;
 }
 
 .dashboard-sidebar {
-  @apply fixed left-0 top-0 h-full w-64 bg-[#1B365D] text-white p-6;
+  @apply fixed left-0 top-0 h-full w-64 bg-[#1B365D] text-white p-6 transition-all duration-300;
 }
 
 .dashboard-content {
-  @apply ml-64 p-8;
+  @apply ml-64 p-8 transition-all duration-300;
 }
 
 .dashboard-header {
-  @apply bg-white shadow-sm mb-6 p-4;
-}
-
-/* Teacher specific */
-.teacher-course-card {
-  @apply card hover:shadow-lg cursor-pointer;
-}
-
-/* Student specific */
-.student-progress-card {
-  @apply card bg-[#1B365D] text-white;
-}
-
-/* Course content */
-.course-section {
-  @apply border-l-4 border-[#1B365D] pl-4 my-4;
-}
-
-.material-item {
-  @apply flex items-center space-x-2 p-2 hover:bg-[#F7FAFC] rounded-md cursor-pointer;
-}
