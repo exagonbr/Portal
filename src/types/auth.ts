@@ -1,16 +1,14 @@
+export type UserRole = 'admin' | 'teacher' | 'student';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  type: 'student' | 'teacher';
-  courses?: string[];
+  role: UserRole;
+  courses?: any[];
 }
 
-export interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<void>;
+export interface AuthResponse {
+  user: User;
+  token?: string;
 }

@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import SimpleCarousel from '@/components/SimpleCarousel';
+import Image from 'next/image';
+import SimpleCarousel from '../components/SimpleCarousel';
 
 export default function HomePage() {
   const carouselImages = [
@@ -21,18 +22,18 @@ export default function HomePage() {
     }
   ];
 
-  return (
-    <div className="min-h-screen">
-      {/* Carousel Section */}
-      <div className="w-full h-[400px] relative mb-8">
-        <SimpleCarousel images={carouselImages} autoplaySpeed={5000} />
-      </div>
-
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
-            <span className="block text-[#2B4B6F]">Aprendizado Simplificado</span>
-          </h1>
+    return (
+      <div className="min-h-screen">
+        {/* Carousel Section */}
+        <div className="w-full h-[400px] relative mb-8">
+          <SimpleCarousel images={carouselImages} autoplaySpeed={5000} />
+        </div>
+  
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
+              <span className="block text-[#2B4B6F]">Aprendizado Simplificado</span>
+            </h1>
           <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
             Uma plataforma completa para professores e alunos gerenciarem suas atividades educacionais.
             Acesse suas aulas, materiais e muito mais.
@@ -135,6 +136,21 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Call to Action */}
+      <div className="bg-gradient-to-r from-primary to-secondary py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-8">
+            Comece sua jornada de aprendizado agora
+          </h2>
+          <Link
+            href="/register"
+            className="bg-white text-primary font-bold py-4 px-8 rounded-lg hover:bg-opacity-90 transition-all"
+          >
+            Criar Conta
+          </Link>
         </div>
       </div>
     </div>

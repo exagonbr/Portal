@@ -1,195 +1,103 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '../contexts/AuthContext';
+import { useState } from 'react';
 
-const studentNavigation = [
-  { name: 'Dashboard', href: '/dashboard/student' },
-  { name: 'Meus Cursos', href: '/courses' },
-  { name: 'Aulas ao Vivo', href: '/live' },
-  { name: 'Materiais', href: '/lessons' },
-  { name: 'Chat', href: '/chat' }
-]
+export const Navigation = () => {
+  const pathname = usePathname();
+  const { user, logout } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-const teacherNavigation = [
-  { name: 'Dashboard', href: '/dashboard/teacher' },
-  { name: 'Minhas Turmas', href: '/courses' },
-  { name: 'Aulas ao Vivo', href: '/live' },
-  { name: 'Material Didático', href: '/lessons' },
-  { name: 'Chat', href: '/chat' }
-]
+  const isActive = (path: string) => pathname === path;
 
-export default function Navigation() {
-  const pathname = usePathname()
-  const { user } = useAuth()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const commonNavItems = [
+    { href: '/courses', label: 'Cursos' },
+    { href: '/live', label: 'Ao Vivo' },
+  ];
 
-  const navigation = user 
-    ? user.type === 'student' 
-      ? studentNavigation 
-      : teacherNavigation
-    : []
+  const studentNavItems = [
+    ...commonNavItems,
+    { href: '/assignments', label: 'Atividades' },
+    { href: '/dashboard/student', label: 'Dashboard' },
+  ];
+
+  const teacherNavItems = [
+    ...commonNavItems,
+    { href: '/dashboard/teacher', label: 'Dashboard' },
+    { href: '/assignments', label: 'Gerenciar Atividades' },
+  ];
+
+  const getNavItems = () => {
+    if (!user) return commonNavItems;
+    return user.role === 'student' ? studentNavItems : teacherNavItems;
+  };
 
   return (
-    <nav className="bg-white shadow-md" role="navigation" aria-label="Main navigation">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            {/* Logo */}
-            <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors" aria-label="Home">
-                Sabercon
-              </Link>
-            </div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              {navigation.map((item) => {
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`
-                      ${isActive
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                      } 
-                      inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors
-                      focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-                    `}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <span className="sr-only">{isActive ? 'Current page:' : 'Go to'}</span>
-                    {item.name}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* User Menu & Mobile Menu Button */}
-          <div className="flex items-center">
-            {/* Notifications */}
-            <button
-              type="button"
-              className="touch-target p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              aria-label="View notifications"
-            >
-              <span className="sr-only">Ver notificações</span>
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-            </button>
-
-            {/* Profile dropdown */}
-            <div className="ml-3 relative">
-              <button
-                type="button"
-                className="touch-target bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                aria-label="User menu"
-                aria-expanded="false"
-              >
-                <span className="sr-only">Abrir menu do usuário</span>
-                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-600 font-medium">
-                    {user?.name?.charAt(0).toUpperCase() || 'U'}
-                  </span>
-                </div>
-              </button>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="sm:hidden ml-3">
-              <button
-                type="button"
-                className="touch-target inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                aria-controls="mobile-menu"
-                aria-expanded={isMobileMenuOpen}
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                <span className="sr-only">
-                  {isMobileMenuOpen ? 'Close main menu' : 'Open main menu'}
-                </span>
-                {/* Icon when menu is closed */}
-                <svg
-                  className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-6 w-6`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-                {/* Icon when menu is open */}
-                <svg
-                  className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-6 w-6`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      <div
-        className={`${isMobileMenuOpen ? 'block' : 'hidden'} sm:hidden`}
-        id="mobile-menu"
-        role="menu"
-        aria-orientation="vertical"
-        aria-labelledby="user-menu-button"
+    <>
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        className="md:hidden p-2 text-gray-600 hover:text-gray-900"
       >
-        <div className="pt-2 pb-3 space-y-1">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`
-                  block px-3 py-2 rounded-md text-base font-medium
-                  ${isActive 
-                    ? 'bg-blue-50 border-l-4 border-blue-500 text-blue-700'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                  }
-                `}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {item.name}
-              </Link>
-            )
-          })}
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {isMenuOpen ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          )}
+        </svg>
+      </button>
+
+      {/* Desktop Navigation */}
+      <nav className={`${isMenuOpen ? 'block' : 'hidden'} md:flex md:items-center md:space-x-6 absolute md:relative top-16 md:top-0 left-0 right-0 bg-white md:bg-transparent p-4 md:p-0 shadow-lg md:shadow-none`}>
+        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6">
+          {getNavItems().map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive(item.href)
+                  ? 'text-primary'
+                  : 'text-text-secondary'
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
-      </div>
-    </nav>
-  )
-}
+
+        <div className="mt-4 md:mt-0">
+          {user ? (
+            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+              <span className="text-sm text-gray-600">
+                {user.role === 'student' ? 'Estudante' : 'Professor'}: {user.name}
+              </span>
+              <button
+                onClick={() => {
+                  logout();
+                  setIsMenuOpen(false);
+                }}
+                className="button-secondary text-sm"
+              >
+                Sair
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="button-primary text-sm block text-center"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Acessar Plataforma
+            </Link>
+          )}
+        </div>
+      </nav>
+    </>
+  );
+};
+
+export default Navigation;

@@ -1,9 +1,9 @@
 export default function Loading() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm z-50">
       <div className="flex flex-col items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <span className="mt-4 text-gray-600">Carregando...</span>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
+        <span className="mt-4 text-text-secondary font-medium">Carregando...</span>
       </div>
     </div>
   )
@@ -11,32 +11,51 @@ export default function Loading() {
 
 export function LoadingSpinner({ size = 'medium' }: { size?: 'small' | 'medium' | 'large' }) {
   const sizeClasses = {
-    small: 'h-6 w-6',
-    medium: 'h-12 w-12',
-    large: 'h-16 w-16'
+    small: 'h-5 w-5 border-2',
+    medium: 'h-12 w-12 border-4',
+    large: 'h-16 w-16 border-4'
   }
 
   return (
     <div className="flex flex-col items-center">
-      <div className={`animate-spin rounded-full border-b-2 border-blue-600 ${sizeClasses[size]}`}></div>
-      <span className={`mt-2 text-gray-600 ${size === 'small' ? 'text-sm' : 'text-base'}`}>
+      <div className={`animate-spin rounded-full border-primary/20 border-t-primary ${sizeClasses[size]}`}></div>
+      <span className={`mt-2 text-text-secondary font-medium ${size === 'small' ? 'text-sm' : 'text-base'}`}>
         Carregando...
       </span>
     </div>
   )
 }
 
-export function LoadingButton({ loading, children, ...props }: { loading: boolean; children: React.ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function LoadingButton({ 
+  loading, 
+  children, 
+  variant = 'primary',
+  ...props 
+}: { 
+  loading: boolean; 
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary';
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const baseClasses = "relative inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2";
+  const variantClasses = {
+    primary: "text-white bg-primary hover:bg-primary-dark focus:ring-primary",
+    secondary: "text-text-primary bg-white border border-border hover:bg-background-start focus:ring-primary"
+  };
+
   return (
     <button
       {...props}
       disabled={loading || props.disabled}
-      className={`relative inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${props.className || ''}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${props.className || ''}`}
     >
       {loading ? (
         <>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="animate-spin h-5 w-5 border-b-2 border-white rounded-full"></div>
+            <div className={`animate-spin h-5 w-5 border-2 rounded-full ${
+              variant === 'primary' 
+                ? 'border-white/30 border-t-white' 
+                : 'border-primary/30 border-t-primary'
+            }`}></div>
           </div>
           <span className="opacity-0">{children}</span>
         </>
@@ -49,10 +68,10 @@ export function LoadingButton({ loading, children, ...props }: { loading: boolea
 
 export function LoadingOverlay({ message }: { message?: string }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50">
-      <div className="flex flex-col items-center p-4 rounded-lg">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        {message && <span className="mt-4 text-gray-600">{message}</span>}
+    <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm z-50">
+      <div className="flex flex-col items-center p-6 rounded-2xl bg-white/50 backdrop-blur-sm shadow-lg">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
+        {message && <span className="mt-4 text-text-secondary font-medium">{message}</span>}
       </div>
     </div>
   )
@@ -60,14 +79,14 @@ export function LoadingOverlay({ message }: { message?: string }) {
 
 export function LoadingCard() {
   return (
-    <div className="animate-pulse bg-white shadow rounded-lg p-6">
-      <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+    <div className="animate-pulse bg-white shadow-sm rounded-xl p-6">
+      <div className="h-4 bg-background-start rounded-full w-3/4 mb-4"></div>
       <div className="space-y-3">
-        <div className="h-3 bg-gray-200 rounded"></div>
-        <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-        <div className="h-3 bg-gray-200 rounded w-4/6"></div>
+        <div className="h-3 bg-background-start rounded-full"></div>
+        <div className="h-3 bg-background-start rounded-full w-5/6"></div>
+        <div className="h-3 bg-background-start rounded-full w-4/6"></div>
       </div>
-      <div className="mt-6 h-8 bg-gray-200 rounded"></div>
+      <div className="mt-6 h-8 bg-background-start rounded-xl"></div>
     </div>
   )
 }

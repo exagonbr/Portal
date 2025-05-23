@@ -26,6 +26,15 @@ interface Teacher {
   };
 }
 
+interface Administrator {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  permissions: string[];
+  department: string;
+}
+
 interface Assignment {
   id: string;
   courseId: string;
@@ -81,6 +90,38 @@ interface ClassSession {
   attendance: Record<string, boolean>;
   notes: string;
 }
+
+export const mockAdministrators: Administrator[] = [
+  {
+    id: 'a1',
+    name: 'Admin Principal',
+    email: 'admin@edu.com',
+    role: 'Super Administrator',
+    permissions: [
+      'user_management',
+      'course_management',
+      'system_settings',
+      'reports',
+      'backup',
+      'modules',
+      'appearance'
+    ],
+    department: 'Administração'
+  },
+  {
+    id: 'a2',
+    name: 'Coordenador Geral',
+    email: 'coord@edu.com',
+    role: 'System Administrator',
+    permissions: [
+      'user_management',
+      'course_management',
+      'reports',
+      'modules'
+    ],
+    department: 'Coordenação'
+  }
+];
 
 export const mockTeachers: Teacher[] = [
   {

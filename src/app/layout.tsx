@@ -1,10 +1,10 @@
 import './globals.css'
-import LayoutWrapper from '@/components/LayoutWrapper'
-import { AppProviders } from '@/providers/AppProviders'
+import { AppProviders } from '../providers/AppProviders'
+import { Header } from '../components/Header'
 
 export const metadata = {
   title: 'Educational Portal',
-  description: 'A platform for online education',
+  description: 'A modern platform for education management',
 }
 
 export default function RootLayout({
@@ -13,10 +13,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
-      <body>
+    <html lang="en">
+      <body className="min-h-screen bg-gray-50">
         <AppProviders>
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <Header />
+          <main className="container mx-auto px-4 sm:px-6 lg:px-8">
+            {children}
+          </main>
         </AppProviders>
       </body>
     </html>
