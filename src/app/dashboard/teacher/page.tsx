@@ -1,249 +1,284 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useAuth } from '../../../contexts/AuthContext'
-import { mockTeachers, mockCourses, mockStudents, mockLiveClasses, mockAssignments } from '../../../constants/mockData'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import LessonPlanManager from '../../../components/LessonPlanManager'
-import ClassGroupManager from '../../../components/ClassGroupManager'
-import { BRAZILIAN_EDUCATION } from '../../../constants/brazilianEducation'
-import { LessonPlan, ClassGroup } from '../../../types/brazilianEducation'
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { mockTeachers, mockCourses, mockStudents, mockLiveClasses, mockAssignments } from '../../../constants/mockData';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import LessonPlanManager from '../../../components/LessonPlanManager';
+import ClassGroupManager from '../../../components/ClassGroupManager';
+import { BRAZILIAN_EDUCATION } from '../../../constants/brazilianEducation';
+import { LessonPlan, ClassGroup } from '../../../types/brazilianEducation';
 
-type TabType = 'overview' | 'lesson-plans' | 'class-groups'
+type TabType = 'overview' | 'lesson-plans' | 'class-groups';
 
-export default function TeacherDashboard() {
-  const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState<TabType>('overview')
-  const [selectedLevel, setSelectedLevel] = useState<keyof typeof BRAZILIAN_EDUCATION | ''>('')
+const TeacherDashboard = () => {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [selectedLevel, setSelectedLevel] = useState<keyof typeof BRAZILIAN_EDUCATION | ''>('');
+
+  useEffect(() => {
+    if (!loading && (!user || user.type !== 'teacher')) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="loading-spinner h-8 w-8"></div>
+        <div className="loading-spinner" />
       </div>
-    )
+    );
   }
 
   if (!user || user.type !== 'teacher') {
-    redirect('/login')
+    return null;
   }
 
-  const teacher = mockTeachers.find(t => t.id === user.id)
-  const teacherCourses = mockCourses.filter(course => teacher?.courses.includes(course.id))
+  const teacher = mockTeachers.find(t => t.id === user.id);
+  const teacherCourses = mockCourses.filter(course => teacher?.courses.includes(course.id));
   const upcomingClasses = mockLiveClasses.filter(
     liveClass => teacher?.courses.includes(liveClass.courseId) && liveClass.status === 'scheduled'
-  )
+  );
   const activeAssignments = mockAssignments.filter(
     assignment => teacher?.courses.includes(assignment.courseId) && assignment.status === 'active'
-  )
+  );
   const teacherStudents = mockStudents.filter(student => 
     student.enrolledCourses.some(courseId => teacher?.courses.includes(courseId))
-  )
+  );
 
   const handleSaveLessonPlan = (plan: LessonPlan) => {
-    // Here you would typically save the lesson plan to your backend
-    console.log('Saving lesson plan:', plan)
-    // You could show a success message here
-  }
+    console.log('Saving lesson plan:', plan);
+  };
 
   const handleSaveClassGroup = (classGroup: ClassGroup) => {
-    // Here you would typically save the class group to your backend
-    console.log('Saving class group:', classGroup)
-    // You could show a success message here
-  }
+    console.log('Saving class group:', classGroup);
+  };
 
   const filterStudentsByLevel = (level: keyof typeof BRAZILIAN_EDUCATION) => {
-    // This would typically filter students based on their educational level
-    // For now, we'll just return all students
-    return teacherStudents
-  }
+    return teacherStudents;
+  };
+
+  const NavButton = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
+    <button 
+      onClick={onClick}
+      className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${
+        active 
+          ? 'bg-primary text-white font-medium shadow-md' 
+          : 'text-text-secondary hover:bg-background-start'
+      }`}
+    >
+      {children}
+    </button>
+  );
 
   return (
-    <div className="dashboard-container">
-      <aside className="dashboard-sidebar">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-2">Portal do Professor</h2>
-          <p className="text-sm opacity-75">{user.name}</p>
+    <div className="flex min-h-screen bg-background-start">
+      <aside className="w-64 bg-white border-r border-border p-6 space-y-8">
+        <div>
+          <h2 className="text-xl font-bold text-text-primary mb-2">Portal do Professor</h2>
+          <p className="text-sm text-text-secondary">{user.name}</p>
         </div>
-        <nav className="space-y-4">
-          <button 
-            onClick={() => setActiveTab('overview')}
-            className={`nav-link block w-full text-left ${activeTab === 'overview' ? 'active' : ''}`}
-          >
+        
+        <nav className="space-y-2">
+          <NavButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
             Visão Geral
-          </button>
-          <button 
-            onClick={() => setActiveTab('lesson-plans')}
-            className={`nav-link block w-full text-left ${activeTab === 'lesson-plans' ? 'active' : ''}`}
-          >
+          </NavButton>
+          <NavButton active={activeTab === 'lesson-plans'} onClick={() => setActiveTab('lesson-plans')}>
             Planos de Aula
-          </button>
-          <button 
-            onClick={() => setActiveTab('class-groups')}
-            className={`nav-link block w-full text-left ${activeTab === 'class-groups' ? 'active' : ''}`}
-          >
+          </NavButton>
+          <NavButton active={activeTab === 'class-groups'} onClick={() => setActiveTab('class-groups')}>
             Turmas
-          </button>
-          <Link href="/courses" className="nav-link block">Meus Cursos</Link>
-          <Link href="/students" className="nav-link block">Alunos</Link>
-          <Link href="/assignments" className="nav-link block">Atividades</Link>
-          <Link href="/live" className="nav-link block">Aulas ao Vivo</Link>
+          </NavButton>
+          
+          <div className="pt-4 space-y-2">
+            <Link href="/courses" className="nav-link block">Meus Cursos</Link>
+            <Link href="/students" className="nav-link block">Alunos</Link>
+            <Link href="/assignments" className="nav-link block">Atividades</Link>
+            <Link href="/live" className="nav-link block">Aulas ao Vivo</Link>
+          </div>
         </nav>
       </aside>
 
-      <main className="dashboard-content">
-        <header className="dashboard-header flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-[#1B365D]">
-            {activeTab === 'overview' && 'Visão Geral'}
-            {activeTab === 'lesson-plans' && 'Planos de Aula'}
-            {activeTab === 'class-groups' && 'Gerenciamento de Turmas'}
-          </h1>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">{user.email}</span>
-            <button className="btn-secondary">Sair</button>
-          </div>
-        </header>
+      <main className="flex-1 p-8">
+        <div className="max-w-6xl mx-auto">
+          <header className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-bold text-text-primary">
+              {activeTab === 'overview' && 'Visão Geral'}
+              {activeTab === 'lesson-plans' && 'Planos de Aula'}
+              {activeTab === 'class-groups' && 'Gerenciamento de Turmas'}
+            </h1>
+          </header>
 
-        {activeTab === 'overview' && (
-          <>
-            {/* Educational Levels Selector */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Filtrar por Nível de Ensino</label>
-              <select
-                className="w-full md:w-64 rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
-                value={selectedLevel}
-                onChange={(e) => setSelectedLevel(e.target.value as keyof typeof BRAZILIAN_EDUCATION)}
-              >
-                <option value="">Todos os níveis</option>
-                {Object.entries(BRAZILIAN_EDUCATION).map(([key, value]) => (
-                  <option key={key} value={key}>{value.name}</option>
-                ))}
-              </select>
-            </div>
+          {activeTab === 'overview' && (
+            <div className="space-y-8 animate-fade-in">
+              <div className="flex items-center space-x-4 mb-6">
+                <select
+                  className="input-field max-w-xs"
+                  value={selectedLevel}
+                  onChange={(e) => setSelectedLevel(e.target.value as keyof typeof BRAZILIAN_EDUCATION)}
+                >
+                  <option value="">Todos os níveis</option>
+                  {Object.entries(BRAZILIAN_EDUCATION).map(([key, value]) => (
+                    <option key={key} value={key}>{value.name}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div className="card">
-                <h3 className="text-lg font-semibold text-[#1B365D]">Cursos</h3>
-                <p className="text-2xl font-bold text-[#1B365D]">{teacherCourses.length}</p>
-              </div>
-              <div className="card">
-                <h3 className="text-lg font-semibold text-[#1B365D]">Alunos</h3>
-                <p className="text-2xl font-bold text-[#1B365D]">
-                  {selectedLevel ? filterStudentsByLevel(selectedLevel as keyof typeof BRAZILIAN_EDUCATION).length : teacherStudents.length}
-                </p>
-              </div>
-              <div className="card">
-                <h3 className="text-lg font-semibold text-[#1B365D]">Aulas Agendadas</h3>
-                <p className="text-2xl font-bold text-[#1B365D]">{upcomingClasses.length}</p>
-              </div>
-              <div className="card">
-                <h3 className="text-lg font-semibold text-[#1B365D]">Atividades Ativas</h3>
-                <p className="text-2xl font-bold text-[#1B365D]">{activeAssignments.length}</p>
-              </div>
-            </div>
-
-            {/* Upcoming Classes */}
-            <div className="card mb-8">
-              <h2 className="section-title">Próximas Aulas</h2>
-              <div className="space-y-4">
-                {upcomingClasses.map(liveClass => (
-                  <div key={liveClass.id} className="border-b pb-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold">{liveClass.title}</h3>
-                        <p className="text-sm text-gray-600">
-                          {liveClass.date} • {liveClass.time}
-                        </p>
-                        {liveClass.description && (
-                          <p className="text-sm text-gray-600 mt-1">{liveClass.description}</p>
-                        )}
-                      </div>
-                      <Link href={liveClass.meetingUrl} className="btn-primary">
-                        Entrar
-                      </Link>
-                    </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="stats-card">
+                  <div className="stats-value">{teacherCourses.length}</div>
+                  <div className="stats-label">Cursos Ativos</div>
+                </div>
+                <div className="stats-card">
+                  <div className="stats-value">
+                    {selectedLevel ? filterStudentsByLevel(selectedLevel as keyof typeof BRAZILIAN_EDUCATION).length : teacherStudents.length}
                   </div>
-                ))}
+                  <div className="stats-label">Alunos</div>
+                </div>
+                <div className="stats-card">
+                  <div className="stats-value">{upcomingClasses.length}</div>
+                  <div className="stats-label">Aulas Agendadas</div>
+                </div>
+                <div className="stats-card">
+                  <div className="stats-value">{activeAssignments.length}</div>
+                  <div className="stats-label">Atividades Ativas</div>
+                </div>
               </div>
-            </div>
 
-            {/* Students Overview */}
-            <div className="card">
-              <h2 className="section-title">Visão Geral dos Alunos</h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="bg-[#F7FAFC]">
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[#1B365D] uppercase tracking-wider">
-                        Nome
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[#1B365D] uppercase tracking-wider">
-                        Progresso
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[#1B365D] uppercase tracking-wider">
-                        Média
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-[#1B365D] uppercase tracking-wider">
-                        Ação
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {(selectedLevel ? filterStudentsByLevel(selectedLevel as keyof typeof BRAZILIAN_EDUCATION) : teacherStudents).map(student => {
-                      const averageGrade = (
-                        (student.grades.assignments + student.grades.tests + student.grades.participation) / 3
-                      ).toFixed(1)
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="card">
+                  <div className="card-header">Próximas Aulas</div>
+                  <div className="card-body space-y-4">
+                    {upcomingClasses.length === 0 ? (
+                      <p className="text-text-secondary text-center py-4">Nenhuma aula agendada</p>
+                    ) : (
+                      upcomingClasses.map(liveClass => (
+                        <div key={liveClass.id} className="flex justify-between items-start p-4 rounded-lg bg-background-start">
+                          <div>
+                            <h3 className="font-medium text-text-primary">{liveClass.title}</h3>
+                            <p className="text-sm text-text-secondary mt-1">
+                              {liveClass.date} • {liveClass.time}
+                            </p>
+                          </div>
+                          <Link href={liveClass.meetingUrl} className="button-primary text-sm">
+                            Entrar
+                          </Link>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
 
-                      return (
-                        <tr key={student.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div>
-                                <div className="text-sm font-medium text-[#1B365D]">{student.name}</div>
-                                <div className="text-sm text-gray-500">{student.email}</div>
-                              </div>
+                <div className="card">
+                  <div className="card-header">Atividades Recentes</div>
+                  <div className="card-body">
+                    {activeAssignments.length === 0 ? (
+                      <p className="text-text-secondary text-center py-4">Nenhuma atividade ativa</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {activeAssignments.map(assignment => (
+                          <div key={assignment.id} className="flex items-center justify-between p-4 rounded-lg bg-background-start">
+                            <div>
+                              <h3 className="font-medium text-text-primary">{assignment.title}</h3>
+                              <p className="text-sm text-text-secondary">Prazo: {assignment.dueDate}</p>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="w-full bg-gray-200 rounded-full h-2.5">
-                              <div
-                                className="bg-[#1B365D] h-2.5 rounded-full"
-                                style={{ width: `${student.progress}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-sm text-gray-600">{student.progress}%</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {averageGrade}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Link
-                              href={`/students/${student.id}`}
-                              className="text-[#1B365D] hover:text-[#2A4C80]"
-                            >
-                              Ver detalhes
-                            </Link>
-                          </td>
+                            <span className="badge badge-success">Ativo</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="card-header">Desempenho dos Alunos</div>
+                <div className="card-body">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-left border-b border-border">
+                          <th className="pb-3 font-medium text-text-secondary">Nome</th>
+                          <th className="pb-3 font-medium text-text-secondary">Progresso</th>
+                          <th className="pb-3 font-medium text-text-secondary">Média</th>
+                          <th className="pb-3 font-medium text-text-secondary">Ação</th>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {(selectedLevel ? filterStudentsByLevel(selectedLevel as keyof typeof BRAZILIAN_EDUCATION) : teacherStudents).map(student => {
+                          const averageGrade = (
+                            (student.grades.assignments + student.grades.tests + student.grades.participation) / 3
+                          ).toFixed(1);
+
+                          return (
+                            <tr key={student.id} className="hover:bg-background-start">
+                              <td className="py-4">
+                                <div>
+                                  <div className="font-medium text-text-primary">{student.name}</div>
+                                  <div className="text-sm text-text-secondary">{student.email}</div>
+                                </div>
+                              </td>
+                              <td className="py-4">
+                                <div className="w-48">
+                                  <div className="h-2 w-full bg-border rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-primary rounded-full"
+                                      style={{ width: `${student.progress}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm text-text-secondary mt-1">{student.progress}%</span>
+                                </div>
+                              </td>
+                              <td className="py-4">
+                                <span className={`font-medium ${
+                                  Number(averageGrade) >= 7 ? 'text-success' : 
+                                  Number(averageGrade) >= 5 ? 'text-warning' : 'text-error'
+                                }`}>
+                                  {averageGrade}
+                                </span>
+                              </td>
+                              <td className="py-4">
+                                <Link
+                                  href={`/students/${student.id}`}
+                                  className="text-primary hover:text-primary-dark font-medium"
+                                >
+                                  Ver detalhes
+                                </Link>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
-          </>
-        )}
+          )}
 
-        {activeTab === 'lesson-plans' && (
-          <LessonPlanManager teacherId={user.id} onSave={handleSaveLessonPlan} />
-        )}
+          {activeTab === 'lesson-plans' && (
+            <div className="card animate-fade-in">
+              <div className="card-header">Planos de Aula</div>
+              <div className="card-body">
+                <LessonPlanManager teacherId={user.id} onSave={handleSaveLessonPlan} />
+              </div>
+            </div>
+          )}
 
-        {activeTab === 'class-groups' && (
-          <ClassGroupManager teacherId={user.id} onSave={handleSaveClassGroup} />
-        )}
+          {activeTab === 'class-groups' && (
+            <div className="card animate-fade-in">
+              <div className="card-header">Gerenciamento de Turmas</div>
+              <div className="card-body">
+                <ClassGroupManager teacherId={user.id} onSave={handleSaveClassGroup} />
+              </div>
+            </div>
+          )}
+        </div>
       </main>
     </div>
-  )
-}
+  );
+};
+
+export default TeacherDashboard;

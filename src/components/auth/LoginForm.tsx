@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/components/Toast'
-import { useForm, patterns } from '@/hooks/useForm'
-import { Input, FormGroup, SubmitButton } from '@/components/forms/FormComponents'
+import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../components/Toast'
+import { useForm, patterns } from '../../hooks/useForm'
+import { Input, FormGroup, SubmitButton } from '../../components/forms/FormComponents'
 
 interface LoginFormData {
   email: string
@@ -49,12 +49,19 @@ export default function LoginForm() {
     async (formData) => {
       try {
         console.log('LoginForm: Attempting login with:', formData.email);
-        await login(formData.email, formData.password)
+        const response = await login(formData.email, formData.password)
         showToast({
           type: 'success',
           message: 'Login realizado com sucesso!'
         })
-        router.push('/dashboard')
+        // Redirect based on user role
+        if (response.user?.role === 'student') {
+          router.push('/dashboard/student')
+        } else if (response.user?.role === 'teacher') {
+          router.push('/dashboard/teacher')
+        } else {
+          router.push('/dashboard')
+        }
       } catch (error: any) {
         console.error('LoginForm: Login failed:', error);
         showToast({

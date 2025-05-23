@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Paths that require authentication
+// Role-specific paths
+const studentPaths = ['/dashboard/student']
+const teacherPaths = ['/dashboard/teacher']
+
+// General protected paths
 const protectedPaths = [
   '/dashboard',
   '/courses',
@@ -11,7 +15,7 @@ const protectedPaths = [
   '/profile'
 ]
 
-// Paths that should not be accessible when authenticated
+// Auth paths that should not be accessible when authenticated
 const authPaths = [
   '/login',
   '/register'
@@ -19,22 +23,48 @@ const authPaths = [
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')
+  const userDataCookie = request.cookies.get('user_data')
   const { pathname } = request.nextUrl
 
-  // Check if the path requires authentication
+  // Check path types
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
   const isAuthPath = authPaths.some(path => pathname.startsWith(path))
+  const isStudentPath = studentPaths.some(path => pathname.startsWith(path))
+  const isTeacherPath = teacherPaths.some(path => pathname.startsWith(path))
 
-  // If the path requires authentication and user is not authenticated
+  // If not authenticated and trying to access protected path
   if (isProtectedPath && !token) {
-    const response = NextResponse.redirect(new URL('/', request.url))
-    return response
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // If user is authenticated and tries to access auth pages
+  // If authenticated and trying to access auth pages
   if (isAuthPath && token) {
-    const response = NextResponse.redirect(new URL('/dashboard', request.url))
-    return response
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Role-based access control
+  if (userDataCookie) {
+    try {
+      const userData = JSON.parse(decodeURIComponent(userDataCookie.value))
+      
+      // Prevent students from accessing teacher paths
+      if (isTeacherPath && userData.role !== 'teacher') {
+        return NextResponse.redirect(new URL('/dashboard/student', request.url))
+      }
+
+      // Prevent teachers from accessing student paths
+      if (isStudentPath && userData.role !== 'student') {
+        return NextResponse.redirect(new URL('/dashboard/teacher', request.url))
+      }
+
+      // Redirect to role-specific dashboard
+      if (pathname === '/dashboard') {
+        const dashboardPath = userData.role === 'student' ? '/dashboard/student' : '/dashboard/teacher'
+        return NextResponse.redirect(new URL(dashboardPath, request.url))
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error)
+    }
   }
 
   return NextResponse.next()
