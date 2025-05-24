@@ -1,18 +1,21 @@
 'use client'
 
-import { Header } from '@/components/Header'
+import { usePathname } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
+import AuthenticatedDashboardLayout from '@/components/dashboard/AuthenticatedDashboardLayout'
 
-export default function Template({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <>
-      <Header />
-      <main>
-        {children}
-      </main>
-    </>
-  )
+// Routes that should not use the dashboard layout
+const publicRoutes = ['/login', '/register', '/forgot-password']
+
+export default function Template({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
+  const pathname = usePathname()
+
+  // Don't use dashboard layout for public routes
+  if (publicRoutes.includes(pathname)) {
+    return <div className="min-h-screen bg-gradient-to-b from-background-start to-background-end">{children}</div>
+  }
+
+  // Use authenticated dashboard layout for all other routes
+  return <AuthenticatedDashboardLayout>{children}</AuthenticatedDashboardLayout>
 }

@@ -1,5 +1,9 @@
 'use client'
 
+'use client'
+
+import { useAuth } from '@/contexts/AuthContext'
+
 interface ChartProps {
   title: string
   type: 'line' | 'bar'
@@ -56,6 +60,40 @@ export function Chart({ title, type, trend }: ChartProps) {
 }
 
 export default function Charts() {
+  const { user } = useAuth()
+
+  if (!user) {
+    return null
+  }
+
+  if (user.role === 'student') {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Chart title="Student Progress" type="line" trend={12} />
+        <Chart title="Course Completion" type="bar" trend={8} />
+      </div>
+    )
+  }
+
+  if (user.role === 'teacher') {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Chart title="Class Performance" type="line" trend={15} />
+        <Chart title="Assignment Completion" type="bar" trend={10} />
+      </div>
+    )
+  }
+
+  if (user.role === 'admin') {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Chart title="Recent Workflow" type="line" trend={17} />
+        <Chart title="Recent Marketing" type="bar" trend={17} />
+      </div>
+    )
+  }
+
+  // Default charts for other roles
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Chart title="Recent Workflow" type="line" trend={17} />

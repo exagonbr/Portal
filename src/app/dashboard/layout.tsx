@@ -1,9 +1,7 @@
-import AuthenticatedDashboardLayout from '@/components/dashboard/AuthenticatedDashboardLayout'
-
-export default function Layout({
+export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  return <AuthenticatedDashboardLayout>{children}</AuthenticatedDashboardLayout>
+  return children;
 }
