@@ -13,20 +13,23 @@ export const Navigation = () => {
   const isActive = (path: string) => pathname === path;
 
   const commonNavItems = [
-    { href: '/courses', label: 'Cursos' },
-    { href: '/live', label: 'Ao Vivo' },
+    { href: '/', label: '' },
   ];
 
   const studentNavItems = [
     ...commonNavItems,
     { href: '/assignments', label: 'Atividades' },
     { href: '/dashboard/student', label: 'Dashboard' },
+    { href: '/courses', label: 'Cursos' },
+    { href: '/live', label: 'Ao Vivo' },
   ];
 
   const teacherNavItems = [
     ...commonNavItems,
     { href: '/dashboard/teacher', label: 'Dashboard' },
     { href: '/assignments', label: 'Gerenciar Atividades' },
+    { href: '/courses', label: 'Cursos' },
+    { href: '/live', label: 'Ao Vivo' },
   ];
 
   const getNavItems = () => {

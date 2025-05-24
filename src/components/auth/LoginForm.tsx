@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -29,6 +30,7 @@ const validationRules = {
 
 export function LoginForm() {
   const { login } = useAuth();
+  const router = useRouter();
   const [submitError, setSubmitError] = useState<string>('');
 
   const {
@@ -45,7 +47,14 @@ export function LoginForm() {
     onSubmit: async (formValues) => {
       try {
         setSubmitError('');
-        await login(formValues.email, formValues.password);
+        const response = await login(formValues.email, formValues.password);
+        if (response.success && response.user) {
+          // Redirect based on user role
+          const dashboardPath = response.user.role === 'student' 
+            ? '/dashboard/student' 
+            : '/dashboard/teacher';
+          router.push(dashboardPath);
+        }
       } catch (error) {
         setSubmitError('Email ou senha inválidos');
       }

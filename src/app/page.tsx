@@ -23,9 +23,9 @@ export default function HomePage() {
   ];
 
     return (
-      <div className="min-h-screen">
+      <div>
         {/* Carousel Section */}
-        <div className="w-full h-[400px] relative mb-8">
+        <div className="w-full h-[400px] relative mb-8 mt-16">
           <SimpleCarousel images={carouselImages} autoplaySpeed={5000} />
         </div>
   
@@ -136,21 +136,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Call to Action */}
-      <div className="bg-gradient-to-r from-primary to-secondary py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-8">
-            Comece sua jornada de aprendizado agora
-          </h2>
-          <Link
-            href="/register"
-            className="bg-white text-primary font-bold py-4 px-8 rounded-lg hover:bg-opacity-90 transition-all"
-          >
-            Criar Conta
-          </Link>
         </div>
       </div>
     </div>

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { PWARegistration } from '@/components/PWARegistration';
+import { AppProviders } from '@/providers/AppProviders';
+import { Header } from '@/components/Header';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -52,10 +54,12 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-b from-background-start to-background-end">
-          {children}
-          <PWARegistration />
-        </div>
+        <AppProviders>
+          <div className="min-h-screen bg-gradient-to-b from-background-start to-background-end">
+            {children}
+            <PWARegistration />
+          </div>
+        </AppProviders>
       </body>
     </html>
   );
