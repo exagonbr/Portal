@@ -13,11 +13,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-gray-50">
+    <html lang="ptBR">
+      <body className="min-h-screen bg-gray-50 flex flex-col">
         <AppProviders>
           <Header />
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
             {children}
           </main>
         </AppProviders>
