@@ -2,29 +2,59 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
       colors: {
-        // Educational Colors
-        primary: '#3B82F6',    // Blue 500 - Main brand color
-        secondary: '#2563EB',  // Blue 600 - Secondary actions
-        accent: '#60A5FA',     // Blue 400 - Highlights
-        success: '#4CAF50',    // Green - Positive feedback
-        warning: '#FBBF24',    // Amber - Attention/caution
-        info: '#2196F3',       // Light Blue - Information
-        error: '#FF5252',      // Red - Error states
-        
-        // Text and Background
-        background: '#FFFFFF',
-        'background-alt': '#DBEAFE',
-        text: '#212121',
-        'text-secondary': '#757575'
+        primary: {
+          DEFAULT: '#007bff',
+          dark: '#0056b3',
+          light: '#3395ff'
+        },
+        secondary: {
+          DEFAULT: '#6c757d',
+          dark: '#545b62',
+          light: '#868e96'
+        },
+        success: '#28a745',
+        warning: '#ffc107',
+        error: '#dc3545',
+        info: '#17a2b8',
+        background: {
+          start: '#f8f9fa',
+          end: '#e9ecef'
+        },
+        text: {
+          primary: '#212529',
+          secondary: '#6c757d'
+        },
+        border: '#dee2e6'
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.3s ease-in-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'slide-down': 'slideDown 0.3s ease-out'
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' }
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' }
+        },
+        slideDown: {
+          '0%': { transform: 'translateY(-100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' }
+        }
       }
     },
   },
-  plugins: []
+  plugins: [],
 }
 
 export default config

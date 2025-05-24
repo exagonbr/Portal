@@ -3,199 +3,137 @@
 @tailwind utilities;
 
 :root {
-  /* Primary Colors */
-  --primary: #3B82F6;    /* Blue 500 - Main brand color */
-  --primary-dark: #2563EB;
-  --primary-light: #60A5FA;
-
-  /* Secondary Colors */
-  --secondary: #2563EB;  /* Blue 600 */
-  --secondary-dark: #1D4ED8;
-  --secondary-light: #3B82F6;
-
-  /* Background Colors */
-  --background-start: #FFFFFF;  /* Clean white */
-  --background-end: #DBEAFE;    /* Light blue tint */
-
-  /* Text Colors */
-  --text-primary: #212121;    /* Dark gray for main text */
-  --text-secondary: #757575;  /* Medium gray for secondary text */
-
-  /* Accent Colors */
-  --success: #4CAF50;     /* Positive feedback */
-  --warning: #FBBF24;     /* Attention/caution */
-  --error: #FF5252;       /* Error red */
-  --info: #2196F3;        /* Information blue */
-
-  /* Border Colors */
-  --border: #E0E0E0;
+  --primary: #007bff;
+  --primary-dark: #0056b3;
+  --secondary: #6c757d;
+  --success: #28a745;
+  --warning: #ffc107;
+  --error: #dc3545;
+  --info: #17a2b8;
+  --background-start: #f8f9fa;
+  --background-end: #e9ecef;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border: #dee2e6;
 }
 
-body {
-  background: linear-gradient(135deg, var(--background-start) 0%, var(--background-end) 100%);
-  min-height: 100vh;
-  color: var(--text-primary);
+@layer base {
+  body {
+    @apply antialiased text-text-primary bg-background-start;
+  }
 }
 
-/* Logo Styles */
-.logo-text {
-  font-size: 1.75rem;
-  font-weight: bold;
-  letter-spacing: -0.5px;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+@layer components {
+  .card {
+    @apply bg-white rounded-2xl shadow-lg border border-border overflow-hidden;
+  }
+
+  .card-header {
+    @apply p-6 border-b border-border bg-gradient-to-r from-primary/10 to-transparent font-bold text-lg text-text-primary;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  .button-primary {
+    @apply px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-200;
+  }
+
+  .nav-link {
+    @apply text-text-secondary hover:text-text-primary transition-colors duration-200;
+  }
+
+  .badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-success/20 text-success;
+  }
+
+  .badge-warning {
+    @apply bg-warning/20 text-warning;
+  }
+
+  .badge-error {
+    @apply bg-error/20 text-error;
+  }
 }
 
-.logo-text-primary {
-  color: var(--primary);
+@layer utilities {
+  .loading-spinner {
+    @apply w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
 }
 
-.logo-text-secondary {
-  color: var(--secondary);
-}
-
-/* Header Styles */
-.header-shadow {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  backdrop-filter: blur(8px);
-  background: rgba(255, 255, 255, 0.98);
-  transition: background-color 0.3s ease;
-}
-
-/* Container Styles */
-.content-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-/* Card Styles */
-.card {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid var(--border);
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-}
-
-/* Button Styles */
-.button-primary {
-  background-color: var(--primary);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.button-primary:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.button-primary:active {
-  transform: translateY(0);
-}
-
-.button-primary:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.button-secondary {
-  background-color: white;
-  color: var(--primary);
-  border: 2px solid var(--primary);
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.button-secondary:hover {
-  background-color: var(--background-end);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-}
-
-/* Input Field Styles */
-.input-field {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--border);
-  border-radius: 0.75rem;
-  transition: all 0.2s ease;
-  font-size: 1rem;
-  color: var(--text-primary);
-  background-color: white;
-}
-
-.input-field:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.input-field::placeholder {
-  color: #9E9E9E;
-}
-
-/* Loading Animation */
-.loading-spinner {
-  border: 2px solid var(--background-start);
-  border-top: 2px solid var(--primary);
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Animations */
-.fade-in-up {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
-/* Responsive Utilities */
-@media (max-width: 768px) {
-  .content-container {
-    padding: 1rem;
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
   }
-
-  .logo-text {
-    font-size: 1.5rem;
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+/* PWA specific styles */
+@media (display-mode: standalone) {
+  /* Add padding for iOS safe areas */
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
+
+  /* Hide browser UI elements when in standalone mode */
+  .browser-ui {
+    display: none;
+  }
+}
+
+/* Offline indicator styles */
+.offline-indicator {
+  @apply fixed bottom-4 left-4 px-4 py-2 bg-warning text-white rounded-lg shadow-lg z-50 flex items-center gap-2;
+  animation: slideUp 0.3s ease-out;
+}
+
+.offline-indicator::before {
+  content: '';
+  @apply w-2 h-2 bg-current rounded-full animate-pulse;
 }

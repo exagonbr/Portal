@@ -1,14 +1,66 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '../../../contexts/AuthContext';
 import { mockTeachers, mockCourses, mockStudents, mockLiveClasses, mockAssignments } from '../../../constants/mockData';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import LessonPlanManager from '../../../components/LessonPlanManager';
-import ClassGroupManager from '../../../components/ClassGroupManager';
+import { StatCard } from '../../../components/dashboard/StatCard';
+import { User } from '../../../types/auth';
+import { Course } from '../../../types/education';
 import { BRAZILIAN_EDUCATION } from '../../../constants/brazilianEducation';
 import { LessonPlan, ClassGroup } from '../../../types/brazilianEducation';
+import LessonPlanManager from '../../../components/LessonPlanManager';
+import ClassGroupManager from '../../../components/ClassGroupManager';
+
+interface SimplifiedStudent {
+  id: string;
+  name: string;
+  email: string;
+  progress: number;
+  grades: {
+    assignments: number;
+    tests: number;
+    participation: number;
+  };
+  enrolledCourses: string[];
+}
+
+interface Teacher {
+  id: string;
+  name: string;
+  email: string;
+  subjects: string[];
+  courses: string[];
+  department: string;
+  availability: {
+    days: string[];
+    hours: string;
+  };
+}
+
+interface LiveClass {
+  id: string;
+  courseId: string;
+  title: string;
+  date: string;
+  time: string;
+  status: 'scheduled' | 'in-progress' | 'completed';
+  meetingUrl: string;
+  description?: string;
+  materials?: string[];
+}
+
+interface Assignment {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  totalPoints: number;
+  type: 'homework' | 'project' | 'quiz';
+  status: 'active' | 'past' | 'draft';
+}
 
 type TabType = 'overview' | 'lesson-plans' | 'class-groups';
 
@@ -19,7 +71,7 @@ const TeacherDashboard = () => {
   const [selectedLevel, setSelectedLevel] = useState<keyof typeof BRAZILIAN_EDUCATION | ''>('');
 
   useEffect(() => {
-    if (!loading && (!user || user.type !== 'teacher')) {
+    if (!loading && (!user || (user.role !== 'teacher' && user.type !== 'teacher'))) {
       router.push('/login');
     }
   }, [user, loading, router]);
@@ -32,7 +84,7 @@ const TeacherDashboard = () => {
     );
   }
 
-  if (!user || user.type !== 'teacher') {
+  if (!user || (user.role !== 'teacher' && user.type !== 'teacher')) {
     return null;
   }
 
@@ -127,24 +179,28 @@ const TeacherDashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="stats-card">
-                  <div className="stats-value">{teacherCourses.length}</div>
-                  <div className="stats-label">Cursos Ativos</div>
-                </div>
-                <div className="stats-card">
-                  <div className="stats-value">
-                    {selectedLevel ? filterStudentsByLevel(selectedLevel as keyof typeof BRAZILIAN_EDUCATION).length : teacherStudents.length}
-                  </div>
-                  <div className="stats-label">Alunos</div>
-                </div>
-                <div className="stats-card">
-                  <div className="stats-value">{upcomingClasses.length}</div>
-                  <div className="stats-label">Aulas Agendadas</div>
-                </div>
-                <div className="stats-card">
-                  <div className="stats-value">{activeAssignments.length}</div>
-                  <div className="stats-label">Atividades Ativas</div>
-                </div>
+                <StatCard
+                  title="Cursos Ativos"
+                  value={teacherCourses.length}
+                  type="courses"
+                  trend={5}
+                />
+                <StatCard
+                  title="Alunos"
+                  value={selectedLevel ? filterStudentsByLevel(selectedLevel as keyof typeof BRAZILIAN_EDUCATION).length : teacherStudents.length}
+                  type="students"
+                  trend={12}
+                />
+                <StatCard
+                  title="Aulas Agendadas"
+                  value={upcomingClasses.length}
+                  type="classes"
+                />
+                <StatCard
+                  title="Atividades Ativas"
+                  value={activeAssignments.length}
+                  type="assignments"
+                />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
