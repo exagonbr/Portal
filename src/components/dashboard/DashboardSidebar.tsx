@@ -33,7 +33,7 @@ export default function DashboardSidebar() {
   }
 
   const getNavItems = (): NavSection[] => {
-    const commonItems: NavSection[] = [
+    let commonItems: NavSection[] = [
       {
         section: 'Principal',
         items: [
