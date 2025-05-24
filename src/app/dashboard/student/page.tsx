@@ -24,7 +24,6 @@ export default function StudentDashboard() {
         {/* Right Sidebar - Takes up 1 column */}
         <div className="space-y-6">
           <ProductList />
-          <ChatSection />
         </div>
       </div>
     </div>
