@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface NavItem {
@@ -18,7 +18,17 @@ interface NavSection {
 
 export default function DashboardSidebar() {
   const pathname = usePathname()
-  const { user } = useAuth()
+  const router = useRouter()
+  const { user, logout } = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push('/login')
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+    }
+  }
 
   const getNavItems = (): NavSection[] => {
     const commonItems: NavSection[] = [
@@ -117,11 +127,11 @@ export default function DashboardSidebar() {
       {/* Bottom Actions */}
       <div className="p-4 border-t border-white/10">
         <button 
-          onClick={() => {/* Add logout handler */}} 
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-blue-600/10 hover:text-white transition-colors"
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-red-500/10 hover:text-red-500 transition-colors group"
         >
-          <span className="material-symbols-outlined text-[20px]">logout</span>
-          <span className="text-sm font-medium">Sair</span>
+          <span className="material-symbols-outlined text-[20px] group-hover:animate-pulse">logout</span>
+          <span className="text-sm font-medium">Sair da Plataforma</span>
         </button>
       </div>
     </aside>

@@ -37,6 +37,11 @@ export const Navigation = () => {
     return user.role === 'student' ? studentNavItems : teacherNavItems;
   };
 
+  const handleLogout = () => {
+    logout();
+    setIsMenuOpen(false);
+  };
+
   return (
     <>
       {/* Mobile menu button */}
@@ -77,26 +82,38 @@ export const Navigation = () => {
           ))}
         </div>
 
-        <div className="mt-4 md:mt-0">
+        <div className="mt-6 md:mt-0 border-t md:border-none pt-6 md:pt-0">
           {user ? (
             <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
-              <span className="text-sm font-medium text-gray-700">
-                {user.role === 'student' ? 'Estudante' : 'Professor'}: {user.name}
-              </span>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <span className="text-blue-600 font-medium">
+                    {user.name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-900">
+                    {user.name}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {user.role === 'student' ? 'Estudante' : 'Professor'}
+                  </span>
+                </div>
+              </div>
               <button
-                onClick={() => {
-                  logout();
-                  setIsMenuOpen(false);
-                }}
-                className="button-secondary text-sm px-6 py-2 rounded-md transition-colors duration-200"
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-200"
               >
-                Sair
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3zm11.707 4.707a1 1 0 0 0-1.414-1.414L10 9.586 6.707 6.293a1 1 0 0 0-1.414 1.414L8.586 11l-3.293 3.293a1 1 0 1 0 1.414 1.414L10 12.414l3.293 3.293a1 1 0 0 0 1.414-1.414L11.414 11l3.293-3.293z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-medium">Sair</span>
               </button>
             </div>
           ) : (
             <Link
               href="/login"
-              className="button-primary text-sm block text-center"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200"
               onClick={() => setIsMenuOpen(false)}
             >
               Acessar Plataforma

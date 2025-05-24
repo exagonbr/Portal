@@ -1,31 +1,44 @@
 'use client'
 
+import { useAuth } from '@/contexts/AuthContext'
+import { teacherMockData, studentMockData } from '@/constants/dashboardData'
+
 interface OverviewCardProps {
   title: string
   value: string | number
+  subtitle?: string
   icon: string
   trend?: number
-  period?: string
+  color?: string
 }
 
-function OverviewCard({ title, value, icon, trend, period = 'Since last week' }: OverviewCardProps) {
+function OverviewCard({ 
+  title, 
+  value, 
+  subtitle, 
+  icon, 
+  trend, 
+  color = 'blue'
+}: OverviewCardProps) {
   return (
-    <div className="bg-white rounded-xl p-6 flex flex-col">
+    <div className="bg-white rounded-xl p-6 flex flex-col shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-          <span className="text-xl">{icon}</span>
+        <div className={`w-12 h-12 rounded-lg bg-${color}-100 flex items-center justify-center`}>
+          <span className="text-2xl">{icon}</span>
         </div>
+        {trend && (
+          <div className={`px-2 py-1 rounded-full ${
+            trend >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          } text-xs font-medium`}>
+            {trend >= 0 ? '+' : ''}{trend}%
+          </div>
+        )}
       </div>
       <div className="flex flex-col">
         <span className="text-sm text-gray-500">{title}</span>
-        <span className="text-2xl font-semibold mt-1">{value}</span>
-        {trend && (
-          <div className="flex items-center mt-2">
-            <span className={`text-sm ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
-            </span>
-            <span className="text-sm text-gray-500 ml-1">{period}</span>
-          </div>
+        <span className="text-2xl font-bold mt-1">{value}</span>
+        {subtitle && (
+          <span className="text-sm text-gray-500 mt-1">{subtitle}</span>
         )}
       </div>
     </div>
@@ -33,17 +46,101 @@ function OverviewCard({ title, value, icon, trend, period = 'Since last week' }:
 }
 
 export default function OverviewCards() {
-  const stats = [
-    { title: 'Document', value: '146.000', icon: '📄', trend: 17 },
-    { title: 'Contact', value: '1400', icon: '👥', trend: 17 },
-    { title: 'Email', value: '150.700', icon: '📧', trend: 17 },
-  ]
+  const { user } = useAuth()
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {stats.map((stat) => (
-        <OverviewCard key={stat.title} {...stat} />
-      ))}
-    </div>
-  )
+  if (!user) {
+    return null
+  }
+
+  if (user.role === 'teacher') {
+    const stats = [
+      { 
+        title: 'Total de Alunos', 
+        value: teacherMockData.totalStudents,
+        subtitle: 'Em todas as turmas',
+        icon: '👥',
+        trend: 5,
+        color: 'blue'
+      },
+      { 
+        title: 'Turmas Ativas', 
+        value: teacherMockData.activeClasses,
+        subtitle: 'No período atual',
+        icon: '📚',
+        trend: 2,
+        color: 'green'
+      },
+      { 
+        title: 'Média de Presença', 
+        value: `${teacherMockData.averageAttendance}%`,
+        subtitle: 'Últimos 30 dias',
+        icon: '📊',
+        trend: 3,
+        color: 'purple'
+      },
+      { 
+        title: 'Próximas Aulas', 
+        value: teacherMockData.upcomingClasses.length,
+        subtitle: 'Agendadas para hoje',
+        icon: '📅',
+        color: 'orange'
+      }
+    ]
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat) => (
+          <OverviewCard key={stat.title} {...stat} />
+        ))}
+      </div>
+    )
+  }
+
+  if (user.role === 'student') {
+    const completionRate = Math.round((studentMockData.completedAssignments / studentMockData.totalAssignments) * 100)
+    
+    const stats = [
+      { 
+        title: 'Média Geral', 
+        value: studentMockData.currentGrade.toFixed(1),
+        subtitle: 'De 0 a 10',
+        icon: '📊',
+        trend: 8,
+        color: 'blue'
+      },
+      { 
+        title: 'Taxa de Presença', 
+        value: `${studentMockData.attendanceRate}%`,
+        subtitle: 'No período atual',
+        icon: '📅',
+        trend: 3,
+        color: 'green'
+      },
+      { 
+        title: 'Atividades', 
+        value: `${completionRate}%`,
+        subtitle: `${studentMockData.completedAssignments} de ${studentMockData.totalAssignments} concluídas`,
+        icon: '✅',
+        trend: 12,
+        color: 'purple'
+      },
+      { 
+        title: 'Próximas Entregas', 
+        value: studentMockData.upcomingDeadlines.length,
+        subtitle: 'Pendentes esta semana',
+        icon: '📝',
+        color: 'orange'
+      }
+    ]
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat) => (
+          <OverviewCard key={stat.title} {...stat} />
+        ))}
+      </div>
+    )
+  }
+
+  return null
 }
