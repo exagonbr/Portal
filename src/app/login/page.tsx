@@ -6,18 +6,33 @@ import Image from 'next/image';
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background-start">
-      <div className="max-w-md w-full space-y-8 p-6 bg-white rounded-lg shadow-lg">
+    <div className="relative min-h-screen flex items-center justify-center">
+      {/* Video Background */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute min-w-full min-h-full object-cover opacity-100"
+        >
+          <source src="/back_video.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 max-w-md w-full space-y-8 p-8 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-text-primary">
-            Bem-vindo de volta
-          </h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            Não tem uma conta?{' '}
-            <Link href="/register" className="text-primary hover:text-primary-dark">
-              Registre-se
-            </Link>
-          </p>
+          <div className="relative w-48 h-16 mx-auto">
+            <Image
+              src="/sabercon-logo.png"
+              alt="Sabercon Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
         </div>
 
         <LoginForm />

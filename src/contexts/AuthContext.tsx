@@ -5,6 +5,7 @@ import { User } from '../types/auth';
 import * as authService from '../services/auth';
 import { useRouter } from 'next/navigation';
 import { LoginResponse, RegisterResponse } from '../services/auth';
+import { useSession } from 'next-auth/react';
 
 export type AuthContextType = {
   user: User | null;
@@ -29,10 +30,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { data: session } = useSession();
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [session]); // Re-run when session changes
 
   const checkAuth = async () => {
     try {

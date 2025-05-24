@@ -1,4 +1,5 @@
 import { User } from '../types/auth';
+import { getSession, signOut } from 'next-auth/react';
 
 export interface LoginResponse {
   success: boolean;
@@ -113,6 +114,20 @@ export const register = async (
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
+  // First try to get user from NextAuth session
+  const session = await getSession();
+  if (session?.user) {
+    const user: User = {
+      id: Math.random().toString(36).substr(2, 9), // Generate random ID for Google users
+      name: session.user.name || '',
+      email: session.user.email || '',
+      role: 'student', // Default role for Google users
+      courses: []
+    };
+    return user;
+  }
+
+  // If no NextAuth session, try local storage
   const userStr = safeLocalStorage.getItem('user');
   if (userStr) {
     try {
@@ -127,15 +142,22 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
 export const logout = async (): Promise<void> => {
   return new Promise((resolve) => {
-    safeLocalStorage.removeItem('auth_token');
-    safeLocalStorage.removeItem('user');
-    removeCookie('auth_token');
-    removeCookie('user_data');
-    setTimeout(() => resolve(), 500);
+    // Clear NextAuth session
+    signOut({ redirect: false }).then(() => {
+      // Clear local storage and cookies
+      safeLocalStorage.removeItem('auth_token');
+      safeLocalStorage.removeItem('user');
+      removeCookie('auth_token');
+      removeCookie('user_data');
+      setTimeout(() => resolve(), 500);
+    });
   });
 };
 
-export const isAuthenticated = (): boolean => {
+export const isAuthenticated = async (): Promise<boolean> => {
+  const session = await getSession();
+  if (session) return true;
+  
   return !!safeLocalStorage.getItem('auth_token') || 
          (typeof window !== 'undefined' && document.cookie.includes('auth_token='));
 };

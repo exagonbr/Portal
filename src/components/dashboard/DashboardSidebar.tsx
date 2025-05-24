@@ -23,8 +23,10 @@ export default function DashboardSidebar() {
 
   const handleLogout = async () => {
     try {
+      // Wait for logout to complete before redirecting
       await logout()
-      router.push('/login')
+      // Force a page refresh to clear any cached states
+      window.location.href = '/login'
     } catch (error) {
       console.error('Erro ao fazer logout:', error)
     }
