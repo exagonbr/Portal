@@ -46,13 +46,13 @@ export default function DashboardSidebar() {
         ]
       },
       {
-        section: 'Biblioteca',
+        section: ' :: Portal de Literatura ::',
         items: [
           { href: `/dashboard/${user?.type || ''}`, icon: 'school', label: 'Acessar Livros' },
         ]
       },
       {
-        section: 'Portal Aluno',
+        section: ' :: Portal Aluno ::',
         items: [
           { href: `/dashboard/${user?.type || ''}`, icon: 'dashboard', label: 'Acessar Material' },
 
@@ -77,19 +77,19 @@ export default function DashboardSidebar() {
           {href: '/grades', icon: 'grade', label: 'Notas'}
         ]
       }, {
-        section: 'Portal de Videos',
+        section: ' :: Portal de Videos ::',
         items: [
           {href: `/dashboard/${user?.type || ''}`, icon: 'dashboard', label: 'Dashboard'},
           {href: `/dashboard/${user?.type || ''}`, icon: 'school', label: 'Acessar Videos'},
         ]
       }, {
-        section: 'Biblioteca',
+        section: ' :: Portal de Literatura ::',
         items: [
           {href: `/dashboard/${user?.type || ''}`, icon: 'dashboard', label: 'Dashboard'},
           {href: `/dashboard/${user?.type || ''}`, icon: 'school', label: 'Acessar Livros'},
         ]
       }, {
-        section: 'Portal Aluno',
+        section: ' :: Portal Aluno ::',
         items: [
           {href: `/dashboard/${user?.type || ''}`, icon: 'dashboard', label: 'Dashboard'},
           {href: '/lessons', icon: 'school', label: 'Acessar Conteúdo'},
