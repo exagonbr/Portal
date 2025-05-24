@@ -10,7 +10,7 @@ export default function AuthenticatedLayout({
   requiredRole,
 }: {
   children: React.ReactNode
-  requiredRole?: 'student' | 'teacher'
+  requiredRole?: 'student' | 'teacher' | 'admin'
 }) {
   const { user, loading } = useAuth()
   const router = useRouter()
