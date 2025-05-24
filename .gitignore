@@ -9,6 +9,8 @@ node_modules/
 # Testing
 /coverage
 
+package-lock.json
+
 # Next.js
 /.next/
 /out/
@@ -51,4 +53,3 @@ next-env.d.ts
 # PWA
 public/sw.js
 public/workbox-*.js
-/educational-portal/
