@@ -26,6 +26,20 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
   const maxValue = Math.max(...data.map(item => item.value))
   const getHeight = (value: number) => (value / maxValue) * 100
 
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+        </div>
+        <div className={`${height} flex items-center justify-center`}>
+          <p className="text-gray-500">Não há dados disponíveis</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm">
       <div className="p-4 border-b border-gray-100">
