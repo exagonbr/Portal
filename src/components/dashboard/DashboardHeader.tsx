@@ -10,7 +10,7 @@ export default function DashboardHeader() {
     <header className="bg-white border-b border-gray-100 h-16">
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left side - Title */}
-        <h1 className="text-2xl font-semibold text-gray-900">Overview</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Bem vindo {user?.name}</h1>
         
         {/* Right side - Notifications and Profile */}
         <div className="flex items-center space-x-4">

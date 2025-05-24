@@ -1,113 +1,85 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { mockAssignments, mockCourses, mockTeachers, mockStudents } from '@/constants/mockData'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import { mockAssignments, mockTeachers, mockStudents } from '@/constants/mockData'
 
 export default function Assignments() {
-  const { user, loading } = useAuth()
+  const { user } = useAuth()
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading-spinner h-8 w-8"></div>
-      </div>
-    )
+  const getUserAssignments = () => {
+    if (!user) return []
+    
+    if (user.type === 'teacher') {
+      const teacher = mockTeachers.find(t => t.id === user.id)
+      const teacherCourses = teacher?.courses || []
+      return mockAssignments.filter(assignment =>
+        teacherCourses.includes(assignment.courseId)
+      )
+    } else {
+      const student = mockStudents.find(s => s.id === user.id)
+      const studentCourses = student?.enrolledCourses || []
+      return mockAssignments.filter(assignment =>
+        studentCourses.includes(assignment.courseId) && assignment.status === 'active'
+      )
+    }
   }
 
-  if (!user) {
-    redirect('/login')
-  }
-
-  let userAssignments = []
-
-  if (user.type === 'teacher') {
-    const teacher = mockTeachers.find(t => t.id === user.id)
-    const teacherCourses = teacher?.courses || []
-    userAssignments = mockAssignments.filter(assignment =>
-      teacherCourses.includes(assignment.courseId)
-    )
-  } else {
-    const student = mockStudents.find(s => s.id === user.id)
-    const studentCourses = student?.enrolledCourses || []
-    userAssignments = mockAssignments.filter(assignment =>
-      studentCourses.includes(assignment.courseId) && assignment.status === 'active'
-    )
-  }
+  const userAssignments = getUserAssignments()
 
   return (
-    <div className="dashboard-container">
-      <aside className="dashboard-sidebar">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-2">
-            Portal do {user.type === 'teacher' ? 'Professor' : 'Aluno'}
-          </h2>
-          <p className="text-sm opacity-75">{user.name}</p>
-        </div>
-        <nav className="space-y-4">
-          <Link href={`/dashboard/${user.type}`} className="nav-link block">
-            Dashboard
-          </Link>
-          <Link href="/courses" className="nav-link block">
-            Cursos
-          </Link>
-          {user.type === 'teacher' && (
-            <Link href="/students" className="nav-link block">
-              Alunos
-            </Link>
-          )}
-          <Link href="/assignments" className="nav-link active block">
-            Atividades
-          </Link>
-          <Link href="/live" className="nav-link block">
-            Aulas ao Vivo
-          </Link>
-          {user.type === 'student' && (
-            <Link href="/chat" className="nav-link block">
-              Chat
-            </Link>
-          )}
-        </nav>
-      </aside>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Atividades</h1>
+        {user?.type === 'teacher' && (
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Criar Nova Atividade
+          </button>
+        )}
+      </div>
 
-      <main className="dashboard-content">
-        <header className="dashboard-header flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1B365D]">Atividades</h1>
-          {user.type === 'teacher' && (
-            <button className="btn-primary">Criar Nova Atividade</button>
-          )}
-        </header>
-
-        <div className="space-y-6 mt-6">
-          {userAssignments.length === 0 ? (
-            <p className="text-gray-600">Nenhuma atividade encontrada.</p>
-          ) : (
-            userAssignments.map(assignment => (
-              <div key={assignment.id} className="card hover:shadow-lg transition-shadow">
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-[#1B365D] mb-2">{assignment.title}</h3>
-                  <p className="text-gray-600 text-sm mb-2">{assignment.description}</p>
-                  <p className="text-gray-600 text-sm mb-2">
-                    Prazo: {assignment.dueDate} • {assignment.totalPoints} pontos
-                  </p>
-                  <span className="bg-[#1B365D] text-white px-3 py-1 rounded-full text-sm">
-                    {assignment.type}
-                  </span>
-                  <div className="mt-4 flex justify-end">
-                    <Link
-                      href={`/assignments/${assignment.id}`}
-                      className="btn-primary"
-                    >
-                      {user.type === 'teacher' ? 'Editar' : 'Iniciar'}
-                    </Link>
+      <div className="grid grid-cols-1 gap-6">
+        {userAssignments.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-6 text-center text-gray-500">
+            Nenhuma atividade encontrada.
+          </div>
+        ) : (
+          userAssignments.map(assignment => (
+            <div 
+              key={assignment.id} 
+              className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            >
+              <div className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {assignment.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      {assignment.description}
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-blue-600 font-medium">
+                        Prazo: {assignment.dueDate}
+                      </span>
+                      <span className="text-sm text-blue-600 font-medium">
+                        {assignment.totalPoints} pontos
+                      </span>
+                    </div>
+                    <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-medium">
+                      {assignment.type}
+                    </span>
                   </div>
+                  <button 
+                    className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    {user?.type === 'teacher' ? 'Editar' : 'Iniciar'}
+                  </button>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      </main>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   )
 }

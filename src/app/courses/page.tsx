@@ -2,23 +2,12 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { mockCourses, mockTeachers, mockStudents } from '@/constants/mockData'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
+import CourseCard from '@/components/dashboard/CourseCard'
 
 export default function Courses() {
-  const { user, loading } = useAuth()
+  const { user } = useAuth()
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading-spinner h-8 w-8"></div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) return null // Will be handled by AuthenticatedDashboardLayout
 
   const userCourses = mockCourses.filter(course => {
     if (user.type === 'teacher') {
@@ -31,90 +20,45 @@ export default function Courses() {
   })
 
   return (
-    <div className="dashboard-container">
-      <aside className="dashboard-sidebar">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-2">
-            Portal do {user.type === 'teacher' ? 'Professor' : 'Aluno'}
-          </h2>
-          <p className="text-sm opacity-75">{user.name}</p>
-        </div>
-        <nav className="space-y-4">
-          <Link href={`/dashboard/${user.type}`} className="nav-link block">
-            Dashboard
-          </Link>
-          <Link href="/courses" className="nav-link active block">
-            {user.type === 'teacher' ? 'Meus Cursos' : 'Cursos'}
-          </Link>
-          {user.type === 'teacher' && (
-            <Link href="/students" className="nav-link block">
-              Alunos
-            </Link>
-          )}
-          <Link href="/assignments" className="nav-link block">
-            Atividades
-          </Link>
-          <Link href="/live" className="nav-link block">
-            Aulas ao Vivo
-          </Link>
-          {user.type === 'student' && (
-            <Link href="/chat" className="nav-link block">
-              Chat
-            </Link>
-          )}
-        </nav>
-      </aside>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {user.type === 'teacher' ? 'Meus Cursos' : 'Cursos Disponíveis'}
+        </h1>
+        {user.type === 'teacher' && (
+          <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            <span className="material-symbols-outlined mr-2">add</span>
+            Criar Novo Curso
+          </button>
+        )}
+      </div>
 
-      <main className="dashboard-content">
-        <header className="dashboard-header flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1B365D]">
-            {user.type === 'teacher' ? 'Meus Cursos' : 'Cursos Disponíveis'}
-          </h1>
-          {user.type === 'teacher' && (
-            <button className="btn-primary">Criar Novo Curso</button>
-          )}
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {userCourses.map((course) => (
-            <div key={course.id} className="card hover:shadow-lg transition-shadow">
-              <div className="h-40 bg-[#1B365D] rounded-t-lg flex items-center justify-center">
-                <span className="text-white text-4xl font-bold opacity-20">
-                  {course.name[0]}
-                </span>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-[#1B365D] mb-2">
-                  {course.name}
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">{course.description}</p>
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="font-medium">Nível:</span>
-                    <span className="ml-2">{course.level}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="font-medium">Ciclo:</span>
-                    <span className="ml-2">{course.cycle}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="font-medium">Duração:</span>
-                    <span className="ml-2">{course.duration}</span>
-                  </div>
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <Link
-                    href={`/courses/${course.id}`}
-                    className="btn-primary"
-                  >
-                    {user.type === 'teacher' ? 'Gerenciar' : 'Acessar'}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {userCourses.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-500 bg-white rounded-xl border border-gray-100">
+            <span className="material-symbols-outlined text-6xl mb-4">school</span>
+            <p className="text-lg">
+              {user.type === 'teacher' 
+                ? 'Você ainda não tem cursos cadastrados' 
+                : 'Nenhum curso disponível no momento'}
+            </p>
+            {user.type === 'teacher' && (
+              <button className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                <span className="material-symbols-outlined mr-2">add</span>
+                Criar Primeiro Curso
+              </button>
+            )}
+          </div>
+        ) : (
+          userCourses.map((course) => (
+            <CourseCard 
+              key={course.id} 
+              course={course} 
+              userType={user.type as 'teacher' | 'student'} 
+            />
+          ))
+        )}
+      </div>
     </div>
   )
 }
