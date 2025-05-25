@@ -1,7 +1,7 @@
 {
-  "name": "Portal Educacional",
-  "short_name": "Portal Edu",
-  "description": "Plataforma educacional brasileira com suporte BNCC",
+  "name": "Portal Sabercon",
+  "short_name": "Portal Sabercon",
+  "description": "Portal educacional Sabercon com suporte BNCC",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -108,15 +108,6 @@ const nextConfig = {
 };
 
 // This ensures the PWA configuration is properly recognized
-const finalConfig = withPWA({
-  ...nextConfig,
-  // Add explicit PWA configuration here
-  pwa: {
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-    disable: false,
-  }
-});
+const finalConfig = withPWA(nextConfig);
 
 module.exports = finalConfig;
