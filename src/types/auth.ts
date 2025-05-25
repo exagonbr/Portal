@@ -1,11 +1,11 @@
-export type UserRole = 'admin' | 'teacher' | 'student';
+export type UserRole = 'admin' | 'teacher' | 'student' | 'manager';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
-  type?: UserRole; // For backward compatibility
+  role: string;
+  type?: string; // For backward compatibility
   courses?: any[];
 }
 

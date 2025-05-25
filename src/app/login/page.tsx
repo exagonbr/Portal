@@ -16,13 +16,13 @@ export default function LoginPage() {
           playsInline
           className="absolute min-w-full min-h-full object-cover opacity-100"
         >
-          <source src="/back_video.mp4" type="video/mp4" />
+          <source src="/back_video4.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-md w-full space-y-8 p-8 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl">
+      <div className="opacity-100 relative z-10 max-w-md w-full space-y-8 p-8 bg-white/90 backdrop-blur-sm rounded-lg shadow-xl">
         <div className="text-center">
           <div className="relative w-48 h-16 mx-auto">
             <Image

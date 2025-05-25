@@ -1,5 +1,5 @@
-import { User } from '../types/auth';
-import { getSession, signOut } from 'next-auth/react';
+import {User} from '../types/auth';
+import {getSession, signOut} from 'next-auth/react';
 
 export interface LoginResponse {
   success: boolean;
@@ -117,14 +117,14 @@ export const getCurrentUser = async (): Promise<User | null> => {
   // First try to get user from NextAuth session
   const session = await getSession();
   if (session?.user) {
-    const user: User = {
+    return {
       id: Math.random().toString(36).substr(2, 9), // Generate random ID for Google users
       name: session.user.name || '',
       email: session.user.email || '',
-      role: 'student', // Default role for Google users
+      role: 'teacher',
+      type: 'teacher', // Default role for Google users
       courses: []
     };
-    return user;
   }
 
   // If no NextAuth session, try local storage
