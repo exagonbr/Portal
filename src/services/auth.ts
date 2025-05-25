@@ -122,7 +122,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
       name: session.user.name || '',
       email: session.user.email || '',
       role: 'teacher',
-      type: 'teacher', // Default role for Google users
+      type: 'teacher', // Default role for Google user s
       courses: []
     };
   }
