@@ -122,12 +122,12 @@ export default function TeacherStudentsPage() {
             <p className="text-gray-600">Gerencie e acompanhe o desempenho dos seus alunos</p>
           </div>
           <div className="flex space-x-4">
-            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
-              <span className="material-icons text-sm mr-2">file_download</span>
+            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200" aria-label="Exportar lista de alunos">
+              <span className="material-icons text-sm mr-2"></span>
               Exportar
             </button>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-              <span className="material-icons text-sm mr-2">person_add</span>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" aria-label="Adicionar novo aluno">
+              <span className="material-icons text-sm mr-2"></span>
               Adicionar Aluno
             </button>
           </div>
@@ -172,22 +172,23 @@ export default function TeacherStudentsPage() {
       {/* Filters Section */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-wrap gap-4">
-          <input
+            <input
             type="text"
             placeholder="Pesquisar alunos..."
+            aria-label="Pesquisar alunos"
             className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por turma">
             <option value="">Todas as Turmas</option>
             <option value="A">Turma A</option>
             <option value="B">Turma B</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por status">
             <option value="">Status</option>
             <option value="active">Ativos</option>
             <option value="inactive">Inativos</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Ordenar alunos">
             <option value="">Ordenar por</option>
             <option value="name">Nome</option>
             <option value="grade">Nota</option>

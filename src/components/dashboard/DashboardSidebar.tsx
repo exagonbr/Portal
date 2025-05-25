@@ -113,8 +113,7 @@ export default function DashboardSidebar() {
           section: 'Portais',
           items: [
             { href: '/portal/videos', icon: 'play_circle', label: 'Portal de Vídeos' },
-            { href: '/portal/literature', icon: 'auto_stories', label: 'Portal de Literatura' },
-            { href: '/portal/teacher', icon: 'person_outline', label: 'Portal do Professor' },
+            { href: '/portal/books', icon: 'auto_stories', label: 'Portal de Literatura' },
           ]
         }
       ]

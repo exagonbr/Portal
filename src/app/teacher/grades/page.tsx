@@ -178,21 +178,22 @@ export default function TeacherGradesPage() {
           <input
             type="text"
             placeholder="Pesquisar avaliações..."
+            aria-label="Pesquisar avaliações"
             className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por turma">
             <option value="">Todas as Turmas</option>
             <option value="A">Turma A</option>
             <option value="B">Turma B</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por tipo de avaliação">
             <option value="">Tipo de Avaliação</option>
             <option value="exam">Provas</option>
             <option value="quiz">Quizzes</option>
             <option value="assignment">Trabalhos</option>
             <option value="project">Projetos</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por status">
             <option value="">Status</option>
             <option value="graded">Corrigidas</option>
             <option value="pending">Pendentes</option>
