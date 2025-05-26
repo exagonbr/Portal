@@ -1,25 +1,68 @@
 'use client';
 
 import React from 'react';
-import SlickSlider, { Settings as SlickSettings } from 'react-slick';
+// @ts-ignore
+import Slider from 'react-slick';
+import type { Settings } from 'react-slick';
 import '../styles/carousel.css';
 
 interface CarouselProps {
-  settings?: SlickSettings;
+  settings?: Settings;
   children: React.ReactNode;
 }
 
 export default function Carousel({ settings, children }: CarouselProps) {
-  const defaultSettings: SlickSettings = {
+  const defaultSettings: Settings = {
     dots: true,
     infinite: true,
     speed: 500,
-    slidesToShow: 1,
+    slidesToShow: 6,
     slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000,
+    autoplay: false,
+    arrows: true,
+    responsive: [
+      {
+        breakpoint: 1536,
+        settings: {
+          slidesToShow: 5,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 1280,
+        settings: {
+          slidesToShow: 4,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 640,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+    ],
     ...settings,
   };
 
-  return <SlickSlider {...defaultSettings}>{children}</SlickSlider>;
+  return (
+    <div className="mx-auto max-w-[90rem] -mx-2 sm:-mx-3 md:-mx-4">
+      <Slider {...defaultSettings}>{children}</Slider>
+    </div>
+  );
 }

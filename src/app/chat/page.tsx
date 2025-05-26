@@ -1,63 +1,78 @@
 'use client'
 
+import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { mockCourses, mockTeachers, mockStudents } from '@/constants/mockData'
-import CourseCard from '@/components/dashboard/CourseCard'
-import ChatSection from "@/components/dashboard/ChatSection";
+import { mockCourses } from '@/constants/mockData'
+import ChatRoom from '@/components/chat/ChatRoom'
 
-export default function Chat() {
+export default function ChatPage() {
   const { user } = useAuth()
+  const [selectedClass, setSelectedClass] = useState<string | null>(null)
 
   if (!user) return null // Will be handled by AuthenticatedDashboardLayout
 
-  const userCourses = mockCourses.filter(course => {
-    if (user.type === 'student') {
-      const teacher = mockTeachers.find(t => t.id === user.id)
-      return teacher?.courses.includes(course.id)
+  // Get classes based on user's courses
+  const userClasses = mockCourses.filter(course => {
+    if (user.type === 'teacher') {
+      return course.teachers?.includes(user.id)
     } else {
-      const student = mockStudents.find(s => s.id === user.id)
-      return student?.enrolledCourses.includes(course.id)
+      return course.students?.includes(user.id)
     }
   })
 
   return (
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {user.type === 'teacher' ? 'Chats Disponíveis' : 'Minhas Conversas'}
-          </h1>
-          {user.type === 'teacher' && (
-              <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                <span className="material-symbols-outlined mr-2">add</span>
-                Criar Novo Curso
-              </button>
-          )}
+    <div className="flex h-[calc(100vh-4rem)]">
+      {/* Classes Sidebar */}
+      <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto">
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800">
+            {user.type === 'teacher' ? 'Your Classes' : 'My Classes'}
+          </h2>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {userCourses.length === 0 ? (
-              <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-500 bg-white rounded-xl border border-gray-100">
-                <span className="material-symbols-outlined text-6xl mb-4">school</span>
-                <p className="text-lg">
-                  {user.type === 'teacher'
-                      ? 'Você ainda não tem conversas ativas'
-                      : 'Nenhum chat disponível no momento'}
-                </p>
-                {user.type === 'teacher' && (
-                    <button className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                      <span className="material-symbols-outlined mr-2">add</span>
-                      Criar Primeiro Curso
-                    </button>
-                )}
-              </div>
+        <div className="space-y-1 p-2">
+          {userClasses.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              <p>No classes available</p>
+            </div>
           ) : (
-              mockStudents.map((studant) => (
-                  <ChatSection
-                      userId={user.id}
-                  />
-              ))
+            userClasses.map(classItem => (
+              <button
+                key={classItem.id}
+                onClick={() => setSelectedClass(classItem.id)}
+                className={`w-full px-4 py-2 text-left rounded-lg transition-colors ${
+                  selectedClass === classItem.id
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                <div className="font-medium">{classItem.name}</div>
+                <div className="text-sm text-gray-500">
+                  {classItem.schedule.classDays.join(', ')}
+                </div>
+              </button>
+            ))
           )}
         </div>
       </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 bg-gray-50">
+        {selectedClass ? (
+          <ChatRoom
+            classId={selectedClass}
+            className={userClasses.find(c => c.id === selectedClass)?.name || ''}
+          />
+        ) : (
+          <div className="h-full flex items-center justify-center text-gray-500">
+            <div className="text-center">
+              <span className="material-symbols-outlined text-6xl mb-2">
+                chat
+              </span>
+              <p>Select a class to start chatting</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

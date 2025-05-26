@@ -2,6 +2,32 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { teacherMockData, studentMockData } from '@/constants/dashboardData'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+import { Line, Bar, Pie } from 'react-chartjs-2'
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 interface ChartDataDetails {
   [key: string]: string | number
@@ -22,10 +48,16 @@ interface ChartProps {
   showLegend?: boolean
 }
 
-export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend = false }: ChartProps) {
-  const maxValue = Math.max(...data.map(item => item.value))
-  const getHeight = (value: number) => (value / maxValue) * 100
+const chartColors = {
+  blue: '#3B82F6',
+  lightBlue: '#60A5FA',
+  lighterBlue: '#93C5FD',
+  lightestBlue: '#BFDBFE',
+  darkBlue: '#2563EB',
+  darkerBlue: '#1D4ED8',
+}
 
+export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend = false }: ChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="bg-white rounded-xl overflow-hidden shadow-sm">
@@ -40,6 +72,63 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
     )
   }
 
+  const chartData = {
+    labels: data.map(item => item.label),
+    datasets: [
+      {
+        label: title,
+        data: data.map(item => item.value),
+        backgroundColor: type === 'pie' 
+          ? Object.values(chartColors)
+          : chartColors.blue,
+        borderColor: type === 'line' ? chartColors.blue : undefined,
+        borderWidth: type === 'line' ? 2 : 1,
+        tension: 0.4,
+      },
+    ],
+  }
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: showLegend,
+        position: 'right' as const,
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            let label = context.dataset.label || ''
+            if (label) {
+              label += ': '
+            }
+            label += context.parsed.y || context.parsed || 0
+            
+            // Add details if available
+            const itemDetails = data[context.dataIndex]?.details
+            if (itemDetails) {
+              Object.entries(itemDetails).forEach(([key, value]) => {
+                label += `\n${key}: ${value}`
+              })
+            }
+            return label
+          }
+        }
+      }
+    },
+    scales: type !== 'pie' ? {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value: any) {
+            return value + (type === 'line' ? '%' : '')
+          }
+        }
+      }
+    } : undefined
+  }
+
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm">
       <div className="p-4 border-b border-gray-100">
@@ -48,173 +137,29 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
       </div>
       
       <div className="p-4">
-        {type === 'line' && (
-          <div className={height}>
-            <div className="relative h-full flex items-end space-x-2">
-              {/* Y-axis labels */}
-              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-2">
-                {[100, 75, 50, 25, 0].map((value) => (
-                  <span key={value}>{value}%</span>
-                ))}
-              </div>
-              {/* Chart lines */}
-              <div className="flex-1 flex items-end space-x-2 pl-8">
-                {data.map((item, index) => (
-                  <div key={index} className="group relative flex-1">
-                    <div 
-                      className="bg-blue-500 bg-opacity-20 rounded-t-lg transition-all duration-200 hover:bg-opacity-30"
-                      style={{ height: `${getHeight(item.value)}%` }}
-                    >
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                        {item.label}: {item.value}%
-                        {item.details && (
-                          <div className="mt-1 text-xs opacity-75">
-                            {Object.entries(item.details).map(([key, value]) => (
-                              <div key={key}>{key}: {String(value)}</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* X-axis labels */}
-            <div className="grid grid-cols-12 gap-2 mt-4 pl-8">
+        <div className={height}>
+          {type === 'line' && <Line data={chartData} options={options} />}
+          {type === 'bar' && <Bar data={chartData} options={options} />}
+          {type === 'pie' && <Pie data={chartData} options={options} />}
+          {type === 'stats' && (
+            <div className="grid grid-cols-2 gap-4">
               {data.map((item, index) => (
-                <div key={index} className="text-center text-xs text-gray-500 transform -rotate-45 origin-top-left">
-                  {item.label}
+                <div key={index} className="p-4 rounded-lg bg-gray-50">
+                  <div className="text-sm text-gray-500">{item.label}</div>
+                  <div className="text-xl font-semibold mt-1">{item.value}</div>
+                  {item.details?.change !== undefined && (
+                    <div className={`text-sm ${Number(item.details.change) >= 0 ? 'text-green-500' : 'text-red-500'} flex items-center mt-1`}>
+                      <span className="material-symbols-outlined text-sm mr-1">
+                        {Number(item.details.change) >= 0 ? 'trending_up' : 'trending_down'}
+                      </span>
+                      {Number(item.details.change) >= 0 ? '+' : ''}{item.details.change}%
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {type === 'bar' && (
-          <div className={height}>
-            <div className="relative h-full flex items-end space-x-2">
-              <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-2">
-                {[10, 7.5, 5, 2.5, 0].map((value) => (
-                  <span key={value}>{value}</span>
-                ))}
-              </div>
-              <div className="flex-1 flex items-end space-x-2 pl-8">
-                {data.map((item, index) => (
-                  <div key={index} className="group relative flex-1">
-                    <div 
-                      className="bg-blue-500 rounded-t-lg transition-all duration-200 hover:bg-blue-600"
-                      style={{ height: `${(item.value / 10) * 100}%` }}
-                    >
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                        {item.label}: {item.value}
-                        {item.details && (
-                          <div className="mt-1 text-xs opacity-75">
-                            {Object.entries(item.details).map(([key, value]) => (
-                              <div key={key}>{key}: {String(value)}</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-6 gap-2 mt-4 pl-8">
-              {data.map((item, index) => (
-                <div key={index} className="text-center text-xs text-gray-500 transform -rotate-45 origin-top-left">
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {type === 'pie' && (
-          <div className={`${height} flex items-center justify-between`}>
-            <div className="relative w-48 h-48">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-sm text-gray-500">Total</div>
-              </div>
-              {data.map((item, index) => {
-                const total = data.reduce((sum, i) => sum + i.value, 0)
-                const percentage = (item.value / total) * 100
-                const rotation = index === 0 ? 0 : data
-                  .slice(0, index)
-                  .reduce((sum, i) => sum + (i.value / total) * 360, 0)
-                
-                return (
-                  <div
-                    key={index}
-                    className="absolute inset-0 group"
-                    style={{
-                      transform: `rotate(${rotation}deg)`,
-                    }}
-                  >
-                    <div
-                      className="absolute inset-0 transition-all duration-200 hover:scale-105"
-                      style={{
-                        background: `conic-gradient(from 0deg, var(--color-${index}) ${percentage * 3.6}deg, transparent ${percentage * 3.6}deg)`,
-                        '--color-0': '#3B82F6',
-                        '--color-1': '#60A5FA',
-                        '--color-2': '#93C5FD',
-                        '--color-3': '#BFDBFE',
-                        '--color-4': '#2563EB',
-                        '--color-5': '#1D4ED8',
-                      } as any}
-                    />
-                    <div className="absolute top-1/2 left-full transform -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                      {item.label}: {percentage.toFixed(1)}%
-                      {item.details && (
-                        <div className="mt-1 text-xs opacity-75">
-                          {Object.entries(item.details).map(([key, value]) => (
-                            <div key={key}>{key}: {String(value)}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            {showLegend && (
-              <div className="ml-8 space-y-2">
-                {data.map((item, index) => (
-                  <div key={index} className="flex items-center text-sm">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{
-                        backgroundColor: ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#2563EB', '#1D4ED8'][index]
-                      }}
-                    />
-                    <span className="text-gray-600">{item.label}</span>
-                    {item.value && <span className="ml-2 text-gray-400">({item.value})</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {type === 'stats' && (
-          <div className="grid grid-cols-2 gap-4">
-            {data.map((item, index) => (
-              <div key={index} className="p-4 rounded-lg bg-gray-50">
-                <div className="text-sm text-gray-500">{item.label}</div>
-                <div className="text-xl font-semibold mt-1">{item.value}</div>
-                {item.details?.change !== undefined && (
-                  <div className={`text-sm ${Number(item.details.change) >= 0 ? 'text-green-500' : 'text-red-500'} flex items-center mt-1`}>
-                    <span className="material-symbols-outlined text-sm mr-1">
-                      {Number(item.details.change) >= 0 ? 'trending_up' : 'trending_down'}
-                    </span>
-                    {Number(item.details.change) >= 0 ? '+' : ''}{item.details.change}%
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

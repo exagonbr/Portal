@@ -18,13 +18,13 @@ const initialValues: LoginFormData = {
 
 const validationRules = {
   email: (value: string) => {
-    if (!value) return 'Email é obrigatório';
-    if (!/\S+@\S+\.\S+/.test(value)) return 'Email inválido';
+    if (!value) return 'O email é obrigatório';
+    if (!/\S+@\S+\.\S+/.test(value)) return 'Formato de email inválido';
     return '';
   },
   password: (value: string) => {
-    if (!value) return 'Senha é obrigatória';
-    if (value.length < 6) return 'Senha deve ter pelo menos 6 caracteres';
+    if (!value) return 'A senha é obrigatória';
+    if (value.length < 6) return 'A senha deve ter pelo menos 6 caracteres';
     return '';
   }
 };
@@ -47,7 +47,7 @@ export function LoginForm() {
     validationRules,
     onSubmit: async (formValues) => {
       try {
-        setSubmitError('');
+          setSubmitError('');
         const response = await login(formValues.email, formValues.password);
         if (response.success && response.user) {
           const dashboardPath = response.user.role === 'student' 
@@ -55,10 +55,10 @@ export function LoginForm() {
             : '/dashboard/teacher';
           router.push(dashboardPath);
         } else {
-          setSubmitError('Email ou senha inválidos');
+          setSubmitError('Email ou senha incorretos');
         }
       } catch (error) {
-        setSubmitError('Email ou senha inválidos');
+        setSubmitError('Email ou senha incorretos');
       }
     }
   });
@@ -67,10 +67,10 @@ export function LoginForm() {
     try {
       const result = await signIn('google', { callbackUrl: '/dashboard/student' });
       if (result?.error) {
-        setSubmitError('Erro ao fazer login com Google');
+        setSubmitError('Erro ao realizar login com Google');
       }
     } catch (error) {
-      setSubmitError('Erro ao fazer login com Google');
+      setSubmitError('Erro ao realizar login com Google');
     }
   };
 
@@ -152,7 +152,7 @@ export function LoginForm() {
             disabled={isSubmitting}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Entrando...' : 'Entrar'}
+            {isSubmitting ? 'Acessando...' : 'Acessar'}
           </button>
         </div>
       </form>
@@ -190,7 +190,7 @@ export function LoginForm() {
               fill="#EA4335"
             />
           </svg>
-          Entrar com Google
+          Acessar com Google
         </button>
       </div>
     </div>

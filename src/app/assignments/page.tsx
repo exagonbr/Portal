@@ -118,16 +118,16 @@ export default function AssignmentsPage() {
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Minhas Atividades</h1>
-            <p className="text-gray-600">Visualize e complete suas atividades pendentes</p>
+            <p className="text-gray-600">Acompanhe e gerencie suas atividades acadêmicas</p>
           </div>
           <div className="flex space-x-4">
             <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
               <span className="material-icons text-sm mr-2">filter_list</span>
-              Filtrar
+              Filtros
             </button>
             <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
               <span className="material-icons text-sm mr-2">add</span>
-              Nova Atividade
+              Adicionar Atividade
             </button>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function AssignmentsPage() {
             <div className="text-2xl font-bold text-gray-800">5</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 2</span>
-              <span className="text-gray-500 text-sm ml-2">esta semana</span>
+              <span className="text-gray-500 text-sm ml-2">nesta semana</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -147,7 +147,7 @@ export default function AssignmentsPage() {
             <div className="text-2xl font-bold text-yellow-600">2</div>
             <div className="mt-4 flex items-center">
               <span className="text-yellow-500 text-sm">!</span>
-              <span className="text-gray-500 text-sm ml-2">próximos 7 dias</span>
+              <span className="text-gray-500 text-sm ml-2">para os próximos 7 dias</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -155,7 +155,7 @@ export default function AssignmentsPage() {
             <div className="text-2xl font-bold text-blue-600">2</div>
             <div className="mt-4 flex items-center">
               <span className="text-blue-500 text-sm">↑ 1</span>
-              <span className="text-gray-500 text-sm ml-2">em progresso</span>
+              <span className="text-gray-500 text-sm ml-2">em andamento</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -163,7 +163,7 @@ export default function AssignmentsPage() {
             <div className="text-2xl font-bold text-green-600">1</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 1</span>
-              <span className="text-gray-500 text-sm ml-2">esta semana</span>
+              <span className="text-gray-500 text-sm ml-2">nesta semana</span>
             </div>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function AssignmentsPage() {
         <div className="flex flex-wrap gap-4">
           <input
             type="text"
-            placeholder="Pesquisar atividades..."
+            placeholder="Buscar atividades..."
             className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -191,9 +191,9 @@ export default function AssignmentsPage() {
           </select>
           <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">Ordenar por</option>
-            <option value="date">Data de Entrega</option>
+            <option value="date">Data de entrega</option>
             <option value="priority">Prioridade</option>
-            <option value="status">Status</option>
+            <option value="status">Situação</option>
           </select>
         </div>
       </div>
@@ -238,7 +238,7 @@ export default function AssignmentsPage() {
                     </div>
                     <div className="flex items-center">
                       <span className="material-icons text-gray-400 text-base mr-2">event</span>
-                      <span>Entrega: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                      <span>Data limite: {new Date(assignment.dueDate).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center">
                       <span className="material-icons text-gray-400 text-base mr-2">schedule</span>
@@ -258,7 +258,7 @@ export default function AssignmentsPage() {
                     {assignment.status === 'completed' ? (
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">{assignment.grade}</div>
-                        <div className="text-xs text-gray-500">Nota Final</div>
+                        <div className="text-xs text-gray-500">Nota final</div>
                       </div>
                     ) : (
                       <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
@@ -271,14 +271,14 @@ export default function AssignmentsPage() {
               <div className="flex items-center space-x-6 mt-4 text-sm">
                 <div className="flex items-center text-gray-500">
                   <span className="material-icons text-gray-400 text-base mr-1">attach_file</span>
-                  <span>{assignment.attachments} anexos</span>
+                  <span>{assignment.attachments} arquivos anexos</span>
                 </div>
                 <div className="flex items-center text-gray-500">
                   <span className="material-icons text-gray-400 text-base mr-1">history</span>
-                  <span>{assignment.submissions} envios</span>
+                  <span>{assignment.submissions} tentativas</span>
                 </div>
                 <button className="text-blue-600 hover:text-blue-800">
-                  Ver Detalhes
+                  Ver detalhes
                 </button>
               </div>
             </div>

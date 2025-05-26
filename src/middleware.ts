@@ -12,7 +12,8 @@ const protectedPaths = [
   '/lessons',
   '/live',
   '/chat',
-  '/profile'
+  '/profile',
+  '/portal' // Adding portal paths to protected routes
 ]
 
 // Auth paths that should not be accessible when authenticated
@@ -39,7 +40,7 @@ export function middleware(request: NextRequest) {
 
   // If authenticated and trying to access auth pages
   if (isAuthPath && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/portal/videos', request.url)) // Redirect to videos page instead of dashboard
   }
 
   // Role-based access control
@@ -49,18 +50,17 @@ export function middleware(request: NextRequest) {
       
       // Prevent students from accessing teacher paths
       if (isTeacherPath && userData.role !== 'teacher') {
-        return NextResponse.redirect(new URL('/dashboard/student', request.url))
+        return NextResponse.redirect(new URL('/portal/videos', request.url))
       }
 
       // Prevent teachers from accessing student paths
       if (isStudentPath && userData.role !== 'student') {
-        return NextResponse.redirect(new URL('/dashboard/teacher', request.url))
+        return NextResponse.redirect(new URL('/portal/videos', request.url))
       }
 
-      // Redirect to role-specific dashboard
+      // Redirect to portal/videos instead of role-specific dashboard
       if (pathname === '/dashboard') {
-        const dashboardPath = userData.role === 'student' ? '/dashboard/student' : '/dashboard/teacher'
-        return NextResponse.redirect(new URL(dashboardPath, request.url))
+        return NextResponse.redirect(new URL('/portal/videos', request.url))
       }
     } catch (error) {
       console.error('Error parsing user data:', error)

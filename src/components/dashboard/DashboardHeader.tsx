@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { teacherMockData } from '@/constants/dashboardData'
 
 interface Notification {
@@ -14,30 +15,32 @@ interface Notification {
 }
 
 export default function DashboardHeader() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const router = useRouter()
 
   // Mock notifications data
   const notifications: Notification[] = [
     {
       id: 1,
       type: 'info',
-      message: 'Nova atividade entregue em Matemática',
-      time: '5 min atrás',
+      message: 'Nova atividade enviada em Matemática',
+      time: 'há 5 minutos',
       read: false
     },
     {
       id: 2,
       type: 'warning',
-      message: 'Prazo de entrega próximo: Relatório de Física',
-      time: '1 hora atrás',
+      message: 'Prazo próximo: Relatório de Física',
+      time: 'há 1 hora',
       read: false
     },
     {
       id: 3,
       type: 'success',
-      message: 'Notas do último teste publicadas',
-      time: '2 horas atrás',
+      message: 'Notas da última avaliação disponíveis',
+      time: 'há 2 horas',
       read: true
     }
   ]
@@ -75,7 +78,7 @@ export default function DashboardHeader() {
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left side - Title */}
         <h1 className=" font-semibold text-gray-900">
-          Bem vindo, {user?.name}
+          Olá, {user?.name}
         </h1>
         
         {/* Right side - Notifications and Profile */}
@@ -101,8 +104,8 @@ export default function DashboardHeader() {
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
-                    <span className="text-xs text-gray-500">{notifications.length} novas</span>
+                    <h3 className="text-sm font-semibold text-gray-900">Central de Notificações</h3>
+                    <span className="text-xs text-gray-500">{notifications.length} não lidas</span>
                   </div>
                 </div>
                 
@@ -134,14 +137,14 @@ export default function DashboardHeader() {
                   ) : (
                     <div className="p-4 text-center text-gray-500">
                       <span className="material-symbols-outlined text-4xl mb-2">notifications_off</span>
-                      <p className="text-sm">Nenhuma notificação</p>
+                      <p className="text-sm">Você não tem notificações</p>
                     </div>
                   )}
                 </div>
 
                 <div className="p-4 border-t border-gray-100">
                   <button className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium">
-                    Ver todas as notificações
+                    Visualizar todas as notificações
                   </button>
                 </div>
               </div>
@@ -149,37 +152,92 @@ export default function DashboardHeader() {
           </div>
 
           {/* Profile Section */}
-          <div className="flex items-center space-x-3">
-            {/* Profile Image */}
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-[#1a2b6d] flex items-center justify-center overflow-hidden">
-                <div className="relative w-6 h-6">
-                  <Image 
-                    src="/sabercon-logo-white.png"
-                    alt="Profile"
-                    fill
-                    sizes="24px"
-                    className="object-contain"
-                  />
+          <div className="flex items-center space-x-3 relative">
+            <button 
+              className="flex items-center space-x-3 focus:outline-none"
+              onClick={() => {
+                setShowProfileMenu(!showProfileMenu)
+                if (showNotifications) setShowNotifications(false)
+              }}
+            >
+              {/* Profile Image */}
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-[#1a2b6d] flex items-center justify-center overflow-hidden">
+                  <div className="relative w-6 h-6">
+                    <Image 
+                      src="/sabercon-logo-white.png"
+                      alt="Profile"
+                      fill
+                      sizes="24px"
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+              </div>
+              
+              {/* Profile Info */}
+              <div className="flex items-center">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-900">
+                    {user?.name || 'Administrator'}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {user?.role === 'student' ? 'Estudante' : 
+                     user?.role === 'teacher' ? 'Professor' : 
+                     user?.role === 'manager' ? 'Gestor' : 
+                     user?.role === 'admin' ? 'Administrador' : 'Usuário'}
+                  </span>
+                </div>
+                <span className="material-symbols-outlined text-gray-400 ml-2">
+                  expand_more
+                </span>
+              </div>
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {showProfileMenu && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      router.push('/profile')
+                      setShowProfileMenu(false)
+                    }}
+                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                  >
+                    <span className="material-symbols-outlined mr-2 text-gray-400">
+                      person
+                    </span>
+                    Perfil
+                  </button>
+                  <button
+                    onClick={() => {
+                      router.push('/change-password')
+                      setShowProfileMenu(false)
+                    }}
+                    className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                  >
+                    <span className="material-symbols-outlined mr-2 text-gray-400">
+                      lock
+                    </span>
+                    Alterar Senha
+                  </button>
+                  <button
+                    onClick={() => {
+                      logout()
+                      setShowProfileMenu(false)
+                    }}
+                    className="w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center"
+                  >
+                    <span className="material-symbols-outlined mr-2 text-red-600">
+                      logout
+                    </span>
+                    Sair
+                  </button>
                 </div>
               </div>
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-            </div>
-            
-            {/* Profile Info */}
-            <div className="flex items-center">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-900">
-                  {user?.name || 'Administrator'}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {user?.role === 'student' ? 'Estudante' : 'Professor'}
-                </span>
-              </div>
-              <span className="material-symbols-outlined text-gray-400 ml-2">
-                expand_more
-              </span>
-            </div>
+            )}
           </div>
         </div>
       </div>

@@ -61,8 +61,8 @@ export default function DashboardSidebar() {
       {
         section: 'Principal',
         items: [
-          { href: `/dashboard/${user?.role || ''}`, icon: 'dashboard', label: 'Dashboard' },
-          { href: '/chat', icon: 'chat', label: 'Chat' },
+          { href: `/dashboard/${user?.role || ''}`, icon: 'dashboard', label: 'Painel Principal' },
+          { href: '/chat', icon: 'chat', label: 'Mensagens' },
         ]
       }
     ]
@@ -72,18 +72,18 @@ export default function DashboardSidebar() {
     if (user?.role === 'student') {
       roleSpecificItems = [
         {
-          section: 'Acadêmico',
+          section: 'Área Acadêmica',
           items: [
             { href: '/courses', icon: 'school', label: 'Meus Cursos' },
-            { href: '/assignments', icon: 'assignment', label: 'Minhas Atividades' },
+            { href: '/assignments', icon: 'assignment', label: 'Atividades' },
             { href: '/live', icon: 'video_camera_front', label: 'Aulas ao Vivo' },
-            { href: '/lessons', icon: 'school', label: 'Minhas Aulas' },
+            { href: '/lessons', icon: 'school', label: 'Aulas' },
           ]
         },
         {
           section: 'Portais',
           items: [
-            { href: '/portal/literature', icon: 'auto_stories', label: 'Portal de Literatura' },
+            { href: '/portal/books', icon: 'auto_stories', label: 'Portal de Literatura' },
             { href: '/portal/student', icon: 'person_outline', label: 'Portal do Aluno' },
           ]
         }
@@ -93,19 +93,19 @@ export default function DashboardSidebar() {
     if (user?.role === 'teacher') {
       roleSpecificItems = [
         {
-          section: 'Ensino',
+          section: 'Área do Professor',
           items: [
-            { href: '/courses/manage', icon: 'school', label: 'Gerenciar Cursos' },
-            { href: '/assignments/manage', icon: 'assignment', label: 'Gerenciar Atividades' },
-            { href: '/live/manage', icon: 'video_camera_front', label: 'Gerenciar Aulas ao Vivo' },
-            { href: '/lessons/manage', icon: 'menu_book', label: 'Gerenciar Aulas' },
+            { href: '/courses/manage', icon: 'school', label: 'Gestão de Cursos' },
+            { href: '/assignments/manage', icon: 'assignment', label: 'Gestão de Atividades' },
+            { href: '/live/manage', icon: 'video_camera_front', label: 'Gestão de Aulas ao Vivo' },
+            { href: '/lessons/manage', icon: 'menu_book', label: 'Gestão de Aulas' },
           ]
         },
         {
-          section: 'Gestão',
+          section: 'Gestão da Turma',
           items: [
-            { href: '/teacher/students', icon: 'group', label: 'Meus Alunos' },
-            { href: '/teacher/grades', icon: 'grade', label: 'Notas' },
+            { href: '/teacher/students', icon: 'group', label: 'Alunos' },
+            { href: '/teacher/grades', icon: 'grade', label: 'Avaliações' },
             { href: '/reports/teacher', icon: 'analytics', label: 'Relatórios' },
           ]
         },
@@ -147,7 +147,7 @@ export default function DashboardSidebar() {
       ]
     }
 
-    if (user?.role === 'admin') {
+      if (user?.role === 'admin') {
       roleSpecificItems = [
         {
           section: 'Administração',
@@ -159,11 +159,19 @@ export default function DashboardSidebar() {
           ]
         },
         {
+          section: 'Gestão de Conteúdo',
+          items: [
+            { href: '/admin/content/library', icon: 'library_books', label: 'Biblioteca Digital' },
+            { href: '/admin/content/upload', icon: 'upload_file', label: 'Envio de Conteúdo' },
+            { href: '/admin/content/search', icon: 'manage_search', label: 'Busca Avançada' },
+          ]
+        },
+        {
           section: 'Monitoramento',
           items: [
-            { href: '/admin/analytics', icon: 'monitoring', label: 'Analytics' },
-            { href: '/admin/logs', icon: 'terminal', label: 'Logs do Sistema' },
-            { href: '/admin/performance', icon: 'speed', label: 'Performance' },
+            { href: '/admin/analytics', icon: 'monitoring', label: 'Análise de Dados' },
+            { href: '/admin/logs', icon: 'terminal', label: 'Registros do Sistema' },
+            { href: '/admin/performance', icon: 'speed', label: 'Desempenho' },
           ]
         },
         {
@@ -222,11 +230,12 @@ export default function DashboardSidebar() {
               {isCollapsed ? (
                 <span className="text-2xl font-bold text-white">S</span>
               ) : (
-                <div className="relative w-32 h-8">
+                <div className="table ">
                   <Image
                     src="/sabercon-logo-white.png"
                     alt="Logo"
-                    fill
+                    width={250}
+                    height={100}
                     className="object-contain"
                     priority
                   />
@@ -300,7 +309,7 @@ export default function DashboardSidebar() {
                 ${isCollapsed ? 'justify-center' : ''}`}
             >
               <span className={`material-symbols-outlined group-hover:animate-pulse transition-transform duration-300 ${isCollapsed ? 'text-[24px]' : 'text-[20px]'}`}>logout</span>
-              {!isCollapsed && <span className="text-sm font-medium">Sair da Plataforma</span>}
+              {!isCollapsed && <span className="text-sm font-medium">Encerrar Sessão</span>}
               
               {/* Tooltip for collapsed state */}
               {isCollapsed && (

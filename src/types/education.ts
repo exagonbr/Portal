@@ -63,6 +63,8 @@ export interface Course {
     classDays: string[]
     classTime: string
   }
+  teachers: string[] // Array of teacher IDs
+  students: string[] // Array of student IDs
 }
 
 export interface Class {

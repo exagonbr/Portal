@@ -1,5 +1,6 @@
 import {User} from '../types/auth';
 import {getSession, signOut} from 'next-auth/react';
+import {MOCK_USERS} from '../constants/mockData';
 
 export interface LoginResponse {
   success: boolean;
@@ -21,28 +22,58 @@ const setCookie = (name: string, value: string, days: number = 7) => {
   }
 };
 
+const clearAllCookies = () => {
+  if (typeof window !== 'undefined') {
+    // Get all cookies and split them into individual cookies
+    const cookies = document.cookie.split(';');
+    
+    // For each cookie, set its expiry to a past date to remove it
+    for (let cookie of cookies) {
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      // Also try with different paths to ensure complete removal
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
+    }
+  }
+};
+
 const removeCookie = (name: string) => {
   if (typeof window !== 'undefined') {
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
   }
 };
 
-// Mock user data with proper typing and matching test credentials
-const MOCK_USERS: Record<string, User> = {
-  'julia.c@edu.com': {
-    id: '1',
-    name: 'Julia Costa',
-    email: 'julia.c@edu.com',
-    role: 'student',
-    courses: ['1', '2']
-  },
-  'ricardo.oliveira@edu.com': {
-    id: '2',
-    name: 'Professor Ricardo',
-    email: 'ricardo.oliveira@edu.com',
-    role: 'teacher',
-    courses: ['1', '2']
-  }
+// User management functions
+export const listUsers = async (): Promise<User[]> => {
+  return Object.values(MOCK_USERS);
+};
+
+export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
+  const newUser = {
+    ...userData,
+    id: Math.random().toString(36).substr(2, 9)
+  };
+  MOCK_USERS[userData.email] = newUser;
+  return newUser;
+};
+
+export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
+  const user = Object.values(MOCK_USERS).find(u => u.id === id);
+  if (!user) return null;
+  
+  const updatedUser = { ...user, ...userData };
+  MOCK_USERS[user.email] = updatedUser;
+  return updatedUser;
+};
+
+export const deleteUser = async (id: string): Promise<boolean> => {
+  const user = Object.values(MOCK_USERS).find(u => u.id === id);
+  if (!user) return false;
+  
+  delete MOCK_USERS[user.email];
+  return true;
 };
 
 // Helper function to safely access localStorage
@@ -144,11 +175,13 @@ export const logout = async (): Promise<void> => {
   return new Promise((resolve) => {
     // Clear NextAuth session
     signOut({ redirect: false }).then(() => {
-      // Clear local storage and cookies
+      // Clear local storage
       safeLocalStorage.removeItem('auth_token');
       safeLocalStorage.removeItem('user');
-      removeCookie('auth_token');
-      removeCookie('user_data');
+      
+      // Clear all cookies
+      clearAllCookies();
+      
       setTimeout(() => resolve(), 500);
     });
   });

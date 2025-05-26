@@ -91,16 +91,16 @@ export default function CoursesPage() {
           </div>
           <div className="flex space-x-4">
             <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Todas as Categorias</option>
-              <option value="exatas">Exatas</option>
-              <option value="humanas">Humanas</option>
-              <option value="ciencias">Ciências</option>
+            <option value="">Todas as Categorias</option>
+            <option value="exatas">Exatas</option>
+            <option value="humanas">Humanas</option>
+            <option value="ciencias">Ciências</option>
             </select>
             <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Ordenar por</option>
-              <option value="progress">Progresso</option>
-              <option value="name">Nome</option>
-              <option value="rating">Avaliação</option>
+            <option value="">Ordenar por</option>
+            <option value="progress">Progresso</option>
+            <option value="name">Nome</option>
+            <option value="rating">Avaliação</option>
             </select>
           </div>
         </div>

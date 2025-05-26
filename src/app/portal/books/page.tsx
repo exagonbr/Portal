@@ -2,138 +2,31 @@
 
 import React from 'react';
 import Carousel from '../../../components/Carousel';
-import VideoCard from '../../../components/VideoCard';
+import BookCard from '../../../components/BookCard';
 import SimpleCarousel from "@/components/SimpleCarousel";
-
-const dummyVideos = [
-  {
-    id: '1',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/4bb8e8d8ab8ae3ba22c6e41cea29b66dbed7fb9479c3a6fac2bb163eda8a8c33.jpg',
-    title: 'Matemática Aplicada',
-    duration: '12:34',
-    progress: 30,
-  },
-  {
-    id: '2',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/4bb8e8d8ab8ae3ba22c6e41cea29b66dbed7fb9479c3a6fac2bb163eda8a8c33.jpg',
-    title: 'Educação 4.0',
-    duration: '08:20',
-    progress: 0,
-  },
-  {
-    id: '3',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/3c8692fc01fcb42e18a48adcd88b2df236f5e8c0621bccfb68d2ddb5bd3d9b42.jpg',
-    title: 'Educação na Sala',
-    duration: '15:10',
-    progress: 75,
-  },
-  {
-    id: '4',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/757947de28d51fe001f5e843e8d8c77bc2cdf2058af64460452b927517ae2e3f.jpg',
-    title: 'Paulo Coelho',
-    duration: '22:45',
-    progress: 50,
-  },
-  {
-    id: '5',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/8dc5a15a64dcffb030b342616e9d978da092c0ea60022c5bdfc0882cce1b4916.jpg',
-    title: 'Educação Financeira',
-    duration: '10:00',
-    progress: 0,
-  },
-  {
-    id: '6',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/6b28d6d7213cbd3c870ed490742417ff93ac9ebc2d5a36a4528fbc595f2498ee.jpg',
-    title: 'Educação Fisica',
-    duration: '09:30',
-    progress: 0,
-  },
-  {
-    id: '7',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 12,
-  },
-  {
-    id: '8',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-  {
-    id: '9',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-  {
-    id: '10',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-  {
-    id: '11',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-  {
-    id: '12',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-  {
-    id: '13',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-  {
-    id: '14',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-  {
-    id: '7',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },  {
-    id: '7',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-  {
-    id: '7',
-    thumbnail: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/a628349509469c5ed5b1cfe5bc90992c4536e802bc00b665848db764227eba46.jpg',
-    title: 'Quimica',
-    duration: '11:15',
-    progress: 0,
-  },
-
-];
+import { mockBooks } from '@/constants/mockData';
 
 const carouselSettings = {
   slidesToShow: 6,
   slidesToScroll: 1,
   infinite: true,
-  dots: false,
-  arrows: false,
+  dots: true,
+  arrows: true,
+  autoplay: true,
+  autoplaySpeed: 5000,
   responsive: [
+    {
+      breakpoint: 1536,
+      settings: {
+        slidesToShow: 5,
+      },
+    },
+    {
+      breakpoint: 1280,
+      settings: {
+        slidesToShow: 4,
+      },
+    },
     {
       breakpoint: 1024,
       settings: {
@@ -141,13 +34,13 @@ const carouselSettings = {
       },
     },
     {
-      breakpoint: 600,
+      breakpoint: 768,
       settings: {
         slidesToShow: 2,
       },
     },
     {
-      breakpoint: 480,
+      breakpoint: 640,
       settings: {
         slidesToShow: 1,
       },
@@ -155,96 +48,156 @@ const carouselSettings = {
   ],
 };
 
-export default function VideosPage() {
+const carouselImages = [
+  {
+    src: '/carousel-images/education1.jpg',
+    alt: 'Literatura e Conhecimento',
+    title: 'Explore Novos Horizontes'
+  },
+  {
+    src: '/carousel-images/education2.jpg',
+    alt: 'Biblioteca Digital',
+    title: 'Biblioteca Virtual'
+  },
+  {
+    src: '/carousel-images/education3.jpg',
+    alt: 'Leitura e Aprendizagem',
+    title: 'Aprendizagem Contínua'
+  }
+];
 
-  const carouselImages = [
-    {
-      src: '/carousel-images/education1.jpg',
-      alt: 'Educação e Tecnologia',
-      title: 'Matemática Aplicada'
-    },
-    {
-      src: '/carousel-images/education2.jpg',
-      alt: 'Cultura e Aprendizado',
-      title: 'Cultura e Religião'
-    },
-    {
-      src: '/carousel-images/education3.jpg',
-      alt: 'Desenvolvimento Educacional',
-      title: 'O Alquimista'
-    }
-  ];
-
+export default function BooksPage() {
+  // Filter books for different sections
+  const continueReading = mockBooks.filter(book => book.progress && book.progress > 0 && book.progress < 100);
+  const recommendations = mockBooks.filter((_, index) => index < 15); // First 15 books for recommendations
+  const newReleases = mockBooks
+    .slice()
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 10); // Random 10 books for new releases
+  const popular = mockBooks
+    .slice()
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 10); // Random 10 books for popular
 
   return (
-    <div className="p-6 space-y-10  min-h-screen text-black">
-      <h1 className="text-4xl font-bold mb-6">Portal de Literatura</h1>
-
-      <section>
-        {/* Carousel Section */}
-        <div className="w-full h-[400px] relative mb-8 mt-16">
-          <SimpleCarousel images={carouselImages} autoplaySpeed={3000} />
-        </div>
+    <div className="min-h-screen bg-gray-50 text-black">
+      {/* Hero Section with Featured Carousel */}
+      <section className="relative w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] bg-gradient-to-b from-gray-900 to-gray-800">
+        <SimpleCarousel images={carouselImages} autoplaySpeed={3000} />
       </section>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Continue Lendo</h2>
-        <Carousel settings={carouselSettings}>
-          {dummyVideos
-            .filter(video => video.progress && video.progress > 0)
-            .map(video => (
-              <VideoCard
-                key={video.id}
-                thumbnail={video.thumbnail}
-                title={video.title}
-                duration={video.duration}
-                progress={video.progress}
-              />
-            ))}
-        </Carousel>
-      </section>
+      {/* Main Content */}
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+        {/* Continue Reading Section */}
+        {continueReading.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Continue a Leitura</h2>
+                <p className="text-sm text-gray-600 mt-1">Retome de onde parou</p>
+              </div>
+            </div>
+            <div className="relative">
+              <Carousel settings={carouselSettings}>
+                {continueReading.map(book => (
+                  <div key={book.id} className="px-2">
+                    <BookCard
+                      thumbnail={book.thumbnail}
+                      title={book.title}
+                      author={book.author}
+                      publisher={book.publisher}
+                      synopsis={book.synopsis}
+                      duration={book.duration}
+                      progress={book.progress}
+                    />
+                  </div>
+                ))}
+              </Carousel>
+            </div>
+          </section>
+        )}
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Sugestões</h2>
-        <Carousel settings={carouselSettings}>
-          {dummyVideos.map(video => (
-            <VideoCard
-              key={video.id}
-              thumbnail={video.thumbnail}
-              title={video.title}
-              duration={video.duration}
-            />
-          ))}
-        </Carousel>
-      </section>
+        {/* Recommendations Section */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Recomendados para Você</h2>
+              <p className="text-sm text-gray-600 mt-1">Com base nos seus interesses</p>
+            </div>
+          </div>
+          <div className="relative">
+            <Carousel settings={carouselSettings}>
+              {recommendations.map(book => (
+                <div key={book.id} className="px-2">
+                  <BookCard
+                    thumbnail={book.thumbnail}
+                    title={book.title}
+                    author={book.author}
+                    publisher={book.publisher}
+                    synopsis={book.synopsis}
+                    duration={book.duration}
+                    progress={book.progress}
+                  />
+                </div>
+              ))}
+            </Carousel>
+          </div>
+        </section>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Novos Livros Adicionados</h2>
-        <Carousel settings={carouselSettings}>
-          {dummyVideos.slice(0, 9).map(video => (
-            <VideoCard
-              key={video.id}
-              thumbnail={video.thumbnail}
-              title={video.title}
-              duration={video.duration}
-            />
-          ))}
-        </Carousel>
-      </section>
+        {/* New Releases Section */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Novidades</h2>
+              <p className="text-sm text-gray-600 mt-1">Adições recentes ao nosso acervo</p>
+            </div>
+          </div>
+          <div className="relative">
+            <Carousel settings={carouselSettings}>
+              {newReleases.map(book => (
+                <div key={book.id} className="px-2">
+                  <BookCard
+                    thumbnail={book.thumbnail}
+                    title={book.title}
+                    author={book.author}
+                    publisher={book.publisher}
+                    synopsis={book.synopsis}
+                    duration={book.duration}
+                    progress={book.progress}
+                  />
+                </div>
+              ))}
+            </Carousel>
+          </div>
+        </section>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Populares</h2>
-        <Carousel settings={carouselSettings}>
-          {dummyVideos.slice(1, 10).map(video => (
-            <VideoCard
-              key={video.id}
-              thumbnail={video.thumbnail}
-              title={video.title}
-              duration={video.duration}
-            />
-          ))}
-        </Carousel>
-      </section>
+        {/* Popular Section */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Mais Populares</h2>
+              <p className="text-sm text-gray-600 mt-1">Os títulos mais lidos da biblioteca</p>
+            </div>
+          </div>
+          <div className="relative">
+            <Carousel settings={carouselSettings}>
+              {popular.map(book => (
+                <div key={book.id} className="px-2">
+                  <BookCard
+                    thumbnail={book.thumbnail}
+                    title={book.title}
+                    author={book.author}
+                    publisher={book.publisher}
+                    synopsis={book.synopsis}
+                    duration={book.duration}
+                    progress={book.progress}
+                  />
+                </div>
+              ))}
+            </Carousel>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
