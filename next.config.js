@@ -103,7 +103,34 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['localhost']
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'covers.openlibrary.org',
+        pathname: '/b/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com'
+      },
+      {
+        protocol: 'https',
+        hostname: 'images-na.ssl-images-amazon.com'
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com'
+      }
+    ]
+  },
+  webpack: (config) => {
+    config.module.rules.push(
+      {
+        test: /\.(pdf|epub)$/i,
+        type: 'asset/resource'
+      }
+    );
+    return config;
   }
 };
 

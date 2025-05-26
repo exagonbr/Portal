@@ -22,10 +22,22 @@ const authPaths = [
   '/register'
 ]
 
+// Paths that bypass authentication
+const publicPaths = [
+  '/test-reader',
+  '/books' // Allow access to test files
+]
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')
   const userDataCookie = request.cookies.get('user_data')
   const { pathname } = request.nextUrl
+
+  // Check if the path is public
+  const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
+  if (isPublicPath) {
+    return NextResponse.next()
+  }
 
   // Check path types
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
@@ -40,7 +52,7 @@ export function middleware(request: NextRequest) {
 
   // If authenticated and trying to access auth pages
   if (isAuthPath && token) {
-    return NextResponse.redirect(new URL('/portal/videos', request.url)) // Redirect to videos page instead of dashboard
+    return NextResponse.redirect(new URL('/portal/videos', request.url))
   }
 
   // Role-based access control

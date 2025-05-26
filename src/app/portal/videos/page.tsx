@@ -11,7 +11,7 @@ const carouselSettings = {
   slidesToScroll: 1,
   infinite: true,
   dots: true,
-  arrows: true,
+  arrows: false,
   autoplay: true,
   autoplaySpeed: 5000,
   responsive: [
@@ -48,23 +48,7 @@ const carouselSettings = {
   ],
 };
 
-const carouselImages = [
-  {
-    src: '/carousel-images/education1.jpg',
-    alt: 'Educação e Tecnologia',
-    title: 'Inovação na Educação'
-  },
-  {
-    src: '/carousel-images/education2.jpg',
-    alt: 'Cultura e Aprendizagem',
-    title: 'Cultura e Sabedoria'
-  },
-  {
-    src: '/carousel-images/education3.jpg',
-    alt: 'Desenvolvimento Educacional',
-    title: 'Aprendizagem Contínua'
-  }
-];
+import { carouselVideoImages } from '@/constants/mockData';
 
 export default function VideosPage() {
   // Filter videos for different sections
@@ -77,7 +61,7 @@ export default function VideosPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Featured Carousel */}
       <section className="relative w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] bg-gradient-to-b from-gray-900 to-gray-800">
-        <SimpleCarousel images={carouselImages} autoplaySpeed={3000} />
+        <SimpleCarousel images={carouselVideoImages} autoplaySpeed={3000} />
       </section>
 
       {/* Main Content */}
@@ -96,6 +80,7 @@ export default function VideosPage() {
                 {continueWatching.map(video => (
                   <div key={video.id} className="px-2">
                     <VideoCard
+                      id={video.id}
                       thumbnail={video.thumbnail}
                       title={video.title}
                       duration={video.duration}
@@ -121,6 +106,7 @@ export default function VideosPage() {
               {recommendations.map(video => (
                 <div key={video.id} className="px-2">
                   <VideoCard
+                    id={video.id}
                     thumbnail={video.thumbnail}
                     title={video.title}
                     duration={video.duration}
@@ -145,6 +131,7 @@ export default function VideosPage() {
               {newReleases.map(video => (
                 <div key={video.id} className="px-2">
                   <VideoCard
+                    id={video.id}
                     thumbnail={video.thumbnail}
                     title={video.title}
                     duration={video.duration}
@@ -169,6 +156,7 @@ export default function VideosPage() {
               {popular.map(video => (
                 <div key={video.id} className="px-2">
                   <VideoCard
+                    id={video.id}
                     thumbnail={video.thumbnail}
                     title={video.title}
                     duration={video.duration}

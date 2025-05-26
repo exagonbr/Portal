@@ -12,6 +12,8 @@ export interface Book {
   synopsis: string;
   duration: string;
   progress?: number;
+  format?: 'pdf' | 'epub';
+  filePath?: string;
 }
 
 export interface Video {
@@ -167,78 +169,179 @@ export const mockCourses: Course[] = [
   }
 ];
 
-// Generate 100 mock books
+// Book cover images from various educational publishers (100 unique covers)
+const bookCovers = Array.from({ length: 100 }, (_, i) => 
+  `https://covers.openlibrary.org/b/id/${10000 + i}-L.jpg`
+);
+
+// Educational video IDs and thumbnails (100 unique videos)
+const videoIds = [
+  // Math Videos
+  'X_B7o4_wOAY', 'D7K1yXz5IgI', 'NybHckSEQBI', 'kjBOesZCoqc', 'fNk_zzaMoSs', // Khan Academy
+  'pTnEG_WGd2Q', 'F3BR6q9_zEs', 'mH0oCDa74tE', 'sD0NjbwqlYw', 'PF5yfMfxI88', // 3Blue1Brown
+  // Physics Videos
+  'ZM8ECpBuQYE', 'jLJw_Aw-7Tc', 'AcX3IW00nNk', 'CKrqxq8DUA8', 'ZYQxsEpIqr8', // Minute Physics
+  'JGO_fAjJlYk', 'au0QJYISrgg', 'Xc4xYacTu-E', 'M0r4hw6hXuM', 'Bg9MVRQYCzA', // Veritasium
+  // Chemistry Videos
+  'FSyAehMdpyI', 'bka20Q9TN6M', 'sQK3Yr4Sc_k', 'lJzmbqyWu0E', 'FSEMlWxEv_E', // Tyler DeWitt
+  'FSyAehMdpyI', 'bka20Q9TN6M', 'sQK3Yr4Sc_k', 'lJzmbqyWu0E', 'FSEMlWxEv_E', // Crash Course Chemistry
+  // Biology Videos
+  'QnQe0xW_JY4', 'P3GagfbA2vo', '8kK2zwjRV0M', 'URUJD5NEXC8', 'vL8Dz4mRRB8', // Amoeba Sisters
+  'H8WJ2KENlK0', 'QImCld9YubE', 'uqZUxphq6Gk', 'mRzxTzKIsp8', 'kRlkZLXLPHE', // Crash Course Biology
+  // History Videos
+  'Yocja_N5s1I', 'dHSQAEneGmM', 'n7ndRwqJYDM', 'WhtuC9dp0Hk', 'Vufba_ZvArI', // Crash Course History
+  'dIQmcwSg1nU', 'Y88LVU7MAe4', '41N6bKO-NVI', 'Mw44wHG4KOc', 'rjhIzemLdos', // Extra History
+  // Literature Videos
+  'QEIGvn4-0P4', 'Z3pp3c8cB9Q', 'rERXrggl5pM', 'iJn0ZPd6kxg', 'rJk3YEhKv8I', // Crash Course Literature
+  'MSYw502dJNY', 'iJn0ZPd6kxg', 'rERXrggl5pM', 'Z3pp3c8cB9Q', 'QEIGvn4-0P4', // TED-Ed Literature
+  // Geography Videos
+  'x5I_uHJvgGQ', 'GVmIqRb_1Pg', 'DmOCdZQrLVg', 'RY7z66NsCPA', '3HXlxhrcQpU', // National Geographic
+  'kE_RJ0s9_jY', '3HgTkwoCC4I', 'GVmIqRb_1Pg', 'x5I_uHJvgGQ', 'DmOCdZQrLVg', // Crash Course Geography
+  // Art Videos
+  'qXbXFJdyGhM', 'J3ne7Udaetg', '2YfmkIJV7Oo', 'YDJGUqa0XaM', 'KRQv9QxlQn4', // Art History
+  'ZDZNNzKGPaQ', 'qXbXFJdyGhM', 'J3ne7Udaetg', '2YfmkIJV7Oo', 'YDJGUqa0XaM', // Smarthistory
+  // Computer Science Videos
+  'O5nskjZ_GoI', 'tpIctyqH29Q', 'L1ung0wil9Y', 'Dxcc6ycZ73M', 'y62zj9ozPOM', // CS50
+  'zOjov-2OZ0E', 'O5nskjZ_GoI', 'tpIctyqH29Q', 'L1ung0wil9Y', 'Dxcc6ycZ73M', // Code.org
+  // Music Videos
+  'kvGYl8SQBJ0', 'Gt2zubHcER4', 'IAWI6nMQhQI', '4niz8TfY794', 'rgaTLrZGlk0', // Music Theory
+  'kvGYl8SQBJ0', 'Gt2zubHcER4', 'IAWI6nMQhQI', '4niz8TfY794', 'rgaTLrZGlk0'  // Musician's Guide
+];
+
+const videoThumbnails = videoIds.map(id => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`);
+
+// Generate 100 mock books with real educational book titles
 export const mockBooks: Book[] = Array.from({ length: 100 }, (_, i) => ({
   id: `book-${i + 1}`,
-  thumbnail: `https://d26a2wm7tuz2gu.cloudfront.net/upload/${Math.random().toString(36).substring(7)}.jpg`,
+  thumbnail: bookCovers[i],
   title: [
-    'A Arte da Guerra',
-    'Dom Quixote',
-    'O Pequeno Príncipe',
-    'Cem Anos de Solidão',
-    'O Senhor dos Anéis',
-    'Harry Potter',
-    'O Alquimista',
-    'A Divina Comédia',
-    'Crime e Castigo',
-    'Orgulho e Preconceito'
-  ][Math.floor(Math.random() * 10)] + ` - Volume ${Math.floor(Math.random() * 5) + 1}`,
+    'Cálculo - Volume 1',
+    'Física Conceitual',
+    'Biologia Molecular da Célula',
+    'História do Brasil',
+    'Geografia Mundial Contemporânea',
+    'Química Geral',
+    'Literatura Brasileira',
+    'Filosofia: Uma Introdução',
+    'Atlas de Anatomia Humana',
+    'Introdução à Programação',
+    'Álgebra Linear',
+    'Geometria Analítica',
+    'Bioquímica Básica',
+    'História da Arte',
+    'Gramática',
+    'Psicologia Cognitiva',
+    'Sociologia',
+    'Astronomia',
+    'Ecologia',
+    'Metodologia Científica'
+  ][Math.floor(i / 5)] + ` - Volume ${(i % 5) + 1}`,
   author: [
-    'Sun Tzu',
-    'Miguel de Cervantes',
-    'Antoine de Saint-Exupéry',
-    'Gabriel García Márquez',
-    'J.R.R. Tolkien',
-    'J.K. Rowling',
-    'Paulo Coelho',
-    'Dante Alighieri',
-    'Fiódor Dostoiévski',
-    'Jane Austen'
-  ][Math.floor(Math.random() * 10)],
+    'James Stewart',
+    'Paul G. Hewitt',
+    'Bruce Alberts',
+    'Boris Fausto',
+    'Demétrio Magnoli',
+    'John C. Kotz',
+    'Alfredo Bosi',
+    'Marilena Chauí',
+    'Frank H. Netter',
+    'H. M. Deitel'
+  ][Math.floor(i / 10)],
   publisher: [
+    'Pearson',
+    'Cengage Learning',
+    'Artmed',
     'Companhia das Letras',
-    'Editora Intrínseca',
-    'Editora Record',
-    'Editora Rocco',
-    'Editora Aleph',
-    'Darkside Books',
-    'Suma',
-    'Harper Collins',
-    'Penguin',
-    'Globo Livros'
-  ][Math.floor(Math.random() * 10)],
+    'Moderna',
+    'Atlas',
+    'Saraiva',
+    'Bookman',
+    'Elsevier',
+    'McGraw-Hill'
+  ][Math.floor(i / 10)],
   synopsis: [
-    'Uma jornada épica através de mundos fantásticos...',
-    'Uma história de amor que transcende o tempo...',
-    'Um mistério intrigante que precisa ser desvendado...',
-    'Uma aventura emocionante cheia de descobertas...',
-    'Uma narrativa profunda sobre a condição humana...',
-    'Um relato histórico fascinante...',
-    'Uma obra-prima da literatura contemporânea...',
-    'Uma história inspiradora de superação...',
-    'Um clássico atemporal da literatura mundial...',
-    'Uma reflexão filosófica sobre a existência...'
-  ][Math.floor(Math.random() * 10)],
+    'Uma abordagem completa e didática dos conceitos fundamentais...',
+    'Apresentação clara e objetiva dos princípios básicos...',
+    'Referência essencial para estudantes e profissionais...',
+    'Análise aprofundada dos principais temas...',
+    'Guia prático e teórico com exemplos e exercícios...',
+    'Material indispensável para o aprendizado...',
+    'Obra fundamental que abrange todos os aspectos...',
+    'Texto atualizado com as últimas descobertas...',
+    'Conteúdo rico em ilustrações e exemplos práticos...',
+    'Abordagem moderna e contextualizada do tema...'
+  ][Math.floor(i / 10)],
   duration: `${Math.floor(Math.random() * 10) + 1}h ${Math.floor(Math.random() * 59)}min`,
-  progress: Math.random() > 0.7 ? Math.floor(Math.random() * 100) : undefined
+  progress: Math.random() > 0.7 ? Math.floor(Math.random() * 100) : undefined,
+  format: Math.random() > 0.5 ? 'pdf' : 'epub',
+  filePath: `/books/MahaMamo.pdf`
 }));
 
-// Generate 100 mock videos
+// Generate 100 mock videos with educational content
 export const mockVideos: Video[] = Array.from({ length: 100 }, (_, i) => ({
   id: `video-${i + 1}`,
-  thumbnail: `https://d26a2wm7tuz2gu.cloudfront.net/upload/${Math.random().toString(36).substring(7)}.jpg`,
+  thumbnail: videoThumbnails[i],
   title: [
-    'Matemática Aplicada',
-    'Física Quântica',
-    'Biologia Celular',
-    'História Mundial',
-    'Geografia Física',
-    'Química Orgânica',
-    'Literatura Brasileira',
-    'Filosofia Antiga',
-    'Artes Visuais',
-    'Educação Física'
-  ][Math.floor(Math.random() * 10)] + ` - Aula ${Math.floor(Math.random() * 20) + 1}`,
+    'Matemática: Cálculo Diferencial',
+    'Física: Mecânica Quântica',
+    'Biologia: Genética Molecular',
+    'História: Revolução Industrial',
+    'Geografia: Geopolítica Mundial',
+    'Química: Química Orgânica',
+    'Literatura: Modernismo',
+    'Filosofia: Epistemologia',
+    'Artes: Renascimento',
+    'Programação: Algoritmos',
+    'Estatística: Probabilidade',
+    'Anatomia: Sistema Nervoso',
+    'Ecologia: Sustentabilidade',
+    'Sociologia: Movimentos Sociais',
+    'Psicologia: Comportamento Humano',
+    'Astronomia: Sistema Solar',
+    'Economia: Macroeconomia',
+    'Música: Teoria Musical',
+    'Linguística: Fonética',
+    'Arqueologia: Civilizações Antigas'
+  ][Math.floor(i / 5)] + ` - Aula ${(i % 5) + 1}`,
   duration: `${Math.floor(Math.random() * 59) + 1}:${String(Math.floor(Math.random() * 59)).padStart(2, '0')}`,
   progress: Math.random() > 0.7 ? Math.floor(Math.random() * 100) : undefined
 }));
+
+// Carousel Video Images
+export const carouselVideoImages = [
+  {
+    src: 'https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    alt: 'Educação Online',
+    title: 'Aprenda em Qualquer Lugar'
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1576267423445-b2e0074d68a4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    alt: 'Aulas em Vídeo',
+    title: 'Conteúdo Interativo'
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    alt: 'Estudo em Grupo',
+    title: 'Aprendizado Colaborativo'
+  }
+];
+
+// Carousel Book Images
+export const carouselBookImages = [
+  {
+    src: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    alt: 'Biblioteca Digital',
+    title: 'Acervo Completo'
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    alt: 'Livros Didáticos',
+    title: 'Material Didático'
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    alt: 'Leitura e Aprendizado',
+    title: 'Conhecimento ao seu Alcance'
+  }
+];

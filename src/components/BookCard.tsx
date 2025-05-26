@@ -2,9 +2,11 @@
 
 import React, { useState } from 'react';
 import { BookOpenIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 import BookModal from './BookModal';
 
 interface BookCardProps {
+  id: string;
   thumbnail: string;
   title: string;
   duration: string;
@@ -32,12 +34,13 @@ export default function BookCard(props: BookCardProps) {
           
           {/* Action buttons overlay */}
           <div className="absolute inset-0 flex items-center justify-center gap-4 opacity-0 hover:opacity-100 transition-opacity duration-300 bg-black/30 backdrop-blur-[2px]">
-            <button 
+            <Link 
+              href={`/portal/books/${props.id}`}
               className="p-2 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-lg"
               aria-label="Abrir livro"
             >
               <BookOpenIcon className="w-8 h-8 text-blue-600" />
-            </button>
+            </Link>
             <button 
               onClick={() => setIsModalOpen(true)}
               className="p-2 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-lg"
