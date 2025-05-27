@@ -3,16 +3,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { ChatMessage, ChatAttachment } from '@/types/communication'
-import { mockTeachers, mockStudents } from '@/constants/mockData'
+import { mockTeachers, mockStudents, MOCK_USERS } from '@/constants/mockData'
 
 interface ChatRoomProps {
   classId: string;
   className: string;
+  initialMessages?: ChatMessage[];
 }
 
-export default function ChatRoom({ classId, className }: ChatRoomProps) {
+export default function ChatRoom({ classId, className, initialMessages = [] }: ChatRoomProps) {
   const { user } = useAuth()
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [newMessage, setNewMessage] = useState('')
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -27,11 +28,17 @@ export default function ChatRoom({ classId, className }: ChatRoomProps) {
   }, [messages])
 
   const getUserInfo = (userId: string) => {
-    const teacher = mockTeachers.find(t => t.id === userId)
+    const teacher = MOCK_USERS.find(t => t.id === userId)
     if (teacher) return { name: teacher.name, role: 'teacher' }
     
-    const student = mockStudents.find(s => s.id === userId)
+    const student = MOCK_USERS.find(s => s.id === userId)
     if (student) return { name: student.name, role: 'student' }
+
+    const manager = MOCK_USERS.find(s => s.id === userId)
+    if (manager) return { name: manager.name, role: 'manager' }
+
+    const admin = MOCK_USERS.find(s => s.id === userId)
+    if (admin) return { name: admin.name, role: 'admin' }
     
     return { name: 'Unknown User', role: 'unknown' }
   }

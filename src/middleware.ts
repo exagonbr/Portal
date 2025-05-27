@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 // Role-specific paths
 const studentPaths = ['/dashboard/student']
 const teacherPaths = ['/dashboard/teacher']
+const adminPaths = ['/dashboard/admin']
 
 // General protected paths
 const protectedPaths = [
@@ -44,6 +45,8 @@ export function middleware(request: NextRequest) {
   const isAuthPath = authPaths.some(path => pathname.startsWith(path))
   const isStudentPath = studentPaths.some(path => pathname.startsWith(path))
   const isTeacherPath = teacherPaths.some(path => pathname.startsWith(path))
+  const isAdminPath = adminPaths.some(path => pathname.startsWith(path))
+
 
   // If not authenticated and trying to access protected path
   if (isProtectedPath && !token) {

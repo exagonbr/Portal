@@ -59,30 +59,108 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Admin User',
     email: 'admin@portal.com',
     role: 'admin',
-    courses: []
+    institution: 'Portal Corp',
+    courses: [],
+    endereco: 'Rua Principal, 123',
+    telefone: '(11) 99999-9999',
+    usuario: 'adminuser',
+    unidadeEnsino: 'Sede Administrativa'
   },
   'julia.c@edu.com': {
     id: '1',
     name: 'Julia Costa',
     email: 'julia.c@edu.com',
     role: 'student',
-    courses: ['1', '2']
+    institution: 'Escola Municipal São José',
+    courses: ['1', '2'],
+    endereco: 'Av. Brasil, 456',
+    telefone: '(21) 98888-8888',
+    usuario: 'juliac',
+    unidadeEnsino: 'Unidade Centro'
   },
   'ricardo.oliveira@edu.com': {
     id: '2',
     name: 'Professor Ricardo',
     email: 'ricardo.oliveira@edu.com',
     role: 'teacher',
-    courses: ['1', '2']
+    institution: 'Escola Municipal São José',
+    courses: ['1', '2'],
+    endereco: 'Rua das Palmeiras, 789',
+    telefone: '(31) 97777-7777',
+    usuario: 'ricardoprof',
+    unidadeEnsino: 'Unidade Centro'
   },
   'manager@portal.com': {
     id: 'manager1',
     name: 'User Manager',
     email: 'manager@portal.com',
     role: 'manager',
-    courses: []
+    institution: 'Portal Corp',
+    courses: [],
+    endereco: 'Alameda dos Anjos, 101',
+    telefone: '(41) 96666-6666',
+    usuario: 'usermanager',
+    unidadeEnsino: 'Sede Operacional'
+  },
+  'ana.santos@edu.com': {
+    id: '3',
+    name: 'Ana Santos',
+    email: 'ana.santos@edu.com',
+    role: 'teacher',
+    institution: 'Colégio Estadual Dom Pedro II',
+    courses: ['3', '4'],
+    endereco: 'Travessa da Paz, 202',
+    telefone: '(51) 95555-5555',
+    usuario: 'anasprof',
+    unidadeEnsino: 'Unidade Norte'
+  }, 'pedro.s@edu.com': {
+    id: '4',
+    name: 'Pedro Santos',
+    email: 'pedro.s@edu.com',
+    role: 'student',
+    institution: 'Colégio Estadual Dom Pedro II',
+    courses: ['1', '3'],
+    endereco: 'Rua da Esperança, 303',
+    telefone: '(61) 94444-4444',
+    usuario: 'pedros',
+    unidadeEnsino: 'Unidade Norte'
+  }, 'carlos.m@edu.com': {
+    id: '5',
+    name: 'Carlos Moreira',
+    email: 'carlos.m@edu.com',
+    role: 'student',
+    institution: 'Escola Municipal São José',
+    courses: ['2'],
+    endereco: 'Avenida Central, 404',
+    telefone: '(71) 93333-3333',
+    usuario: 'carlosm',
+    senha: 'password123',
+    unidadeEnsino: 'Unidade Centro'
+  }, 'lucia.f@edu.com': {
+    id: '6',
+    name: 'Lucia Ferreira',
+    email: 'lucia.f@edu.com',
+    role: 'teacher',
+    institution: 'Universidade Federal XYZ',
+    courses: ['5'],
+    endereco: 'Praça da Liberdade, 505',
+    telefone: '(81) 92222-2222',
+    usuario: 'luciafprof',
+    unidadeEnsino: 'Campus Principal'
+  },
+  'roberto.a@edu.com': {
+    id: '7',
+    name: 'Roberto Alves',
+    email: 'roberto.a@edu.com',
+    role: 'student',
+    institution: 'Universidade Federal XYZ',
+    courses: ['5', '6'],
+    endereco: 'Rua Universitária, 606',
+    telefone: '(91) 91111-1111',
+    usuario: 'robertoa',
+    unidadeEnsino: 'Campus Principal'
   }
-};
+}
 
 // Mock teachers data
 export const mockTeachers: Teacher[] = [
@@ -168,6 +246,98 @@ export const mockCourses: Course[] = [
     },
     teachers: ['t1'],
     students: ['s1', 's2']
+  },
+  {
+    id: '2',
+    name: 'História do Brasil Colônia',
+    description: 'Curso sobre o período colonial brasileiro.',
+    level: 'BASIC', // Corrected from 'INTERMEDIATE'
+    cycle: 'Ensino Médio',
+    stage: '1º ano',
+    institution: {
+      id: '2',
+      name: 'Colégio Estadual Dom Pedro II',
+      type: 'COLLEGE', // Corrected from 'SCHOOL'
+      characteristics: ['Foco em humanidades', 'Biblioteca especializada']
+    },
+    duration: '6 meses',
+    schedule: {
+      startDate: '2024-03-01',
+      endDate: '2024-08-30',
+      classDays: ['Terça', 'Quinta'],
+      classTime: '09:00 - 10:30'
+    },
+    teachers: ['t2'],
+    students: ['s2']
+  },
+  {
+    id: '3',
+    name: 'Introdução à Programação com Python',
+    description: 'Curso introdutório de programação utilizando a linguagem Python.',
+    level: 'PROFESSIONAL', // Corrected from 'BASIC' to better fit 'Profissionalizante' cycle
+    cycle: 'Profissionalizante',
+    stage: 'N/A',
+    institution: {
+      id: '3',
+      name: 'Centro de Treinamento TechDev',
+      type: 'TECH_CENTER', // Corrected from 'TRAINING_CENTER'
+      characteristics: ['Laboratórios equipados', 'Instrutores experientes']
+    },
+    duration: '3 meses',
+    schedule: {
+      startDate: '2024-01-15',
+      endDate: '2024-04-15',
+      classDays: ['Segunda', 'Quarta'],
+      classTime: '19:00 - 21:00'
+    },
+    teachers: ['t1', 't2'], // Assuming teachers can teach in multiple institutions or courses
+    students: ['s1']
+  },
+  {
+    id: '4',
+    name: 'Inglês Instrumental',
+    description: 'Curso de inglês focado em leitura e interpretação de textos técnicos.',
+    level: 'SUPERIOR', // Corrected from 'INTERMEDIATE'
+    cycle: 'Superior',
+    stage: 'N/A',
+    institution: {
+      id: '4',
+      name: 'Universidade Federal XYZ',
+      type: 'UNIVERSITY',
+      characteristics: ['Convênios internacionais', 'Professores nativos']
+    },
+    duration: '1 semestre',
+    schedule: {
+      startDate: '2024-02-10',
+      endDate: '2024-06-30',
+      classDays: ['Sexta'],
+      classTime: '10:00 - 12:00'
+    },
+    teachers: ['t2'], // Assuming Lucia Ferreira (id:6 from MOCK_USERS) is t2 or a new teacher
+    students: ['s1', 's2']
+  },
+  {
+    id: '5',
+    name: 'Gestão de Projetos Ágeis',
+    description: 'Curso sobre metodologias ágeis para gerenciamento de projetos.',
+    level: 'PROFESSIONAL', // Corrected from 'ADVANCED'
+    cycle: 'Profissionalizante',
+    stage: 'N/A',
+    institution: {
+      id: '5',
+      name: 'Escola de Negócios Inova',
+      type: 'TECH_CENTER', // Corrected from 'TRAINING_CENTER'
+      characteristics: ['Cases reais', 'Networking com profissionais da área']
+    },
+    duration: '2 meses',
+    schedule: {
+      startDate: '2024-05-01',
+      endDate: '2024-06-30',
+      classDays: ['Terça', 'Quinta'],
+      classTime: '18:30 - 20:30'
+    },
+    teachers: ['t1'],
+    students: ['s1']
   }
 ];
 

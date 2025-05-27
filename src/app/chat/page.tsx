@@ -4,6 +4,31 @@ import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { mockCourses } from '@/constants/mockData'
 import ChatRoom from '@/components/chat/ChatRoom'
+import { ChatMessage } from '@/types/communication'
+
+const mockConversationPortugues: ChatMessage[] = [
+  {
+    id: 'msg1-pt-page',
+    senderId: 't1', // Prof. Ricardo Oliveira
+    content: 'Olá Julia, como você está progredindo com os exercícios de cálculo aqui da página?',
+    timestamp: new Date(Date.now() - 1000 * 60 * 7).toISOString(), // 7 minutes ago
+    readBy: ['t1', 's1'],
+  },
+  {
+    id: 'msg2-pt-page',
+    senderId: 's1', // Julia Costa
+    content: 'Olá Professor Ricardo! Estou indo bem, mas tive um pouco de dificuldade com as integrais triplas, como comentei.',
+    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
+    readBy: ['t1', 's1'],
+  },
+  {
+    id: 'msg3-pt-page',
+    senderId: 't1', // Prof. Ricardo Oliveira
+    content: 'Certo. Vamos revisar isso. Qual o primeiro ponto que não ficou claro?',
+    timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(), // 2 minutes ago
+    readBy: ['t1', 's1'],
+  },
+];
 
 export default function ChatPage() {
   const { user } = useAuth()
@@ -61,6 +86,7 @@ export default function ChatPage() {
           <ChatRoom
             classId={selectedClass}
             className={userClasses.find(c => c.id === selectedClass)?.name || ''}
+            initialMessages={mockConversationPortugues}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-gray-500">

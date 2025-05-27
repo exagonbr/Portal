@@ -155,32 +155,32 @@ export default function DashboardSidebar() {
             { href: '/admin/users', icon: 'manage_accounts', label: 'Gestão de Usuários' },
             { href: '/admin/roles', icon: 'admin_panel_settings', label: 'Gestão de Permissões' },
             { href: '/admin/institutions', icon: 'business', label: 'Gestão de Instituições' },
-            { href: '/admin/settings', icon: 'settings', label: 'Configurações do Sistema' },
+            { href: '/admin/units', icon: 'business', label: 'Gestão de Unidades' },
           ]
         },
         {
           section: 'Gestão de Conteúdo',
           items: [
             { href: '/admin/content/library', icon: 'library_books', label: 'Biblioteca Digital' },
-            { href: '/admin/content/upload', icon: 'upload_file', label: 'Envio de Conteúdo' },
-            { href: '/admin/content/search', icon: 'manage_search', label: 'Busca Avançada' },
+            { href: '/admin/content/upload', icon: 'upload_file', label: 'Biblioteca de Videos' },
+            { href: '/admin/content/search', icon: 'manage_search', label: 'Arquivos' },
+          ]
+        },
+        {
+          section: 'Relatorios',
+          items: [
+            { href: '/portal/reports', icon: 'analytics', label: 'Portal de Relatórios' },
           ]
         },
         {
           section: 'Monitoramento',
           items: [
+            { href: '/admin/settings', icon: 'settings', label: 'Configurações do Sistema' },
             { href: '/admin/analytics', icon: 'monitoring', label: 'Análise de Dados' },
             { href: '/admin/logs', icon: 'terminal', label: 'Registros do Sistema' },
             { href: '/admin/performance', icon: 'speed', label: 'Desempenho' },
           ]
         },
-        {
-          section: 'Portais',
-          items: [
-            { href: '/portal/admin', icon: 'admin_panel_settings', label: 'Portal Admin' },
-            { href: '/portal/reports', icon: 'analytics', label: 'Portal de Relatórios' },
-          ]
-        }
       ]
     }
 
