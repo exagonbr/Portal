@@ -2,17 +2,11 @@
 
 import { useState } from 'react';
 import { ContentMetadata, ContentSearchResult } from '@/types/content';
-import OpenAI from "openai";
-import {responseStatus} from "@openai/Responses/ResponseStatus"
 
 interface SearchResponse {
   results: ContentSearchResult[];
   totalResults: number;
 }
-
-const openai = new OpenAI({
-  apiKey: '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',
-});
 
 
 export default function ContentSearch() {
@@ -28,24 +22,17 @@ export default function ContentSearch() {
       setSearching(true);
       setError(null);
 
-      const response = await openai.responses.create({
-        model: "gpt-4.1",
-        input: query,
-        text: {
-          "format": {
-            "type": "text"
-          }
+      // Call API endpoint for content search instead of direct OpenAI call
+      const response = await fetch('/api/content/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        reasoning: {},
-        tools: [],
-        temperature: 1,
-        max_output_tokens: 2048,
-        top_p: 1,
-        store: true
+        body: JSON.stringify({ query }),
       });
 
-      if (response.status != responseStatus.completed ) {
-        throw new Error('Search failed');
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
       }
 
       const data: SearchResponse = await response.json();
@@ -53,6 +40,7 @@ export default function ContentSearch() {
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
+      console.error('Search error:', err);
     } finally {
       setSearching(false);
     }
@@ -75,7 +63,7 @@ export default function ContentSearch() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Buscar conteúdo com IA..."
+              placeholder="Search content with AI..."
               className="w-full pl-10 pr-4 py-2 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined">
@@ -91,7 +79,7 @@ export default function ContentSearch() {
                 : 'bg-blue-500 hover:bg-blue-600'
             }`}
           >
-            {searching ? 'Buscando...' : 'Buscar'}
+            {searching ? 'Searching...' : 'Search'}
           </button>
         </div>
       </div>
@@ -125,7 +113,7 @@ export default function ContentSearch() {
                       {content.title}
                     </h3>
                     <span className="flex-shrink-0 text-sm text-gray-500">
-                      Relevância: {(relevanceScore * 100).toFixed(0)}%
+                      Relevance: {(relevanceScore * 100).toFixed(0)}%
                     </span>
                   </div>
 
@@ -171,7 +159,7 @@ export default function ContentSearch() {
                   onClick={() => window.open(content.url, '_blank')}
                   className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
                 >
-                  Visualizar
+                  View
                 </button>
               </div>
             </div>
@@ -179,7 +167,7 @@ export default function ContentSearch() {
         </div>
       ) : query && !searching ? (
         <div className="text-center py-8 text-gray-500">
-          Nenhum resultado encontrado
+          No results found
         </div>
       ) : null}
     </div>

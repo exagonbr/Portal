@@ -217,12 +217,22 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
 
       {/* Zoom Controls */}
       <div className="flex items-center justify-center space-x-2 p-1.5 bg-gray-800 border-b border-gray-700">
-        <button 
+        <button
           onClick={() => handleZoom('out')}
           className="p-1.5 rounded hover:bg-gray-700 transition-colors duration-200"
           title="Zoom Out (-)"
           aria-label="Zoom out"
         >
+          <FiMinus size={16} />
+        </button>
+        <span className="text-xs text-gray-400 mx-2">{zoom}%</span>
+        <button
+          onClick={() => handleZoom('in')}
+          className="p-1.5 rounded hover:bg-gray-700 transition-colors duration-200"
+          title="Zoom In (+)"
+          aria-label="Zoom in"
+        >
+          <FiPlus size={16} />
         </button>
       </div>
 

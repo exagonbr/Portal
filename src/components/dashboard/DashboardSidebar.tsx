@@ -298,8 +298,7 @@ export default function DashboardSidebar() {
         {
           section: 'Gestão de Conteúdo',
           items: [
-            { href: '/admin/content/library', icon: 'library_books', label: 'Biblioteca Digital' },
-            { href: '/admin/content/upload', icon: 'upload_file', label: 'Biblioteca de Videos' },
+            { href: '/admin/content/library', icon: 'library_books', label: 'Acervo Digital' },
             { href: '/admin/content/search', icon: 'manage_search', label: 'Arquivos' },
           ]
         },
