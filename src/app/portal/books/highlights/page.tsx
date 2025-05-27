@@ -3,6 +3,8 @@
 import React, { useMemo } from 'react';
 import { StarIcon } from '@heroicons/react/24/outline';
 import { mockBooks } from '@/constants/mockData';
+import { mockHighlights } from '@/constants/mockHighlightsData';
+
 
 interface Highlight {
     id: number;
@@ -15,17 +17,6 @@ interface Highlight {
 interface HighlightsMap {
     [bookId: string]: Highlight[];
 }
-
-// Mock highlights data (in real app, this would come from an API/database)
-const mockHighlights: HighlightsMap = {
-    'book-1': [
-        { id: 1, page: 15, text: 'A metodologia científica requer um processo sistemático de investigação...', color: 'yellow', date: '2024-01-15' },
-        { id: 2, page: 28, text: 'Os resultados demonstram uma correlação significativa entre...', color: 'green', date: '2024-01-16' }
-    ],
-    'book-2': [
-        { id: 3, page: 42, text: 'Os princípios fundamentais da teoria podem ser resumidos em...', color: 'blue', date: '2024-01-14' }
-    ]
-};
 
 interface BookWithHighlights {
     id: string;
@@ -85,16 +76,16 @@ export default function HighlightsPage() {
                                             <div className="flex-1">
                                                 <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium">
-                            Página {highlight.page}
+                            Página {highlight.pageNumber}
                           </span>
                                                     <span className="text-xs text-gray-500">
-                            {new Date(highlight.date).toLocaleDateString('pt-BR')}
+                            {new Date(highlight.createdAt).toLocaleDateString('pt-BR')}
                           </span>
                                                 </div>
                                                 <blockquote
                                                     className={`p-3 border-l-4 rounded-r-lg ${colorClasses[highlight.color as keyof typeof colorClasses]}`}
                                                 >
-                                                    {highlight.text}
+                                                    {highlight.content}
                                                 </blockquote>
                                             </div>
                                         </div>
