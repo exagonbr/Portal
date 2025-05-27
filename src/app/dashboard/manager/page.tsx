@@ -8,7 +8,7 @@ import ChatSection from '@/components/dashboard/ChatSection'
 import Leaderboard from '@/components/gamification/Leaderboard'
 import RewardCenter from '@/components/gamification/RewardCenter'
 
-export default function TeacherDashboard() {
+export default function ManagerDashboard() {
   return (
     <div className="space-y-6">
       {/* Overview Cards */}
@@ -17,7 +17,7 @@ export default function TeacherDashboard() {
       {/* Charts */}
       <Charts />
       {/* Gamification Management */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         <Leaderboard />
         <RewardCenter isTeacher={true} />
       </div>
@@ -32,8 +32,6 @@ export default function TeacherDashboard() {
           <ProductList />
         </div>
       </div>
-
-
     </div>
   )
 }
