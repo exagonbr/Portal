@@ -137,12 +137,6 @@ export default function DashboardSidebar() {
             { href: '/reports/performance', icon: 'monitoring', label: 'Desempenho' },
             { href: '/reports/attendance', icon: 'fact_check', label: 'Frequência' },
           ]
-        },
-        {
-          section: 'Portais',
-          items: [
-            { href: '/portal/manager', icon: 'admin_panel_settings', label: 'Portal do Gestor' },
-          ]
         }
       ]
     }

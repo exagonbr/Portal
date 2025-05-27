@@ -56,7 +56,7 @@ export interface Teacher {
 export const MOCK_USERS: Record<string, User> = {
   'admin@portal.com': {
     id: 'admin1',
-    name: 'Admin User',
+    name: 'ADM',
     email: 'admin@portal.com',
     role: 'admin',
     institution: 'Portal Corp',
@@ -92,7 +92,7 @@ export const MOCK_USERS: Record<string, User> = {
   },
   'manager@portal.com': {
     id: 'manager1',
-    name: 'User Manager',
+    name: 'Marina Silva',
     email: 'manager@portal.com',
     role: 'manager',
     institution: 'Portal Corp',
