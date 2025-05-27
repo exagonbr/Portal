@@ -13,6 +13,52 @@ import { mockBooks } from '@/constants/mockData';
 import ImportFilesModal from '@/components/ImportFilesModal';
 import { s3Service } from '@/services/s3Service';
 import { useToast } from '@/components/Toast';
+import SimpleCarousel from "@/components/SimpleCarousel";
+import { mockVideos } from '@/constants/mockData';
+
+const carouselSettings = {
+  slidesToShow: 6,
+  slidesToScroll: 1,
+  infinite: true,
+  dots: true,
+  arrows: false,
+  autoplay: true,
+  autoplaySpeed: 5000,
+  responsive: [
+    {
+      breakpoint: 1536,
+      settings: {
+        slidesToShow: 5,
+      },
+    },
+    {
+      breakpoint: 1280,
+      settings: {
+        slidesToShow: 4,
+      },
+    },
+    {
+      breakpoint: 1024,
+      settings: {
+        slidesToShow: 3,
+      },
+    },
+    {
+      breakpoint: 768,
+      settings: {
+        slidesToShow: 2,
+      },
+    },
+    {
+      breakpoint: 640,
+      settings: {
+        slidesToShow: 1,
+      },
+    },
+  ],
+};
+
+import { carouselBookImages } from '@/constants/mockData';
 
 interface Filters {
   search: string;
@@ -137,8 +183,13 @@ export default function BooksPage() {
   };
 
   return (
+    
     <div className="min-h-screen bg-gray-50 text-black">
       {/* Top Bar */}
+      {/* Hero Section with Featured Carousel */}
+      <section className="relative w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] bg-gradient-to-b from-gray-900 to-gray-800">
+        <SimpleCarousel images={carouselBookImages} autoplaySpeed={3000} />
+      </section>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
         {/* Main Filters */}
         <div className="px-2 sm:px-4 py-2 sm:py-3 space-y-2 sm:space-y-3">
