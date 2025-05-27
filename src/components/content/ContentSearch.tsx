@@ -2,11 +2,18 @@
 
 import { useState } from 'react';
 import { ContentMetadata, ContentSearchResult } from '@/types/content';
+import OpenAI from "openai";
+import {responseStatus} from "@openai/Responses/ResponseStatus"
 
 interface SearchResponse {
   results: ContentSearchResult[];
   totalResults: number;
 }
+
+const openai = new OpenAI({
+  apiKey: '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',
+});
+
 
 export default function ContentSearch() {
   const [query, setQuery] = useState('');
@@ -21,15 +28,23 @@ export default function ContentSearch() {
       setSearching(true);
       setError(null);
 
-      const response = await fetch('/api/content/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await openai.responses.create({
+        model: "gpt-4.1",
+        input: query,
+        text: {
+          "format": {
+            "type": "text"
+          }
         },
-        body: JSON.stringify({ query }),
+        reasoning: {},
+        tools: [],
+        temperature: 1,
+        max_output_tokens: 2048,
+        top_p: 1,
+        store: true
       });
 
-      if (!response.ok) {
+      if (response.status != responseStatus.completed ) {
         throw new Error('Search failed');
       }
 
