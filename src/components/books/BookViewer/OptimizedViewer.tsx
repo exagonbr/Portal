@@ -627,3 +627,180 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
               }`}
               title="Alternar visualização de página dupla"
             >
+              <FiColumns className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Controles à direita */}
+        <div className="flex items-center space-x-1">
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              className={`p-1.5 rounded transition-colors ${
+                showSearch
+                  ? 'bg-blue-500 text-white'
+                  : 'hover:bg-white dark:hover:bg-gray-600'
+              }`}
+              title="Pesquisar"
+            >
+              <FiSearch className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={() => {
+                const bookmark = viewerState.bookmarks.find(b => b.pageNumber === viewerState.currentPage);
+                if (bookmark) {
+                  // Remove bookmark
+                  setViewerState(prev => ({
+                    ...prev,
+                    bookmarks: prev.bookmarks.filter(b => b.id !== bookmark.id)
+                  }));
+                } else {
+                  setIsAddingBookmark(true);
+                }
+              }}
+              className={`p-1.5 rounded transition-colors ${
+                viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage)
+                  ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
+                  : 'hover:bg-white dark:hover:bg-gray-600'
+              }`}
+              title="Alternar marcador"
+            >
+              <FiBookmark className="w-4 h-4" fill={viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage) ? 'currentColor' : 'none'} />
+            </button>
+          </div>
+          
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={handleThemeToggle}
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-600 transition-colors"
+              title="Alternar modo escuro"
+            >
+              {isDarkMode ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
+            </button>
+            
+            <button
+              onClick={handleFullscreenToggle}
+              className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-600 transition-colors"
+              title="Alternar tela cheia"
+            >
+              {viewerState.isFullscreen ? <FiMinimize className="w-4 h-4" /> : <FiMaximize className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Barra de progresso */}
+      <div className="h-1 bg-gray-200 dark:bg-gray-700">
+        <div
+          className="h-full bg-blue-500 transition-all duration-300"
+          style={{ width: `${readingProgress}%` }}
+        />
+      </div>
+
+      {/* Barra de pesquisa */}
+      {showSearch && (
+        <div className="px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="flex items-center space-x-2 max-w-xl mx-auto">
+            <div className="relative flex-1">
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Pesquisar no documento..."
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={!searchQuery.trim() || isSearching}
+              className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+            >
+              {isSearching ? 'Pesquisando...' : 'Pesquisar'}
+            </button>
+            <button
+              onClick={() => {
+                setShowSearch(false);
+                setSearchQuery('');
+                setSearchResults([]);
+              }}
+              className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+          
+          {/* Resultados da pesquisa */}
+          {searchResults.length > 0 && (
+            <div className="mt-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 max-h-40 overflow-y-auto max-w-xl mx-auto">
+              <h4 className="text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">Resultados da Pesquisa</h4>
+              <div className="space-y-1">
+                {searchResults.map((result, i) => (
+                  <div
+                    key={i}
+                    onClick={() => handlePageChange(result.page)}
+                    className="p-2 bg-white dark:bg-gray-700 rounded cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Página {result.page}</span>
+                      <button className="text-xs text-gray-500 hover:text-gray-700">Ir para página</button>
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{result.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal para adicionar marcador */}
+      {isAddingBookmark && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Adicionar Marcador</h3>
+            <input
+              type="text"
+              value={newBookmarkTitle}
+              onChange={(e) => setNewBookmarkTitle(e.target.value)}
+              placeholder="Título do marcador..."
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700"
+              autoFocus
+            />
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={() => {
+                  setIsAddingBookmark(false);
+                  setNewBookmarkTitle('');
+                }}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBookmarkSubmit}
+                disabled={!newBookmarkTitle.trim()}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Área de conteúdo principal */}
+      <div 
+        ref={contentRef}
+        className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900"
+      >
+        {renderBookContent()}
+      </div>
+    </div>
+  );
+};
+
+export default OptimizedViewer;

@@ -17,7 +17,7 @@ import { s3Service } from '../../../services/s3Service';
 import { useToast } from '../../../components/Toast';
 import SimpleCarousel from '../../../components/SimpleCarousel';
 import { carouselBookImages } from '../../../constants/mockData';
-import IntegratedViewer from '../../../components/books/BookViewer/IntegratedViewer';
+import OptimizedViewer from '../../../components/books/BookViewer/OptimizedViewer';
 
 const carouselSettings = {
   slidesToShow: 6,
@@ -214,7 +214,7 @@ export default function BooksPage() {
   if (isViewerOpen && selectedBook) {
     return (
       <div className="h-screen w-full">
-        <IntegratedViewer
+        <OptimizedViewer
           book={selectedBook}
           onBack={handleCloseViewer}
           onAnnotationAdd={handleAnnotationAdd}
