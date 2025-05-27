@@ -31,11 +31,9 @@ const bookshelfCategories: BookshelfCategory[] = [
   { name: 'Entretenimento', href: '/portal/books/category/entertainment' },
 ];
 
-export default function BookshelfSidebar() {
+export default function BookSidebar() {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
-
-
 
   return (
     <div className="w-64 h-screen  text-white flex flex-col">

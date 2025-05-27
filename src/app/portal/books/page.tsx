@@ -260,15 +260,15 @@ export default function BooksPage() {
       </div>
 
       {/* Books Grid */}
-      <div className="p-6">
+      <div className="p-4">
         <div
           className={`${
             filters.view === 'cover'
-              ? 'grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2 sm:gap-3 md:gap-4'
+              ? 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3 sm:gap-4'
               : filters.view === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8'
-              : 'space-y-2 sm:space-y-4'
-          } px-2 sm:px-4`}
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
+              : 'space-y-3'
+          }`}
         >
           {filteredBooks.map(book => (
             <div key={book.id} className="h-full">

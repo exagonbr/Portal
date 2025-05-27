@@ -309,7 +309,7 @@ export default function DashboardSidebar() {
                 ${isCollapsed ? 'justify-center' : ''}`}
             >
               <span className={`material-symbols-outlined group-hover:animate-pulse transition-transform duration-300 ${isCollapsed ? 'text-[24px]' : 'text-[20px]'}`}>logout</span>
-              {!isCollapsed && <span className="text-sm font-medium">Encerrar Sessão</span>}
+              {!isCollapsed && <span className="text-sm font-medium">Sair da Plataforma</span>}
               
               {/* Tooltip for collapsed state */}
               {isCollapsed && (

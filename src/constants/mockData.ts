@@ -224,8 +224,8 @@ export const mockBooks: Book[] = [
     duration: '2h 30min',
     format: 'pdf',
     filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/740706609aa4939aa3c7930178bc516d4f5c2b905de7ab47637bec6bf91dcaa5.pdf',
-    pageCount: 120
-
+    pageCount: 120,
+    progress: 10
   },
   {
     id: 'test-book-2',
@@ -237,8 +237,8 @@ export const mockBooks: Book[] = [
     duration: '1h 45min',
     format: 'pdf',
     filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/c76a59abd394730dfde13cb51604cc8ad0dfedcfb34a931f61182b9338c84822.pdf',
-    pageCount: 85
-
+    pageCount: 85,
+    progress: 10
   },
   {
     id: 'test-book-3',
@@ -250,8 +250,8 @@ export const mockBooks: Book[] = [
     duration: '3h 15min',
     format: 'pdf',
     filePath: 'https://editora-liberty.s3.sa-east-1.amazonaws.com/upload/51814c3b79838003d288662610734eb8c90dd05fb6b667ee8e2435ed1e794d4c.pdf',
-    pageCount: 200
-
+    pageCount: 200,
+    progress: 10
   },
   {
     id: 'test-book-4',
@@ -263,8 +263,8 @@ export const mockBooks: Book[] = [
     duration: '2h 00min',
     format: 'pdf',
     filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf',
-    pageCount: 150
-
+    pageCount: 150,
+    progress: 10
   },
   {
     id: 'test-book-5',
@@ -276,8 +276,8 @@ export const mockBooks: Book[] = [
     duration: '2h 00min',
     format: 'epub',
     filePath: 'https://github.com/daisy/epub-accessibility-tests/releases/download/math-extdesc-1.1.1/Accessibility-Tests-Extended-Descriptions-v1.1.1.epub',
-    pageCount: 150
-
+    pageCount: 150,
+    progress: 10
   }
 ];
 
