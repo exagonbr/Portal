@@ -3,11 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 
 interface BookModalProps {
   isOpen: boolean;
   onClose: () => void;
   book: {
+    id?: string;
     thumbnail: string;
     title: string;
     duration: string;

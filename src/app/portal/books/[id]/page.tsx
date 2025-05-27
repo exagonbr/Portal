@@ -11,18 +11,41 @@ import Image from 'next/image';
 export default function BookPage() {
   const params = useParams();
   const bookId = params.id as string;
-  
-  // Find the book from mock data
-  const book = mockBooks.find(b => b.id === bookId);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [book, setBook] = React.useState<typeof mockBooks[0] | null>(null);
+  const [annotations, setAnnotations] = React.useState<number>(0);
+  const [highlights, setHighlights] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      const foundBook = mockBooks.find(b => b.id === bookId);
+      setBook(foundBook || null);
+      setIsLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [bookId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-white">Carregando livro...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!book) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Livro não encontrado</h1>
+          <h1 className="text-2xl font-bold text-white mb-4">Livro não encontrado</h1>
           <Link 
             href="/portal/books"
-            className="text-blue-600 hover:text-blue-800 flex items-center justify-center gap-2"
+            className="text-blue-400 hover:text-blue-300 flex items-center justify-center gap-2"
           >
             <ArrowLeftIcon className="w-5 h-5" />
             Voltar para Biblioteca
@@ -34,6 +57,7 @@ export default function BookPage() {
 
   // Use sample files for demonstration
   const fileUrl = book.filePath || `/books/MahaMamo.pdf`;
+  const format = book.format || 'pdf';
 
   return (
     <div className="flex h-screen bg-gray-900">
@@ -53,9 +77,19 @@ export default function BookPage() {
           <p className="text-sm text-gray-400 mb-4">{book.author}</p>
         </div>
 
-        {/* Navigation */}
-        <div className="flex-1">
-          {/* Add page navigation here if needed */}
+        {/* Book Stats */}
+        <div className="bg-gray-700 rounded-lg p-4 mb-6">
+          <h3 className="text-sm font-semibold text-gray-300 mb-3">Estatísticas</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Anotações</span>
+              <span className="text-sm text-white">{annotations}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">Destaques</span>
+              <span className="text-sm text-white">{highlights}</span>
+            </div>
+          </div>
         </div>
 
         {/* Back to Library Button */}
@@ -72,7 +106,9 @@ export default function BookPage() {
       <div className="flex-1 h-full overflow-hidden">
         <BookReader 
           url={fileUrl}
-          format={book.format as 'pdf' | 'epub' || 'pdf'} 
+          format={format as 'pdf' | 'epub' | 'html'}
+          onAnnotationsChange={setAnnotations}
+          onHighlightsChange={setHighlights}
         />
       </div>
     </div>
