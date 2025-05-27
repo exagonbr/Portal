@@ -14,7 +14,9 @@ export interface Book {
   progress?: number;
   format?: 'pdf' | 'epub';
   filePath?: string;
+  pageCount?: number;
 }
+
 
 export interface Video {
   id: string;
@@ -211,72 +213,60 @@ const videoIds = [
 const videoThumbnails = videoIds.map(id => `https://img.youtube.com/vi/${id}/maxresdefault.jpg`);
 
 // Generate 100 mock books with real educational book titles
-export const mockBooks: Book[] = Array.from({ length: 100 }, (_, i) => ({
-  id: `book-${i + 1}`,
-  thumbnail: bookCovers[i],
-  title: [
-    'Cálculo - Volume 1',
-    'Física Conceitual',
-    'Biologia Molecular da Célula',
-    'História do Brasil',
-    'Geografia Mundial Contemporânea',
-    'Química Geral',
-    'Literatura Brasileira',
-    'Filosofia: Uma Introdução',
-    'Atlas de Anatomia Humana',
-    'Introdução à Programação',
-    'Álgebra Linear',
-    'Geometria Analítica',
-    'Bioquímica Básica',
-    'História da Arte',
-    'Gramática',
-    'Psicologia Cognitiva',
-    'Sociologia',
-    'Astronomia',
-    'Ecologia',
-    'Metodologia Científica'
-  ][Math.floor(i / 5)] + ` - Volume ${(i % 5) + 1}`,
-  author: [
-    'James Stewart',
-    'Paul G. Hewitt',
-    'Bruce Alberts',
-    'Boris Fausto',
-    'Demétrio Magnoli',
-    'John C. Kotz',
-    'Alfredo Bosi',
-    'Marilena Chauí',
-    'Frank H. Netter',
-    'H. M. Deitel'
-  ][Math.floor(i / 10)],
-  publisher: [
-    'Pearson',
-    'Cengage Learning',
-    'Artmed',
-    'Companhia das Letras',
-    'Moderna',
-    'Atlas',
-    'Saraiva',
-    'Bookman',
-    'Elsevier',
-    'McGraw-Hill'
-  ][Math.floor(i / 10)],
-  synopsis: [
-    'Uma abordagem completa e didática dos conceitos fundamentais...',
-    'Apresentação clara e objetiva dos princípios básicos...',
-    'Referência essencial para estudantes e profissionais...',
-    'Análise aprofundada dos principais temas...',
-    'Guia prático e teórico com exemplos e exercícios...',
-    'Material indispensável para o aprendizado...',
-    'Obra fundamental que abrange todos os aspectos...',
-    'Texto atualizado com as últimas descobertas...',
-    'Conteúdo rico em ilustrações e exemplos práticos...',
-    'Abordagem moderna e contextualizada do tema...'
-  ][Math.floor(i / 10)],
-  duration: `${Math.floor(Math.random() * 10) + 1}h ${Math.floor(Math.random() * 59)}min`,
-  progress: Math.random() > 0.7 ? Math.floor(Math.random() * 100) : undefined,
-  format: Math.random() > 0.5 ? 'pdf' : 'epub',
-  filePath: `/books/MahaMamo.pdf`
-}));
+export const mockBooks: Book[] = [
+  {
+    id: 'test-book-1',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10001-L.jpg',
+    title: 'Test Book 1',
+    author: 'Test Author 1',
+    publisher: 'Test Publisher',
+    synopsis: 'Test book for PDF reader functionality',
+    duration: '2h 30min',
+    format: 'pdf',
+    filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/740706609aa4939aa3c7930178bc516d4f5c2b905de7ab47637bec6bf91dcaa5.pdf',
+    pageCount: 120
+
+  },
+  {
+    id: 'test-book-2',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10002-L.jpg',
+    title: 'Test Book 2',
+    author: 'Test Author 2',
+    publisher: 'Test Publisher',
+    synopsis: 'Test book for PDF reader functionality',
+    duration: '1h 45min',
+    format: 'pdf',
+    filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/c76a59abd394730dfde13cb51604cc8ad0dfedcfb34a931f61182b9338c84822.pdf',
+    pageCount: 85
+
+  },
+  {
+    id: 'test-book-3',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10003-L.jpg',
+    title: 'Test Book 3',
+    author: 'Test Author 3',
+    publisher: 'Test Publisher',
+    synopsis: 'Test book for PDF reader functionality',
+    duration: '3h 15min',
+    format: 'pdf',
+    filePath: 'https://editora-liberty.s3.sa-east-1.amazonaws.com/upload/51814c3b79838003d288662610734eb8c90dd05fb6b667ee8e2435ed1e794d4c.pdf',
+    pageCount: 200
+
+  },
+  {
+    id: 'test-book-4',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10004-L.jpg',
+    title: 'Test Book 4',
+    author: 'Test Author 4',
+    publisher: 'Test Publisher',
+    synopsis: 'Test book for PDF reader functionality',
+    duration: '2h 00min',
+    format: 'pdf',
+    filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf',
+    pageCount: 150
+
+  }
+];
 
 // Generate 100 mock videos with educational content
 export const mockVideos: Video[] = Array.from({ length: 100 }, (_, i) => ({

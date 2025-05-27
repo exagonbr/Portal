@@ -27,12 +27,15 @@ interface BookCardProps {
   synopsis: string;
   format?: string;
   viewMode?: 'grid' | 'list' | 'cover';
+  pageCount?: number;
 }
+
 
 export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const { thumbnail, title, duration, progress, author, publisher, id } = props;
+  const { thumbnail, title, duration, progress, author, publisher, id, pageCount } = props;
+
 
   // Mock data for annotations and highlights
   // In a real app, this would come from a backend/database
@@ -43,6 +46,7 @@ export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps)
     <>
       <Link 
         href={`/portal/books/${id}`}
+
         className="p-2 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-lg"
         aria-label="Abrir livro"
       >
@@ -120,7 +124,9 @@ export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps)
               <div className="text-sm text-gray-600">
                 <p><span className="font-medium">Autor(a): </span>{author}</p>
                 <p><span className="font-medium">Editora: </span>{publisher}</p>
+                {pageCount && <p><span className="font-medium">Páginas: </span>{pageCount}</p>}
               </div>
+
               <ProgressBar />
             </div>
 
@@ -156,6 +162,8 @@ export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps)
             <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
               <h3 className="font-semibold truncate mb-1">{title}</h3>
               <p className="text-sm text-gray-200 truncate">{author}</p>
+              {pageCount && <p className="text-xs text-gray-300">Páginas: {pageCount}</p>}
+
               <div className="mt-2 flex items-center justify-between">
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   progress ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
@@ -190,10 +198,11 @@ export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps)
 
   // Default grid view - Modified to show info on the side
   return (
-    <div className="w-full h-[240px] bg-white rounded-lg shadow-lg overflow-hidden transition-transform hover:scale-[1.02]">
-      <div className="flex h-full">
+    <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden transition-transform hover:scale-[1.02] min-h-[200px] lg:min-h-[280px]">
+      <div className="flex flex-col lg:flex-row h-full">
         {/* Thumbnail */}
-        <div className="relative w-[100%] max-w-[160px] flex-shrink-0">
+        <div className="relative w-full lg:w-[40%] xl:w-[35%] flex-shrink-0">
+
           <div className="relative aspect-[2/3] w-full">
             <img 
               src={thumbnail} 
@@ -201,9 +210,10 @@ export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps)
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
             />
-            <div className={`absolute top-2 left-2 px-2 py-1 text-xs rounded-full shadow-md ${
+            <div className={`absolute top-2 left-2 px-2 py-1 text-[0.65rem] sm:text-xs rounded-full shadow-md ${
               progress ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
+            } whitespace-nowrap`}>
+
               {progress ? `${progress}%` : 'Não iniciado'}
             </div>
             
@@ -220,31 +230,38 @@ export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps)
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 flex flex-col p-5">
+        <div className="flex-1 min-w-0 flex flex-col p-3 sm:p-4 lg:p-5">
+
           <div className="relative mb-3">
             <div className="absolute right-0 -top-1 flex gap-2">
               <StatusIcons />
             </div>
-            <h3 
-              className="text-lg font-semibold truncate hover:text-blue-600 transition-colors pr-24" 
+            <h3
+              className="text-base lg:text-lg font-semibold line-clamp-2 hover:text-blue-600 transition-colors pr-8 lg:pr-24"
               title={title}
             >
+
               {title}
             </h3>
           </div>
 
-          <div className="flex-1">
-            <div className="text-sm text-gray-600 space-y-2">
-              <p><span className="font-medium">Autor(a): </span>{author || 'Autor(a) desconhecido(a)'}</p>
-              <p><span className="font-medium">Editora: </span>{publisher}</p>
-              {duration && <p><span className="font-medium">Duração: </span>{duration}</p>}
+          <div className="flex-1 overflow-hidden">
+            <div className="text-sm text-gray-600 space-y-1 sm:space-y-2">
+
+              <p className="truncate"><span className="font-medium">Autor(a): </span>{author || 'Autor(a) desconhecido(a)'}</p>
+              <p className="truncate"><span className="font-medium">Editora: </span>{publisher}</p>
+              {duration && <p className="truncate"><span className="font-medium">Duração: </span>{duration}</p>}
+              {pageCount && <p><span className="font-medium">Páginas: </span>{pageCount}</p>}
+
             </div>
+
             <div className="mt-4">
               <ProgressBar />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-auto pt-4">
+          <div className="flex justify-end gap-2 sm:gap-3 mt-auto pt-2 sm:pt-4">
+
             <ActionButtons />
           </div>
         </div>

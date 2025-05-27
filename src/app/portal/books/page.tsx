@@ -10,6 +10,9 @@ import {
 } from '@heroicons/react/24/outline';
 import BookCard from '../../../components/BookCard';
 import { mockBooks } from '@/constants/mockData';
+import ImportFilesModal from '@/components/ImportFilesModal';
+import { s3Service } from '@/services/s3Service';
+import { useToast } from '@/components/Toast';
 
 interface Filters {
   search: string;
@@ -35,6 +38,10 @@ export default function BooksPage() {
     category: 'all',
     showType: 'all'
   });
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const { showToast } = useToast();
 
   // Filter and sort books
   const filteredBooks = useMemo(() => {
@@ -88,15 +95,56 @@ export default function BooksPage() {
     });
   }, [filters]);
 
+  const handleImport = async (files: File[]) => {
+    if (!window.confirm(`Confirma a importação de ${files.length} arquivo(s)?`)) {
+      return;
+    }
+
+    for (const file of files) {
+      try {
+        // Determine content type based on file type
+        const contentTypeMap: Record<string, any> = {
+          'application/pdf': 'PDF',
+          'application/epub+zip': 'EPUB'
+        };
+        const contentType = contentTypeMap[file.type] || 'PDF';
+
+        // Initiate upload to get presigned URL
+        const { uploadUrl } = await s3Service.initiateUpload(file, {
+          title: file.name,
+          type: contentType
+        });
+
+        // Upload file to presigned URL
+        const response = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Falha ao enviar o arquivo ${file.name}`);
+        }
+
+        console.log(`Arquivo ${file.name} enviado com sucesso.`);
+      } catch (error) {
+        console.error(error);
+        showToast({ type: 'error', message: `Erro ao enviar o arquivo ${file.name}: ${error instanceof Error ? error.message : error}` });
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-black">
       {/* Top Bar */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
         {/* Main Filters */}
-        <div className="px-4 py-3 space-y-3">
-          <div className="flex items-center justify-between gap-4">
+        <div className="px-2 sm:px-4 py-2 sm:py-3 space-y-2 sm:space-y-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
             {/* Search Bar */}
-            <div className="flex-1 max-w-2xl">
+            <div className="flex-1 w-full sm:max-w-2xl">
               <div className="relative">
                 <input
                   type="text"
@@ -115,9 +163,9 @@ export default function BooksPage() {
             <div className="flex items-center gap-4">
               <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
                 <button
-                onClick={() => setFilters(prev => ({ ...prev, view: 'grid' }))}
-                className={`p-2 rounded-md transition-all ${
-                  filters.view === 'grid'
+                  onClick={() => setFilters(prev => ({ ...prev, view: 'grid' }))}
+                  className={`p-2 rounded-md transition-all ${
+                    filters.view === 'grid'
                       ? 'bg-white shadow text-blue-600'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
@@ -148,13 +196,17 @@ export default function BooksPage() {
                   <Square2StackIcon className="w-5 h-5" />
                 </button>
               </div>
-
-
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              >
+                Importar
+              </button>
             </div>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             <div className="flex items-center space-x-2">
               <AdjustmentsHorizontalIcon className="w-5 h-5 text-gray-500" />
               <select
@@ -182,7 +234,7 @@ export default function BooksPage() {
                       showType: type.value as Filters['showType']
                     }))
                   }
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                     filters.showType === type.value
                       ? 'bg-blue-100 text-blue-700'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -192,12 +244,12 @@ export default function BooksPage() {
                 </button>
               ))}
             </div>
-            <select
+              <select
                 value={filters.orderBy}
                 onChange={(e) =>
                   setFilters(prev => ({ ...prev, orderBy: e.target.value }))
                 }
-                className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                className="p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
               >
                 <option value="title">Título</option>
                 <option value="author">Autor</option>
@@ -212,11 +264,11 @@ export default function BooksPage() {
         <div
           className={`${
             filters.view === 'cover'
-              ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4'
+              ? 'grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2 sm:gap-3 md:gap-4'
               : filters.view === 'grid'
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-8'
-                : 'space-y-4'
-          }`}
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8'
+              : 'space-y-2 sm:space-y-4'
+          } px-2 sm:px-4`}
         >
           {filteredBooks.map(book => (
             <div key={book.id} className="h-full">
@@ -245,6 +297,12 @@ export default function BooksPage() {
           </div>
         )}
       </div>
+
+      <ImportFilesModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImport}
+      />
     </div>
   );
 }
