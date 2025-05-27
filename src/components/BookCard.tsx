@@ -8,12 +8,11 @@ import {
   PencilSquareIcon,
   StarIcon
 } from '@heroicons/react/24/outline';
-import { 
+import {
   HeartIcon as HeartSolidIcon,
   PencilSquareIcon as PencilSquareSolidIcon,
   StarIcon as StarSolidIcon
 } from '@heroicons/react/24/solid';
-import Link from 'next/link';
 import BookModal from './BookModal';
 
 interface BookCardProps {
@@ -28,10 +27,11 @@ interface BookCardProps {
   format?: string;
   viewMode?: 'grid' | 'list' | 'cover';
   pageCount?: number;
+  onBookOpen?: () => void;
 }
 
 
-export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps) {
+export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: BookCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const { thumbnail, title, duration, progress, author, publisher, id, pageCount } = props;
@@ -48,22 +48,22 @@ export default function BookCard({ viewMode = 'grid', ...props }: BookCardProps)
 
   const ActionButtons: React.FC<ActionButtonsProps> = ({ size = 'default' }) => (
     <>
-      <Link 
-        href={`/portal/books/${id}`}
+      <button
+        onClick={onBookOpen}
         className={`${
-          size === 'small' 
-            ? 'p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-md' 
+          size === 'small'
+            ? 'p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-md'
             : 'p-2 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-lg'
         }`}
         aria-label="Abrir livro"
       >
         <BookOpenIcon className={size === 'small' ? 'w-5 h-5 text-blue-600' : 'w-8 h-8 text-blue-600'} />
-      </Link>
-      <button 
+      </button>
+      <button
         onClick={() => setIsModalOpen(true)}
         className={`${
-          size === 'small' 
-            ? 'p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-md' 
+          size === 'small'
+            ? 'p-1.5 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-md'
             : 'p-2 rounded-full bg-white/90 hover:bg-white transition-colors duration-200 shadow-lg'
         }`}
         aria-label="Mais informações"

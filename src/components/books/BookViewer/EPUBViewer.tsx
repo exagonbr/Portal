@@ -6,6 +6,7 @@ import { Book } from '@/constants/mockData';
 import { Annotation, Highlight, Bookmark, ViewerState } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import screenfull from 'screenfull';
+import { FiX } from 'react-icons/fi';
 
 interface EPUBViewerProps {
   fileUrl: string;
@@ -41,6 +42,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
   });
   const [totalPages, setTotalPages] = useState<number>(0);
   const [bookMetadata, setBookMetadata] = useState<any>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     if (!viewerRef.current) return;
@@ -253,14 +255,33 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     format: 'epub'
   };
 
+  // Toggle dark mode
+  const handleThemeToggle = useCallback(() => {
+    setIsDarkMode(prev => !prev);
+    
+    // Apply dark mode to EPUB renderer if needed
+    if (rendition) {
+      rendition.themes.register('dark', {
+        'body': { 'color': '#e5e7eb !important', 'background-color': '#1f2937 !important' },
+        'a': { 'color': '#60a5fa !important' }
+      });
+      rendition.themes.register('light', {
+        'body': { 'color': '#1f2937 !important', 'background-color': '#ffffff !important' },
+        'a': { 'color': '#3b82f6 !important' }
+      });
+      
+      rendition.themes.select(isDarkMode ? 'light' : 'dark');
+    }
+  }, [rendition, isDarkMode]);
+
   return (
-    <div 
+    <div
       ref={containerRef}
-      className={`flex h-full ${viewerState.isFullscreen ? 'bg-gray-900' : ''}`}
+      className={`flex h-full ${viewerState.isFullscreen ? 'bg-gray-900' : ''} ${isDarkMode ? 'dark' : ''}`}
     >
       <div className="flex-1 overflow-auto relative">
-        <div 
-          ref={viewerRef} 
+        <div
+          ref={viewerRef}
           className="w-full h-full"
           style={{ minHeight: '600px' }}
         />
@@ -271,19 +292,24 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
           .map(annotation => (
             <div
               key={annotation.id}
-              className="absolute bg-yellow-200 bg-opacity-80 p-2 rounded shadow-lg"
+              className="absolute bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg shadow-lg border border-yellow-200 dark:border-yellow-800/30"
               style={{
                 left: `${annotation.position.x}px`,
                 top: `${annotation.position.y}px`,
-                zIndex: 10
+                zIndex: 10,
+                maxWidth: '250px'
               }}
             >
-              <p className="text-xs text-gray-800">{annotation.content}</p>
+              <div className="flex justify-between items-start mb-1">
+                <span className="text-xs text-yellow-600 dark:text-yellow-400">Note</span>
+                <span className="text-xs text-gray-500">{new Date(annotation.createdAt).toLocaleTimeString()}</span>
+              </div>
+              <p className="text-sm text-gray-800 dark:text-gray-200">{annotation.content}</p>
               <button
                 onClick={() => handleAnnotationDelete(annotation.id)}
-                className="text-red-500 text-xs mt-1"
+                className="text-xs text-red-500 hover:text-red-600 mt-2 flex items-center"
               >
-                Delete
+                <FiX className="w-3 h-3 mr-1" /> Remove
               </button>
             </div>
           ))}
@@ -296,6 +322,8 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
         isDualPage={viewerState.isDualPage}
         isFullscreen={viewerState.isFullscreen}
         bookmarks={viewerState.bookmarks}
+        annotations={viewerState.annotations}
+        highlights={viewerState.highlights}
         onPageChange={handlePageChange}
         onZoomChange={handleZoomChange}
         onDualPageToggle={handleDualPageToggle}
@@ -304,6 +332,8 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
         onBookmarkDelete={handleBookmarkDelete}
         onAnnotationAdd={handleAnnotationAdd}
         onHighlightAdd={handleHighlightAdd}
+        onThemeToggle={handleThemeToggle}
+        isDarkMode={isDarkMode}
       />
     </div>
   );

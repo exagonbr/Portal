@@ -2,8 +2,8 @@ export interface ClassChat {
   id: string;
   classId: string;
   messages: ChatMessage[];
-  participants: string[]; // User IDs
-  lastActivity: string; // ISO timestamp
+  participants: string[]; // IDs de Usuários
+  lastActivity: string; // Timestamp ISO
 }
 
 export interface ChatMessage {
@@ -12,7 +12,7 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   attachments?: ChatAttachment[];
-  readBy: string[]; // User IDs
+  readBy: string[]; // IDs de Usuários
 }
 
 export interface ChatAttachment {
@@ -24,14 +24,14 @@ export interface ChatAttachment {
 }
 
 export enum ForumTagCategory {
-  Question = 'Question',
-  Discussion = 'Discussion',
-  Resource = 'Resource',
-  Assignment = 'Assignment',
-  Event = 'Event',
-  Announcement = 'Announcement',
-  Technical = 'Technical',
-  General = 'General'
+  Question = 'Pergunta',
+  Discussion = 'Discussão',
+  Resource = 'Recurso',
+  Assignment = 'Tarefa',
+  Event = 'Evento',
+  Announcement = 'Anúncio',
+  Technical = 'Técnico',
+  General = 'Geral'
 }
 
 export interface ForumThread {
@@ -53,13 +53,13 @@ export interface ForumThread {
 export interface ForumReply {
   id: string;
   threadId: string;
-  parentReplyId?: string; // For nested replies
+  parentReplyId?: string; // Para respostas aninhadas
   content: string;
   authorId: string;
   createdAt: string;
   updatedAt: string;
   attachments?: ForumAttachment[];
-  likes: string[]; // User IDs
+  likes: string[]; // IDs de Usuários
 }
 
 export interface ForumAttachment {
@@ -77,17 +77,17 @@ export interface Announcement {
   authorId: string;
   createdAt: string;
   expiresAt?: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: 'baixa' | 'média' | 'alta' | 'urgente';
   scope: {
-    type: 'global' | 'class' | 'course';
-    targetId?: string; // classId or courseId if not global
+    type: 'global' | 'turma' | 'curso';
+    targetId?: string; // classId ou courseId se não for global
   };
   notifications: {
     email: boolean;
     push: boolean;
   };
   attachments?: AnnouncementAttachment[];
-  acknowledgments: string[]; // User IDs who have seen/acknowledged
+  acknowledgments: string[]; // IDs de Usuários que viram/reconheceram
 }
 
 export interface AnnouncementAttachment {

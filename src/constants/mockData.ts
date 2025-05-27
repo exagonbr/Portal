@@ -445,7 +445,7 @@ export const mockBooks: Book[] = [
     synopsis: 'Test book for EPUB reader functionality',
     duration: '2h 00min',
     format: 'epub',
-    filePath: 'https://github.com/daisy/epub-accessibility-tests/releases/download/math-extdesc-1.1.1/Accessibility-Tests-Extended-Descriptions-v1.1.1.epub',
+    filePath: '/books/9786585208116.epub',
     pageCount: 150,
     progress: 10
   }
@@ -505,7 +505,7 @@ export const carouselBookImages = [
   {
     src: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
     alt: 'Biblioteca Digital',
-    title: 'Acervo Completo'
+    title: 'Acervo Completo - Globo Livros'
   },
   {
     src: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',

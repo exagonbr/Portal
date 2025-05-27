@@ -1,20 +1,23 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Bars3Icon,
   MagnifyingGlassIcon,
   Squares2X2Icon,
   AdjustmentsHorizontalIcon,
-  Square2StackIcon
+  Square2StackIcon,
+  XMarkIcon,
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 import BookCard from '../../../components/BookCard';
-import { mockBooks } from '@/constants/mockData';
-import ImportFilesModal from '@/components/ImportFilesModal';
-import { s3Service } from '@/services/s3Service';
-import { useToast } from '@/components/Toast';
-import SimpleCarousel from "@/components/SimpleCarousel";
-import { mockVideos } from '@/constants/mockData';
+import { mockBooks, Book } from '../../../constants/mockData';
+import ImportFilesModal from '../../../components/ImportFilesModal';
+import { s3Service } from '../../../services/s3Service';
+import { useToast } from '../../../components/Toast';
+import SimpleCarousel from '../../../components/SimpleCarousel';
+import { carouselBookImages } from '../../../constants/mockData';
+import IntegratedViewer from '../../../components/books/BookViewer/IntegratedViewer';
 
 const carouselSettings = {
   slidesToShow: 6,
@@ -58,8 +61,6 @@ const carouselSettings = {
   ],
 };
 
-import { carouselBookImages } from '@/constants/mockData';
-
 interface Filters {
   search: string;
   view: 'grid' | 'list' | 'cover';
@@ -86,6 +87,8 @@ export default function BooksPage() {
   });
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const { showToast } = useToast();
 
@@ -182,14 +185,54 @@ export default function BooksPage() {
     }
   };
 
+  const handleBookOpen = useCallback((book: Book) => {
+    setSelectedBook(book);
+    setIsViewerOpen(true);
+  }, []);
+
+  const handleCloseViewer = useCallback(() => {
+    setIsViewerOpen(false);
+    setSelectedBook(null);
+  }, []);
+
+  const handleAnnotationAdd = useCallback((annotation: any) => {
+    console.log('Anotação adicionada:', annotation);
+    showToast({ type: 'success', message: 'Anotação adicionada com sucesso!' });
+  }, [showToast]);
+
+  const handleHighlightAdd = useCallback((highlight: any) => {
+    console.log('Destaque adicionado:', highlight);
+    showToast({ type: 'success', message: 'Destaque adicionado com sucesso!' });
+  }, [showToast]);
+
+  const handleBookmarkAdd = useCallback((bookmark: any) => {
+    console.log('Marcador adicionado:', bookmark);
+    showToast({ type: 'success', message: 'Marcador adicionado com sucesso!' });
+  }, [showToast]);
+
+  // Se o visualizador estiver aberto, mostrar apenas ele
+  if (isViewerOpen && selectedBook) {
+    return (
+      <div className="h-screen w-full">
+        <IntegratedViewer
+          book={selectedBook}
+          onBack={handleCloseViewer}
+          onAnnotationAdd={handleAnnotationAdd}
+          onHighlightAdd={handleHighlightAdd}
+          onBookmarkAdd={handleBookmarkAdd}
+        />
+      </div>
+    );
+  }
+
   return (
-    
     <div className="min-h-screen bg-gray-50 text-black">
-      {/* Top Bar */}
       {/* Hero Section with Featured Carousel */}
       <section className="relative w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] bg-gradient-to-b from-gray-900 to-gray-800">
         <SimpleCarousel images={carouselBookImages} autoplaySpeed={3000} />
       </section>
+
+      {/* Top Bar */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
         {/* Main Filters */}
         <div className="px-2 sm:px-4 py-2 sm:py-3 space-y-2 sm:space-y-3">
@@ -295,17 +338,17 @@ export default function BooksPage() {
                 </button>
               ))}
             </div>
-              <select
-                value={filters.orderBy}
-                onChange={(e) =>
-                  setFilters(prev => ({ ...prev, orderBy: e.target.value }))
-                }
-                className="p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
-              >
-                <option value="title">Título</option>
-                <option value="author">Autor</option>
-                <option value="progress">Progresso</option>
-              </select>
+            <select
+              value={filters.orderBy}
+              onChange={(e) =>
+                setFilters(prev => ({ ...prev, orderBy: e.target.value }))
+              }
+              className="p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+            >
+              <option value="title">Título</option>
+              <option value="author">Autor</option>
+              <option value="progress">Progresso</option>
+            </select>
           </div>
         </div>
       </div>
@@ -334,6 +377,8 @@ export default function BooksPage() {
                 duration={book.duration}
                 progress={book.progress}
                 format={book.format}
+                pageCount={book.pageCount}
+                onBookOpen={() => handleBookOpen(book)}
               />
             </div>
           ))}

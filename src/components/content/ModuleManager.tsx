@@ -45,15 +45,15 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       setLoading(true);
       setError(null);
       
-      // This would be replaced with an actual API call
-      // For now, we'll use mock data
+      // Isso seria substituído por uma chamada real à API
+      // Por enquanto, usaremos dados simulados
       const mockCollection: Collection = {
         id: collectionId,
         name: 'Matemática Básica',
         synopsis: 'Coleção de vídeos sobre matemática básica para o ensino fundamental',
         coverImage: '/placeholder-thumbnail.png',
         supportMaterial: 'https://example.com/math-support-material.pdf',
-        totalDuration: 3600, // 1 hour
+        totalDuration: 3600, // 1 hora
         subject: 'Matemática',
         modules: [
           {
@@ -75,7 +75,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       
       setCollection(mockCollection);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load collection');
+      setError(err instanceof Error ? err.message : 'Falha ao carregar coleção');
     } finally {
       setLoading(false);
     }
@@ -83,15 +83,15 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
 
   const loadAvailableVideos = async () => {
     try {
-      // This would be replaced with an actual API call
-      // Mock videos for now
+      // Isso seria substituído por uma chamada real à API
+      // Vídeos simulados por enquanto
       const mockVideos: Video[] = [
         {
           id: 'video-1',
           name: 'Introdução à Álgebra - Parte 1',
           moduleId: 'module-1',
           videoUrl: 'https://example.com/videos/algebra-intro-1.mp4',
-          duration: 600, // 10 minutes
+          duration: 600, // 10 minutos
           authors: ['Prof. João Silva'],
           educationCycle: {
             level: 'FUNDAMENTAL',
@@ -106,7 +106,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
           name: 'Introdução à Álgebra - Parte 2',
           moduleId: 'module-1',
           videoUrl: 'https://example.com/videos/algebra-intro-2.mp4',
-          duration: 720, // 12 minutes
+          duration: 720, // 12 minutos
           authors: ['Prof. João Silva'],
           educationCycle: {
             level: 'FUNDAMENTAL',
@@ -119,7 +119,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       ];
       setAvailableVideos(mockVideos);
     } catch (err) {
-      console.error('Failed to load available videos', err);
+      console.error('Falha ao carregar vídeos disponíveis', err);
     }
   };
 
@@ -132,7 +132,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
 
       if (!collection) return;
 
-      // This would be replaced with an actual API call
+      // Isso seria substituído por uma chamada real à API
       const newModuleData: Module = {
         id: `module_${Date.now()}`,
         name: newModule.name,
@@ -159,7 +159,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       });
       setSelectedVideos([]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create module');
+      setError(err instanceof Error ? err.message : 'Falha ao criar módulo');
     }
   };
 
@@ -172,7 +172,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
         return;
       }
 
-      // This would be replaced with an actual API call
+      // Isso seria substituído por uma chamada real à API
       const updatedModules = collection.modules.map(module => 
         module.id === selectedModule.id ? { ...selectedModule, videoIds: selectedVideos } : module
       );
@@ -186,7 +186,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       setSelectedModule(null);
       setSelectedVideos([]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update module');
+      setError(err instanceof Error ? err.message : 'Falha ao atualizar módulo');
     }
   };
 
@@ -195,7 +195,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
     if (!collection) return;
 
     try {
-      // This would be replaced with an actual API call
+      // Isso seria substituído por uma chamada real à API
       const updatedModules = collection.modules.filter(module => module.id !== moduleId);
       
       const updatedCollection = {
@@ -205,7 +205,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
 
       setCollection(updatedCollection);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete module');
+      setError(err instanceof Error ? err.message : 'Falha ao excluir módulo');
     }
   };
 
@@ -235,7 +235,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       
       if (!selectedModule) return;
       
-      // This would be replaced with an actual API call
+      // Isso seria substituído por uma chamada real à API
       const videoData: Video = {
         id: `video_${Date.now()}`,
         name: newVideo.name || '',
@@ -251,13 +251,13 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
         updatedAt: new Date()
       };
       
-      // Add to available videos
+      // Adicionar aos vídeos disponíveis
       setAvailableVideos(prev => [...prev, videoData]);
       
-      // Add to selected videos
+      // Adicionar aos vídeos selecionados
       setSelectedVideos(prev => [...prev, videoData.id]);
       
-      // Reset form
+      // Resetar formulário
       setNewVideo({
         name: '',
         videoUrl: '',
@@ -271,7 +271,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       
       setShowVideoModal(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add video');
+      setError(err instanceof Error ? err.message : 'Falha ao adicionar vídeo');
     }
   };
   
@@ -395,7 +395,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
         </div>
       )}
 
-      {/* Create/Edit Module Modal */}
+      {/* Modal de Criar/Editar Módulo */}
       {(showCreateModal || selectedModule) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -528,7 +528,7 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
         </div>
       )}
       
-      {/* Add Video Modal */}
+      {/* Modal de Adicionar Vídeo */}
       {showVideoModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">

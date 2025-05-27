@@ -10,13 +10,6 @@ export const metadata: Metadata = {
   title: 'Portal Educacional',
   description: 'Plataforma educacional brasileira com suporte BNCC',
   manifest: '/manifest.json',
-  themeColor: '#007bff',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -34,6 +27,14 @@ export const metadata: Metadata = {
       { url: '/icons/icon-192x192.png' },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#007bff',
 };
 
 export default function RootLayout({

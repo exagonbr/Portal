@@ -2,7 +2,7 @@ export interface Module {
   id: string;
   name: string;
   description: string;
-  coverImage: string; // S3 URL
+  coverImage: string; // URL do S3
   videoIds: string[];
   order: number;
   createdAt: Date;
@@ -13,13 +13,13 @@ export interface Video {
   id: string;
   name: string;
   moduleId: string;
-  videoUrl: string; // S3 URL
-  duration: number; // in seconds
+  videoUrl: string; // URL do S3
+  duration: number; // em segundos
   authors: string[];
   educationCycle: {
     level: keyof typeof import('../constants/brazilianEducation').BRAZILIAN_EDUCATION;
-    cycle?: string; // For Fundamental: 'ANOS_INICIAIS' or 'ANOS_FINAIS'
-    grade?: string; // Specific grade key
+    cycle?: string; // Para Fundamental: 'ANOS_INICIAIS' ou 'ANOS_FINAIS'
+    grade?: string; // Chave da série específica
   };
   createdAt: Date;
   updatedAt: Date;
@@ -30,9 +30,9 @@ export interface Collection {
   name: string;
   synopsis: string;
   coverImage: string;
-  supportMaterial?: string; // PDF URL (S3)
-  totalDuration: number; // in seconds
-  subject: string; // discipline
+  supportMaterial?: string; // URL do PDF (S3)
+  totalDuration: number; // em segundos
+  subject: string; // disciplina
   modules: Module[];
   tags: string[];
   createdBy: string;
@@ -52,9 +52,9 @@ export interface BookByEducationCycle {
   s3Key?: string;
   size: number;
   educationLevel: keyof typeof import('../constants/brazilianEducation').BRAZILIAN_EDUCATION;
-  cycle?: string; // For Fundamental: 'ANOS_INICIAIS' or 'ANOS_FINAIS'
-  grade?: string; // Specific grade key
-  subject?: string; // Subject of the book
+  cycle?: string; // Para Fundamental: 'ANOS_INICIAIS' ou 'ANOS_FINAIS'
+  grade?: string; // Chave da série específica
+  subject?: string; // Disciplina do livro
   tags: string[];
   uploadedBy: string;
   uploadedAt: Date;

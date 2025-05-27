@@ -221,6 +221,7 @@ export default function DashboardSidebar() {
             { href: '/assignments', icon: 'assignment', label: 'Atividades' },
             { href: '/live', icon: 'video_camera_front', label: 'Aulas ao Vivo' },
             { href: '/lessons', icon: 'school', label: 'Aulas' },
+            { href: `/forum/${user?.role || ''}`, icon: 'forum', label: 'Fórum' },
           ]
         },
         {
@@ -250,6 +251,8 @@ export default function DashboardSidebar() {
             { href: '/teacher/students', icon: 'group', label: 'Alunos' },
             { href: '/teacher/grades', icon: 'grade', label: 'Avaliações' },
             { href: '/reports/teacher', icon: 'analytics', label: 'Relatórios' },
+            { href: `/forum/${user?.role || ''}`, icon: 'forum', label: 'Fórum' },
+
           ]
         },
         {

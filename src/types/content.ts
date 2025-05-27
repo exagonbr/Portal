@@ -13,8 +13,8 @@ export interface ContentMetadata {
   type: ContentType;
   uploadedBy: string;
   uploadedAt: Date;
-  size: number; // in bytes
-  duration?: number; // for videos, in seconds
+  size: number; // em bytes
+  duration?: number; // para vídeos, em segundos
   thumbnail: string;
   tags: string[];
   url: string;
@@ -23,7 +23,7 @@ export interface ContentMetadata {
 
 export interface ContentUploadResponse {
   metadata: ContentMetadata;
-  uploadUrl: string; // Presigned S3 URL for direct upload
+  uploadUrl: string; // URL pré-assinada do S3 para upload direto
 }
 
 export interface ContentSearchResult {

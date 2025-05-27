@@ -136,17 +136,6 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
               </div>
             </div>
 
-            {/* Progresso */}
-            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-1">Progresso</h3>
-                <p className="text-sm text-gray-400 mb-3">75% concluído</p>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: '75%' }}></div>
-                </div>
-              </div>
-            </div>
-
             {/* Anotações */}
             <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">

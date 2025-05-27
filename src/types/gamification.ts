@@ -18,19 +18,19 @@ export interface UserBadge extends Badge {
 }
 
 export enum BadgeCategory {
-  ACADEMIC = 'ACADEMIC',
-  PARTICIPATION = 'PARTICIPATION',
-  ACHIEVEMENT = 'ACHIEVEMENT',
+  ACADEMIC = 'ACADÊMICO',
+  PARTICIPATION = 'PARTICIPAÇÃO',
+  ACHIEVEMENT = 'CONQUISTA',
   SOCIAL = 'SOCIAL',
-  SPECIAL = 'SPECIAL'
+  SPECIAL = 'ESPECIAL'
 }
 
 export enum RequirementType {
   XP = 'XP',
-  ASSIGNMENTS = 'ASSIGNMENTS',
-  ATTENDANCE = 'ATTENDANCE',
-  COURSES = 'COURSES',
-  CUSTOM = 'CUSTOM'
+  ASSIGNMENTS = 'TAREFAS',
+  ATTENDANCE = 'PRESENÇA',
+  COURSES = 'CURSOS',
+  CUSTOM = 'PERSONALIZADO'
 }
 
 export interface BadgeRequirement {
@@ -44,15 +44,15 @@ export interface Reward {
   description: string;
   xpCost: number;
   type: RewardType;
-  createdBy: string; // teacher ID
+  createdBy: string; // ID do professor
   expiresAt?: Date;
 }
 
 export enum RewardType {
-  HOMEWORK_PASS = 'HOMEWORK_PASS',
-  EXTRA_CREDIT = 'EXTRA_CREDIT',
-  SPECIAL_PRIVILEGE = 'SPECIAL_PRIVILEGE',
-  CUSTOM = 'CUSTOM'
+  HOMEWORK_PASS = 'DISPENSA_DE_TAREFA',
+  EXTRA_CREDIT = 'CRÉDITO_EXTRA',
+  SPECIAL_PRIVILEGE = 'PRIVILÉGIO_ESPECIAL',
+  CUSTOM = 'PERSONALIZADO'
 }
 
 export interface LeaderboardEntry {

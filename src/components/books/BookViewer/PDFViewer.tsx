@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ViewerControls } from './ViewerControls';
 import { AnnotationLayer } from './AnnotationLayer';
@@ -19,6 +19,8 @@ interface PDFViewerProps {
   onAnnotationAdd?: (annotation: Annotation) => void;
   onHighlightAdd?: (highlight: Highlight) => void;
   onBookmarkAdd?: (bookmark: Bookmark) => void;
+  isDarkMode?: boolean;
+  onThemeToggle?: () => void;
 }
 
 const PDFViewer: React.FC<PDFViewerProps> = ({ 
@@ -28,9 +30,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   initialBookmarks = [],
   onAnnotationAdd,
   onHighlightAdd,
-  onBookmarkAdd
+  onBookmarkAdd,
+  isDarkMode = false,
+  onThemeToggle
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
   const [viewerState, setViewerState] = useState<ViewerState>({
     annotations: initialAnnotations,
     highlights: initialHighlights,
@@ -41,14 +46,68 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     currentPage: 1
   });
   const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageWidth, setPageWidth] = useState<number>(0);
+  const [pageHeight, setPageHeight] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pdfDocument, setPdfDocument] = useState<any>(null);
+  const [fitMode, setFitMode] = useState<'width' | 'height' | 'page'>('page');
+
+  // Calculate optimal page dimensions based on container size
+  useEffect(() => {
+    const updatePageDimensions = () => {
+      if (pageContainerRef.current) {
+        const container = pageContainerRef.current;
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        const padding = 40; // Total padding
+        
+        // Calculate available space
+        const availableWidth = containerWidth - padding;
+        const availableHeight = containerHeight - padding;
+        
+        if (fitMode === 'width') {
+          setPageWidth(availableWidth);
+          setPageHeight(0); // Let height be auto
+        } else if (fitMode === 'height') {
+          setPageHeight(availableHeight);
+          setPageWidth(0); // Let width be auto
+        } else { // fit page
+          // For dual page mode, divide width by 2
+          const targetWidth = viewerState.isDualPage 
+            ? (availableWidth - 20) / 2 
+            : availableWidth;
+          
+          setPageWidth(Math.min(targetWidth, 900)); // Max width for readability
+          setPageHeight(availableHeight);
+        }
+      }
+    };
+
+    updatePageDimensions();
+    window.addEventListener('resize', updatePageDimensions);
+    return () => window.removeEventListener('resize', updatePageDimensions);
+  }, [viewerState.isDualPage, fitMode]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
+    setLoading(false);
+  }
+
+  function onDocumentLoadError(error: Error) {
+    console.error('Error loading PDF:', error);
+    setError('Failed to load PDF document');
+    setLoading(false);
   }
 
   const handlePageChange = useCallback((newPage: number) => {
     if (newPage >= 1 && newPage <= (numPages || 1)) {
       setViewerState(prev => ({ ...prev, currentPage: newPage }));
+      
+      // Smooth scroll to top when changing pages
+      if (pageContainerRef.current) {
+        pageContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   }, [numPages]);
 
@@ -138,10 +197,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       return [viewerState.currentPage];
     }
 
-    // For dual page view, show pairs of pages (2-3, 4-5, etc)
-    const isEvenPage = viewerState.currentPage % 2 === 0;
-    const firstPage = isEvenPage ? viewerState.currentPage : viewerState.currentPage - 1;
-    const secondPage = isEvenPage ? viewerState.currentPage + 1 : viewerState.currentPage;
+    // For dual page view, show odd-even pairs (1-2, 3-4, etc)
+    const isOddPage = viewerState.currentPage % 2 === 1;
+    const firstPage = isOddPage ? viewerState.currentPage : viewerState.currentPage - 1;
+    const secondPage = firstPage + 1;
 
     // Don't show a non-existent page
     if (secondPage > (numPages || 0)) {
@@ -153,70 +212,132 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
   const mockBook: Book = {
     id: 'pdf-viewer',
-    title: "PDF Document",
-    author: "Unknown",
-    publisher: "Unknown",
+    title: pdfDocument?.info?.title || "PDF Document",
+    author: pdfDocument?.info?.author || "Unknown Author",
+    publisher: pdfDocument?.info?.producer || "Unknown Publisher",
     thumbnail: "",
-    synopsis: "",
+    synopsis: pdfDocument?.info?.subject || "",
     duration: "N/A",
     pageCount: numPages || 0,
     format: 'pdf'
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className={`flex h-full ${viewerState.isFullscreen ? 'bg-gray-900' : ''}`}
+      className={`h-full w-full flex flex-col ${viewerState.isFullscreen ? 'fixed inset-0 z-50' : ''} ${isDarkMode ? 'dark' : ''}`}
     >
-      <div className="flex-1 overflow-auto relative">
-        <Document
-          file={fileUrl}
-          onLoadSuccess={onDocumentLoadSuccess}
-          loading={<div className="text-white">Loading PDF...</div>}
-          error={<div className="text-red-500">Failed to load PDF</div>}
-        >
-          <div className="flex justify-center">
-            {getPagesToDisplay().map((pageNum) => (
-              <div key={pageNum} className="relative mx-1">
-                <Page
-                  pageNumber={pageNum}
-                  scale={viewerState.currentScale}
-                  renderTextLayer={false}
-                  renderAnnotationLayer={false}
-                  className="shadow-lg"
-                />
-                <AnnotationLayer
-                  pageNumber={pageNum}
-                  scale={viewerState.currentScale}
-                  annotations={viewerState.annotations}
-                  highlights={viewerState.highlights}
-                  onAnnotationAdd={handleAnnotationAdd}
-                  onAnnotationDelete={handleAnnotationDelete}
-                  onHighlightAdd={handleHighlightAdd}
-                  onHighlightDelete={handleHighlightDelete}
-                />
-              </div>
-            ))}
-          </div>
-        </Document>
+      {/* Controls - Fixed height header */}
+      <div className="flex-shrink-0">
+        <ViewerControls
+          book={mockBook}
+          currentPage={viewerState.currentPage}
+          zoom={viewerState.currentScale * 100}
+          isDualPage={viewerState.isDualPage}
+          isFullscreen={viewerState.isFullscreen}
+          bookmarks={viewerState.bookmarks}
+          annotations={viewerState.annotations}
+          highlights={viewerState.highlights}
+          onPageChange={handlePageChange}
+          onZoomChange={handleZoomChange}
+          onDualPageToggle={handleDualPageToggle}
+          onFullscreenToggle={handleFullscreenToggle}
+          onBookmarkAdd={handleBookmarkAdd}
+          onBookmarkDelete={handleBookmarkDelete}
+          onAnnotationAdd={handleAnnotationAdd}
+          onHighlightAdd={handleHighlightAdd}
+          onThemeToggle={onThemeToggle}
+          isDarkMode={isDarkMode}
+        />
       </div>
+      
+      {/* PDF Content - Flexible height container */}
+      <div 
+        ref={pageContainerRef}
+        className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900"
+      >
+        {loading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Loading PDF...</p>
+            </div>
+          </div>
+        )}
 
-      <ViewerControls
-        book={mockBook}
-        currentPage={viewerState.currentPage}
-        zoom={viewerState.currentScale * 100}
-        isDualPage={viewerState.isDualPage}
-        isFullscreen={viewerState.isFullscreen}
-        bookmarks={viewerState.bookmarks}
-        onPageChange={handlePageChange}
-        onZoomChange={handleZoomChange}
-        onDualPageToggle={handleDualPageToggle}
-        onFullscreenToggle={handleFullscreenToggle}
-        onBookmarkAdd={handleBookmarkAdd}
-        onBookmarkDelete={handleBookmarkDelete}
-        onAnnotationAdd={handleAnnotationAdd}
-        onHighlightAdd={handleHighlightAdd}
-      />
+        {error && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="text-red-500 mb-4">
+                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <Document
+            file={fileUrl}
+            onLoadSuccess={(pdf) => {
+              setPdfDocument(pdf);
+              onDocumentLoadSuccess(pdf);
+            }}
+            onLoadError={onDocumentLoadError}
+            className="flex justify-center"
+          >
+            <div className={`flex ${viewerState.isDualPage ? 'space-x-4' : ''} justify-center py-4`}>
+              {getPagesToDisplay().map((pageNum) => (
+                <div 
+                  key={pageNum} 
+                  className="relative bg-white shadow-2xl rounded-lg overflow-hidden"
+                  style={{ 
+                    transform: `scale(${viewerState.currentScale})`,
+                    transformOrigin: 'top center',
+                    transition: 'transform 0.2s ease-out'
+                  }}
+                >
+                  <Page
+                    pageNumber={pageNum}
+                    width={pageWidth || undefined}
+                    height={pageHeight || undefined}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    className="pdf-page"
+                    loading={
+                      <div className="flex items-center justify-center h-96 bg-gray-50">
+                        <div className="animate-pulse">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      </div>
+                    }
+                  />
+                  
+                  {/* Page number overlay */}
+                  <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+                    Page {pageNum}
+                  </div>
+                  
+                  {/* Annotation layer */}
+                  <AnnotationLayer
+                    pageNumber={pageNum}
+                    scale={viewerState.currentScale}
+                    annotations={viewerState.annotations}
+                    highlights={viewerState.highlights}
+                    onAnnotationAdd={handleAnnotationAdd}
+                    onAnnotationDelete={handleAnnotationDelete}
+                    onHighlightAdd={handleHighlightAdd}
+                    onHighlightDelete={handleHighlightDelete}
+                  />
+                </div>
+              ))}
+            </div>
+          </Document>
+        )}
+      </div>
     </div>
   );
 };

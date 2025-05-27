@@ -90,5 +90,5 @@ export interface OfflineIndicatorProps {
   isOnline: boolean;
 }
 
-// Ensure this file is treated as a module
+// Garantir que este arquivo seja tratado como um módulo
 export {};
