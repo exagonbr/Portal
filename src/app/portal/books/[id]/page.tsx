@@ -36,9 +36,12 @@ const BookPage: React.FC = () => {
   return (
     <div className="flex flex-col h-full">
       <header className="flex items-center p-4 border-b border-gray-300">
-        <Link href="/portal/books" className="flex items-center text-blue-600 hover:underline">
-          <ArrowLeftIcon className="h-6 w-6 mr-2" />
-          Back to Books
+        <Link 
+          href="/portal/books" 
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
+        >
+          <ArrowLeftIcon className="h-5 w-5 mr-2" />
+          Voltar para o acervo
         </Link>
       </header>
         {/* Main Content - Book Reader */}

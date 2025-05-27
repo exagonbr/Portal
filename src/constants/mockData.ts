@@ -265,6 +265,19 @@ export const mockBooks: Book[] = [
     filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf',
     pageCount: 150
 
+  },
+  {
+    id: 'test-book-5',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10004-L.jpg',
+    title: 'Test Book 5',
+    author: 'Test Author 4',
+    publisher: 'Test Publisher',
+    synopsis: 'Test book for EPUB reader functionality',
+    duration: '2h 00min',
+    format: 'epub',
+    filePath: 'https://github.com/daisy/epub-accessibility-tests/releases/download/math-extdesc-1.1.1/Accessibility-Tests-Extended-Descriptions-v1.1.1.epub',
+    pageCount: 150
+
   }
 ];
 

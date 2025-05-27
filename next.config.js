@@ -102,6 +102,8 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  // Only treat .tsx and .ts files in app directory as pages/layouts
+  pageExtensions: ['tsx', 'ts'],
   images: {
     remotePatterns: [
       {
@@ -124,13 +126,27 @@ const nextConfig = {
     ]
   },
   webpack: (config) => {
-    config.module.rules.push(
-      {
-        test: /\.(pdf|epub)$/i,
-        type: 'asset/resource'
+    config.module.rules.push({
+      test: /\.(pdf)$/i,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/chunks/[path][name].[hash][ext]'
       }
-    );
+    });
     return config;
+  },
+  async headers() {
+    return [
+      {
+        source: '/books/:path*',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/epub+zip'
+          }
+        ]
+      }
+    ];
   }
 };
 

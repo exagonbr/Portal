@@ -15,29 +15,53 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({ fileUrl }) => {
   useEffect(() => {
     if (!viewerRef.current) return;
 
-    const newBook = new EpubBook(fileUrl);
+    // Convert relative path to absolute URL if needed
+    const absoluteUrl = fileUrl.startsWith('https') 
+      ? fileUrl 
+      : `${window.location.origin}${fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`}`;
+    console.log('Loading EPUB from:', absoluteUrl);
+
+    const newBook = new EpubBook(absoluteUrl, {
+      openAs: 'epub',
+      requestHeaders: {
+        'Accept': 'application/epub+zip',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
 
     setBook(newBook);
 
-    newBook.loaded.metadata.then((meta: { title: string }) => {
+    const loadBook = async () => {
+      try {
+        // Wait for initial book loading
+        await newBook.ready;
+        
+        // Render the book
+        await newBook.renderTo(viewerRef.current!, {
+          width: '100%',
+          height: '100%',
+          spread: 'none'
+        });
 
-      console.log('Book loaded:', meta.title);
-    });
+        // Load metadata
+        const meta = await newBook.loaded.metadata;
+        console.log('Book loaded:', meta.title);
 
-    newBook.ready.then(() => {
-      newBook.renderTo(viewerRef.current!, {
-        width: '100%',
-        height: '100%',
-        spread: 'none'
-      });
-      
-      newBook.locations.generate(1024).then(() => {
-        setTotalPages(newBook.locations.length);
-      });
-    });
+        // Generate locations if not already generated
+        await newBook.locations.generate(1024);
+        setTotalPages(newBook.locations.length());
+      } catch (error) {
+        console.error('Error loading book:', error);
+        console.error('Failed to load EPUB from:', absoluteUrl);
+      }
+    };
+
+    loadBook();
 
     return () => {
-      newBook.destroy();
+      if (newBook) {
+        newBook.destroy();
+      }
     };
   }, [fileUrl]);
 
@@ -47,8 +71,6 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({ fileUrl }) => {
         ref={viewerRef} 
         className="flex-1 overflow-auto"
       />
-      
-      {/* Controls will be in the sidebar */}
     </div>
   );
 };
