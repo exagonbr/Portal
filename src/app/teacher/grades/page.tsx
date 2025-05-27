@@ -283,7 +283,7 @@ export default function TeacherGradesPage() {
 
               <div className="flex justify-between items-center pt-4 mt-4 border-t border-gray-100">
                 <button className="text-gray-600 hover:text-gray-800">
-                  <span className="material-icons">more_vert</span>
+<span className="material-icons">mais_vert</span>
                 </button>
                 <div className="flex space-x-2">
                   <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">

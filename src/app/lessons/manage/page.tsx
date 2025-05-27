@@ -76,7 +76,7 @@ export default function ManageLessonsPage() {
                     Publicada
                   </span>
                   <button className="text-gray-600 hover:text-gray-800">
-                    <span className="material-icons">more_vert</span>
+                    <span className="material-icons">mais_vert</span>
                   </button>
                 </div>
               </div>
@@ -97,7 +97,7 @@ export default function ManageLessonsPage() {
                     Rascunho
                   </span>
                   <button className="text-gray-600 hover:text-gray-800">
-                    <span className="material-icons">more_vert</span>
+                    <span className="material-icons">mais_vert</span>
                   </button>
                 </div>
               </div>

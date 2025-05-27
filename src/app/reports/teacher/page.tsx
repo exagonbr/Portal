@@ -209,7 +209,7 @@ export default function TeacherReportsPage() {
                     <span className="material-icons">analytics</span>
                   </button>
                   <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                    <span className="material-icons">more_vert</span>
+<span className="material-icons">mais_vert</span>
                   </button>
                 </div>
               </div>

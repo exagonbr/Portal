@@ -124,7 +124,7 @@ export default function AdminInstitutionsPage() {
                   Gerenciar
                 </button>
                 <button className="px-4 py-2 text-gray-600 hover:text-gray-800">
-                  <span className="material-icons">more_vert</span>
+                  <span className="material-icons">mais_vert</span>
                 </button>
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function AdminInstitutionsPage() {
                   Gerenciar
                 </button>
                 <button className="px-4 py-2 text-gray-600 hover:text-gray-800">
-                  <span className="material-icons">more_vert</span>
+                  <span className="material-icons">mais_vert</span>
                 </button>
               </div>
             </div>
