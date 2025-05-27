@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { teacherMockData } from '@/constants/dashboardData'
+import { teacherMockData } from '@/constants/mockData'
 
 interface Notification {
   id: number
@@ -143,7 +143,13 @@ export default function DashboardHeader() {
                 </div>
 
                 <div className="p-4 border-t border-gray-100">
-                  <button className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  <button
+                    onClick={() => {
+                      router.push('/notifications')
+                      setShowNotifications(false)
+                    }}
+                    className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
                     Visualizar todas as notificações
                   </button>
                 </div>

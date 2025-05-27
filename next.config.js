@@ -125,7 +125,7 @@ const nextConfig = {
       }
     ]
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.module.rules.push({
       test: /\.(pdf)$/i,
       type: 'asset/resource',
@@ -133,6 +133,22 @@ const nextConfig = {
         filename: 'static/chunks/[path][name].[hash][ext]'
       }
     });
+
+    // Resolve Node.js modules for client-side
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        dgram: false,
+        dns: false,
+        child_process: false,
+        'native-dns': false,
+        'native-dns-cache': false,
+      };
+    }
+
     return config;
   },
   async headers() {

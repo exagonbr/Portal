@@ -2,8 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { StarIcon } from '@heroicons/react/24/outline';
-import { mockBooks } from '@/constants/mockData';
-import { mockHighlights } from '@/constants/mockHighlightsData';
+import { mockBooks, mockHighlights } from '@/constants/mockData';
 
 
 interface Highlight {

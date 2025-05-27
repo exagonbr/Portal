@@ -1,6 +1,7 @@
 import { Course } from '../types/education';
-import { ForumThread, ForumTagCategory } from '../types/communication';
+import { ForumThread, ForumTagCategory, ChatMessage } from '../types/communication';
 import { User } from '../types/auth';
+import { Annotation, Highlight } from '../components/books/BookViewer/types';
 
 // Interfaces
 export interface Book {
@@ -16,7 +17,6 @@ export interface Book {
   filePath?: string;
   pageCount?: number;
 }
-
 
 export interface Video {
   id: string;
@@ -50,6 +50,172 @@ export interface Teacher {
     days: string[];
     hours: string;
   };
+}
+
+// Quiz interfaces
+export type QuestionType = 'multiple-choice' | 'true-false' | 'short-answer';
+
+export interface Question {
+  id: string;
+  type: QuestionType;
+  text: string;
+  options?: string[];
+  correctAnswer: string | string[];
+  points: number;
+  explanation?: string;
+}
+
+export interface Quiz {
+  id: string;
+  title: string;
+  description: string;
+  timeLimit?: number; // in minutes
+  passingScore: number;
+  questions: Question[];
+  attempts: number;
+  isGraded: boolean;
+}
+
+// Module interfaces
+export interface Module {
+  id: string;
+  title: string;
+  description: string;
+  lessons: Lesson[];
+  xpReward: number;
+  isCompleted: boolean;
+  prerequisites?: string[];
+}
+
+export interface Lesson {
+  id: string;
+  title: string;
+  type: 'video' | 'reading' | 'quiz' | 'assignment';
+  duration: string;
+  xpReward: number;
+  isCompleted: boolean;
+  content?: string;
+  videoUrl?: string;
+  requirements?: LessonRequirement[];
+}
+
+export interface LessonRequirement {
+  type: 'lesson' | 'quiz' | 'assignment';
+  lessonId: string;
+  description: string;
+}
+
+// Annotations and Highlights interfaces
+export interface AnnotationsMap {
+  [bookId: string]: Annotation[];
+}
+
+export interface HighlightsMap {
+  [bookId: string]: Highlight[];
+}
+
+// Dashboard interfaces
+export interface TeacherMockData {
+  totalStudents: number;
+  activeClasses: number;
+  averageAttendance: number;
+  upcomingClasses: Array<{
+    id: number;
+    subject: string;
+    time: string;
+    date: string;
+    students: number;
+    room: string;
+  }>;
+  studentPerformance: Array<{
+    month: string;
+    average: number;
+    approved: number;
+    pending: number;
+  }>;
+  classAttendance: Array<{
+    month: string;
+    attendance: number;
+    total: number;
+    present: number;
+  }>;
+  subjectDistribution: Array<{
+    subject: string;
+    students: number;
+    averageGrade: number;
+    attendanceRate: number;
+    completionRate: number;
+  }>;
+  classPerformance: Array<{
+    class: string;
+    students: number;
+    averageGrade: number;
+    attendanceRate: number;
+    completionRate: number;
+    subjects: Array<{
+      name: string;
+      average: number;
+    }>;
+  }>;
+  recentActivities: Array<{
+    id: number;
+    type: string;
+    subject: string;
+    class: string;
+    date: string;
+    status: string;
+    averageGrade?: number;
+    submissions: number;
+    totalStudents: number;
+  }>;
+}
+
+export interface StudentMockData {
+  currentGrade: number;
+  attendanceRate: number;
+  completedAssignments: number;
+  totalAssignments: number;
+  ranking: {
+    position: number;
+    totalStudents: number;
+    improvement: number;
+  };
+  upcomingDeadlines: Array<{
+    id: number;
+    subject: string;
+    task: string;
+    deadline: string;
+    type: string;
+    weight: number;
+    status: string;
+  }>;
+  gradeHistory: Array<{
+    subject: string;
+    grades: number[];
+    weights: number[];
+    average: number;
+    ranking: number;
+    teacher: string;
+  }>;
+  attendanceBySubject: Array<{
+    subject: string;
+    attendance: number;
+    totalClasses: number;
+    presentClasses: number;
+    lastAbsence: string;
+  }>;
+  weeklyStudyHours: Array<{
+    day: string;
+    hours: number;
+    subjects: string[];
+  }>;
+  performanceHistory: Array<{
+    month: string;
+    averageGrade: number;
+    attendanceRate: number;
+    completionRate: number;
+    ranking: number;
+  }>;
 }
 
 // Mock user data
@@ -516,5 +682,680 @@ export const carouselBookImages = [
     src: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
     alt: 'Leitura e Aprendizado',
     title: 'Conhecimento ao seu Alcance'
+  }
+];
+
+// Dashboard Mock Data
+export const teacherMockData: TeacherMockData = {
+  totalStudents: 156,
+  activeClasses: 8,
+  averageAttendance: 92,
+  upcomingClasses: [
+    { id: 1, subject: "Matemática", time: "14:00", date: "2024-01-20", students: 25, room: "Sala 101" },
+    { id: 2, subject: "Física", time: "15:30", date: "2024-01-20", students: 22, room: "Lab Física" },
+    { id: 3, subject: "Química", time: "09:00", date: "2024-01-21", students: 20, room: "Lab Química" },
+    { id: 4, subject: "Biologia", time: "10:30", date: "2024-01-21", students: 23, room: "Lab Biologia" },
+    { id: 5, subject: "História", time: "13:00", date: "2024-01-22", students: 28, room: "Sala 203" }
+  ],
+  studentPerformance: [
+    { month: "Jan", average: 85, approved: 142, pending: 14 },
+    { month: "Fev", average: 82, approved: 138, pending: 18 },
+    { month: "Mar", average: 88, approved: 145, pending: 11 },
+    { month: "Abr", average: 85, approved: 140, pending: 16 },
+    { month: "Mai", average: 90, approved: 148, pending: 8 },
+    { month: "Jun", average: 87, approved: 144, pending: 12 },
+    { month: "Jul", average: 89, approved: 146, pending: 10 },
+    { month: "Ago", average: 86, approved: 141, pending: 15 },
+    { month: "Set", average: 88, approved: 143, pending: 13 },
+    { month: "Out", average: 91, approved: 150, pending: 6 },
+    { month: "Nov", average: 89, approved: 147, pending: 9 },
+    { month: "Dez", average: 92, approved: 152, pending: 4 }
+  ],
+  classAttendance: [
+    { month: "Jan", attendance: 95, total: 156, present: 148 },
+    { month: "Fev", attendance: 93, total: 156, present: 145 },
+    { month: "Mar", attendance: 91, total: 156, present: 142 },
+    { month: "Abr", attendance: 94, total: 156, present: 147 },
+    { month: "Mai", attendance: 92, total: 156, present: 144 },
+    { month: "Jun", attendance: 90, total: 156, present: 140 },
+    { month: "Jul", attendance: 93, total: 156, present: 145 },
+    { month: "Ago", attendance: 91, total: 156, present: 142 },
+    { month: "Set", attendance: 94, total: 156, present: 147 },
+    { month: "Out", attendance: 96, total: 156, present: 150 },
+    { month: "Nov", attendance: 95, total: 156, present: 148 },
+    { month: "Dez", attendance: 97, total: 156, present: 151 }
+  ],
+  subjectDistribution: [
+    { 
+      subject: "Matemática", 
+      students: 45,
+      averageGrade: 8.5,
+      attendanceRate: 94,
+      completionRate: 92
+    },
+    { 
+      subject: "Física", 
+      students: 38,
+      averageGrade: 8.2,
+      attendanceRate: 91,
+      completionRate: 88
+    },
+    { 
+      subject: "Química", 
+      students: 35,
+      averageGrade: 8.7,
+      attendanceRate: 93,
+      completionRate: 90
+    },
+    { 
+      subject: "Biologia", 
+      students: 38,
+      averageGrade: 8.9,
+      attendanceRate: 95,
+      completionRate: 94
+    },
+    { 
+      subject: "História", 
+      students: 42,
+      averageGrade: 8.6,
+      attendanceRate: 92,
+      completionRate: 89
+    },
+    { 
+      subject: "Geografia", 
+      students: 40,
+      averageGrade: 8.8,
+      attendanceRate: 93,
+      completionRate: 91
+    }
+  ],
+  classPerformance: [
+    {
+      class: "9º Ano A",
+      students: 32,
+      averageGrade: 8.7,
+      attendanceRate: 94,
+      completionRate: 92,
+      subjects: [
+        { name: "Matemática", average: 8.5 },
+        { name: "Física", average: 8.2 },
+        { name: "Química", average: 8.8 },
+        { name: "Biologia", average: 9.0 }
+      ]
+    },
+    {
+      class: "9º Ano B",
+      students: 30,
+      averageGrade: 8.5,
+      attendanceRate: 92,
+      completionRate: 90,
+      subjects: [
+        { name: "Matemática", average: 8.3 },
+        { name: "Física", average: 8.0 },
+        { name: "Química", average: 8.6 },
+        { name: "Biologia", average: 8.8 }
+      ]
+    }
+  ],
+  recentActivities: [
+    {
+      id: 1,
+      type: "Avaliação",
+      subject: "Matemática",
+      class: "9º Ano A",
+      date: "2024-01-18",
+      status: "Concluído",
+      averageGrade: 8.5,
+      submissions: 30,
+      totalStudents: 32
+    },
+    {
+      id: 2,
+      type: "Trabalho em Grupo",
+      subject: "Física",
+      class: "9º Ano B",
+      date: "2024-01-19",
+      status: "Em Andamento",
+      submissions: 25,
+      totalStudents: 30
+    }
+  ]
+};
+
+export const studentMockData: StudentMockData = {
+  currentGrade: 8.5,
+  attendanceRate: 95,
+  completedAssignments: 45,
+  totalAssignments: 50,
+  ranking: {
+    position: 15,
+    totalStudents: 156,
+    improvement: 3
+  },
+  upcomingDeadlines: [
+    { 
+      id: 1, 
+      subject: "Matemática", 
+      task: "Trabalho de Álgebra", 
+      deadline: "2024-01-22",
+      type: "Trabalho",
+      weight: 30,
+      status: "Pendente"
+    },
+    { 
+      id: 2, 
+      subject: "Física", 
+      task: "Relatório de Laboratório", 
+      deadline: "2024-01-24",
+      type: "Relatório",
+      weight: 20,
+      status: "Em Andamento"
+    },
+    { 
+      id: 3, 
+      subject: "Química", 
+      task: "Questionário Online", 
+      deadline: "2024-01-25",
+      type: "Avaliação",
+      weight: 25,
+      status: "Não Iniciado"
+    }
+  ],
+  gradeHistory: [
+    { 
+      subject: "Matemática", 
+      grades: [8.5, 9.0, 8.0, 9.5],
+      weights: [25, 25, 25, 25],
+      average: 8.75,
+      ranking: 8,
+      teacher: "Prof. Silva"
+    },
+    { 
+      subject: "Física", 
+      grades: [7.5, 8.0, 8.5, 8.0],
+      weights: [25, 25, 25, 25],
+      average: 8.0,
+      ranking: 12,
+      teacher: "Prof. Santos"
+    },
+    { 
+      subject: "Química", 
+      grades: [9.0, 8.5, 9.0, 8.5],
+      weights: [25, 25, 25, 25],
+      average: 8.75,
+      ranking: 5,
+      teacher: "Profa. Lima"
+    },
+    { 
+      subject: "Biologia", 
+      grades: [8.0, 8.5, 9.0, 8.5],
+      weights: [25, 25, 25, 25],
+      average: 8.5,
+      ranking: 10,
+      teacher: "Profa. Costa"
+    }
+  ],
+  attendanceBySubject: [
+    { 
+      subject: "Matemática", 
+      attendance: 98,
+      totalClasses: 40,
+      presentClasses: 39,
+      lastAbsence: "2024-01-10"
+    },
+    { 
+      subject: "Física", 
+      attendance: 95,
+      totalClasses: 38,
+      presentClasses: 36,
+      lastAbsence: "2024-01-15"
+    },
+    { 
+      subject: "Química", 
+      attendance: 92,
+      totalClasses: 36,
+      presentClasses: 33,
+      lastAbsence: "2024-01-12"
+    },
+    { 
+      subject: "Biologia", 
+      attendance: 94,
+      totalClasses: 35,
+      presentClasses: 33,
+      lastAbsence: "2024-01-08"
+    }
+  ],
+  weeklyStudyHours: [
+    { day: "Segunda", hours: 3, subjects: ["Matemática", "Física"] },
+    { day: "Terça", hours: 2.5, subjects: ["Química", "Biologia"] },
+    { day: "Quarta", hours: 4, subjects: ["Matemática", "História"] },
+    { day: "Quinta", hours: 3, subjects: ["Física", "Geografia"] },
+    { day: "Sexta", hours: 2, subjects: ["Química", "Matemática"] }
+  ],
+  performanceHistory: [
+    {
+      month: "Janeiro",
+      averageGrade: 8.5,
+      attendanceRate: 95,
+      completionRate: 90,
+      ranking: 15
+    },
+    {
+      month: "Fevereiro",
+      averageGrade: 8.7,
+      attendanceRate: 96,
+      completionRate: 92,
+      ranking: 12
+    },
+    {
+      month: "Março",
+      averageGrade: 8.9,
+      attendanceRate: 97,
+      completionRate: 94,
+      ranking: 10
+    }
+  ]
+};
+
+// Annotations Mock Data
+export const mockAnnotations: AnnotationsMap = {
+  'test-book-1': [
+    {
+      id: 'ann-1',
+      pageNumber: 15,
+      content: 'Importante conceito sobre metodologia científica que precisa ser revisado.',
+      position: { x: 150, y: 200 },
+      createdAt: '2024-01-15T10:30:00Z'
+    },
+    {
+      id: 'ann-2',
+      pageNumber: 28,
+      content: 'Definição fundamental para o entendimento do capítulo.',
+      position: { x: 180, y: 350 },
+      createdAt: '2024-01-16T14:20:00Z'
+    }
+  ],
+  'test-book-2': [
+    {
+      id: 'ann-3',
+      pageNumber: 42,
+      content: 'Referência importante para a bibliografia.',
+      position: { x: 200, y: 150 },
+      createdAt: '2024-01-14T09:15:00Z'
+    }
+  ],
+  'test-book-3': [
+    {
+      id: 'ann-4',
+      pageNumber: 67,
+      content: 'Exemplo prático de aplicação da teoria.',
+      position: { x: 250, y: 400 },
+      createdAt: '2024-01-17T16:45:00Z'
+    },
+    {
+      id: 'ann-5',
+      pageNumber: 89,
+      content: 'Conclusão relevante para o trabalho final.',
+      position: { x: 300, y: 280 },
+      createdAt: '2024-01-18T11:30:00Z'
+    }
+  ]
+};
+
+// Highlights Mock Data
+export const mockHighlights: HighlightsMap = {
+  'test-book-1': [
+    {
+      id: 'hl-1',
+      pageNumber: 15,
+      content: 'A metodologia científica requer um processo sistemático de investigação e documentação dos resultados obtidos.',
+      color: '#FFEB3B', // yellow
+      position: { x: 150, y: 200, width: 400, height: 24 },
+      createdAt: '2024-01-15T10:30:00Z'
+    },
+    {
+      id: 'hl-2',
+      pageNumber: 28,
+      content: 'Os resultados demonstram uma correlação significativa entre as variáveis estudadas, sugerindo uma forte relação causal.',
+      color: '#4CAF50', // green
+      position: { x: 180, y: 350, width: 380, height: 48 },
+      createdAt: '2024-01-16T14:20:00Z'
+    }
+  ],
+  'test-book-2': [
+    {
+      id: 'hl-3',
+      pageNumber: 42,
+      content: 'Os princípios fundamentais da teoria podem ser resumidos em três aspectos principais que se interrelacionam.',
+      color: '#2196F3', // blue
+      position: { x: 200, y: 150, width: 420, height: 24 },
+      createdAt: '2024-01-14T09:15:00Z'
+    }
+  ],
+  'test-book-3': [
+    {
+      id: 'hl-4',
+      pageNumber: 67,
+      content: 'A aplicação prática destes conceitos demonstra a versatilidade da metodologia em diferentes contextos.',
+      color: '#FFEB3B', // yellow
+      position: { x: 250, y: 400, width: 390, height: 24 },
+      createdAt: '2024-01-17T16:45:00Z'
+    }
+  ]
+};
+
+// Color mapping for UI display
+export const highlightColorClasses = {
+  '#FFEB3B': 'bg-yellow-100 border-yellow-400',
+  '#4CAF50': 'bg-green-100 border-green-400',
+  '#2196F3': 'bg-blue-100 border-blue-400'
+};
+
+// Quiz Mock Data
+export const mockQuiz: Quiz = {
+  id: '1',
+  title: 'Avaliação: Números Naturais',
+  description: 'Teste seus conhecimentos sobre números naturais e suas propriedades',
+  timeLimit: 30,
+  passingScore: 70,
+  attempts: 2,
+  isGraded: true,
+  questions: [
+    {
+      id: 'q1',
+      type: 'multiple-choice',
+      text: 'Qual dos seguintes números NÃO é um número natural?',
+      options: ['0', '-1', '1', '2'],
+      correctAnswer: '-1',
+      points: 2,
+      explanation: 'Números naturais são inteiros não negativos (0, 1, 2, 3, ...)'
+    },
+    {
+      id: 'q2',
+      type: 'true-false',
+      text: 'Todo número natural tem um sucessor.',
+      options: ['Verdadeiro', 'Falso'],
+      correctAnswer: 'Verdadeiro',
+      points: 1,
+      explanation: 'Para qualquer número natural n, seu sucessor é n + 1'
+    },
+    {
+      id: 'q3',
+      type: 'multiple-choice',
+      text: 'Quais das seguintes propriedades se aplicam à adição de números naturais?',
+      options: [
+        'Comutativa e Associativa',
+        'Apenas Comutativa',
+        'Apenas Associativa',
+        'Nenhuma das anteriores'
+      ],
+      correctAnswer: 'Comutativa e Associativa',
+      points: 2,
+      explanation: 'A adição de números naturais é tanto comutativa (a + b = b + a) quanto associativa ((a + b) + c = a + (b + c))'
+    },
+    {
+      id: 'q4',
+      type: 'short-answer',
+      text: 'Qual é o menor número natural?',
+      correctAnswer: ['0', 'zero'],
+      points: 1,
+      explanation: 'O conjunto dos números naturais começa em zero'
+    }
+  ]
+};
+
+// Course Materials Mock Data
+export const mockModules: Module[] = [
+  {
+    id: 'mod1',
+    title: 'Introdução à Matemática',
+    description: 'Conceitos fundamentais de matemática',
+    xpReward: 100,
+    isCompleted: false,
+    lessons: [
+      {
+        id: 'lesson1',
+        title: 'Números Naturais',
+        type: 'video',
+        duration: '15 min',
+        xpReward: 25,
+        isCompleted: false,
+        videoUrl: 'https://example.com/video1'
+      },
+      {
+        id: 'lesson2',
+        title: 'Operações Básicas',
+        type: 'reading',
+        duration: '20 min',
+        xpReward: 30,
+        isCompleted: false,
+        content: 'Conteúdo sobre operações básicas...'
+      },
+      {
+        id: 'lesson3',
+        title: 'Quiz: Números Naturais',
+        type: 'quiz',
+        duration: '10 min',
+        xpReward: 45,
+        isCompleted: false,
+        requirements: [
+          {
+            type: 'lesson',
+            lessonId: 'lesson1',
+            description: 'Completar Números Naturais'
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'mod2',
+    title: 'Álgebra Básica',
+    description: 'Introdução aos conceitos algébricos',
+    xpReward: 150,
+    isCompleted: false,
+    prerequisites: ['mod1'],
+    lessons: [
+      {
+        id: 'lesson4',
+        title: 'Variáveis e Expressões',
+        type: 'video',
+        duration: '25 min',
+        xpReward: 35,
+        isCompleted: false,
+        videoUrl: 'https://example.com/video2'
+      },
+      {
+        id: 'lesson5',
+        title: 'Equações Lineares',
+        type: 'reading',
+        duration: '30 min',
+        xpReward: 40,
+        isCompleted: false,
+        content: 'Conteúdo sobre equações lineares...'
+      }
+    ]
+  }
+];
+
+// Chat Mock Data
+export const mockChats = [
+  {
+    id: 'chat1',
+    name: 'Matemática - 9º Ano A',
+    participants: ['t1', 's1', 's2'],
+    lastMessage: 'Boa tarde, turma!',
+    lastMessageTime: '2024-01-20T14:30:00Z'
+  },
+  {
+    id: 'chat2',
+    name: 'Física - 9º Ano B',
+    participants: ['t1', 's2'],
+    lastMessage: 'Dúvida sobre a experiência',
+    lastMessageTime: '2024-01-20T15:45:00Z'
+  }
+];
+
+export const mockConversationPortugues: ChatMessage[] = [
+  {
+    id: '1',
+    senderId: 't1',
+    content: 'Boa tarde, turma! Como estão os estudos?',
+    timestamp: '2024-01-20T14:30:00Z',
+    readBy: ['t1', 's1', 's2']
+  },
+  {
+    id: '2',
+    senderId: 's1',
+    content: 'Boa tarde, professor! Estou com uma dúvida sobre a matéria de hoje.',
+    timestamp: '2024-01-20T14:32:00Z',
+    readBy: ['t1', 's1']
+  },
+  {
+    id: '3',
+    senderId: 't1',
+    content: 'Claro! Qual é a sua dúvida?',
+    timestamp: '2024-01-20T14:33:00Z',
+    readBy: ['t1', 's1']
+  },
+  {
+    id: '4',
+    senderId: 's1',
+    content: 'É sobre as equações do segundo grau. Não entendi como resolver quando o discriminante é negativo.',
+    timestamp: '2024-01-20T14:35:00Z',
+    readBy: ['t1', 's1']
+  },
+  {
+    id: '5',
+    senderId: 't1',
+    content: 'Ótima pergunta! Quando o discriminante (Δ) é negativo, a equação não possui raízes reais. Isso significa que o gráfico da função não toca o eixo x.',
+    timestamp: '2024-01-20T14:37:00Z',
+    readBy: ['t1', 's1']
+  }
+];
+
+// Forum Mock Data
+export const mockForumThreads: ForumThread[] = [
+  {
+    id: 'thread1',
+    classId: '1',
+    title: 'Dúvidas sobre Equações Quadráticas',
+    content: 'Estou com dificuldades para resolver equações do segundo grau. Alguém pode me ajudar?',
+    authorId: 's1',
+    tags: [ForumTagCategory.Question, ForumTagCategory.Technical],
+    createdAt: '2024-01-15T10:00:00Z',
+    updatedAt: '2024-01-15T10:00:00Z',
+    replies: [],
+    pinned: false,
+    locked: false,
+    views: 25
+  },
+  {
+    id: 'thread2',
+    classId: '2',
+    title: 'Experimento de Física - Resultados',
+    content: 'Compartilhando os resultados do experimento sobre movimento retilíneo uniforme.',
+    authorId: 't1',
+    tags: [ForumTagCategory.Resource, ForumTagCategory.Assignment],
+    createdAt: '2024-01-16T14:00:00Z',
+    updatedAt: '2024-01-16T14:00:00Z',
+    replies: [],
+    pinned: true,
+    locked: false,
+    views: 45
+  }
+];
+
+// Institution Mock Data for forms
+export const mockInstitutions = [
+  { id: 'inst1', name: 'Portal Corp' },
+  { id: 'inst2', name: 'Escola Municipal São José' },
+  { id: 'inst3', name: 'Colégio Estadual Dom Pedro II' },
+  { id: 'inst4', name: 'Universidade Federal XYZ' },
+  { id: 'inst5', name: 'Centro de Treinamento TechDev' },
+  { id: 'inst6', name: 'Escola de Negócios Inova' }
+];
+
+export const mockUnidadesEnsino = [
+  { id: 'ue1', name: 'Sede Administrativa' },
+  { id: 'ue2', name: 'Sede Operacional' },
+  { id: 'ue3', name: 'Unidade Centro' },
+  { id: 'ue4', name: 'Unidade Norte' },
+  { id: 'ue5', name: 'Campus Principal' }
+];
+
+// Additional Mock Data from various components
+
+// Student Portal Videos Mock Data
+export const dummyVideos = [
+  {
+    id: 'video-dummy-1',
+    thumbnail: 'https://img.youtube.com/vi/X_B7o4_wOAY/maxresdefault.jpg',
+    title: 'Matemática: Introdução à Álgebra',
+    duration: '25:30',
+    progress: 45
+  },
+  {
+    id: 'video-dummy-2',
+    thumbnail: 'https://img.youtube.com/vi/D7K1yXz5IgI/maxresdefault.jpg',
+    title: 'Física: Leis de Newton',
+    duration: '18:45',
+    progress: 78
+  },
+  {
+    id: 'video-dummy-3',
+    thumbnail: 'https://img.youtube.com/vi/NybHckSEQBI/maxresdefault.jpg',
+    title: 'Química: Tabela Periódica',
+    duration: '22:15',
+    progress: 23
+  },
+  {
+    id: 'video-dummy-4',
+    thumbnail: 'https://img.youtube.com/vi/kjBOesZCoqc/maxresdefault.jpg',
+    title: 'Biologia: Células',
+    duration: '30:00',
+    progress: 67
+  },
+  {
+    id: 'video-dummy-5',
+    thumbnail: 'https://img.youtube.com/vi/fNk_zzaMoSs/maxresdefault.jpg',
+    title: 'História: Brasil Colonial',
+    duration: '28:20',
+    progress: 12
+  },
+  {
+    id: 'video-dummy-6',
+    thumbnail: 'https://img.youtube.com/vi/pTnEG_WGd2Q/maxresdefault.jpg',
+    title: 'Geografia: Relevo Brasileiro',
+    duration: '24:10',
+    progress: 89
+  },
+  {
+    id: 'video-dummy-7',
+    thumbnail: 'https://img.youtube.com/vi/F3BR6q9_zEs/maxresdefault.jpg',
+    title: 'Literatura: Modernismo',
+    duration: '26:45',
+    progress: 34
+  },
+  {
+    id: 'video-dummy-8',
+    thumbnail: 'https://img.youtube.com/vi/mH0oCDa74tE/maxresdefault.jpg',
+    title: 'Filosofia: Ética',
+    duration: '32:15',
+    progress: 56
+  },
+  {
+    id: 'video-dummy-9',
+    thumbnail: 'https://img.youtube.com/vi/sD0NjbwqlYw/maxresdefault.jpg',
+    title: 'Sociologia: Classes Sociais',
+    duration: '27:30',
+    progress: 78
+  },
+  {
+    id: 'video-dummy-10',
+    thumbnail: 'https://img.youtube.com/vi/PF5yfMfxI88/maxresdefault.jpg',
+    title: 'Artes: Renascimento',
+    duration: '29:40',
+    progress: 91
   }
 ];

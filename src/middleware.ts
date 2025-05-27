@@ -29,8 +29,31 @@ const publicPaths = [
   '/books' // Allow access to test files
 ]
 
-export function middleware(request: NextRequest) {
+// Função para validar sessão via Redis
+async function validateRedisSession(sessionId: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/sessions/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sessionId }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.valid;
+    }
+    return false;
+  } catch (error) {
+    console.error('Erro ao validar sessão Redis:', error);
+    return false;
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')
+  const sessionId = request.cookies.get('session_id')
   const userDataCookie = request.cookies.get('user_data')
   const { pathname } = request.nextUrl
 
@@ -47,14 +70,37 @@ export function middleware(request: NextRequest) {
   const isTeacherPath = teacherPaths.some(path => pathname.startsWith(path))
   const isAdminPath = adminPaths.some(path => pathname.startsWith(path))
 
+  // Validação de sessão Redis para rotas protegidas
+  if (isProtectedPath) {
+    let isAuthenticated = false;
 
-  // If not authenticated and trying to access protected path
-  if (isProtectedPath && !token) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    // Primeiro verifica se há token tradicional
+    if (token) {
+      isAuthenticated = true;
+    }
+
+    // Se há sessionId, valida via Redis
+    if (sessionId && !isAuthenticated) {
+      isAuthenticated = await validateRedisSession(sessionId.value);
+      
+      // Se a sessão Redis é inválida, limpa os cookies
+      if (!isAuthenticated) {
+        const response = NextResponse.redirect(new URL('/login', request.url));
+        response.cookies.delete('session_id');
+        response.cookies.delete('auth_token');
+        response.cookies.delete('user_data');
+        return response;
+      }
+    }
+
+    // Se não está autenticado, redireciona para login
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
   }
 
   // If authenticated and trying to access auth pages
-  if (isAuthPath && token) {
+  if (isAuthPath && (token || sessionId)) {
     return NextResponse.redirect(new URL('/portal/videos', request.url))
   }
 
@@ -82,7 +128,17 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  // Adiciona headers de sessão para rastreamento
+  const response = NextResponse.next();
+  
+  if (sessionId) {
+    response.headers.set('X-Session-ID', sessionId.value);
+  }
+  
+  response.headers.set('X-Request-Path', pathname);
+  response.headers.set('X-Request-Time', new Date().toISOString());
+
+  return response;
 }
 
 export const config = {

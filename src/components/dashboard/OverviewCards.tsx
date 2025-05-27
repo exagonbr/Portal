@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { teacherMockData, studentMockData } from '@/constants/dashboardData'
+import { teacherMockData, studentMockData } from '@/constants/mockData'
 
 interface OverviewCardProps {
   title: string

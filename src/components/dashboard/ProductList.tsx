@@ -1,6 +1,6 @@
 'use client'
 
-import { teacherMockData } from '@/constants/dashboardData'
+import { teacherMockData } from '@/constants/mockData'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface ClassNotification {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+// Interfaces locais para compatibilidade com o componente existente
 interface Material {
   id: string
   title: string
@@ -13,7 +14,7 @@ interface Material {
   completed?: boolean
 }
 
-interface Lesson {
+interface LocalLesson {
   id: string
   title: string
   description: string
@@ -26,17 +27,17 @@ interface Lesson {
   }[]
 }
 
-interface Module {
+interface LocalModule {
   id: string
   title: string
   description: string
-  lessons: Lesson[]
+  lessons: LocalLesson[]
   isUnlocked: boolean
   xp: number
 }
 
-// Mock data enhanced with XP and gamification elements
-const MOCK_MODULES: Module[] = [
+// Adaptação dos dados centralizados para a estrutura local
+const adaptedModules: LocalModule[] = [
   {
     id: '1',
     title: 'Módulo 1: Introdução à Matemática Fundamental',
@@ -138,12 +139,12 @@ const MOCK_MODULES: Module[] = [
 ]
 
 export default function CourseMaterials() {
-  const [activeModule, setActiveModule] = useState<string>(MOCK_MODULES[0].id)
+  const [activeModule, setActiveModule] = useState<string>(adaptedModules[0].id)
   const [activeLesson, setActiveLesson] = useState<string | null>(null)
   const [hoveredMaterial, setHoveredMaterial] = useState<string | null>(null)
 
   const getTotalXP = () => {
-    return MOCK_MODULES.reduce((total, module) => {
+    return adaptedModules.reduce((total, module) => {
       const moduleXP = module.lessons.reduce((lessonTotal, lesson) => {
         const materialXP = lesson.materials.reduce((materialTotal, material) => 
           materialTotal + (material.completed ? (material.xp || 0) : 0), 0)
@@ -153,8 +154,8 @@ export default function CourseMaterials() {
     }, 0)
   }
 
-  const getModuleProgress = (module: Module) => {
-    const completedLessons = module.lessons.filter(lesson => lesson.isCompleted).length
+  const getModuleProgress = (module: LocalModule) => {
+    const completedLessons = module.lessons.filter((lesson: LocalLesson) => lesson.isCompleted).length
     const totalLessons = module.lessons.length
     return Math.round((completedLessons / totalLessons) * 100)
   }
@@ -214,7 +215,7 @@ export default function CourseMaterials() {
         {/* Learning Path Sidebar */}
         <div className="lg:col-span-1 border-r border-gray-200">
           <nav className="space-y-1 p-4">
-            {MOCK_MODULES.map((module, moduleIndex) => (
+            {adaptedModules.map((module, moduleIndex) => (
               <div key={module.id} className="relative">
                 {moduleIndex > 0 && (
                   <div className="absolute -top-4 left-4 w-0.5 h-4 bg-gray-200" />
@@ -262,7 +263,7 @@ export default function CourseMaterials() {
 
         {/* Content Area */}
         <div className="lg:col-span-3 p-6">
-          {MOCK_MODULES.map(module => (
+          {adaptedModules.map(module => (
             module.id === activeModule && (
               <div key={module.id} className="space-y-6">
                 <div>
@@ -330,7 +331,7 @@ export default function CourseMaterials() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                   <span>
-                                    Completar {MOCK_MODULES.find(m => 
+                                    Completar {adaptedModules.find(m => 
                                       m.lessons.some(l => l.id === req.lessonId)
                                     )?.lessons.find(l => l.id === req.lessonId)?.title}
                                     {req.minimumScore && ` com nota mínima de ${req.minimumScore}%`}

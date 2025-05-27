@@ -28,17 +28,9 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
   }, [messages])
 
   const getUserInfo = (userId: string) => {
-    const teacher = MOCK_USERS.find(t => t.id === userId)
-    if (teacher) return { name: teacher.name, role: 'teacher' }
-    
-    const student = MOCK_USERS.find(s => s.id === userId)
-    if (student) return { name: student.name, role: 'student' }
-
-    const manager = MOCK_USERS.find(s => s.id === userId)
-    if (manager) return { name: manager.name, role: 'manager' }
-
-    const admin = MOCK_USERS.find(s => s.id === userId)
-    if (admin) return { name: admin.name, role: 'admin' }
+    const users = Object.values(MOCK_USERS)
+    const user = users.find(u => u.id === userId)
+    if (user) return { name: user.name, role: user.role }
     
     return { name: 'Unknown User', role: 'unknown' }
   }

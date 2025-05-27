@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { teacherMockData } from '@/constants/dashboardData'
+import { teacherMockData } from '@/constants/mockData'
 
 interface Activity {
   id: number

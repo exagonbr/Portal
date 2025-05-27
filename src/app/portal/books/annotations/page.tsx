@@ -2,8 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { PencilSquareIcon } from '@heroicons/react/24/outline';
-import { mockBooks } from '@/constants/mockData';
-import { mockAnnotations } from '@/constants/mockAnnotationsData';
+import { mockBooks, mockAnnotations } from '@/constants/mockData';
 import { Annotation } from '@/components/books/BookViewer/types';
 
 interface BookWithAnnotations {
