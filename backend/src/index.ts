@@ -4,8 +4,11 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import * as dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 import { testDatabaseConnection } from './config/database';
 import { testRedisConnection } from './config/redis';
+import apiRoutes from './routes';
 
 // Carrega variáveis de ambiente
 dotenv.config();
@@ -19,7 +22,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
@@ -54,15 +57,21 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-app.get('/api', (req, res) => {
-  res.json({
-    message: 'Portal Sabercon API',
-    version: '1.0.0',
-    documentation: '/api/docs',
-    health: '/health'
-  });
+// Swagger UI at /backend/docs
+app.use('/backend/docs', swaggerUi.serve);
+app.get('/backend/docs', swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Portal Sabercon API Documentation',
+  customfavIcon: '/favicon.ico',
+}));
+
+// Redirect /backend to /backend/docs
+app.get('/backend', (req, res) => {
+  res.redirect('/backend/docs');
 });
+
+// Mount API Routes
+app.use('/api', apiRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

@@ -1,4 +1,4 @@
-import { Knex } from 'knex';
+import type { Knex } from 'knex';
 
 export async function seed(knex: Knex): Promise<void> {
   // Deletes ALL existing entries
@@ -7,8 +7,8 @@ export async function seed(knex: Knex): Promise<void> {
   // Inserts seed entries
   await knex('institutions').insert([
     {
-      id: '1',
       name: 'Escola Municipal São José',
+      code: 'EMSJ001',
       type: 'SCHOOL',
       characteristics: JSON.stringify([
         'Ensino fundamental completo',
@@ -20,8 +20,8 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'contato@escolasaojose.edu.br'
     },
     {
-      id: '2',
       name: 'Colégio Estadual Dom Pedro II',
+      code: 'CEDP002',
       type: 'COLLEGE',
       characteristics: JSON.stringify([
         'Foco em humanidades',
@@ -32,8 +32,8 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'secretaria@dompedro.edu.br'
     },
     {
-      id: '3',
       name: 'Centro de Treinamento TechDev',
+      code: 'CTTD003',
       type: 'TECH_CENTER',
       characteristics: JSON.stringify([
         'Laboratórios equipados',
@@ -44,8 +44,8 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'info@techdev.com.br'
     },
     {
-      id: '4',
       name: 'Universidade Federal XYZ',
+      code: 'UFXYZ004',
       type: 'UNIVERSITY',
       characteristics: JSON.stringify([
         'Convênios internacionais',
@@ -56,8 +56,8 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'reitoria@ufxyz.edu.br'
     },
     {
-      id: '5',
       name: 'Escola de Negócios Inova',
+      code: 'ENIN005',
       type: 'TECH_CENTER',
       characteristics: JSON.stringify([
         'Cases reais',
@@ -68,8 +68,8 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'contato@inova.edu.br'
     },
     {
-      id: 'inst1',
       name: 'Portal Corp',
+      code: 'PCORP006',
       type: 'TECH_CENTER',
       characteristics: JSON.stringify([
         'Tecnologia educacional',

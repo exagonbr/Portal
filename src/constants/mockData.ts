@@ -1359,3 +1359,384 @@ export const dummyVideos = [
     progress: 91
   }
 ];
+
+// Roles and Permissions Mock Data
+export interface Permission {
+  id: string;
+  name: string;
+  resource: string;
+  action: 'create' | 'read' | 'update' | 'delete';
+  description: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  type: 'system' | 'custom';
+  permissions: string[];
+  userCount: number;
+  createdAt: string;
+  updatedAt: string;
+  status: 'active' | 'inactive';
+}
+
+export const mockPermissions: Permission[] = [
+  // User Management
+  { id: 'user_create', name: 'Criar Usuários', resource: 'users', action: 'create', description: 'Permite criar novos usuários no sistema' },
+  { id: 'user_read', name: 'Visualizar Usuários', resource: 'users', action: 'read', description: 'Permite visualizar informações dos usuários' },
+  { id: 'user_update', name: 'Editar Usuários', resource: 'users', action: 'update', description: 'Permite editar informações dos usuários' },
+  { id: 'user_delete', name: 'Excluir Usuários', resource: 'users', action: 'delete', description: 'Permite excluir usuários do sistema' },
+  
+  // Course Management
+  { id: 'course_create', name: 'Criar Cursos', resource: 'courses', action: 'create', description: 'Permite criar novos cursos' },
+  { id: 'course_read', name: 'Visualizar Cursos', resource: 'courses', action: 'read', description: 'Permite visualizar cursos' },
+  { id: 'course_update', name: 'Editar Cursos', resource: 'courses', action: 'update', description: 'Permite editar cursos existentes' },
+  { id: 'course_delete', name: 'Excluir Cursos', resource: 'courses', action: 'delete', description: 'Permite excluir cursos' },
+  
+  // Content Management
+  { id: 'content_create', name: 'Criar Conteúdo', resource: 'content', action: 'create', description: 'Permite criar novo conteúdo educacional' },
+  { id: 'content_read', name: 'Visualizar Conteúdo', resource: 'content', action: 'read', description: 'Permite visualizar conteúdo educacional' },
+  { id: 'content_update', name: 'Editar Conteúdo', resource: 'content', action: 'update', description: 'Permite editar conteúdo existente' },
+  { id: 'content_delete', name: 'Excluir Conteúdo', resource: 'content', action: 'delete', description: 'Permite excluir conteúdo' },
+  
+  // Reports
+  { id: 'reports_read', name: 'Visualizar Relatórios', resource: 'reports', action: 'read', description: 'Permite visualizar relatórios do sistema' },
+  { id: 'reports_create', name: 'Gerar Relatórios', resource: 'reports', action: 'create', description: 'Permite gerar novos relatórios' },
+  
+  // System Administration
+  { id: 'system_admin', name: 'Administração do Sistema', resource: 'system', action: 'update', description: 'Acesso total às configurações do sistema' },
+  { id: 'roles_manage', name: 'Gerenciar Funções', resource: 'roles', action: 'update', description: 'Permite gerenciar funções e permissões' },
+  
+  // Grades and Assessments
+  { id: 'grades_create', name: 'Lançar Notas', resource: 'grades', action: 'create', description: 'Permite lançar notas dos alunos' },
+  { id: 'grades_read', name: 'Visualizar Notas', resource: 'grades', action: 'read', description: 'Permite visualizar notas' },
+  { id: 'grades_update', name: 'Editar Notas', resource: 'grades', action: 'update', description: 'Permite editar notas existentes' },
+  
+  // Attendance
+  { id: 'attendance_create', name: 'Registrar Presença', resource: 'attendance', action: 'create', description: 'Permite registrar presença dos alunos' },
+  { id: 'attendance_read', name: 'Visualizar Presença', resource: 'attendance', action: 'read', description: 'Permite visualizar registros de presença' },
+];
+
+export const mockRoles: Role[] = [
+  {
+    id: 'admin',
+    name: 'Administrador',
+    description: 'Acesso total ao sistema',
+    type: 'system',
+    permissions: mockPermissions.map(p => p.id),
+    userCount: 3,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    status: 'active'
+  },
+  {
+    id: 'manager',
+    name: 'Gestor',
+    description: 'Gerenciamento de cursos e usuários',
+    type: 'system',
+    permissions: [
+      'user_read', 'user_update', 'course_create', 'course_read', 'course_update',
+      'content_create', 'content_read', 'content_update', 'reports_read', 'reports_create',
+      'grades_read', 'attendance_read'
+    ],
+    userCount: 8,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-15T10:30:00Z',
+    status: 'active'
+  },
+  {
+    id: 'teacher',
+    name: 'Professor',
+    description: 'Ensino e avaliação de alunos',
+    type: 'system',
+    permissions: [
+      'course_read', 'content_read', 'content_create', 'content_update',
+      'grades_create', 'grades_read', 'grades_update',
+      'attendance_create', 'attendance_read', 'reports_read'
+    ],
+    userCount: 45,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-10T14:20:00Z',
+    status: 'active'
+  },
+  {
+    id: 'student',
+    name: 'Aluno',
+    description: 'Acesso ao conteúdo educacional',
+    type: 'system',
+    permissions: [
+      'course_read', 'content_read', 'grades_read', 'attendance_read'
+    ],
+    userCount: 1247,
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-05T09:15:00Z',
+    status: 'active'
+  },
+  {
+    id: 'coordinator',
+    name: 'Coordenador',
+    description: 'Coordenação pedagógica e administrativa',
+    type: 'custom',
+    permissions: [
+      'user_read', 'course_create', 'course_read', 'course_update',
+      'content_read', 'content_update', 'reports_read', 'reports_create',
+      'grades_read', 'attendance_read'
+    ],
+    userCount: 12,
+    createdAt: '2024-01-15T16:45:00Z',
+    updatedAt: '2024-01-20T11:30:00Z',
+    status: 'active'
+  },
+  {
+    id: 'tutor',
+    name: 'Tutor',
+    description: 'Suporte e orientação aos alunos',
+    type: 'custom',
+    permissions: [
+      'course_read', 'content_read', 'grades_read', 'attendance_read'
+    ],
+    userCount: 23,
+    createdAt: '2024-01-20T08:00:00Z',
+    updatedAt: '2024-01-25T15:45:00Z',
+    status: 'active'
+  },
+  {
+    id: 'content_creator',
+    name: 'Criador de Conteúdo',
+    description: 'Criação e edição de material educacional',
+    type: 'custom',
+    permissions: [
+      'content_create', 'content_read', 'content_update', 'course_read'
+    ],
+    userCount: 7,
+    createdAt: '2024-02-01T10:15:00Z',
+    updatedAt: '2024-02-05T14:30:00Z',
+    status: 'active'
+  },
+  {
+    id: 'guest',
+    name: 'Visitante',
+    description: 'Acesso limitado para demonstração',
+    type: 'custom',
+    permissions: [
+      'course_read', 'content_read'
+    ],
+    userCount: 0,
+    createdAt: '2024-02-10T12:00:00Z',
+    updatedAt: '2024-02-10T12:00:00Z',
+    status: 'inactive'
+  }
+];
+
+// Resources for permission matrix
+export const mockResources = [
+  { id: 'users', name: 'Usuários', description: 'Gerenciamento de usuários do sistema' },
+  { id: 'courses', name: 'Cursos', description: 'Gerenciamento de cursos e disciplinas' },
+  { id: 'content', name: 'Conteúdo', description: 'Material educacional (livros, vídeos, etc.)' },
+  { id: 'grades', name: 'Notas', description: 'Sistema de avaliação e notas' },
+  { id: 'attendance', name: 'Presença', description: 'Controle de frequência' },
+  { id: 'reports', name: 'Relatórios', description: 'Relatórios e analytics' },
+  { id: 'system', name: 'Sistema', description: 'Configurações gerais do sistema' },
+  { id: 'roles', name: 'Funções', description: 'Gerenciamento de funções e permissões' }
+];
+
+// Content Management Mock Data
+// Importando as interfaces corretas do projeto
+import {
+  Collection as ContentCollection,
+  Module as ContentModule,
+  Video as ContentVideo
+} from '@/types/collection';
+
+// Mock Collections Data
+export const mockContentCollections: ContentCollection[] = [
+  {
+    id: '1',
+    name: 'Matemática Básica',
+    synopsis: 'Coleção de vídeos sobre matemática básica para o ensino fundamental',
+    coverImage: '/placeholder-thumbnail.png',
+    supportMaterial: 'https://example.com/math-support-material.pdf',
+    totalDuration: 12240, // 3H24 em segundos
+    subject: 'Matemática',
+    modules: [],
+    tags: ['matemática', 'fundamental'],
+    createdBy: 'user-1',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '2',
+    name: 'Física Experimental',
+    synopsis: 'Coleção de experimentos práticos de física para o ensino médio',
+    coverImage: '/placeholder-thumbnail.png',
+    supportMaterial: 'https://example.com/physics-support-material.pdf',
+    totalDuration: 15300, // 4H15 em segundos
+    subject: 'Física',
+    modules: [],
+    tags: ['física', 'experimentos', 'médio'],
+    createdBy: 'user-2',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '3',
+    name: 'Química Orgânica',
+    synopsis: 'Introdução aos compostos orgânicos e suas reações',
+    coverImage: '/placeholder-thumbnail.png',
+    supportMaterial: 'https://example.com/chemistry-support-material.pdf',
+    totalDuration: 19800, // 5H30 em segundos
+    subject: 'Química',
+    modules: [],
+    tags: ['química', 'orgânica', 'médio'],
+    createdBy: 'user-3',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
+
+// Mock Videos Data for Content Management
+export const mockContentVideos: ContentVideo[] = [
+  {
+    id: 'video-1',
+    name: 'Introdução à Álgebra - Parte 1',
+    moduleId: 'module-1',
+    videoUrl: 'https://example.com/videos/algebra-intro-1.mp4',
+    duration: 600, // 10 minutos
+    authors: ['Prof. João Silva'],
+    educationCycle: {
+      level: 'FUNDAMENTAL',
+      cycle: 'ANOS_FINAIS',
+      grade: 'SEXTO_ANO'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 'video-2',
+    name: 'Introdução à Álgebra - Parte 2',
+    moduleId: 'module-1',
+    videoUrl: 'https://example.com/videos/algebra-intro-2.mp4',
+    duration: 720, // 12 minutos
+    authors: ['Prof. João Silva'],
+    educationCycle: {
+      level: 'FUNDAMENTAL',
+      cycle: 'ANOS_FINAIS',
+      grade: 'SEXTO_ANO'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 'video-3',
+    name: 'Leis de Newton - Experimento Prático',
+    moduleId: 'module-2',
+    videoUrl: 'https://example.com/videos/newton-laws-experiment.mp4',
+    duration: 900, // 15 minutos
+    authors: ['Prof. Maria Santos', 'Dr. Carlos Lima'],
+    educationCycle: {
+      level: 'MEDIO',
+      cycle: 'PRIMEIRO_ANO'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 'video-4',
+    name: 'Movimento Retilíneo Uniforme',
+    moduleId: 'module-2',
+    videoUrl: 'https://example.com/videos/uniform-motion.mp4',
+    duration: 780, // 13 minutos
+    authors: ['Prof. Maria Santos'],
+    educationCycle: {
+      level: 'MEDIO',
+      cycle: 'PRIMEIRO_ANO'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 'video-5',
+    name: 'Alcanos e suas Propriedades',
+    moduleId: 'module-3',
+    videoUrl: 'https://example.com/videos/alkanes-properties.mp4',
+    duration: 840, // 14 minutos
+    authors: ['Prof. Ana Química', 'Dr. Pedro Orgânico'],
+    educationCycle: {
+      level: 'MEDIO',
+      cycle: 'TERCEIRO_ANO'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 'video-6',
+    name: 'Reações de Substituição',
+    moduleId: 'module-3',
+    videoUrl: 'https://example.com/videos/substitution-reactions.mp4',
+    duration: 960, // 16 minutos
+    authors: ['Prof. Ana Química'],
+    educationCycle: {
+      level: 'MEDIO',
+      cycle: 'TERCEIRO_ANO'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 'video-7',
+    name: 'Geometria Plana - Triângulos',
+    moduleId: 'module-1',
+    videoUrl: 'https://example.com/videos/plane-geometry-triangles.mp4',
+    duration: 660, // 11 minutos
+    authors: ['Prof. João Silva', 'Prof. Matemática Avançada'],
+    educationCycle: {
+      level: 'FUNDAMENTAL',
+      cycle: 'ANOS_FINAIS',
+      grade: 'SETIMO_ANO'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: 'video-8',
+    name: 'Energia Cinética e Potencial',
+    moduleId: 'module-2',
+    videoUrl: 'https://example.com/videos/kinetic-potential-energy.mp4',
+    duration: 1020, // 17 minutos
+    authors: ['Prof. Maria Santos', 'Dr. Física Experimental'],
+    educationCycle: {
+      level: 'MEDIO',
+      cycle: 'SEGUNDO_ANO'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
+
+// Mock Collection for Module Manager (single collection example)
+export const mockModuleCollection: ContentCollection = {
+  id: 'collection-math-basic',
+  name: 'Matemática Básica',
+  synopsis: 'Coleção de vídeos sobre matemática básica para o ensino fundamental',
+  coverImage: '/placeholder-thumbnail.png',
+  supportMaterial: 'https://example.com/math-support-material.pdf',
+  totalDuration: 3600, // 1 hora em segundos
+  subject: 'Matemática',
+  modules: [
+    {
+      id: 'module-1',
+      name: 'Introdução à Álgebra',
+      description: 'Conceitos básicos de álgebra',
+      coverImage: '/placeholder-thumbnail.png',
+      videoIds: ['video-1', 'video-2'],
+      order: 1,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+  ],
+  tags: ['matemática', 'fundamental'],
+  createdBy: 'user-1',
+  createdAt: new Date(),
+  updatedAt: new Date()
+};

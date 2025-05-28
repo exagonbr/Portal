@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Collection } from '@/types/collection';
 import { s3Service } from '@/services/s3Service';
+import { mockContentCollections } from '@/constants/mockData';
 
 export default function CollectionManager() {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -15,7 +16,7 @@ export default function CollectionManager() {
     subject: '',
     supportMaterial: '',
     coverImage: '',
-    totalDuration: '',
+    totalDuration: 0,
     tags: [] as string[]
   });
   const [tagInput, setTagInput] = useState('');
@@ -30,25 +31,8 @@ export default function CollectionManager() {
       setError(null);
       
       // This would be replaced with an actual API call
-      // For now, we'll use mock data
-      const mockCollections: Collection[] = [
-        {
-          id: '1',
-          name: 'Matemática Básica',
-          synopsis: 'Coleção de vídeos sobre matemática básica para o ensino fundamental',
-          coverImage: '/placeholder-thumbnail.png',
-          supportMaterial: 'https://example.com/math-support-material.pdf',
-          totalDuration: "3H24", // 1 hour
-          subject: 'Matemática',
-          modules: [],
-          tags: ['matemática', 'fundamental'],
-          createdBy: 'user-1',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
-      
-      setCollections(mockCollections);
+      // For now, we'll use mock data from mockData.ts
+      setCollections(mockContentCollections);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load collections');
     } finally {
@@ -92,7 +76,7 @@ export default function CollectionManager() {
         subject: '',
         supportMaterial: '',
         coverImage: '',
-        totalDuration: '',
+        totalDuration: 0,
         tags: []
       });
     } catch (err) {
@@ -310,7 +294,7 @@ export default function CollectionManager() {
                   value={newCollection.totalDuration || '0'}
                   onChange={e => setNewCollection(prev => ({
                     ...prev,
-                    totalDuration: e.target.value || '0'
+                    totalDuration: e.target.value ? 0 : 0 
                   }))}
                   className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Duração total em minutos"

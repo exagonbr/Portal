@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Collection, Module, Video } from '@/types/collection';
 import { s3Service } from '@/services/s3Service';
+import { mockModuleCollection, mockContentVideos } from '@/constants/mockData';
 
 interface ModuleManagerProps {
   collectionId: string;
@@ -46,34 +47,10 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
       setError(null);
       
       // Isso seria substituído por uma chamada real à API
-      // Por enquanto, usaremos dados simulados
-      const mockCollection: Collection = {
-        id: collectionId,
-        name: 'Matemática Básica',
-        synopsis: 'Coleção de vídeos sobre matemática básica para o ensino fundamental',
-        coverImage: '/placeholder-thumbnail.png',
-        supportMaterial: 'https://example.com/math-support-material.pdf',
-        totalDuration: 3600, // 1 hora
-        subject: 'Matemática',
-        modules: [
-          {
-            id: 'module-1',
-            name: 'Introdução à Álgebra',
-            description: 'Conceitos básicos de álgebra',
-            coverImage: '/placeholder-thumbnail.png',
-            videoIds: ['video-1', 'video-2'],
-            order: 1,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        ],
-        tags: ['matemática', 'fundamental'],
-        createdBy: 'user-1',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // Por enquanto, usaremos dados simulados do mockData.ts
+      const collection = { ...mockModuleCollection, id: collectionId };
       
-      setCollection(mockCollection);
+      setCollection(collection);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao carregar coleção');
     } finally {
@@ -84,40 +61,8 @@ export default function ModuleManager({ collectionId }: ModuleManagerProps) {
   const loadAvailableVideos = async () => {
     try {
       // Isso seria substituído por uma chamada real à API
-      // Vídeos simulados por enquanto
-      const mockVideos: Video[] = [
-        {
-          id: 'video-1',
-          name: 'Introdução à Álgebra - Parte 1',
-          moduleId: 'module-1',
-          videoUrl: 'https://example.com/videos/algebra-intro-1.mp4',
-          duration: 600, // 10 minutos
-          authors: ['Prof. João Silva'],
-          educationCycle: {
-            level: 'FUNDAMENTAL',
-            cycle: 'ANOS_FINAIS',
-            grade: 'SEXTO_ANO'
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 'video-2',
-          name: 'Introdução à Álgebra - Parte 2',
-          moduleId: 'module-1',
-          videoUrl: 'https://example.com/videos/algebra-intro-2.mp4',
-          duration: 720, // 12 minutos
-          authors: ['Prof. João Silva'],
-          educationCycle: {
-            level: 'FUNDAMENTAL',
-            cycle: 'ANOS_FINAIS',
-            grade: 'SEXTO_ANO'
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ];
-      setAvailableVideos(mockVideos);
+      // Vídeos simulados por enquanto do mockData.ts
+      setAvailableVideos(mockContentVideos);
     } catch (err) {
       console.error('Falha ao carregar vídeos disponíveis', err);
     }

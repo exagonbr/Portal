@@ -15,9 +15,11 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@types/express-session": "^1.18.1",
+    "@types/ioredis": "^4.28.10",
     "chart.js": "^4.4.9",
     "epubjs": "^0.3.93",
     "express-session": "^1.18.1",
+    "ioredis": "^5.6.1",
     "next": "14.0.4",
     "next-auth": "^4.24.11",
     "next-pwa": "^5.6.0",
