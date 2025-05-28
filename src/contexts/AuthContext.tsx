@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { User } from '../types/auth';
-import * as authService from '../services/clientAuth';
+import * as authService from '../services/auth';
 import { useRouter } from 'next/navigation';
 import { LoginResponse, RegisterResponse } from '../services/auth';
 import { useSession } from 'next-auth/react';
@@ -14,10 +14,6 @@ export type AuthContextType = {
   login: (email: string, password: string) => Promise<LoginResponse>;
   register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<RegisterResponse>;
   logout: () => void;
-  listUsers: () => Promise<User[]>;
-  createUser: (userData: Omit<User, 'id'>) => Promise<User>;
-  updateUser: (id: string, userData: Partial<User>) => Promise<User | null>;
-  deleteUser: (id: string) => Promise<boolean>;
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -26,11 +22,7 @@ export const AuthContext = createContext<AuthContextType>({
   setUser: () => {},
   login: async () => ({ success: false }),
   register: async () => ({ success: false }),
-  logout: () => {},
-  listUsers: async () => [],
-  createUser: async () => ({ id: '', name: '', email: '', role: 'student' }),
-  updateUser: async () => null,
-  deleteUser: async () => false
+  logout: () => {}
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -64,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
 
       const response = await authService.login(email, password);
-      
+
       if (response.success && response.user) {
         setUser(response.user);
       } else {
@@ -85,9 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await authService.register(name, email, password, type);
-      
+
       if (response.success && response.user) {
         setUser(response.user);
       } else {
@@ -113,57 +105,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const listUsers = async () => {
-    try {
-      return await authService.listUsers();
-    } catch (error) {
-      console.error('Failed to list users:', error);
-      throw error;
-    }
-  };
-
-  const createUser = async (userData: Omit<User, 'id'>) => {
-    try {
-      return await authService.createUser(userData);
-    } catch (error) {
-      console.error('Failed to create user:', error);
-      throw error;
-    }
-  };
-
-  const updateUser = async (id: string, userData: Partial<User>) => {
-    try {
-      return await authService.updateUser(id, userData);
-    } catch (error) {
-      console.error('Failed to update user:', error);
-      throw error;
-    }
-  };
-
-  const deleteUser = async (id: string) => {
-    try {
-      return await authService.deleteUser(id);
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-      throw error;
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      setUser, 
-      login, 
-      register, 
-      logout,
-      listUsers,
-      createUser,
-      updateUser,
-      deleteUser
-    }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{ user, loading, setUser, login, register, logout }}>
+        {children}
+      </AuthContext.Provider>
   );
 };
 

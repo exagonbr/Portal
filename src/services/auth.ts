@@ -1,7 +1,5 @@
 import {User} from '../types/auth';
 import {getSession, signOut} from 'next-auth/react';
-import {MOCK_USERS} from '../constants/mockData';
-import { sessionService } from './sessionService';
 
 export interface LoginResponse {
   success: boolean;
@@ -19,24 +17,7 @@ const setCookie = (name: string, value: string, days: number = 7) => {
   if (typeof window !== 'undefined') {
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;secure;samesite=strict`;
-  }
-};
-
-const clearAllCookies = () => {
-  if (typeof window !== 'undefined') {
-    // Get all cookies and split them into individual cookies
-    const cookies = document.cookie.split(';');
-    
-    // For each cookie, set its expiry to a past date to remove it
-    for (let cookie of cookies) {
-      const eqPos = cookie.indexOf('=');
-      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-      // Also try with different paths to ensure complete removal
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
-    }
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
   }
 };
 
@@ -46,35 +27,22 @@ const removeCookie = (name: string) => {
   }
 };
 
-// User management functions
-export const listUsers = async (): Promise<User[]> => {
-  return Object.values(MOCK_USERS);
-};
-
-export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
-  const newUser = {
-    ...userData,
-    id: Math.random().toString(36).substr(2, 9)
-  };
-  MOCK_USERS[userData.email] = newUser;
-  return newUser;
-};
-
-export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
-  const user = Object.values(MOCK_USERS).find(u => u.id === id);
-  if (!user) return null;
-  
-  const updatedUser = { ...user, ...userData };
-  MOCK_USERS[user.email] = updatedUser;
-  return updatedUser;
-};
-
-export const deleteUser = async (id: string): Promise<boolean> => {
-  const user = Object.values(MOCK_USERS).find(u => u.id === id);
-  if (!user) return false;
-  
-  delete MOCK_USERS[user.email];
-  return true;
+// Mock user data with proper typing and matching test credentials
+const MOCK_USERS: Record<string, User> = {
+  'julia.c@edu.com': {
+    id: '1',
+    name: 'Julia Costa',
+    email: 'julia.c@edu.com',
+    role: 'student',
+    courses: ['1', '2']
+  },
+  'ricardo.oliveira@edu.com': {
+    id: '2',
+    name: 'Professor Ricardo',
+    email: 'ricardo.oliveira@edu.com',
+    role: 'teacher',
+    courses: ['1', '2']
+  }
 };
 
 // Helper function to safely access localStorage
@@ -98,39 +66,17 @@ const safeLocalStorage = {
 };
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
-  return new Promise(async (resolve, reject) => {
-    setTimeout(async () => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
       if (password === 'teste123') {
         const user = MOCK_USERS[email.toLowerCase()];
         if (user) {
-          try {
-            // Cria sessão no Redis
-            const sessionId = await sessionService.createSession(
-              user,
-              undefined, // IP será capturado no servidor
-              typeof window !== 'undefined' ? navigator.userAgent : undefined,
-              typeof window !== 'undefined' ? `${navigator.platform} - ${navigator.userAgent}` : undefined
-            );
-
-            // Set session ID and user data in cookies and localStorage
-            setCookie('session_id', sessionId);
-            setCookie('auth_token', 'dummy_token_value');
-            setCookie('user_data', encodeURIComponent(JSON.stringify(user)));
-            safeLocalStorage.setItem('session_id', sessionId);
-            safeLocalStorage.setItem('auth_token', 'dummy_token_value');
-            safeLocalStorage.setItem('user', JSON.stringify(user));
-            
-            console.log(`✅ Login realizado com sucesso para ${user.email}, sessão: ${sessionId}`);
-            resolve({ success: true, user });
-          } catch (error) {
-            console.error('Erro ao criar sessão Redis:', error);
-            // Fallback para autenticação tradicional
-            setCookie('auth_token', 'dummy_token_value');
-            setCookie('user_data', encodeURIComponent(JSON.stringify(user)));
-            safeLocalStorage.setItem('auth_token', 'dummy_token_value');
-            safeLocalStorage.setItem('user', JSON.stringify(user));
-            resolve({ success: true, user });
-          }
+          // Set auth token and user data in both cookie and localStorage
+          setCookie('auth_token', 'dummy_token_value');
+          setCookie('user_data', encodeURIComponent(JSON.stringify(user)));
+          safeLocalStorage.setItem('auth_token', 'dummy_token_value');
+          safeLocalStorage.setItem('user', JSON.stringify(user));
+          resolve({ success: true, user });
         } else {
           reject(new Error('Usuário não encontrado'));
         }
@@ -142,13 +88,13 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 };
 
 export const register = async (
-  name: string,
-  email: string,
-  password: string,
-  type: 'student' | 'teacher'
+    name: string,
+    email: string,
+    password: string,
+    type: 'student' | 'teacher'
 ): Promise<RegisterResponse> => {
-  return new Promise(async (resolve) => {
-    setTimeout(async () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
       const newUser: User = {
         id: Math.random().toString(36).substr(2, 9),
         name,
@@ -157,34 +103,12 @@ export const register = async (
         courses: []
       };
 
-      try {
-        // Cria sessão no Redis
-        const sessionId = await sessionService.createSession(
-          newUser,
-          undefined, // IP será capturado no servidor
-          typeof window !== 'undefined' ? navigator.userAgent : undefined,
-          typeof window !== 'undefined' ? `${navigator.platform} - ${navigator.userAgent}` : undefined
-        );
-
-        // Set session ID and user data in cookies and localStorage
-        setCookie('session_id', sessionId);
-        setCookie('auth_token', 'dummy_token_value');
-        setCookie('user_data', encodeURIComponent(JSON.stringify(newUser)));
-        safeLocalStorage.setItem('session_id', sessionId);
-        safeLocalStorage.setItem('auth_token', 'dummy_token_value');
-        safeLocalStorage.setItem('user', JSON.stringify(newUser));
-        
-        console.log(`✅ Registro realizado com sucesso para ${newUser.email}, sessão: ${sessionId}`);
-        resolve({ success: true, user: newUser });
-      } catch (error) {
-        console.error('Erro ao criar sessão Redis no registro:', error);
-        // Fallback para autenticação tradicional
-        setCookie('auth_token', 'dummy_token_value');
-        setCookie('user_data', encodeURIComponent(JSON.stringify(newUser)));
-        safeLocalStorage.setItem('auth_token', 'dummy_token_value');
-        safeLocalStorage.setItem('user', JSON.stringify(newUser));
-        resolve({ success: true, user: newUser });
-      }
+      // Set auth token and user data in both cookie and localStorage
+      setCookie('auth_token', 'dummy_token_value');
+      setCookie('user_data', encodeURIComponent(JSON.stringify(newUser)));
+      safeLocalStorage.setItem('auth_token', 'dummy_token_value');
+      safeLocalStorage.setItem('user', JSON.stringify(newUser));
+      resolve({ success: true, user: newUser });
     }, 500);
   });
 };
@@ -217,73 +141,23 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 export const logout = async (): Promise<void> => {
-  return new Promise(async (resolve) => {
-    try {
-      // Recupera o session ID antes de limpar
-      const sessionId = safeLocalStorage.getItem('session_id') ||
-                       (typeof window !== 'undefined' && document.cookie
-                         .split('; ')
-                         .find(row => row.startsWith('session_id='))
-                         ?.split('=')[1]);
-
-      // Remove sessão do Redis se existir
-      if (sessionId) {
-        try {
-          await sessionService.destroySession(sessionId);
-          console.log(`✅ Sessão Redis removida: ${sessionId}`);
-        } catch (error) {
-          console.error('Erro ao remover sessão Redis:', error);
-        }
-      }
-
-      // Clear NextAuth session
-      signOut({ redirect: false }).then(() => {
-        // Clear local storage
-        safeLocalStorage.removeItem('session_id');
-        safeLocalStorage.removeItem('auth_token');
-        safeLocalStorage.removeItem('user');
-        
-        // Clear all cookies
-        clearAllCookies();
-        
-        setTimeout(() => resolve(), 500);
-      });
-    } catch (error) {
-      console.error('Erro durante logout:', error);
-      // Continua com limpeza local mesmo se houver erro no Redis
-      signOut({ redirect: false }).then(() => {
-        safeLocalStorage.removeItem('session_id');
-        safeLocalStorage.removeItem('auth_token');
-        safeLocalStorage.removeItem('user');
-        clearAllCookies();
-        setTimeout(() => resolve(), 500);
-      });
-    }
+  return new Promise((resolve) => {
+    // Clear NextAuth session
+    signOut({ redirect: false }).then(() => {
+      // Clear local storage and cookies
+      safeLocalStorage.removeItem('auth_token');
+      safeLocalStorage.removeItem('user');
+      removeCookie('auth_token');
+      removeCookie('user_data');
+      setTimeout(() => resolve(), 500);
+    });
   });
 };
 
 export const isAuthenticated = async (): Promise<boolean> => {
-  // Verifica NextAuth session
   const session = await getSession();
   if (session) return true;
-  
-  // Verifica sessão Redis
-  const sessionId = safeLocalStorage.getItem('session_id') ||
-                   (typeof window !== 'undefined' && document.cookie
-                     .split('; ')
-                     .find(row => row.startsWith('session_id='))
-                     ?.split('=')[1]);
-  
-  if (sessionId) {
-    try {
-      const isValid = await sessionService.isSessionValid(sessionId);
-      if (isValid) return true;
-    } catch (error) {
-      console.error('Erro ao verificar sessão Redis:', error);
-    }
-  }
-  
-  // Fallback para autenticação tradicional
+
   return !!safeLocalStorage.getItem('auth_token') ||
-         (typeof window !== 'undefined' && document.cookie.includes('auth_token='));
+      (typeof window !== 'undefined' && document.cookie.includes('auth_token='));
 };
