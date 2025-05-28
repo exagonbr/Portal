@@ -44,11 +44,16 @@ export interface UpdateEntityData {
   [key: string]: any;
 }
 
+export interface ValidationErrorDetail {
+  field: string;
+  message: string;
+}
+
 export interface ServiceResult<T> {
   success: boolean;
   data?: T;
-  error?: string;
-  errors?: string[];
+  error?: string; // Mensagem de erro principal
+  errors?: string[] | ValidationErrorDetail[]; // Pode ser strings simples ou erros de validação detalhados
 }
 
 export interface RepositoryOptions {

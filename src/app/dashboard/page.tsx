@@ -10,7 +10,24 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) {
-      router.replace(user.type === 'student' ? '/dashboard/student' : '/dashboard/teacher')
+      // Redirect based on user role
+      switch (user.role) {
+        case 'admin':
+          router.replace('/dashboard/admin')
+          break
+        case 'manager':
+          router.replace('/dashboard/manager')
+          break
+        case 'teacher':
+          router.replace('/dashboard/teacher')
+          break
+        case 'student':
+          router.replace('/dashboard/student')
+          break
+        default:
+          // Fallback to student dashboard if role is unknown
+          router.replace('/dashboard/student')
+      }
     }
   }, [user, router])
 

@@ -1,5 +1,6 @@
 import { BaseRepository } from './BaseRepository';
 import { Course, CreateCourseData, UpdateCourseData } from '../models/Course';
+import { Institution } from '../models/Institution';
 
 export class CourseRepository extends BaseRepository<Course> {
   constructor() {
@@ -146,5 +147,81 @@ export class CourseRepository extends BaseRepository<Course> {
         grades,
         updated_at: new Date()
       });
+  }
+
+  async getInstitutionForCourse(institutionId: string): Promise<Institution | undefined> {
+    const institution = await this.db('institutions')
+      .where('id', institutionId)
+      .first();
+    return institution;
+  }
+
+  async countCourses(filters: any): Promise<number> {
+    let query = this.db(this.tableName);
+
+    if (filters.search) {
+      query = query.where(function() {
+        this.where('name', 'ilike', `%${filters.search}%`)
+          .orWhere('description', 'ilike', `%${filters.search}%`);
+      });
+    }
+
+    if (filters.institution_id) {
+      query = query.where('institution_id', filters.institution_id);
+    }
+
+    if (filters.level) {
+      query = query.where('level', filters.level);
+    }
+
+    if (filters.cycle) {
+      query = query.where('cycle', filters.cycle);
+    }
+
+    if (filters.stage) {
+      query = query.where('stage', filters.stage);
+    }
+
+    const result = await query.count('* as count').first();
+    return result?.count || 0;
+  }
+
+  async findAllWithFilters(
+    filters: any,
+    pagination: { page: number; limit: number },
+    sortBy?: keyof Course,
+    sortOrder: 'asc' | 'desc' = 'asc'
+  ): Promise<Course[]> {
+    let query = this.db(this.tableName);
+
+    if (filters.search) {
+      query = query.where(function() {
+        this.where('name', 'ilike', `%${filters.search}%`)
+          .orWhere('description', 'ilike', `%${filters.search}%`);
+      });
+    }
+
+    if (filters.institution_id) {
+      query = query.where('institution_id', filters.institution_id);
+    }
+
+    if (filters.level) {
+      query = query.where('level', filters.level);
+    }
+
+    if (filters.cycle) {
+      query = query.where('cycle', filters.cycle);
+    }
+
+    if (filters.stage) {
+      query = query.where('stage', filters.stage);
+    }
+
+    if (sortBy) {
+      query = query.orderBy(sortBy, sortOrder);
+    }
+
+    const offset = (pagination.page - 1) * pagination.limit;
+    return query.limit(pagination.limit).offset(offset);
   }
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
-import { signIn } from 'next-auth/react';
+import { signIn, signOut } from 'next-auth/react';
 
 interface LoginFormData {
   email: string;
@@ -30,7 +30,7 @@ const validationRules = {
 };
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string>('');
 
@@ -50,10 +50,29 @@ export function LoginForm() {
           setSubmitError('');
         const response = await login(formValues.email, formValues.password);
         if (response.success && response.user) {
-          const dashboardPath = response.user.role === 'student' 
-            ? '/dashboard/student' 
-            : '/dashboard/teacher';
-          router.push(dashboardPath);
+          let dashboardPath = '';
+          switch (response.user.role) {
+            case 'student':
+              dashboardPath = '/dashboard/student';
+              break;
+            case 'teacher':
+              dashboardPath = '/dashboard/teacher';
+              break;
+            case 'admin':
+              dashboardPath = '/dashboard/admin';
+              break;
+            case 'manager':
+              dashboardPath = '/dashboard/manager';
+              break;
+            default:
+              // Invalid role - log out the user
+              await logout();
+              router.push('/login');
+              return;
+          }
+          if (dashboardPath) {
+            router.push(dashboardPath);
+          }
         } else {
           setSubmitError('Email ou senha incorretos');
         }
@@ -65,7 +84,37 @@ export function LoginForm() {
 
   const handleGoogleLogin = async () => {
     try {
-      const result = await signIn('google', { callbackUrl: '/dashboard/student' });
+      const result = await signIn('google', { redirect: false });
+      if (result?.ok && !result?.error) {
+        // Get user role after Google login
+        const response = await fetch('/api/auth/session');
+        const session = await response.json();
+        
+        if (session?.user?.role) {
+          let dashboardPath = '';
+          switch (session.user.role) {
+            case 'student':
+              dashboardPath = '/dashboard/student';
+              break;
+            case 'teacher':
+              dashboardPath = '/dashboard/teacher';
+              break;
+            case 'admin':
+              dashboardPath = '/dashboard/admin';
+              break;
+            case 'manager':
+              dashboardPath = '/dashboard/manager';
+              break;
+            default:
+              await signOut();
+              router.push('/login');
+              return;
+          }
+          if (dashboardPath) {
+            router.push(dashboardPath);
+          }
+        }
+      }
       if (result?.error) {
         setSubmitError('Erro ao realizar login com Google');
       }

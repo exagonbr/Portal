@@ -2,7 +2,7 @@ export interface Course {
   id: string;
   name: string;
   description?: string;
-  level: 'BASIC' | 'PROFESSIONAL' | 'SUPERIOR';
+  level: CourseLevel;
   cycle: string;
   stage?: string;
   duration?: string;
@@ -12,10 +12,12 @@ export interface Course {
   updated_at: Date;
 }
 
+export type CourseLevel = 'BASIC' | 'PROFESSIONAL' | 'SUPERIOR';
+
 export interface CreateCourseData {
   name: string;
   description?: string;
-  level: 'BASIC' | 'PROFESSIONAL' | 'SUPERIOR';
+  level: CourseLevel;
   cycle: string;
   stage?: string;
   duration?: string;
@@ -26,7 +28,7 @@ export interface CreateCourseData {
 export interface UpdateCourseData {
   name?: string;
   description?: string;
-  level?: 'BASIC' | 'PROFESSIONAL' | 'SUPERIOR';
+  level?: CourseLevel;
   cycle?: string;
   stage?: string;
   duration?: string;

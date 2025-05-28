@@ -1,33 +1,217 @@
 import express from 'express';
 import { validateJWT } from '../middleware/auth';
+import { InstitutionController } from '../controllers/refactored/InstitutionController';
+import { body, param } from 'express-validator';
+import { InstitutionType } from '../models/Institution'; // Para validação do tipo
 
 const router = express.Router();
+const institutionController = new InstitutionController();
+
+const institutionTypesArray = ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER'];
+
+// Validation middlewares
+const validateCreateInstitution = [
+  body('name').isString().notEmpty().withMessage('Name is required and must be a string.'),
+  body('code').isString().notEmpty().withMessage('Code is required and must be a string.'),
+  body('type').isIn(institutionTypesArray).withMessage(`Type must be one of: ${institutionTypesArray.join(', ')}`),
+  body('address').optional().isString().withMessage('Address must be a string.'),
+  body('city').optional().isString().withMessage('City must be a string.'),
+  body('state').optional().isString().withMessage('State must be a string.'),
+  body('zip_code').optional().isString().withMessage('Zip code must be a string.'),
+  body('country').optional().isString().withMessage('Country must be a string.'),
+  body('phone').optional().isString().withMessage('Phone must be a string.'),
+  body('email').optional().isEmail().withMessage('Email must be a valid email address.'),
+  body('website').optional().isURL().withMessage('Website must be a valid URL.'),
+  body('logo_url').optional().isURL().withMessage('Logo URL must be a valid URL.'),
+  body('is_active').optional().isBoolean().withMessage('Is_active must be a boolean.'),
+];
+
+const validateUpdateInstitution = [
+  param('id').isUUID().withMessage('ID must be a valid UUID.'),
+  body('name').optional().isString().notEmpty().withMessage('Name must be a string.'),
+  body('code').optional().isString().notEmpty().withMessage('Code must be a string.'),
+  body('type').optional().isIn(institutionTypesArray).withMessage(`Type must be one of: ${institutionTypesArray.join(', ')}`),
+  body('address').optional().isString().withMessage('Address must be a string.'),
+  body('city').optional().isString().withMessage('City must be a string.'),
+  body('state').optional().isString().withMessage('State must be a string.'),
+  body('zip_code').optional().isString().withMessage('Zip code must be a string.'),
+  body('country').optional().isString().withMessage('Country must be a string.'),
+  body('phone').optional().isString().withMessage('Phone must be a string.'),
+  body('email').optional().isEmail().withMessage('Email must be a valid email address.'),
+  body('website').optional().isURL().withMessage('Website must be a valid URL.'),
+  body('logo_url').optional().isURL().withMessage('Logo URL must be a valid URL.'),
+  body('is_active').optional().isBoolean().withMessage('Is_active must be a boolean.'),
+];
+
+const validateIdParam = [
+  param('id').isUUID().withMessage('ID must be a valid UUID.'),
+];
+
+const validateCodeParam = [
+  param('code').isString().notEmpty().withMessage('Code is required.'),
+];
+
+
+/**
+ * @swagger
+ * tags:
+ *   name: Institutions
+ *   description: Institution management
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Institution:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         code:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER']
+ *         address:
+ *           type: string
+ *         city:
+ *           type: string
+ *         state:
+ *           type: string
+ *         zip_code:
+ *           type: string
+ *         country:
+ *           type: string
+ *         phone:
+ *           type: string
+ *         email:
+ *           type: string
+ *           format: email
+ *         website:
+ *           type: string
+ *           format: url
+ *         logo_url:
+ *           type: string
+ *           format: url
+ *         is_active:
+ *           type: boolean
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *     CreateInstitutionDto:
+ *       type: object
+ *       required:
+ *         - name
+ *         - code
+ *         - type
+ *       properties:
+ *         name:
+ *           type: string
+ *         code:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER']
+ *         # ... (outros campos opcionais do DTO)
+ *     UpdateInstitutionDto:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         code:
+ *           type: string
+ *         type:
+ *           type: string
+ *           enum: ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER']
+ *         # ... (outros campos opcionais do DTO)
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
 
 /**
  * @swagger
  * /api/institutions:
  *   get:
- *     summary: Get all institutions
+ *     summary: Get all institutions with filters and pagination
  *     tags: [Institutions]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for name or code
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER']
+ *         description: Filter by institution type
+ *       - in: query
+ *         name: is_active
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: ['name', 'code', 'type', 'created_at'] # Adicionar mais campos se necessário
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: ['asc', 'desc']
+ *         description: Sort order
  *     responses:
  *       200:
  *         description: List of institutions
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Institution'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Institution'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/PaginationResult' # Supondo que PaginationResult está definido
  *       401:
  *         description: Unauthorized
- *       500:
- *         description: Server error
  */
-router.get('/', validateJWT, async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.get(
+  '/',
+  validateJWT,
+  institutionController.getAll
+);
 
 /**
  * @swagger
@@ -38,25 +222,70 @@ router.get('/', validateJWT, async (req, res) => {
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
+ *       - $ref: '#/components/parameters/idParam'
  *     responses:
  *       200:
  *         description: Institution found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Institution'
  *       404:
  *         description: Institution not found
  */
-router.get('/:id', validateJWT, async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.get(
+  '/:id',
+  validateJWT,
+  validateIdParam,
+  institutionController.getById
+);
+
+/**
+ * @swagger
+ * /api/institutions/code/{code}:
+ *   get:
+ *     summary: Get institution by code
+ *     tags: [Institutions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: code
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Institution code
+ *     responses:
+ *       200:
+ *         description: Institution found
+ *       404:
+ *         description: Institution not found
+ */
+router.get(
+  '/code/:code',
+  validateJWT,
+  validateCodeParam,
+  institutionController.getByCode
+);
+
+/**
+ * @swagger
+ * /api/institutions/{id}/stats:
+ *   get:
+ *     summary: Get statistics for an institution
+ *     tags: [Institutions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/parameters/idParam'
+ *     responses:
+ *       200:
+ *         description: Institution statistics
+ *       404:
+ *         description: Institution not found
+ */
+router.get(
+  '/:id/stats',
+  validateJWT,
+  validateIdParam,
+  institutionController.getStats
+);
 
 /**
  * @swagger
@@ -71,28 +300,19 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - name
- *               - code
- *             properties:
- *               name:
- *                 type: string
- *               code:
- *                 type: string
+ *             $ref: '#/components/schemas/CreateInstitutionDto'
  *     responses:
  *       201:
  *         description: Institution created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Institution'
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.post(
+  '/',
+  validateJWT,
+  validateCreateInstitution,
+  institutionController.create
+);
 
 /**
  * @swagger
@@ -103,36 +323,27 @@ router.post('/', validateJWT, async (req, res) => {
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
+ *       - $ref: '#/components/parameters/idParam'
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               code:
- *                 type: string
+ *             $ref: '#/components/schemas/UpdateInstitutionDto'
  *     responses:
  *       200:
  *         description: Institution updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Institution'
+ *       400:
+ *         description: Invalid input
  *       404:
  *         description: Institution not found
  */
-router.put('/:id', validateJWT, async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.put(
+  '/:id',
+  validateJWT,
+  validateUpdateInstitution,
+  institutionController.update
+);
 
 /**
  * @swagger
@@ -143,20 +354,33 @@ router.put('/:id', validateJWT, async (req, res) => {
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
+ *       - $ref: '#/components/parameters/idParam' # Reutilizando o parâmetro ID
  *     responses:
  *       200:
  *         description: Institution deleted
  *       404:
  *         description: Institution not found
  */
-router.delete('/:id', validateJWT, async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.delete(
+  '/:id',
+  validateJWT,
+  validateIdParam, // Apenas validação do ID é necessária para delete
+  institutionController.delete
+);
+
+// Helper para definir parâmetros reutilizáveis no Swagger (opcional, mas bom para DRY)
+/**
+ * @swagger
+ * components:
+ *   parameters:
+ *     idParam:
+ *       name: id
+ *       in: path
+ *       required: true
+ *       description: Institution ID
+ *       schema:
+ *         type: string
+ *         format: uuid
+ */
 
 export default router;

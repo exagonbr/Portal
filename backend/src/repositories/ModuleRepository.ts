@@ -13,6 +13,10 @@ export class ModuleRepository extends BaseRepository<Module> {
       .select('*');
   }
 
+  async findByCourseId(courseId: string): Promise<Module[]> {
+    return this.findByCourse(courseId);
+  }
+
   async createModule(data: CreateModuleData): Promise<Module> {
     return this.create(data);
   }
