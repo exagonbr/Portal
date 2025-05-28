@@ -3,26 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-
-interface SentNotification {
-  id: number
-  title: string
-  message: string
-  type: 'info' | 'warning' | 'success' | 'error'
-  category: 'academic' | 'system' | 'social' | 'administrative'
-  sentAt: string
-  sentBy: string
-  recipients: {
-    total: number
-    read: number
-    unread: number
-    roles?: string[]
-    specific?: string[]
-  }
-  status: 'sent' | 'scheduled' | 'draft' | 'failed'
-  scheduledFor?: string
-  priority: 'low' | 'medium' | 'high'
-}
+import { notificationService } from '@/services/notificationService'
+import { Notification as SentNotification } from '@/types/notification'
+import { PaginatedResponseDto } from '@/types/api'
 
 export default function SentNotificationsPage() {
   const { user } = useAuth()
@@ -30,6 +13,14 @@ export default function SentNotificationsPage() {
   const [sentNotifications, setSentNotifications] = useState<SentNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'failed'>('all')
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false
+  })
 
   // Verificar permissões
   useEffect(() => {
@@ -44,99 +35,22 @@ export default function SentNotificationsPage() {
     const loadSentNotifications = async () => {
       try {
         setLoading(true)
-        // Simular delay de API
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // Mock data - em produção viria do backend
-        const mockSentNotifications: SentNotification[] = [
-          {
-            id: 1,
-            title: 'Reunião de Coordenação',
-            message: 'Reunião marcada para discutir o planejamento do próximo semestre',
-            type: 'info',
-            category: 'administrative',
-            sentAt: '2024-01-15T10:30:00',
-            sentBy: user?.name || 'Usuário',
-            recipients: {
-              total: 15,
-              read: 12,
-              unread: 3,
-              roles: ['teacher']
-            },
-            status: 'sent',
-            priority: 'high'
-          },
-          {
-            id: 2,
-            title: 'Nova Atividade de Matemática',
-            message: 'Atividade sobre álgebra linear disponível na plataforma',
-            type: 'success',
-            category: 'academic',
-            sentAt: '2024-01-14T14:20:00',
-            sentBy: user?.name || 'Usuário',
-            recipients: {
-              total: 30,
-              read: 25,
-              unread: 5,
-              roles: ['student']
-            },
-            status: 'sent',
-            priority: 'medium'
-          },
-          {
-            id: 3,
-            title: 'Manutenção do Sistema',
-            message: 'Sistema ficará indisponível no domingo das 2h às 6h',
-            type: 'warning',
-            category: 'system',
-            sentAt: '2024-01-13T16:45:00',
-            sentBy: user?.name || 'Usuário',
-            recipients: {
-              total: 50,
-              read: 45,
-              unread: 5,
-              roles: ['teacher', 'student']
-            },
-            status: 'sent',
-            priority: 'high'
-          },
-          {
-            id: 4,
-            title: 'Aviso sobre Provas',
-            message: 'Cronograma de provas do mês de fevereiro',
-            type: 'info',
-            category: 'academic',
-            sentAt: '',
-            sentBy: user?.name || 'Usuário',
-            recipients: {
-              total: 25,
-              read: 0,
-              unread: 0,
-              roles: ['student']
-            },
-            status: 'scheduled',
-            scheduledFor: '2024-01-20T08:00:00',
-            priority: 'medium'
-          },
-          {
-            id: 5,
-            title: 'Rascunho - Evento Cultural',
-            message: 'Convite para participar do evento cultural da escola',
-            type: 'info',
-            category: 'social',
-            sentAt: '',
-            sentBy: user?.name || 'Usuário',
-            recipients: {
-              total: 0,
-              read: 0,
-              unread: 0
-            },
-            status: 'draft',
-            priority: 'low'
-          }
-        ]
-        
-        setSentNotifications(mockSentNotifications)
+        const response = await notificationService.getSentNotifications({
+          status: filter === 'all' ? undefined : filter,
+          page: pagination.page,
+          limit: pagination.limit,
+          sortBy: 'created_at',
+          sortOrder: 'desc'
+        })
+        setSentNotifications(response.items)
+        setPagination({
+          page: response.page,
+          limit: response.limit,
+          total: response.total,
+          totalPages: response.totalPages,
+          hasNext: response.hasNext,
+          hasPrev: response.hasPrev
+        })
       } catch (error) {
         console.error('Erro ao carregar notificações enviadas:', error)
       } finally {
@@ -147,7 +61,12 @@ export default function SentNotificationsPage() {
     if (user && user.role !== 'student') {
       loadSentNotifications()
     }
-  }, [user])
+  }, [user, filter, pagination.page, pagination.limit])
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }, [filter])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -402,6 +321,49 @@ export default function SentNotificationsPage() {
             </div>
           )}
         </div>
+
+        {/* Paginação */}
+        {filteredNotifications.length > 0 && (
+          <div className="mt-4 flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
+            <div className="flex items-center text-sm text-gray-500">
+              <span>
+                Mostrando {((pagination.page - 1) * pagination.limit) + 1} a{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} de{' '}
+                {pagination.total} resultados
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                disabled={!pagination.hasPrev}
+                className={`px-3 py-1 rounded-lg text-sm ${
+                  pagination.hasPrev
+                    ? 'text-blue-600 hover:bg-blue-50'
+                    : 'text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Anterior
+              </button>
+              
+              <span className="px-3 py-1 text-sm text-gray-600">
+                Página {pagination.page} de {pagination.totalPages}
+              </span>
+              
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                disabled={!pagination.hasNext}
+                className={`px-3 py-1 rounded-lg text-sm ${
+                  pagination.hasNext
+                    ? 'text-blue-600 hover:bg-blue-50'
+                    : 'text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

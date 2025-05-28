@@ -23,7 +23,7 @@ export class VideoRepository extends BaseRepository<Video> {
   }
 
   async searchVideos(searchTerm: string, courseId?: string): Promise<Video[]> {
-    let query = this.db(this.tableName)
+    let query = this.db.queryBuilder().from(this.tableName)
       .where('title', 'ilike', `%${searchTerm}%`)
       .orWhere('description', 'ilike', `%${searchTerm}%`);
 
@@ -35,7 +35,7 @@ export class VideoRepository extends BaseRepository<Video> {
   }
 
   async getVideosWithCourse(): Promise<any[]> {
-    return this.db(this.tableName)
+    return this.db.queryBuilder().from(this.tableName)
       .select(
         'videos.*',
         'courses.name as course_name'
@@ -44,7 +44,7 @@ export class VideoRepository extends BaseRepository<Video> {
   }
 
   async getVideoWithCourse(id: string): Promise<any | null> {
-    const result = await this.db(this.tableName)
+    const result = await this.db.queryBuilder().from(this.tableName)
       .select(
         'videos.*',
         'courses.name as course_name'
@@ -57,19 +57,19 @@ export class VideoRepository extends BaseRepository<Video> {
   }
 
   async updateVideoProgress(videoId: string, userId: string, progress: number): Promise<void> {
-    const existingProgress = await this.db('user_progress')
+    const existingProgress = await this.db.queryBuilder().from('user_progress')
       .where({ user_id: userId, video_id: videoId })
       .first();
 
     if (existingProgress) {
-      await this.db('user_progress')
+      await this.db.queryBuilder().from('user_progress')
         .where({ user_id: userId, video_id: videoId })
         .update({
           progress_percentage: progress,
           updated_at: new Date()
         });
     } else {
-      await this.db('user_progress').insert({
+      await this.db.queryBuilder().from('user_progress').insert({
         user_id: userId,
         video_id: videoId,
         progress_percentage: progress,
@@ -80,13 +80,13 @@ export class VideoRepository extends BaseRepository<Video> {
   }
 
   async getUserVideoProgress(videoId: string, userId: string): Promise<any | null> {
-    return this.db('user_progress')
+    return this.db.queryBuilder().from('user_progress')
       .where({ user_id: userId, video_id: videoId })
       .first();
   }
 
   async getVideosByDuration(minDuration?: string, maxDuration?: string): Promise<Video[]> {
-    let query = this.db(this.tableName);
+    let query = this.db.queryBuilder().from(this.tableName);
 
     if (minDuration) {
       query = query.where('duration', '>=', minDuration);
@@ -104,7 +104,7 @@ export class VideoRepository extends BaseRepository<Video> {
   }
 
   async getVideoStream(id: string): Promise<{ file_path: string } | null> {
-    const result = await this.db(this.tableName)
+    const result = await this.db.queryBuilder().from(this.tableName)
       .select('file_path')
       .where('id', id)
       .first();
@@ -113,7 +113,7 @@ export class VideoRepository extends BaseRepository<Video> {
   }
 
   async getVideoThumbnail(id: string): Promise<{ thumbnail_path: string } | null> {
-    const result = await this.db(this.tableName)
+    const result = await this.db.queryBuilder().from(this.tableName)
       .select('thumbnail_path')
       .where('id', id)
       .first();

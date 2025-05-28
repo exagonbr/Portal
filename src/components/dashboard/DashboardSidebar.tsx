@@ -27,11 +27,12 @@ const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
       <span className="text-2xl font-bold text-white">S</span>
     ) : (
       <div className="table">
-        <Image
+          <Image
           src="/sabercon-logo-white.png"
           alt="Logo"
-          width={250}
-          height={100}
+          width={180}
+          height={40}
+          sizes="(max-width: 768px) 150px, 180px"
           className="object-contain"
           priority
         />

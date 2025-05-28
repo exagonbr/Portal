@@ -111,7 +111,9 @@ export abstract class BaseRepository<T> {
       this.logger.debug(`Creating ${this.tableName}`, { data });
 
       const startTime = Date.now();
-      const query = options?.transaction ? options.transaction(this.tableName) : this.db(this.tableName);
+      const query = options?.transaction ? 
+        options.transaction(this.tableName) : 
+        this.db(this.tableName);
       
       const preparedData = this.prepareDataForInsert(data);
       const [result] = await query.insert(preparedData).returning('*');
@@ -140,7 +142,9 @@ export abstract class BaseRepository<T> {
       this.logger.debug(`Updating ${this.tableName}`, { id, data });
 
       const startTime = Date.now();
-      const query = options?.transaction ? options.transaction(this.tableName) : this.db(this.tableName);
+      const query = options?.transaction ? 
+        options.transaction(this.tableName) : 
+        this.db(this.tableName);
       
       const preparedData = this.prepareDataForUpdate(data);
       const [result] = await query
@@ -174,7 +178,9 @@ export abstract class BaseRepository<T> {
       this.logger.debug(`Deleting ${this.tableName}`, { id });
 
       const startTime = Date.now();
-      const query = options?.transaction ? options.transaction(this.tableName) : this.db(this.tableName);
+      const query = options?.transaction ? 
+        options.transaction(this.tableName) : 
+        this.db(this.tableName);
       
       const deletedRows = await query.where('id', id).del();
       const duration = Date.now() - startTime;
@@ -278,7 +284,9 @@ export abstract class BaseRepository<T> {
       this.logger.debug(`Creating many ${this.tableName}`, { count: dataArray.length });
 
       const startTime = Date.now();
-      const query = options?.transaction ? options.transaction(this.tableName) : this.db(this.tableName);
+      const query = options?.transaction ? 
+        options.transaction(this.tableName) : 
+        this.db(this.tableName);
       
       const preparedData = dataArray.map(data => this.prepareDataForInsert(data));
       const results = await query.insert(preparedData).returning('*');

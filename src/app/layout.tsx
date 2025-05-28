@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { PWARegistration } from '@/components/PWARegistration';
+import { PushNotificationInitializer } from '@/components/PushNotificationInitializer';
 import { AppProviders } from '@/providers/AppProviders';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -61,6 +62,7 @@ export default function RootLayout({
         <AppProviders>
           {children}
           <PWARegistration />
+          <PushNotificationInitializer />
         </AppProviders>
       </body>
     </html>

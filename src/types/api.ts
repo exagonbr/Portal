@@ -287,3 +287,19 @@ export interface StatsResponse {
   active_sessions: number;
   recent_activity: any[];
 }
+
+// Notification DTOs
+export interface NotificationFilterDto extends BaseFilterDto {
+  status?: 'sent' | 'scheduled' | 'draft' | 'failed';
+  category?: 'academic' | 'system' | 'social' | 'administrative';
+  priority?: 'low' | 'medium' | 'high';
+  startDate?: string;
+  endDate?: string;
+  [key: string]: string | number | boolean | undefined;
+}
+
+export interface NotificationStatsDto {
+  total: number;
+  read: number;
+  unread: number;
+}

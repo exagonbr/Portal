@@ -78,7 +78,7 @@ export default function DashboardHeader() {
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left side - Title */}
         <h1 className=" font-semibold text-gray-900">
-          Olá, {user?.name}
+          Bem vindo ao Portal Sabercon, {user?.name}
         </h1>
         
         {/* Right side - Notifications and Profile */}
@@ -174,7 +174,7 @@ export default function DashboardHeader() {
                       src="/sabercon-logo-white.png"
                       alt="Profile"
                       fill
-                      sizes="24px"
+                      sizes="(max-width: 768px) 24px, 32px"
                       className="object-contain"
                     />
                   </div>

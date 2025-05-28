@@ -2,6 +2,9 @@ import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger';
 
+
+// API Routes
+import pushSubscriptionRoutes from './pushSubscription';
 import institutionsRouter from './institutions';
 import usersRouter from './users';
 import coursesRouter from './courses';
@@ -36,6 +39,8 @@ router.get('/docs.json', (req, res) => {
 });
 
 // API Routes
+// API Routes
+router.use('/push-subscriptions', pushSubscriptionRoutes);
 router.use('/institutions', institutionsRouter);
 router.use('/users', usersRouter);
 router.use('/courses', coursesRouter);

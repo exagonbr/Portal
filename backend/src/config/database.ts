@@ -14,7 +14,7 @@ const config: Knex.Config = {
     port: parseInt(process.env.DB_PORT || '5432'),
     database: process.env.DB_NAME || 'portal_sabercon',
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '',
+    password: process.env.DB_PASSWORD || 'root',
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   },
   pool: {
@@ -37,7 +37,7 @@ const db: Knex = knex(config);
 // Função para testar a conexão com o banco
 export const testDatabaseConnection = async (): Promise<boolean> => {
   try {
-    await db.raw('SELECT 1');
+    await db.raw('SELECT 1 as result');
     console.log('✅ Conexão com PostgreSQL estabelecida com sucesso');
     return true;
   } catch (error) {

@@ -32,7 +32,9 @@ export default function NotificationsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedNotifications, setSelectedNotifications] = useState<number[]>([])
-  const itemsPerPage = 10
+  const [showFilters, setShowFilters] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'compact'>('list')
+  const itemsPerPage = 15
 
   // Aplicar filtros
   useEffect(() => {
@@ -113,15 +115,31 @@ export default function NotificationsPage() {
     )
   }
 
+  const clearFilters = () => {
+    setFilters({
+      category: 'all',
+      type: 'all',
+      status: 'all',
+      dateRange: 'all'
+    })
+    setSearchTerm('')
+  }
+
+  const hasActiveFilters = () => {
+    return filters.category !== 'all' || 
+           filters.type !== 'all' || 
+           filters.status !== 'all' || 
+           searchTerm !== ''
+  }
+
   // Paginação
   const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedNotifications = filteredNotifications.slice(startIndex, startIndex + itemsPerPage)
 
-
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-96">
+      <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando notificações...</p>
@@ -132,16 +150,18 @@ export default function NotificationsPage() {
 
   if (error) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <span className="material-symbols-outlined text-4xl text-red-500 mb-4">
-            error
-          </span>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Erro ao carregar notificações</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center max-w-md mx-auto">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="material-symbols-outlined text-2xl text-red-600">
+              error
+            </span>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Erro ao carregar notificações</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             Tentar novamente
           </button>
@@ -151,10 +171,10 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="p-6">
+    <div>
       {/* Header da Página */}
       <div className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Central de Notificações</h1>
             <p className="text-sm text-gray-500 mt-1">
@@ -162,83 +182,123 @@ export default function NotificationsPage() {
             </p>
           </div>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Botões de ação rápida */}
             {selectedNotifications.length > 0 && (
-              <>
+              <div className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg">
+                <span className="text-sm text-blue-700 font-medium">
+                  {selectedNotifications.length} selecionadas
+                </span>
                 <button
                   onClick={markSelectedAsRead}
-                  className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                  title="Marcar como lidas"
                 >
-                  Marcar como Lidas ({selectedNotifications.length})
+                  <span className="material-symbols-outlined text-sm">mark_email_read</span>
                 </button>
                 <button
                   onClick={deleteSelected}
-                  className="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                  title="Excluir selecionadas"
                 >
-                  Excluir ({selectedNotifications.length})
+                  <span className="material-symbols-outlined text-sm">delete</span>
                 </button>
-              </>
+              </div>
             )}
+
+            {/* Botões principais */}
             <button
-              onClick={markAllAsRead}
-              className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-2 rounded-lg transition-colors ${
+                showFilters || hasActiveFilters()
+                  ? 'bg-blue-100 text-blue-600'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              }`}
+              title="Filtros"
             >
-              Marcar Todas como Lidas
+              <span className="material-symbols-outlined">tune</span>
             </button>
+
+            <button
+              onClick={() => setViewMode(viewMode === 'list' ? 'compact' : 'list')}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              title={viewMode === 'list' ? 'Visualização compacta' : 'Visualização em lista'}
+            >
+              <span className="material-symbols-outlined">
+                {viewMode === 'list' ? 'view_agenda' : 'view_list'}
+              </span>
+            </button>
+
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Marcar todas como lidas"
+              >
+                <span className="material-symbols-outlined">done_all</span>
+              </button>
+            )}
+
             {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'teacher') && (
               <>
                 <button
                   onClick={() => router.push('/notifications/sent')}
-                  className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                  className="px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
                 >
-                  <span className="material-symbols-outlined text-sm">
-                    history
-                  </span>
-                  <span>Enviadas</span>
+                  <span className="material-symbols-outlined text-sm">history</span>
+                  <span className="hidden sm:inline">Enviadas</span>
                 </button>
                 <button
                   onClick={() => router.push('/notifications/send')}
-                  className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                 >
-                  <span className="material-symbols-outlined text-sm">
-                    send
-                  </span>
-                  <span>Enviar Notificação</span>
+                  <span className="material-symbols-outlined text-sm">send</span>
+                  <span className="hidden sm:inline">Enviar</span>
                 </button>
               </>
             )}
+
             <NotificationSettings />
           </div>
         </div>
       </div>
 
       <div>
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar com Filtros */}
-          <div className="lg:w-80 space-y-6">
-            {/* Busca */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Buscar</h3>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  search
-                </span>
-                <input
-                  type="text"
-                  placeholder="Buscar notificações..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
+        {/* Barra de busca e filtros */}
+        <div className="mb-6">
+          {/* Busca sempre visível */}
+          <div className="relative mb-4">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Buscar notificações..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            />
+          </div>
 
-            {/* Filtros */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Filtros</h3>
-              
-              <div className="space-y-4">
-                {/* Categoria */}
+          {/* Filtros expansíveis */}
+          {showFilters && (
+            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="all">Todas</option>
+                    <option value="unread">Não lidas</option>
+                    <option value="read">Lidas</option>
+                  </select>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Categoria
@@ -256,7 +316,6 @@ export default function NotificationsPage() {
                   </select>
                 </div>
 
-                {/* Tipo */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tipo
@@ -273,202 +332,244 @@ export default function NotificationsPage() {
                     <option value="error">Erro</option>
                   </select>
                 </div>
+              </div>
 
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={filters.status}
-                    onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              {hasActiveFilters() && (
+                <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                  <span className="text-sm text-gray-600">
+                    {filteredNotifications.length} de {totalCount} notificações
+                  </span>
+                  <button
+                    onClick={clearFilters}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
-                    <option value="all">Todas</option>
-                    <option value="unread">Não lidas</option>
-                    <option value="read">Lidas</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Limpar Filtros */}
-              <button
-                onClick={() => {
-                  setFilters({
-                    category: 'all',
-                    type: 'all',
-                    status: 'all',
-                    dateRange: 'all'
-                  })
-                  setSearchTerm('')
-                }}
-                className="w-full mt-4 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Limpar Filtros
-              </button>
-            </div>
-          </div>
-
-          {/* Lista de Notificações */}
-          <div className="flex-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              {/* Header da Lista */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <input
-                      type="checkbox"
-                      checked={paginatedNotifications.length > 0 && paginatedNotifications.every(n => selectedNotifications.includes(n.id))}
-                      onChange={selectAllVisible}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-600">
-                      {filteredNotifications.length} notificações encontradas
-                    </span>
-                  </div>
-                  
-                  <div className="text-sm text-gray-500">
-                    Página {currentPage} de {totalPages}
-                  </div>
-                </div>
-              </div>
-
-              {/* Lista */}
-              <div className="divide-y divide-gray-200">
-                {paginatedNotifications.length > 0 ? (
-                  paginatedNotifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-6 hover:bg-gray-50 transition-colors ${
-                        !notification.read ? 'bg-blue-50/30' : ''
-                      }`}
-                    >
-                      <div className="flex items-start space-x-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedNotifications.includes(notification.id)}
-                          onChange={() => toggleSelectNotification(notification.id)}
-                          className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                        
-                        <div className={`p-2 rounded-full ${getNotificationColor(notification.type)}`}>
-                          <span className="material-symbols-outlined text-sm">
-                            {getNotificationIcon(notification.type)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <h4 className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
-                                  {notification.title}
-                                </h4>
-                                <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                                  {getCategoryLabel(notification.category)}
-                                </span>
-                                {!notification.read && (
-                                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 mb-2">
-                                {notification.message}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {notification.time}
-                              </p>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2 ml-4">
-                              {!notification.read && (
-                                <button
-                                  onClick={() => markAsRead(notification.id)}
-                                  className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                  title="Marcar como lida"
-                                >
-                                  <span className="material-symbols-outlined text-sm">
-                                    mark_email_read
-                                  </span>
-                                </button>
-                              )}
-                              <button
-                                className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
-                                title="Mais opções"
-                              >
-                                <span className="material-symbols-outlined text-sm">
-                                  more_vert
-                                </span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-12 text-center">
-                    <span className="material-symbols-outlined text-4xl text-gray-300 mb-4">
-                      notifications_off
-                    </span>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Nenhuma notificação encontrada
-                    </h3>
-                    <p className="text-gray-500">
-                      Tente ajustar os filtros ou termos de busca.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Paginação */}
-              {totalPages > 1 && (
-                <div className="p-6 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
-                      Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredNotifications.length)} de {filteredNotifications.length} resultados
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Anterior
-                      </button>
-                      
-                      <div className="flex items-center space-x-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          const page = i + 1
-                          return (
-                            <button
-                              key={page}
-                              onClick={() => setCurrentPage(page)}
-                              className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                                currentPage === page
-                                  ? 'bg-blue-600 text-white'
-                                  : 'border border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          )
-                        })}
-                      </div>
-                      
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Próxima
-                      </button>
-                    </div>
-                  </div>
+                    Limpar filtros
+                  </button>
                 </div>
               )}
             </div>
+          )}
+
+          {/* Filtros ativos (chips) */}
+          {hasActiveFilters() && !showFilters && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {filters.status !== 'all' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Status: {filters.status === 'unread' ? 'Não lidas' : 'Lidas'}
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
+                    className="ml-2 text-blue-600 hover:text-blue-800"
+                  >
+                    <span className="material-symbols-outlined text-xs">close</span>
+                  </button>
+                </span>
+              )}
+              {filters.category !== 'all' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  {getCategoryLabel(filters.category)}
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, category: 'all' }))}
+                    className="ml-2 text-green-600 hover:text-green-800"
+                  >
+                    <span className="material-symbols-outlined text-xs">close</span>
+                  </button>
+                </span>
+              )}
+              {searchTerm && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  Busca: "{searchTerm}"
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="ml-2 text-purple-600 hover:text-purple-800"
+                  >
+                    <span className="material-symbols-outlined text-xs">close</span>
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Lista de notificações */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {/* Header da lista com seleção */}
+          {paginatedNotifications.length > 0 && (
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="checkbox"
+                    checked={paginatedNotifications.length > 0 && paginatedNotifications.every(n => selectedNotifications.includes(n.id))}
+                    onChange={selectAllVisible}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-600">
+                    {filteredNotifications.length} notificações
+                  </span>
+                </div>
+                
+                {totalPages > 1 && (
+                  <div className="text-sm text-gray-500">
+                    Página {currentPage} de {totalPages}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Conteúdo da lista */}
+          <div className={viewMode === 'compact' ? 'divide-y divide-gray-100' : 'divide-y divide-gray-200'}>
+            {paginatedNotifications.length > 0 ? (
+              paginatedNotifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`${
+                    viewMode === 'compact' ? 'p-4' : 'p-6'
+                  } hover:bg-gray-50 transition-colors ${
+                    !notification.read ? 'bg-blue-50/30 border-l-4 border-l-blue-500' : ''
+                  }`}
+                >
+                  <div className="flex items-start space-x-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedNotifications.includes(notification.id)}
+                      onChange={() => toggleSelectNotification(notification.id)}
+                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    
+                    <div className={`${viewMode === 'compact' ? 'p-1.5' : 'p-2'} rounded-full ${getNotificationColor(notification.type)}`}>
+                      <span className={`material-symbols-outlined ${viewMode === 'compact' ? 'text-xs' : 'text-sm'}`}>
+                        {getNotificationIcon(notification.type)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h4 className={`${viewMode === 'compact' ? 'text-sm' : 'text-sm'} font-medium ${
+                              !notification.read ? 'text-gray-900' : 'text-gray-700'
+                            }`}>
+                              {notification.title}
+                            </h4>
+                            <span className={`px-2 py-0.5 ${viewMode === 'compact' ? 'text-xs' : 'text-xs'} bg-gray-100 text-gray-600 rounded-full`}>
+                              {getCategoryLabel(notification.category)}
+                            </span>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                            )}
+                          </div>
+                          {viewMode === 'list' && (
+                            <p className="text-sm text-gray-600 mb-2">
+                              {notification.message}
+                            </p>
+                          )}
+                          <p className={`${viewMode === 'compact' ? 'text-xs' : 'text-xs'} text-gray-500`}>
+                            {notification.time}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center space-x-1 ml-4">
+                          {!notification.read && (
+                            <button
+                              onClick={() => markAsRead(notification.id)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              title="Marcar como lida"
+                            >
+                              <span className="material-symbols-outlined text-sm">
+                                mark_email_read
+                              </span>
+                            </button>
+                          )}
+                          <button
+                            className="p-1.5 text-gray-400 hover:bg-gray-100 rounded transition-colors"
+                            title="Mais opções"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              more_vert
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="material-symbols-outlined text-2xl text-gray-400">
+                    {hasActiveFilters() ? 'search_off' : 'notifications_off'}
+                  </span>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {hasActiveFilters() ? 'Nenhuma notificação encontrada' : 'Nenhuma notificação'}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {hasActiveFilters() 
+                    ? 'Tente ajustar os filtros ou termos de busca.' 
+                    : 'Você não possui notificações no momento.'
+                  }
+                </p>
+                {hasActiveFilters() && (
+                  <button
+                    onClick={clearFilters}
+                    className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Limpar filtros
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Paginação melhorada */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredNotifications.length)} de {filteredNotifications.length} resultados
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Anterior
+                  </button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const page = i + 1
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                            currentPage === page
+                              ? 'bg-blue-600 text-white'
+                              : 'border border-gray-300 hover:bg-white'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Próxima
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

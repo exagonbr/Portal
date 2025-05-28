@@ -24,7 +24,7 @@ export class RoleRepository extends BaseRepository<Role> {
 
   async deleteRole(id: string): Promise<boolean> {
     // Check if role is being used by any users
-    const usersWithRole = await this.db('users').where('role_id', id).count('* as count').first();
+    const usersWithRole = await this.db.queryBuilder().from('users').where('role_id', id).count('* as count').first();
     const userCount = parseInt(usersWithRole?.count as string) || 0;
 
     if (userCount > 0) {
@@ -35,21 +35,21 @@ export class RoleRepository extends BaseRepository<Role> {
   }
 
   async updateUserCount(roleId: string): Promise<void> {
-    const result = await this.db('users').where('role_id', roleId).count('* as count').first();
+    const result = await this.db.queryBuilder().from('users').where('role_id', roleId).count('* as count').first();
     const userCount = parseInt(result?.count as string) || 0;
 
     await this.update(roleId, { user_count: userCount } as Partial<Role>);
   }
 
   async getRolePermissions(roleId: string): Promise<Permission[]> {
-    return this.db('permissions')
+    return this.db.queryBuilder().from('permissions')
       .select('permissions.*')
       .innerJoin('role_permissions', 'permissions.id', 'role_permissions.permission_id')
       .where('role_permissions.role_id', roleId);
   }
 
   async addPermissionToRole(roleId: string, permissionId: string): Promise<void> {
-    await this.db('role_permissions').insert({
+    await this.db.queryBuilder().from('role_permissions').insert({
       role_id: roleId,
       permission_id: permissionId,
       created_at: new Date(),
@@ -58,7 +58,7 @@ export class RoleRepository extends BaseRepository<Role> {
   }
 
   async removePermissionFromRole(roleId: string, permissionId: string): Promise<boolean> {
-    const deletedRows = await this.db('role_permissions')
+    const deletedRows = await this.db.queryBuilder().from('role_permissions')
       .where({ role_id: roleId, permission_id: permissionId })
       .del();
     return deletedRows > 0;
@@ -67,7 +67,7 @@ export class RoleRepository extends BaseRepository<Role> {
   async setRolePermissions(roleId: string, permissionIds: string[]): Promise<void> {
     await this.executeTransaction(async (trx) => {
       // Remove existing permissions
-      await trx('role_permissions').where('role_id', roleId).del();
+      await trx.queryBuilder().from('role_permissions').where('role_id', roleId).del();
 
       // Add new permissions
       if (permissionIds.length > 0) {
@@ -78,7 +78,7 @@ export class RoleRepository extends BaseRepository<Role> {
           updated_at: new Date()
         }));
 
-        await trx('role_permissions').insert(rolePermissions);
+        await trx.queryBuilder().from('role_permissions').insert(rolePermissions);
       }
     });
   }
@@ -96,7 +96,7 @@ export class RoleRepository extends BaseRepository<Role> {
   }
 
   async searchRoles(searchTerm: string): Promise<Role[]> {
-    return this.db(this.tableName)
+    return this.db.queryBuilder().from(this.tableName)
       .where('name', 'ilike', `%${searchTerm}%`)
       .orWhere('description', 'ilike', `%${searchTerm}%`)
       .select('*');
@@ -126,7 +126,7 @@ export class PermissionRepository extends BaseRepository<Permission> {
 
   async deletePermission(id: string): Promise<boolean> {
     // Check if permission is being used by any roles
-    const rolesWithPermission = await this.db('role_permissions')
+    const rolesWithPermission = await this.db.queryBuilder().from('role_permissions')
       .where('permission_id', id)
       .count('* as count')
       .first();
@@ -140,14 +140,14 @@ export class PermissionRepository extends BaseRepository<Permission> {
   }
 
   async getPermissionRoles(permissionId: string): Promise<Role[]> {
-    return this.db('roles')
+    return this.db.queryBuilder().from('roles')
       .select('roles.*')
       .innerJoin('role_permissions', 'roles.id', 'role_permissions.role_id')
       .where('role_permissions.permission_id', permissionId);
   }
 
   async searchPermissions(searchTerm: string): Promise<Permission[]> {
-    return this.db(this.tableName)
+    return this.db.queryBuilder().from(this.tableName)
       .where('name', 'ilike', `%${searchTerm}%`)
       .orWhere('resource', 'ilike', `%${searchTerm}%`)
       .orWhere('description', 'ilike', `%${searchTerm}%`)

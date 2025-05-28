@@ -383,9 +383,11 @@ export const JobTypes = {
   FILE_CLEANUP: 'file:cleanup',
 
   // Notificações
+  NOTIFICATION_CREATE: 'notification:create',
   NOTIFICATION_PUSH: 'notification:push',
   NOTIFICATION_EMAIL: 'notification:email',
-  NOTIFICATION_SMS: 'notification:sms'
+  NOTIFICATION_SMS: 'notification:sms',
+  NOTIFICATION_CLEANUP: 'notification:cleanup'
 } as const;
 
 // Funções de conveniência para jobs comuns
@@ -464,6 +466,21 @@ export const addReportJob = async (
     priority: 4,
     maxAttempts: 2,
     timeout: 600000, // 10 minutos
+    ...options
+  });
+};
+
+/**
+ * Adiciona job de criação de notificação
+ */
+export const addNotificationCreateJob = async (
+  notification: any,
+  options?: QueueOptions
+): Promise<string> => {
+  return queueService.addJob(JobTypes.NOTIFICATION_CREATE, { notification }, {
+    priority: 8,
+    maxAttempts: 3,
+    timeout: 30000, // 30 segundos
     ...options
   });
 };

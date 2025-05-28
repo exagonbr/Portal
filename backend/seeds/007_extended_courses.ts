@@ -1,10 +1,15 @@
 import type { Knex } from 'knex';
 
 export async function seed(knex: Knex): Promise<void> {
-  // Clear existing data
-  await knex('course_students').del();
-  await knex('course_teachers').del();
-  await knex('courses').del();
+  // Clear existing data (disable foreign key checks for truncation)
+  await knex.raw('SET session_replication_role = replica');
+
+  await knex('course_students').del()
+  await knex('course_teachers').del()
+  await knex('courses').del()
+
+  await knex.raw('SET session_replication_role = DEFAULT'); 
+
 
   // Get institution IDs
   const institutions = await knex('institutions').select('id', 'name');

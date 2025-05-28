@@ -31,6 +31,7 @@ export default function LoginPage() {
               fill
               className="object-contain"
               priority
+              sizes="(max-width: 768px) 192px, 192px"
             />
           </div>
         </div>

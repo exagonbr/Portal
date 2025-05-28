@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import * as dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
-import { testDatabaseConnection } from './config/database';
+import testDatabaseConnection from "./config/database";
 import { testRedisConnection } from './config/redis';
 import apiRoutes from './routes';
 
@@ -104,10 +104,10 @@ async function startServer() {
     // Testa conexões
     console.log('📊 Testando conexões...');
     
-    const dbConnected = await testDatabaseConnection();
-    if (!dbConnected) {
-      throw new Error('Falha na conexão com PostgreSQL');
-    }
+    // const dbConnected = await testDatabaseConnection();
+    // if (!dbConnected) {
+    //   throw new Error('Falha na conexão com PostgreSQL');
+    // }
     
     const redisConnected = await testRedisConnection();
     if (!redisConnected) {

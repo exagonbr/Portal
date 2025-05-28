@@ -567,3 +567,4 @@ router.delete('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
 
 
 export default router;
+
