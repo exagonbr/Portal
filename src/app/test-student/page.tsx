@@ -34,7 +34,7 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, subtitle, color, trend }: StatCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+    <div className="bg-background-primary rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
           <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
@@ -43,11 +43,11 @@ function StatCard({ icon: Icon, title, value, subtitle, color, trend }: StatCard
           <span className="text-xs text-green-600 font-medium">{trend}</span>
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <p className="text-2xl font-bold text-text-primary">
         {value}
       </p>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-500">{subtitle}</p>
+      <p className="text-sm text-text-secondary">{title}</p>
+      <p className="text-xs text-text-tertiary">{subtitle}</p>
     </div>
   );
 }
@@ -109,11 +109,11 @@ export default function TestStudentDashboard() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-text-primary mb-2 flex items-center gap-3">
           <BookOpen className="w-8 h-8 text-blue-600" />
           Dashboard do Estudante - Teste (SEM AUTENTICAÇÃO)
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-text-secondary">
           Olá, Estudante! Este é um teste do dashboard sem proteção de rota.
         </p>
       </div>
@@ -196,7 +196,7 @@ export default function TestStudentDashboard() {
       </div>
 
       {/* Tarefas */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-background-primary rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center">
           <FileText className="w-5 h-5 mr-2 text-blue-500" />
           Minhas Tarefas
@@ -205,7 +205,7 @@ export default function TestStudentDashboard() {
           {assignments.map((assignment) => (
             <div
               key={assignment.id}
-              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+              className="flex items-center justify-between p-4 bg-background-secondary rounded-lg"
             >
               <div className="flex-1">
                 <h3 className="font-medium">{assignment.title}</h3>

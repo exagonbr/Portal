@@ -3,33 +3,49 @@
 @tailwind utilities;
 
 :root {
-  --primary: #007bff;
-  --primary-dark: #0056b3;
-  --secondary: #6c757d;
-  --success: #28a745;
-  --warning: #ffc107;
-  --error: #dc3545;
-  --info: #17a2b8;
-  --background-start: #f8f9fa;
-  --background-end: #e9ecef;
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
-  --border: #dee2e6;
+  /* Cores principais baseadas no Figma */
+  --primary: #1e293b;
+  --primary-dark: #0f172a;
+  --primary-light: #334155;
+  --secondary: #64748b;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-purple: #8b5cf6;
+  --accent-yellow: #eab308;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+  --background-primary: #ffffff;
+  --background-secondary: #f8fafc;
+  --background-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-dark: #cbd5e1;
+  --sidebar-bg: #1e293b;
+  --sidebar-hover: #334155;
+  --sidebar-active: #3b82f6;
+  --sidebar-text: #e2e8f0;
+  --sidebar-text-active: #ffffff;
 }
 
 @layer base {
   body {
-    @apply antialiased text-text-primary bg-background-start;
+    @apply antialiased text-text-primary bg-background-primary;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white rounded-2xl shadow-lg border border-border overflow-hidden;
+    @apply bg-background-primary rounded-2xl shadow-lg border border-border overflow-hidden;
   }
 
   .card-header {
-    @apply p-6 border-b border-border bg-gradient-to-r from-primary/10 to-transparent font-bold text-lg text-text-primary;
+    @apply p-6 border-b border-border bg-gradient-to-r from-primary/5 to-transparent font-bold text-lg text-text-primary;
   }
 
   .card-body {
@@ -40,12 +56,36 @@
     @apply px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200;
   }
 
+  .button-accent-blue {
+    @apply px-4 py-2 bg-accent-blue text-white rounded-lg hover:bg-accent-blue/90 transition-colors duration-200;
+  }
+
+  .button-accent-green {
+    @apply px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-accent-green/90 transition-colors duration-200;
+  }
+
+  .button-accent-orange {
+    @apply px-4 py-2 bg-accent-orange text-white rounded-lg hover:bg-accent-orange/90 transition-colors duration-200;
+  }
+
+  .button-accent-purple {
+    @apply px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-accent-purple/90 transition-colors duration-200;
+  }
+
   .input-field {
-    @apply w-full px-4 py-2 rounded-lg border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-200;
+    @apply w-full px-4 py-2 rounded-lg border border-border focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/20 outline-none transition-all duration-200;
   }
 
   .nav-link {
     @apply text-text-secondary hover:text-text-primary transition-colors duration-200;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-lg mx-2;
+  }
+
+  .sidebar-link-active {
+    @apply bg-sidebar-active text-white;
   }
 
   .badge {
@@ -62,6 +102,26 @@
 
   .badge-error {
     @apply bg-error/20 text-error;
+  }
+
+  .badge-info {
+    @apply bg-info/20 text-info;
+  }
+
+  .badge-blue {
+    @apply bg-accent-blue/20 text-accent-blue;
+  }
+
+  .badge-green {
+    @apply bg-accent-green/20 text-accent-green;
+  }
+
+  .badge-orange {
+    @apply bg-accent-orange/20 text-accent-orange;
+  }
+
+  .badge-purple {
+    @apply bg-accent-purple/20 text-accent-purple;
   }
 }
 

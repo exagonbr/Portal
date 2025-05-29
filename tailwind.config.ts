@@ -9,29 +9,50 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Cores principais baseadas no Figma
         primary: {
-          DEFAULT: '#007bff',
-          dark: '#0056b3',
-          light: '#3395ff'
+          DEFAULT: '#1e293b', // Navy blue escuro da sidebar
+          dark: '#0f172a',
+          light: '#334155'
         },
         secondary: {
-          DEFAULT: '#6c757d',
-          dark: '#545b62',
-          light: '#868e96'
+          DEFAULT: '#64748b',
+          dark: '#475569',
+          light: '#94a3b8'
         },
-        success: '#28a745',
-        warning: '#ffc107',
-        error: '#dc3545',
-        info: '#17a2b8',
+        accent: {
+          blue: '#3b82f6',
+          green: '#10b981',
+          orange: '#f59e0b',
+          purple: '#8b5cf6',
+          yellow: '#eab308'
+        },
+        success: '#10b981',
+        warning: '#f59e0b',
+        error: '#ef4444',
+        info: '#3b82f6',
         background: {
-          start: '#f8f9fa',
-          end: '#e9ecef'
+          primary: '#ffffff',
+          secondary: '#f8fafc',
+          tertiary: '#f1f5f9'
         },
         text: {
-          primary: '#212529',
-          secondary: '#6c757d'
+          primary: '#1e293b',
+          secondary: '#64748b',
+          tertiary: '#94a3b8'
         },
-        border: '#dee2e6'
+        border: {
+          DEFAULT: '#e2e8f0',
+          light: '#f1f5f9',
+          dark: '#cbd5e1'
+        },
+        sidebar: {
+          bg: '#1e293b',
+          hover: '#334155',
+          active: '#3b82f6',
+          text: '#e2e8f0',
+          textActive: '#ffffff'
+        }
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',

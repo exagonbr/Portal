@@ -2,8 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { InstitutionDto, CreateInstitutionDto, UpdateInstitutionDto } from '@/types/api';
-import { INSTITUTION_TYPE_LABELS } from '@/types/institution';
+import {
+  InstitutionDto,
+  CreateInstitutionDto as CreateInstitutionDtoFromInstitution,
+  UpdateInstitutionDto as UpdateInstitutionDtoFromInstitution,
+  InstitutionType,
+  INSTITUTION_TYPE_LABELS
+} from '@/types/institution';
 import { institutionService } from '@/services/institutionService';
 
 interface InstitutionModalProps {
@@ -13,10 +18,10 @@ interface InstitutionModalProps {
 
 export default function InstitutionModal({ institution, onClose }: InstitutionModalProps) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<CreateInstitutionDto>({
+  const [formData, setFormData] = useState<CreateInstitutionDtoFromInstitution>({
     name: '',
     code: '',
-    type: 'SCHOOL',
+    type: 'PUBLIC',
     address: '',
     phone: '',
     email: ''
@@ -41,7 +46,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
 
     try {
       if (institution) {
-        await institutionService.update(institution.id, formData as UpdateInstitutionDto);
+        await institutionService.update(institution.id, formData as UpdateInstitutionDtoFromInstitution);
       } else {
         await institutionService.create(formData);
       }
@@ -78,7 +83,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 required
               />
             </div>
@@ -91,7 +96,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
                 type="text"
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 required
                 placeholder="Ex: INST001"
               />
@@ -103,8 +108,8 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
               </label>
               <select
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as InstitutionType })}
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 required
               >
                 {Object.entries(INSTITUTION_TYPE_LABELS).map(([value, label]) => (
@@ -123,7 +128,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
                 type="text"
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
               />
             </div>
 
@@ -135,7 +140,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
                 type="text"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 placeholder="(00) 0000-0000"
               />
             </div>
@@ -148,7 +153,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 placeholder="contato@instituicao.com"
               />
             </div>
@@ -157,7 +162,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-text-secondary hover:bg-background-secondary rounded-lg transition-colors"
               >
                 Cancelar
               </button>

@@ -97,7 +97,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                   required
                 />
               </div>
@@ -110,7 +110,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                   type="text"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                   required
                 />
               </div>
@@ -122,7 +122,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                 <select
                   value={formData.institution_id}
                   onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                   required
                 >
                   <option value="">Selecione uma instituição</option>
@@ -142,7 +142,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 />
               </div>
 

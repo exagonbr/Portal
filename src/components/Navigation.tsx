@@ -4,6 +4,23 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
+import { UserRole } from '../types/auth';
+
+// Função utilitária para mapear roles para labels em português
+const getRoleLabel = (role: UserRole): string => {
+  const roleLabels: Record<UserRole, string> = {
+    'student': 'Aluno',
+    'teacher': 'Professor',
+    'manager': 'Gestor',
+    'institution_manager': 'Gestor Institucional',
+    'admin': 'Administrador',
+    'system_admin': 'Administrador do Sistema',
+    'academic_coordinator': 'Coordenador Acadêmico',
+    'guardian': 'Responsável'
+  };
+  
+  return roleLabels[role] || role;
+};
 
 export const Navigation = () => {
   const pathname = usePathname();
@@ -54,7 +71,7 @@ export const Navigation = () => {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="md:hidden p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
+        className="md:hidden p-2 text-text-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
         aria-label="Toggle menu"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,7 +87,7 @@ export const Navigation = () => {
       <nav 
         className={`${
           isMenuOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 md:translate-x-0 md:opacity-100'
-        } transform transition-all duration-200 ease-in-out md:flex md:items-center md:space-x-6 fixed md:relative top-16 md:top-0 left-0 right-0 h-screen md:h-auto bg-white md:bg-transparent p-6 md:p-0 shadow-lg md:shadow-none z-50`}
+        } transform transition-all duration-200 ease-in-out md:flex md:items-center md:space-x-6 fixed md:relative top-16 md:top-0 left-0 right-0 h-screen md:h-auto bg-background-primary md:bg-transparent p-6 md:p-0 shadow-lg md:shadow-none z-50`}
       >
         <div className="flex flex-col md:flex-row md:items-center space-y-6 md:space-y-0 md:space-x-8">
           {getNavItems().map((item) => (
@@ -103,11 +120,11 @@ export const Navigation = () => {
                     </span>
                   </div>
                   <div className="flex flex-col items-start">
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-text-primary">
                       {user.name}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {user.role === 'student' ? 'Estudante' : 'Professor'}
+                      {user?.role && getRoleLabel(user.role)}
                     </span>
                   </div>
                   <svg 

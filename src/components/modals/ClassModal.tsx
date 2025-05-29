@@ -67,7 +67,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+      <div className="bg-background-primary rounded-lg max-w-md w-full">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">
@@ -75,7 +75,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
             </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 hover:bg-background-secondary rounded-lg"
             >
               <X className="w-5 h-5" />
             </button>
@@ -90,7 +90,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 required
                 placeholder="Ex: 5º Ano A"
               />
@@ -104,7 +104,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
                 type="text"
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 required
                 placeholder="Ex: 5A-2025"
               />
@@ -117,7 +117,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
               <select
                 value={formData.school_id}
                 onChange={(e) => setFormData({ ...formData, school_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 required
               >
                 <option value="">Selecione uma escola</option>
@@ -138,7 +138,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
                   type="number"
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                   required
                   min="2020"
                   max="2030"
@@ -152,7 +152,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
                 <select
                   value={formData.shift}
                   onChange={(e) => setFormData({ ...formData, shift: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                   required
                 >
                   {Object.entries(SHIFT_LABELS).map(([value, label]) => (
@@ -172,7 +172,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
                 type="number"
                 value={formData.max_students}
                 onChange={(e) => setFormData({ ...formData, max_students: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 bg-background-primary"
                 required
                 min="1"
                 max="100"
@@ -186,7 +186,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-text-secondary hover:bg-background-secondary rounded-lg transition-colors"
               >
                 Cancelar
               </button>

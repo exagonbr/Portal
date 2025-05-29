@@ -17,14 +17,18 @@ import {
 import { schoolService } from '@/services/schoolService';
 import { institutionService } from '@/services/institutionService';
 import { School, CreateSchoolData, UpdateSchoolData } from '@/types/school';
-import { Institution } from '@/types/api';
+import { InstitutionResponseDto } from '@/types/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'react-hot-toast';
+// Função simples para notificações (substitui react-hot-toast)
+const toast = {
+  success: (message: string) => console.log('✅ Success:', message),
+  error: (message: string) => console.error('❌ Error:', message)
+};
 
 export default function SchoolsManagement() {
   const { user } = useAuth();
   const [schools, setSchools] = useState<School[]>([]);
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInstitution, setSelectedInstitution] = useState<string>('');
@@ -52,7 +56,7 @@ export default function SchoolsManagement() {
       
       // Carregar instituições
       const institutionsResponse = await institutionService.getAll();
-      setInstitutions(institutionsResponse);
+      setInstitutions(institutionsResponse.data || []);
 
       // Carregar escolas
       let schoolsData: School[];
@@ -60,7 +64,7 @@ export default function SchoolsManagement() {
         schoolsData = await schoolService.getByInstitution(selectedInstitution);
       } else {
         const response = await schoolService.list({ limit: 100 });
-        schoolsData = response.data;
+        schoolsData = response.items || [];
       }
       setSchools(schoolsData);
     } catch (error) {

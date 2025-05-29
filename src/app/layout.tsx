@@ -35,7 +35,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#007bff',
+  themeColor: '#1e293b',
 };
 
 export default function RootLayout({
@@ -50,7 +50,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Portal Edu" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#007bff" />
+        <meta name="theme-color" content="#1e293b" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
         <link

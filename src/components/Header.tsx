@@ -6,7 +6,7 @@ import { Navigation } from './Navigation'
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-md transition-all duration-200">
+    <header className="sticky top-0 z-50 bg-background-primary shadow-md transition-all duration-200">
       <div className="w-full max-w-[95%] md:max-w-[90%] lg:max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3">
         <div className="flex justify-between items-center relative">
           <Link href="/" className="flex items-center space-x-2">
