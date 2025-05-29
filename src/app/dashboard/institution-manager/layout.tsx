@@ -1,14 +1,9 @@
-import RoleGuard from '@/components/auth/RoleGuard';
-import { UserRole } from '@/types/roles';
+'use client'
 
 export default function InstitutionManagerLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  return (
-    <RoleGuard allowedRoles={[UserRole.INSTITUTION_MANAGER]}>
-      {children}
-    </RoleGuard>
-  );
+  return children
 }

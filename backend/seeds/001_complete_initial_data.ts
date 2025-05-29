@@ -321,7 +321,7 @@ export async function seed(knex: Knex): Promise<void> {
     {
       email: 'gestor@sabercon.edu.br',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
-      name: 'Maria Silva',
+      name: 'Marina Silva',
       role_id: roleLookup['Gestor'],
       institution_id: institutions[0].id,
       is_active: true
@@ -329,16 +329,32 @@ export async function seed(knex: Knex): Promise<void> {
     {
       email: 'professor@sabercon.edu.br',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
-      name: 'João Santos',
+      name: 'Ricardo Santos',
       role_id: roleLookup['Professor'],
       institution_id: institutions[0].id,
       is_active: true
     },
     {
-      email: 'julia.c@edu.com',
+      email: 'julia.c@ifsp.com',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
       name: 'Julia Costa',
       role_id: roleLookup['Aluno'],
+      institution_id: institutions[0].id,
+      is_active: true
+    },
+    {
+      email: 'coordenador@sabercon.edu.com',
+      password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
+      name: 'Luciana Lima',
+      role_id: roleLookup['Coordenador Acadêmico'],
+      institution_id: institutions[0].id,
+      is_active: true
+    },
+    {
+      email: 'renato@gmail.com',
+      password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
+      name: 'Renato Oliveira',
+      role_id: roleLookup['Responsável'],
       institution_id: institutions[0].id,
       is_active: true
     }
