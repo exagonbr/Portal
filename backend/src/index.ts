@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import * as dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
-import testDatabaseConnection from "./config/database";
+// import testDatabaseConnection from "./config/database";
 import { testRedisConnection } from './config/redis';
 import apiRoutes from './routes';
 
@@ -47,7 +47,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
@@ -66,7 +66,7 @@ app.get('/backend/docs', swaggerUi.setup(swaggerSpec, {
 }));
 
 // Redirect /backend to /backend/docs
-app.get('/backend', (req, res) => {
+app.get('/backend', (_, res) => {
   res.redirect('/backend/docs');
 });
 
@@ -83,7 +83,7 @@ app.use('*', (req, res) => {
 });
 
 // Error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Error:', err);
   
   const status = err.status || err.statusCode || 500;

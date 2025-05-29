@@ -1,350 +1,471 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { User } from '../../../types/auth';
-import * as authService from '../../../services/auth';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import React, { useState, useEffect } from 'react';
+import { 
+  Building2, 
+  School, 
+  Users, 
+  GraduationCap,
+  UserCheck,
+  TrendingUp,
+  Plus,
+  Edit,
+  Eye,
+  Settings,
+  BarChart3,
+  Calendar,
+  Bell
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { institutionService } from '@/services/institutionService';
+import { schoolService } from '@/services/schoolService';
+import { classService } from '@/services/classService';
+import { School as SchoolType } from '@/types/school';
+import { Class } from '@/types/class';
+import { InstitutionDto, InstitutionResponseDto } from '@/types/api';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+// Modal de CRUD de Instituições
+import InstitutionModal from '@/components/modals/InstitutionModal';
+// Modal de CRUD de Escolas
+import SchoolModal from '@/components/modals/SchoolModal';
+// Modal de CRUD de Turmas
+import ClassModal from '@/components/modals/ClassModal';
 
-export default function AdminDashboardPage() { // Renamed component for clarity
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface DashboardStats {
+  totalInstitutions: number;
+  totalSchools: number;
+  totalClasses: number;
+  totalStudents: number;
+  totalTeachers: number;
+  activeClasses: number;
+  monthlyGrowth: number;
+  satisfactionRate: number;
+}
+
+export default function AdminDashboard() {
   const { user } = useAuth();
-  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalInstitutions: 0,
+    totalSchools: 0,
+    totalClasses: 0,
+    totalStudents: 0,
+    totalTeachers: 0,
+    activeClasses: 0,
+    monthlyGrowth: 0,
+    satisfactionRate: 0
+  });
 
-  // Redirect if not admin or manager
+  // Estados para modais
+  const [showInstitutionModal, setShowInstitutionModal] = useState(false);
+  const [showSchoolModal, setShowSchoolModal] = useState(false);
+  const [showClassModal, setShowClassModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  // Dados para listagens
+  const [recentInstitutions, setRecentInstitutions] = useState<InstitutionDto[]>([]);
+  const [recentSchools, setRecentSchools] = useState<SchoolType[]>([]);
+  const [recentClasses, setRecentClasses] = useState<Class[]>([]);
+
   useEffect(() => {
-    if (user && !['admin', 'manager'].includes(user.role)) {
-      router.push('/dashboard'); // This will redirect to student/teacher specific dashboards
-    }
-  }, [user, router]);
-
-  // Fetch users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const usersList = await authService.listUsers();
-        setUsers(usersList);
-      } catch (err) {
-        setError('Falha ao carregar usuários');
-        console.error('Erro ao carregar usuários:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
+    loadDashboardData();
   }, []);
 
-  const handleDeleteUser = async (id: string) => {
+  const loadDashboardData = async () => {
     try {
-      const success = await authService.deleteUser(id);
-      if (success) {
-        setUsers(users.filter(user => user.id !== id));
-      }
-    } catch (err) {
-        setError('Falha ao excluir usuário');
-        console.error('Erro ao excluir usuário:', err);
-    }
-  };
+      setLoading(true);
+      
+      // Carregar instituições
+      const institutionsResponse = await institutionService.list({ limit: 5 });
+      setRecentInstitutions(institutionsResponse.items || []);
+      
+      // Carregar escolas recentes
+      const schoolsResponse = await schoolService.list({ limit: 5 });
+      setRecentSchools(schoolsResponse.items || []);
+      
+      // Carregar turmas recentes
+      const classesResponse = await classService.list({ limit: 5 });
+      setRecentClasses(classesResponse.items || []);
 
-  const roleCounts = useMemo(() => {
-    const counts = { admin: 0, manager: 0, other: 0 };
-    users.forEach(u => {
-      if (u.role === 'admin') counts.admin++;
-      else if (u.role === 'manager') counts.manager++;
-      else counts.other++;
-    });
-    return counts;
-  }, [users]);
+      // Calcular estatísticas
+      let totalStudents = 0;
+      let totalTeachers = 0;
+      let activeClasses = 0;
 
-  const institutionCounts = useMemo(() => {
-    const counts: { [key: string]: number } = {};
-    users.forEach(u => {
-      if (u.institution) {
-        counts[u.institution] = (counts[u.institution] || 0) + 1;
-      }
-    });
-    return counts;
-  }, [users]);
-
-  const roleChartData = {
-    labels: ['Administradores', 'Gerentes', 'Estudantes'],
-    datasets: [
-      {
-        label: 'Número de Usuários',
-        data: [roleCounts.admin, roleCounts.manager, roleCounts.other],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-        ],
-        borderColor: [
-          'rgba(75, 192, 192, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const institutionChartData = {
-    labels: Object.keys(institutionCounts),
-    datasets: [
-      {
-        label: 'Número de Usuários',
-        data: Object.values(institutionCounts),
-        backgroundColor: 'rgba(153, 102, 255, 0.6)',
-        borderColor: 'rgba(153, 102, 255, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const commonChartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        // text will be set per chart
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-          callback: function(value: string | number) { // Ensure only integer ticks
-            if (Number.isInteger(value)) {
-              return value;
-            }
-          },
+      // Para cada escola, buscar estatísticas
+      for (const school of schoolsResponse.items || []) {
+        try {
+          const stats = await schoolService.getStats(school.id);
+          totalStudents += stats.totalStudents;
+          totalTeachers += stats.totalTeachers;
+          activeClasses += stats.activeClasses;
+        } catch (error) {
+          console.error('Erro ao buscar stats da escola:', error);
         }
       }
-    }
-  };
-  
-  const chartBaseOptions = {
-    maintainAspectRatio: false,
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          font: {
-            size: 12,
-            family: "'Inter', sans-serif",
-          }
-        }
-      },
-      title: {
-        display: true,
-        font: {
-          size: 16,
-          family: "'Inter', sans-serif",
-          weight: 'bold' as const
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-          callback: function(value: string | number) {
-            if (Number.isInteger(value)) {
-              return value;
-            }
-          },
-        }
-      }
+
+      setStats({
+        totalInstitutions: institutionsResponse.pagination?.total || 0,
+        totalSchools: schoolsResponse.pagination?.total || 0,
+        totalClasses: classesResponse.pagination?.total || 0,
+        totalStudents,
+        totalTeachers,
+        activeClasses,
+        monthlyGrowth: 12.5, // Mock - implementar cálculo real
+        satisfactionRate: 87.3 // Mock - implementar pesquisa real
+      });
+    } catch (error) {
+      console.error('Erro ao carregar dashboard:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const roleChartOptions = {
-    ...chartBaseOptions,
-    plugins: {
-      ...chartBaseOptions.plugins,
-      title: {
-        ...chartBaseOptions.plugins.title,
-        text: 'Distribuição de Funções'
-      }
-    }
+  const handleEditInstitution = (institution: InstitutionDto) => {
+    setSelectedItem(institution);
+    setShowInstitutionModal(true);
   };
 
-  const institutionChartOptions = {
-    ...chartBaseOptions,
-    plugins: {
-      ...chartBaseOptions.plugins,
-      title: {
-        ...chartBaseOptions.plugins.title,
-        text: 'Usuários por Instituição'
-      }
-    }
+  const handleEditSchool = (school: SchoolType) => {
+    setSelectedItem(school);
+    setShowSchoolModal(true);
   };
 
-
-  if (!user || !['admin', 'manager'].includes(user.role)) {
-    return null; // or loading state, handled by redirect
-  }
+  const handleEditClass = (classItem: Class) => {
+    setSelectedItem(classItem);
+    setShowClassModal(true);
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <span className="ml-3 text-lg text-gray-700">Carregando...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <div className="flex items-center">
-          <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          <span className="ml-2 text-red-700">{error}</span>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Painel de Controle Administrativo</h1>
-        <p className="mt-2 text-gray-600">Gerencie usuários e visualize estatísticas do sistema</p>
-      </div>
-      
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Card: Total de Usuários */}
-        <div className="bg-white p-6 shadow-sm rounded-xl border border-gray-100">
-          <h3 className="text-sm font-medium text-gray-500">Total de Usuários</h3>
-          <p className="mt-2 text-3xl font-semibold text-indigo-600">{users.length}</p>
-        </div>
-        
-        {/* Card: Administradores */}
-        <div className="bg-white p-6 shadow-sm rounded-xl border border-gray-100">
-          <h3 className="text-sm font-medium text-gray-500">Administradores</h3>
-          <p className="mt-2 text-3xl font-semibold text-emerald-600">{roleCounts.admin}</p>
-        </div>
-        
-        {/* Card: Gerentes */}
-        <div className="bg-white p-6 shadow-sm rounded-xl border border-gray-100">
-          <h3 className="text-sm font-medium text-gray-500">Gerentes</h3>
-          <p className="mt-2 text-3xl font-semibold text-blue-600">{roleCounts.manager}</p>
-        </div>
-
-        {/* Card: Estudantes */}
-        <div className="bg-white p-6 shadow-sm rounded-xl border border-gray-100">
-          <h3 className="text-sm font-medium text-gray-500">Estudantes</h3>
-          <p className="mt-2 text-3xl font-semibold text-amber-600">{roleCounts.other}</p>
-        </div>
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Cabeçalho */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-800 mb-2">
+          Dashboard Administrativo
+        </h1>
+        <p className="text-slate-600">
+          Bem-vindo(a), {user?.name}! Gerencie todo o sistema educacional.
+        </p>
       </div>
 
-      {/* Seção de Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white p-6 shadow-sm rounded-xl border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900">Distribuição de Funções</h2>
-          <div style={{ height: '400px' }}>
-            <Bar options={roleChartOptions} data={roleChartData} />
+      {/* Cards de Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          icon={Building2}
+          title="Instituições"
+          value={stats.totalInstitutions}
+          trend={`+${stats.monthlyGrowth}%`}
+          color="purple"
+        />
+        <StatCard
+          icon={School}
+          title="Escolas"
+          value={stats.totalSchools}
+          subtitle={`${stats.activeClasses} turmas ativas`}
+          color="blue"
+        />
+        <StatCard
+          icon={GraduationCap}
+          title="Alunos"
+          value={stats.totalStudents}
+          subtitle="Total matriculado"
+          color="green"
+        />
+        <StatCard
+          icon={UserCheck}
+          title="Professores"
+          value={stats.totalTeachers}
+          subtitle={`${stats.satisfactionRate}% satisfação`}
+          color="orange"
+        />
+      </div>
+
+      {/* Ações Rápidas */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <QuickActionCard
+          title="Nova Instituição"
+          description="Cadastre uma nova instituição no sistema"
+          icon={Building2}
+          onClick={() => {
+            setSelectedItem(null);
+            setShowInstitutionModal(true);
+          }}
+        />
+        <QuickActionCard
+          title="Nova Escola"
+          description="Adicione uma escola a uma instituição"
+          icon={School}
+          onClick={() => {
+            setSelectedItem(null);
+            setShowSchoolModal(true);
+          }}
+        />
+        <QuickActionCard
+          title="Nova Turma"
+          description="Crie uma nova turma em uma escola"
+          icon={Users}
+          onClick={() => {
+            setSelectedItem(null);
+            setShowClassModal(true);
+          }}
+        />
+      </div>
+
+      {/* Tabelas de Dados Recentes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Instituições Recentes */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Instituições Recentes</h2>
+            <button
+              onClick={() => window.location.href = '/institution/manage'}
+              className="text-indigo-600 hover:text-indigo-700 text-sm"
+            >
+              Ver todas
+            </button>
+          </div>
+          <div className="space-y-3">
+            {recentInstitutions.map((institution) => (
+              <div
+                key={institution.id}
+                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">{institution.name}</p>
+                  <p className="text-sm text-slate-500">{institution.code}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEditInstitution(institution)}
+                    className="p-1 hover:bg-slate-200 rounded"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button className="p-1 hover:bg-slate-200 rounded">
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="bg-white p-6 shadow-sm rounded-xl border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900">Usuários por Instituição</h2>
-          <div style={{ height: '400px' }}>
-            <Bar options={institutionChartOptions} data={institutionChartData} />
+        {/* Escolas Recentes */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Escolas Recentes</h2>
+            <button
+              onClick={() => window.location.href = '/institution/schools'}
+              className="text-indigo-600 hover:text-indigo-700 text-sm"
+            >
+              Ver todas
+            </button>
+          </div>
+          <div className="space-y-3">
+            {recentSchools.map((school) => (
+              <div
+                key={school.id}
+                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+              >
+                <div>
+                  <p className="font-medium">{school.name}</p>
+                  <p className="text-sm text-slate-500">
+                    {school.city} - {school.state}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEditSchool(school)}
+                    className="p-1 hover:bg-slate-200 rounded"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button className="p-1 hover:bg-slate-200 rounded">
+                    <Eye className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">Lista de Usuários</h2>
+      {/* Gráficos e Análises */}
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <BarChart3 className="w-5 h-5 mr-2" />
+            Crescimento Mensal
+          </h3>
+          <div className="h-64 flex items-center justify-center text-slate-500">
+            Gráfico de crescimento (implementar com Chart.js)
+          </div>
         </div>
-      
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Função
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${user.role === 'admin' ? 'bg-emerald-100 text-emerald-800' : 
-                        user.role === 'manager' ? 'bg-blue-100 text-blue-800' : 
-                        'bg-gray-100 text-gray-800'}`}>
-                      {user.role === 'admin' ? 'Administrador' :
-                       user.role === 'manager' ? 'Gerente' :
-                       'Estudante'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      disabled={user.role === 'admin' || user.role === 'manager'}
-                      className={`text-sm font-medium rounded-md px-3 py-1.5 
-                        ${user.role === 'admin' || user.role === 'manager'
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <Calendar className="w-5 h-5 mr-2" />
+            Eventos Próximos
+          </h3>
+          <div className="space-y-3">
+            <EventItem
+              date="15/06"
+              title="Reunião de Diretores"
+              type="meeting"
+            />
+            <EventItem
+              date="20/06"
+              title="Início das Férias"
+              type="holiday"
+            />
+            <EventItem
+              date="01/07"
+              title="Matrícula 2º Semestre"
+              type="enrollment"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Modais */}
+      {showInstitutionModal && (
+        <InstitutionModal
+          institution={selectedItem}
+          onClose={() => {
+            setShowInstitutionModal(false);
+            setSelectedItem(null);
+            loadDashboardData();
+          }}
+        />
+      )}
+
+      {showSchoolModal && (
+        <SchoolModal
+          school={selectedItem}
+          onClose={() => {
+            setShowSchoolModal(false);
+            setSelectedItem(null);
+            loadDashboardData();
+          }}
+        />
+      )}
+
+      {showClassModal && (
+        <ClassModal
+          classItem={selectedItem}
+          onClose={() => {
+            setShowClassModal(false);
+            setSelectedItem(null);
+            loadDashboardData();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Componente de Card de Estatística
+interface StatCardProps {
+  icon: React.ElementType;
+  title: string;
+  value: number;
+  subtitle?: string;
+  trend?: string;
+  color: string;
+}
+
+function StatCard({ icon: Icon, title, value, subtitle, trend, color }: StatCardProps) {
+  const colorClasses = {
+    purple: 'bg-indigo-100 text-indigo-600',
+    blue: 'bg-sky-100 text-sky-600',
+    green: 'bg-emerald-100 text-emerald-600',
+    orange: 'bg-amber-100 text-amber-600'
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-3 rounded-lg ${colorClasses[color as keyof typeof colorClasses]}`}>
+          <Icon className="w-6 h-6" />
+        </div>
+        {trend && (
+          <span className="text-sm text-green-600 font-medium">
+            {trend}
+          </span>
+        )}
+      </div>
+      <p className="text-2xl font-bold text-slate-800">
+        {value.toLocaleString('pt-BR')}
+      </p>
+      <p className="text-sm text-slate-600">{title}</p>
+      {subtitle && (
+        <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+      )}
+    </div>
+  );
+}
+
+// Componente de Ação Rápida
+interface QuickActionCardProps {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  onClick: () => void;
+}
+
+function QuickActionCard({ title, description, icon: Icon, onClick }: QuickActionCardProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-left"
+    >
+      <div className="flex items-center mb-3">
+                <div className="p-2 bg-sky-100 rounded-lg mr-3">
+                  <Icon className="w-5 h-5 text-sky-600" />
+                </div>
+                <Plus className="w-4 h-4 text-slate-400" />
+      </div>
+      <h3 className="font-semibold text-slate-800 mb-1">{title}</h3>
+      <p className="text-sm text-slate-600">{description}</p>
+    </button>
+  );
+}
+
+// Componente de Item de Evento
+interface EventItemProps {
+  date: string;
+  title: string;
+  type: 'meeting' | 'holiday' | 'enrollment';
+}
+
+function EventItem({ date, title, type }: EventItemProps) {
+  const typeColors = {
+    meeting: 'bg-sky-100 text-sky-800',
+    holiday: 'bg-emerald-100 text-emerald-800',
+    enrollment: 'bg-indigo-100 text-indigo-800'
+  };
+
+  return (
+    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+      <div className="flex items-center">
+          <div className="text-sm font-medium text-slate-500 w-12">
+          {date}
+        </div>
+        <div className="ml-3">
+            <p className="text-sm font-medium text-slate-800">{title}</p>
+        </div>
+      </div>
+      <span className={`px-2 py-1 text-xs rounded-full ${typeColors[type]}`}>
+        {type === 'meeting' ? 'Reunião' : type === 'holiday' ? 'Feriado' : 'Matrícula'}
+      </span>
     </div>
   );
 }

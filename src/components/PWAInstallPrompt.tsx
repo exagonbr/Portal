@@ -12,11 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-declare global {
-  interface WindowEventMap {
-    'beforeinstallprompt': BeforeInstallPromptEvent;
-  }
-}
+// The 'beforeinstallprompt' event is already declared globally in your types, so no need to redeclare it here.
 
 export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -73,10 +69,10 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-50">
+    <div className="fixed bottom-4 right-8 z-50">
       <button
         onClick={handleInstallClick}
-        className="flex items-center gap-2 px-4 py-3 bg-primary text-white rounded-lg shadow-lg hover:bg-primary-dark transition-colors duration-200"
+        className="flex items-center gap-2 px-4 py-3 bg-green-800 text-white rounded-lg shadow-lg hover:bg-orange transition-colors duration-200"
         aria-label="Install PWA"
       >
         <FaDownload className="text-lg" />

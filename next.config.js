@@ -102,8 +102,6 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Only treat .tsx and .ts files in app directory as pages/layouts
-  pageExtensions: ['tsx', 'ts'],
   images: {
     remotePatterns: [
       {

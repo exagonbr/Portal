@@ -10,7 +10,7 @@ interface User {
   email: string;
   password: string;
   name: string;
-  role: string;
+  role_id: string;
   institution_id: string;
 }
 
@@ -29,11 +29,35 @@ export class AuthService {
     return bcrypt.compare(password, hashedPassword);
   }
 
-  static generateToken(user: Partial<User>): string {
+  static async generateToken(user: Partial<User>): Promise<string> {
+    // Buscar a role do usuário pelo role_id
+    const role = await db('roles')
+      .where('id', user.role_id)
+      .first();
+    
+    let permissions: string[] = [];
+    let roleName = '';
+    
+    // Se encontrou a role, buscar as permissões associadas
+    if (role) {
+      roleName = role.name;
+      
+      // Buscar as permissões da role através da tabela de junção
+      const rolePermissions = await db('role_permissions')
+        .join('permissions', 'role_permissions.permission_id', 'permissions.id')
+        .where('role_permissions.role_id', role.id)
+        .select('permissions.name');
+      
+      permissions = rolePermissions.map(p => p.name);
+    }
+    
     return jwt.sign(
       {
         userId: user.id,
-        role: user.role,
+        email: user.email,
+        name: user.name,
+        role: roleName,
+        permissions: permissions,
         institutionId: user.institution_id
       },
       JWT_SECRET,
@@ -62,15 +86,43 @@ export class AuthService {
       })
       .returning('*');
 
+    // Buscar a role do usuário pelo role_id
+    const role = await db('roles')
+      .where('id', user.role_id)
+      .first();
+    
+    let permissions: string[] = [];
+    let roleName = '';
+    
+    // Se encontrou a role, buscar as permissões associadas
+    if (role) {
+      roleName = role.name;
+      
+      // Buscar as permissões da role através da tabela de junção
+      const rolePermissions = await db('role_permissions')
+        .join('permissions', 'role_permissions.permission_id', 'permissions.id')
+        .where('role_permissions.role_id', role.id)
+        .select('permissions.name');
+      
+      permissions = rolePermissions.map(p => p.name);
+    }
+
     // Generate token
-    const token = this.generateToken(user);
+    const token = await this.generateToken(user);
 
     // Remove password from response
     const { password, ...userWithoutPassword } = user;
 
+    // Adicionar as permissões e role name à resposta do usuário
+    const userWithPermissions = {
+      ...userWithoutPassword,
+      role: roleName,
+      permissions
+    };
+
     return {
       token,
-      user: userWithoutPassword
+      user: userWithPermissions
     };
   }
 
@@ -90,15 +142,43 @@ export class AuthService {
       throw new Error('Invalid credentials');
     }
 
+    // Buscar a role do usuário pelo role_id
+    const role = await db('roles')
+      .where('id', user.role_id)
+      .first();
+    
+    let permissions: string[] = [];
+    let roleName = '';
+    
+    // Se encontrou a role, buscar as permissões associadas
+    if (role) {
+      roleName = role.name;
+      
+      // Buscar as permissões da role através da tabela de junção
+      const rolePermissions = await db('role_permissions')
+        .join('permissions', 'role_permissions.permission_id', 'permissions.id')
+        .where('role_permissions.role_id', role.id)
+        .select('permissions.name');
+      
+      permissions = rolePermissions.map(p => p.name);
+    }
+
     // Generate token
-    const token = this.generateToken(user);
+    const token = await this.generateToken(user);
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
+    // Adicionar as permissões e role name à resposta do usuário
+    const userWithPermissions = {
+      ...userWithoutPassword,
+      role: roleName,
+      permissions
+    };
+
     return {
       token,
-      user: userWithoutPassword
+      user: userWithPermissions
     };
   }
 
@@ -111,8 +191,37 @@ export class AuthService {
       return null;
     }
 
+    // Buscar a role do usuário pelo role_id
+    const role = await db('roles')
+      .where('id', user.role_id)
+      .first();
+    
+    let permissions: string[] = [];
+    let roleName = '';
+    
+    // Se encontrou a role, buscar as permissões associadas
+    if (role) {
+      roleName = role.name;
+      
+      // Buscar as permissões da role através da tabela de junção
+      const rolePermissions = await db('role_permissions')
+        .join('permissions', 'role_permissions.permission_id', 'permissions.id')
+        .where('role_permissions.role_id', role.id)
+        .select('permissions.name');
+      
+      permissions = rolePermissions.map(p => p.name);
+    }
+
     // Remove password from response
     const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    
+    // Adicionar as permissões e role name à resposta do usuário
+    const userWithPermissions = {
+      ...userWithoutPassword,
+      role: roleName,
+      permissions
+    };
+    
+    return userWithPermissions;
   }
 }

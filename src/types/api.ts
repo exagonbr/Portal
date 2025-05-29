@@ -149,6 +149,7 @@ export interface RoleUpdateDto extends UpdateRoleDto {}
 export interface InstitutionDto {
   id: string;
   name: string;
+  code: string;
   description?: string;
   address?: string;
   phone?: string;

@@ -1,176 +1,210 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { User } from '../types/auth';
-import * as authService from '../services/auth';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { LoginResponse, RegisterResponse } from '../services/auth';
-import { useSession } from 'next-auth/react';
+import { UserEssentials, Permission } from '@/types/auth';
+import * as authService from '@/services/auth';
+import { getDashboardPath } from '@/utils/roleRedirect';
 
-export type AuthContextType = {
-  user: User | null;
+interface AuthContextType {
+  user: UserEssentials | null;
   loading: boolean;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  login: (email: string, password: string) => Promise<LoginResponse>;
-  register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<RegisterResponse>;
-  logout: () => void;
-  listUsers: () => Promise<User[]>;
-  createUser: (userData: Omit<User, 'id'>) => Promise<User>;
-  updateUser: (id: string, userData: Partial<User>) => Promise<User | null>;
-  deleteUser: (id: string) => Promise<boolean>;
-};
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<void>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasAllPermissions: (permissions: string[]) => boolean;
+}
 
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  setUser: () => {},
-  login: async () => ({ success: false }),
-  register: async () => ({ success: false }),
-  logout: () => {},
-  listUsers: async () => [],
-  createUser: async () => ({ id: '', name: '', email: '', role: 'student' }),
-  updateUser: async () => null,
-  deleteUser: async () => false
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<UserEssentials | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { data: session } = useSession();
 
-  useEffect(() => {
-    checkAuth();
-  }, [session]); // Re-run when session changes
-
-  const checkAuth = async () => {
-    try {
-      const user = await authService.getCurrentUser();
-      if (user) {
-        setUser(user);
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setError('Authentication check failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = async (email: string, password: string): Promise<LoginResponse> => {
+  // Função para buscar o usuário atual
+  const fetchCurrentUser = useCallback(async () => {
     try {
       setLoading(true);
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
       setError(null);
-
-      const response = await authService.login(email, password);
-
-      if (response.success && response.user) {
-        setUser(response.user);
-      } else {
-        throw new Error('Login failed: Invalid response from server');
-      }
-
-      return response;
-    } catch (error: any) {
-      console.error('Login failed:', error);
-      setError(error.message || 'An error occurred during login');
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (name: string, email: string, password: string, type: 'student' | 'teacher'): Promise<RegisterResponse> => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await authService.register(name, email, password, type);
-
-      if (response.success && response.user) {
-        setUser(response.user);
-      } else {
-        throw new Error('Registration failed: Invalid response from server');
-      }
-
-      return response;
-    } catch (error: any) {
-      console.error('Registration failed:', error);
-      setError(error.message || 'An error occurred during registration');
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    authService.logout().then(() => {
+    } catch (err) {
+      console.error('Erro ao buscar usuário:', err);
       setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Verificar autenticação ao montar o componente
+  useEffect(() => {
+    fetchCurrentUser();
+  }, [fetchCurrentUser]);
+
+  // Login
+  const login = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await authService.login(email, password);
+      
+      if (response.success && response.user) {
+        setUser(response.user);
+        
+        // Normaliza a role para lowercase
+        const normalizedRole = response.user.role?.toLowerCase();
+        
+        // Redirecionar para o dashboard apropriado
+        const dashboardPath = getDashboardPath(normalizedRole || response.user.role);
+        if (dashboardPath) {
+          router.push(dashboardPath);
+        } else {
+          router.push('/dashboard');
+        }
+      }
+    } catch (err: any) {
+      console.error('Erro no login:', err);
+      setError(err.message || 'Erro ao fazer login');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Register
+  const register = async (name: string, email: string, password: string, type: 'student' | 'teacher') => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await authService.register(name, email, password, type);
+      
+      if (response.success && response.user) {
+        setUser(response.user);
+        
+        // Normaliza a role para lowercase
+        const normalizedRole = response.user.role?.toLowerCase();
+        
+        // Redirecionar para o dashboard apropriado
+        const dashboardPath = getDashboardPath(normalizedRole || response.user.role);
+        if (dashboardPath) {
+          router.push(dashboardPath);
+        } else {
+          router.push('/dashboard');
+        }
+      }
+    } catch (err: any) {
+      console.error('Erro no registro:', err);
+      setError(err.message || 'Erro ao registrar usuário');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Logout
+  const logout = async () => {
+    try {
+      setLoading(true);
+      await authService.logout();
+      setUser(null);
+      setError(null);
       router.push('/login');
-    }).catch((error) => {
-      console.error('Logout failed:', error);
-    });
-  };
-
-  const listUsers = async () => {
-    try {
-      return await authService.listUsers();
-    } catch (error) {
-      console.error('Failed to list users:', error);
-      throw error;
+    } catch (err: any) {
+      console.error('Erro no logout:', err);
+      setError(err.message || 'Erro ao fazer logout');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const createUser = async (userData: Omit<User, 'id'>) => {
-    try {
-      return await authService.createUser(userData);
-    } catch (error) {
-      console.error('Failed to create user:', error);
-      throw error;
-    }
+  // Refresh user data
+  const refreshUser = async () => {
+    await fetchCurrentUser();
   };
 
-  const updateUser = async (id: string, userData: Partial<User>) => {
-    try {
-      return await authService.updateUser(id, userData);
-    } catch (error) {
-      console.error('Failed to update user:', error);
-      throw error;
-    }
+  // Permission check helpers
+  const hasPermission = useCallback((permission: string): boolean => {
+    if (!user?.permissions) return false;
+    return user.permissions.includes(permission as Permission);
+  }, [user]);
+
+  const hasAnyPermission = useCallback((permissions: string[]): boolean => {
+    if (!user?.permissions) return false;
+    return permissions.some(permission => user.permissions?.includes(permission as Permission));
+  }, [user]);
+
+  const hasAllPermissions = useCallback((permissions: string[]): boolean => {
+    if (!user?.permissions) return false;
+    return permissions.every(permission => user.permissions?.includes(permission as Permission));
+  }, [user]);
+
+  const value = {
+    user,
+    loading,
+    error,
+    login,
+    register,
+    logout,
+    refreshUser,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
   };
 
-  const deleteUser = async (id: string) => {
-    try {
-      return await authService.deleteUser(id);
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-      throw error;
-    }
-  };
-
-  return (
-      <AuthContext.Provider value={{
-        user,
-        loading,
-        setUser,
-        login,
-        register,
-        logout,
-        listUsers,
-        createUser,
-        updateUser,
-        deleteUser
-      }}>
-        {children}
-      </AuthContext.Provider>
-  );
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
+}
+
+// Hook para verificar se o usuário está autenticado
+export function useRequireAuth(redirectTo = '/login') {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push(redirectTo);
+    }
+  }, [user, loading, router, redirectTo]);
+
+  return { user, loading };
+}
+
+// Hook para verificar roles específicas
+export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard') {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      // Normaliza a role para lowercase para comparação
+      const normalizedRole = user.role?.toLowerCase();
+      const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
+      
+      if (!normalizedAllowedRoles.includes(normalizedRole)) {
+        const dashboardPath = getDashboardPath(normalizedRole);
+        router.push(dashboardPath || redirectTo);
+      }
+    }
+  }, [user, loading, allowedRoles, router, redirectTo]);
+
+  return {
+    user,
+    loading,
+    hasRole: user ? allowedRoles.map(r => r.toLowerCase()).includes(user.role.toLowerCase()) : false
+  };
 }

@@ -78,7 +78,7 @@ export default function DashboardHeader() {
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left side - Title */}
         <h1 className=" font-semibold text-gray-900">
-          Bem vindo ao Portal Sabercon, {user?.name}
+          Portal Educacional Sabercon
         </h1>
         
         {/* Right side - Notifications and Profile */}

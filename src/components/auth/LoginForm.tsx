@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { signIn, signOut } from 'next-auth/react';
+import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
 
 interface LoginFormData {
   email: string;
@@ -47,36 +48,11 @@ export function LoginForm() {
     validationRules,
     onSubmit: async (formValues) => {
       try {
-          setSubmitError('');
-        const response = await login(formValues.email, formValues.password);
-        if (response.success && response.user) {
-          let dashboardPath = '';
-          switch (response.user.role) {
-            case 'student':
-              dashboardPath = '/dashboard/student';
-              break;
-            case 'teacher':
-              dashboardPath = '/dashboard/teacher';
-              break;
-            case 'admin':
-              dashboardPath = '/dashboard/admin';
-              break;
-            case 'manager':
-              dashboardPath = '/dashboard/manager';
-              break;
-            default:
-              // Invalid role - log out the user
-              await logout();
-              router.push('/login');
-              return;
-          }
-          if (dashboardPath) {
-            router.push(dashboardPath);
-          }
-        } else {
-          setSubmitError('Email ou senha incorretos');
-        }
+        setSubmitError('');
+        // O AuthContext já cuida do redirecionamento
+        await login(formValues.email, formValues.password);
       } catch (error) {
+        console.error('Erro durante o login:', error);
         setSubmitError('Email ou senha incorretos');
       }
     }
@@ -85,40 +61,46 @@ export function LoginForm() {
   const handleGoogleLogin = async () => {
     try {
       const result = await signIn('google', { redirect: false });
+      
       if (result?.ok && !result?.error) {
-        // Get user role after Google login
+        // Obtém a sessão do usuário após login com Google
         const response = await fetch('/api/auth/session');
         const session = await response.json();
         
         if (session?.user?.role) {
-          let dashboardPath = '';
-          switch (session.user.role) {
-            case 'student':
-              dashboardPath = '/dashboard/student';
-              break;
-            case 'teacher':
-              dashboardPath = '/dashboard/teacher';
-              break;
-            case 'admin':
-              dashboardPath = '/dashboard/admin';
-              break;
-            case 'manager':
-              dashboardPath = '/dashboard/manager';
-              break;
-            default:
-              await signOut();
-              router.push('/login');
-              return;
+          const userRole = session.user.role;
+          // Normaliza a role para lowercase
+          const normalizedRole = userRole?.toLowerCase();
+          
+          // Verifica se a role é válida
+          if (!isValidRole(normalizedRole)) {
+            console.error(`Role inválida detectada no login Google: ${userRole}`);
+            await signOut();
+            setSubmitError('Perfil de usuário inválido. Entre em contato com o administrador.');
+            return;
           }
+          
+          // Obtém o caminho do dashboard baseado na role
+          const dashboardPath = getDashboardPath(normalizedRole);
+          
           if (dashboardPath) {
+            console.log(`Redirecionando usuário Google ${session.user.name} (${userRole}) para: ${dashboardPath}`);
             router.push(dashboardPath);
+          } else {
+            console.error(`Caminho do dashboard não encontrado para a role: ${userRole}`);
+            setSubmitError('Erro interno. Entre em contato com o administrador.');
           }
+        } else {
+          setSubmitError('Sessão inválida. Tente novamente.');
         }
       }
+      
       if (result?.error) {
+        console.error('Erro no login Google:', result.error);
         setSubmitError('Erro ao realizar login com Google');
       }
     } catch (error) {
+      console.error('Erro durante login Google:', error);
       setSubmitError('Erro ao realizar login com Google');
     }
   };

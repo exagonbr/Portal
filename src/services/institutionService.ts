@@ -469,6 +469,35 @@ export class InstitutionService {
 
     return errors;
   }
+
+  /**
+   * Método list para compatibilidade com outros serviços
+   */
+  async list(options?: InstitutionListOptions): Promise<PaginatedResponseDto<InstitutionResponseDto>> {
+    return this.getInstitutions(options);
+  }
+
+  /**
+   * Método getAll para compatibilidade com outros serviços
+   */
+  async getAll(): Promise<{ data: InstitutionResponseDto[] }> {
+    const response = await this.getInstitutions({ limit: 1000 });
+    return { data: response.items };
+  }
+
+  /**
+   * Método create para compatibilidade com outros serviços
+   */
+  async create(data: InstitutionCreateDto): Promise<InstitutionResponseDto> {
+    return this.createInstitution(data);
+  }
+
+  /**
+   * Método update para compatibilidade com outros serviços
+   */
+  async update(id: string, data: InstitutionUpdateDto): Promise<InstitutionResponseDto> {
+    return this.updateInstitution(id, data);
+  }
 }
 
 // Instância singleton do serviço de instituições

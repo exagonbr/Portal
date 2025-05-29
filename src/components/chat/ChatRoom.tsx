@@ -73,8 +73,8 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow">
       {/* Chat Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-800">{className}</h2>
+      <div className="px-4 py-3 border-b border-slate-200">
+        <h2 className="text-lg font-semibold text-slate-800">{className}</h2>
       </div>
 
       {/* Messages Area */}
@@ -89,14 +89,14 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
               className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] ${
+              className={`max-w-[70%] ${
                   isOwnMessage
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-100 text-slate-900'
                 } rounded-lg px-4 py-2`}
               >
                 {!isOwnMessage && (
-                  <div className="text-sm font-medium text-gray-600 mb-1">
+                  <div className="text-sm font-medium text-slate-600 mb-1">
                     {userInfo.name} ({userInfo.role})
                   </div>
                 )}
@@ -134,13 +134,13 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200">
+      <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-200">
         {attachments.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {attachments.map(file => (
               <div
                 key={file.id}
-                className="flex items-center bg-gray-100 rounded px-2 py-1 text-sm"
+                className="flex items-center bg-slate-100 rounded px-2 py-1 text-sm"
               >
                 <span className="material-symbols-outlined mr-1">
                   {file.type === 'image' ? 'image' : 'description'}
@@ -149,7 +149,7 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
                 <button
                   type="button"
                   onClick={() => setAttachments(prev => prev.filter(f => f.id !== file.id))}
-                  className="ml-1 text-gray-500 hover:text-gray-700"
+                  className="ml-1 text-slate-500 hover:text-slate-700"
                 >
                   <span className="material-symbols-outlined text-sm">close</span>
                 </button>
@@ -161,7 +161,7 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
+            className="p-2 text-slate-500 hover:text-slate-700 rounded-full hover:bg-slate-100"
           >
             <span className="material-symbols-outlined">attach_file</span>
           </button>
@@ -177,12 +177,12 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500"
+            className="flex-1 px-4 py-2 border border-slate-300 rounded-full focus:outline-none focus:border-indigo-500"
           />
           <button
             type="submit"
             disabled={!newMessage.trim() && attachments.length === 0}
-            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined">send</span>
           </button>

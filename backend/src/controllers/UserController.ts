@@ -1,479 +1,240 @@
 import { Request, Response } from 'express';
-import { UserRepository } from '../repositories/UserRepository';
-import { CreateUserData, UpdateUserData } from '../models/User';
-import { validationResult } from 'express-validator';
-import bcrypt from 'bcryptjs';
+import { UserService } from '../services/UserService';
 
 export class UserController {
-  private userRepository: UserRepository;
+  private userService: UserService;
 
   constructor() {
-    this.userRepository = new UserRepository();
+    this.userService = new UserService();
   }
 
-  async getAll(req: Request, res: Response): Promise<Response> {
+  // Listar todos os usuários
+  getAllUsers = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { page = 1, limit = 10, search, role, institution_id } = req.query;
+      const { page = 1, limit = 10, search, role, institutionId, schoolId } = req.query;
       
-      let users;
+      const users = await this.userService.getAllUsers({
+        page: Number(page),
+        limit: Number(limit),
+        search: search as string,
+        role: role as string,
+        institutionId: institutionId as string,
+        schoolId: schoolId as string
+      });
+
+      res.json(users);
+    } catch (error) {
+      console.error('Erro ao listar usuários:', error);
+      res.status(500).json({ error: 'Erro ao listar usuários' });
+    }
+  };
+
+  // Buscar usuário por ID
+  getUserById = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const user = await this.userService.getUserById(id);
+
+      if (!user) {
+        res.status(404).json({ error: 'Usuário não encontrado' });
+        return;
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error('Erro ao buscar usuário:', error);
+      res.status(500).json({ error: 'Erro ao buscar usuário' });
+    }
+  };
+
+  // Atualizar usuário
+  updateUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const currentUser = req.user;
+
+      // Verificar se é o próprio usuário ou admin
+      if (currentUser?.userId !== id && currentUser?.role !== 'admin') {
+        res.status(403).json({ error: 'Sem permissão para atualizar este usuário' });
+        return;
+      }
+
+      const updatedUser = await this.userService.updateUser(id, updateData);
+
+      if (!updatedUser) {
+        res.status(404).json({ error: 'Usuário não encontrado' });
+        return;
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      res.status(500).json({ error: 'Erro ao atualizar usuário' });
+    }
+  };
+
+  // Deletar usuário
+  deleteUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
       
-      if (search && typeof search === 'string') {
-        users = await this.userRepository.searchUsers(search);
-      } else if (role && typeof role === 'string') {
-        users = await this.userRepository.findByRole(role);
-      } else if (institution_id && typeof institution_id === 'string') {
-        users = await this.userRepository.findByInstitution(institution_id);
-      } else {
-        users = await this.userRepository.getUsersWithRoleAndInstitution();
+      const success = await this.userService.deleteUser(id);
+
+      if (!success) {
+        res.status(404).json({ error: 'Usuário não encontrado' });
+        return;
       }
 
-      // Remove sensitive information
-      const sanitizedUsers = users.map(user => {
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
-      });
-
-      return res.json({
-        success: true,
-        data: sanitizedUsers,
-        pagination: {
-          page: parseInt(page as string),
-          limit: parseInt(limit as string),
-          total: sanitizedUsers.length
-        }
-      });
+      res.status(204).send();
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error retrieving users',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error('Erro ao deletar usuário:', error);
+      res.status(500).json({ error: 'Erro ao deletar usuário' });
     }
-  }
+  };
 
-  async getById(req: Request, res: Response): Promise<Response> {
+  // Listar usuários por instituição
+  getUsersByInstitution = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { institutionId } = req.params;
+      const { page = 1, limit = 10 } = req.query;
+
+      const users = await this.userService.getUsersByInstitution(
+        institutionId,
+        Number(page),
+        Number(limit)
+      );
+
+      res.json(users);
+    } catch (error) {
+      console.error('Erro ao listar usuários por instituição:', error);
+      res.status(500).json({ error: 'Erro ao listar usuários por instituição' });
+    }
+  };
+
+  // Listar usuários por escola
+  getUsersBySchool = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { schoolId } = req.params;
+      const { page = 1, limit = 10 } = req.query;
+
+      const users = await this.userService.getUsersBySchool(
+        schoolId,
+        Number(page),
+        Number(limit)
+      );
+
+      res.json(users);
+    } catch (error) {
+      console.error('Erro ao listar usuários por escola:', error);
+      res.status(500).json({ error: 'Erro ao listar usuários por escola' });
+    }
+  };
+
+  // Listar usuários por turma
+  getUsersByClass = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { classId } = req.params;
+      const { page = 1, limit = 10 } = req.query;
+
+      const users = await this.userService.getUsersByClass(
+        classId,
+        Number(page),
+        Number(limit)
+      );
+
+      res.json(users);
+    } catch (error) {
+      console.error('Erro ao listar usuários por turma:', error);
+      res.status(500).json({ error: 'Erro ao listar usuários por turma' });
+    }
+  };
+
+  // Atribuir papel a usuário
+  assignRole = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
+      const { roleId } = req.body;
+
+      if (!roleId) {
+        res.status(400).json({ error: 'ID do papel é obrigatório' });
+        return;
       }
 
-      const user = await this.userRepository.getUserWithRoleAndInstitution(id);
+      const updatedUser = await this.userService.assignRole(id, roleId);
 
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
+      if (!updatedUser) {
+        res.status(404).json({ error: 'Usuário ou papel não encontrado' });
+        return;
       }
 
-      // Remove sensitive information
-      const { password, ...userWithoutPassword } = user;
-
-      return res.json({
-        success: true,
-        data: userWithoutPassword
-      });
+      res.json(updatedUser);
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error retrieving user',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error('Erro ao atribuir papel:', error);
+      res.status(500).json({ error: 'Erro ao atribuir papel ao usuário' });
     }
-  }
+  };
 
-  async getProfile(req: Request, res: Response): Promise<Response> {
+  // Adicionar usuário a turma
+  addToClass = async (req: Request, res: Response): Promise<void> => {
     try {
-      if (!req.user?.userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'User not authenticated'
-        });
+      const { id, classId } = req.params;
+
+      const success = await this.userService.addToClass(id, classId);
+
+      if (!success) {
+        res.status(404).json({ error: 'Usuário ou turma não encontrada' });
+        return;
       }
 
-      const user = await this.userRepository.getUserWithRoleAndInstitution(req.user.userId);
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      // Remove sensitive information
-      const { password, ...userWithoutPassword } = user;
-
-      return res.json({
-        success: true,
-        data: userWithoutPassword
-      });
+      res.json({ message: 'Usuário adicionado à turma com sucesso' });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error retrieving user profile',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error('Erro ao adicionar usuário à turma:', error);
+      res.status(500).json({ error: 'Erro ao adicionar usuário à turma' });
     }
-  }
+  };
 
-  async create(req: Request, res: Response): Promise<Response> {
+  // Remover usuário de turma
+  removeFromClass = async (req: Request, res: Response): Promise<void> => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          errors: errors.array()
-        });
+      const { id, classId } = req.params;
+
+      const success = await this.userService.removeFromClass(id, classId);
+
+      if (!success) {
+        res.status(404).json({ error: 'Usuário ou turma não encontrada' });
+        return;
       }
 
-      const userData: CreateUserData = req.body;
-
-      // Check if user with same email already exists
-      const existingUser = await this.userRepository.findByEmail(userData.email);
-      if (existingUser) {
-        return res.status(409).json({
-          success: false,
-          message: 'User with this email already exists'
-        });
-      }
-
-      // Check if user with same username already exists
-      const existingUsername = await this.userRepository.findByUsername(userData.usuario);
-      if (existingUsername) {
-        return res.status(409).json({
-          success: false,
-          message: 'User with this username already exists'
-        });
-      }
-
-      // Hash password
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
-      userData.password = hashedPassword;
-
-      const user = await this.userRepository.createUser(userData);
-
-      // Remove sensitive information from response
-      const { password, ...userWithoutPassword } = user;
-
-      return res.status(201).json({
-        success: true,
-        data: userWithoutPassword,
-        message: 'User created successfully'
-      });
+      res.json({ message: 'Usuário removido da turma com sucesso' });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error creating user',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error('Erro ao remover usuário da turma:', error);
+      res.status(500).json({ error: 'Erro ao remover usuário da turma' });
     }
-  }
+  };
 
-  async update(req: Request, res: Response): Promise<Response> {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          errors: errors.array()
-        });
-      }
-
-      const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
-      }
-
-      const updateData: UpdateUserData = req.body;
-
-      // Check if user exists
-      const existingUser = await this.userRepository.findById(id);
-      if (!existingUser) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      // Check if email is being updated and if it conflicts with another user
-      if (updateData.email && updateData.email !== existingUser.email) {
-        const userWithEmail = await this.userRepository.findByEmail(updateData.email);
-        if (userWithEmail) {
-          return res.status(409).json({
-            success: false,
-            message: 'User with this email already exists'
-          });
-        }
-      }
-
-      // Check if username is being updated and if it conflicts with another user
-      if (updateData.usuario && updateData.usuario !== existingUser.usuario) {
-        const userWithUsername = await this.userRepository.findByUsername(updateData.usuario);
-        if (userWithUsername) {
-          return res.status(409).json({
-            success: false,
-            message: 'User with this username already exists'
-          });
-        }
-      }
-
-      // Hash password if it's being updated
-      if (updateData.password) {
-        const saltRounds = 10;
-        updateData.password = await bcrypt.hash(updateData.password, saltRounds);
-      }
-
-      const user = await this.userRepository.updateUser(id, updateData);
-
-      if (!user) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to update user'
-        });
-      }
-
-      // Remove sensitive information from response
-      const { password, ...userWithoutPassword } = user;
-
-      return res.json({
-        success: true,
-        data: userWithoutPassword,
-        message: 'User updated successfully'
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error updating user',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  async updateProfile(req: Request, res: Response): Promise<Response> {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          errors: errors.array()
-        });
-      }
-
-      if (!req.user?.userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'User not authenticated'
-        });
-      }
-
-      const updateData: UpdateUserData = req.body;
-
-      // Users can't update their own role or institution through this endpoint
-      delete updateData.role_id;
-      delete updateData.institution_id;
-
-      // Check if email is being updated and if it conflicts with another user
-      if (updateData.email) {
-        const userWithEmail = await this.userRepository.findByEmail(updateData.email);
-        if (userWithEmail && userWithEmail.id !== req.user.userId) {
-          return res.status(409).json({
-            success: false,
-            message: 'User with this email already exists'
-          });
-        }
-      }
-
-      // Check if username is being updated and if it conflicts with another user
-      if (updateData.usuario) {
-        const userWithUsername = await this.userRepository.findByUsername(updateData.usuario);
-        if (userWithUsername && userWithUsername.id !== req.user.userId) {
-          return res.status(409).json({
-            success: false,
-            message: 'User with this username already exists'
-          });
-        }
-      }
-
-      // Hash password if it's being updated
-      if (updateData.password) {
-        const saltRounds = 10;
-        updateData.password = await bcrypt.hash(updateData.password, saltRounds);
-      }
-
-      const user = await this.userRepository.updateUser(req.user.userId, updateData);
-
-      if (!user) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to update profile'
-        });
-      }
-
-      // Remove sensitive information from response
-      const { password, ...userWithoutPassword } = user;
-
-      return res.json({
-        success: true,
-        data: userWithoutPassword,
-        message: 'Profile updated successfully'
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error updating profile',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  async delete(req: Request, res: Response): Promise<Response> {
+  // Ativar/desativar usuário
+  toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
+      const { isActive } = req.body;
+
+      if (typeof isActive !== 'boolean') {
+        res.status(400).json({ error: 'Status isActive deve ser um booleano' });
+        return;
       }
 
-      const user = await this.userRepository.findById(id);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
+      const updatedUser = await this.userService.toggleUserStatus(id, isActive);
+
+      if (!updatedUser) {
+        res.status(404).json({ error: 'Usuário não encontrado' });
+        return;
       }
 
-      const deleted = await this.userRepository.deleteUser(id);
-
-      if (!deleted) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to delete user'
-        });
-      }
-
-      return res.json({
-        success: true,
-        message: 'User deleted successfully'
-      });
+      res.json(updatedUser);
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error deleting user',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error('Erro ao alterar status do usuário:', error);
+      res.status(500).json({ error: 'Erro ao alterar status do usuário' });
     }
-  }
-
-  async getUserCourses(req: Request, res: Response): Promise<Response> {
-    try {
-      const { id } = req.params;
-      if (!id) {
-        return res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
-      }
-
-      const courses = await this.userRepository.getUserCourses(id);
-
-      return res.json({
-        success: true,
-        data: courses
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error retrieving user courses',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  async getMyCourses(req: Request, res: Response): Promise<Response> {
-    try {
-      if (!req.user?.userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'User not authenticated'
-        });
-      }
-
-      const courses = await this.userRepository.getUserCourses(req.user.userId);
-
-      return res.json({
-        success: true,
-        data: courses
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error retrieving user courses',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-
-  async changePassword(req: Request, res: Response): Promise<Response> {
-    try {
-      const { currentPassword, newPassword } = req.body;
-
-      if (!req.user?.userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'User not authenticated'
-        });
-      }
-
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({
-          success: false,
-          message: 'Current password and new password are required'
-        });
-      }
-
-      const user = await this.userRepository.findById(req.user.userId);
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
-      }
-
-      // Verify current password
-      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
-      if (!isCurrentPasswordValid) {
-        return res.status(400).json({
-          success: false,
-          message: 'Current password is incorrect'
-        });
-      }
-
-      // Hash new password
-      const saltRounds = 10;
-      const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
-
-      await this.userRepository.updateUser(req.user.userId, { password: hashedNewPassword });
-
-      return res.json({
-        success: true,
-        message: 'Password changed successfully'
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error changing password',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
+  };
 }

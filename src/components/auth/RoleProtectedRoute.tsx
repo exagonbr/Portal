@@ -1,0 +1,138 @@
+'use client';
+
+import { ReactNode, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
+import { isValidRole, getDashboardPath } from '../../utils/roleRedirect';
+
+interface RoleProtectedRouteProps {
+  children: ReactNode;
+  allowedRoles: string[];
+  fallbackPath?: string;
+  showLoading?: boolean;
+  loadingComponent?: ReactNode;
+  unauthorizedComponent?: ReactNode;
+}
+
+/**
+ * Componente para proteger rotas baseado nas roles do usuário
+ */
+export function RoleProtectedRoute({
+  children,
+  allowedRoles,
+  fallbackPath = '/login',
+  showLoading = true,
+  loadingComponent,
+  unauthorizedComponent
+}: RoleProtectedRouteProps) {
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      // Se ainda está carregando, aguarda
+      if (loading) {
+        setIsAuthorized(null);
+        return;
+      }
+
+      // Se não há usuário, redireciona para login
+      if (!user) {
+        console.log('Usuário não autenticado, redirecionando para login');
+        router.push(fallbackPath);
+        setIsAuthorized(false);
+        return;
+      }
+
+      // Verifica se a role é válida
+      if (!isValidRole(user.role)) {
+        console.error(`Role inválida detectada: ${user.role}`);
+        await logout();
+        router.push(fallbackPath);
+        setIsAuthorized(false);
+        return;
+      }
+
+      // Normaliza as roles para comparação (lowercase)
+      const normalizedUserRole = user.role.toLowerCase();
+      const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase());
+      
+      // Verifica se o usuário tem permissão para acessar a rota
+      const hasPermission = normalizedAllowedRoles.includes(normalizedUserRole);
+
+      if (!hasPermission) {
+        console.warn(`Usuário ${user.name} (${user.role}) tentou acessar rota não autorizada. Roles permitidas: ${allowedRoles.join(', ')}`);
+        
+        // Redireciona para o dashboard apropriado da role do usuário
+        const userDashboard = getDashboardPath(normalizedUserRole);
+        if (userDashboard) {
+          console.log(`RoleProtectedRoute: Redirecionando para ${userDashboard}`);
+          router.push(userDashboard);
+        } else {
+          console.log(`RoleProtectedRoute: Redirecionando para fallback ${fallbackPath}`);
+          router.push(fallbackPath);
+        }
+        setIsAuthorized(false);
+        return;
+      }
+
+      console.log(`Acesso autorizado para usuário ${user.name} (${user.role})`);
+      setIsAuthorized(true);
+    };
+
+    checkAuthorization();
+  }, [user, loading, allowedRoles, router, logout, fallbackPath]);
+
+  // Mostra loading enquanto verifica autorização
+  if (loading || isAuthorized === null) {
+    if (showLoading) {
+      return loadingComponent || (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  // Se não autorizado, mostra componente de não autorizado ou null
+  if (!isAuthorized) {
+    return unauthorizedComponent || null;
+  }
+
+  // Se autorizado, renderiza os children
+  return <>{children}</>;
+}
+
+/**
+ * HOC para proteger páginas baseado em roles
+ */
+export function withRoleProtection<P extends object>(
+  WrappedComponent: React.ComponentType<P>,
+  allowedRoles: string[],
+  options?: {
+    fallbackPath?: string;
+    showLoading?: boolean;
+    loadingComponent?: ReactNode;
+    unauthorizedComponent?: ReactNode;
+  }
+) {
+  const ProtectedComponent = (props: P) => {
+    return (
+      <RoleProtectedRoute
+        allowedRoles={allowedRoles}
+        fallbackPath={options?.fallbackPath}
+        showLoading={options?.showLoading}
+        loadingComponent={options?.loadingComponent}
+        unauthorizedComponent={options?.unauthorizedComponent}
+      >
+        <WrappedComponent {...props} />
+      </RoleProtectedRoute>
+    );
+  };
+
+  ProtectedComponent.displayName = `withRoleProtection(${WrappedComponent.displayName || WrappedComponent.name})`;
+
+  return ProtectedComponent;
+}

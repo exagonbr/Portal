@@ -5,7 +5,17 @@ import { useAuth } from '@/contexts/AuthContext'
 import AuthenticatedDashboardLayout from '@/components/dashboard/AuthenticatedDashboardLayout'
 
 // Routes that should not use the dashboard layout
-const publicRoutes = ['/login', '/register', '/forgot-password']
+const publicRoutes = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/test-simple',
+  '/test-dashboard',
+  '/test-student',
+  '/debug-auth',
+  '/test-dashboard-simple', // Keep test route
+  '/' // Add root route as public
+]
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()

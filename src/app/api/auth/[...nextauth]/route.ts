@@ -15,12 +15,24 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }: { token: JWT; user: any }) {
       if (user) {
         token.role = 'student'; // Default role for Google login
+        // Adicionar permissões padrão para estudantes
+        token.permissions = [
+          'students.communicate',
+          'schedule.view.own',
+          'grades.view.own',
+          'materials.access',
+          'assignments.submit',
+          'progress.track.own',
+          'teachers.message',
+          'announcements.receive'
+        ];
       }
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         (session.user as any).role = token.role;
+        (session.user as any).permissions = token.permissions;
       }
       return session;
     },

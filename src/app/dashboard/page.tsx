@@ -1,40 +1,36 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserRole } from '@/types/roles';
+import { getDefaultDashboard } from '@/utils/rolePermissions';
 
-export default function Dashboard() {
-  const { user } = useAuth()
-  const router = useRouter()
+export default function DashboardRedirect() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (user) {
-      // Redirect based on user role
-      switch (user.role) {
-        case 'admin':
-          router.replace('/dashboard/admin')
-          break
-        case 'manager':
-          router.replace('/dashboard/manager')
-          break
-        case 'teacher':
-          router.replace('/dashboard/teacher')
-          break
-        case 'student':
-          router.replace('/dashboard/student')
-          break
-        default:
-          // Fallback to student dashboard if role is unknown
-          router.replace('/dashboard/student')
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+        return;
       }
-    }
-  }, [user, router])
 
-  // Show loading state while redirecting
+      // Usar o utilitário para obter o dashboard padrão
+      const userRole = user.role as UserRole;
+      const defaultRoute = getDefaultDashboard(userRole);
+      
+      router.push(defaultRoute);
+    }
+  }, [user, loading, router]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="loading-spinner h-8 w-8"></div>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">Redirecionando...</p>
+      </div>
     </div>
-  )
+  );
 }

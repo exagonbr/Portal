@@ -422,6 +422,13 @@ export class UserService {
       return false;
     }
   }
+
+  /**
+   * Método list para compatibilidade com outros serviços
+   */
+  async list(filters?: UserFilterDto): Promise<ListResponse<UserResponseDto>> {
+    return this.getUsers(filters);
+  }
 }
 
 // Instância singleton do serviço de usuários

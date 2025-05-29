@@ -4,7 +4,10 @@ import { UserRepository } from '../repositories/UserRepository';
 
 interface JWTPayload extends JwtPayload {
   userId: string;
+  email?: string;
+  name?: string;
   role?: string;
+  permissions?: string[];
   institutionId: string;
 }
 
@@ -109,7 +112,11 @@ function isJWTPayload(payload: any): payload is JWTPayload {
   return (
     typeof payload === 'object' &&
     typeof payload.userId === 'string' &&
-    typeof payload.institutionId === 'string'
+    (payload.institutionId === undefined || typeof payload.institutionId === 'string') &&
+    (payload.email === undefined || typeof payload.email === 'string') &&
+    (payload.name === undefined || typeof payload.name === 'string') &&
+    (payload.role === undefined || typeof payload.role === 'string') &&
+    (payload.permissions === undefined || Array.isArray(payload.permissions))
   );
 }
 

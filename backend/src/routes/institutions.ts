@@ -2,7 +2,6 @@ import express from 'express';
 import { validateJWT } from '../middleware/auth';
 import { InstitutionController } from '../controllers/refactored/InstitutionController';
 import { body, param } from 'express-validator';
-import { InstitutionType } from '../models/Institution'; // Para validação do tipo
 
 const router = express.Router();
 const institutionController = new InstitutionController();
