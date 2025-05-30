@@ -1,20 +1,21 @@
-import { JwtPayload } from 'jsonwebtoken';
-
-interface JWTPayload extends JwtPayload {
+interface AuthTokenPayload {
   userId: string;
   email?: string;
   name?: string;
-  role?: string;
+  role: string;
   permissions?: string[];
   institutionId?: string;
+  sessionId?: string;
+  iat?: number;
+  exp?: number;
 }
 
 declare global {
   namespace Express {
     interface Request {
-      user?: JWTPayload;
+      user?: AuthTokenPayload;
     }
   }
 }
 
-export { JWTPayload };
+export { AuthTokenPayload };

@@ -10,10 +10,6 @@ export class UserRepository extends BaseRepository<User> {
     return this.findOne({ email } as Partial<User>);
   }
 
-  async findByUsername(username: string): Promise<User | null> {
-    return this.findOne({ usuario: username } as Partial<User>);
-  }
-
   async findByInstitution(institutionId: string): Promise<User[]> {
     return this.findAll({ institution_id: institutionId } as Partial<User>);
   }
@@ -37,7 +33,7 @@ export class UserRepository extends BaseRepository<User> {
   async findUserWithoutPassword(id: string): Promise<UserWithoutPassword | null> {
     const user = await this.db(this.tableName)
       .where('id', id)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'usuario', 'unidade_ensino', 'created_at', 'updated_at')
+      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at')
       .first();
     
     return user || null;
@@ -45,7 +41,7 @@ export class UserRepository extends BaseRepository<User> {
 
   async findUsersWithoutPassword(filters?: Partial<User>): Promise<UserWithoutPassword[]> {
     let query = this.db(this.tableName)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'usuario', 'unidade_ensino', 'created_at', 'updated_at');
+      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at');
 
     if (filters) {
       query = query.where(filters);
@@ -56,10 +52,9 @@ export class UserRepository extends BaseRepository<User> {
 
   async searchUsers(searchTerm: string, institutionId?: string): Promise<UserWithoutPassword[]> {
     let query = this.db(this.tableName)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'usuario', 'unidade_ensino', 'created_at', 'updated_at')
+      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at')
       .where('name', 'ilike', `%${searchTerm}%`)
-      .orWhere('email', 'ilike', `%${searchTerm}%`)
-      .orWhere('usuario', 'ilike', `%${searchTerm}%`);
+      .orWhere('email', 'ilike', `%${searchTerm}%`);
 
     if (institutionId) {
       query = query.andWhere('institution_id', institutionId);
@@ -76,18 +71,20 @@ export class UserRepository extends BaseRepository<User> {
         'users.name',
         'users.endereco',
         'users.telefone',
-        'users.usuario',
-        'users.unidade_ensino',
+        'users.school_id',
+        'users.is_active',
         'users.created_at',
         'users.updated_at',
         'roles.name as role_name',
-        'institutions.name as institution_name'
+        'institutions.name as institution_name',
+        'schools.name as school_name'
       )
       .leftJoin('roles', 'users.role_id', 'roles.id')
-      .leftJoin('institutions', 'users.institution_id', 'institutions.id');
+      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+      .leftJoin('schools', 'users.school_id', 'schools.id');
   }
 
-  async getUserWithRoleAndInstitution(id: string): Promise<any | null> {
+  async getUserWithRoleAndInstitution(id: string): Promise<User | null> {
     const result = await this.db(this.tableName)
       .select(
         'users.id',
@@ -95,15 +92,17 @@ export class UserRepository extends BaseRepository<User> {
         'users.name',
         'users.endereco',
         'users.telefone',
-        'users.usuario',
-        'users.unidade_ensino',
+        'users.school_id',
+        'users.is_active',
         'users.created_at',
         'users.updated_at',
         'roles.name as role_name',
-        'institutions.name as institution_name'
+        'institutions.name as institution_name',
+        'schools.name as school_name'
       )
       .leftJoin('roles', 'users.role_id', 'roles.id')
       .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+      .leftJoin('schools', 'users.school_id', 'schools.id')
       .where('users.id', id)
       .first();
 

@@ -151,38 +151,6 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
     }
   }
 
-  /**
-   * Busca usuário por username
-   */
-  async findByUsername(username: string): Promise<ServiceResult<UserResponseDto>> {
-    try {
-      this.logger.debug('Finding user by username', { username });
-
-      const user = await this.userRepository.findByUsername(username);
-
-      if (!user) {
-        return {
-          success: false,
-          error: 'User not found'
-        };
-      }
-
-      const sanitizedUser = this.sanitizeData(user) as UserResponseDto;
-
-      this.logger.info('Found user by username', { username });
-
-      return {
-        success: true,
-        data: sanitizedUser
-      };
-    } catch (error) {
-      this.logger.error('Error finding user by username', { username }, error as Error);
-      return {
-        success: false,
-        error: 'Failed to retrieve user'
-      };
-    }
-  }
 
   /**
    * Busca cursos do usuário
@@ -310,12 +278,6 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
       errors.push('Email already exists');
     }
 
-    // Validar username único
-    const existingUsername = await this.userRepository.findByUsername(data.usuario);
-    if (existingUsername) {
-      errors.push('Username already exists');
-    }
-
     // Validar formato do email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
@@ -352,14 +314,6 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(data.email)) {
         errors.push('Invalid email format');
-      }
-    }
-
-    // Validar username único (se está sendo alterado)
-    if (data.usuario && data.usuario !== existingEntity.usuario) {
-      const existingUsername = await this.userRepository.findByUsername(data.usuario);
-      if (existingUsername) {
-        errors.push('Username already exists');
       }
     }
 

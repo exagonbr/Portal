@@ -5,7 +5,7 @@ import {
   UserResponseDto,
   UserWithRoleDto 
 } from '../types/api';
-import { User } from '../types/auth';
+import { User, UserRole } from '../types/auth';
 
 export interface LoginResponse {
   success: boolean;
@@ -97,7 +97,6 @@ export class AuthService {
         name,
         email,
         password,
-        usuario: email.split('@')[0], // Gera username baseado no email
         role_id: roleMapping[type],
         institution_id: institutionId || 'default-institution-id' // Substituir por ID real
       };
@@ -368,17 +367,32 @@ export class AuthService {
   }
 
   private convertToCompatibleUser(apiUser: UserResponseDto): User {
+    // Mapear role_id para role baseado no UserWithRoleDto se disponível
+    let role: UserRole = 'student'; // default
+    if ('role_name' in apiUser) {
+      const roleMapping: Record<string, UserRole> = {
+        'Aluno': 'student',
+        'Professor': 'teacher',
+        'Gestor': 'manager',
+        'Administrador': 'admin',
+        'Coordenador Acadêmico': 'academic_coordinator',
+        'Responsável': 'guardian'
+      };
+      role = roleMapping[(apiUser as UserWithRoleDto).role_name] || 'student';
+    }
+
     return {
       id: apiUser.id,
       name: apiUser.name,
       email: apiUser.email,
-      role: apiUser.role_name || 'user',
-      type: apiUser.role_name || 'user',
-      institution: apiUser.institution_name,
+      role: role,
       endereco: apiUser.endereco,
       telefone: apiUser.telefone,
-      usuario: apiUser.usuario,
-      unidadeEnsino: apiUser.unidade_ensino,
+      institution_id: apiUser.institution_id,
+      school_id: apiUser.school_id,
+      is_active: apiUser.is_active,
+      created_at: new Date(apiUser.created_at),
+      updated_at: new Date(apiUser.updated_at),
       courses: [] // Será preenchido quando necessário
     };
   }
@@ -410,16 +424,29 @@ export const listUsers = async (): Promise<User[]> => {
 export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
   try {
     const { userService } = await import('./userService');
+    
+    // Mapear role para role_id - seria melhor buscar roles reais da API
+    const roleMapping: Record<UserRole, string> = {
+      'student': 'student-role-id',
+      'teacher': 'teacher-role-id', 
+      'admin': 'admin-role-id',
+      'manager': 'manager-role-id',
+      'system_admin': 'system-admin-role-id',
+      'institution_manager': 'institution-manager-role-id',
+      'academic_coordinator': 'academic-coordinator-role-id',
+      'guardian': 'guardian-role-id'
+    };
+
     const createData = {
       email: userData.email,
       password: 'temp123', // Senha temporária
       name: userData.name,
-      role_id: 'default-role-id', // Mapear conforme necessário
-      institution_id: 'default-institution-id',
+      role_id: (userData.role && roleMapping[userData.role as UserRole]) || roleMapping['student'],
+      institution_id: userData.institution_id,
       endereco: userData.endereco,
       telefone: userData.telefone,
-      usuario: userData.usuario || userData.email.split('@')[0],
-      unidade_ensino: userData.unidadeEnsino
+      school_id: userData.school_id,
+      is_active: userData.is_active ?? true
     };
     
     const result = await userService.createUser(createData);
@@ -433,17 +460,36 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
 export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
   try {
     const { userService } = await import('./userService');
+    
+    // Mapear role para role_id se fornecido
+    let role_id: string | undefined;
+    if (userData.role) {
+      const roleMapping: Record<UserRole, string> = {
+        'student': 'student-role-id',
+        'teacher': 'teacher-role-id', 
+        'admin': 'admin-role-id',
+        'manager': 'manager-role-id',
+        'system_admin': 'system-admin-role-id',
+        'institution_manager': 'institution-manager-role-id',
+        'academic_coordinator': 'academic-coordinator-role-id',
+        'guardian': 'guardian-role-id'
+      };
+      role_id = roleMapping[userData.role];
+    }
+
     const updateData = {
       email: userData.email,
       name: userData.name,
+      role_id: role_id,
+      institution_id: userData.institution_id,
       endereco: userData.endereco,
       telefone: userData.telefone,
-      usuario: userData.usuario,
-      unidade_ensino: userData.unidadeEnsino
+      school_id: userData.school_id,
+      is_active: userData.is_active
     };
     
     const result = await userService.updateUser(id, updateData);
-    return authService['convertToCompatibleUser'](result);
+    return result ? authService['convertToCompatibleUser'](result) : null;
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);
     return null;

@@ -1,5 +1,5 @@
 import { BaseRepository } from './BaseRepository';
-import { Role, CreateRoleData, UpdateRoleData, Permission, CreatePermissionData, UpdatePermissionData, RolePermission } from '../models/Role';
+import { Role, CreateRoleData, UpdateRoleData, Permission, CreatePermissionData, UpdatePermissionData } from '../models/Role';
 
 export class RoleRepository extends BaseRepository<Role> {
   constructor() {

@@ -18,12 +18,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
     endereco: '',
     telefone: '',
     email: '',
-    usuario: '',
     senha: '',
     repitaSenha: '',
-    institution: undefined, // Initialize as undefined
-    unidadeEnsino: '',
+    institution_id: undefined,
+    school_id: '',
     role: 'student',
+    is_active: true,
   };
 
   const [formData, setFormData] = useState<Partial<User> & { repitaSenha?: string }>(initialFormData);
@@ -52,19 +52,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
   useEffect(() => {
     if (isOpen) {
       if (existingUser) {
-        let institutionToSet: UserInstitution | undefined = undefined;
-
-        if (existingUser.institution && typeof existingUser.institution === 'object' && existingUser.institution.id) {
-          institutionToSet = mockInstitutions.find(inst => inst.id === existingUser.institution!.id);
-        } else if (existingUser.institution_id) {
-          institutionToSet = mockInstitutions.find(inst => inst.id === existingUser.institution_id);
-        } else if (existingUser.institution_name) {
-          institutionToSet = mockInstitutions.find(inst => inst.name === existingUser.institution_name);
-        }
-
         setFormData({
           ...existingUser,
-          institution: institutionToSet,
           senha: '',
           repitaSenha: '',
         });
@@ -73,13 +62,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
       }
       setError(null);
     }
-  }, [existingUser, isOpen]); // initialFormData is stable
+  }, [existingUser, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (name === "institution") {
-      const selectedInstitution = mockInstitutions.find(inst => inst.id === value);
-      setFormData(prev => ({ ...prev, institution: selectedInstitution }));
+      setFormData(prev => ({ ...prev, institution_id: value }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -94,8 +82,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
       return;
     }
 
-    if (!formData.name || !formData.email || !formData.usuario || !formData.senha || !formData.role) {
-        setError("Por favor, preencha todos os campos obrigatórios (Nome, E-mail, Usuário, Senha, Role).");
+    if (!formData.name || !formData.email || !formData.senha || !formData.role) {
+        setError("Por favor, preencha todos os campos obrigatórios (Nome, E-mail, Senha, Role).");
         return;
     }
 
@@ -106,17 +94,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
         name: formData.name!,
         email: formData.email!,
         role: formData.role as UserRole,
-        usuario: formData.usuario!,
-        // senha: formData.senha!, // Password should be handled by backend, not stored in User object directly
-        contact: {
-            address: formData.endereco,
-            phone: formData.telefone,
-            educationUnit: formData.unidadeEnsino,
-        },
-        institution: formData.institution,
-        courses: formData.courses || [],
-        createdAt: existingUser?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        endereco: formData.endereco,
+        telefone: formData.telefone,
+        institution_id: formData.institution_id,
+        school_id: formData.school_id,
+        is_active: formData.is_active || true,
+        created_at: existingUser?.created_at || new Date(),
+        updated_at: new Date(),
       };
       
       console.log("User data to be submitted:", newUser, "Password (not sent):", formData.senha ? "****" : "N/A");
@@ -253,22 +237,6 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="usuario" className="block text-sm font-medium text-text-secondary mb-1">
-                    Nome de Usuário <span className="text-error-DEFAULT">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="usuario"
-                    id="usuario"
-                    value={formData.usuario || ''}
-                    onChange={handleChange}
-                    required
-                    placeholder="usuario.exemplo"
-                    className="w-full px-4 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent transition-colors duration-200 bg-background-primary text-text-primary"
-                  />
-                </div>
-
-                <div>
                   <label htmlFor="role" className="block text-sm font-medium text-text-secondary mb-1">
                     Tipo de Usuário <span className="text-error-DEFAULT">*</span>
                   </label>
@@ -335,7 +303,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
                   <select
                     name="institution"
                     id="institution"
-                    value={formData.institution?.id || ''}
+                    value={formData.institution_id || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent transition-colors duration-200 bg-background-primary text-text-primary"
                   >
@@ -347,13 +315,13 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
                 </div>
 
                 <div>
-                  <label htmlFor="unidadeEnsino" className="block text-sm font-medium text-text-secondary mb-1">
+                  <label htmlFor="school_id" className="block text-sm font-medium text-text-secondary mb-1">
                     Unidade de Ensino
                   </label>
                   <select
-                    name="unidadeEnsino"
-                    id="unidadeEnsino"
-                    value={formData.unidadeEnsino || ''}
+                    name="school_id"
+                    id="school_id"
+                    value={formData.school_id || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent transition-colors duration-200 bg-background-primary text-text-primary"
                   >

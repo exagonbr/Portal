@@ -8,7 +8,7 @@ export const authenticateToken = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<Response | void> => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -32,7 +32,7 @@ export const authenticateToken = async (
 };
 
 export const authorizeRoles = (...allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): Response | void => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -40,7 +40,7 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
       });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (!req.user.role || !allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: 'Acesso negado. Você não tem permissão para acessar este recurso.'
@@ -52,7 +52,7 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
 };
 
 export const authorizePermissions = (...requiredPermissions: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -92,7 +92,7 @@ export const authorizePermissions = (...requiredPermissions: string[]) => {
 };
 
 // Middleware opcional para verificar se o usuário pertence a uma instituição específica
-export const authorizeInstitution = (req: Request, res: Response, next: NextFunction) => {
+export const authorizeInstitution = (req: Request, res: Response, next: NextFunction): Response | void => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
@@ -104,7 +104,7 @@ export const authorizeInstitution = (req: Request, res: Response, next: NextFunc
   
   if (requestedInstitutionId && req.user.institutionId !== requestedInstitutionId) {
     // Exceção para administradores do sistema
-    if (req.user.role !== 'SYSTEM_ADMIN') {
+    if (!req.user.role || req.user.role !== 'SYSTEM_ADMIN') {
       return res.status(403).json({
         success: false,
         message: 'Você não tem permissão para acessar recursos de outra instituição.'
@@ -117,7 +117,7 @@ export const authorizeInstitution = (req: Request, res: Response, next: NextFunc
 
 // Middleware para verificar se o usuário pode acessar seus próprios recursos
 export const authorizeOwner = (userIdParam: string = 'userId') => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): Response | void => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -129,7 +129,7 @@ export const authorizeOwner = (userIdParam: string = 'userId') => {
     
     if (requestedUserId && req.user.userId !== requestedUserId) {
       // Exceção para administradores
-      if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(req.user.role)) {
+      if (!req.user.role || !['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(req.user.role)) {
         return res.status(403).json({
           success: false,
           message: 'Você só pode acessar seus próprios recursos.'

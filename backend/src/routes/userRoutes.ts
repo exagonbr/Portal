@@ -33,9 +33,6 @@ router.get('/search', userController.searchUsers);
 // Buscar usuário por email
 router.get('/by-email/:email', userController.getByEmail);
 
-// Buscar usuário por username
-router.get('/by-username/:username', userController.getByUsername);
-
 // Buscar usuário por ID
 router.get('/:id', userController.getById);
 

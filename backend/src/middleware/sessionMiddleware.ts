@@ -1,18 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { SessionService } from '../services/SessionService';
-
-export interface UserAuth {
-  userId: string;
-  email?: string;
-  name?: string;
-  role?: string;
-  permissions?: string[];
-  institutionId?: string;
-  sessionId?: string;
-  iat?: number;
-  exp?: number;
-}
+import { AuthTokenPayload } from '../types/express';
 
 export interface ClientInfo {
   ipAddress: string;
@@ -22,7 +11,7 @@ export interface ClientInfo {
 
 // Tipagem para Request com propriedades customizadas
 export type AuthenticatedRequest = Request & {
-  user?: UserAuth;
+  user?: AuthTokenPayload;
   sessionId?: string;
   clientInfo?: ClientInfo;
 };
@@ -90,9 +79,9 @@ export const validateJWTAndSession = async (
     }
 
     const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, secret) as any;
     
-    if (typeof decoded === 'string' || !isValidUserAuth(decoded)) {
+    if (typeof decoded === 'string' || !isValidAuthTokenPayload(decoded)) {
       return res.status(401).json({
         success: false,
         message: 'Payload do token inválido'
@@ -100,7 +89,7 @@ export const validateJWTAndSession = async (
     }
 
     // Cria objeto user tipado
-    const userAuth: UserAuth = {
+    const userAuth: AuthTokenPayload = {
       userId: decoded.userId,
       email: decoded.email,
       name: decoded.name,
@@ -112,27 +101,18 @@ export const validateJWTAndSession = async (
       exp: decoded.exp
     };
 
-    // Valida a sessão se sessionId estiver presente
+    // Validar sessão se sessionId presente
     if (userAuth.sessionId) {
-      const sessionData = await SessionService.validateSession(userAuth.sessionId);
-      
-      if (!sessionData) {
+      const sessionValid = await SessionService.validateSession(userAuth.sessionId);
+      if (!sessionValid) {
         return res.status(401).json({
           success: false,
           message: 'Sessão inválida ou expirada'
         });
       }
-
-      // Atualiza dados do usuário com informações da sessão
-      userAuth.email = sessionData.email;
-      userAuth.name = sessionData.name;
-      userAuth.role = sessionData.role;
-      userAuth.permissions = sessionData.permissions;
-      userAuth.institutionId = sessionData.institutionId;
     }
-    
-    (req as any).user = userAuth;
-    (req as any).sessionId = userAuth.sessionId;
+
+    req.user = userAuth;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -147,7 +127,6 @@ export const validateJWTAndSession = async (
         message: 'Token expirado'
       });
     }
-    console.error('Erro na autenticação:', error);
     return res.status(401).json({
       success: false,
       message: 'Falha na autenticação'
@@ -182,16 +161,16 @@ export const validateJWTOnly = async (
     }
 
     const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, secret) as any;
     
-    if (typeof decoded === 'string' || !isValidUserAuth(decoded)) {
+    if (typeof decoded === 'string' || !isValidAuthTokenPayload(decoded)) {
       return res.status(401).json({
         success: false,
         message: 'Payload do token inválido'
       });
     }
     
-    const userAuth: UserAuth = {
+    const userAuth: AuthTokenPayload = {
       userId: decoded.userId,
       email: decoded.email,
       name: decoded.name,
@@ -203,7 +182,7 @@ export const validateJWTOnly = async (
       exp: decoded.exp
     };
     
-    (req as any).user = userAuth;
+    req.user = userAuth;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -228,7 +207,7 @@ export const validateJWTOnly = async (
 /**
  * Type guard para verificar estrutura do payload JWT
  */
-function isValidUserAuth(payload: any): payload is UserAuth {
+function isValidAuthTokenPayload(payload: any): payload is AuthTokenPayload {
   return (
     typeof payload === 'object' &&
     typeof payload.userId === 'string' &&
@@ -338,8 +317,8 @@ export const optionalAuth = async (
         const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
         const decoded = jwt.verify(token, secret);
         
-        if (typeof decoded !== 'string' && isValidUserAuth(decoded)) {
-          const userAuth: UserAuth = {
+        if (typeof decoded !== 'string' && isValidAuthTokenPayload(decoded)) {
+          const userAuth: AuthTokenPayload = {
             userId: decoded.userId,
             email: decoded.email,
             name: decoded.name,
@@ -363,8 +342,8 @@ export const optionalAuth = async (
             }
           }
           
-          (req as any).user = userAuth;
-          (req as any).sessionId = userAuth.sessionId;
+          req.user = userAuth;
+          req.sessionId = userAuth.sessionId;
         }
       }
     }

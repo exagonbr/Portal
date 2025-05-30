@@ -4,6 +4,7 @@ import { AppDataSource } from '../config/typeorm.config';
 import { User } from '../entities/User';
 import { Role, UserRole } from '../entities/Role';
 import { CreateUserDto, LoginDto, AuthResponseDto } from '../dto/AuthDto';
+import { AuthTokenPayload } from '../types/express';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
 const JWT_EXPIRES_IN = '24h';
@@ -42,16 +43,17 @@ export class AuthService {
   private static readonly ACTIVE_USERS_SET = 'active_users';
   private static readonly SESSION_TTL = 24 * 60 * 60; // 24 hours
 
-  static generateToken(user: User): string {
+  static generateToken(user: User, sessionId?: string): string {
+    const payload: Partial<AuthTokenPayload> = {
+      userId: user.id,
+      email: user.email,
+      permissions: user.role.permissions,
+      role: user.role.name.toUpperCase(),
+      sessionId: sessionId
+    };
+
     return jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        permissions: user.role.permissions,
-        role: user.role.name.toUpperCase(),
-        type: user.role.name,
-        institutionId: user.institution_id
-      },
+      payload,
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -192,16 +194,16 @@ export class AuthService {
     // Save user (password hashing is done automatically in @BeforeInsert)
     const savedUser = await this.userRepository.save(user);
 
-    // Generate token
-    const token = this.generateToken(savedUser);
-
-    // Create session
+    // Create session first
     const userForSession = {
       ...savedUser,
       role_name: role.name,
       institution_name: savedUser.institution?.name
     };
     const sessionId = await this.createSession(userForSession, clientInfo);
+
+    // Generate token with sessionId
+    const token = this.generateToken(savedUser, sessionId);
 
     // Remove password from response
     const { password, ...userWithoutPassword } = savedUser;
@@ -242,16 +244,16 @@ export class AuthService {
       throw new Error('Usuário inativo');
     }
 
-    // Generate token
-    const token = this.generateToken(user);
-
-    // Create session
+    // Create session first
     const userForSession = {
       ...user,
       role_name: user.role.name,
       institution_name: user.institution?.name
     };
     const sessionId = await this.createSession(userForSession, clientInfo);
+
+    // Generate token with sessionId
+    const token = this.generateToken(user, sessionId);
 
     // Remove password from response
     const { password, ...userWithoutPassword } = user;
@@ -357,9 +359,9 @@ export class AuthService {
     return user;
   }
 
-  static async validateToken(token: string): Promise<any> {
+  static async validateToken(token: string): Promise<AuthTokenPayload> {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET) as AuthTokenPayload;
       return decoded;
     } catch (error) {
       throw new Error('Token inválido');

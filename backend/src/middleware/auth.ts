@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { UserRepository } from '../repositories/UserRepository';
-import { JWTPayload } from '../types/express';
+import { AuthTokenPayload } from '../types/express';
+import { RoleRepository } from '../repositories/RoleRepository';
 
 export const validateJWT = async (
   req: Request,
@@ -27,9 +28,9 @@ export const validateJWT = async (
     }
 
     const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, secret) as any;
     
-    if (typeof decoded === 'string' || !isJWTPayload(decoded)) {
+    if (typeof decoded === 'string' || !isAuthTokenPayload(decoded)) {
       return res.status(401).json({
         success: false,
         message: 'Invalid token payload'
@@ -40,7 +41,8 @@ export const validateJWT = async (
     if (!decoded.role && decoded.userId) {
       try {
         const userRepository = new UserRepository();
-        const user = await userRepository.getUserWithRoleAndInstitution(decoded.userId);
+        const roleRepository = new RoleRepository();
+        const user = await userRepository.findByEmail(decoded.email!);
         
         if (!user) {
           return res.status(401).json({
@@ -58,7 +60,15 @@ export const validateJWT = async (
           'Gerente': 'manager'
         };
         
-        const roleName = user.role_name || 'user';
+        const role = await roleRepository.findById(user.role_id);
+
+        if (!role) {
+          return res.status(401).json({
+            success: false,
+            message: 'Role not found'
+          });
+        }
+        const roleName = role.name;
         decoded.role = roleMapping[roleName] || roleName.toLowerCase();
       } catch (dbError) {
         console.error('Error fetching user role:', dbError);
@@ -69,7 +79,18 @@ export const validateJWT = async (
       }
     }
     
-    req.user = decoded as JWTPayload;
+    // Garantir que o role seja sempre definido
+    if (!decoded.role) {
+      decoded.role = 'user'; // Role padrão se não foi possível determinar
+    }
+    
+    // Criar objeto com tipo garantido
+    const authenticatedUser: AuthTokenPayload = {
+      ...decoded,
+      role: decoded.role! // Usar non-null assertion pois garantimos acima que existe
+    };
+    
+    req.user = authenticatedUser;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -92,7 +113,7 @@ export const validateJWT = async (
 };
 
 // Type guard to verify JWT payload structure
-function isJWTPayload(payload: any): payload is JWTPayload {
+function isAuthTokenPayload(payload: any): payload is AuthTokenPayload {
   return (
     typeof payload === 'object' &&
     typeof payload.userId === 'string' &&
@@ -100,7 +121,10 @@ function isJWTPayload(payload: any): payload is JWTPayload {
     (payload.email === undefined || typeof payload.email === 'string') &&
     (payload.name === undefined || typeof payload.name === 'string') &&
     (payload.role === undefined || typeof payload.role === 'string') &&
-    (payload.permissions === undefined || Array.isArray(payload.permissions))
+    (payload.permissions === undefined || Array.isArray(payload.permissions)) &&
+    (payload.sessionId === undefined || typeof payload.sessionId === 'string') &&
+    (payload.iat === undefined || typeof payload.iat === 'number') &&
+    (payload.exp === undefined || typeof payload.exp === 'number')
   );
 }
 

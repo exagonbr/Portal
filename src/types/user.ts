@@ -9,8 +9,11 @@ export interface User {
   city?: string;
   state?: string;
   zip_code?: string;
+  endereco?: string;
+  telefone?: string;
   role_id: string;
   institution_id?: string;
+  school_id?: string;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -27,8 +30,11 @@ export interface CreateUserData {
   city?: string;
   state?: string;
   zip_code?: string;
+  endereco?: string;
+  telefone?: string;
   role_id: string;
   institution_id?: string;
+  school_id?: string;
   is_active?: boolean;
 }
 
@@ -43,8 +49,11 @@ export interface UpdateUserData {
   city?: string;
   state?: string;
   zip_code?: string;
+  endereco?: string;
+  telefone?: string;
   role_id?: string;
   institution_id?: string;
+  school_id?: string;
   is_active?: boolean;
 }
 

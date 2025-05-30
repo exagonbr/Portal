@@ -350,28 +350,4 @@ export class UserController extends BaseController {
 
     return this.success(res, result.data!, 'User retrieved successfully');
   });
-
-  /**
-   * GET /api/users/by-username/:username
-   * Busca usuário por username
-   */
-  getByUsername = this.asyncHandler(async (req: Request, res: Response) => {
-    const { username } = req.params;
-    this.logger.apiRequest('GET', `/api/users/by-username/${username}`, this.getUserId(req) || undefined);
-
-    if (!username || username.length < 3) {
-      return this.error(res, 'Username must be at least 3 characters long', 400);
-    }
-
-    const result = await this.userService.findByUsername(username);
-
-    if (!result.success) {
-      if (result.error === 'User not found') {
-        return this.notFound(res, 'User');
-      }
-      return this.error(res, result.error || 'Failed to retrieve user');
-    }
-
-    return this.success(res, result.data!, 'User retrieved successfully');
-  });
 }

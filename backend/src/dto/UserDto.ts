@@ -6,11 +6,11 @@ export interface CreateUserDto {
   password: string;
   name: string;
   role_id: string;
-  institution_id: string;
+  institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario: string;
-  unidade_ensino?: string;
+  school_id?: string;
+  is_active?: boolean;
 }
 
 export interface UpdateUserDto {
@@ -21,8 +21,8 @@ export interface UpdateUserDto {
   institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario?: string;
-  unidade_ensino?: string;
+  school_id?: string;
+  is_active?: boolean;
 }
 
 export interface UpdateProfileDto {
@@ -30,8 +30,7 @@ export interface UpdateProfileDto {
   name?: string;
   endereco?: string;
   telefone?: string;
-  usuario?: string;
-  unidade_ensino?: string;
+  school_id?: string;
 }
 
 export interface ChangePasswordDto {
@@ -44,13 +43,14 @@ export interface UserResponseDto extends BaseEntity {
   email: string;
   name: string;
   role_id: string;
-  institution_id: string;
+  institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario: string;
-  unidade_ensino?: string;
+  school_id?: string;
+  is_active: boolean;
   role_name?: string;
   institution_name?: string;
+  school_name?: string;
 }
 
 export interface UserWithRoleDto extends UserResponseDto {

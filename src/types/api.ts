@@ -27,11 +27,11 @@ export interface CreateUserDto {
   password: string;
   name: string;
   role_id: string;
-  institution_id: string;
+  institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario: string;
-  unidade_ensino?: string;
+  school_id?: string;
+  is_active?: boolean;
 }
 
 export interface UpdateUserDto {
@@ -42,8 +42,8 @@ export interface UpdateUserDto {
   institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario?: string;
-  unidade_ensino?: string;
+  school_id?: string;
+  is_active?: boolean;
 }
 
 export interface UpdateProfileDto {
@@ -51,8 +51,7 @@ export interface UpdateProfileDto {
   name?: string;
   endereco?: string;
   telefone?: string;
-  usuario?: string;
-  unidade_ensino?: string;
+  school_id?: string;
 }
 
 export interface ChangePasswordDto {
@@ -65,13 +64,11 @@ export interface UserResponseDto {
   email: string;
   name: string;
   role_id: string;
-  institution_id: string;
+  institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario: string;
-  unidade_ensino?: string;
-  role_name?: string;
-  institution_name?: string;
+  school_id?: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -84,7 +81,7 @@ export interface UserWithRoleDto extends UserResponseDto {
 export interface UserFilterDto {
   search?: string;
   role?: string;
-  institution_id?: string;
+  school_id?: string;
   page?: number;
   limit?: number;
   sortBy?: 'name' | 'email' | 'created_at' | 'updated_at';

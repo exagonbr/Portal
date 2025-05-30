@@ -316,6 +316,9 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Administrador Sistema',
       role_id: roleLookup['Administrador'],
       institution_id: institutions[0].id,
+      endereco: 'Rua da Administração, 100',
+      telefone: '(11) 98765-4321',
+      school_id: null, // Admin não vinculado a escola específica
       is_active: true
     },
     {
@@ -324,6 +327,9 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Marina Silva',
       role_id: roleLookup['Gestor'],
       institution_id: institutions[0].id,
+      endereco: 'Av. dos Gestores, 200',
+      telefone: '(11) 97654-3210',
+      school_id: null, // Gestor pode gerenciar múltiplas escolas
       is_active: true
     },
     {
@@ -332,6 +338,9 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Ricardo Santos',
       role_id: roleLookup['Professor'],
       institution_id: institutions[0].id,
+      endereco: 'Rua dos Professores, 300',
+      telefone: '(11) 96543-2109',
+      school_id: null, // Será definido após criar escolas
       is_active: true
     },
     {
@@ -340,6 +349,9 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Julia Costa',
       role_id: roleLookup['Aluno'],
       institution_id: institutions[0].id,
+      endereco: 'Rua dos Estudantes, 400',
+      telefone: '(11) 95432-1098',
+      school_id: null, // Será definido após criar escolas
       is_active: true
     },
     {
@@ -348,6 +360,9 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Luciana Lima',
       role_id: roleLookup['Coordenador Acadêmico'],
       institution_id: institutions[0].id,
+      endereco: 'Av. da Coordenação, 500',
+      telefone: '(11) 94321-0987',
+      school_id: null, // Será definido após criar escolas
       is_active: true
     },
     {
@@ -356,6 +371,9 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Renato Oliveira',
       role_id: roleLookup['Responsável'],
       institution_id: institutions[0].id,
+      endereco: 'Rua dos Responsáveis, 600',
+      telefone: '(11) 93210-9876',
+      school_id: null, // Responsável não vinculado diretamente a escola
       is_active: true
     }
   ]).returning('*');

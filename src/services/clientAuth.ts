@@ -54,7 +54,7 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
   const newUser = {
     ...userData,
     id: Math.random().toString(36).substr(2, 9)
-  };
+  } as User;
   MOCK_USERS[userData.email] = newUser;
   return newUser;
 };

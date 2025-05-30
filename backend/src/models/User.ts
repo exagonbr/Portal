@@ -4,11 +4,11 @@ export interface User {
   password: string;
   name: string;
   role_id: string;
-  institution_id: string;
+  institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario: string;
-  unidade_ensino?: string;
+  school_id?: string;
+  is_active: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -18,11 +18,11 @@ export interface CreateUserData {
   password: string;
   name: string;
   role_id: string;
-  institution_id: string;
+  institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario: string;
-  unidade_ensino?: string;
+  school_id?: string;
+  is_active?: boolean;
 }
 
 export interface UpdateUserData {
@@ -33,8 +33,8 @@ export interface UpdateUserData {
   institution_id?: string;
   endereco?: string;
   telefone?: string;
-  usuario?: string;
-  unidade_ensino?: string;
+  school_id?: string;
+  is_active?: boolean;
 }
 
 export interface UserWithoutPassword extends Omit<User, 'password'> {}

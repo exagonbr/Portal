@@ -61,16 +61,18 @@ export class CourseService extends BaseService<Course, CreateCourseDto, UpdateCo
         }));
 
         const teachers = await this.courseRepository.getCourseTeachers(course.id);
-        teachersDto = teachers.map(t => ({ // Mapeamento simples, idealmente UserService.mapToDto
-            id: t.id,
-            name: t.name,
-            email: t.email,
-            // ... outros campos do UserResponseDto
-            role_id: (t as any).role_id, 
-            institution_id: (t as any).institution_id,
-            usuario: (t as any).usuario,
-            created_at: t.created_at,
-            updated_at: t.updated_at,
+        teachersDto = teachers.map(t => ({ 
+          id: t.id,
+          name: t.name,
+          email: t.email,
+          role_id: (t as any).role_id || '',
+          institution_id: (t as any).institution_id,
+          endereco: (t as any).endereco,
+          telefone: (t as any).telefone,
+          school_id: (t as any).school_id,
+          is_active: (t as any).is_active ?? true,
+          created_at: t.created_at,
+          updated_at: t.updated_at
         }));
     }
     
@@ -226,7 +228,19 @@ export class CourseService extends BaseService<Course, CreateCourseDto, UpdateCo
       if (!courseExists) return { success: false, error: 'Course not found' };
 
       const teachers = await this.courseRepository.getCourseTeachers(courseId);
-      const teachersDto = teachers.map(t => ({ /* Mapeamento para UserResponseDto */ id: t.id, name: t.name, email: t.email, role_id: (t as any).role_id, institution_id: (t as any).institution_id, usuario: (t as any).usuario, created_at: t.created_at, updated_at: t.updated_at }));
+      const teachersDto = teachers.map(t => ({ 
+        id: t.id,
+        name: t.name,
+        email: t.email,
+        role_id: (t as any).role_id || '',
+        institution_id: (t as any).institution_id,
+        endereco: (t as any).endereco,
+        telefone: (t as any).telefone,
+        school_id: (t as any).school_id,
+        is_active: (t as any).is_active ?? true,
+        created_at: t.created_at,
+        updated_at: t.updated_at
+      }));
       return { success: true, data: teachersDto };
     } catch (error) {
       this.logger.error('Error getting course teachers', { courseId }, error as Error);
@@ -241,7 +255,19 @@ export class CourseService extends BaseService<Course, CreateCourseDto, UpdateCo
       if (!courseExists) return { success: false, error: 'Course not found' };
 
       const students = await this.courseRepository.getCourseStudents(courseId); // Precisa existir no repo
-      const studentsDto = students.map(s => ({ /* Mapeamento para UserResponseDto */ id: s.id, name: s.name, email: s.email, role_id: (s as any).role_id, institution_id: (s as any).institution_id, usuario: (s as any).usuario, created_at: s.created_at, updated_at: s.updated_at }));
+      const studentsDto = students.map(s => ({ 
+        id: s.id,
+        name: s.name,
+        email: s.email,
+        role_id: (s as any).role_id || '',
+        institution_id: (s as any).institution_id,
+        endereco: (s as any).endereco,
+        telefone: (s as any).telefone,
+        school_id: (s as any).school_id,
+        is_active: (s as any).is_active ?? true,
+        created_at: s.created_at,
+        updated_at: s.updated_at
+      }));
       return { success: true, data: studentsDto };
     } catch (error) {
       this.logger.error('Error getting course students', { courseId }, error as Error);
