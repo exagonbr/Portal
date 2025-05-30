@@ -91,28 +91,39 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     return `${window.location.origin}/${url}`;
   }, []);
 
-  // Calcular dimensões fit-to-screen
-  const calculateFitDimensions = useCallback(() => {
-    if (!containerRef.current) return { width: 800, height: 600 };
-    
-    const container = containerRef.current;
-    const containerRect = container.getBoundingClientRect();
-    
-    // Considerar a altura da toolbar (aproximadamente 80px) e padding
-    const availableHeight = containerRect.height - 120;
-    const availableWidth = containerRect.width - 40;
-    
-    return {
-      width: Math.max(600, availableWidth),
-      height: Math.max(400, availableHeight)
-    };
-  }, []);
-
   // Atualizar dimensões quando o container redimensiona
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const updateDimensions = () => {
-      const newDimensions = calculateFitDimensions();
-      setDimensions(newDimensions);
+      // Usar throttling para evitar atualizações excessivas
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (!containerRef.current) return;
+        
+        const container = containerRef.current;
+        const containerRect = container.getBoundingClientRect();
+        
+        // Considerar a altura da toolbar (aproximadamente 80px) e padding
+        const availableHeight = containerRect.height - 120;
+        const availableWidth = containerRect.width - 40;
+        
+        const newDimensions = {
+          width: Math.max(600, availableWidth),
+          height: Math.max(400, availableHeight)
+        };
+        
+        // Só atualizar se houve mudança significativa (> 10px)
+        setDimensions(prevDimensions => {
+          const widthDiff = Math.abs(newDimensions.width - prevDimensions.width);
+          const heightDiff = Math.abs(newDimensions.height - prevDimensions.height);
+          
+          if (widthDiff > 10 || heightDiff > 10) {
+            return newDimensions;
+          }
+          return prevDimensions;
+        });
+      }, 150); // Throttle de 150ms
     };
 
     updateDimensions();
@@ -122,8 +133,11 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
       resizeObserver.observe(containerRef.current);
     }
 
-    return () => resizeObserver.disconnect();
-  }, [calculateFitDimensions]);
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+    };
+  }, []); // Remover calculateFitDimensions das dependências
 
   const initializeEPUB = useCallback(async () => {
     if (!viewerRef.current) return;
@@ -205,7 +219,8 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
   }, [fileUrl, getFileUrl, viewerState.isDualPage, dimensions]);
 
   useEffect(() => {
-    if (dimensions.width > 0 && dimensions.height > 0) {
+    // Só inicializar se as dimensões são válidas e ainda não foi inicializado
+    if (dimensions.width > 0 && dimensions.height > 0 && !book) {
       initializeEPUB();
     }
 
@@ -214,15 +229,21 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
         book.destroy();
       }
     };
-  }, [initializeEPUB, dimensions]);
+  }, [initializeEPUB]); // Remover dimensions das dependências
+
+  // Separar useEffect para redimensionamento da renderização existente
+  useEffect(() => {
+    if (rendition && dimensions.width > 0 && dimensions.height > 0) {
+      rendition.resize(dimensions.width, dimensions.height);
+    }
+  }, [rendition, dimensions]);
 
   // Atualizar renderização quando o modo de página dupla muda
   useEffect(() => {
     if (rendition) {
       rendition.spread(viewerState.isDualPage ? 'auto' : 'none');
-      rendition.resize(dimensions.width, dimensions.height);
     }
-  }, [viewerState.isDualPage, rendition, dimensions]);
+  }, [viewerState.isDualPage, rendition]);
 
   // Atualizar escala da renderização
   useEffect(() => {
