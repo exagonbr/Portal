@@ -28,7 +28,10 @@ const ROUTES = {
     '/debug-auth',
     '/test-dashboard-simple',
     '/test-auth-integration',
-    '/test-julia-login'
+    '/test-julia-login',
+    '/portal',
+    '/portal/books',
+    '/portal/videos'
   ],
   
   // Authentication routes
@@ -41,8 +44,7 @@ const ROUTES = {
     '/lessons',
     '/live',
     '/chat',
-    '/profile',
-    '/portal'
+    '/profile'
   ],
   
   // Role-specific dashboard routes
@@ -100,11 +102,17 @@ class MiddlewareUtils {
 class SessionValidator {
   static async validateToken(token: string): Promise<{ valid: boolean; user?: any }> {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+
       const response = await fetch(`${CONFIG.BASE_URL}/api/auth/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -112,7 +120,16 @@ class SessionValidator {
       }
       return { valid: false };
     } catch (error) {
-      console.error('Erro ao validar token:', error);
+      if (error instanceof Error) {
+        // Se é erro de conectividade (fetch failed, network error, etc)
+        if (error.name === 'AbortError' || error.message.includes('fetch failed')) {
+          console.warn('⚠️ Middleware: Backend não disponível, permitindo acesso limitado');
+          // Em modo offline/degradado, considera o token válido se existe
+          // Isso permite que a aplicação funcione sem backend
+          return { valid: true, user: null };
+        }
+      }
+      console.error('❌ Erro ao validar token:', error);
       return { valid: false };
     }
   }
@@ -219,7 +236,7 @@ export async function middleware(request: NextRequest) {
     
     if (!authResult.authenticated) {
       console.log(`Middleware: Usuário não autenticado tentando acessar ${pathname}`);
-      return MiddlewareUtils.createRedirectWithClearCookies('/login', request);
+      return MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
     }
 
     // Atualizar dados do usuário se necessário
@@ -240,6 +257,36 @@ export async function middleware(request: NextRequest) {
         path: '/',
       });
       return response;
+    }
+  }
+
+  // 4.5. Handle portal paths with degraded access when backend is unavailable
+  if (pathname.startsWith('/portal')) {
+    // Se tem token mas não conseguiu validar (backend offline), permite acesso limitado
+    if (token && !userDataCookie) {
+      console.log('⚠️ Middleware: Modo degradado ativado para portal - backend indisponível');
+      const response = NextResponse.next();
+      // Define dados temporários para modo offline
+      const offlineUserData = {
+        id: 'offline-user',
+        name: 'Usuário Offline',
+        email: 'offline@local',
+        role: 'student', // Role padrão para modo offline
+        offline: true
+      };
+      response.cookies.set(CONFIG.COOKIES.USER_DATA, encodeURIComponent(JSON.stringify(offlineUserData)), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60, // 1 hora apenas para modo offline
+        path: '/',
+      });
+      return response;
+    }
+    // Se não tem token, permite acesso público ao portal
+    if (!token) {
+      console.log('✅ Middleware: Acesso público ao portal permitido');
+      return NextResponse.next();
     }
   }
 
@@ -264,7 +311,7 @@ export async function middleware(request: NextRequest) {
     
     if (!userData) {
       console.log('Dados do usuário inválidos, redirecionando para login');
-      return MiddlewareUtils.createRedirectWithClearCookies('/login', request);
+      return MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
     }
 
     console.log(`Middleware: Usuário ${userData.name} (${userData.role}) acessando ${pathname}`);
@@ -272,7 +319,7 @@ export async function middleware(request: NextRequest) {
     // Validate role - se não tiver role, permite acesso mas sem permissões específicas
     if (userData.role && !RoleAccessControl.validateRole(userData.role)) {
       console.log(`Role inválida para usuário ${userData.name}: ${userData.role}`);
-      return MiddlewareUtils.createRedirectWithClearCookies('/login', request);
+      return MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
     }
 
     // Redirect generic dashboard to role-specific dashboard PRIMEIRO

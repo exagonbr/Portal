@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     }
     if (tags && tags.length > 0) {
       filteredResults = filteredResults.filter(result =>
-        tags.every(tag => result.content.tags.includes(tag))
+        tags.every((tag: string) => result.content.tags.includes(tag))
       );
     }
 

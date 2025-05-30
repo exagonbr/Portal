@@ -30,15 +30,12 @@ interface BookCardProps {
   onBookOpen?: () => void;
 }
 
-
 export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: BookCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const { thumbnail, title, duration, progress, author, publisher, id, pageCount } = props;
-
+  const { thumbnail, title, duration, progress, author, publisher, id, pageCount, format } = props;
 
   // Mock data for annotations and highlights
-  // In a real app, this would come from a backend/database
   const hasAnnotations = id === 'book-1' || id === 'book-2';
   const hasHighlights = id === 'book-2' || id === 'book-3';
 
@@ -52,23 +49,23 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
         onClick={onBookOpen}
         className={`${
           size === 'small'
-            ? 'p-1.5 rounded-full bg-background-primary/90 hover:bg-background-primary transition-colors duration-200 shadow-md'
-            : 'p-2 rounded-full bg-background-primary/90 hover:bg-background-primary transition-colors duration-200 shadow-lg'
+            ? 'p-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
+            : 'p-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
         }`}
         aria-label="Abrir livro"
       >
-        <BookOpenIcon className={size === 'small' ? 'w-5 h-5 text-primary-DEFAULT' : 'w-8 h-8 text-primary-DEFAULT'} />
+        <BookOpenIcon className={size === 'small' ? 'w-4 h-4' : 'w-5 h-5'} />
       </button>
       <button
         onClick={() => setIsModalOpen(true)}
         className={`${
           size === 'small'
-            ? 'p-1.5 rounded-full bg-background-primary/90 hover:bg-background-primary transition-colors duration-200 shadow-md'
-            : 'p-2 rounded-full bg-background-primary/90 hover:bg-background-primary transition-colors duration-200 shadow-lg'
+            ? 'p-2 rounded-xl bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
+            : 'p-3 rounded-xl bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
         }`}
         aria-label="Mais informações"
       >
-        <InformationCircleIcon className={size === 'small' ? 'w-5 h-5 text-primary-DEFAULT' : 'w-8 h-8 text-primary-DEFAULT'} />
+        <InformationCircleIcon className={size === 'small' ? 'w-4 h-4' : 'w-5 h-5'} />
       </button>
     </>
   );
@@ -77,22 +74,22 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
     <>
       <button
         onClick={() => setIsFavorite(!isFavorite)}
-        className="p-1.5 rounded-full bg-background-primary/90 hover:bg-background-primary transition-colors duration-200 shadow-lg"
+        className="p-2 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-110"
       >
         {isFavorite ? (
-          <HeartSolidIcon className="w-5 h-5 text-error-DEFAULT" />
+          <HeartSolidIcon className="w-4 h-4 text-red-500" />
         ) : (
-          <HeartIcon className="w-5 h-5 text-secondary-DEFAULT hover:text-error-DEFAULT" />
+          <HeartIcon className="w-4 h-4 text-gray-600 hover:text-red-500" />
         )}
       </button>
       {hasAnnotations && (
-        <div className="p-1.5 rounded-full bg-background-primary/90 shadow-lg">
-          <PencilSquareSolidIcon className="w-5 h-5 text-primary-DEFAULT" />
+        <div className="p-2 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg">
+          <PencilSquareSolidIcon className="w-4 h-4 text-amber-500" />
         </div>
       )}
       {hasHighlights && (
-        <div className="p-1.5 rounded-full bg-background-primary/90 shadow-lg">
-          <StarSolidIcon className="w-5 h-5 text-accent-yellow-DEFAULT" />
+        <div className="p-2 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg">
+          <StarSolidIcon className="w-4 h-4 text-yellow-500" />
         </div>
       )}
     </>
@@ -100,53 +97,79 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
 
   const ProgressBar = () => (
     progress !== undefined && progress > 0 ? (
-      <div className="h-1.5 sm:h-2 bg-secondary-light rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
         <div
-          className="h-full bg-primary-DEFAULT"
+          className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
     ) : null
   );
 
+  const FormatBadge = ({ className = "" }: { className?: string }) => (
+    format && (
+      <div className={`absolute top-3 right-3 ${className}`}>
+        <span className={`px-2 py-1 text-xs font-semibold rounded-lg shadow-lg ${
+          format?.toUpperCase() === 'PDF' 
+            ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' 
+            : 'bg-gradient-to-r from-green-500 to-green-600 text-white'
+        }`}>
+          {format?.toUpperCase()}
+        </span>
+      </div>
+    )
+  );
+
   if (viewMode === 'list') {
     return (
-      <div className="w-full bg-background-primary rounded-lg shadow-md hover:shadow-lg overflow-hidden hover:bg-background-secondary transition-all duration-200">
-        <div className="p-3 flex gap-3">
+      <div className="w-full bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 transform hover:scale-[1.02] border border-gray-100">
+        <div className="p-4 flex gap-4">
           {/* Thumbnail */}
-          <div className="relative w-20 h-28 flex-shrink-0">
+          <div className="relative w-24 h-32 flex-shrink-0">
             <img
               src={thumbnail}
               alt={title}
-              className="w-full h-full object-cover object-center rounded-md"
+              className="w-full h-full object-cover object-center rounded-xl shadow-lg"
               loading="lazy"
             />
-            <div className={`absolute top-1 left-1 px-1.5 py-0.5 text-[0.65rem] rounded-full shadow-md ${
-              progress ? 'bg-primary-DEFAULT text-white' : 'bg-secondary-light text-text-secondary'
+            <div className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded-lg shadow-lg ${
+              progress ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' : 'bg-gray-200 text-gray-600'
             }`}>
-              {progress ? `${progress}%` : 'Não iniciado'}
+              {progress ? `${progress}%` : 'Novo'}
             </div>
+            <FormatBadge className="top-2 right-2 left-auto" />
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="text-sm font-semibold line-clamp-1 pr-16">{title}</h3>
-                <div className="flex gap-1.5 -mt-1">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-lg font-bold text-gray-900 line-clamp-2 pr-4 hover:text-blue-600 transition-colors">{title}</h3>
+                <div className="flex gap-2 -mt-1">
                   <StatusIcons />
                 </div>
               </div>
-              <div className="text-xs text-text-secondary space-y-0.5">
-                <p className="truncate"><span className="font-medium">Autor(a): </span>{author}</p>
-                <p className="truncate"><span className="font-medium">Editora: </span>{publisher}</p>
-                {pageCount && <p className="truncate"><span className="font-medium">Páginas: </span>{pageCount}</p>}
+              <div className="text-sm text-gray-600 space-y-1">
+                <p className="flex items-center">
+                  <span className="font-semibold text-gray-800 mr-2">👤 Autor:</span>
+                  <span className="truncate">{author}</span>
+                </p>
+                <p className="flex items-center">
+                  <span className="font-semibold text-gray-800 mr-2">🏢 Editora:</span>
+                  <span className="truncate">{publisher}</span>
+                </p>
+                {pageCount && (
+                  <p className="flex items-center">
+                    <span className="font-semibold text-gray-800 mr-2">📖 Páginas:</span>
+                    <span>{pageCount}</span>
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="mt-2">
+            <div className="mt-4">
               <ProgressBar />
-              <div className="flex justify-end gap-1.5 mt-2">
+              <div className="flex justify-end gap-3 mt-3">
                 <ActionButtons size="small" />
               </div>
             </div>
@@ -159,8 +182,7 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
   if (viewMode === 'cover') {
     return (
       <div className="relative group">
-        {/* Cover Image */}
-        <div className="relative aspect-[2/3] rounded-lg shadow-md hover:shadow-lg overflow-hidden transition-all duration-200">
+        <div className="relative aspect-[2/3] rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 transform hover:scale-105">
           <img
             src={thumbnail}
             alt={title}
@@ -169,28 +191,30 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
           />
 
           {/* Progress badge */}
-          <div className={`absolute top-2 left-2 px-1.5 py-0.5 text-[0.65rem] rounded-full shadow-md ${
-            progress ? 'bg-primary-DEFAULT text-white' : 'bg-secondary-light text-text-secondary'
+          <div className={`absolute top-3 left-3 px-2 py-1 text-xs font-semibold rounded-lg shadow-lg ${
+            progress ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' : 'bg-white/90 text-gray-700'
           }`}>
-            {progress ? `${progress}%` : 'Não iniciado'}
+            {progress ? `${progress}%` : 'Novo'}
           </div>
 
+          <FormatBadge />
+
           {/* Overlay with book details */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background-primary/80 via-background-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <div className="absolute bottom-0 left-0 right-0 p-3">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="text-xs font-medium text-text-primary line-clamp-2">{title}</h3>
-                <div className="flex gap-1 -mt-1">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <h3 className="text-sm font-bold text-white line-clamp-2 flex-1">{title}</h3>
+                <div className="flex gap-1.5 -mt-1">
                   <StatusIcons />
                 </div>
               </div>
 
-              <div className="space-y-0.5 mb-2">
-                <p className="text-[0.65rem] text-text-secondary truncate">{author}</p>
-                {pageCount && <p className="text-[0.65rem] text-text-tertiary">Páginas: {pageCount}</p>}
+              <div className="space-y-1 mb-3">
+                <p className="text-xs text-gray-200 truncate">{author}</p>
+                {pageCount && <p className="text-xs text-gray-300">{pageCount} páginas</p>}
               </div>
 
-              <div className="flex justify-end gap-1.5">
+              <div className="flex justify-end gap-2">
                 <ActionButtons size="small" />
               </div>
             </div>
@@ -198,9 +222,9 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
 
           {/* Progress bar */}
           {progress !== undefined && progress > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-secondary-light">
+            <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
               <div
-                className="h-full bg-primary-DEFAULT"
+                className="h-full bg-gradient-to-r from-blue-400 to-purple-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -210,12 +234,12 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
     );
   }
 
-  // Default grid view - Modified to show info on the side
+  // Default grid view
   return (
-    <div className="w-full bg-background-primary rounded-lg shadow-md hover:shadow-lg overflow-hidden transition-all duration-200 hover:scale-[1.01] min-h-[160px] lg:min-h-[150px]">
+    <div className="w-full bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 transform hover:scale-[1.02] min-h-[180px] lg:min-h-[170px] border border-gray-100">
       <div className="flex flex-col lg:flex-row h-full">
         {/* Thumbnail */}
-        <div className="relative w-full lg:w-[34%] flex-shrink-0">
+        <div className="relative w-full lg:w-[38%] flex-shrink-0">
           <div className="relative aspect-[4/3] lg:aspect-[3/4] w-full">
             <img
               src={thumbnail}
@@ -223,18 +247,23 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
               className="absolute inset-0 w-full h-full object-cover object-center"
               loading="lazy"
             />
-            <div className={`absolute top-2 left-2 px-2 py-1 text-[0.65rem] sm:text-xs rounded-full shadow-md ${
-              progress ? 'bg-primary-DEFAULT text-white' : 'bg-secondary-light text-text-secondary'
-            } whitespace-nowrap`}>
-
-              {progress ? `${progress}%` : 'Não iniciado'}
+            
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            
+            <div className={`absolute top-3 left-3 px-3 py-1.5 text-xs font-semibold rounded-xl shadow-lg backdrop-blur-sm ${
+              progress ? 'bg-gradient-to-r from-blue-500/90 to-purple-600/90 text-white' : 'bg-white/90 text-gray-700'
+            }`}>
+              {progress ? `${progress}%` : 'Novo'}
             </div>
+
+            <FormatBadge />
 
             {/* Progress bar */}
             {progress !== undefined && progress > 0 && (
-              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-secondary-light">
+              <div className="absolute bottom-0 left-0 right-0 h-2 bg-black/20">
                 <div
-                  className="h-full bg-primary-DEFAULT"
+                  className="h-full bg-gradient-to-r from-blue-400 to-purple-500"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -243,26 +272,39 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 flex flex-col p-3 sm:p-4">
-          <div className="relative mb-2">
-            <div className="absolute right-0 top-0 flex gap-1.5">
+        <div className="flex-1 min-w-0 flex flex-col p-4 lg:p-5">
+          <div className="relative mb-3">
+            <div className="absolute right-0 top-0 flex gap-2">
               <StatusIcons />
             </div>
-            <h3 className="text-sm lg:text-base font-semibold line-clamp-2 hover:text-primary-dark transition-colors pr-16">
+            <h3 className="text-base lg:text-lg font-bold text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors pr-20">
               {title}
             </h3>
           </div>
 
           <div className="flex-1 overflow-hidden mt-1">
-            <div className="text-xs lg:text-sm text-text-secondary space-y-1">
-              <p className="truncate"><span className="font-medium">Autor(a): </span>{author || 'Autor(a) desconhecido(a)'}</p>
-              <p className="truncate"><span className="font-medium">Editora: </span>{publisher}</p>
-              {pageCount && <p className="truncate"><span className="font-medium">Páginas: </span>{pageCount}</p>}
+            <div className="text-sm text-gray-600 space-y-2">
+              <p className="flex items-center">
+                <span className="font-semibold text-gray-800 mr-2">👤</span>
+                <span className="truncate">{author || 'Autor desconhecido'}</span>
+              </p>
+              <p className="flex items-center">
+                <span className="font-semibold text-gray-800 mr-2">🏢</span>
+                <span className="truncate">{publisher}</span>
+              </p>
+              {pageCount && (
+                <p className="flex items-center">
+                  <span className="font-semibold text-gray-800 mr-2">📖</span>
+                  <span>{pageCount} páginas</span>
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 mt-auto pt-2">
-            <ActionButtons />
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <div className="flex justify-end gap-3">
+              <ActionButtons />
+            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-// @ts-ignore
 import Slider from 'react-slick';
 import type { Settings } from 'react-slick';
 import '../styles/carousel.css';
@@ -62,6 +61,7 @@ export default function Carousel({ settings, children }: CarouselProps) {
 
   return (
     <div className="mx-auto max-w-[90rem] -mx-2 sm:-mx-3 md:-mx-4">
+      {/* @ts-ignore */}
       <Slider {...defaultSettings}>{children}</Slider>
     </div>
   );

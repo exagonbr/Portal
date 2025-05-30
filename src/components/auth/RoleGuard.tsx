@@ -23,7 +23,7 @@ export default function RoleGuard({
     if (!loading) {
       if (!user) {
         // Se não há usuário, redireciona para login
-        router.push('/login');
+        router.push('/login?error=unauthorized');
       } else if (!allowedRoles.includes(user.role as UserRole)) {
         // Se o usuário não tem o papel permitido, redireciona para seu dashboard específico
         const roleRoute = ROLE_BASED_ROUTES.find(route =>

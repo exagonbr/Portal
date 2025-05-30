@@ -183,7 +183,7 @@ export class CourseRepository extends BaseRepository<Course> {
     }
 
     const result = await query.count('* as count').first();
-    return result?.count || 0;
+    return Number(result?.count) || 0;
   }
 
   async findAllWithFilters(

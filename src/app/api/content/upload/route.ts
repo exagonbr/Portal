@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     const updatedMetadata: ContentMetadata = {
       ...uploadResponse.metadata,
       thumbnail: thumbnailUrl,
-      tags: [...new Set([...(metadata.tags || []), ...extractedTags])]
+      tags: Array.from(new Set([...(metadata.tags || []), ...extractedTags]))
     };
 
     // In a real implementation, save metadata to database
@@ -90,11 +90,3 @@ export async function OPTIONS(request: Request) {
     }
   });
 }
-
-// Increase payload size limit for file uploads
-export const config = {
-  api: {
-    bodyParser: false,
-    responseLimit: false
-  }
-};

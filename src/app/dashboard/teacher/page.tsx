@@ -1079,7 +1079,7 @@ export default function TeacherDashboard() {
               Você não tem permissão para acessar o dashboard de professor.
             </p>
             <button
-              onClick={() => window.location.href = '/login'}
+              onClick={() => window.location.href = '/login?error=unauthorized'}
               className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
             >
               Fazer Login

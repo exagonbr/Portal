@@ -7,7 +7,7 @@ export default function StudentGradesPage() {
   const { user } = useAuth()
   const router = useRouter()
 
-  if (!user || user.type !== 'student') {
+  if (!user || user.role !== 'student') {
     router.push('/forum')
     return null
   }

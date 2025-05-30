@@ -19,13 +19,13 @@ export default function DashboardLayout({
       try {
         const currentUser = await getCurrentUser();
         if (!currentUser) {
-          router.push('/login');
+          router.push('/login?error=unauthorized');
           return;
         }
         setUser(currentUser);
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
-        router.push('/login');
+        router.push('/login?error=unauthorized');
       } finally {
         setLoading(false);
       }

@@ -13,6 +13,12 @@ export default function AdminUsersPage() {
             <p className="text-gray-600">Gerencie todos os usuários do sistema</p>
           </div>
           <div className="space-x-4">
+            <button 
+              onClick={() => window.location.href = '/admin/demo-modals'}
+              className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-200"
+            >
+              🎭 Demo Modais
+            </button>
             <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
               Importar Usuários
             </button>

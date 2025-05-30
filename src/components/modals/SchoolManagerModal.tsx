@@ -7,7 +7,7 @@ import { schoolManagerService } from '@/services/schoolManagerService';
 import { schoolService } from '@/services/schoolService';
 import { userService } from '@/services/userService';
 import { School } from '@/types/school';
-import { User } from '@/types/user';
+import { UserResponseDto } from '@/types/api';
 
 interface SchoolManagerModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
   const [startDateStr, setStartDateStr] = useState(new Date().toISOString().split('T')[0]);
   const [endDateStr, setEndDateStr] = useState('');
   const [schools, setSchools] = useState<School[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserResponseDto[]>([]);
   const [managers, setManagers] = useState<SchoolManagerWithDetails[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,8 +63,8 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
         schoolService.list({ limit: 100 }),
         userService.list({ limit: 100 })
       ]);
-      setSchools(schoolsResponse.data || []);
-      setUsers(usersResponse.data || []);
+      setSchools(schoolsResponse.items || []);
+      setUsers(usersResponse.items || []);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }

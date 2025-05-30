@@ -50,7 +50,7 @@ export default function ClassesManagement() {
       
       // Carregar escolas
       const schoolsResponse = await schoolService.list({ limit: 100 });
-      setSchools(schoolsResponse.data || []);
+      setSchools(schoolsResponse.items || []);
 
       // Carregar turmas
       const filter: any = { year: selectedYear, limit: 100 };
@@ -59,7 +59,7 @@ export default function ClassesManagement() {
       }
       
       const response = await classService.list(filter);
-      setClasses(response.data || []);
+      setClasses(response.items || []);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {

@@ -91,8 +91,11 @@ export class NotificationService {
                 }
             };
 
-            // Send to all target users
-            const sentCount = await pushSubscriptionController.sendNotificationToUsers(userIds, payload);
+            // Send to all target users (convert to string array)
+            const sentCount = await pushSubscriptionController.sendNotificationToUsers(
+                userIds.map(id => id.toString()), 
+                payload
+            );
 
             // Update notification status
             await db('notifications')

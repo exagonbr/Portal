@@ -195,6 +195,7 @@ export default function VideosPage() {
             .map(video => (
               <VideoCard
                 key={video.id}
+                id={video.id}
                 thumbnail={video.thumbnail}
                 title={video.title}
                 duration={video.duration}
@@ -210,6 +211,7 @@ export default function VideosPage() {
           {dummyVideos.map(video => (
             <VideoCard
               key={video.id}
+              id={video.id}
               thumbnail={video.thumbnail}
               title={video.title}
               duration={video.duration}
@@ -224,6 +226,7 @@ export default function VideosPage() {
           {dummyVideos.slice(0, 9).map(video => (
             <VideoCard
               key={video.id}
+              id={video.id}
               thumbnail={video.thumbnail}
               title={video.title}
               duration={video.duration}
@@ -238,6 +241,7 @@ export default function VideosPage() {
           {dummyVideos.slice(1, 10).map(video => (
             <VideoCard
               key={video.id}
+              id={video.id}
               thumbnail={video.thumbnail}
               title={video.title}
               duration={video.duration}

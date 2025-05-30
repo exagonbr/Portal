@@ -1,8 +1,26 @@
+'use client';
+
 import { LoginForm } from '../components/auth/LoginForm';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function HomePage() {
+  const searchParams = useSearchParams();
+  const [showUnauthorizedMessage, setShowUnauthorizedMessage] = useState(false);
+
+  useEffect(() => {
+    const error = searchParams.get('error');
+    if (error === 'unauthorized') {
+      setShowUnauthorizedMessage(true);
+      // Remove the error parameter from URL after showing the message
+      const url = new URL(window.location.href);
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams]);
+
   return (
     <div className="relative min-h-screen flex items-center justify-center" role="main">
       {/* Video Background */}
@@ -34,6 +52,23 @@ export default function HomePage() {
             />
           </div>
         </div>
+
+        {/* Unauthorized Message */}
+        {showUnauthorizedMessage && (
+          <div className="rounded-md bg-orange-50 p-4 border border-orange-200" role="alert">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span className="material-symbols-outlined text-orange-400" aria-hidden="true">warning</span>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-orange-800">Não autorizado</h3>
+                <p className="text-sm text-orange-700 mt-1">
+                  Você precisa fazer login para acessar esta página.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <LoginForm />
 

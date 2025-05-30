@@ -264,7 +264,7 @@ export default function ChatPage() {
       case 'online': return 'bg-emerald-500';
       case 'away': return 'bg-amber-500';
       case 'busy': return 'bg-rose-500';
-      default: return 'bg-slate-400';
+      default: return 'bg-gray-400';
     }
   };
 
@@ -272,7 +272,7 @@ export default function ChatPage() {
     switch (status) {
       case 'sent': return <Check className="w-4 h-4" />;
       case 'delivered': return <CheckCheck className="w-4 h-4" />;
-      case 'read': return <CheckCheck className="w-4 h-4 text-indigo-500" />;
+      case 'read': return <CheckCheck className="w-4 h-4 text-blue-600" />;
     }
   };
 
@@ -281,55 +281,62 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="flex min-h-screen bg-slate-100 bg-gray-300">
+    <div className="flex h-full bg-gray-50 full-screen-content">
       {/* Lista de Conversas */}
-      <div className="w-80 bg-white bg-gray-800 border-r border-slate-200 border-gray-700 flex flex-col">
+      <div className="w-64 lg:w-80 bg-white border-r border-gray-200 flex flex-col">
         {/* Cabeçalho */}
-        <div className="p-4 border-b border-slate-200 border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Mensagens</h2>
-            <button className="p-2 hover:bg-slate-100 hover:bg-gray-300 rounded-lg">
-              <Plus className="w-5 h-5" />
+        <div className="p-3 lg:p-4 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <h2 className="text-lg lg:text-xl font-bold text-gray-900 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
+              <span className="hidden sm:inline">Mensagens</span>
+            </h2>
+            <button className="p-1.5 lg:p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <Plus className="w-4 h-4 lg:w-5 lg:h-5 text-gray-600" />
             </button>
           </div>
           
           {/* Busca */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 lg:w-5 lg:h-5" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar conversas..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-100 bg-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Buscar..."
+              className="w-full pl-9 lg:pl-10 pr-3 lg:pr-4 py-1.5 lg:py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-gray-700 text-sm"
             />
           </div>
         </div>
 
         {/* Lista de Conversas */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {filteredConversations.map((conversation) => (
             <div
               key={conversation.id}
               onClick={() => handleSelectConversation(conversation)}
-              className={`p-4 hover:bg-slate-50 hover:bg-gray-300 cursor-pointer transition-colors ${
-                selectedConversation?.id === conversation.id ? 'bg-slate-50 bg-gray-300' : ''
+              className={`p-3 lg:p-4 hover:bg-blue-50 cursor-pointer transition-all duration-200 border-l-4 ${
+                selectedConversation?.id === conversation.id 
+                  ? 'bg-blue-50 border-primary' 
+                  : 'border-transparent hover:border-blue-300'
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2 lg:gap-3">
                 {/* Avatar */}
-                <div className="relative">
-                  <div className="w-12 h-12 bg-slate-300 rounded-full flex items-center justify-center">
+                <div className="relative flex-shrink-0">
+                  <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center font-semibold text-white ${
+                    conversation.type === 'group' ? 'bg-purple-500' : 'bg-blue-500'
+                  }`}>
                     {conversation.type === 'group' ? (
-                      <Users className="w-6 h-6 text-slate-600" />
+                      <Users className="w-4 h-4 lg:w-5 lg:h-5" />
                     ) : (
-                      <span className="text-lg font-semibold">
-                        {conversation.name.charAt(0)}
+                      <span className="text-xs lg:text-sm">
+                        {conversation.name.charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
                   {conversation.type === 'direct' && (
-                    <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                    <div className={`absolute bottom-0 right-0 w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full border-2 border-white ${
                       getStatusColor(conversation.participants[0]?.status || 'offline')
                     }`} />
                   )}
@@ -338,22 +345,22 @@ export default function ChatPage() {
                 {/* Conteúdo */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium truncate">
-                      {conversation.isPinned && <Star className="inline w-3 h-3 mr-1 text-yellow-500" />}
+                    <h3 className="text-sm font-medium text-gray-900 truncate flex items-center gap-1">
+                      {conversation.isPinned && <Star className="w-3 h-3 text-amber-500 fill-current" />}
                       {conversation.name}
                     </h3>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
                       {conversation.lastMessage && formatTime(conversation.lastMessage.timestamp)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-600 text-gray-400 truncate">
+                    <p className="text-xs text-gray-600 truncate">
                       {conversation.lastMessage?.content}
                     </p>
-                    <div className="flex items-center gap-2">
-                      {conversation.isMuted && <BellOff className="w-3 h-3 text-slate-400" />}
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {conversation.isMuted && <BellOff className="w-3 h-3 text-gray-400" />}
                       {conversation.unreadCount > 0 && (
-                        <span className="px-2 py-0.5 text-xs bg-indigo-600 text-white rounded-full">
+                        <span className="px-1.5 py-0.5 text-xs bg-primary text-white rounded-full font-medium min-w-[20px] text-center">
                           {conversation.unreadCount}
                         </span>
                       )}
@@ -368,34 +375,36 @@ export default function ChatPage() {
 
       {/* Área de Chat */}
       {selectedConversation ? (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Cabeçalho do Chat */}
-          <div className="bg-white bg-gray-800 border-b border-slate-200 border-gray-700 p-4">
+          <div className="bg-white border-b border-gray-200 p-4 flex-shrink-0">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 bg-slate-300 rounded-full flex items-center justify-center">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative flex-shrink-0">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-semibold text-white ${
+                    selectedConversation.type === 'group' ? 'bg-purple-500' : 'bg-blue-500'
+                  }`}>
                     {selectedConversation.type === 'group' ? (
-                      <Users className="w-5 h-5 text-slate-600" />
+                      <Users className="w-4 h-4" />
                     ) : (
-                      <span className="font-semibold">
-                        {selectedConversation.name.charAt(0)}
+                      <span className="text-sm">
+                        {selectedConversation.name.charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
                   {selectedConversation.type === 'direct' && (
-                    <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                    <div className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border-2 border-white ${
                       getStatusColor(selectedConversation.participants[0]?.status || 'offline')
                     }`} />
                   )}
                 </div>
-                <div>
-                  <h3 className="font-semibold">{selectedConversation.name}</h3>
-                  <p className="text-sm text-slate-500">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-medium text-gray-900 truncate">{selectedConversation.name}</h3>
+                  <p className="text-xs text-gray-500">
                     {selectedConversation.type === 'group' 
                       ? `${selectedConversation.participants.length} participantes`
                       : selectedConversation.participants[0]?.status === 'online' 
-                        ? 'Online' 
+                        ? 'Online agora' 
                         : 'Offline'
                     }
                   </p>
@@ -403,24 +412,24 @@ export default function ChatPage() {
               </div>
               
               <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-slate-100 hover:bg-gray-300 rounded-lg">
-              <Phone className="w-5 h-5" />
-            </button>
-            <button className="p-2 hover:bg-slate-100 hover:bg-gray-300 rounded-lg">
-              <Video className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => setShowUserInfo(!showUserInfo)}
-              className="p-2 hover:bg-slate-100 hover:bg-gray-300 rounded-lg"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Phone className="w-5 h-5 text-gray-600" />
+                </button>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Video className="w-5 h-5 text-gray-600" />
+                </button>
+                <button 
+                  onClick={() => setShowUserInfo(!showUserInfo)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Mensagens */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 min-h-0">
             {messages.map((message, index) => {
               const isCurrentUser = message.senderId === 'current';
               const showDate = index === 0 || 
@@ -430,21 +439,21 @@ export default function ChatPage() {
                 <React.Fragment key={message.id}>
                   {showDate && (
                     <div className="text-center my-4">
-                      <span className="px-3 py-1 text-xs bg-slate-200 bg-gray-400 rounded-full">
+                      <span className="px-3 py-1 text-xs bg-white text-gray-600 rounded-full shadow-sm">
                         {formatDate(message.timestamp)}
                       </span>
                     </div>
                   )}
                   
                   <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs lg:max-w-md ${
+                    <div className={`max-w-xs lg:max-w-md rounded-2xl px-4 py-2 shadow-sm ${
                       isCurrentUser 
-                        ? 'bg-indigo-600 text-white' 
-                        : 'bg-slate-200 dark:bg-green-400 text-slate-900 dark:text-black'
-                    } rounded-lg px-4 py-2`}>
+                        ? 'bg-primary text-white' 
+                        : 'bg-white text-gray-800'
+                    }`}>
                       <p className="text-sm">{message.content}</p>
                       <div className={`flex items-center justify-end gap-1 mt-1 ${
-                        isCurrentUser ? 'text-indigo-100' : 'text-slate-500'
+                        isCurrentUser ? 'text-blue-100' : 'text-gray-500'
                       }`}>
                         <span className="text-xs">{formatTime(message.timestamp)}</span>
                         {isCurrentUser && getStatusIcon(message.status)}
@@ -457,11 +466,11 @@ export default function ChatPage() {
             
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-slate-200 bg-gray-300 rounded-lg px-4 py-2">
+                <div className="bg-white rounded-2xl px-4 py-2 shadow-sm">
                   <div className="flex gap-1">
-                    <Circle className="w-2 h-2 fill-current animate-bounce" />
-                    <Circle className="w-2 h-2 fill-current animate-bounce delay-100" />
-                    <Circle className="w-2 h-2 fill-current animate-bounce delay-200" />
+                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce" />
+                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce delay-100" />
+                    <Circle className="w-2 h-2 fill-gray-400 animate-bounce delay-200" />
                   </div>
                 </div>
               </div>
@@ -471,13 +480,13 @@ export default function ChatPage() {
           </div>
 
           {/* Input de Mensagem */}
-          <form onSubmit={handleSendMessage} className="bg-white dark:bg-blue-100 border-t border-slate-200 dark:border-gray-700 p-4">
+          <form onSubmit={handleSendMessage} className="bg-white border-t border-gray-200 p-4 flex-shrink-0">
             <div className="flex items-end gap-2">
               <button
                 type="button"
-                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <Paperclip className="w-5 h-5" />
+                <Paperclip className="w-5 h-5 text-gray-600" />
               </button>
               
               <div className="flex-1">
@@ -486,21 +495,21 @@ export default function ChatPage() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Digite uma mensagem..."
-                  className="w-full px-4 py-2 bg-slate-100 dark:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-700"
                 />
               </div>
               
               <button
                 type="button"
-                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <Smile className="w-5 h-5" />
+                <Smile className="w-5 h-5 text-gray-600" />
               </button>
               
               <button
                 type="submit"
                 disabled={!newMessage.trim()}
-                className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-5 h-5" />
               </button>
@@ -508,82 +517,87 @@ export default function ChatPage() {
           </form>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center bg-gray-50">
           <div className="text-center">
-            <MessageSquare className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-500">Selecione uma conversa para começar</p>
+            <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">Selecione uma conversa para começar</p>
+            <p className="text-gray-400 text-sm mt-2">Suas mensagens aparecerão aqui</p>
           </div>
         </div>
       )}
 
       {/* Painel de Informações */}
       {showUserInfo && selectedConversation && (
-        <div className="w-80 bg-white dark:bg-gray-800 border-l border-slate-200 dark:border-gray-700 p-4">
-          <div className="text-center mb-6">
-            <div className="w-20 h-20 bg-slate-300 rounded-full mx-auto mb-3 flex items-center justify-center">
-              {selectedConversation.type === 'group' ? (
-                <Users className="w-10 h-10 text-slate-600" />
-              ) : (
-                <span className="text-2xl font-semibold">
-                  {selectedConversation.name.charAt(0)}
-                </span>
+        <div className="w-64 lg:w-80 bg-white border-l border-gray-200 flex flex-col overflow-y-auto">
+          <div className="p-3 lg:p-4">
+            <div className="text-center mb-4 lg:mb-6">
+              <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full mx-auto mb-2 lg:mb-3 flex items-center justify-center font-semibold text-white ${
+                selectedConversation.type === 'group' ? 'bg-purple-500' : 'bg-blue-500'
+              }`}>
+                {selectedConversation.type === 'group' ? (
+                  <Users className="w-7 h-7 lg:w-8 lg:h-8" />
+                ) : (
+                  <span className="text-lg lg:text-xl">
+                    {selectedConversation.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <h3 className="font-medium text-sm lg:text-base text-gray-900">{selectedConversation.name}</h3>
+              {selectedConversation.type === 'direct' && (
+                <p className="text-xs lg:text-sm text-gray-600">
+                  {selectedConversation.participants[0]?.role}
+                </p>
               )}
             </div>
-            <h3 className="font-semibold text-lg">{selectedConversation.name}</h3>
-            {selectedConversation.type === 'direct' && (
-              <p className="text-sm text-slate-500">
-                {selectedConversation.participants[0]?.role}
-              </p>
+
+            <div className="space-y-1 lg:space-y-2">
+              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
+                {selectedConversation.isMuted ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+                <span className="text-xs lg:text-sm">{selectedConversation.isMuted ? 'Ativar notificações' : 'Silenciar'}</span>
+              </button>
+              
+              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
+                <Star className="w-4 h-4" />
+                <span className="text-xs lg:text-sm">{selectedConversation.isPinned ? 'Desafixar' : 'Fixar'} conversa</span>
+              </button>
+              
+              <button className="w-full p-2 lg:p-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-gray-700">
+                <Archive className="w-4 h-4" />
+                <span className="text-xs lg:text-sm">Arquivar conversa</span>
+              </button>
+              
+              <button className="w-full p-2 lg:p-3 hover:bg-red-50 rounded-lg flex items-center gap-2 lg:gap-3 transition-colors text-red-600">
+                <Trash2 className="w-4 h-4" />
+                <span className="text-xs lg:text-sm">Apagar conversa</span>
+              </button>
+            </div>
+
+            {selectedConversation.type === 'group' && (
+              <div className="mt-4 lg:mt-6">
+                <h4 className="text-xs lg:text-sm font-medium text-gray-900 mb-2 lg:mb-3">Participantes ({selectedConversation.participants.length})</h4>
+                <div className="space-y-1 lg:space-y-2">
+                  {selectedConversation.participants.map((participant) => (
+                    <div key={participant.id} className="flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="relative">
+                        <div className="w-7 h-7 lg:w-8 lg:h-8 bg-gray-300 rounded-full flex items-center justify-center text-white bg-gradient-to-br from-blue-400 to-blue-600">
+                          <span className="text-xs font-medium">
+                            {participant.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className={`absolute bottom-0 right-0 w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full border border-white ${
+                          getStatusColor(participant.status)
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs lg:text-sm font-medium text-gray-900 truncate">{participant.name}</p>
+                        <p className="text-xs text-gray-500">{participant.role}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
-
-          <div className="space-y-4">
-            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg flex items-center gap-3">
-              {selectedConversation.isMuted ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
-              <span>{selectedConversation.isMuted ? 'Ativar notificações' : 'Silenciar'}</span>
-            </button>
-            
-            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg flex items-center gap-3">
-              <Star className="w-5 h-5" />
-              <span>{selectedConversation.isPinned ? 'Desafixar' : 'Fixar'} conversa</span>
-            </button>
-            
-            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg flex items-center gap-3">
-              <Archive className="w-5 h-5" />
-              <span>Arquivar conversa</span>
-            </button>
-            
-            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg flex items-center gap-3 text-red-600">
-              <Trash2 className="w-5 h-5" />
-              <span>Apagar conversa</span>
-            </button>
-          </div>
-
-          {selectedConversation.type === 'group' && (
-            <div className="mt-6">
-              <h4 className="font-medium mb-3">Participantes ({selectedConversation.participants.length})</h4>
-              <div className="space-y-2">
-                {selectedConversation.participants.map((participant) => (
-                  <div key={participant.id} className="flex items-center gap-3 p-2">
-                    <div className="relative">
-                      <div className="w-8 h-8 bg-slate-300 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium">
-                          {participant.name.charAt(0)}
-                        </span>
-                      </div>
-                      <div className={`absolute bottom-0 right-0 w-2 h-2 rounded-full border border-white ${
-                        getStatusColor(participant.status)
-                      }`} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{participant.name}</p>
-                      <p className="text-xs text-slate-500">{participant.role}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>

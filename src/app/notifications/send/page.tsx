@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { type Notification } from '@/hooks/useNotifications'
+import { apiClient } from '@/services/apiClient'
+import { pushNotificationService } from '@/services/pushNotificationService'
 
 interface NotificationForm {
   title: string
@@ -14,9 +15,12 @@ interface NotificationForm {
     type: 'all' | 'role' | 'specific'
     roles?: string[]
     userIds?: string[]
+    emails?: string[]
   }
   scheduledFor?: string
   priority: 'low' | 'medium' | 'high'
+  sendPush: boolean
+  sendEmail: boolean
 }
 
 interface User {
@@ -37,12 +41,20 @@ export default function SendNotificationPage() {
     recipients: {
       type: 'all'
     },
-    priority: 'medium'
+    priority: 'medium',
+    sendPush: true,
+    sendEmail: false
   })
   const [availableUsers, setAvailableUsers] = useState<User[]>([])
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [pushStatus, setPushStatus] = useState<{
+    supported: boolean
+    permission: NotificationPermission
+    subscribed: boolean
+  } | null>(null)
 
   // Verificar permissões
   useEffect(() => {
@@ -52,33 +64,64 @@ export default function SendNotificationPage() {
     }
   }, [user, router])
 
-  // Carregar usuários disponíveis baseado na role
+  // Verificar status das push notifications
   useEffect(() => {
-    const loadAvailableUsers = () => {
-      // Mock data - em produção viria do backend
-      const mockUsers: User[] = [
-        { id: '1', name: 'João Silva', email: 'joao@escola.com', role: 'manager' },
-        { id: '2', name: 'Maria Santos', email: 'maria@escola.com', role: 'teacher' },
-        { id: '3', name: 'Pedro Costa', email: 'pedro@escola.com', role: 'teacher' },
-        { id: '4', name: 'Ana Oliveira', email: 'ana@escola.com', role: 'student' },
-        { id: '5', name: 'Carlos Lima', email: 'carlos@escola.com', role: 'student' },
-        { id: '6', name: 'Lucia Ferreira', email: 'lucia@escola.com', role: 'student' }
-      ]
-
-      let filteredUsers: User[] = []
-
-      if (user?.role === 'admin') {
-        // Admin pode enviar para managers e teachers
-        filteredUsers = mockUsers.filter(u => u.role === 'manager' || u.role === 'teacher')
-      } else if (user?.role === 'manager') {
-        // Manager pode enviar para teachers
-        filteredUsers = mockUsers.filter(u => u.role === 'teacher')
-      } else if (user?.role === 'teacher') {
-        // Teacher pode enviar para students
-        filteredUsers = mockUsers.filter(u => u.role === 'student')
+    const checkPushStatus = async () => {
+      try {
+        const status = await pushNotificationService.getSubscriptionStatus()
+        setPushStatus(status)
+      } catch (error) {
+        console.error('Error checking push status:', error)
       }
+    }
 
-      setAvailableUsers(filteredUsers)
+    checkPushStatus()
+  }, [])
+
+  // Carregar usuários disponíveis
+  useEffect(() => {
+    const loadAvailableUsers = async () => {
+      try {
+        // Buscar usuários do backend baseado na role do usuário atual
+        let roles = ''
+        if (user?.role === 'admin') {
+          roles = 'manager,teacher'
+        } else if (user?.role === 'manager') {
+          roles = 'teacher'
+        } else if (user?.role === 'teacher') {
+          roles = 'student'
+        }
+
+        const response = await apiClient.get(`/api/users?limit=100${roles ? `&roles=${roles}` : ''}`)
+
+        if (response.success && response.data && Array.isArray(response.data)) {
+          setAvailableUsers(response.data)
+        } else if (response.success && response.data && typeof response.data === 'object' && 'users' in response.data) {
+          setAvailableUsers((response.data as any).users || [])
+        }
+      } catch (error) {
+        console.error('Error loading users:', error)
+        // Fallback para dados mock em caso de erro
+        const mockUsers: User[] = [
+          { id: '1', name: 'João Silva', email: 'joao@escola.com', role: 'manager' },
+          { id: '2', name: 'Maria Santos', email: 'maria@escola.com', role: 'teacher' },
+          { id: '3', name: 'Pedro Costa', email: 'pedro@escola.com', role: 'teacher' },
+          { id: '4', name: 'Ana Oliveira', email: 'ana@escola.com', role: 'student' },
+          { id: '5', name: 'Carlos Lima', email: 'carlos@escola.com', role: 'student' },
+          { id: '6', name: 'Lucia Ferreira', email: 'lucia@escola.com', role: 'student' }
+        ]
+
+        let filteredUsers: User[] = []
+        if (user?.role === 'admin') {
+          filteredUsers = mockUsers.filter(u => u.role === 'manager' || u.role === 'teacher')
+        } else if (user?.role === 'manager') {
+          filteredUsers = mockUsers.filter(u => u.role === 'teacher')
+        } else if (user?.role === 'teacher') {
+          filteredUsers = mockUsers.filter(u => u.role === 'student')
+        }
+
+        setAvailableUsers(filteredUsers)
+      }
     }
 
     if (user) {
@@ -107,38 +150,105 @@ export default function SendNotificationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
 
     try {
-      // Simular envio para o backend
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Preparar dados para envio
+      const notificationData = {
+        title: form.title,
+        message: form.message,
+        type: form.type,
+        category: form.category,
+        priority: form.priority,
+        sendPush: form.sendPush,
+        sendEmail: form.sendEmail,
+        recipients: {
+          userIds: form.recipients.type === 'specific' ? selectedUsers : undefined,
+          emails: form.recipients.type === 'specific' ? 
+            selectedUsers.map(id => availableUsers.find(u => u.id === id)?.email).filter(Boolean) : 
+            undefined,
+          roles: form.recipients.type === 'role' ? form.recipients.roles : undefined
+        }
+      }
 
-      // Aqui seria feita a chamada real para a API
-      console.log('Enviando notificação:', {
-        ...form,
-        sender: user?.id,
-        selectedUsers: form.recipients.type === 'specific' ? selectedUsers : undefined
-      })
+      // Enviar notificação via API
+      const response = await apiClient.post('/api/notifications/send', notificationData)
 
-      setSuccess(true)
-      
-      // Resetar formulário após sucesso
-      setTimeout(() => {
-        setForm({
-          title: '',
-          message: '',
-          type: 'info',
-          category: 'academic',
-          recipients: { type: 'all' },
-          priority: 'medium'
-        })
-        setSelectedUsers([])
-        setSuccess(false)
-      }, 3000)
+      if (response.success) {
+        setSuccess(true)
+        
+        // Resetar formulário após sucesso
+        setTimeout(() => {
+          setForm({
+            title: '',
+            message: '',
+            type: 'info',
+            category: 'academic',
+            recipients: { type: 'all' },
+            priority: 'medium',
+            sendPush: true,
+            sendEmail: false
+          })
+          setSelectedUsers([])
+          setSuccess(false)
+        }, 3000)
+      } else {
+        throw new Error(response.message || 'Erro ao enviar notificação')
+      }
 
     } catch (error) {
       console.error('Erro ao enviar notificação:', error)
+      setError(error instanceof Error ? error.message : 'Erro desconhecido')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleTestEmail = async () => {
+    if (!user?.email) return
+
+    try {
+      setLoading(true)
+      const response = await apiClient.post('/api/notifications/email/test', {
+        to: user.email
+      })
+
+      if (response.success) {
+        alert('Email de teste enviado com sucesso! Verifique sua caixa de entrada.')
+      } else {
+        throw new Error(response.message || 'Erro ao enviar email de teste')
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error)
+      alert('Erro ao enviar email de teste: ' + (error instanceof Error ? error.message : 'Erro desconhecido'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleTestPushNotification = async () => {
+    try {
+      await pushNotificationService.sendTestNotification()
+      alert('Notificação push de teste enviada!')
+    } catch (error) {
+      console.error('Error sending test push notification:', error)
+      alert('Erro ao enviar notificação push de teste')
+    }
+  }
+
+  const handleEnablePushNotifications = async () => {
+    try {
+      const success = await pushNotificationService.requestPermissionAndSubscribe()
+      if (success) {
+        const status = await pushNotificationService.getSubscriptionStatus()
+        setPushStatus(status)
+        alert('Push notifications habilitadas com sucesso!')
+      } else {
+        alert('Não foi possível habilitar as push notifications')
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error)
+      alert('Erro ao habilitar push notifications')
     }
   }
 
@@ -205,6 +315,75 @@ export default function SendNotificationPage() {
             </div>
           </div>
         )}
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <span className="material-symbols-outlined text-red-600 mr-2">
+                error
+              </span>
+              <p className="text-red-800">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Status das Notificações Push */}
+        {pushStatus && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="text-sm font-medium text-blue-900 mb-2">Status das Push Notifications</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span>Suporte do navegador:</span>
+                <span className={pushStatus.supported ? 'text-green-600' : 'text-red-600'}>
+                  {pushStatus.supported ? 'Suportado' : 'Não suportado'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Permissão:</span>
+                <span className={pushStatus.permission === 'granted' ? 'text-green-600' : 'text-yellow-600'}>
+                  {pushStatus.permission === 'granted' ? 'Concedida' : 
+                   pushStatus.permission === 'denied' ? 'Negada' : 'Não solicitada'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Inscrito:</span>
+                <span className={pushStatus.subscribed ? 'text-green-600' : 'text-red-600'}>
+                  {pushStatus.subscribed ? 'Sim' : 'Não'}
+                </span>
+              </div>
+            </div>
+            {pushStatus.supported && pushStatus.permission !== 'granted' && (
+              <button
+                onClick={handleEnablePushNotifications}
+                className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Habilitar Push Notifications
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Botões de Teste */}
+        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Testes de Configuração</h3>
+          <div className="flex space-x-4">
+            <button
+              onClick={handleTestEmail}
+              disabled={loading}
+              className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+            >
+              Testar Email
+            </button>
+            {pushStatus?.supported && pushStatus?.subscribed && (
+              <button
+                onClick={handleTestPushNotification}
+                className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Testar Push Notification
+              </button>
+            )}
+          </div>
+        </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -288,6 +467,43 @@ export default function SendNotificationPage() {
                   <option value="high">Alta</option>
                 </select>
               </div>
+            </div>
+
+            {/* Tipo de Notificação */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-4">
+                Métodos de Envio
+              </label>
+              <div className="space-y-3">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={form.sendPush}
+                    onChange={(e) => setForm(prev => ({ ...prev, sendPush: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-3 text-sm text-gray-700">
+                    Push Notification
+                    {pushStatus && !pushStatus.subscribed && (
+                      <span className="text-yellow-600 ml-1">(não configurado)</span>
+                    )}
+                  </span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={form.sendEmail}
+                    onChange={(e) => setForm(prev => ({ ...prev, sendEmail: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-3 text-sm text-gray-700">Email</span>
+                </label>
+              </div>
+              {!form.sendPush && !form.sendEmail && (
+                <p className="text-sm text-red-600 mt-2">
+                  Selecione pelo menos um método de envio
+                </p>
+              )}
             </div>
 
             {/* Destinatários */}
@@ -414,7 +630,7 @@ export default function SendNotificationPage() {
               </button>
               <button
                 type="submit"
-                disabled={loading || !form.title || !form.message}
+                disabled={loading || !form.title || !form.message || (!form.sendPush && !form.sendEmail)}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
               >
                 {loading && (

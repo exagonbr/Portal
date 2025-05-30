@@ -88,14 +88,17 @@ export async function PUT(request: Request) {
         case 'XP':
           earned = stats.xp >= badge.requirement.threshold;
           break;
-        case 'ASSIGNMENTS':
+        case 'TAREFAS':
           earned = stats.completedAssignments >= badge.requirement.threshold;
           break;
-        case 'ATTENDANCE':
+        case 'PRESENÇA':
           earned = stats.attendanceDays >= badge.requirement.threshold;
           break;
-        case 'COURSES':
+        case 'CURSOS':
           earned = stats.completedCourses >= badge.requirement.threshold;
+          break;
+        case 'PERSONALIZADO':
+          // Add custom logic here
           break;
         // Add other requirement types as needed
       }

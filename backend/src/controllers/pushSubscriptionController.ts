@@ -17,47 +17,59 @@ export class PushSubscriptionController {
         try {
             const user = await getUserFromRequest(req);
             if (!user) {
-                return res.status(401).json({ error: 'Unauthorized' });
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
             }
 
-            const subscription: CreatePushSubscriptionDto = req.body;
-            if (!subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
-                return res.status(400).json({ error: 'Invalid subscription data' });
+            const { endpoint, keys }: CreatePushSubscriptionDto = req.body;
+
+            if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid subscription data'
+                });
             }
 
             // Check if subscription already exists
-            const existing = await db<PushSubscription>('push_subscriptions')
-                .where('endpoint', subscription.endpoint)
+            const existingSubscription = await db<PushSubscription>('push_subscriptions')
+                .where({ user_id: user.id, endpoint })
                 .first();
 
-            if (existing) {
-                // Update if exists
+            if (existingSubscription) {
+                // Update existing subscription
                 await db<PushSubscription>('push_subscriptions')
-                    .where('endpoint', subscription.endpoint)
+                    .where({ user_id: user.id, endpoint })
                     .update({
-                        user_id: user.id,
-                        p256dh: subscription.keys.p256dh,
-                        auth: subscription.keys.auth,
+                        p256dh: keys.p256dh,
+                        auth: keys.auth,
                         active: true,
-                        last_used: new Date(),
-                        updated_at: new Date()
+                        last_used: new Date()
                     });
             } else {
                 // Create new subscription
                 await db<PushSubscription>('push_subscriptions').insert({
                     user_id: user.id,
-                    endpoint: subscription.endpoint,
-                    p256dh: subscription.keys.p256dh,
-                    auth: subscription.keys.auth,
+                    endpoint,
+                    p256dh: keys.p256dh,
+                    auth: keys.auth,
                     active: true,
+                    created_at: new Date(),
                     last_used: new Date()
                 });
             }
 
-            return res.status(200).json({ success: true });
+            return res.status(200).json({
+                success: true,
+                message: 'Push subscription registered successfully'
+            });
         } catch (error) {
-            console.error('Error saving push subscription:', error);
-            return res.status(500).json({ error: 'Internal server error' });
+            console.error('Error registering push subscription:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to register push subscription'
+            });
         }
     }
 
@@ -65,24 +77,28 @@ export class PushSubscriptionController {
         try {
             const user = await getUserFromRequest(req);
             if (!user) {
-                return res.status(401).json({ error: 'Unauthorized' });
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
             }
 
             const { endpoint } = req.params;
-            if (!endpoint) {
-                return res.status(400).json({ error: 'Endpoint is required' });
-            }
 
-            const decodedEndpoint = decodeURIComponent(endpoint);
-            
             await db<PushSubscription>('push_subscriptions')
-                .where({ endpoint: decodedEndpoint, user_id: user.id })
+                .where({ user_id: user.id, endpoint })
                 .update({ active: false });
 
-            return res.status(200).json({ success: true });
+            return res.status(200).json({
+                success: true,
+                message: 'Push subscription removed successfully'
+            });
         } catch (error) {
             console.error('Error removing push subscription:', error);
-            return res.status(500).json({ error: 'Internal server error' });
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to remove push subscription'
+            });
         }
     }
 
@@ -113,27 +129,105 @@ export class PushSubscriptionController {
         }
     }
 
-    async sendNotificationToUser(userId: number, payload: WebPushPayload): Promise<number> {
-        const subscriptions = await db<PushSubscription>('push_subscriptions')
-            .where({ user_id: userId, active: true });
+    async sendNotificationToUser(userId: string, payload: WebPushPayload): Promise<number> {
+        try {
+            const subscriptions = await db<PushSubscription>('push_subscriptions')
+                .where('user_id', userId)
+                .where('active', true);
 
-        const results = await Promise.allSettled(
-            subscriptions.map(sub => this.sendNotification(sub, payload))
-        );
+            let sentCount = 0;
+            
+            for (const subscription of subscriptions) {
+                try {
+                    await this.sendNotification(subscription, payload);
+                    sentCount++;
+                } catch (error) {
+                    console.error(`Error sending notification to subscription ${subscription.endpoint}:`, error);
+                }
+            }
 
-        return results.filter(r => r.status === 'fulfilled').length;
+            return sentCount;
+        } catch (error) {
+            console.error('Error sending notification to user:', error);
+            throw error;
+        }
     }
 
-    async sendNotificationToUsers(userIds: number[], payload: WebPushPayload): Promise<number> {
-        const subscriptions = await db<PushSubscription>('push_subscriptions')
-            .whereIn('user_id', userIds)
-            .where('active', true);
+    async sendNotificationToUsers(userIds: string[], payload: WebPushPayload): Promise<number> {
+        try {
+            let totalSent = 0;
+            
+            for (const userId of userIds) {
+                const sent = await this.sendNotificationToUser(userId, payload);
+                totalSent += sent;
+            }
 
-        const results = await Promise.allSettled(
-            subscriptions.map(sub => this.sendNotification(sub, payload))
-        );
+            return totalSent;
+        } catch (error) {
+            console.error('Error sending notifications to users:', error);
+            throw error;
+        }
+    }
 
-        return results.filter(r => r.status === 'fulfilled').length;
+    async sendBulkNotification(req: Request, res: Response): Promise<Response> {
+        try {
+            const user = await getUserFromRequest(req);
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not authenticated'
+                });
+            }
+
+            const { title, body, data, userIds, icon, badge } = req.body;
+
+            if (!title || !body) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Title and body are required'
+                });
+            }
+
+            const payload: WebPushPayload = {
+                title,
+                body,
+                icon: icon || '/icons/icon-192x192.png',
+                badge: badge || '/icons/icon.svg',
+                data: data || {}
+            };
+
+            let sentCount = 0;
+            
+            if (userIds && Array.isArray(userIds)) {
+                // Send to specific users
+                sentCount = await this.sendNotificationToUsers(userIds, payload);
+            } else {
+                // Send to all active subscriptions
+                const subscriptions = await db<PushSubscription>('push_subscriptions')
+                    .where('active', true);
+
+                for (const subscription of subscriptions) {
+                    try {
+                        await this.sendNotification(subscription, payload);
+                        sentCount++;
+                    } catch (error) {
+                        console.error(`Error sending notification to subscription ${subscription.endpoint}:`, error);
+                    }
+                }
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: `Notification sent to ${sentCount} subscriptions`,
+                sentCount
+            });
+        } catch (error) {
+            console.error('Error sending bulk notification:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to send bulk notification'
+            });
+        }
     }
 }
 

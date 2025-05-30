@@ -19,22 +19,25 @@ interface NavSection {
 }
 
 // Constants
-const SIDEBAR_WIDTH = '15rem' // 272px
-const COLLAPSED_WIDTH = '4.3rem' // 80px
+const SIDEBAR_WIDTH = '16rem' // 256px - ligeiramente maior
+const COLLAPSED_WIDTH = '4rem' // 64px - mais compacto
+const MOBILE_BREAKPOINT = 768
 // Memoized Components
 const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
-  <Link href="/" className="overflow-y-hidden flex items-center justify-center ">
+  <Link href="/" className="overflow-hidden flex items-center justify-center py-1">
     {isCollapsed ? (
-      <span className="text-2xl font-bold text-white">S</span>
+      <div className="w-8 h-8 bg-primary-light/20 rounded-lg flex items-center justify-center">
+        <span className="text-xl font-bold text-white">S</span>
+      </div>
     ) : (
-      <div className="table">
-          <Image
+      <div className="w-full flex justify-center">
+        <Image
           src="/sabercon-logo-white.png"
           alt="Logo"
-          width={180}
-          height={40}
-          sizes="(max-width: 768px) 150px, 180px"
-          className="object-contain"
+          width={160}
+          height={35}
+          sizes="(max-width: 768px) 140px, 160px"
+          className="object-contain max-w-full h-auto"
           priority
         />
       </div>
@@ -59,17 +62,17 @@ const getRoleLabel = (role: UserRole): string => {
 };
 
 const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boolean }) => (
-  <div className="px-3 py-2 border-b border-white/10 flex-shrink-0">
-    <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-2'}`}>
-      <div className="w-8 h-8 rounded-full bg-primary-light/30 flex items-center justify-center flex-shrink-0">
-        <span className={`material-symbols-outlined text-primary ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}>
+  <div className="px-2 py-3 border-b border-white/10 flex-shrink-0">
+    <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+      <div className="w-7 h-7 rounded-full bg-primary-light/30 flex items-center justify-center flex-shrink-0">
+        <span className={`material-symbols-outlined text-primary ${isCollapsed ? 'text-[16px]' : 'text-[14px]'}`}>
           person
         </span>
       </div>
       {!isCollapsed && (
-        <div className="overflow-hidden">
-          <p className="text-xs font-semibold text-sidebar-text-active truncate">{user?.name}</p>
-            <span className="text-xs text-gray-400">
+        <div className="overflow-hidden min-w-0 flex-1">
+          <p className="text-xs font-semibold text-sidebar-text-active truncate leading-tight">{user?.name}</p>
+          <span className="text-[10px] text-gray-400 leading-tight">
             {user?.role && getRoleLabel(user.role)}
           </span>
         </div>
@@ -86,29 +89,29 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
 }) => (
   <Link
     href={item.href}
-    className={`sidebar-link group relative
+    className={`flex items-center gap-2 px-2 py-2 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
       ${isActive
-        ? 'sidebar-link-active'
+        ? 'bg-sidebar-active text-white shadow-sm'
         : ''
       } ${isCollapsed ? 'justify-center' : ''}`}
     onClick={onClick}
     aria-current={isActive ? 'page' : undefined}
   >
     <span
-      className={`material-symbols-outlined transition-transform duration-300 ${isCollapsed ? 'text-[20px]' : 'text-[18px]'}`}
+      className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
       aria-hidden="true"
     >
       {item.icon}
     </span>
     
     {!isCollapsed && (
-      <span className="text-xs font-medium truncate">{item.label}</span>
+      <span className="text-xs font-medium truncate leading-tight">{item.label}</span>
     )}
     
     {/* Tooltip for collapsed state */}
     {isCollapsed && (
       <div
-        className="absolute left-full ml-2 px-3 py-2 bg-primary-dark text-sidebar-text-active text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+        className="absolute left-full ml-2 px-2 py-1 bg-primary-dark text-sidebar-text-active text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
         role="tooltip"
       >
         {item.label}
@@ -124,9 +127,9 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick }:
   isCollapsed: boolean,
   onItemClick?: () => void
 }) => (
-  <div className="mb-2">
+  <div className="mb-3">
     {!isCollapsed && (
-      <p className="px-2 py-1 text-[10px] font-bold text-sidebar-text uppercase tracking-wider">
+      <p className="px-2 py-1 text-[10px] font-bold text-sidebar-text uppercase tracking-wider opacity-75">
         {section}
       </p>
     )}
@@ -147,23 +150,23 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick }:
 const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, onLogout: () => void }) => (
   <button
     onClick={onLogout}
-    className={`flex items-center ${!isCollapsed && 'space-x-2'} px-2 py-1.5 rounded-lg text-sidebar-text hover:bg-error/10 hover:text-error transition-all duration-300 group relative w-full mx-1
+    className={`flex items-center gap-2 px-2 py-2 rounded-md text-sidebar-text hover:bg-error/10 hover:text-error transition-all duration-300 group relative w-full mx-1 text-xs font-medium
       ${isCollapsed ? 'justify-center' : ''}`}
     aria-label="Sair da Plataforma"
   >
     <span
-      className={`material-symbols-outlined group-hover:animate-pulse transition-transform duration-300 ${isCollapsed ? 'text-[20px]' : 'text-[18px]'}`}
+      className={`material-symbols-outlined group-hover:animate-pulse transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
       aria-hidden="true"
     >
       logout
     </span>
     
-    {!isCollapsed && <span className="text-xs font-medium">Sair da Plataforma</span>}
+    {!isCollapsed && <span className="text-xs font-medium leading-tight">Sair da Plataforma</span>}
     
     {/* Tooltip for collapsed state */}
     {isCollapsed && (
       <div
-        className="absolute left-full ml-2 px-3 py-2 bg-primary-dark text-sidebar-text-active text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+        className="absolute left-full ml-2 px-2 py-1 bg-primary-dark text-sidebar-text-active text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
         role="tooltip"
       >
         Sair da Plataforma
@@ -171,7 +174,6 @@ const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, on
     )}
   </button>
 ));
-const MOBILE_BREAKPOINT = 768
 
 export default function DashboardSidebar() {
   const pathname = usePathname()
@@ -881,12 +883,12 @@ const navItems = getNavItems()
       {/* Mobile Menu Button */}
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-4 left-4 z-50 bg-sidebar-bg rounded-lg p-2 text-sidebar-text hover:bg-sidebar-hover transition-colors shadow-md"
+        className="md:hidden fixed top-3 left-3 z-50 bg-sidebar-bg rounded-lg p-2.5 text-sidebar-text hover:bg-sidebar-hover transition-colors shadow-lg border border-white/10"
         aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
         aria-expanded={isMobileOpen}
         aria-controls="sidebar-menu"
       >
-        <span className="material-symbols-outlined" aria-hidden="true">
+        <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
           {isMobileOpen ? 'close' : 'menu'}
         </span>
       </button>
@@ -894,7 +896,7 @@ const navItems = getNavItems()
       {/* Backdrop for mobile */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden sidebar-mobile-backdrop"
           onClick={closeMobileSidebar}
           aria-hidden="true"
         />
@@ -912,14 +914,14 @@ const navItems = getNavItems()
         {/* Sidebar Content */}
         <aside className="bg-sidebar-bg text-sidebar-text h-full flex flex-col shadow-xl overflow-hidden border-r border-primary-dark/20">
           {/* Logo */}
-          <div className="p-3 border-b border-white/10 relative flex-shrink-0">
+          <div className="p-2 border-b border-white/10 relative flex-shrink-0">
             {/* Desktop Toggle Button */}
             <button
               onClick={toggleSidebar}
-              className="hidden md:flex absolute -right-2.5 top-1/2 -translate-y-1/2 bg-sidebar-bg rounded-full p-1 hover:bg-sidebar-hover transition-colors z-50 items-center justify-center"
+              className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 bg-sidebar-bg rounded-full p-1 hover:bg-sidebar-hover transition-colors z-50 items-center justify-center border border-white/10"
               aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
             >
-              <span className="material-symbols-outlined text-sidebar-text-active text-[18px]" aria-hidden="true">
+              <span className="material-symbols-outlined text-sidebar-text-active text-[16px]" aria-hidden="true">
                 {isCollapsed ? 'chevron_right' : 'chevron_left'}
               </span>
             </button>
@@ -931,21 +933,23 @@ const navItems = getNavItems()
           <UserProfile user={user} isCollapsed={isCollapsed} />
 
           {/* Navigation */}
-          <nav className="flex-1 px-2 py-1 overflow-hidden">
-            {navItems.map((section, idx) => (
-              <NavSection
-                key={idx}
-                section={section.section}
-                items={section.items}
-                pathname={pathname}
-                isCollapsed={isCollapsed}
-                onItemClick={closeMobileSidebar}
-              />
-            ))}
+          <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-hover scrollbar-track-transparent">
+            <div className="space-y-1">
+              {navItems.map((section, idx) => (
+                <NavSection
+                  key={idx}
+                  section={section.section}
+                  items={section.items}
+                  pathname={pathname}
+                  isCollapsed={isCollapsed}
+                  onItemClick={closeMobileSidebar}
+                />
+              ))}
+            </div>
           </nav>
 
           {/* Bottom Actions */}
-          <div className="p-1.5 border-t border-white/10 flex-shrink-0">
+          <div className="p-1 border-t border-white/10 flex-shrink-0">
             <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} />
           </div>
         </aside>

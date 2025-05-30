@@ -23,7 +23,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   // Don't use dashboard layout for public routes
   if (publicRoutes.includes(pathname)) {
-    return <div className="min-h-screen bg-gradient-to-b from-background-start to-background-end">{children}</div>
+    return <div className="h-full w-full">{children}</div>
   }
 
   // Use authenticated dashboard layout for all other routes

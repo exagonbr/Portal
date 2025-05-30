@@ -1,23 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { UserRepository } from '../repositories/UserRepository';
-
-interface JWTPayload extends JwtPayload {
-  userId: string;
-  email?: string;
-  name?: string;
-  role?: string;
-  permissions?: string[];
-  institutionId: string;
-}
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JWTPayload;
-    }
-  }
-}
+import { JWTPayload } from '../types/express';
 
 export const validateJWT = async (
   req: Request,
@@ -85,7 +69,7 @@ export const validateJWT = async (
       }
     }
     
-    req.user = decoded as JWTPayload & { role: string };
+    req.user = decoded as JWTPayload;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {

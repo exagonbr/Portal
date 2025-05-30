@@ -79,7 +79,7 @@ export default function ForumPage() {
           name: 'Avisos e Comunicados',
           description: 'Informações importantes da instituição',
           icon: '📢',
-          color: 'bg-accent-blue',
+          color: 'bg-blue-500',
           topicsCount: 15,
           postsCount: 45,
           lastPost: {
@@ -94,7 +94,7 @@ export default function ForumPage() {
           name: 'Dúvidas Acadêmicas',
           description: 'Tire suas dúvidas sobre conteúdos e atividades',
           icon: '❓',
-          color: 'bg-accent-green',
+          color: 'bg-emerald-500',
           topicsCount: 128,
           postsCount: 512,
           lastPost: {
@@ -109,7 +109,7 @@ export default function ForumPage() {
           name: 'Projetos e Trabalhos',
           description: 'Discussões sobre projetos em grupo',
           icon: '💡',
-          color: 'bg-accent-purple',
+          color: 'bg-purple-500',
           topicsCount: 34,
           postsCount: 156,
           lastPost: {
@@ -124,7 +124,7 @@ export default function ForumPage() {
           name: 'Eventos e Atividades',
           description: 'Informações sobre eventos escolares',
           icon: '🎉',
-          color: 'bg-accent-yellow',
+          color: 'bg-amber-500',
           topicsCount: 22,
           postsCount: 89,
           lastPost: {
@@ -208,198 +208,207 @@ export default function ForumPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="loading-spinner"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="container-responsive spacing-y-responsive bg-gray-50 min-h-screen">
       {/* Cabeçalho */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-              <MessageSquare className="w-8 h-8 text-primary" />
-              Fórum da Comunidade
+            <h1 className="page-title flex items-center gap-2 sm:gap-3">
+              <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+              Fórum Acadêmico
             </h1>
-            <p className="text-gray-600 text-gray-400 mt-2">
-              Participe das discussões e compartilhe conhecimento
+            <p className="page-subtitle">
+              Participe das discussões e compartilhe conhecimento com a comunidade escolar
             </p>
           </div>
-          <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            Novo Tópico
+          <button className="button-primary flex items-center gap-2 shadow-sm">
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hide-mobile">Novo Tópico</span>
+            <span className="hide-desktop">Novo</span>
           </button>
         </div>
 
         {/* Barra de Pesquisa e Filtros */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar tópicos..."
-              className="w-full pl-10 pr-4 py-2 border   rounded-lg focus:ring-2 focus:ring-accent-blue bg-gray-100"
+              className="input-field pl-10"
             />
           </div>
-          <button className="px-4 py-2 border border-gray-300 border-gray-600 rounded-lg hover:bg-gray-50 hover:bg-gray-300 flex items-center gap-2">
-            <Filter className="w-5 h-5" />
+          <button className="button-secondary flex items-center gap-2">
+            <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
             Filtros
           </button>
         </div>
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-gray-900 ">
+              <p className="stat-value">
                 {categories.reduce((acc, cat) => acc + cat.topicsCount, 0)}
               </p>
-              <p className="text-sm text-gray-600 ">Tópicos</p>
+              <p className="stat-label">Tópicos</p>
             </div>
-            <MessageSquare className="min-w-min min-h-min text-accent-blue opacity-50" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-gray-900 ">
+              <p className="stat-value">
                 {categories.reduce((acc, cat) => acc + cat.postsCount, 0)}
               </p>
-              <p className="text-sm text-gray-600 text-gray-400">Respostas</p>
+              <p className="stat-label">Respostas</p>
             </div>
-            <MessageCircle className="min-w-min min-h-min text-accent-green opacity-50" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-gray-900 ">
-                1,234
-              </p>
-              <p className="text-sm text-gray-600 text-gray-400">Membros Ativos</p>
+              <p className="stat-value">1,234</p>
+              <p className="stat-label">Membros Ativos</p>
             </div>
-            <User className="min-w-min min-h-min text-accent-purple opacity-50" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <User className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-gray-900">
-                89%
-              </p>
-              <p className="text-sm text-gray-600 text-gray-400">Taxa de Resposta</p>
+              <p className="stat-value">89%</p>
+              <p className="stat-label">Taxa de Resposta</p>
             </div>
-            <TrendingUp className="wmin-w-min min-h-min text-accent-yellow opacity-50" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Categorias */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Categorias</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="section-title mb-4">Categorias</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           {categories.map((category) => (
             <div
               key={category.id}
-              className="bg-white bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              className="card hover:shadow-lg transition-all duration-300 cursor-pointer"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-lg ${category.color} bg-opacity-10 text-4xl`}>
-                    {category.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-1">{category.name}</h3>
-                    <p className="text-sm text-gray-600 text-gray-400 mb-3">
-                      {category.description}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>{category.topicsCount} tópicos</span>
-                      <span>•</span>
-                      <span>{category.postsCount} posts</span>
+              <div className="card-body">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className={`p-2 sm:p-3 rounded-lg ${category.color} bg-opacity-10 text-2xl sm:text-4xl`}>
+                      {category.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-base-responsive font-semibold mb-1 text-gray-900">{category.name}</h3>
+                      <p className="text-xs-responsive text-gray-600 mb-3">
+                        {category.description}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs-responsive text-gray-500">
+                        <span>{category.topicsCount} tópicos</span>
+                        <span>•</span>
+                        <span>{category.postsCount} posts</span>
+                      </div>
                     </div>
                   </div>
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
+                {category.lastPost && (
+                  <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+                    <p className="text-xs-responsive text-gray-500">Último post:</p>
+                    <p className="text-xs-responsive font-medium text-gray-800 truncate">{category.lastPost.title}</p>
+                    <p className="text-xs text-gray-500">
+                      por {category.lastPost.author} • {formatDate(category.lastPost.date)}
+                    </p>
+                  </div>
+                )}
               </div>
-              {category.lastPost && (
-                <div className="mt-4 pt-4 border-t border-gray-200 border-gray-700">
-                  <p className="text-sm text-gray-500">Último post:</p>
-                  <p className="text-sm font-medium truncate">{category.lastPost.title}</p>
-                  <p className="text-xs text-gray-400">
-                    por {category.lastPost.author} • {formatDate(category.lastPost.date)}
-                  </p>
-                </div>
-              )}
             </div>
           ))}
         </div>
       </div>
 
       {/* Tópicos Recentes e Populares */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Tópicos Recentes */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-accent-blue" />
+          <h2 className="section-title mb-4 flex items-center gap-2">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             Tópicos Recentes
           </h2>
           <div className="space-y-3">
             {recentTopics.map((topic) => (
               <div
                 key={topic.id}
-                className="bg-white bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="card hover:shadow-md transition-all duration-300 cursor-pointer"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {topic.isPinned && <Pin className="w-4 h-4 text-red-500" />}
-                      {topic.isLocked && <Lock className="w-4 h-4 text-gray-500" />}
-                      <h3 className="font-medium hover:text-primary transition-colors">
-                        {topic.title}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        {topic.author.name}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(topic.createdAt)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {topic.views}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3" />
-                        {topic.replies}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      {topic.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-1 text-xs bg-gray-100 bg-gray-300 rounded-full"
-                        >
-                          {tag}
+                <div className="card-body p-3 sm:p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {topic.isPinned && <Pin className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />}
+                        {topic.isLocked && <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />}
+                        <h3 className="text-sm-responsive font-medium text-gray-900 hover:text-primary transition-colors">
+                          {topic.title}
+                        </h3>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          {topic.author.name}
                         </span>
-                      ))}
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(topic.createdAt)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          {topic.views}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="w-3 h-3" />
+                          {topic.replies}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {topic.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="badge bg-gray-100 text-gray-600"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <ThumbsUp className="w-4 h-4" />
-                    <span className="text-sm">{topic.likes}</span>
+                    <div className="flex items-center gap-1 text-gray-500 ml-2">
+                      <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs-responsive">{topic.likes}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -409,57 +418,59 @@ export default function ForumPage() {
 
         {/* Tópicos Populares */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-accent-green" />
+          <h2 className="section-title mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
             Tópicos Populares
           </h2>
           <div className="space-y-3">
             {popularTopics.map((topic) => (
               <div
                 key={topic.id}
-                className="bg-white bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="card hover:shadow-md transition-all duration-300 cursor-pointer"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      {topic.isPinned && <Pin className="w-4 h-4 text-red-500" />}
-                      {topic.isLocked && <Lock className="w-4 h-4 text-gray-500" />}
-                      <h3 className="font-medium hover:text-primary transition-colors">
-                        {topic.title}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        {topic.author.name}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(topic.createdAt)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {topic.views}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3" />
-                        {topic.replies}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      {topic.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-1 text-xs bg-gray-100 bg-gray-300 rounded-full"
-                        >
-                          {tag}
+                <div className="card-body p-3 sm:p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {topic.isPinned && <Pin className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />}
+                        {topic.isLocked && <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />}
+                        <h3 className="text-sm-responsive font-medium text-gray-900 hover:text-primary transition-colors">
+                          {topic.title}
+                        </h3>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          {topic.author.name}
                         </span>
-                      ))}
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(topic.createdAt)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          {topic.views}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="w-3 h-3" />
+                          {topic.replies}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {topic.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="badge bg-gray-100 text-gray-600"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <ThumbsUp className="w-4 h-4" />
-                    <span className="text-sm">{topic.likes}</span>
+                    <div className="flex items-center gap-1 text-gray-500 ml-2">
+                      <ThumbsUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs-responsive">{topic.likes}</span>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -12,7 +12,7 @@ export interface ModuleDto {
   prerequisites?: string[]; // IDs de outros módulos
   course_id: string;
   // lessons?: LessonDto[]; // Se for incluir aulas no DTO do módulo
-  quizzes?: QuizDto[];   // Se for incluir quizzes no DTO do módulo
+  // quizzes?: QuizDto[];   // Se for incluir quizzes no DTO do módulo
   created_at: Date;
   updated_at: Date;
 }

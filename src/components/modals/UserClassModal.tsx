@@ -7,7 +7,7 @@ import { userClassService } from '@/services/userClassService';
 import { classService } from '@/services/classService';
 import { userService } from '@/services/userService';
 import { Class } from '@/types/class';
-import { User } from '@/types/user';
+import { UserResponseDto } from '@/types/api';
 
 interface UserClassModalProps {
   isOpen: boolean;
@@ -26,7 +26,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
   });
   const [enrollmentDateStr, setEnrollmentDateStr] = useState(new Date().toISOString().split('T')[0]);
   const [classes, setClasses] = useState<Class[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserResponseDto[]>([]);
   const [enrolledUsers, setEnrolledUsers] = useState<UserClassWithDetails[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,8 +52,8 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
         classService.list({ limit: 100 }),
         userService.list({ limit: 100 })
       ]);
-      setClasses(classesResponse.data || []);
-      setUsers(usersResponse.data || []);
+      setClasses(classesResponse.items || []);
+      setUsers(usersResponse.items || []);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     }

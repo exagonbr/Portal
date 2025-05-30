@@ -71,14 +71,14 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow">
+    <div className="flex flex-col h-full bg-white">
       {/* Chat Header */}
-      <div className="px-4 py-3 border-b border-slate-200">
+      <div className="px-4 py-3 border-b border-slate-200 flex-shrink-0">
         <h2 className="text-lg font-semibold text-slate-800">{className}</h2>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.map(message => {
           const isOwnMessage = message.senderId === user?.id
           const userInfo = getUserInfo(message.senderId)
@@ -134,7 +134,7 @@ export default function ChatRoom({ classId, className, initialMessages = [] }: C
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-200">
+      <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-200 flex-shrink-0">
         {attachments.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-2">
             {attachments.map(file => (

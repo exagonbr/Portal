@@ -1,7 +1,7 @@
 {
   "name": "portal-sabercon-backend",
-  "version": "1.0.0",
-  "description": "Backend API para o Portal Sabercon - Sistema de Gestão Educacional",
+  "version": "2.0.0",
+  "description": "Backend API para o Portal Sabercon - Sistema de Gestão Educacional com Redis Sessions e Dashboard Analytics",
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
@@ -10,6 +10,12 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "typeorm:cli": "npx typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm:cli migration:generate",
+    "migration:run": "npm run typeorm:cli migration:run -d src/config/typeorm.config.ts",
+    "migration:revert": "npm run typeorm:cli migration:revert -d src/config/typeorm.config.ts",
+    "setup": "node src/scripts/setup.ts",
+    "create-env": "node scripts/create-env.js",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
     "seed": "knex seed:run",
@@ -27,11 +33,17 @@
     "typescript",
     "postgresql",
     "redis",
-    "queue"
+    "sessions",
+    "jwt",
+    "dashboard",
+    "analytics",
+    "swagger"
   ],
   "author": "Portal Sabercon Team",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.820.0",
+    "@aws-sdk/s3-request-presigner": "^3.820.0",
     "@types/ioredis": "^4.28.10",
     "@types/web-push": "^3.6.4",
     "bcryptjs": "^2.4.3",

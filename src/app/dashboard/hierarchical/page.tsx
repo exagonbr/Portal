@@ -70,7 +70,7 @@ export default function HierarchicalDashboard() {
     try {
       setLoading(true);
       const institutionsResponse = await institutionService.list({ limit: 100 });
-      setInstitutions(institutionsResponse.data);
+      setInstitutions(institutionsResponse.items as any);
       
       // Calcular estatísticas gerais
       let totalSchools = 0;
@@ -79,7 +79,7 @@ export default function HierarchicalDashboard() {
       let totalTeachers = 0;
       let activeClasses = 0;
 
-      for (const institution of institutionsResponse.data) {
+      for (const institution of institutionsResponse.items) {
         const schoolsData = await schoolService.getByInstitution(institution.id);
         totalSchools += schoolsData.length;
 
@@ -93,7 +93,7 @@ export default function HierarchicalDashboard() {
       }
 
       setStats({
-        totalInstitutions: institutionsResponse.data.length,
+        totalInstitutions: institutionsResponse.items.length,
         totalSchools,
         totalClasses,
         totalStudents,

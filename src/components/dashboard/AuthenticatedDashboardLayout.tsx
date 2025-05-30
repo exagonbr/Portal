@@ -15,7 +15,7 @@ export default function AuthenticatedDashboardLayout({
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login')
+      router.push('/login?error=unauthorized')
     }
   }, [loading, user, router])
 

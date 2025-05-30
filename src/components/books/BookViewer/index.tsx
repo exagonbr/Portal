@@ -1,6 +1,6 @@
 import React from 'react';
 import { Book } from '@/constants/mockData';
-import IntegratedViewer from './IntegratedViewer';
+import OptimizedViewer from './OptimizedViewer';
 import { Annotation, Highlight, Bookmark } from './types';
 
 interface BookViewerProps {
@@ -27,7 +27,7 @@ const BookViewer: React.FC<BookViewerProps> = ({
   standalone = true
 }) => {
   return (
-    <IntegratedViewer
+    <OptimizedViewer
       book={book}
       initialAnnotations={initialAnnotations}
       initialHighlights={initialHighlights}

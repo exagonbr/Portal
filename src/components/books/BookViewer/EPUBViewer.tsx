@@ -1,12 +1,28 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Book as EpubBook, Rendition } from 'epubjs';
-import { ViewerControls } from './ViewerControls';
-import { AnnotationLayer } from './AnnotationLayer';
 import { Book } from '@/constants/mockData';
 import { Annotation, Highlight, Bookmark, ViewerState } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import screenfull from 'screenfull';
-import { FiX } from 'react-icons/fi';
+import {
+  FiChevronLeft,
+  FiChevronRight,
+  FiBookmark,
+  FiSearch,
+  FiMaximize,
+  FiMinimize,
+  FiColumns,
+  FiZoomIn,
+  FiZoomOut,
+  FiRotateCw,
+  FiMoon,
+  FiSun,
+  FiChevronsLeft,
+  FiChevronsRight,
+  FiX,
+  FiHome
+} from 'react-icons/fi';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 interface EPUBViewerProps {
   fileUrl: string;
@@ -16,6 +32,7 @@ interface EPUBViewerProps {
   onAnnotationAdd?: (annotation: Annotation) => void;
   onHighlightAdd?: (highlight: Highlight) => void;
   onBookmarkAdd?: (bookmark: Bookmark) => void;
+  onBack?: () => void;
 }
 
 const EPUBViewer: React.FC<EPUBViewerProps> = ({ 
@@ -25,10 +42,12 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
   initialBookmarks = [],
   onAnnotationAdd,
   onHighlightAdd,
-  onBookmarkAdd
+  onBookmarkAdd,
+  onBack
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
+  
   const [book, setBook] = useState<EpubBook | null>(null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const [viewerState, setViewerState] = useState<ViewerState>({
@@ -40,93 +59,172 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     isDualPage: false,
     currentPage: 1
   });
+  
   const [totalPages, setTotalPages] = useState<number>(0);
   const [bookMetadata, setBookMetadata] = useState<any>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{page: number, text: string}[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [newBookmarkTitle, setNewBookmarkTitle] = useState('');
+  const [isAddingBookmark, setIsAddingBookmark] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  // Função para obter URL completa do arquivo
+  const getFileUrl = useCallback((url: string): string => {
+    if (!url) return '';
+    
+    // Se já é uma URL completa
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // Se é uma URL relativa
+    if (url.startsWith('/')) {
+      return `${window.location.origin}${url}`;
+    }
+    
+    // Se não tem protocolo, assume que é relativo
+    return `${window.location.origin}/${url}`;
+  }, []);
+
+  // Calcular dimensões fit-to-screen
+  const calculateFitDimensions = useCallback(() => {
+    if (!containerRef.current) return { width: 800, height: 600 };
+    
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    
+    // Considerar a altura da toolbar (aproximadamente 80px) e padding
+    const availableHeight = containerRect.height - 120;
+    const availableWidth = containerRect.width - 40;
+    
+    return {
+      width: Math.max(600, availableWidth),
+      height: Math.max(400, availableHeight)
+    };
+  }, []);
+
+  // Atualizar dimensões quando o container redimensiona
+  useEffect(() => {
+    const updateDimensions = () => {
+      const newDimensions = calculateFitDimensions();
+      setDimensions(newDimensions);
+    };
+
+    updateDimensions();
+    
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [calculateFitDimensions]);
+
+  const initializeEPUB = useCallback(async () => {
+    if (!viewerRef.current) return;
+    
+    setLoading(true);
+    setError(null);
+
+    try {
+      const absoluteUrl = getFileUrl(fileUrl);
+      console.log('Carregando EPUB:', absoluteUrl);
+
+      // Verificar se o arquivo existe
+      try {
+        const response = await fetch(absoluteUrl, { method: 'HEAD' });
+        if (!response.ok) {
+          throw new Error(`Arquivo não encontrado: ${response.status}`);
+        }
+      } catch (fetchError) {
+        throw new Error('Arquivo EPUB não encontrado ou inacessível');
+      }
+
+      const newBook = new EpubBook(absoluteUrl, {
+        openAs: 'epub',
+        requestHeaders: {
+          'Accept': 'application/epub+zip',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+
+      setBook(newBook);
+
+      // Aguardar o livro estar pronto
+      await newBook.ready;
+      
+      // Carregar metadados
+      const meta = await newBook.loaded.metadata;
+      setBookMetadata(meta);
+      
+      // Renderizar o livro com dimensões fit-to-screen
+      const newRendition = newBook.renderTo(viewerRef.current, {
+        width: dimensions.width,
+        height: dimensions.height,
+        spread: viewerState.isDualPage ? 'auto' : 'none',
+        flow: 'paginated'
+      });
+      
+      setRendition(newRendition);
+
+      // Exibir a primeira página
+      await newRendition.display();
+
+      // Gerar localizações para paginação
+      await newBook.locations.generate(1024);
+      const total = newBook.locations.length();
+      setTotalPages(total);
+
+      // Configurar listeners de eventos
+      newRendition.on('relocated', (location: any) => {
+        const currentLocation = newBook.locations.locationFromCfi(location.start.cfi);
+        if (typeof currentLocation === 'number') {
+          setViewerState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
+        }
+      });
+
+      // Manipular seleção de texto para destaques
+      newRendition.on('selected', (cfiRange: string, contents: any) => {
+        const text = contents.window.getSelection().toString();
+        if (text) {
+          handleTextSelection(cfiRange, text);
+        }
+      });
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Erro ao carregar EPUB:', error);
+      setError(error instanceof Error ? error.message : 'Falha ao carregar o documento EPUB');
+      setLoading(false);
+    }
+  }, [fileUrl, getFileUrl, viewerState.isDualPage, dimensions]);
 
   useEffect(() => {
-    if (!viewerRef.current) return;
-
-    // Convert relative path to absolute URL if needed
-    const absoluteUrl = fileUrl.startsWith('http') 
-      ? fileUrl 
-      : `${window.location.origin}${fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`}`;
-
-    const newBook = new EpubBook(absoluteUrl, {
-      openAs: 'epub',
-      requestHeaders: {
-        'Accept': 'application/epub+zip',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
-
-    setBook(newBook);
-
-    const loadBook = async () => {
-      try {
-        // Wait for initial book loading
-        await newBook.ready;
-        
-        // Load metadata
-        const meta = await newBook.loaded.metadata;
-        setBookMetadata(meta);
-        
-        // Render the book
-        const newRendition = newBook.renderTo(viewerRef.current!, {
-          width: '100%',
-          height: '100%',
-          spread: viewerState.isDualPage ? 'auto' : 'none',
-          flow: 'paginated'
-        });
-        
-        setRendition(newRendition);
-
-        // Display the first page
-        await newRendition.display();
-
-        // Generate locations for pagination
-        await newBook.locations.generate(1024);
-        const total = newBook.locations.length();
-        setTotalPages(total);
-
-        // Set up event listeners
-        newRendition.on('relocated', (location: any) => {
-          const currentLocation = newBook.locations.locationFromCfi(location.start.cfi);
-          if (typeof currentLocation === 'number') {
-            setViewerState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
-          }
-        });
-
-        // Handle text selection for highlights
-        newRendition.on('selected', (cfiRange: string, contents: any) => {
-          const text = contents.window.getSelection().toString();
-          if (text) {
-            handleTextSelection(cfiRange, text);
-          }
-        });
-
-      } catch (error) {
-        console.error('Error loading EPUB:', error);
-      }
-    };
-
-    loadBook();
+    if (dimensions.width > 0 && dimensions.height > 0) {
+      initializeEPUB();
+    }
 
     return () => {
-      if (newBook) {
-        newBook.destroy();
+      if (book) {
+        book.destroy();
       }
     };
-  }, [fileUrl]);
+  }, [initializeEPUB, dimensions]);
 
-  // Update rendition when dual page mode changes
+  // Atualizar renderização quando o modo de página dupla muda
   useEffect(() => {
     if (rendition) {
       rendition.spread(viewerState.isDualPage ? 'auto' : 'none');
+      rendition.resize(dimensions.width, dimensions.height);
     }
-  }, [viewerState.isDualPage, rendition]);
+  }, [viewerState.isDualPage, rendition, dimensions]);
 
-  // Update rendition scale
+  // Atualizar escala da renderização
   useEffect(() => {
     if (rendition) {
       rendition.themes.fontSize(`${viewerState.currentScale * 100}%`);
@@ -141,8 +239,16 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
   }, [book, rendition, totalPages]);
 
   const handleZoomChange = useCallback((zoomLevel: number) => {
-    setViewerState(prev => ({ ...prev, currentScale: zoomLevel / 100 }));
+    const clampedZoom = Math.max(50, Math.min(300, zoomLevel));
+    setViewerState(prev => ({ ...prev, currentScale: clampedZoom / 100 }));
   }, []);
+
+  const handleZoom = useCallback((direction: 'in' | 'out') => {
+    const currentZoom = viewerState.currentScale * 100;
+    const step = 25;
+    const newZoom = direction === 'in' ? currentZoom + step : currentZoom - step;
+    handleZoomChange(newZoom);
+  }, [viewerState.currentScale, handleZoomChange]);
 
   const handleDualPageToggle = useCallback(() => {
     setViewerState(prev => ({ ...prev, isDualPage: !prev.isDualPage }));
@@ -156,28 +262,6 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     }
   }, []);
 
-  // Annotation handlers
-  const handleAnnotationAdd = useCallback((annotation: Omit<Annotation, 'id' | 'createdAt'>) => {
-    const newAnnotation: Annotation = {
-      ...annotation,
-      id: uuidv4(),
-      createdAt: new Date().toISOString()
-    };
-    setViewerState(prev => ({
-      ...prev,
-      annotations: [...prev.annotations, newAnnotation]
-    }));
-    onAnnotationAdd?.(newAnnotation);
-  }, [onAnnotationAdd]);
-
-  const handleAnnotationDelete = useCallback((id: string) => {
-    setViewerState(prev => ({
-      ...prev,
-      annotations: prev.annotations.filter(a => a.id !== id)
-    }));
-  }, []);
-
-  // Highlight handlers
   const handleTextSelection = useCallback((cfiRange: string, text: string) => {
     if (!rendition) return;
 
@@ -185,19 +269,14 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
       pageNumber: viewerState.currentPage,
       content: text,
       color: '#ffeb3b',
-      position: {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0
-      }
+      position: { x: 0, y: 0, width: 0, height: 0 }
     };
 
     handleHighlightAdd(highlight);
 
-    // Add highlight to EPUB rendition
+    // Adicionar destaque à renderização EPUB
     rendition.annotations.highlight(cfiRange, {}, (e: MouseEvent) => {
-      console.log('Highlight clicked:', text);
+      console.log('Destaque clicado:', text);
     }, '', { fill: '#ffeb3b', 'fill-opacity': '0.3' });
   }, [rendition, viewerState.currentPage]);
 
@@ -214,14 +293,6 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     onHighlightAdd?.(newHighlight);
   }, [onHighlightAdd]);
 
-  const handleHighlightDelete = useCallback((id: string) => {
-    setViewerState(prev => ({
-      ...prev,
-      highlights: prev.highlights.filter(h => h.id !== id)
-    }));
-  }, []);
-
-  // Bookmark handlers
   const handleBookmarkAdd = useCallback((title: string) => {
     const newBookmark: Bookmark = {
       id: uuidv4(),
@@ -236,30 +307,37 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     onBookmarkAdd?.(newBookmark);
   }, [viewerState.currentPage, onBookmarkAdd]);
 
-  const handleBookmarkDelete = useCallback((id: string) => {
-    setViewerState(prev => ({
-      ...prev,
-      bookmarks: prev.bookmarks.filter(b => b.id !== id)
-    }));
-  }, []);
-
-  const mockBook: Book = {
-    id: 'epub-viewer',
-    title: bookMetadata?.title || "EPUB Document",
-    author: bookMetadata?.creator || "Unknown",
-    publisher: bookMetadata?.publisher || "Unknown",
-    thumbnail: "",
-    synopsis: bookMetadata?.description || "",
-    duration: "N/A",
-    pageCount: totalPages,
-    format: 'epub'
+  const handleBookmarkSubmit = () => {
+    if (newBookmarkTitle.trim()) {
+      handleBookmarkAdd(newBookmarkTitle.trim());
+      setNewBookmarkTitle('');
+      setIsAddingBookmark(false);
+    }
   };
 
-  // Toggle dark mode
+  const handleSearch = useCallback(() => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    
+    // Simular pesquisa (em implementação real, usar API do EPUB.js)
+    setTimeout(() => {
+      const results = Array.from({ length: Math.min(5, totalPages || 0) }, (_, i) => {
+        const randomPage = Math.floor(Math.random() * (totalPages || 10)) + 1;
+        return {
+          page: randomPage,
+          text: `...${searchQuery} encontrado no contexto da página ${randomPage}...`
+        };
+      });
+      
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 500);
+  }, [searchQuery, totalPages]);
+
   const handleThemeToggle = useCallback(() => {
     setIsDarkMode(prev => !prev);
     
-    // Apply dark mode to EPUB renderer if needed
     if (rendition) {
       rendition.themes.register('dark', {
         'body': { 'color': '#e5e7eb !important', 'background-color': '#1f2937 !important' },
@@ -274,67 +352,408 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     }
   }, [rendition, isDarkMode]);
 
+  // Calcular progresso de leitura
+  const readingProgress = totalPages ? (viewerState.currentPage / totalPages) * 100 : 0;
+
+  const mockBook: Book = {
+    id: 'epub-viewer',
+    title: bookMetadata?.title || "Documento EPUB",
+    author: bookMetadata?.creator || "Autor Desconhecido",
+    publisher: bookMetadata?.publisher || "Editora Desconhecida",
+    thumbnail: "",
+    synopsis: bookMetadata?.description || "",
+    duration: "N/A",
+    pageCount: totalPages,
+    format: 'epub'
+  };
+
   return (
     <div
       ref={containerRef}
-      className={`flex h-full ${viewerState.isFullscreen ? 'bg-gray-900' : ''} ${isDarkMode ? 'dark' : ''}`}
+      className={`h-screen w-full flex flex-col overflow-hidden ${
+        viewerState.isFullscreen ? 'fixed inset-0 z-50' : ''
+      } ${isDarkMode ? 'dark' : ''} bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/10`}
     >
-      <div className="flex-1 overflow-auto relative">
-        <div
-          ref={viewerRef}
-          className="w-full h-full"
-          style={{ minHeight: '600px' }}
-        />
-        
-        {/* Overlay for annotations on current page */}
-        {viewerState.annotations
-          .filter(a => a.pageNumber === viewerState.currentPage)
-          .map(annotation => (
-            <div
-              key={annotation.id}
-              className="absolute bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg shadow-lg border border-yellow-200 dark:border-yellow-800/30"
-              style={{
-                left: `${annotation.position.x}px`,
-                top: `${annotation.position.y}px`,
-                zIndex: 10,
-                maxWidth: '250px'
-              }}
+      {/* Barra de ferramentas superior moderna */}
+      <div className="flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg flex-shrink-0">
+        {/* Controles à esquerda - Botão Voltar Proeminente */}
+        <div className="flex items-center space-x-4">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 hover:from-blue-600 hover:via-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
+              title="Voltar ao Portal"
             >
-              <div className="flex justify-between items-start mb-1">
-                <span className="text-xs text-yellow-600 dark:text-yellow-400">Note</span>
-                <span className="text-xs text-gray-500">{new Date(annotation.createdAt).toLocaleTimeString()}</span>
-              </div>
-              <p className="text-sm text-gray-800 dark:text-gray-200">{annotation.content}</p>
+              <ArrowLeftIcon className="w-5 h-5" />
+              <span>Voltar</span>
+            </button>
+          )}
+
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
               <button
-                onClick={() => handleAnnotationDelete(annotation.id)}
-                className="text-xs text-red-500 hover:text-red-600 mt-2 flex items-center"
+                onClick={() => handlePageChange(1)}
+                disabled={viewerState.currentPage <= 1}
+                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                title="Primeira página"
               >
-                <FiX className="w-3 h-3 mr-1" /> Remove
+                <FiChevronsLeft className="w-4 h-4" />
+              </button>
+              
+              <button
+                onClick={() => handlePageChange(viewerState.currentPage - (viewerState.isDualPage ? 2 : 1))}
+                disabled={viewerState.currentPage <= 1}
+                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                title="Página anterior"
+              >
+                <FiChevronLeft className="w-4 h-4" />
+              </button>
+              
+              <div className="flex items-center space-x-2 px-4">
+                <input
+                  type="number"
+                  value={viewerState.currentPage}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value >= 1 && value <= totalPages) {
+                      handlePageChange(value);
+                    }
+                  }}
+                  className="w-16 px-2 py-1 text-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-300/50 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  min={1}
+                  max={totalPages}
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                  / {totalPages || '—'}
+                </span>
+              </div>
+              
+              <button
+                onClick={() => handlePageChange(viewerState.currentPage + (viewerState.isDualPage ? 2 : 1))}
+                disabled={viewerState.currentPage >= totalPages}
+                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                title="Próxima página"
+              >
+                <FiChevronRight className="w-4 h-4" />
+              </button>
+              
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={viewerState.currentPage >= totalPages}
+                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                title="Última página"
+              >
+                <FiChevronsRight className="w-4 h-4" />
               </button>
             </div>
-          ))}
+          </div>
+
+          {/* Informações do livro */}
+          <div className="hidden lg:flex items-center space-x-4 text-sm">
+            <div className="text-gray-800 dark:text-gray-200">
+              <span className="font-bold text-blue-700 dark:text-blue-300">{mockBook.title}</span>
+              <span className="text-gray-600 dark:text-gray-400 ml-3">• {mockBook.author}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Controles centrais */}
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+            <button
+              onClick={() => handleZoom('out')}
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              title="Diminuir zoom"
+            >
+              <FiZoomOut className="w-4 h-4" />
+            </button>
+            <span className="px-4 text-sm font-semibold min-w-[3.5rem] text-center text-blue-600 dark:text-blue-400">
+              {Math.round(viewerState.currentScale * 100)}%
+            </span>
+            <button
+              onClick={() => handleZoom('in')}
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              title="Aumentar zoom"
+            >
+              <FiZoomIn className="w-4 h-4" />
+            </button>
+            <div className="w-px h-6 bg-gray-300/50 dark:bg-gray-600/50 mx-1" />
+            <button
+              onClick={() => handleZoomChange(100)}
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              title="Redefinir zoom"
+            >
+              <FiRotateCw className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="flex bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+            <button
+              onClick={handleDualPageToggle}
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                viewerState.isDualPage
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                  : 'hover:bg-white/80 dark:hover:bg-gray-600/80'
+              }`}
+              title="Alternar visualização de página dupla"
+            >
+              <FiColumns className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Controles à direita */}
+        <div className="flex items-center space-x-3">
+          <div className="flex bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                showSearch
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
+                  : 'hover:bg-white/80 dark:hover:bg-gray-600/80'
+              }`}
+              title="Pesquisar"
+            >
+              <FiSearch className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={() => {
+                const bookmark = viewerState.bookmarks.find(b => b.pageNumber === viewerState.currentPage);
+                if (bookmark) {
+                  setViewerState(prev => ({
+                    ...prev,
+                    bookmarks: prev.bookmarks.filter(b => b.id !== bookmark.id)
+                  }));
+                } else {
+                  setIsAddingBookmark(true);
+                }
+              }}
+              className={`p-2 rounded-lg transition-all duration-200 ${
+                viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage)
+                  ? 'text-yellow-500 bg-yellow-50/80 dark:bg-yellow-900/30'
+                  : 'hover:bg-white/80 dark:hover:bg-gray-600/80'
+              }`}
+              title="Alternar marcador"
+            >
+              <FiBookmark className="w-4 h-4" fill={viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage) ? 'currentColor' : 'none'} />
+            </button>
+          </div>
+          
+          <div className="flex bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+            <button
+              onClick={handleThemeToggle}
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              title="Alternar modo escuro"
+            >
+              {isDarkMode ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
+            </button>
+            
+            <button
+              onClick={handleFullscreenToggle}
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              title="Alternar tela cheia"
+            >
+              {viewerState.isFullscreen ? <FiMinimize className="w-4 h-4" /> : <FiMaximize className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
       </div>
 
-      <ViewerControls
-        book={mockBook}
-        currentPage={viewerState.currentPage}
-        zoom={viewerState.currentScale * 100}
-        isDualPage={viewerState.isDualPage}
-        isFullscreen={viewerState.isFullscreen}
-        bookmarks={viewerState.bookmarks}
-        annotations={viewerState.annotations}
-        highlights={viewerState.highlights}
-        onPageChange={handlePageChange}
-        onZoomChange={handleZoomChange}
-        onDualPageToggle={handleDualPageToggle}
-        onFullscreenToggle={handleFullscreenToggle}
-        onBookmarkAdd={handleBookmarkAdd}
-        onBookmarkDelete={handleBookmarkDelete}
-        onAnnotationAdd={handleAnnotationAdd}
-        onHighlightAdd={handleHighlightAdd}
-        onThemeToggle={handleThemeToggle}
-        isDarkMode={isDarkMode}
-      />
+      {/* Barra de progresso com gradiente */}
+      <div className="h-1 bg-gray-200/50 dark:bg-gray-700/50 flex-shrink-0">
+        <div
+          className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-500 ease-out"
+          style={{ width: `${readingProgress}%` }}
+        />
+      </div>
+
+      {/* Barra de pesquisa */}
+      {showSearch && (
+        <div className="px-6 py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 flex-shrink-0">
+          <div className="flex items-center space-x-4 max-w-3xl mx-auto">
+            <div className="relative flex-1">
+              <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Pesquisar no documento EPUB..."
+                className="w-full pl-12 pr-4 py-3 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-300/50 dark:border-gray-600/50"
+                autoFocus
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              disabled={!searchQuery.trim() || isSearching}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg"
+            >
+              {isSearching ? 'Pesquisando...' : 'Pesquisar'}
+            </button>
+            <button
+              onClick={() => {
+                setShowSearch(false);
+                setSearchQuery('');
+                setSearchResults([]);
+              }}
+              className="p-3 rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Resultados da pesquisa */}
+          {searchResults.length > 0 && (
+            <div className="mt-4 bg-gray-50/80 dark:bg-gray-700/50 backdrop-blur-sm rounded-xl p-4 max-h-64 overflow-y-auto max-w-3xl mx-auto shadow-lg">
+              <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Resultados da Pesquisa</h4>
+              <div className="space-y-2">
+                {searchResults.map((result, i) => (
+                  <div
+                    key={i}
+                    onClick={() => handlePageChange(result.page)}
+                    className="p-4 bg-white/80 dark:bg-gray-600/80 backdrop-blur-sm rounded-lg cursor-pointer hover:bg-blue-50/80 dark:hover:bg-blue-900/30 transition-all duration-200 border border-gray-200/50 dark:border-gray-600/50"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">Página {result.page}</span>
+                      <button className="text-xs text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Ir para página</button>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{result.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal para adicionar marcador */}
+      {isAddingBookmark && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-8 w-96 max-w-full mx-4 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+            <h3 className="text-xl font-bold mb-6 text-gray-800 dark:text-gray-200">Adicionar Marcador</h3>
+            <input
+              type="text"
+              value={newBookmarkTitle}
+              onChange={(e) => setNewBookmarkTitle(e.target.value)}
+              placeholder="Título do marcador..."
+              className="w-full px-4 py-3 border border-gray-300/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm"
+              autoFocus
+            />
+            <div className="flex justify-end space-x-3 mt-8">
+              <button
+                onClick={() => {
+                  setIsAddingBookmark(false);
+                  setNewBookmarkTitle('');
+                }}
+                className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-gray-700/80 rounded-xl transition-all duration-200 font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleBookmarkSubmit}
+                disabled={!newBookmarkTitle.trim()}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Conteúdo EPUB - Layout Fit to Screen */}
+      <div className="flex-1 overflow-hidden relative p-4">
+        {loading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="relative w-20 h-20 mx-auto mb-8">
+                <div className="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 text-xl font-semibold mb-2">Carregando EPUB...</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Preparando visualização</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center max-w-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+              <div className="text-red-500 mb-6">
+                <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-gray-700 dark:text-gray-300 mb-6 text-lg font-semibold">{error}</p>
+              <button
+                onClick={initializeEPUB}
+                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg"
+              >
+                Tentar Novamente
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="h-full flex items-center justify-center">
+            <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50">
+              <div
+                ref={viewerRef}
+                className="bg-white dark:bg-gray-800"
+                style={{ 
+                  width: `${dimensions.width}px`, 
+                  height: `${dimensions.height}px`,
+                  minWidth: '600px',
+                  minHeight: '400px'
+                }}
+              />
+              
+              {/* Overlay de informações do livro */}
+              {bookMetadata && (
+                <div className="absolute top-4 left-4 bg-black/70 text-white px-4 py-2 rounded-xl text-sm backdrop-blur-sm shadow-lg">
+                  <div className="font-semibold">{bookMetadata.title || mockBook.title}</div>
+                  <div className="text-xs opacity-75">{bookMetadata.creator || mockBook.author}</div>
+                </div>
+              )}
+
+              {/* Overlay para anotações na página atual */}
+              {viewerState.annotations
+                .filter(a => a.pageNumber === viewerState.currentPage)
+                .map(annotation => (
+                  <div
+                    key={annotation.id}
+                    className="absolute bg-yellow-100/90 dark:bg-yellow-900/40 p-3 rounded-lg shadow-lg border border-yellow-200/50 dark:border-yellow-800/30 backdrop-blur-sm"
+                    style={{
+                      left: `${annotation.position.x}px`,
+                      top: `${annotation.position.y}px`,
+                      zIndex: 10,
+                      maxWidth: '250px'
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Anotação</span>
+                      <span className="text-xs text-gray-500">{new Date(annotation.createdAt).toLocaleTimeString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">{annotation.content}</p>
+                    <button
+                      onClick={() => {
+                        setViewerState(prev => ({
+                          ...prev,
+                          annotations: prev.annotations.filter(a => a.id !== annotation.id)
+                        }));
+                      }}
+                      className="text-xs text-red-500 hover:text-red-600 mt-2 flex items-center transition-colors"
+                    >
+                      <FiX className="w-3 h-3 mr-1" /> Remover
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

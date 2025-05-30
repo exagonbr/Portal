@@ -225,7 +225,7 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'ADM',
     email: 'admin@portal.com',
     role: 'admin',
-    institution: 'Portal Corp',
+    institution: { id: 'portal-corp', name: 'Portal Corp' },
     courses: [],
     endereco: 'Rua Principal, 123',
     telefone: '(11) 99999-9999',
@@ -237,8 +237,11 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Julia Costa',
     email: 'julia.c@edu.com',
     role: 'student',
-    institution: 'Escola Municipal São José',
-    courses: ['1', '2'],
+    institution: { id: 'escola-sao-jose', name: 'Escola Municipal São José' },
+    courses: [
+      { id: '1', name: 'Matemática Avançada', status: 'active' },
+      { id: '2', name: 'História do Brasil Colônia', status: 'active' }
+    ],
     endereco: 'Av. Brasil, 456',
     telefone: '(21) 98888-8888',
     usuario: 'juliac',
@@ -249,8 +252,11 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Professor Ricardo',
     email: 'ricardo.oliveira@edu.com',
     role: 'teacher',
-    institution: 'Escola Municipal São José',
-    courses: ['1', '2'],
+    institution: { id: 'escola-sao-jose', name: 'Escola Municipal São José' },
+    courses: [
+      { id: '1', name: 'Matemática Avançada', role: 'teacher', status: 'active' },
+      { id: '2', name: 'História do Brasil Colônia', role: 'teacher', status: 'active' }
+    ],
     endereco: 'Rua das Palmeiras, 789',
     telefone: '(31) 97777-7777',
     usuario: 'ricardoprof',
@@ -261,7 +267,7 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Marina Silva',
     email: 'manager@portal.com',
     role: 'manager',
-    institution: 'Portal Corp',
+    institution: { id: 'portal-corp', name: 'Portal Corp' },
     courses: [],
     endereco: 'Alameda dos Anjos, 101',
     telefone: '(41) 96666-6666',
@@ -273,8 +279,11 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Ana Santos',
     email: 'ana.santos@edu.com',
     role: 'teacher',
-    institution: 'Colégio Estadual Dom Pedro II',
-    courses: ['3', '4'],
+    institution: { id: 'colegio-dom-pedro', name: 'Colégio Estadual Dom Pedro II' },
+    courses: [
+      { id: '3', name: 'Biologia', role: 'teacher', status: 'active' },
+      { id: '4', name: 'Química', role: 'teacher', status: 'active' }
+    ],
     endereco: 'Travessa da Paz, 202',
     telefone: '(51) 95555-5555',
     usuario: 'anasprof',
@@ -284,8 +293,11 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Pedro Santos',
     email: 'pedro.s@edu.com',
     role: 'student',
-    institution: 'Colégio Estadual Dom Pedro II',
-    courses: ['1', '3'],
+    institution: { id: 'colegio-dom-pedro', name: 'Colégio Estadual Dom Pedro II' },
+    courses: [
+      { id: '1', name: 'Matemática Avançada', status: 'active' },
+      { id: '3', name: 'Biologia', status: 'active' }
+    ],
     endereco: 'Rua da Esperança, 303',
     telefone: '(61) 94444-4444',
     usuario: 'pedros',
@@ -295,8 +307,10 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Carlos Moreira',
     email: 'carlos.m@edu.com',
     role: 'student',
-    institution: 'Escola Municipal São José',
-    courses: ['2'],
+    institution: { id: 'escola-sao-jose', name: 'Escola Municipal São José' },
+    courses: [
+      { id: '2', name: 'História do Brasil Colônia', status: 'active' }
+    ],
     endereco: 'Avenida Central, 404',
     telefone: '(71) 93333-3333',
     usuario: 'carlosm',
@@ -307,8 +321,10 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Lucia Ferreira',
     email: 'lucia.f@edu.com',
     role: 'teacher',
-    institution: 'Universidade Federal XYZ',
-    courses: ['5'],
+    institution: { id: 'universidade-xyz', name: 'Universidade Federal XYZ' },
+    courses: [
+      { id: '5', name: 'Física Quântica', role: 'teacher', status: 'active' }
+    ],
     endereco: 'Praça da Liberdade, 505',
     telefone: '(81) 92222-2222',
     usuario: 'luciafprof',
@@ -319,8 +335,11 @@ export const MOCK_USERS: Record<string, User> = {
     name: 'Roberto Alves',
     email: 'roberto.a@edu.com',
     role: 'student',
-    institution: 'Universidade Federal XYZ',
-    courses: ['5', '6'],
+    institution: { id: 'universidade-xyz', name: 'Universidade Federal XYZ' },
+    courses: [
+      { id: '5', name: 'Física Quântica', status: 'active' },
+      { id: '6', name: 'Cálculo Avançado', status: 'active' }
+    ],
     endereco: 'Rua Universitária, 606',
     telefone: '(91) 91111-1111',
     usuario: 'robertoa',
@@ -551,69 +570,69 @@ const videoThumbnails = videoIds.map(id => `https://img.youtube.com/vi/${id}/max
 // Generate 100 mock books with real educational book titles
 export const mockBooks: Book[] = [
   {
-    id: 'test-book-1',
+    id: 'local-epub-1',
     thumbnail: 'https://covers.openlibrary.org/b/id/10001-L.jpg',
-    title: 'Test Book 1',
-    author: 'Test Author 1',
-    publisher: 'Test Publisher',
-    synopsis: 'Test book for PDF reader functionality',
+    title: 'Livro EPUB Local - Teste 1',
+    author: 'Autor Teste',
+    publisher: 'Editora Teste',
+    synopsis: 'Livro EPUB local para teste de funcionalidade. Este arquivo está disponível localmente.',
     duration: '2h 30min',
-    format: 'pdf',
-    filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/740706609aa4939aa3c7930178bc516d4f5c2b905de7ab47637bec6bf91dcaa5.pdf',
-    pageCount: 120,
-    progress: 10
-  },
-  {
-    id: 'test-book-2',
-    thumbnail: 'https://covers.openlibrary.org/b/id/10002-L.jpg',
-    title: 'Test Book 2',
-    author: 'Test Author 2',
-    publisher: 'Test Publisher',
-    synopsis: 'Test book for PDF reader functionality',
-    duration: '1h 45min',
-    format: 'pdf',
-    filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/c76a59abd394730dfde13cb51604cc8ad0dfedcfb34a931f61182b9338c84822.pdf',
-    pageCount: 85,
-    progress: 10
-  },
-  {
-    id: 'test-book-3',
-    thumbnail: 'https://covers.openlibrary.org/b/id/10003-L.jpg',
-    title: 'Test Book 3',
-    author: 'Test Author 3',
-    publisher: 'Test Publisher',
-    synopsis: 'Test book for PDF reader functionality',
-    duration: '3h 15min',
-    format: 'pdf',
-    filePath: 'https://editora-liberty.s3.sa-east-1.amazonaws.com/upload/51814c3b79838003d288662610734eb8c90dd05fb6b667ee8e2435ed1e794d4c.pdf',
-    pageCount: 200,
-    progress: 10
-  },
-  {
-    id: 'test-book-4',
-    thumbnail: 'https://covers.openlibrary.org/b/id/10004-L.jpg',
-    title: 'Test Book 4',
-    author: 'Test Author 4',
-    publisher: 'Test Publisher',
-    synopsis: 'Test book for PDF reader functionality',
-    duration: '2h 00min',
-    format: 'pdf',
-    filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf',
-    pageCount: 150,
-    progress: 10
-  },
-  {
-    id: 'test-book-5',
-    thumbnail: 'https://covers.openlibrary.org/b/id/10004-L.jpg',
-    title: 'Test Book 5',
-    author: 'Test Author 4',
-    publisher: 'Test Publisher',
-    synopsis: 'Test book for EPUB reader functionality',
-    duration: '2h 00min',
     format: 'epub',
     filePath: '/books/9786585208116.epub',
+    pageCount: 300,
+    progress: 15
+  },
+  {
+    id: 'local-epub-2',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10002-L.jpg',
+    title: 'Sample EPUB - Teste 2',
+    author: 'Sample Author',
+    publisher: 'Sample Publisher',
+    synopsis: 'Arquivo EPUB de exemplo para testar o visualizador local.',
+    duration: '1h 15min',
+    format: 'epub',
+    filePath: '/books/sample.epub',
     pageCount: 150,
-    progress: 10
+    progress: 5
+  },
+  {
+    id: 'external-pdf-1',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10003-L.jpg',
+    title: 'PDF Externo - Teste 1',
+    author: 'Autor Externo',
+    publisher: 'Editora Externa',
+    synopsis: 'Livro PDF externo para teste de funcionalidade com URLs externas.',
+    duration: '3h 15min',
+    format: 'pdf',
+    filePath: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/740706609aa4939aa3c7930178bc516d4f5c2b905de7ab47637bec6bf91dcaa5.pdf',
+    pageCount: 200,
+    progress: 25
+  },
+  {
+    id: 'external-pdf-2',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10004-L.jpg',
+    title: 'PDF Externo - Teste 2',
+    author: 'Segundo Autor',
+    publisher: 'Segunda Editora',
+    synopsis: 'Segundo PDF externo para validar múltiplos formatos e URLs.',
+    duration: '2h 45min',
+    format: 'pdf',
+    filePath: 'https://editora-liberty.s3.sa-east-1.amazonaws.com/upload/51814c3b79838003d288662610734eb8c90dd05fb6b667ee8e2435ed1e794d4c.pdf',
+    pageCount: 180,
+    progress: 40
+  },
+  {
+    id: 'fallback-test',
+    thumbnail: 'https://covers.openlibrary.org/b/id/10005-L.jpg',
+    title: 'Teste Fallback - Sem filePath',
+    author: 'Teste Fallback',
+    publisher: 'Teste Publisher',
+    synopsis: 'Este livro não tem filePath definido para testar o sistema de fallback.',
+    duration: '1h 30min',
+    format: 'pdf',
+    // filePath não definido propositalmente para testar fallback
+    pageCount: 100,
+    progress: 0
   }
 ];
 

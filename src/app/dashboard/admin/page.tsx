@@ -189,7 +189,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Ações Rápidas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
         <QuickActionCard
           title="Nova Instituição"
           description="Cadastre uma nova instituição no sistema"
@@ -215,6 +215,22 @@ export default function AdminDashboard() {
           onClick={() => {
             setSelectedItem(null);
             setShowClassModal(true);
+          }}
+        />
+        <QuickActionCard
+          title="Demo de Modais"
+          description="Teste todos os modais de CRUD criados"
+          icon={Settings}
+          onClick={() => {
+            window.location.href = '/admin/demo-modals';
+          }}
+        />
+        <QuickActionCard
+          title="Navegação do Sistema"
+          description="Mapa completo de todas as páginas"
+          icon={TrendingUp}
+          onClick={() => {
+            window.location.href = '/admin/system-nav';
           }}
         />
       </div>

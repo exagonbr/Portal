@@ -18,7 +18,7 @@ export default function AuthenticatedLayout({
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/login')
+        router.push('/login?error=unauthorized')
       } else if (requiredRole && user.role !== requiredRole) {
         router.push(user.role === 'student' ? '/dashboard/student' : '/dashboard/teacher')
       }

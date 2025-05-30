@@ -11,5 +11,15 @@ export const env = {
     VAPID_PUBLIC_KEY: requireEnv('VAPID_PUBLIC_KEY'),
     VAPID_PRIVATE_KEY: requireEnv('VAPID_PRIVATE_KEY'),
     JWT_SECRET: requireEnv('JWT_SECRET'),
-    NODE_ENV: process.env.NODE_ENV || 'development'
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    
+    // Email configuration
+    SMTP_HOST: process.env.SMTP_HOST || 'localhost',
+    SMTP_PORT: process.env.SMTP_PORT || '587',
+    SMTP_SECURE: process.env.SMTP_SECURE || 'false',
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASS: process.env.SMTP_PASS,
+    SMTP_TLS_REJECT_UNAUTHORIZED: process.env.SMTP_TLS_REJECT_UNAUTHORIZED || 'true',
+    EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@portal.sabercon.com',
+    FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000'
 } as const;

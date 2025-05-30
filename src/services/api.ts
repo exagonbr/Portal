@@ -32,11 +32,11 @@ api.interceptors.response.use(
       // Token expirado ou inválido
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.location.href = '/login?error=unauthorized';
     }
     
     // Formatar mensagem de erro
-    const message = error.response?.data?.message || error.message || 'Erro ao processar requisição';
+    const message = (error.response?.data as any)?.message || error.message || 'Erro ao processar requisição';
     
     return Promise.reject({
       ...error,

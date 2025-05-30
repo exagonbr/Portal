@@ -22,7 +22,7 @@ export class UserController extends BaseController {
    * Lista todos os usuários com filtros e paginação
    */
   getAll = this.asyncHandler(async (req: Request, res: Response) => {
-    this.logger.apiRequest('GET', '/api/users', this.getUserId(req));
+    this.logger.apiRequest('GET', '/api/users', this.getUserId(req) || undefined);
 
     const filters: UserFilterDto = {
       search: req.query.search as string,
@@ -49,7 +49,7 @@ export class UserController extends BaseController {
    */
   getById = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    this.logger.apiRequest('GET', `/api/users/${id}`, this.getUserId(req));
+    this.logger.apiRequest('GET', `/api/users/${id}`, this.getUserId(req) || undefined);
 
     if (!id || !this.validateId(id)) {
       return this.error(res, 'Invalid user ID format', 400);
@@ -72,7 +72,7 @@ export class UserController extends BaseController {
    * Busca perfil do usuário autenticado
    */
   getProfile = this.asyncHandler(async (req: Request, res: Response) => {
-    this.logger.apiRequest('GET', '/api/users/me', this.getUserId(req));
+    this.logger.apiRequest('GET', '/api/users/me', this.getUserId(req) || undefined);
 
     if (!this.isAuthenticated(req)) {
       return this.unauthorized(res);
@@ -96,11 +96,11 @@ export class UserController extends BaseController {
    * Cria novo usuário
    */
   create = this.asyncHandler(async (req: Request, res: Response) => {
-    this.logger.apiRequest('POST', '/api/users', this.getUserId(req), req.body);
+    this.logger.apiRequest('POST', '/api/users', this.getUserId(req) || undefined, req.body);
 
     const validationErrors = this.validateRequest(req);
     if (validationErrors) {
-      return this.validationError(res, validationErrors);
+      return this.error(res, 'Validation failed', 400, validationErrors);
     }
 
     const userData: CreateUserDto = req.body;
@@ -110,7 +110,7 @@ export class UserController extends BaseController {
 
     if (!result.success) {
       if (result.errors) {
-        return this.validationError(res, result.errors);
+        return this.error(res, 'Validation failed', 400, result.errors as string[]);
       }
       return this.error(res, result.error || 'Failed to create user');
     }
@@ -124,11 +124,11 @@ export class UserController extends BaseController {
    */
   update = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    this.logger.apiRequest('PUT', `/api/users/${id}`, this.getUserId(req), req.body);
+    this.logger.apiRequest('PUT', `/api/users/${id}`, this.getUserId(req) || undefined, req.body);
 
     const validationErrors = this.validateRequest(req);
     if (validationErrors) {
-      return this.validationError(res, validationErrors);
+      return this.error(res, 'Validation failed', 400, validationErrors);
     }
 
     if (!id || !this.validateId(id)) {
@@ -145,7 +145,7 @@ export class UserController extends BaseController {
         return this.notFound(res, 'User');
       }
       if (result.errors) {
-        return this.validationError(res, result.errors);
+        return this.error(res, 'Validation failed', 400, result.errors as string[]);
       }
       return this.error(res, result.error || 'Failed to update user');
     }
@@ -158,7 +158,7 @@ export class UserController extends BaseController {
    * Atualiza perfil do usuário autenticado
    */
   updateProfile = this.asyncHandler(async (req: Request, res: Response) => {
-    this.logger.apiRequest('PUT', '/api/users/me', this.getUserId(req), req.body);
+    this.logger.apiRequest('PUT', '/api/users/me', this.getUserId(req) || undefined, req.body);
 
     if (!this.isAuthenticated(req)) {
       return this.unauthorized(res);
@@ -166,7 +166,7 @@ export class UserController extends BaseController {
 
     const validationErrors = this.validateRequest(req);
     if (validationErrors) {
-      return this.validationError(res, validationErrors);
+      return this.error(res, 'Validation failed', 400, validationErrors);
     }
 
     const userId = this.getUserId(req)!;
@@ -182,7 +182,7 @@ export class UserController extends BaseController {
         return this.notFound(res, 'User');
       }
       if (result.errors) {
-        return this.validationError(res, result.errors);
+        return this.error(res, 'Validation failed', 400, result.errors as string[]);
       }
       return this.error(res, result.error || 'Failed to update profile');
     }
@@ -196,7 +196,7 @@ export class UserController extends BaseController {
    */
   delete = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    this.logger.apiRequest('DELETE', `/api/users/${id}`, this.getUserId(req));
+    this.logger.apiRequest('DELETE', `/api/users/${id}`, this.getUserId(req) || undefined);
 
     if (!id || !this.validateId(id)) {
       return this.error(res, 'Invalid user ID format', 400);
@@ -222,7 +222,7 @@ export class UserController extends BaseController {
    */
   getUserCourses = this.asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    this.logger.apiRequest('GET', `/api/users/${id}/courses`, this.getUserId(req));
+    this.logger.apiRequest('GET', `/api/users/${id}/courses`, this.getUserId(req) || undefined);
 
     if (!id || !this.validateId(id)) {
       return this.error(res, 'Invalid user ID format', 400);
@@ -242,7 +242,7 @@ export class UserController extends BaseController {
    * Busca cursos do usuário autenticado
    */
   getMyCourses = this.asyncHandler(async (req: Request, res: Response) => {
-    this.logger.apiRequest('GET', '/api/users/me/courses', this.getUserId(req));
+    this.logger.apiRequest('GET', '/api/users/me/courses', this.getUserId(req) || undefined);
 
     if (!this.isAuthenticated(req)) {
       return this.unauthorized(res);
@@ -263,7 +263,7 @@ export class UserController extends BaseController {
    * Altera senha do usuário autenticado
    */
   changePassword = this.asyncHandler(async (req: Request, res: Response) => {
-    this.logger.apiRequest('POST', '/api/users/me/change-password', this.getUserId(req));
+    this.logger.apiRequest('POST', '/api/users/me/change-password', this.getUserId(req) || undefined);
 
     if (!this.isAuthenticated(req)) {
       return this.unauthorized(res);
@@ -300,7 +300,7 @@ export class UserController extends BaseController {
    */
   searchUsers = this.asyncHandler(async (req: Request, res: Response) => {
     const { q: search, institution_id } = req.query;
-    this.logger.apiRequest('GET', '/api/users/search', this.getUserId(req), { search, institution_id });
+    this.logger.apiRequest('GET', '/api/users/search', this.getUserId(req) || undefined, { search, institution_id });
 
     if (!search || typeof search !== 'string') {
       return this.error(res, 'Search term is required', 400);
@@ -328,7 +328,7 @@ export class UserController extends BaseController {
    */
   getByEmail = this.asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.params;
-    this.logger.apiRequest('GET', `/api/users/by-email/${email}`, this.getUserId(req));
+    this.logger.apiRequest('GET', `/api/users/by-email/${email}`, this.getUserId(req) || undefined);
 
     if (!email) {
       return this.error(res, 'Email is required', 400);
@@ -357,7 +357,7 @@ export class UserController extends BaseController {
    */
   getByUsername = this.asyncHandler(async (req: Request, res: Response) => {
     const { username } = req.params;
-    this.logger.apiRequest('GET', `/api/users/by-username/${username}`, this.getUserId(req));
+    this.logger.apiRequest('GET', `/api/users/by-username/${username}`, this.getUserId(req) || undefined);
 
     if (!username || username.length < 3) {
       return this.error(res, 'Username must be at least 3 characters long', 400);

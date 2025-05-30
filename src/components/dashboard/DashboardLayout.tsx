@@ -126,7 +126,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-background-secondary" onClick={handleClickOutside}>
+    <div className="flex h-screen w-screen bg-background-secondary" onClick={handleClickOutside}>
       {/* Left Sidebar */}
       <DashboardSidebar />
       
@@ -497,7 +497,7 @@ export default function DashboardLayout({
 
         {/* Page Content - Sem Right Sidebar */}
         <main className="flex-1 overflow-y-auto bg-background-tertiary min-w-0">
-          <div className="p-4 sm:p-6 lg:p-8">
+          <div className="h-full">
             {children}
           </div>
         </main>

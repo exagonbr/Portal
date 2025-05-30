@@ -29,6 +29,7 @@ import {
   Activity
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 import { classService } from '@/services/classService';
 import { Class } from '@/types/class';
 import { SHIFT_LABELS } from '@/types/class';
@@ -114,6 +115,7 @@ interface StudyGroup {
 
 function StudentDashboardContent() {
   const { user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [myClass, setMyClass] = useState<Class | null>(null);
   const [stats, setStats] = useState<StudentStats>({
@@ -576,7 +578,10 @@ function StudentDashboardContent() {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark">
+            <button 
+              onClick={() => router.push('/assignments/view-all')}
+              className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark transition-colors"
+            >
               Ver todas as tarefas
             </button>
           </div>
@@ -705,7 +710,10 @@ function StudentDashboardContent() {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark">
+            <button 
+              onClick={() => router.push('/portal/student/materials')}
+              className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark transition-colors"
+            >
               Ver todos os materiais
             </button>
           </div>
@@ -776,19 +784,31 @@ function StudentDashboardContent() {
           <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
             <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
+              <button 
+                onClick={() => router.push('/live/student')}
+                className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+              >
                 <Video className="w-4 h-4" />
                 Aula ao Vivo
               </button>
-              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+              <button 
+                onClick={() => router.push('/quiz/student')}
+                className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+              >
                 <Gamepad2 className="w-4 h-4" />
                 Quiz Interativo
               </button>
-              <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+              <button 
+                onClick={() => router.push('/study-groups/student')}
+                className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+              >
                 <Users className="w-4 h-4" />
                 Grupo de Estudos
               </button>
-              <button className="w-full px-4 py-2 bg-accent-orange text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2">
+              <button 
+                onClick={() => router.push('/chat/teacher')}
+                className="w-full px-4 py-2 bg-accent-orange text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+              >
                 <MessageSquare className="w-4 h-4" />
                 Falar com Professor
               </button>
@@ -1223,7 +1243,7 @@ export default function StudentDashboard() {
               Você não tem permissão para acessar o dashboard de estudante.
             </p>
             <button
-              onClick={() => window.location.href = '/login'}
+              onClick={() => window.location.href = '/login?error=unauthorized'}
               className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
             >
               Fazer Login

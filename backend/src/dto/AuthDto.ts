@@ -1,5 +1,5 @@
-import { Institution } from "@/entities/Institution";
-import { Role } from "@/entities/Role";
+import { Institution } from "../entities/Institution";
+import { Role } from "../entities/Role";
 
 export interface CreateUserDto {
   email: string;

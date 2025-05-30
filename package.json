@@ -15,6 +15,8 @@
     "test:push": "node scripts/test-push-notifications.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.820.0",
+    "@aws-sdk/s3-request-presigner": "^3.820.0",
     "@heroicons/react": "^2.2.0",
     "@types/express-session": "^1.18.1",
     "@types/ioredis": "^4.28.10",
