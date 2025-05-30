@@ -26,7 +26,7 @@ print_success() {
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${YELLOW}🔥  $1${NC}"
 }
 
 print_error() {
@@ -134,9 +134,11 @@ sleep 3
 print_success "Intervalo concluído"
 
 print_step "Iniciando Sabercon Backend..."
+cd backend
 pm2 start npm --name "PortalServerBackend" -- run dev --exp-backoff-restart-delay=100 --stop-exit-codes 0
 check_status "Backend iniciado com sucesso"
 echo ""
+cd ..
 
 # Verificação final
 print_step "Verificando status dos serviços..."
