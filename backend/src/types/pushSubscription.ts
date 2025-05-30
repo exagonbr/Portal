@@ -2,9 +2,9 @@ export interface PushSubscription {
     id: number;
     user_id: number;
     endpoint: string;
-    p256dh: string;
-    auth: string;
-    active: boolean;
+    p256dh_key: string;
+    auth_key: string;
+    is_active: boolean;
     last_used: Date | null;
     created_at: Date;
     updated_at: Date;

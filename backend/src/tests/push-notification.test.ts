@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 describe('Push Notification System', () => {
     let mockRequest: Partial<Request>;
     let mockResponse: Partial<Response>;
-    let mockUser = { id: 1, email: 'test@example.com', name: 'Test User', role: 'user' };
+    let mockUser = { id: '1', userId: '1', email: 'test@example.com', name: 'Test User', role: 'user' };
 
     beforeEach(() => {
         mockRequest = {
@@ -49,9 +49,9 @@ describe('Push Notification System', () => {
 
             expect(subscription).toBeTruthy();
             expect(subscription.endpoint).toBe(mockRequest.body.endpoint);
-            expect(subscription.p256dh).toBe(mockRequest.body.keys.p256dh);
-            expect(subscription.auth).toBe(mockRequest.body.keys.auth);
-            expect(subscription.active).toBe(true);
+            expect(subscription.p256dh_key).toBe(mockRequest.body.keys.p256dh);
+            expect(subscription.auth_key).toBe(mockRequest.body.keys.auth);
+            expect(subscription.is_active).toBe(true);
         });
 
         it('should update existing subscription', async () => {
@@ -76,8 +76,8 @@ describe('Push Notification System', () => {
                 .where('user_id', mockUser.id)
                 .first();
 
-            expect(subscription.p256dh).toBe('new-p256dh-key');
-            expect(subscription.auth).toBe('new-auth-key');
+            expect(subscription.p256dh_key).toBe('new-p256dh-key');
+            expect(subscription.auth_key).toBe('new-auth-key');
         });
     });
 
@@ -102,7 +102,7 @@ describe('Push Notification System', () => {
                 .where('user_id', mockUser.id)
                 .first();
 
-            expect(subscription.active).toBe(false);
+            expect(subscription.is_active).toBe(false);
         });
     });
 
@@ -121,7 +121,7 @@ describe('Push Notification System', () => {
             };
 
             const sentCount = await pushSubscriptionController.sendNotificationToUser(
-                mockUser.id,
+                mockUser.userId,
                 payload
             );
 

@@ -5,6 +5,7 @@ import { PWARegistration } from '@/components/PWARegistration';
 import { PushNotificationInitializer } from '@/components/PushNotificationInitializer';
 import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
+import GlobalSetup from '@/components/GlobalSetup';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -61,6 +62,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
         <ErrorSuppressor />
+        <GlobalSetup />
         <AppProviders>
           {children}
           <PWARegistration />

@@ -29,6 +29,15 @@ ChartJS.register(
   Legend
 )
 
+// Configurar Chart.js para otimizar o ResizeObserver
+ChartJS.defaults.responsive = true;
+ChartJS.defaults.maintainAspectRatio = false;
+ChartJS.defaults.resizeDelay = 200; // Delay para resize
+ChartJS.defaults.animation = {
+  ...ChartJS.defaults.animation,
+  duration: 750, // Reduzir duração da animação
+};
+
 interface ChartDataDetails {
   [key: string]: string | number
 }

@@ -91,53 +91,85 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     return `${window.location.origin}/${url}`;
   }, []);
 
-  // Atualizar dimensões quando o container redimensiona
+  // Redimensionamento responsivo
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+    let isObserving = false;
+
     const updateDimensions = () => {
-      // Usar throttling para evitar atualizações excessivas
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        if (!containerRef.current) return;
+        if (!containerRef.current || isObserving) return;
         
-        const container = containerRef.current;
-        const containerRect = container.getBoundingClientRect();
+        isObserving = true;
         
-        // Considerar a altura da toolbar (aproximadamente 80px) e padding
-        const availableHeight = containerRect.height - 120;
-        const availableWidth = containerRect.width - 40;
-        
-        const newDimensions = {
-          width: Math.max(600, availableWidth),
-          height: Math.max(400, availableHeight)
-        };
-        
-        // Só atualizar se houve mudança significativa (> 10px)
-        setDimensions(prevDimensions => {
-          const widthDiff = Math.abs(newDimensions.width - prevDimensions.width);
-          const heightDiff = Math.abs(newDimensions.height - prevDimensions.height);
+        try {
+          const container = containerRef.current;
+          const rect = container.getBoundingClientRect();
+          const availableWidth = rect.width - 40; // margem
+          const availableHeight = rect.height - 80; // margem + controles
           
-          if (widthDiff > 10 || heightDiff > 10) {
-            return newDimensions;
-          }
-          return prevDimensions;
-        });
-      }, 150); // Throttle de 150ms
+          const newDimensions = {
+            width: Math.max(600, availableWidth),
+            height: Math.max(400, availableHeight)
+          };
+          
+          // Só atualizar se houve mudança significativa (> 10px)
+          setDimensions(prevDimensions => {
+            const widthDiff = Math.abs(newDimensions.width - prevDimensions.width);
+            const heightDiff = Math.abs(newDimensions.height - prevDimensions.height);
+            
+            if (widthDiff > 10 || heightDiff > 10) {
+              return newDimensions;
+            }
+            return prevDimensions;
+          });
+        } catch (error) {
+          // Ignorar erros do ResizeObserver
+        } finally {
+          isObserving = false;
+        }
+      }, 200); // Aumentar throttle para 200ms
     };
 
     updateDimensions();
     
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
+    let resizeObserver: ResizeObserver | null = null;
+    
+    try {
+      resizeObserver = new ResizeObserver((entries) => {
+        // Verificar se há mudanças significativas antes de processar
+        const entry = entries[0];
+        if (entry && entry.contentRect) {
+          updateDimensions();
+        }
+      });
+      
+      if (containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+      }
+    } catch (error) {
+      // Fallback para resize da window se ResizeObserver falhar
+      const handleWindowResize = () => updateDimensions();
+      window.addEventListener('resize', handleWindowResize);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('resize', handleWindowResize);
+      };
     }
 
     return () => {
       clearTimeout(timeoutId);
-      resizeObserver.disconnect();
+      if (resizeObserver) {
+        try {
+          resizeObserver.disconnect();
+        } catch (error) {
+          // Ignorar erros ao desconectar
+        }
+      }
     };
-  }, []); // Remover calculateFitDimensions das dependências
+  }, []);
 
   const initializeEPUB = useCallback(async () => {
     if (!viewerRef.current) return;

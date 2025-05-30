@@ -42,9 +42,9 @@ export class PushSubscriptionController {
                 await db<PushSubscription>('push_subscriptions')
                     .where({ user_id: user.id, endpoint })
                     .update({
-                        p256dh: keys.p256dh,
-                        auth: keys.auth,
-                        active: true,
+                        p256dh_key: keys.p256dh,
+                        auth_key: keys.auth,
+                        is_active: true,
                         last_used: new Date()
                     });
             } else {
@@ -52,9 +52,9 @@ export class PushSubscriptionController {
                 await db<PushSubscription>('push_subscriptions').insert({
                     user_id: user.id,
                     endpoint,
-                    p256dh: keys.p256dh,
-                    auth: keys.auth,
-                    active: true,
+                    p256dh_key: keys.p256dh,
+                    auth_key: keys.auth,
+                    is_active: true,
                     created_at: new Date(),
                     last_used: new Date()
                 });
@@ -87,7 +87,7 @@ export class PushSubscriptionController {
 
             await db<PushSubscription>('push_subscriptions')
                 .where({ user_id: user.id, endpoint })
-                .update({ active: false });
+                .update({ is_active: false });
 
             return res.status(200).json({
                 success: true,
@@ -107,8 +107,8 @@ export class PushSubscriptionController {
             await webpush.sendNotification({
                 endpoint: subscription.endpoint,
                 keys: {
-                    p256dh: subscription.p256dh,
-                    auth: subscription.auth
+                    p256dh: subscription.p256dh_key,
+                    auth: subscription.auth_key
                 }
             }, JSON.stringify(payload));
 
@@ -123,7 +123,7 @@ export class PushSubscriptionController {
                 // Subscription is expired or invalid
                 await db<PushSubscription>('push_subscriptions')
                     .where('endpoint', subscription.endpoint)
-                    .update({ active: false });
+                    .update({ is_active: false });
             }
             throw error;
         }
@@ -133,7 +133,7 @@ export class PushSubscriptionController {
         try {
             const subscriptions = await db<PushSubscription>('push_subscriptions')
                 .where('user_id', userId)
-                .where('active', true);
+                .where('is_active', true);
 
             let sentCount = 0;
             
@@ -204,7 +204,7 @@ export class PushSubscriptionController {
             } else {
                 // Send to all active subscriptions
                 const subscriptions = await db<PushSubscription>('push_subscriptions')
-                    .where('active', true);
+                    .where('is_active', true);
 
                 for (const subscription of subscriptions) {
                     try {
