@@ -97,7 +97,7 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
       >
         <FaDownload className="text-lg" />
         <span className="font-medium">
-          {isHttps ? 'Instalar App' : 'Instalar App (Requer HTTPS)'}
+          {isHttps ? 'Instalar App' : 'Instalar App'}
         </span>
       </button>
     </div>

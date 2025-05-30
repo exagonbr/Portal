@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# Script para configurar SSL Let's Encrypt - Portal Sabercon
-# Frontend: 54.232.72.62:3000 | Backend: 54.232.72.62:3001
-# Autor: Assistente AI
-# Data: $(date)
+# Script completo de SSL Let's Encrypt - Portal Sabercon
+# Frontend: localhost:3000 via HTTPS | Backend: localhost:3001 via HTTPS
+# Execute como root: sudo bash setup-ssl.sh
 
 set -e
 
@@ -15,391 +14,499 @@ BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 # Configurações
-SERVER_IP="54.232.72.62"
+IP="54.232.72.62"
 FRONTEND_PORT="3000"
 BACKEND_PORT="3001"
-DOMAIN=$SERVER_IP
 EMAIL="admin@sabercon.com.br"  # ALTERE ESTE EMAIL
 
-echo -e "${BLUE}🚀 Configurando SSL Let's Encrypt - Portal Sabercon${NC}"
-echo -e "${CYAN}📱 Frontend: ${SERVER_IP}:${FRONTEND_PORT}${NC}"
-echo -e "${CYAN}🔧 Backend:  ${SERVER_IP}:${BACKEND_PORT}${NC}"
-echo -e "${YELLOW}⚠️  Certifique-se de que você tem acesso root ao servidor${NC}"
+# Função para log
+log() {
+    echo -e "${BLUE}[$(date '+%H:%M:%S')] $1${NC}"
+}
+
+log_success() {
+    echo -e "${GREEN}[$(date '+%H:%M:%S')] ✅ $1${NC}"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[$(date '+%H:%M:%S')] ⚠️  $1${NC}"
+}
+
+log_error() {
+    echo -e "${RED}[$(date '+%H:%M:%S')] ❌ $1${NC}"
+}
+
+# Header
+echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${WHITE}🔒 PORTAL SABERCON - CONFIGURAÇÃO SSL COMPLETA${NC}"
+echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+echo -e "${CYAN}📱 Frontend:    https://$IP/ → localhost:$FRONTEND_PORT${NC}"
+echo -e "${CYAN}🔧 Backend API: https://$IP/api/ → localhost:$BACKEND_PORT/api/${NC}"
+echo -e "${CYAN}🔧 Backend:     https://$IP/backend/ → localhost:$BACKEND_PORT/${NC}"
+echo -e "${CYAN}📧 Contato SSL: $EMAIL${NC}"
 echo ""
 
-# Função para verificar se comando existe
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Função para instalar pacotes
-install_package() {
-    if ! dpkg -l | grep -q "^ii  $1 "; then
-        echo -e "${YELLOW}📦 Instalando $1...${NC}"
-        apt-get install -y $1
-    else
-        echo -e "${GREEN}✅ $1 já está instalado${NC}"
-    fi
-}
-
-# Verificar se é root
+# Verificar root
 if [ "$EUID" -ne 0 ]; then
-    echo -e "${RED}❌ Este script deve ser executado como root${NC}"
-    echo "Execute: sudo bash setup-ssl.sh"
+    log_error "Execute como root: sudo bash setup-ssl.sh"
     exit 1
 fi
 
-# Atualizar sistema
-echo -e "${BLUE}🔄 Atualizando sistema...${NC}"
-apt-get update
+# Verificar conectividade
+log "🌐 Verificando conectividade e DNS..."
+if ping -c 1 8.8.8.8 > /dev/null 2>&1; then
+    log_success "Conectividade OK"
+else
+    log_error "Sem conectividade com a internet"
+    exit 1
+fi
 
-# Instalar dependências
-echo -e "${BLUE}📦 Instalando dependências...${NC}"
-install_package "nginx"
-install_package "certbot"
-install_package "python3-certbot-nginx"
-install_package "ufw"
-install_package "net-tools"
+# Verificar se as aplicações estão rodando
+log "🔍 Verificando serviços Portal Sabercon..."
+FRONTEND_RUNNING=false
+BACKEND_RUNNING=false
+
+if netstat -tlnp 2>/dev/null | grep -E "(127.0.0.1:${FRONTEND_PORT}|localhost:${FRONTEND_PORT}|:${FRONTEND_PORT})" > /dev/null; then
+    log_success "Frontend encontrado na porta $FRONTEND_PORT"
+    FRONTEND_RUNNING=true
+else
+    log_warning "Frontend não encontrado na porta $FRONTEND_PORT"
+fi
+
+if netstat -tlnp 2>/dev/null | grep -E "(127.0.0.1:${BACKEND_PORT}|localhost:${BACKEND_PORT}|:${BACKEND_PORT})" > /dev/null; then
+    log_success "Backend encontrado na porta $BACKEND_PORT"
+    BACKEND_RUNNING=true
+else
+    log_warning "Backend não encontrado na porta $BACKEND_PORT"
+fi
+
+if [ "$FRONTEND_RUNNING" = false ] || [ "$BACKEND_RUNNING" = false ]; then
+    echo ""
+    log_warning "Algumas aplicações não estão rodando. Verifique:"
+    echo "  🔍 pm2 list"
+    echo "  🔍 netstat -tlnp | grep -E '(3000|3001)'"
+    echo ""
+    read -p "Continuar mesmo assim? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log "Configuração cancelada"
+        exit 1
+    fi
+fi
+
+# Backup de configurações antigas
+log "💾 Fazendo backup das configurações..."
+BACKUP_DIR="/root/ssl-backup-$(date +%Y%m%d-%H%M%S)"
+mkdir -p $BACKUP_DIR
+
+if [ -f "/etc/nginx/sites-available/default" ]; then
+    cp /etc/nginx/sites-available/default $BACKUP_DIR/nginx-default.bak
+    log_success "Backup Nginx criado em $BACKUP_DIR"
+fi
+
+# Atualizar sistema
+log "📦 Atualizando sistema e instalando dependências..."
+apt update -qq
+apt install -y nginx certbot python3-certbot-nginx curl wget net-tools ufw software-properties-common
 
 # Configurar firewall
-echo -e "${BLUE}🔥 Configurando firewall...${NC}"
-ufw --force enable
+log "🔥 Configurando firewall UFW..."
+ufw --force reset
+ufw default deny incoming
+ufw default allow outgoing
 ufw allow ssh
+ufw allow 22
 ufw allow 80
 ufw allow 443
 ufw allow $FRONTEND_PORT
 ufw allow $BACKEND_PORT
+ufw --force enable
+log_success "Firewall configurado"
 
-# Verificar se as aplicações estão rodando
-echo -e "${BLUE}🔍 Verificando se as aplicações estão rodando...${NC}"
-if ! netstat -tlnp | grep ":${FRONTEND_PORT} " > /dev/null; then
-    echo -e "${YELLOW}⚠️  Frontend não encontrado na porta ${FRONTEND_PORT}${NC}"
-    echo "Certifique-se de que sua aplicação Next.js está rodando em ${FRONTEND_PORT}"
-fi
-
-if ! netstat -tlnp | grep ":${BACKEND_PORT} " > /dev/null; then
-    echo -e "${YELLOW}⚠️  Backend não encontrado na porta ${BACKEND_PORT}${NC}"
-    echo "Certifique-se de que sua aplicação backend está rodando em ${BACKEND_PORT}"
-fi
-
-read -p "Continuar mesmo assim? (y/N): " continue_anyway
-if [[ ! $continue_anyway =~ ^[Yy]$ ]]; then
-    exit 1
-fi
-
-# Parar nginx se estiver rodando
+# Parar serviços
+log "⏹️  Parando serviços..."
 systemctl stop nginx 2>/dev/null || true
+systemctl stop apache2 2>/dev/null || true
 
-# Criar configuração inicial do nginx
-echo -e "${BLUE}⚙️  Criando configuração inicial do Nginx...${NC}"
+# Configuração avançada do Nginx
+log "⚙️ Configurando Nginx com otimizações..."
+
+# Backup da configuração principal
+cp /etc/nginx/nginx.conf $BACKUP_DIR/nginx.conf.bak 2>/dev/null || true
+
+# Configuração principal otimizada
+cat > /etc/nginx/nginx.conf << 'EOL'
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    # Basic Settings
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    server_tokens off;
+    
+    # MIME Types
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    
+    # Logging
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+    
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log warn;
+    
+    # Gzip
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml;
+    
+    # Rate Limiting
+    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=general:10m rate=1r/s;
+    
+    # Include sites
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}
+EOL
+
+# Site específico para Portal Sabercon
 cat > /etc/nginx/sites-available/default << EOF
-# Portal Sabercon - Frontend + Backend
+# Portal Sabercon - Configuração SSL Completa
+# Frontend: localhost:$FRONTEND_PORT | Backend: localhost:$BACKEND_PORT
+
 server {
     listen 80;
-    server_name ${DOMAIN} www.${DOMAIN};
-
-    # Frontend (raiz do site)
+    server_name $IP;
+    
+    # Redirecionamento para HTTPS será adicionado pelo Certbot
+    
+    # Frontend (raiz do site) → localhost:$FRONTEND_PORT
     location / {
-        proxy_pass http://localhost:${FRONTEND_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
+        # Rate limiting suave para frontend
+        limit_req zone=general burst=5 nodelay;
+        
+        proxy_pass http://localhost:$FRONTEND_PORT;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Forwarded-Host \$host;
         proxy_cache_bypass \$http_upgrade;
+        
+        # Headers para PWA e WebSocket
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        
+        # Timeout otimizado
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
+        
+        # Headers de segurança
+        add_header X-Content-Type-Options nosniff;
+        add_header X-Frame-Options DENY;
+        add_header X-XSS-Protection "1; mode=block";
+        
+        # Cache para assets estáticos
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            proxy_pass http://localhost:$FRONTEND_PORT;
+            proxy_set_header Host \$host;
+            expires 7d;
+            add_header Cache-Control "public, immutable";
+        }
     }
-
-    # Backend API
-    location /api {
-        proxy_pass http://localhost:${BACKEND_PORT}/api;
-        proxy_http_version 1.1;
+    
+    # Backend API → localhost:$BACKEND_PORT/api/
+    location /api/ {
+        # Rate limiting para API
+        limit_req zone=api burst=20 nodelay;
+        
+        proxy_pass http://localhost:$BACKEND_PORT/api/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Headers específicos para API
         proxy_set_header Content-Type application/json;
+        proxy_set_header Accept application/json;
         
         # CORS headers
-        add_header Access-Control-Allow-Origin *;
-        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
-        add_header Access-Control-Allow-Headers "Content-Type, Authorization";
-    }
-
-    # Backend direto (para testes/admin)
-    location /backend {
-        rewrite ^/backend/(.*) /\$1 break;
-        proxy_pass http://localhost:${BACKEND_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-EOF
-
-# Testar configuração do nginx
-echo -e "${BLUE}🧪 Testando configuração do Nginx...${NC}"
-nginx -t
-
-# Iniciar nginx
-echo -e "${BLUE}🚀 Iniciando Nginx...${NC}"
-systemctl start nginx
-systemctl enable nginx
-
-# Aguardar nginx inicializar
-sleep 2
-
-# Verificar se nginx está rodando
-if ! systemctl is-active --quiet nginx; then
-    echo -e "${RED}❌ Erro: Nginx não conseguiu iniciar${NC}"
-    systemctl status nginx
-    exit 1
-fi
-
-echo -e "${GREEN}✅ Nginx configurado e rodando${NC}"
-
-# Obter certificado SSL
-echo -e "${BLUE}🔒 Obtendo certificado SSL Let's Encrypt...${NC}"
-echo -e "${YELLOW}📧 Usando email: ${EMAIL}${NC}"
-echo -e "${YELLOW}⚠️  Se necessário, altere o email no script${NC}"
-
-# Para IP, usamos standalone mode
-systemctl stop nginx
-
-# Obter certificado usando standalone
-certbot certonly \
-    --standalone \
-    --non-interactive \
-    --agree-tos \
-    --email $EMAIL \
-    --domains $DOMAIN \
-    --preferred-challenges http
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Certificado SSL obtido com sucesso!${NC}"
-else
-    echo -e "${RED}❌ Erro ao obter certificado SSL${NC}"
-    echo -e "${YELLOW}💡 Verifique se:${NC}"
-    echo "   - O domínio/IP aponta para este servidor"
-    echo "   - As portas 80 e 443 estão abertas"
-    echo "   - Não há outros serviços usando a porta 80"
-    exit 1
-fi
-
-# Criar configuração nginx com SSL
-echo -e "${BLUE}🔧 Configurando Nginx com SSL...${NC}"
-cat > /etc/nginx/sites-available/default << EOF
-# Redirecionamento HTTP para HTTPS
-server {
-    listen 80;
-    server_name ${DOMAIN} www.${DOMAIN};
-    return 301 https://\$server_name\$request_uri;
-}
-
-# Configuração HTTPS - Portal Sabercon
-server {
-    listen 443 ssl http2;
-    server_name ${DOMAIN} www.${DOMAIN};
-
-    # Certificados SSL
-    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
-
-    # Configurações SSL modernas
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_prefer_server_ciphers off;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
-
-    # Headers de segurança
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-
-    # Frontend (raiz do site)
-    location / {
-        proxy_pass http://localhost:${FRONTEND_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header X-Forwarded-Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-        
-        # Configurações para PWA
-        proxy_set_header X-Forwarded-Server \$host;
-    }
-
-    # Backend API
-    location /api {
-        proxy_pass http://localhost:${BACKEND_PORT}/api;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header Content-Type application/json;
-        
-        # CORS e API headers
         add_header Access-Control-Allow-Origin * always;
-        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
-        add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH" always;
+        add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With" always;
+        add_header Access-Control-Allow-Credentials true always;
         
-        # Timeout para APIs
+        # Preflight requests
+        if (\$request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin * always;
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH" always;
+            add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With" always;
+            add_header Access-Control-Max-Age 1728000;
+            add_header Content-Type 'text/plain charset=UTF-8';
+            add_header Content-Length 0;
+            return 204;
+        }
+        
+        # Timeout para APIs (maior)
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
+        
+        # Buffer settings
+        proxy_buffering off;
+        proxy_request_buffering off;
     }
-
-    # Backend direto (para testes/admin)
-    location /backend {
-        rewrite ^/backend/(.*) /\$1 break;
-        proxy_pass http://localhost:${BACKEND_PORT};
-        proxy_http_version 1.1;
+    
+    # Backend direto → localhost:$BACKEND_PORT/
+    location /backend/ {
+        proxy_pass http://localhost:$BACKEND_PORT/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Timeout padrão
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
     }
-
-    # Otimizações para arquivos estáticos do Frontend
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js|pdf|txt|svg|woff|woff2|ttf|eot|webp)$ {
-        proxy_pass http://localhost:${FRONTEND_PORT};
-        proxy_cache_valid 200 1y;
-        add_header Cache-Control "public, immutable";
-        add_header X-Cache-Status "STATIC";
-        expires 1y;
-    }
-
-    # Service Worker e Manifest (PWA)
-    location ~* \.(sw|manifest)\.js$ {
-        proxy_pass http://localhost:${FRONTEND_PORT};
-        add_header Cache-Control "no-cache, no-store, must-revalidate";
-        add_header Pragma "no-cache";
-        add_header Expires "0";
+    
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    # Health check
+    location /_health {
+        access_log off;
+        return 200 "OK";
+        add_header Content-Type text/plain;
     }
 }
 EOF
 
-# Testar nova configuração
-echo -e "${BLUE}🧪 Testando nova configuração do Nginx...${NC}"
-nginx -t
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Configuração do Nginx válida${NC}"
+# Testar configuração
+log "🧪 Testando configuração do Nginx..."
+if nginx -t; then
+    log_success "Configuração Nginx válida"
 else
-    echo -e "${RED}❌ Erro na configuração do Nginx${NC}"
+    log_error "Erro na configuração Nginx"
     exit 1
 fi
 
-# Reiniciar nginx
-echo -e "${BLUE}🔄 Reiniciando Nginx...${NC}"
-systemctl restart nginx
+# Iniciar Nginx
+log "🚀 Iniciando Nginx..."
+systemctl start nginx
+systemctl enable nginx
+log_success "Nginx iniciado"
 
-# Verificar status
+# Verificar se está rodando
 if systemctl is-active --quiet nginx; then
-    echo -e "${GREEN}✅ Nginx reiniciado com sucesso${NC}"
+    log_success "Nginx ativo"
 else
-    echo -e "${RED}❌ Erro ao reiniciar Nginx${NC}"
-    systemctl status nginx
+    log_error "Nginx não está ativo"
+    exit 1
+fi
+
+# Obter certificado SSL
+log "🔒 Obtendo certificado SSL Let's Encrypt..."
+echo "Este processo pode demorar alguns minutos..."
+
+if certbot --nginx --non-interactive --agree-tos --email $EMAIL -d $IP --redirect; then
+    log_success "Certificado SSL obtido com sucesso!"
+    
+    # Verificar certificado
+    if certbot certificates | grep -q $IP; then
+        log_success "Certificado verificado"
+    else
+        log_warning "Certificado pode não estar configurado corretamente"
+    fi
+    
+else
+    log_error "Falha ao obter certificado SSL"
+    echo ""
+    echo "Possíveis causas:"
+    echo "  • O servidor não está acessível na porta 80"
+    echo "  • Firewall está bloqueando"
+    echo "  • DNS não está resolvendo para este IP"
+    echo "  • Rate limit do Let's Encrypt atingido"
+    echo ""
+    echo "Para diagnosticar:"
+    echo "  curl -I http://$IP"
+    echo "  systemctl status nginx"
+    echo "  tail -f /var/log/nginx/error.log"
     exit 1
 fi
 
 # Configurar renovação automática
-echo -e "${BLUE}🔄 Configurando renovação automática...${NC}"
+log "🔄 Configurando renovação automática..."
 systemctl enable certbot.timer
 systemctl start certbot.timer
 
-# Criar script de renovação personalizado
-cat > /etc/letsencrypt/renewal-hooks/deploy/nginx-reload.sh << 'EOF'
+# Teste de renovação
+if certbot renew --dry-run > /dev/null 2>&1; then
+    log_success "Teste de renovação passou"
+else
+    log_warning "Teste de renovação falhou"
+fi
+
+# Verificações finais
+log "🧪 Realizando verificações finais..."
+
+# Testar HTTPS
+sleep 3
+if curl -s -I https://$IP | head -1 | grep -q "200"; then
+    log_success "HTTPS respondendo corretamente"
+else
+    log_warning "HTTPS pode não estar respondendo"
+fi
+
+# Testar se frontend está acessível via HTTPS
+if curl -s -o /dev/null -w "%{http_code}" https://$IP | grep -q "200\|301\|302"; then
+    log_success "Frontend acessível via HTTPS"
+else
+    log_warning "Frontend pode não estar acessível via HTTPS"
+fi
+
+# Testar se backend está acessível
+if curl -s -o /dev/null -w "%{http_code}" https://$IP/backend/ | grep -q "200\|301\|302\|404"; then
+    log_success "Backend acessível via HTTPS"
+else
+    log_warning "Backend pode não estar acessível via HTTPS"
+fi
+
+# Otimizações finais do sistema
+log "⚡ Aplicando otimizações finais..."
+
+# Configurar logrotate para nginx
+cat > /etc/logrotate.d/nginx << 'EOL'
+/var/log/nginx/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 0644 www-data adm
+    postrotate
+        if [ -f /var/run/nginx.pid ]; then
+            kill -USR1 `cat /var/run/nginx.pid`
+        fi
+    endscript
+}
+EOL
+
+# Script de monitoramento
+cat > /usr/local/bin/portal-ssl-check.sh << 'EOF'
 #!/bin/bash
-systemctl reload nginx
+# Script de monitoramento Portal Sabercon
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"; }
+
+# Verificar serviços
+if ! systemctl is-active --quiet nginx; then
+    log "ERRO: Nginx não está rodando"
+    systemctl restart nginx
+fi
+
+# Verificar certificado
+DAYS_LEFT=$(certbot certificates 2>/dev/null | grep "VALID" | grep -o '[0-9]* days' | head -1 | grep -o '[0-9]*')
+if [ "$DAYS_LEFT" -lt 30 ] 2>/dev/null; then
+    log "AVISO: Certificado expira em $DAYS_LEFT dias"
+fi
+
+# Verificar portas
+if ! netstat -tlnp | grep -q ":3000 "; then
+    log "AVISO: Frontend (3000) não está respondendo"
+fi
+
+if ! netstat -tlnp | grep -q ":3001 "; then
+    log "AVISO: Backend (3001) não está respondendo"
+fi
+
+log "Verificação concluída"
 EOF
 
-chmod +x /etc/letsencrypt/renewal-hooks/deploy/nginx-reload.sh
+chmod +x /usr/local/bin/portal-ssl-check.sh
 
-# Testar renovação
-echo -e "${BLUE}🧪 Testando renovação automática...${NC}"
-certbot renew --dry-run
+# Crontab para monitoramento
+(crontab -l 2>/dev/null; echo "0 */6 * * * /usr/local/bin/portal-ssl-check.sh >> /var/log/portal-ssl-check.log 2>&1") | crontab -
 
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Renovação automática configurada com sucesso${NC}"
-else
-    echo -e "${YELLOW}⚠️  Aviso: Teste de renovação falhou, mas o SSL está funcionando${NC}"
-fi
-
-# Criar script de verificação de status para Portal Sabercon
-cat > /usr/local/bin/check-sabercon-status.sh << 'EOF'
-#!/bin/bash
-echo "=== STATUS PORTAL SABERCON ==="
-echo ""
-echo "🔒 Certificado SSL:"
-openssl x509 -enddate -noout -in /etc/letsencrypt/live/54.232.72.62/cert.pem
-
-echo ""
-echo "🌐 Status Nginx:"
-systemctl status nginx --no-pager -l | head -5
-
-echo ""
-echo "📱 Frontend (porta 3000):"
-if netstat -tlnp | grep :3000 > /dev/null; then
-    echo "✅ Rodando"
-else
-    echo "❌ Não encontrado"
-fi
-
-echo ""
-echo "🔧 Backend (porta 3001):"
-if netstat -tlnp | grep :3001 > /dev/null; then
-    echo "✅ Rodando"
-else
-    echo "❌ Não encontrado"
-fi
-
-echo ""
-echo "🔄 Certbot Timer:"
-systemctl status certbot.timer --no-pager -l | head -3
-EOF
-
-chmod +x /usr/local/bin/check-sabercon-status.sh
+log_success "Monitoramento configurado"
 
 # Resultados finais
 echo ""
-echo -e "${GREEN}🎉 ========================================${NC}"
-echo -e "${GREEN}✅ SSL PORTAL SABERCON CONFIGURADO!${NC}"
-echo -e "${GREEN}🎉 ========================================${NC}"
+echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${WHITE}🎉 CONFIGURAÇÃO SSL CONCLUÍDA COM SUCESSO!${NC}"
+echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "${BLUE}📋 URLs disponíveis:${NC}"
-echo -e "   🌐 HTTP:        http://${DOMAIN} → redireciona para HTTPS"
-echo -e "   🔒 HTTPS:       https://${DOMAIN}"
-echo -e "   📱 Frontend:    https://${DOMAIN}/"
-echo -e "   🔧 Backend API: https://${DOMAIN}/api"
-echo -e "   🔧 Backend:     https://${DOMAIN}/backend"
-echo -e "   📱 PWA:         Agora funciona completamente!"
+echo -e "${GREEN}🌐 URLs HTTPS configuradas:${NC}"
+echo -e "${GREEN}📱 Frontend:    https://$IP/ → localhost:$FRONTEND_PORT${NC}"
+echo -e "${GREEN}🔧 Backend API: https://$IP/api/ → localhost:$BACKEND_PORT/api/${NC}"
+echo -e "${GREEN}🔧 Backend:     https://$IP/backend/ → localhost:$BACKEND_PORT/${NC}"
+echo -e "${GREEN}📱 PWA agora funcionará perfeitamente com HTTPS!${NC}"
 echo ""
-echo -e "${BLUE}🔧 Comandos úteis:${NC}"
-echo -e "   📊 Status Geral:  sudo /usr/local/bin/check-sabercon-status.sh"
-echo -e "   🔄 Renovar SSL:   sudo certbot renew"
-echo -e "   🔧 Reload Nginx:  sudo systemctl reload nginx"
-echo -e "   📝 Logs Nginx:    sudo tail -f /var/log/nginx/access.log"
-echo -e "   📝 Logs SSL:      sudo tail -f /var/log/letsencrypt/letsencrypt.log"
+
+# Status dos serviços
+echo -e "${CYAN}📊 Status dos serviços:${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Nginx:"
+systemctl status nginx --no-pager -l | head -3
+
 echo ""
-echo -e "${YELLOW}⚠️  Lembre-se:${NC}"
-echo -e "   • O certificado renova automaticamente a cada 90 dias"
-echo -e "   • Acesse sempre via HTTPS para PWA funcionar"
-echo -e "   • Frontend na porta ${FRONTEND_PORT}, Backend na porta ${BACKEND_PORT}"
-echo -e "   • Use pm2 para gerenciar os processos das aplicações"
+echo "PM2 (Portal Sabercon):"
+pm2 list 2>/dev/null | head -10 || echo "PM2 não encontrado ou sem processos"
+
 echo ""
-echo -e "${GREEN}✅ Portal Sabercon está seguro e pronto para produção!${NC}" 
+echo "Certificados SSL:"
+certbot certificates | grep -A 5 -B 1 $IP || echo "Certificado não encontrado"
+
+echo ""
+echo "Portas em uso:"
+netstat -tlnp | grep -E "(3000|3001|80|443)" | head -5
+
+echo ""
+echo -e "${CYAN}🔗 Comandos úteis:${NC}"
+echo -e "${BLUE}  📊 Status Nginx:     systemctl status nginx${NC}"
+echo -e "${BLUE}  📊 Status PM2:       pm2 list${NC}"
+echo -e "${BLUE}  📝 Logs Nginx:       tail -f /var/log/nginx/access.log${NC}"
+echo -e "${BLUE}  📝 Logs SSL:         tail -f /var/log/letsencrypt/letsencrypt.log${NC}"
+echo -e "${BLUE}  🔒 Verificar SSL:    certbot certificates${NC}"
+echo -e "${BLUE}  🔄 Renovar SSL:      certbot renew${NC}"
+echo -e "${BLUE}  🧪 Testar HTTPS:     curl -I https://$IP${NC}"
+echo -e "${BLUE}  🔍 Monitoramento:    /usr/local/bin/portal-ssl-check.sh${NC}"
+echo -e "${BLUE}  🗂️  Backup em:        $BACKUP_DIR${NC}"
+echo ""
+echo -e "${GREEN}✅ Portal Sabercon SSL configurado e otimizado!${NC}"
+echo -e "${GREEN}🎯 Acesse: https://$IP${NC}"
+echo -e "${GREEN}🔒 Certificado válido por 90 dias (renovação automática)${NC}"
+echo ""
+echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}" 

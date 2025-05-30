@@ -179,7 +179,7 @@ print_header "INICIANDO SERVIÇOS"
 echo ""
 
 print_step "Iniciando Sabercon Frontend (porta 3000)..."
-pm2 start npm --name "PortalServerFrontend" -- run dev
+pm2 --name PortalServerFrontend start 'npm run dev' --exp-backoff-restart-delay=100 --stop-exit-codes 0
 check_status "Frontend iniciado com sucesso"
 
 print_step "Aguardando 5 segundos para Frontend estabilizar..."
@@ -188,7 +188,7 @@ print_success "Intervalo concluído"
 
 print_step "Iniciando Sabercon Backend (porta 3001)..."
 cd backend
-pm2 start npm --name "PortalServerBackend" -- run dev --cwd $(pwd)
+cd backend && pm2 --name PortalServerBackend start 'npm run dev' --exp-backoff-restart-delay=100 --stop-exit-codes 0
 check_status "Backend iniciado com sucesso"
 cd ..
 echo ""
