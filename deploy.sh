@@ -77,44 +77,6 @@ git reset --hard origin/master
 check_status "Reset para origin/master concluído"
 echo ""
 
-# Limpeza de dependências - Frontend
-print_step "Limpando módulos do Frontend..."
-if [ -d "node_modules" ]; then
-    rm -rf node_modules
-    print_success "Frontend node_modules removido"
-else
-    print_warning "Frontend node_modules não encontrado"
-fi
-
-if [ -f "package-lock.json" ]; then
-    rm package-lock.json
-    print_success "Frontend package-lock.json removido"
-else
-    print_warning "Frontend package-lock.json não encontrado"
-fi
-
-# Limpeza de dependências - Backend
-print_step "Limpando módulos do Backend..."
-if [ -d "backend" ]; then
-    if [ -d "backend/node_modules" ]; then
-        rm -rf backend/node_modules
-        print_success "Backend node_modules removido"
-    else
-        print_warning "Backend node_modules não encontrado"
-    fi
-    
-    if [ -f "backend/package-lock.json" ]; then
-        rm backend/package-lock.json
-        print_success "Backend package-lock.json removido"
-    else
-        print_warning "Backend package-lock.json não encontrado"
-    fi
-else
-    print_error "Pasta backend não encontrada!"
-    exit 1
-fi
-echo ""
-
 # Permissões
 print_step "Configurando permissões de execução..."
 chmod 777 deploy.sh
@@ -144,53 +106,15 @@ else
 fi
 echo ""
 
-# Instalação de dependências - Frontend
-print_step "Instalando dependências do Frontend..."
-npm install --silent
-check_status "Dependências do Frontend instaladas"
-
-# Instalação de dependências - Backend
-print_step "Instalando dependências do Backend..."
-cd backend
-npm install --silent
-check_status "Dependências do Backend instaladas"
-cd ..
-echo ""
-
-# Build do projeto (se necessário)
-print_step "Verificando se precisa fazer build..."
-if [ -f "backend/tsconfig.json" ]; then
-    print_step "Fazendo build do Backend TypeScript..."
-    cd backend
-    npm run build 2>/dev/null || {
-        print_warning "Build falhou ou comando não encontrado - continuando"
-    }
-    cd ..
-fi
-
-# Verificar se pasta backend existe
-if [ ! -d "backend" ]; then
-    print_error "Pasta backend não encontrada!"
-    exit 1
-fi
-
 # Inicialização dos serviços
 print_header "INICIANDO SERVIÇOS"
 echo ""
 
-print_step "Iniciando Sabercon Frontend (porta 3000)..."
-pm2 --name PortalServerFrontend start 'npm run dev' --exp-backoff-restart-delay=100 --stop-exit-codes 0
-check_status "Frontend iniciado com sucesso"
-
-print_step "Aguardando 5 segundos para Frontend estabilizar..."
-sleep 5
-print_success "Intervalo concluído"
-
-print_step "Iniciando Sabercon Backend (porta 3001)..."
-cd backend
-cd backend && pm2 --name PortalServerBackend start 'npm run dev' --exp-backoff-restart-delay=100 --stop-exit-codes 0
-check_status "Backend iniciado com sucesso"
-cd ..
+print_step "Iniciando Sabercon Frontend ..."
+print_step "pm2 --name PortalServerFrontend start 'npm run dev' --exp-backoff-restart-delay=100 --stop-exit-codes 0"
+echo ""
+print_step "Iniciando Sabercon Backend ..."
+print_step "cd backend && pm2 --name PortalServerBackend start 'npm run dev' --exp-backoff-restart-delay=100 --stop-exit-codes 0"
 echo ""
 
 # Verificação final
@@ -210,11 +134,6 @@ fi
 
 # Verificar se Backend está rodando
 if netstat -tlnp 2>/dev/null | grep :3001 > /dev/null; then
-    print_success "Backend respondendo na porta 3001"
-else
-    print_warning "Backend pode não estar respondendo na porta 3001"
-fi
-
 # Resultados finais
 print_header "DEPLOY CONCLUÍDO COM SUCESSO"
 echo ""
@@ -229,11 +148,13 @@ echo ""
 print_info "🌐 URLs disponíveis:"
 print_info "📱 Frontend: http://localhost:3000"
 print_info "🔧 Backend: http://localhost:3001"
-if [ -f "quick-ssl-setup.sh" ] || [ -f "setup-ssl.sh" ]; then
-    print_info "🔒 Para HTTPS: Execute um dos scripts SSL"
-fi
+print_info "🔧 Backend: http://localhost:3001/api"
 echo ""
 print_success "✨ Portal Sabercon está online e funcionando!"
+
+else
+    print_warning "Falha ao iniciar serviços"
+fi
 echo -e "${PURPLE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"   
 
 

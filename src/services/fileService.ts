@@ -202,4 +202,62 @@ export class FileService {
       throw error
     }
   }
+
+  // Buscar TODOS os arquivos do bucket (incluindo não vinculados)
+  static async getAllBucketFiles(category: string): Promise<S3FileInfo[]> {
+    try {
+      const response = await fetch(`${API_BASE}/bucket-files?category=${category}`)
+      if (!response.ok) {
+        throw new Error('Erro ao buscar arquivos do bucket')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao buscar arquivos do bucket:', error)
+      throw error
+    }
+  }
+
+  // Vincular arquivo a uma coleção
+  static async linkToCollection(fileId: string, collectionId: string): Promise<FileRecord> {
+    try {
+      const response = await fetch(`${API_BASE}/${fileId}/link-collection`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ collectionId })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao vincular arquivo à coleção')
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao vincular à coleção:', error)
+      throw error
+    }
+  }
+
+  // Adicionar arquivo à biblioteca
+  static async addToLibrary(fileId: string, libraryCategory: string): Promise<FileRecord> {
+    try {
+      const response = await fetch(`${API_BASE}/${fileId}/add-library`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ libraryCategory })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao adicionar arquivo à biblioteca')
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao adicionar à biblioteca:', error)
+      throw error
+    }
+  }
 } 
