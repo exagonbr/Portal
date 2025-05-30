@@ -4,18 +4,19 @@ import Image from 'next/image';
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen flex items-center justify-center">
+    <div className="relative min-h-screen flex items-center justify-center" role="main">
       {/* Video Background */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
+      <div className="absolute inset-0 w-full h-full overflow-hidden" aria-hidden="true">
         <video
           autoPlay
           loop
           muted
           playsInline
           className="absolute min-w-full min-h-full object-cover opacity-100"
+          preload="auto"
         >
           <source src="/back_video4.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
+          Seu navegador não suporta a tag de vídeo.
         </video>
       </div>
 
@@ -39,7 +40,8 @@ export default function HomePage() {
         <div className="text-center mt-4">
           <Link
             href="/forgot-password"
-            className="text-sm text-primary hover:text-primary-dark"
+            className="text-sm text-primary hover:text-primary-dark transition-colors duration-200"
+            aria-label="Recuperar senha"
           >
             Esqueceu sua senha?
           </Link>

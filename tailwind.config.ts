@@ -95,11 +95,11 @@ const config: Config = {
         // Sidebar com tema claro.
 
         sidebar: {
-          bg: '#0C1E33',          // Fundo branco ou muito claro (background.primary)
-          hover: '#EDF2F7',       // Fundo de hover sutil (background.tertiary)
-          active: '#E0E7FF',      // Fundo ativo com tom azulado claro (Tailwind indigo-100)
-          text: '#2D3748',        // Texto escuro (text.secondary)
-          textActive: '#4338CA',  // Texto ativo com cor primária ou de destaque (Tailwind indigo-700)
+          bg: '#0f3460',          // Fundo branco ou muito claro (background.primary)
+          hover: '#1e4d82',       // Fundo de hover sutil (background.tertiary)
+          active: '#1e40af',      // Fundo ativo com tom azulado claro (Tailwind indigo-100)
+          text: '#e2e8f0',        // Texto escuro (text.secondary)
+          textActive: '#ffffff',  // Texto ativo com cor primária ou de destaque (Tailwind indigo-700)
           border: '#E2E8F0'       // Borda do sidebar (border.DEFAULT)
         }
       },

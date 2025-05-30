@@ -74,7 +74,7 @@ export default function DashboardHeader() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-100 h-16">
+    <header className="bg-white border-b border-gray-100 h-13">
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left side - Title */}
         <h1 className=" font-semibold text-gray-900">

@@ -299,14 +299,14 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-300 transition-colors"
               title="Toggle Sidebar (S)"
             >
               {showSidebar ? <FiSidebar className="w-5 h-5" /> : <FiMenu className="w-5 h-5" />}
             </button>
 
             <div className="flex items-center space-x-1">
-              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <div className="flex items-center bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
                 <button
                   onClick={() => onPageChange?.(1)}
                   disabled={currentPage <= 1}
@@ -361,7 +361,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
 
             {/* Progress Bar */}
             <div className="hidden md:flex items-center space-x-2">
-              <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="w-32 h-2 bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-blue-500 transition-all duration-300"
                   style={{ width: `${readingProgress}%` }}
@@ -375,7 +375,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
 
           {/* Center Controls */}
           <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
               <button
                 onClick={() => handleZoom('out')}
                 className="p-2 rounded hover:bg-white dark:hover:bg-gray-600 transition-colors"
@@ -403,7 +403,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
               </button>
             </div>
 
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
               <button
                 onClick={onDualPageToggle}
                 className={`p-2 rounded transition-colors ${
@@ -442,7 +442,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
 
           {/* Right Controls */}
           <div className="flex items-center space-x-2">
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
               <button
                 onClick={() => setShowSearch(!showSearch)}
                 className={`p-2 rounded transition-colors ${
@@ -483,7 +483,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
               ) : null}
             </div>
             
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
               <button
                 onClick={() => {/* Implement download */}}
                 className="p-2 rounded hover:bg-white dark:hover:bg-gray-600 transition-colors"
@@ -501,7 +501,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
               </button>
             </div>
             
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
               <button
                 onClick={onThemeToggle}
                 className="p-2 rounded hover:bg-white dark:hover:bg-gray-600 transition-colors"
@@ -535,7 +535,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Search in document..."
-                    className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <button
@@ -551,7 +551,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                     setSearchQuery('');
                     setSearchResults([]);
                   }}
-                  className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-300"
                 >
                   <FiX className="w-4 h-4" />
                 </button>
@@ -559,14 +559,14 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
               
               {/* Search Results */}
               {searchResults.length > 0 && (
-                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 max-h-60 overflow-y-auto">
+                <div className="bg-gray-50 dark:bg-gray-300/50 rounded-lg p-3 max-h-60 overflow-y-auto">
                   <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Search Results</h4>
                   <div className="space-y-2">
                     {searchResults.map((result, i) => (
                       <div
                         key={i}
                         onClick={() => onPageChange?.(result.page)}
-                        className="p-2 bg-white dark:bg-gray-700 rounded cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                        className="p-2 bg-white dark:bg-gray-300 rounded cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Page {result.page}</span>
@@ -601,7 +601,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                       className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                         isActive
                           ? 'bg-blue-500 text-white shadow-sm'
-                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                          : 'bg-white dark:bg-gray-300 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20'
                       }`}
                     >
                       {percentage === 0 ? 'Start' : percentage === 1 ? 'End' : `${percentage * 100}%`}
@@ -619,7 +619,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
               </div>
               
               {/* Mini progress bar */}
-              <div className="hidden md:block w-32 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div className="hidden md:block w-32 h-1.5 bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-blue-500 transition-all duration-300"
                   style={{ width: `${readingProgress}%` }}
@@ -693,7 +693,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                 {book.synopsis && (
                   <div className="mt-2">
                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Synopsis</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-4 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-4 bg-gray-50 dark:bg-gray-300/50 p-2 rounded-md">
                       {book.synopsis}
                     </p>
                     <button className="text-xs text-blue-500 hover:text-blue-600 mt-1">
@@ -720,7 +720,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                   className={`flex-1 px-2 py-3 text-sm font-medium transition-all relative ${
                     activeTab === tab
                       ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-300/50'
                   }`}
                 >
                   <div className="flex flex-col items-center justify-center">
@@ -762,13 +762,13 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                     <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Pages</h3>
                     <div className="flex items-center space-x-2">
                       <select
-                        className="text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1"
+                        className="text-xs bg-white dark:bg-gray-300 border border-gray-300 dark:border-gray-600 rounded px-2 py-1"
                         defaultValue="grid"
                       >
                         <option value="grid">Grid View</option>
                         <option value="list">List View</option>
                       </select>
-                      <button className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+                      <button className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-300">
                         <FiSearch className="w-4 h-4" />
                       </button>
                     </div>
@@ -781,8 +781,8 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                       // Loading skeleton
                       Array.from({ length: 9 }).map((_, i) => (
                         <div key={i} className="animate-pulse">
-                          <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-36 w-full" />
-                          <div className="mt-1 h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mx-auto" />
+                          <div className="bg-gray-200 dark:bg-gray-300 rounded-lg h-36 w-full" />
+                          <div className="mt-1 h-3 bg-gray-200 dark:bg-gray-300 rounded w-1/2 mx-auto" />
                         </div>
                       ))
                     ) : (
@@ -805,7 +805,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                                 : 'hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-600 hover:scale-105'
                             } rounded-lg overflow-hidden shadow-sm hover:shadow-md`}
                           >
-                            <div className="relative bg-gray-100 dark:bg-gray-700">
+                            <div className="relative bg-gray-100 dark:bg-gray-300">
                               <img
                                 src={thumbnail}
                                 alt={`Page ${pageNum}`}
@@ -837,7 +837,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                                 Page {pageNum}
                               </p>
                               <button
-                                className="opacity-0 group-hover:opacity-100 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-opacity"
+                                className="opacity-0 group-hover:opacity-100 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-300 transition-opacity"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onPageChange?.(pageNum);
@@ -943,7 +943,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                             setIsAddingBookmark(false);
                             setNewBookmarkTitle('');
                           }}
-                          className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded hover:bg-gray-100 dark:hover:bg-gray-300 transition-colors"
                         >
                           Cancel
                         </button>
@@ -989,7 +989,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                             className={`group flex items-center p-3 rounded-lg cursor-pointer transition-all ${
                               bookmark.pageNumber === currentPage
                                 ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500'
-                                : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/70 border-l-4 border-transparent shadow-sm'
+                                : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-300/70 border-l-4 border-transparent shadow-sm'
                             }`}
                             onClick={() => onPageChange?.(bookmark.pageNumber)}
                           >
@@ -998,7 +998,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                                 <p className={`text-sm font-medium truncate ${bookmark.pageNumber === currentPage ? 'text-blue-700 dark:text-blue-400' : ''}`}>
                                   {bookmark.title}
                                 </p>
-                                <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full ml-2">
+                                <span className="text-xs bg-gray-100 dark:bg-gray-300 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full ml-2">
                                   p.{bookmark.pageNumber}
                                 </span>
                               </div>
@@ -1119,27 +1119,27 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Keyboard Shortcuts</h4>
                 <div className="grid grid-cols-2 gap-x-8 gap-y-1">
                   <div className="flex items-center">
-                    <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">←/→</span>
+                    <span className="bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">←/→</span>
                     <span className="text-xs text-gray-600 dark:text-gray-400">Navigate pages</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">F</span>
+                    <span className="bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">F</span>
                     <span className="text-xs text-gray-600 dark:text-gray-400">Fullscreen</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">Ctrl+F</span>
+                    <span className="bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">Ctrl+F</span>
                     <span className="text-xs text-gray-600 dark:text-gray-400">Search</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">S</span>
+                    <span className="bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">S</span>
                     <span className="text-xs text-gray-600 dark:text-gray-400">Toggle sidebar</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">B</span>
+                    <span className="bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">B</span>
                     <span className="text-xs text-gray-600 dark:text-gray-400">Bookmarks</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">T</span>
+                    <span className="bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded text-xs font-mono mr-2">T</span>
                     <span className="text-xs text-gray-600 dark:text-gray-400">Thumbnails</span>
                   </div>
                 </div>
@@ -1154,7 +1154,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                 </div>
                 <div className="flex items-center">
                   <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">Current position:</span>
-                  <div className="w-32 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="w-32 h-1.5 bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-500 transition-all duration-300"
                       style={{ width: `${readingProgress}%` }}

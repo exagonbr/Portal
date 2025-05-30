@@ -68,7 +68,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
             </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-300 rounded-lg"
             >
               <X className="w-5 h-5" />
             </button>

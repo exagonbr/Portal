@@ -7,11 +7,6 @@ export default function TeacherAssignmentsPage() {
   const { user } = useAuth()
   const router = useRouter()
 
-  if (!user || user.type !== 'teacher') {
-    router.push('/forum')
-    return null
-  }
-
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-4">Assignments</h2>

@@ -40,7 +40,7 @@ export default function BooksContentPage() {
               placeholder="Buscar livros..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg pl-10"
+              className="w-full bg-gray-300 text-white px-4 py-2 rounded-lg pl-10"
             />
             <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
@@ -51,7 +51,7 @@ export default function BooksContentPage() {
           <button
             onClick={() => setSelectedShelf('all')}
             className={`flex items-center space-x-3 w-full px-3 py-2 rounded-lg transition-colors ${
-              selectedShelf === 'all' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+              selectedShelf === 'all' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-300'
             }`}
           >
             <BookOpenIcon className="h-5 w-5" />
@@ -61,7 +61,7 @@ export default function BooksContentPage() {
           <button
             onClick={() => setSelectedShelf('favorites')}
             className={`flex items-center space-x-3 w-full px-3 py-2 rounded-lg transition-colors ${
-              selectedShelf === 'favorites' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+              selectedShelf === 'favorites' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-300'
             }`}
           >
             <HeartIcon className="h-5 w-5" />
@@ -71,7 +71,7 @@ export default function BooksContentPage() {
           <button
             onClick={() => setSelectedShelf('in-progress')}
             className={`flex items-center space-x-3 w-full px-3 py-2 rounded-lg transition-colors ${
-              selectedShelf === 'in-progress' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+              selectedShelf === 'in-progress' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-300'
             }`}
           >
             <BookOpenIcon className="h-5 w-5" />
@@ -81,7 +81,7 @@ export default function BooksContentPage() {
 
         {/* Settings */}
         <div className="border-t border-gray-700 pt-4 mt-4">
-          <button className="flex items-center space-x-3 w-full px-3 py-2 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors">
+          <button className="flex items-center space-x-3 w-full px-3 py-2 text-gray-300 hover:bg-gray-300 rounded-lg transition-colors">
             <Cog6ToothIcon className="h-5 w-5" />
             <span>Configurações</span>
           </button>

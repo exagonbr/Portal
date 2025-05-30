@@ -161,16 +161,16 @@ export default function SchoolsManagement() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary dark:text-white mb-2">
+        <h1 className="text-3xl font-bold text-primary text-gray-800 mb-2">
           Gestão de Escolas
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600 text-gray-400">
           Gerencie as escolas das instituições
         </p>
       </div>
 
       {/* Filtros e Ações */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -180,7 +180,7 @@ export default function SchoolsManagement() {
                 placeholder="Buscar por nome, código ou cidade..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-100"
               />
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function SchoolsManagement() {
           <select
             value={selectedInstitution}
             onChange={(e) => setSelectedInstitution(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+            className="px-4 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-100"
           >
             <option value="">Todas as instituições</option>
             {institutions.map((inst) => (
@@ -216,15 +216,15 @@ export default function SchoolsManagement() {
         {filteredSchools.map((school) => (
           <div
             key={school.id}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+            className="bg-white bg-gray-100 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center">
-                <div className="p-2 bg-primary/10 dark:bg-primary/30 rounded-lg mr-3">
-                  <SchoolIcon className="w-6 h-6 text-primary dark:text-primary-light" />
+                <div className="p-2 bg-primary/100 bg-primary/30 rounded-lg mr-3">
+                  <SchoolIcon className="w-6 h-6 text-primary text-primary-light" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-900 text-white">
                     {school.name}
                   </h3>
                   <p className="text-sm text-gray-500">Código: {school.code}</p>
@@ -232,8 +232,8 @@ export default function SchoolsManagement() {
               </div>
               <div className={`px-2 py-1 rounded-full text-xs ${
                 school.is_active
-                  ? 'bg-accent-green/20 text-accent-green dark:bg-accent-green/30 dark:text-accent-green'
-                  : 'bg-error/20 text-error dark:bg-error/30 dark:text-error'
+                  ? 'bg-accent-green/20 text-accent-green bg-accent-green/30 text-accent-green'
+                  : 'bg-error/20 text-error bg-error/30 text-error'
               }`}>
                 {school.is_active ? 'Ativa' : 'Inativa'}
               </div>
@@ -241,29 +241,29 @@ export default function SchoolsManagement() {
 
             <div className="space-y-2 mb-4">
               {school.city && (
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center text-sm text-gray-600 text-gray-400">
                   <MapPin className="w-4 h-4 mr-2" />
                   {school.city} - {school.state}
                 </div>
               )}
               {school.phone && (
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center text-sm text-gray-600 text-gray-400">
                   <Phone className="w-4 h-4 mr-2" />
                   {school.phone}
                 </div>
               )}
               {school.email && (
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center text-sm text-gray-600 text-gray-400">
                   <Mail className="w-4 h-4 mr-2" />
                   {school.email}
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t dark:border-gray-700">
+            <div className="flex items-center justify-between pt-4 border-t border-gray-700">
               <button
                 onClick={() => handleEdit(school)}
-                className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary transition-colors"
+                className="text-primary hover:text-primary-dark text-primary-light hover:text-primary transition-colors"
               >
                 <Edit className="w-5 h-5" />
               </button>
@@ -271,8 +271,8 @@ export default function SchoolsManagement() {
                 onClick={() => handleToggleActive(school)}
                 className={`${
                   school.is_active
-                    ? 'text-error hover:text-error/80 dark:text-error dark:hover:text-error/80'
-                    : 'text-accent-green hover:text-accent-green/80 dark:text-accent-green dark:hover:text-accent-green/80'
+                    ? 'text-error hover:text-error/80 text-error hover:text-error/80'
+                    : 'text-accent-green hover:text-accent-green/80 text-accent-green hover:text-accent-green/80'
                 }`}
               >
                 {school.is_active ? (
@@ -289,7 +289,7 @@ export default function SchoolsManagement() {
       {/* Modal de Formulário */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="text-2xl font-bold text-primary mb-6">
                 {editingSchool ? 'Editar Escola' : 'Nova Escola'}
@@ -305,7 +305,7 @@ export default function SchoolsManagement() {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                       required
                     />
                   </div>
@@ -318,7 +318,7 @@ export default function SchoolsManagement() {
                       type="text"
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                       required
                     />
                   </div>
@@ -330,7 +330,7 @@ export default function SchoolsManagement() {
                     <select
                       value={formData.institution_id}
                       onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                       required
                     >
                       <option value="">Selecione uma instituição</option>
@@ -350,7 +350,7 @@ export default function SchoolsManagement() {
                       type="text"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                     />
                   </div>
 
@@ -362,7 +362,7 @@ export default function SchoolsManagement() {
                       type="text"
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                     />
                   </div>
 
@@ -374,7 +374,7 @@ export default function SchoolsManagement() {
                       type="text"
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                       maxLength={2}
                     />
                   </div>
@@ -387,7 +387,7 @@ export default function SchoolsManagement() {
                       type="text"
                       value={formData.zip_code}
                       onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                     />
                   </div>
 
@@ -399,7 +399,7 @@ export default function SchoolsManagement() {
                       type="text"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                     />
                   </div>
 
@@ -411,7 +411,7 @@ export default function SchoolsManagement() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                      className="w-full px-3 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                     />
                   </div>
                 </div>
@@ -423,7 +423,7 @@ export default function SchoolsManagement() {
                       setShowModal(false);
                       resetForm();
                     }}
-                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="px-4 py-2 text-gray-700 text-gray-300 hover:bg-gray-100 hover:bg-gray-300 rounded-lg transition-colors"
                   >
                     Cancelar
                   </button>

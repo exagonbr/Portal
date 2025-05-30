@@ -81,7 +81,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
             </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-300 rounded-lg"
             >
               <X className="w-5 h-5" />
             </button>
@@ -154,7 +154,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                   type="text"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-300"
                 />
               </div>
 
@@ -165,7 +165,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                 <select
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-300"
                 >
                   <option value="">Selecione</option>
                   <option value="AC">AC</option>
@@ -206,7 +206,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                   type="text"
                   value={formData.zip_code}
                   onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-300"
                   placeholder="00000-000"
                 />
               </div>
@@ -219,7 +219,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                   type="text"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300"
                   placeholder="(00) 0000-0000"
                 />
               </div>
@@ -232,7 +232,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300"
                   placeholder="escola@exemplo.com"
                 />
               </div>
@@ -242,7 +242,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-300 rounded-lg transition-colors"
               >
                 Cancelar
               </button>

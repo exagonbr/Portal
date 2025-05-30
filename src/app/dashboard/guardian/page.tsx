@@ -378,7 +378,7 @@ export default function GuardianDashboard() {
             <select
               value={selectedStudent}
               onChange={(e) => setSelectedStudent(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-300"
             >
               <option value="all">Todos os filhos</option>
               {students.map(student => (
@@ -393,7 +393,7 @@ export default function GuardianDashboard() {
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   selectedView === 'overview'
                     ? 'bg-primary-dark text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Visão Geral
@@ -403,7 +403,7 @@ export default function GuardianDashboard() {
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   selectedView === 'academic'
                     ? 'bg-primary-dark text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Acadêmico
@@ -413,7 +413,7 @@ export default function GuardianDashboard() {
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   selectedView === 'communication'
                     ? 'bg-primary-dark text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Comunicação
@@ -423,7 +423,7 @@ export default function GuardianDashboard() {
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   selectedView === 'financial'
                     ? 'bg-primary-dark text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Financeiro
@@ -517,7 +517,7 @@ export default function GuardianDashboard() {
                 {performances.map((performance) => (
                   <div
                     key={performance.studentId}
-                    className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    className="p-4 bg-gray-50 dark:bg-gray-300 rounded-lg"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -606,7 +606,7 @@ export default function GuardianDashboard() {
                     className={`p-4 rounded-lg border ${
                       event.isImportant
                         ? 'border-primary/30 bg-primary/5 dark:border-primary/50 dark:bg-primary/10'
-                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700'
+                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-300'
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -694,7 +694,7 @@ export default function GuardianDashboard() {
                     className={`p-3 rounded-lg ${
                       report.type === 'positive' ? 'bg-green-50 dark:bg-green-900/20' :
                       report.type === 'negative' ? 'bg-red-50 dark:bg-red-900/20' :
-                      'bg-gray-50 dark:bg-gray-700'
+                      'bg-gray-50 dark:bg-gray-300'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-1">
@@ -772,7 +772,7 @@ export default function GuardianDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div className="text-center">
                   <div className="relative inline-flex">
-                    <div className="w-32 h-32 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                    <div className="w-32 h-32 rounded-full bg-gray-200 dark:bg-gray-300"></div>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div>
                         <p className="text-3xl font-bold">{performance.currentGrade.toFixed(1)}</p>
@@ -813,7 +813,7 @@ export default function GuardianDashboard() {
                 
                 <div className="col-span-2">
                   <p className="text-sm text-gray-500 mb-2">Evolução por Disciplina</p>
-                  <div className="h-32 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-gray-500">
+                  <div className="h-32 bg-gray-100 dark:bg-gray-300 rounded-lg flex items-center justify-center text-gray-500">
                     Gráfico de barras (implementar)
                   </div>
                 </div>
@@ -824,7 +824,7 @@ export default function GuardianDashboard() {
                 <h3 className="font-semibold mb-4 text-primary-dark">Desempenho por Disciplina</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {['Matemática', 'Português', 'Ciências', 'História', 'Geografia', 'Inglês'].map((subject) => (
-                    <div key={subject} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div key={subject} className="p-4 bg-gray-50 dark:bg-gray-300 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium">{subject}</h4>
                         <span className="text-lg font-bold text-primary">8.5</span>
@@ -874,7 +874,7 @@ export default function GuardianDashboard() {
                     className={`p-4 rounded-lg border ${
                       !message.isRead
                         ? 'border-primary-dark/30 bg-primary-dark/5 dark:border-primary-dark/50 dark:bg-primary-dark/10'
-                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700'
+                        : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-300'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
@@ -917,7 +917,7 @@ export default function GuardianDashboard() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4 text-primary-dark">Canais de Comunicação</h3>
               <div className="space-y-3">
-                <button className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
+                <button className="w-full p-3 bg-gray-50 dark:bg-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Video className="w-5 h-5 text-primary" />
@@ -929,7 +929,7 @@ export default function GuardianDashboard() {
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   </div>
                 </button>
-                <button className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
+                <button className="w-full p-3 bg-gray-50 dark:bg-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Phone className="w-5 h-5 text-accent-green" />
@@ -941,7 +941,7 @@ export default function GuardianDashboard() {
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   </div>
                 </button>
-                <button className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
+                <button className="w-full p-3 bg-gray-50 dark:bg-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Mail className="w-5 h-5 text-accent-purple" />
@@ -1052,7 +1052,7 @@ export default function GuardianDashboard() {
                       <button className="flex-1 px-4 py-2 bg-accent-green text-white rounded hover:bg-green-700">
                         Pagar Agora
                       </button>
-                      <button className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
+                      <button className="px-4 py-2 bg-gray-200 dark:bg-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
                         Ver Boleto
                       </button>
                     </div>
@@ -1083,7 +1083,7 @@ export default function GuardianDashboard() {
                     { month: 'Dezembro/2024', student: 'João Silva', value: 850.00, date: '05/12/2024', status: 'paid' },
                     { month: 'Dezembro/2024', student: 'Maria Silva', value: 850.00, date: '05/12/2024', status: 'paid' },
                   ].map((payment, idx) => (
-                    <tr key={idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={idx} className="border-b hover:bg-gray-50 dark:hover:bg-gray-300">
                       <td className="py-3 text-sm">{payment.month}</td>
                       <td className="py-3 text-sm">{payment.student}</td>
                       <td className="py-3 text-sm">R$ {payment.value.toFixed(2)}</td>

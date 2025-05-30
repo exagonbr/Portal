@@ -213,7 +213,7 @@ export default function HierarchicalDashboard() {
                 className={`w-full text-left p-3 rounded-lg transition-colors ${
                   selectedInstitution?.id === institution.id
                     ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-300'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -248,7 +248,7 @@ export default function HierarchicalDashboard() {
                   className={`w-full text-left p-3 rounded-lg transition-colors ${
                     selectedSchool?.id === school.id
                       ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-300'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -280,19 +280,19 @@ export default function HierarchicalDashboard() {
             <div>
               {/* Estatísticas da Escola */}
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                <div className="bg-gray-50 dark:bg-gray-300 p-3 rounded">
                   <p className="text-sm text-gray-500">Total de Turmas</p>
                   <p className="text-xl font-semibold">{schoolStats.totalClasses}</p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                <div className="bg-gray-50 dark:bg-gray-300 p-3 rounded">
                   <p className="text-sm text-gray-500">Turmas Ativas</p>
                   <p className="text-xl font-semibold">{schoolStats.activeClasses}</p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                <div className="bg-gray-50 dark:bg-gray-300 p-3 rounded">
                   <p className="text-sm text-gray-500">Alunos</p>
                   <p className="text-xl font-semibold">{schoolStats.totalStudents}</p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                <div className="bg-gray-50 dark:bg-gray-300 p-3 rounded">
                   <p className="text-sm text-gray-500">Professores</p>
                   <p className="text-xl font-semibold">{schoolStats.totalTeachers}</p>
                 </div>
@@ -304,7 +304,7 @@ export default function HierarchicalDashboard() {
                 {classes.map((classItem) => (
                   <div
                     key={classItem.id}
-                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    className="p-3 bg-gray-50 dark:bg-gray-300 rounded-lg"
                   >
                     <div className="flex items-center justify-between">
                       <div>

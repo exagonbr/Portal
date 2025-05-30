@@ -333,11 +333,11 @@ function TeacherDashboardContent() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+            <h1 className="text-3xl font-bold  text-gray-800 mb-2 flex items-center gap-3">
               <BookOpen className="w-8 h-8 text-primary" />
               Painel do Professor
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600 text-gray-400">
               Bem-vindo(a), {user?.name}! Acompanhe o progresso dos seus alunos.
             </p>
           </div>
@@ -347,7 +347,7 @@ function TeacherDashboardContent() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'overview'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-primary-dark text-white'
               }`}
             >
               Visão Geral
@@ -357,7 +357,7 @@ function TeacherDashboardContent() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'students'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-primary-dark text-white'
               }`}
             >
               Alunos
@@ -367,7 +367,7 @@ function TeacherDashboardContent() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'resources'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-primary-dark text-white'
               }`}
             >
               Recursos
@@ -377,7 +377,7 @@ function TeacherDashboardContent() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'communication'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'bg-primary-dark text-white'
               }`}
             >
               Comunicação
@@ -447,14 +447,14 @@ function TeacherDashboardContent() {
       </div>
 
       {/* Seletor de Turma e Ações Rápidas */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4 w-full md:w-auto">
             <label className="text-sm font-medium">Turma:</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+              className="px-4 py-2 border border-white rounded-lg focus:ring-2 focus:ring-primary bg-gray-100"
             >
               <option value="">Todas as turmas</option>
               {myClasses.map((classItem) => (
@@ -487,7 +487,7 @@ function TeacherDashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Próximas Aulas */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <Clock className="w-5 h-5 mr-2 text-primary" />
               Próximas Aulas
@@ -496,7 +496,7 @@ function TeacherDashboardContent() {
               {upcomingClasses.map((upClass) => (
                 <div
                   key={upClass.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-50 bg-gray-300 rounded-lg hover:bg-gray-100 hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-center">
@@ -504,7 +504,7 @@ function TeacherDashboardContent() {
                     </div>
                     <div>
                       <p className="font-medium">{upClass.className}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-gray-600 text-gray-400">
                         {upClass.topic}
                       </p>
                       <p className="text-xs text-gray-500">
@@ -514,11 +514,11 @@ function TeacherDashboardContent() {
                   </div>
                   <div className="flex items-center gap-2">
                     {upClass.materials && (
-                      <span className="px-2 py-1 text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
+                      <span className="px-2 py-1 text-xs bg-green-100 text-green-800 bg-green-300 text-green-300 rounded-full">
                         Material pronto
                       </span>
                     )}
-                    <button className="px-3 py-1 bg-primary/10 text-primary dark:bg-primary/30 dark:text-primary-light rounded-lg hover:bg-primary/20 dark:hover:bg-primary/40 transition-colors">
+                    <button className="px-3 py-1 bg-primary/10 text-primary bg-primary/30 text-primary rounded-lg hover:bg-primary/20 hover:bg-primary/40 transition-colors">
                       Iniciar
                     </button>
                   </div>
@@ -528,7 +528,7 @@ function TeacherDashboardContent() {
           </div>
 
           {/* Alunos que Precisam de Atenção */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6">
+          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6 mt-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <AlertCircle className="w-5 h-5 mr-2 text-accent-yellow" />
               Alunos que Precisam de Atenção
@@ -537,12 +537,12 @@ function TeacherDashboardContent() {
               {studentProgress.filter(s => s.needsAttention).map((student) => (
                 <div
                   key={student.id}
-                  className="p-4 border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg"
+                  className="p-4 border border-yellow-200 border-yellow-800 bg-yellow-50 bg-yellow-900/20 rounded-lg"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-semibold">{student.name}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{student.class}</p>
+                      <p className="text-sm text-gray-600 text-gray-400">{student.class}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-red-600">{student.currentGrade.toFixed(1)}</p>
@@ -563,7 +563,7 @@ function TeacherDashboardContent() {
                     </div>
                   </div>
                   <div className="text-sm">
-                    <p className="text-gray-600 dark:text-gray-400 mb-1">
+                    <p className="text-gray-600 text-gray-400 mb-1">
                       <span className="font-medium">Desafios:</span> {student.challenges.join(', ')}
                     </p>
                   </div>
@@ -571,7 +571,7 @@ function TeacherDashboardContent() {
                     <button className="text-sm px-3 py-1 bg-primary text-white rounded hover:bg-primary-dark">
                       Plano de Ação
                     </button>
-                    <button className="text-sm px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
+                    <button className="text-sm px-3 py-1 bg-gray-200 bg-gray-300 rounded hover:bg-gray-300 hover:bg-gray-600">
                       Contatar Pais
                     </button>
                   </div>
@@ -584,7 +584,7 @@ function TeacherDashboardContent() {
         {/* Painel Lateral */}
         <div className="space-y-6">
           {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações Pedagógicas</h3>
             <div className="space-y-2">
               <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
@@ -607,7 +607,7 @@ function TeacherDashboardContent() {
           </div>
 
           {/* Recursos Mais Usados */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Lightbulb className="w-5 h-5 mr-2 text-accent-yellow" />
               Recursos Populares
@@ -616,7 +616,7 @@ function TeacherDashboardContent() {
               {learningResources.slice(0, 3).map((resource) => (
                 <div
                   key={resource.id}
-                  className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                  className="p-3 bg-gray-50 bg-gray-300 rounded-lg hover:bg-gray-100 hover:bg-gray-600 cursor-pointer"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -638,7 +638,7 @@ function TeacherDashboardContent() {
           </div>
 
           {/* Atividades Recentes */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <Bell className="w-5 h-5 mr-2 text-accent-orange" />
               Notificações
@@ -648,9 +648,9 @@ function TeacherDashboardContent() {
                 <div
                   key={activity.id}
                   className={`p-3 rounded-lg ${
-                    activity.priority === 'high' ? 'bg-red-50 dark:bg-red-900/20' :
-                    activity.priority === 'medium' ? 'bg-yellow-50 dark:bg-yellow-900/20' :
-                    'bg-gray-50 dark:bg-gray-700'
+                    activity.priority === 'high' ? 'bg-red-50 bg-red-900/20' :
+                    activity.priority === 'medium' ? 'bg-yellow-50 bg-yellow-900/20' :
+                    'bg-gray-50 bg-gray-300'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -697,7 +697,7 @@ function TeacherDashboardContent() {
       {/* View de Alunos */}
       {selectedView === 'students' && (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold flex items-center">
                 <Users className="w-5 h-5 mr-2 text-primary" />
@@ -714,7 +714,7 @@ function TeacherDashboardContent() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-sm text-gray-600 dark:text-gray-400 border-b">
+                  <tr className="text-left text-sm text-gray-600 text-gray-400 border-b">
                     <th className="pb-3">Aluno</th>
                     <th className="pb-3">Turma</th>
                     <th className="pb-3">Média</th>
@@ -728,7 +728,7 @@ function TeacherDashboardContent() {
                 </thead>
                 <tbody>
                   {studentProgress.map((student) => (
-                    <tr key={student.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={student.id} className="border-b hover:bg-gray-50 hover:bg-gray-300">
                       <td className="py-4">
                         <div className="flex items-center gap-2">
                           {student.needsAttention && (
@@ -792,7 +792,7 @@ function TeacherDashboardContent() {
       {selectedView === 'resources' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <BookOpen className="w-5 h-5 mr-2 text-accent-purple" />
                 Biblioteca de Recursos Pedagógicos
@@ -802,9 +802,9 @@ function TeacherDashboardContent() {
                 <input
                   type="text"
                   placeholder="Buscar recursos..."
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+                  className="flex-1 px-4 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300"
                 />
-                <select className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                <select className="px-4 py-2 border border-gray-300 border-gray-600 rounded-lg focus:ring-2 focus:ring-primary bg-gray-300">
                   <option value="">Todas as disciplinas</option>
                   <option value="math">Matemática</option>
                   <option value="portuguese">Português</option>
@@ -816,7 +816,7 @@ function TeacherDashboardContent() {
                 {learningResources.map((resource) => (
                   <div
                     key={resource.id}
-                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                    className="p-4 border border-gray-200 border-gray-700 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className={`p-2 rounded-lg ${
@@ -833,14 +833,14 @@ function TeacherDashboardContent() {
                       <span className="text-xs text-gray-500">{resource.usage} usos</span>
                     </div>
                     <h3 className="font-semibold mb-1">{resource.title}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="text-sm text-gray-600 text-gray-400 mb-2">
                       {resource.subject} • {resource.duration}
                     </p>
                     <div className="flex gap-2">
                       <button className="flex-1 px-3 py-1 bg-primary text-white rounded hover:bg-primary-dark text-sm">
                         Usar
                       </button>
-                      <button className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 text-sm">
+                      <button className="px-3 py-1 bg-gray-200 bg-gray-300 rounded hover:bg-gray-300 hover:bg-gray-600 text-sm">
                         Prévia
                       </button>
                     </div>
@@ -851,7 +851,7 @@ function TeacherDashboardContent() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Criar Novo Recurso</h3>
               <div className="space-y-2">
                 <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
@@ -869,21 +869,21 @@ function TeacherDashboardContent() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Recursos Recomendados</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-sm text-gray-600 text-gray-400 mb-4">
                 Baseado no desempenho dos seus alunos
               </p>
               <div className="space-y-3">
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="p-3 bg-blue-50 bg-blue-300/20 rounded-lg">
                   <p className="font-medium text-sm">Exercícios de Reforço - Frações</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-600 text-gray-400 mt-1">
                     Recomendado para 5 alunos com dificuldade
                   </p>
                 </div>
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className="p-3 bg-green-50 bg-green-900/20 rounded-lg">
                   <p className="font-medium text-sm">Desafios Avançados - Geometria</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-600 text-gray-400 mt-1">
                     Para alunos com desempenho acima da média
                   </p>
                 </div>
@@ -897,7 +897,7 @@ function TeacherDashboardContent() {
       {selectedView === 'communication' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <MessageSquare className="w-5 h-5 mr-2 text-primary-dark" />
                 Central de Comunicação
@@ -908,20 +908,20 @@ function TeacherDashboardContent() {
                   <button className="px-4 py-2 bg-primary-dark text-white rounded-lg">
                     Mensagens
                   </button>
-                  <button className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                  <button className="px-4 py-2 bg-gray-200 bg-gray-300 rounded-lg">
                     Comunicados
                   </button>
-                  <button className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                  <button className="px-4 py-2 bg-gray-200 bg-gray-300 rounded-lg">
                     Reuniões
                   </button>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <div className="p-4 border border-gray-200 border-gray-700 rounded-lg">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-semibold">Maria Silva (Mãe de Ana Silva)</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-gray-600 text-gray-400">
                           Dúvida sobre tarefa de matemática
                         </p>
                       </div>
@@ -934,17 +934,17 @@ function TeacherDashboardContent() {
                       <button className="px-3 py-1 bg-primary text-white rounded text-sm">
                         Responder
                       </button>
-                      <button className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm">
+                      <button className="px-3 py-1 bg-gray-200 bg-gray-300 rounded text-sm">
                         Marcar reunião
                       </button>
                     </div>
                   </div>
 
-                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <div className="p-4 border border-gray-200 border-gray-700 rounded-lg">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-semibold">João Santos (Pai de João Jr.)</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-gray-600 text-gray-400">
                           Reunião agendada - Desempenho escolar
                         </p>
                       </div>
@@ -957,7 +957,7 @@ function TeacherDashboardContent() {
                       <button className="px-3 py-1 bg-accent-green text-white rounded text-sm">
                         Ver detalhes
                       </button>
-                      <button className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm">
+                      <button className="px-3 py-1 bg-gray-200 bg-gray-300 rounded text-sm">
                         Reagendar
                       </button>
                     </div>
@@ -968,7 +968,7 @@ function TeacherDashboardContent() {
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Comunicação Rápida</h3>
               <div className="space-y-2">
                 <button className="w-full px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
@@ -986,11 +986,11 @@ function TeacherDashboardContent() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Estatísticas de Comunicação</h3>
               <div className="space-y-3">
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-sm mb-1 text-black">
                     <span>Taxa de Resposta</span>
                     <span className="font-medium">92%</span>
                   </div>
@@ -1008,10 +1008,10 @@ function TeacherDashboardContent() {
                   </div>
                 </div>
                 <div className="pt-3 border-t">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 text-gray-400">
                     <span className="font-medium">15</span> mensagens esta semana
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 text-gray-400">
                     <span className="font-medium">3</span> reuniões agendadas
                   </p>
                 </div>
@@ -1035,18 +1035,18 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+    <div className="bg-white bg-gray-500 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
           <Icon className={`w-4 h-4 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-xl font-bold text-gray-900 dark:text-white">
+      <p className="text-xl font-bold text-gray-900 text-white">
         {value}
       </p>
-      <p className="text-xs text-gray-600 dark:text-gray-400">{title}</p>
+      <p className="text-xs text-gray-600 text-gray-400">{title}</p>
       {subtitle && (
-        <p className="text-xs text-gray-500 dark:text-gray-500">{subtitle}</p>
+        <p className="text-xs text-gray-500 text-gray-500">{subtitle}</p>
       )}
     </div>
   );
@@ -1062,7 +1062,7 @@ export default function TeacherDashboard() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Verificando permissões...</p>
+            <p className="text-gray-600 text-gray-400">Verificando permissões...</p>
           </div>
         </div>
       }
@@ -1072,10 +1072,10 @@ export default function TeacherDashboard() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-xl font-semibold text-gray-900 text-white mb-2">
               Acesso Negado
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-gray-600 text-gray-400 mb-4">
               Você não tem permissão para acessar o dashboard de professor.
             </p>
             <button

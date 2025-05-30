@@ -208,7 +208,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
                         loadSchoolManagers(e.target.value);
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
                     required
                   >
                     <option value="">Selecione uma escola</option>
@@ -231,7 +231,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Buscar por nome ou email..."
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
                     />
                   </div>
                 </div>
@@ -245,7 +245,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
                     availableUsers.map((user) => (
                       <div
                         key={user.id}
-                        className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
+                        className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-300 cursor-pointer ${
                           formData.user_id === user.id ? 'bg-blue-50 dark:bg-blue-900' : ''
                         }`}
                         onClick={() => setFormData({ ...formData, user_id: user.id })}
@@ -263,7 +263,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
                 <select
                   value={formData.position}
                   onChange={(e) => setFormData({ ...formData, position: e.target.value as ManagerPosition })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
                   required
                 >
                   {Object.entries(MANAGER_POSITION_LABELS).map(([value, label]) => (
@@ -281,7 +281,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
                     type="date"
                     value={startDateStr}
                     onChange={(e) => setStartDateStr(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
                     required
                   />
                 </div>
@@ -292,7 +292,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
                     type="date"
                     value={endDateStr}
                     onChange={(e) => setEndDateStr(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
                   />
                 </div>
               </div>
@@ -313,7 +313,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-300 dark:text-gray-300 dark:hover:bg-gray-600"
                 >
                   Cancelar
                 </button>
@@ -337,7 +337,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
                     <div
                       key={manager.id}
                       className={`flex items-center justify-between p-4 rounded-lg ${
-                        manager.is_active ? 'bg-gray-50 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-800 opacity-75'
+                        manager.is_active ? 'bg-gray-50 dark:bg-gray-300' : 'bg-gray-100 dark:bg-gray-800 opacity-75'
                       }`}
                     >
                       <div>

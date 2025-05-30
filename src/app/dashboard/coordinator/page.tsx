@@ -311,7 +311,7 @@ export default function CoordinatorDashboard() {
             <select
               value={selectedCycle}
               onChange={(e) => setSelectedCycle(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-300"
             >
               <option value="all">Todos os Ciclos</option>
               <option value="fundamental1">Fundamental I</option>
@@ -425,7 +425,7 @@ export default function CoordinatorDashboard() {
               {cycles.map((cycle) => (
                 <div
                   key={cycle.id}
-                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                  className="p-4 bg-gray-50 dark:bg-gray-300 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div>
@@ -495,7 +495,7 @@ export default function CoordinatorDashboard() {
                 </thead>
                 <tbody>
                   {teachers.map((teacher) => (
-                    <tr key={teacher.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr key={teacher.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-300">
                       <td className="py-3">
                         <p className="font-medium">{teacher.name}</p>
                         <p className="text-xs text-gray-500">{teacher.students} alunos</p>
@@ -572,7 +572,7 @@ export default function CoordinatorDashboard() {
               {curriculum.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  className="p-3 bg-gray-50 dark:bg-gray-300 rounded-lg"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div>

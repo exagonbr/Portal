@@ -240,7 +240,7 @@ export default function InstitutionManagerDashboard() {
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-dark dark:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-dark dark:bg-gray-300"
             >
               <option value="week">Última Semana</option>
               <option value="month">Último Mês</option>
@@ -338,7 +338,7 @@ export default function InstitutionManagerDashboard() {
               {schools.map((school) => (
                 <div
                   key={school.id}
-                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                  className="p-4 bg-gray-50 dark:bg-gray-300 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -428,7 +428,7 @@ export default function InstitutionManagerDashboard() {
               {announcements.map((announcement) => (
                 <div
                   key={announcement.id}
-                  className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  className="p-3 bg-gray-50 dark:bg-gray-300 rounded-lg"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-medium text-sm">{announcement.title}</h4>
@@ -545,7 +545,7 @@ function PerformanceIndicator({ title, value, target, icon: Icon, color }: Perfo
         <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}%</p>
         <p className="text-sm text-gray-500 mb-1">/ {target}%</p>
       </div>
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+      <div className="w-full bg-gray-200 dark:bg-gray-300 rounded-full h-2 mb-2">
         <div
           className={`h-2 rounded-full ${color === 'primary' ? 'bg-primary' : color === 'accent-green' ? 'bg-accent-green' : 'bg-accent-purple'} transition-all duration-300`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
@@ -581,7 +581,7 @@ function MetricProgress({ label, current, target, unit }: MetricProgressProps) {
           {current}{unit} / {target}{unit}
         </span>
       </div>
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+      <div className="w-full bg-gray-200 dark:bg-gray-300 rounded-full h-2">
         <div
           className={`h-2 rounded-full transition-all duration-300 ${
             isComplete ? 'bg-accent-green' : percentage >= 70 ? 'bg-accent-yellow' : 'bg-red-500'

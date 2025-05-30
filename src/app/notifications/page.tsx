@@ -239,7 +239,9 @@ export default function NotificationsPage() {
               </button>
             )}
 
-            {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'teacher') && (
+
+
+            {(user?.role === 'Administrador' || user?.role === 'Gestor' || user?.role === 'Professor') && (
               <>
                 <button
                   onClick={() => router.push('/notifications/sent')}

@@ -219,11 +219,11 @@ export default function ForumPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
               <MessageSquare className="w-8 h-8 text-primary" />
               Fórum da Comunidade
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-gray-600 text-gray-400 mt-2">
               Participe das discussões e compartilhe conhecimento
             </p>
           </div>
@@ -242,10 +242,10 @@ export default function ForumPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar tópicos..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-accent-blue dark:bg-gray-700"
+              className="w-full pl-10 pr-4 py-2 border   rounded-lg focus:ring-2 focus:ring-accent-blue bg-gray-100"
             />
           </div>
-          <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+          <button className="px-4 py-2 border border-gray-300 border-gray-600 rounded-lg hover:bg-gray-50 hover:bg-gray-300 flex items-center gap-2">
             <Filter className="w-5 h-5" />
             Filtros
           </button>
@@ -254,51 +254,51 @@ export default function ForumPage() {
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl font-bold text-gray-900 ">
                 {categories.reduce((acc, cat) => acc + cat.topicsCount, 0)}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Tópicos</p>
+              <p className="text-sm text-gray-600 ">Tópicos</p>
             </div>
-            <MessageSquare className="w-8 h-8 text-accent-blue opacity-50" />
+            <MessageSquare className="min-w-min min-h-min text-accent-blue opacity-50" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl font-bold text-gray-900 ">
                 {categories.reduce((acc, cat) => acc + cat.postsCount, 0)}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Respostas</p>
+              <p className="text-sm text-gray-600 text-gray-400">Respostas</p>
             </div>
-            <MessageCircle className="w-8 h-8 text-accent-green opacity-50" />
+            <MessageCircle className="min-w-min min-h-min text-accent-green opacity-50" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl font-bold text-gray-900 ">
                 1,234
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Membros Ativos</p>
+              <p className="text-sm text-gray-600 text-gray-400">Membros Ativos</p>
             </div>
-            <User className="w-8 h-8 text-accent-purple opacity-50" />
+            <User className="min-w-min min-h-min text-accent-purple opacity-50" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl font-bold text-gray-900">
                 89%
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Taxa de Resposta</p>
+              <p className="text-sm text-gray-600 text-gray-400">Taxa de Resposta</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-accent-yellow opacity-50" />
+            <TrendingUp className="wmin-w-min min-h-min text-accent-yellow opacity-50" />
           </div>
         </div>
       </div>
@@ -310,7 +310,7 @@ export default function ForumPage() {
           {categories.map((category) => (
             <div
               key={category.id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              className="bg-white bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
@@ -319,7 +319,7 @@ export default function ForumPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg mb-1">{category.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    <p className="text-sm text-gray-600 text-gray-400 mb-3">
                       {category.description}
                     </p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -332,7 +332,7 @@ export default function ForumPage() {
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </div>
               {category.lastPost && (
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="mt-4 pt-4 border-t border-gray-200 border-gray-700">
                   <p className="text-sm text-gray-500">Último post:</p>
                   <p className="text-sm font-medium truncate">{category.lastPost.title}</p>
                   <p className="text-xs text-gray-400">
@@ -357,7 +357,7 @@ export default function ForumPage() {
             {recentTopics.map((topic) => (
               <div
                 key={topic.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -390,7 +390,7 @@ export default function ForumPage() {
                       {topic.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded-full"
+                          className="px-2 py-1 text-xs bg-gray-100 bg-gray-300 rounded-full"
                         >
                           {tag}
                         </span>
@@ -417,7 +417,7 @@ export default function ForumPage() {
             {popularTopics.map((topic) => (
               <div
                 key={topic.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -450,7 +450,7 @@ export default function ForumPage() {
                       {topic.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded-full"
+                          className="px-2 py-1 text-xs bg-gray-100 bg-gray-300 rounded-full"
                         >
                           {tag}
                         </span>

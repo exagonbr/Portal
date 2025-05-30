@@ -379,7 +379,7 @@ export default function SystemAdminDashboard() {
               {institutions.map((institution) => (
                 <div
                   key={institution.id}
-                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                  className="p-4 bg-gray-50 dark:bg-gray-300 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -448,7 +448,7 @@ export default function SystemAdminDashboard() {
                 <Lock className="w-4 h-4" />
                 Políticas de Segurança
               </button>
-              <button className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center gap-2">
                 <Settings className="w-4 h-4" />
                 Configurações
               </button>
@@ -459,7 +459,7 @@ export default function SystemAdminDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Logs do Sistema</h3>
             <div className="space-y-2 text-sm">
-              <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
+              <div className="p-2 bg-gray-50 dark:bg-gray-300 rounded">
                 <p className="font-mono text-xs">
                   [INFO] 12:15:23 - Backup iniciado
                 </p>
@@ -469,7 +469,7 @@ export default function SystemAdminDashboard() {
                   [WARN] 12:14:15 - Alto uso de CPU detectado
                 </p>
               </div>
-              <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
+              <div className="p-2 bg-gray-50 dark:bg-gray-300 rounded">
                 <p className="font-mono text-xs">
                   [INFO] 12:10:45 - Nova instituição cadastrada
                 </p>

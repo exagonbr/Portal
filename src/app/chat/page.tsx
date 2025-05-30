@@ -281,14 +281,14 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="flex min-h-screen bg-slate-100 bg-gray-900">
+    <div className="flex min-h-screen bg-slate-100 bg-gray-300">
       {/* Lista de Conversas */}
       <div className="w-80 bg-white bg-gray-800 border-r border-slate-200 border-gray-700 flex flex-col">
         {/* Cabeçalho */}
         <div className="p-4 border-b border-slate-200 border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Mensagens</h2>
-            <button className="p-2 hover:bg-slate-100 hover:bg-gray-700 rounded-lg">
+            <button className="p-2 hover:bg-slate-100 hover:bg-gray-300 rounded-lg">
               <Plus className="w-5 h-5" />
             </button>
           </div>
@@ -301,7 +301,7 @@ export default function ChatPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar conversas..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-100 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-2 bg-slate-100 bg-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
         </div>
@@ -312,8 +312,8 @@ export default function ChatPage() {
             <div
               key={conversation.id}
               onClick={() => handleSelectConversation(conversation)}
-              className={`p-4 hover:bg-slate-50 hover:bg-gray-700 cursor-pointer transition-colors ${
-                selectedConversation?.id === conversation.id ? 'bg-slate-50 bg-gray-700' : ''
+              className={`p-4 hover:bg-slate-50 hover:bg-gray-300 cursor-pointer transition-colors ${
+                selectedConversation?.id === conversation.id ? 'bg-slate-50 bg-gray-300' : ''
               }`}
             >
               <div className="flex items-start gap-3">
@@ -403,15 +403,15 @@ export default function ChatPage() {
               </div>
               
               <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-slate-100 hover:bg-gray-700 rounded-lg">
+            <button className="p-2 hover:bg-slate-100 hover:bg-gray-300 rounded-lg">
               <Phone className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-slate-100 hover:bg-gray-700 rounded-lg">
+            <button className="p-2 hover:bg-slate-100 hover:bg-gray-300 rounded-lg">
               <Video className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setShowUserInfo(!showUserInfo)}
-              className="p-2 hover:bg-slate-100 hover:bg-gray-700 rounded-lg"
+              className="p-2 hover:bg-slate-100 hover:bg-gray-300 rounded-lg"
             >
               <MoreVertical className="w-5 h-5" />
             </button>
@@ -430,7 +430,7 @@ export default function ChatPage() {
                 <React.Fragment key={message.id}>
                   {showDate && (
                     <div className="text-center my-4">
-                      <span className="px-3 py-1 text-xs bg-slate-200 bg-gray-700 rounded-full">
+                      <span className="px-3 py-1 text-xs bg-slate-200 bg-gray-400 rounded-full">
                         {formatDate(message.timestamp)}
                       </span>
                     </div>
@@ -440,7 +440,7 @@ export default function ChatPage() {
                     <div className={`max-w-xs lg:max-w-md ${
                       isCurrentUser 
                         ? 'bg-indigo-600 text-white' 
-                        : 'bg-slate-200 dark:bg-gray-700 text-slate-900 dark:text-white'
+                        : 'bg-slate-200 dark:bg-green-400 text-slate-900 dark:text-black'
                     } rounded-lg px-4 py-2`}>
                       <p className="text-sm">{message.content}</p>
                       <div className={`flex items-center justify-end gap-1 mt-1 ${
@@ -457,7 +457,7 @@ export default function ChatPage() {
             
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-slate-200 dark:bg-gray-700 rounded-lg px-4 py-2">
+                <div className="bg-slate-200 bg-gray-300 rounded-lg px-4 py-2">
                   <div className="flex gap-1">
                     <Circle className="w-2 h-2 fill-current animate-bounce" />
                     <Circle className="w-2 h-2 fill-current animate-bounce delay-100" />
@@ -471,11 +471,11 @@ export default function ChatPage() {
           </div>
 
           {/* Input de Mensagem */}
-          <form onSubmit={handleSendMessage} className="bg-white dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 p-4">
+          <form onSubmit={handleSendMessage} className="bg-white dark:bg-blue-100 border-t border-slate-200 dark:border-gray-700 p-4">
             <div className="flex items-end gap-2">
               <button
                 type="button"
-                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg"
               >
                 <Paperclip className="w-5 h-5" />
               </button>
@@ -486,13 +486,13 @@ export default function ChatPage() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Digite uma mensagem..."
-                  className="w-full px-4 py-2 bg-slate-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-2 bg-slate-100 dark:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               
               <button
                 type="button"
-                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg"
               >
                 <Smile className="w-5 h-5" />
               </button>
@@ -538,22 +538,22 @@ export default function ChatPage() {
           </div>
 
           <div className="space-y-4">
-            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-3">
+            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg flex items-center gap-3">
               {selectedConversation.isMuted ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
               <span>{selectedConversation.isMuted ? 'Ativar notificações' : 'Silenciar'}</span>
             </button>
             
-            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-3">
+            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg flex items-center gap-3">
               <Star className="w-5 h-5" />
               <span>{selectedConversation.isPinned ? 'Desafixar' : 'Fixar'} conversa</span>
             </button>
             
-            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-3">
+            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg flex items-center gap-3">
               <Archive className="w-5 h-5" />
               <span>Arquivar conversa</span>
             </button>
             
-            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg flex items-center gap-3 text-red-600">
+            <button className="w-full p-3 hover:bg-slate-100 dark:hover:bg-gray-300 rounded-lg flex items-center gap-3 text-red-600">
               <Trash2 className="w-5 h-5" />
               <span>Apagar conversa</span>
             </button>

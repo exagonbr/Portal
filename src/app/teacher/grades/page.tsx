@@ -125,11 +125,11 @@ export default function TeacherGradesPage() {
           </div>
           <div className="flex space-x-4">
             <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
-              <span className="material-icons text-sm mr-2">file_download</span>
+              <span className="material-symbols-outlined text-sm mr-2">file_download</span>
               Exportar
             </button>
             <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
-              <span className="material-icons text-sm mr-2">add</span>
+              <span className="material-symbols-outlined text-sm mr-2">add</span>
               Nova Avaliação
             </button>
           </div>
@@ -207,9 +207,9 @@ export default function TeacherGradesPage() {
         {MOCK_GRADES.map((grade) => (
           <div key={grade.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             {/* Activity Image Header */}
-            <div className="relative h-48 bg-gradient-to-r from-primary to-primary-dark">
+            <div className="relative h-52 bg-gradient-to-r from-primary to-primary-dark">
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="material-icons text-white text-6xl">
+                <span className="material-symbols-outlined text-white text-6xl">
                   {ACTIVITY_TYPE_ICONS[grade.activity.type]}
                 </span>
               </div>
@@ -282,9 +282,6 @@ export default function TeacherGradesPage() {
               </div>
 
               <div className="flex justify-between items-center pt-4 mt-4 border-t border-gray-100">
-                <button className="text-gray-600 hover:text-gray-800">
-<span className="material-icons">mais_vert</span>
-                </button>
                 <div className="flex space-x-2">
                   <button className="px-3 py-1 text-sm text-primary hover:text-primary-dark transition-colors">
                     Ver Detalhes

@@ -290,7 +290,7 @@ export default function DashboardSidebar() {
               permissions: ['materials.access']
             },
             {
-              href: `/forum/${user?.role || ''}`,
+              href: '/forum/student/assignments',
               icon: 'forum',
               label: 'Fórum',
               permissions: ['forum.access']
@@ -370,7 +370,7 @@ export default function DashboardSidebar() {
               permissions: ['reports.view.own']
             },
             {
-              href: `/forum/${user?.role || ''}`,
+              href: '/forum/teacher/announcements',
               icon: 'forum',
               label: 'Fórum',
               permissions: ['forum.moderate']

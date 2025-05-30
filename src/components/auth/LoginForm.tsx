@@ -34,6 +34,7 @@ export function LoginForm() {
   const { login, logout } = useAuth();
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string>('');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const {
     values,
@@ -49,38 +50,36 @@ export function LoginForm() {
     onSubmit: async (formValues) => {
       try {
         setSubmitError('');
-        // O AuthContext já cuida do redirecionamento
         await login(formValues.email, formValues.password);
       } catch (error) {
         console.error('Erro durante o login:', error);
-        setSubmitError('Email ou senha incorretos');
+        setSubmitError('Email ou senha incorretos. Por favor, tente novamente.');
       }
     }
   });
 
   const handleGoogleLogin = async () => {
     try {
+      setIsGoogleLoading(true);
+      setSubmitError('');
+      
       const result = await signIn('google', { redirect: false });
       
       if (result?.ok && !result?.error) {
-        // Obtém a sessão do usuário após login com Google
         const response = await fetch('/api/auth/session');
         const session = await response.json();
         
         if (session?.user?.role) {
           const userRole = session.user.role;
-          // Normaliza a role para lowercase
           const normalizedRole = userRole?.toLowerCase();
           
-          // Verifica se a role é válida
           if (!isValidRole(normalizedRole)) {
             console.error(`Role inválida detectada no login Google: ${userRole}`);
             await signOut();
-            setSubmitError('Perfil de usuário inválido. Entre em contato com o administrador.');
+            setSubmitError('Perfil de usuário inválido. Por favor, entre em contato com o administrador.');
             return;
           }
           
-          // Obtém o caminho do dashboard baseado na role
           const dashboardPath = getDashboardPath(normalizedRole);
           
           if (dashboardPath) {
@@ -88,26 +87,28 @@ export function LoginForm() {
             router.push(dashboardPath);
           } else {
             console.error(`Caminho do dashboard não encontrado para a role: ${userRole}`);
-            setSubmitError('Erro interno. Entre em contato com o administrador.');
+            setSubmitError('Erro interno. Por favor, entre em contato com o administrador.');
           }
         } else {
-          setSubmitError('Sessão inválida. Tente novamente.');
+          setSubmitError('Sessão inválida. Por favor, tente novamente.');
         }
       }
       
       if (result?.error) {
         console.error('Erro no login Google:', result.error);
-        setSubmitError('Erro ao realizar login com Google');
+        setSubmitError('Erro ao realizar login com Google. Por favor, tente novamente.');
       }
     } catch (error) {
       console.error('Erro durante login Google:', error);
-      setSubmitError('Erro ao realizar login com Google');
+      setSubmitError('Erro ao realizar login com Google. Por favor, tente novamente.');
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6 mt-8">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6 mt-8" role="form" aria-label="Formulário de login">
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
             Email
@@ -122,14 +123,16 @@ export function LoginForm() {
               value={values.email}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 ${
+              aria-invalid={touched.email && errors.email ? 'true' : 'false'}
+              aria-describedby={touched.email && errors.email ? 'email-error' : undefined}
+              className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200 ${
                 touched.email && errors.email
                   ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
                   : 'border-gray-300 focus:ring-accent-blue focus:border-accent-blue'
               }`}
             />
             {touched.email && errors.email && (
-              <p className="mt-2 text-sm text-red-600" id="email-error">
+              <p className="mt-2 text-sm text-red-600" id="email-error" role="alert">
                 {errors.email}
               </p>
             )}
@@ -150,14 +153,16 @@ export function LoginForm() {
               value={values.password}
               onChange={handleChange}
               onBlur={handleBlur}
-              className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 ${
+              aria-invalid={touched.password && errors.password ? 'true' : 'false'}
+              aria-describedby={touched.password && errors.password ? 'password-error' : undefined}
+              className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200 ${
                 touched.password && errors.password
                   ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
                   : 'border-gray-300 focus:ring-accent-blue focus:border-accent-blue'
               }`}
             />
             {touched.password && errors.password && (
-              <p className="mt-2 text-sm text-red-600" id="password-error">
+              <p className="mt-2 text-sm text-red-600" id="password-error" role="alert">
                 {errors.password}
               </p>
             )}
@@ -165,10 +170,10 @@ export function LoginForm() {
         </div>
 
         {submitError && (
-          <div className="rounded-md bg-red-50 p-4">
+          <div className="rounded-md bg-red-50 p-4" role="alert">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="material-symbols-outlined text-red-400">error</span>
+                <span className="material-symbols-outlined text-red-400" aria-hidden="true">error</span>
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">{submitError}</h3>
@@ -182,6 +187,7 @@ export function LoginForm() {
             type="submit"
             disabled={isSubmitting}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            aria-busy={isSubmitting}
           >
             {isSubmitting ? 'Acessando...' : 'Acessar'}
           </button>
@@ -193,7 +199,7 @@ export function LoginForm() {
           <div className="w-full border-t border-gray-300" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500"></span>
+          <span className="px-2 bg-white text-gray-500">ou</span>
         </div>
       </div>
 
@@ -201,9 +207,11 @@ export function LoginForm() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-200"
+          disabled={isGoogleLoading}
+          className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-busy={isGoogleLoading}
         >
-          <svg className="h-5 w-5" viewBox="0 0 24 24">
+          <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
               fill="#4285F4"
@@ -221,7 +229,7 @@ export function LoginForm() {
               fill="#EA4335"
             />
           </svg>
-          Acessar com Google
+          {isGoogleLoading ? 'Conectando...' : 'Acessar com Google'}
         </button>
       </div>
     </div>

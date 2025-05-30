@@ -7,11 +7,6 @@ export default function StudentAssignmentsPage() {
   const { user } = useAuth()
   const router = useRouter()
 
-  if (!user || user.type !== 'student') {
-    router.push('/forum')
-    return null
-  }
-
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-900 mb-4">My Assignments</h2>

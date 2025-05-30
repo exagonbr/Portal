@@ -452,8 +452,8 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
                   loading={
                     <div className="flex items-center justify-center h-96 bg-gray-50 dark:bg-gray-800">
                       <div className="animate-pulse">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-300 rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-300 rounded w-1/2"></div>
                       </div>
                     </div>
                   }
@@ -497,7 +497,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-300 transition-colors"
               title="Voltar"
             >
               <FiArrowLeft className="w-5 h-5" />
@@ -505,7 +505,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
           )}
 
           <div className="flex items-center space-x-1">
-            <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
               <button
                 onClick={() => handlePageChange(1)}
                 disabled={viewerState.currentPage <= 1}
@@ -565,7 +565,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
 
           {/* Barra de progresso */}
           <div className="hidden md:flex items-center space-x-2">
-            <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="w-32 h-2 bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden">
               <div
                 className="h-full bg-blue-500 transition-all duration-300"
                 style={{ width: `${readingProgress}%` }}
@@ -579,7 +579,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
 
         {/* Controles centrais */}
         <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
             <button
               onClick={() => handleZoom('out')}
               className="p-2 rounded hover:bg-white dark:hover:bg-gray-600 transition-colors"
@@ -607,7 +607,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
             </button>
           </div>
 
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
             <button
               onClick={handleDualPageToggle}
               className={`p-2 rounded transition-colors ${
@@ -624,7 +624,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
 
         {/* Controles à direita */}
         <div className="flex items-center space-x-2">
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
             <button
               onClick={() => setShowSearch(!showSearch)}
               className={`p-2 rounded transition-colors ${
@@ -661,7 +661,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
             </button>
           </div>
           
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-300 rounded-lg p-1">
             <button
               onClick={handleThemeToggle}
               className="p-2 rounded hover:bg-white dark:hover:bg-gray-600 transition-colors"
@@ -693,7 +693,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Pesquisar no documento..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <button
@@ -709,7 +709,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
                 setSearchQuery('');
                 setSearchResults([]);
               }}
-              className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-300"
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -717,14 +717,14 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
           
           {/* Resultados da pesquisa */}
           {searchResults.length > 0 && (
-            <div className="mt-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 max-h-60 overflow-y-auto max-w-2xl mx-auto">
+            <div className="mt-3 bg-gray-50 dark:bg-gray-300/50 rounded-lg p-3 max-h-60 overflow-y-auto max-w-2xl mx-auto">
               <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Resultados da Pesquisa</h4>
               <div className="space-y-2">
                 {searchResults.map((result, i) => (
                   <div
                     key={i}
                     onClick={() => handlePageChange(result.page)}
-                    className="p-2 bg-white dark:bg-gray-700 rounded cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    className="p-2 bg-white dark:bg-gray-300 rounded cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Página {result.page}</span>
@@ -749,7 +749,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
               value={newBookmarkTitle}
               onChange={(e) => setNewBookmarkTitle(e.target.value)}
               placeholder="Título do marcador..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-300"
               autoFocus
             />
             <div className="flex justify-end space-x-2 mt-4">
@@ -758,7 +758,7 @@ const IntegratedViewer: React.FC<IntegratedViewerProps> = ({
                   setIsAddingBookmark(false);
                   setNewBookmarkTitle('');
                 }}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-300 rounded-lg transition-colors"
               >
                 Cancelar
               </button>

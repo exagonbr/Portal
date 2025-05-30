@@ -51,7 +51,7 @@ export default function BookSidebar() {
                 className={`flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-blue-600 text-white'
-                    : 'text-black hover:bg-gray-700'
+                    : 'text-black hover:bg-gray-300'
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -77,7 +77,7 @@ export default function BookSidebar() {
                   className={`flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-colors ${
                     isActive
                       ? 'bg-blue-600 text-white'
-                      : 'text-black hover:bg-gray-700'
+                      : 'text-black hover:bg-gray-300'
                   }`}
                 >
                   <BookmarkIcon className="w-4 h-4" />

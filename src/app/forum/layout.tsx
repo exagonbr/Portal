@@ -31,10 +31,10 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  All Discussions
+                  Todos os Tópicos
                 </Link>
 
-                {user?.type === 'teacher' && (
+                {(user?.role === 'teacher' ? 'Professor' : '') && (
                   <>
                     <Link 
                       href="/forum/teacher/assignments"
@@ -44,7 +44,7 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      Assignments
+                      Atribuições
                     </Link>
                     <Link 
                       href="/forum/teacher/announcements"
@@ -54,12 +54,12 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      Announcements
+                      Anúncios
                     </Link>
                   </>
                 )}
 
-                {user?.type === 'student' && (
+                {user?.role === 'student' && (
                   <>
                     <Link 
                       href="/forum/student/assignments"
@@ -88,12 +88,6 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
 
             {/* Main Content */}
             <div className="flex-1">
-          <div className="border-b border-gray-200 pb-4 mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">Forum</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Discuss topics, ask questions, and share knowledge with your classmates and teachers.
-            </p>
-          </div>
               {children}
             </div>
           </div>

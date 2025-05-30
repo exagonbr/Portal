@@ -412,7 +412,7 @@ function StudentDashboardContent() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'overview'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300'
               }`}
             >
               Visão Geral
@@ -422,7 +422,7 @@ function StudentDashboardContent() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'learning'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300'
               }`}
             >
               Aprendizado
@@ -432,7 +432,7 @@ function StudentDashboardContent() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'social'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300'
               }`}
             >
               Social
@@ -442,7 +442,7 @@ function StudentDashboardContent() {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'achievements'
                   ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-300'
               }`}
             >
               Conquistas
@@ -813,10 +813,10 @@ function StudentDashboardContent() {
                   <button className="px-4 py-2 bg-accent-purple text-white rounded-lg">
                     Para Você
                   </button>
-                  <button className="px-4 py-2 bg-gray-200 bg-gray-700 rounded-lg">
+                  <button className="px-4 py-2 bg-gray-200 bg-gray-300 rounded-lg">
                     Todos
                   </button>
-                  <button className="px-4 py-2 bg-gray-200 bg-gray-700 rounded-lg">
+                  <button className="px-4 py-2 bg-gray-200 bg-gray-300 rounded-lg">
                     Favoritos
                   </button>
                 </div>
@@ -995,7 +995,7 @@ function StudentDashboardContent() {
                 ))}
               </div>
 
-              <button className="w-full mt-4 px-4 py-2 bg-gray-200 bg-gray-700 rounded-lg hover:bg-gray-300 hover:bg-gray-600 transition-colors">
+              <button className="w-full mt-4 px-4 py-2 bg-gray-200 bg-gray-300 rounded-lg hover:bg-gray-300 hover:bg-gray-600 transition-colors">
                 Criar Novo Grupo
               </button>
             </div>
@@ -1012,7 +1012,7 @@ function StudentDashboardContent() {
                   <div
                     key={position}
                     className={`flex items-center justify-between p-3 rounded-lg ${
-                      position === stats.ranking ? 'bg-primary/10 border border-primary/30' : 'bg-gray-50 bg-gray-700'
+                      position === stats.ranking ? 'bg-primary/10 border border-primary/30' : 'bg-gray-50 bg-gray-300'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -1125,7 +1125,7 @@ function StudentDashboardContent() {
                     <div className={`p-3 rounded-lg ${
                       achievement.unlocked
                         ? 'bg-yellow-200 text-yellow-800'
-                        : 'bg-gray-200 bg-gray-700 text-gray-500'
+                        : 'bg-gray-200 bg-gray-300 text-gray-500'
                     }`}>
                       {achievement.icon === 'star' ? <Star className="w-6 h-6" /> :
                        achievement.icon === 'calculator' ? <Brain className="w-6 h-6" /> :
