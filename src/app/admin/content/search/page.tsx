@@ -1,7 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { FileService } from '@/services/fileService'
 import { BucketService } from '@/services/bucketService'
 import { S3FileInfo } from '@/types/files'
@@ -243,7 +243,7 @@ export default function AdminContentSearchPage() {
   }
 
   // Função para filtrar e ordenar conteúdo com paginação
-  const getFilteredContent = () => {
+  const getFilteredContent = useMemo(() => {
     let content = contents[activeTab] || []
     
     // Filtrar por termo de busca
@@ -275,17 +275,21 @@ export default function AdminContentSearchPage() {
       }
     })
     
-    // Calcular total de páginas
-    const totalItems = content.length
-    const pages = Math.ceil(totalItems / ITEMS_PER_PAGE)
-    setTotalPages(pages)
-    
-    // Aplicar paginação
+    return content
+  }, [contents, activeTab, searchTerm, contentType, sortBy])
+
+  // Calcular páginas paginadas
+  const paginatedContent = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
-    
-    return content.slice(startIndex, endIndex)
-  }
+    return getFilteredContent.slice(startIndex, endIndex)
+  }, [getFilteredContent, currentPage])
+
+  // Atualizar total de páginas quando conteúdo filtrado mudar
+  useEffect(() => {
+    const pages = Math.ceil(getFilteredContent.length / ITEMS_PER_PAGE)
+    setTotalPages(pages)
+  }, [getFilteredContent.length])
 
   // Funções de ação
   const handleView = (item: S3FileInfo) => {
@@ -467,8 +471,6 @@ export default function AdminContentSearchPage() {
     setSelectedItem(item)
     setShowAddLibraryModal(true)
   }
-
-  const filteredContent = getFilteredContent()
 
   if (bucketsLoading) {
     return (
@@ -655,7 +657,7 @@ export default function AdminContentSearchPage() {
               <span className="material-symbols-outlined text-blue-600 mr-2">folder</span>
               <div>
                 <p className="text-sm text-gray-600">Total de Arquivos</p>
-                <p className="text-xl font-semibold">{filteredContent.length}</p>
+                <p className="text-xl font-semibold">{getFilteredContent.length}</p>
               </div>
             </div>
           </div>
@@ -665,7 +667,7 @@ export default function AdminContentSearchPage() {
               <div>
                 <p className="text-sm text-gray-600">Com Referência DB</p>
                 <p className="text-xl font-semibold text-green-600">
-                  {filteredContent.filter(item => item.hasDbReference).length}
+                  {getFilteredContent.filter(item => item.hasDbReference).length}
                 </p>
               </div>
             </div>
@@ -676,7 +678,7 @@ export default function AdminContentSearchPage() {
               <div>
                 <p className="text-sm text-gray-600">Sem Referência DB</p>
                 <p className="text-xl font-semibold text-red-600">
-                  {filteredContent.filter(item => !item.hasDbReference).length}
+                  {getFilteredContent.filter(item => !item.hasDbReference).length}
                 </p>
               </div>
             </div>
@@ -711,7 +713,7 @@ export default function AdminContentSearchPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredContent.map((item) => (
+              {paginatedContent.map((item) => (
                 <tr key={item.id} className={`hover:bg-gray-50 ${!item.hasDbReference ? 'bg-red-50' : ''}`}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -863,10 +865,10 @@ export default function AdminContentSearchPage() {
                   <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>
                   {' '}até{' '}
                   <span className="font-medium">
-                    {Math.min(currentPage * ITEMS_PER_PAGE, (contents[activeTab] || []).length)}
+                    {Math.min(currentPage * ITEMS_PER_PAGE, getFilteredContent.length)}
                   </span>
                   {' '}de{' '}
-                  <span className="font-medium">{(contents[activeTab] || []).length}</span>
+                  <span className="font-medium">{getFilteredContent.length}</span>
                   {' '}resultados
                 </p>
               </div>
@@ -936,7 +938,7 @@ export default function AdminContentSearchPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-500">Carregando arquivos...</p>
           </div>
-        ) : filteredContent.length === 0 ? (
+        ) : getFilteredContent.length === 0 ? (
           <div className="text-center py-12">
             <span className="material-symbols-outlined text-gray-400 text-6xl mb-4">folder_open</span>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum arquivo encontrado</h3>
