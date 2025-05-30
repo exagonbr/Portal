@@ -4,7 +4,7 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development' && process.env.DISABLE_PWA !== 'false',
+  disable: process.env.NODE_ENV === 'development' && process.env.DISABLE_PWA === 'true',
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,

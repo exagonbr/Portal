@@ -5,7 +5,7 @@ import { FileRecord, S3FileInfo } from '@/types/files'
 
 // Configuração S3 (você deve configurar com suas credenciais)
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || 'sa-east-1',
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
@@ -13,9 +13,9 @@ const s3Client = new S3Client({
 })
 
 const BUCKETS = {
-  literario: process.env.S3_BUCKET_LITERARIO || 'literario-bucket',
-  professor: process.env.S3_BUCKET_PROFESSOR || 'professor-bucket',
-  aluno: process.env.S3_BUCKET_ALUNO || 'aluno-bucket'
+  literario: process.env.S3_BUCKET_LITERARIO || 'sabercon-library',
+  professor: process.env.S3_BUCKET_PROFESSOR || 'editora-liberty',
+  aluno: process.env.S3_BUCKET_ALUNO || 'editora-liberty',
 }
 
 // Mock do banco de dados - substitua pela sua implementação

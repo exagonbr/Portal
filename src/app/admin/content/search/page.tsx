@@ -3,77 +3,10 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useState, useRef, useEffect } from 'react'
 import { FileService } from '@/services/fileService'
+import { BucketService } from '@/services/bucketService'
 import { S3FileInfo } from '@/types/files'
 
-// Mock data para diferentes tipos de conteúdo
-const MOCK_CONTENT = {
-  literario: [
-    {
-      id: 'lit_1',
-      name: 'Dom Casmurro.pdf',
-      type: 'PDF',
-      size: '2.4 MB',
-      bucket: 'literario-bucket',
-      lastModified: '2024-01-15',
-      description: 'Clássico da literatura brasileira',
-      url: 'https://literario-bucket.s3.amazonaws.com/dom-casmurro.pdf'
-    },
-    {
-      id: 'lit_2',
-      name: 'Vidas Secas.epub',
-      type: 'EPUB',
-      size: '1.8 MB',
-      bucket: 'literario-bucket',
-      lastModified: '2024-02-10',
-      description: 'Romance regionalista de Graciliano Ramos',
-      url: 'https://literario-bucket.s3.amazonaws.com/vidas-secas.epub'
-    }
-  ],
-  professor: [
-    {
-      id: 'prof_1',
-      name: 'Plano de Aula - Matemática.docx',
-      type: 'DOCX',
-      size: '856 KB',
-      bucket: 'professor-bucket',
-      lastModified: '2024-03-05',
-      description: 'Plano de aula para ensino fundamental',
-      url: 'https://professor-bucket.s3.amazonaws.com/plano-matematica.docx'
-    },
-    {
-      id: 'prof_2',
-      name: 'Apresentação História.pptx',
-      type: 'PPTX',
-      size: '15.2 MB',
-      bucket: 'professor-bucket',
-      lastModified: '2024-02-28',
-      description: 'Slides sobre história do Brasil',
-      url: 'https://professor-bucket.s3.amazonaws.com/apresentacao-historia.pptx'
-    }
-  ],
-  aluno: [
-    {
-      id: 'alun_1',
-      name: 'Exercícios Matemática 6º Ano.pdf',
-      type: 'PDF',
-      size: '3.2 MB',
-      bucket: 'aluno-bucket',
-      lastModified: '2024-03-10',
-      description: 'Lista de exercícios para estudantes',
-      url: 'https://aluno-bucket.s3.amazonaws.com/exercicios-mat-6ano.pdf'
-    },
-    {
-      id: 'alun_2',
-      name: 'Jogo Educativo.zip',
-      type: 'ZIP',
-      size: '45.8 MB',
-      bucket: 'aluno-bucket',
-      lastModified: '2024-01-20',
-      description: 'Jogo interativo de ciências',
-      url: 'https://aluno-bucket.s3.amazonaws.com/jogo-educativo.zip'
-    }
-  ]
-}
+
 
 const CONTENT_TYPES = ['Todos', 'PDF', 'DOCX', 'PPTX', 'EPUB', 'ZIP', 'MP4', 'MP3']
 const SORT_OPTIONS = [
@@ -83,11 +16,12 @@ const SORT_OPTIONS = [
   { value: 'type', label: 'Tipo' }
 ]
 
-const BUCKETS = [
-  { value: 'literario-bucket', label: 'Conteúdo Literário' },
-  { value: 'professor-bucket', label: 'Conteúdo Professor' },
-  { value: 'aluno-bucket', label: 'Conteúdo Aluno' }
-]
+interface BucketInfo {
+  name: string
+  label: string
+  category: string
+  description: string
+}
 
 export default function AdminContentSearchPage() {
   const { user } = useAuth()
@@ -98,21 +32,20 @@ export default function AdminContentSearchPage() {
   const [contentType, setContentType] = useState('Todos')
   const [sortBy, setSortBy] = useState('name')
   
-  // Estados para abas e conteúdo
-  const [activeTab, setActiveTab] = useState('literario')
-  const [contents, setContents] = useState<Record<string, S3FileInfo[]>>({
-    literario: [],
-    professor: [],
-    aluno: []
-  })
+  // Estados para buckets e conteúdo
+  const [availableBuckets, setAvailableBuckets] = useState<BucketInfo[]>([])
+  const [activeTab, setActiveTab] = useState('')
+  const [contents, setContents] = useState<Record<string, S3FileInfo[]>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [bucketsLoading, setBucketsLoading] = useState(true)
   
   // Estados para modais e ações
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [showMoveModal, setShowMoveModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCreateRefModal, setShowCreateRefModal] = useState(false)
+  const [showBucketModal, setShowBucketModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState<S3FileInfo | null>(null)
   const [newName, setNewName] = useState('')
   const [targetBucket, setTargetBucket] = useState('')
@@ -120,33 +53,118 @@ export default function AdminContentSearchPage() {
   const [refDescription, setRefDescription] = useState('')
   const [refTags, setRefTags] = useState('')
 
-  const tabs = [
-    { id: 'literario', label: 'Conteúdo Literário', icon: 'book' },
-    { id: 'professor', label: 'Conteúdo Professor', icon: 'school' },
-    { id: 'aluno', label: 'Conteúdo Aluno', icon: 'person' }
-  ]
+  // Estados para adicionar bucket
+  const [newBucketName, setNewBucketName] = useState('')
+  const [newBucketLabel, setNewBucketLabel] = useState('')
+  const [newBucketCategory, setNewBucketCategory] = useState('')
+  const [newBucketDescription, setNewBucketDescription] = useState('')
 
-  // Carregar dados ao montar o componente
+  // Carregar buckets ao montar o componente
   useEffect(() => {
-    loadFiles()
+    loadBuckets()
   }, [])
 
+  // Carregar arquivos quando mudar aba ativa
+  useEffect(() => {
+    if (activeTab) {
+      loadFiles()
+    }
+  }, [activeTab])
+
+  const loadBuckets = async () => {
+    setBucketsLoading(true)
+    setError(null)
+    try {
+      const buckets = await BucketService.getConfiguredBuckets()
+      setAvailableBuckets(buckets)
+      
+      // Definir primeira aba como ativa se não houver nenhuma
+      if (buckets.length > 0 && !activeTab) {
+        setActiveTab(buckets[0].category)
+      }
+      
+      // Inicializar estado de contents para todos os buckets
+      const initialContents: Record<string, S3FileInfo[]> = {}
+      buckets.forEach(bucket => {
+        initialContents[bucket.category] = []
+      })
+      setContents(initialContents)
+      
+    } catch (err) {
+      console.error('Erro ao carregar buckets:', err)
+      setError('Erro ao carregar buckets. Tente novamente.')
+    } finally {
+      setBucketsLoading(false)
+    }
+  }
+
   const loadFiles = async () => {
+    if (!activeTab) return
+    
     setLoading(true)
     setError(null)
     try {
-      // Carregar arquivos de todas as categorias com verificação de referências
+      const files = await FileService.checkDatabaseReferences(activeTab as 'literario' | 'professor' | 'aluno')
+      setContents(prev => ({
+        ...prev,
+        [activeTab]: files
+      }))
+    } catch (err) {
+      console.error('Erro ao carregar arquivos:', err)
+      setError('Erro ao carregar arquivos. Tente novamente.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadAllFiles = async () => {
+    setLoading(true)
+    setError(null)
+    try {
       const allFiles: Record<string, S3FileInfo[]> = {}
       
-      for (const tab of tabs) {
-        const files = await FileService.checkDatabaseReferences(tab.id as 'literario' | 'professor' | 'aluno')
-        allFiles[tab.id] = files
+      for (const bucket of availableBuckets) {
+        const files = await FileService.checkDatabaseReferences(bucket.category as 'literario' | 'professor' | 'aluno')
+        allFiles[bucket.category] = files
       }
       
       setContents(allFiles)
     } catch (err) {
       console.error('Erro ao carregar arquivos:', err)
       setError('Erro ao carregar arquivos. Tente novamente.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const addNewBucket = async () => {
+    if (!newBucketName || !newBucketLabel || !newBucketCategory) {
+      setError('Nome, label e categoria são obrigatórios')
+      return
+    }
+
+    try {
+      setLoading(true)
+      await BucketService.addBucket({
+        name: newBucketName,
+        label: newBucketLabel,
+        category: newBucketCategory,
+        description: newBucketDescription
+      })
+      
+      // Recarregar buckets
+      await loadBuckets()
+      
+      // Limpar form
+      setNewBucketName('')
+      setNewBucketLabel('')
+      setNewBucketCategory('')
+      setNewBucketDescription('')
+      setShowBucketModal(false)
+      
+    } catch (err) {
+      console.error('Erro ao adicionar bucket:', err)
+      setError('Erro ao adicionar bucket. Verifique se o bucket existe na AWS.')
     } finally {
       setLoading(false)
     }
@@ -324,12 +342,42 @@ export default function AdminContentSearchPage() {
 
   const filteredContent = getFilteredContent()
 
+  if (bucketsLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Carregando buckets...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Gerenciamento de Conteúdo</h1>
-        <p className="text-gray-600">Gerencie arquivos nos buckets S3 da AWS e suas referências no banco de dados</p>
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Gerenciamento de Conteúdo</h1>
+          <p className="text-gray-600">Gerencie arquivos nos buckets S3 da AWS e suas referências no banco de dados</p>
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setShowBucketModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            <span>Adicionar Bucket</span>
+          </button>
+          <button
+            onClick={loadAllFiles}
+            disabled={loading}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            <span className="material-symbols-outlined text-sm">refresh</span>
+            <span>{loading ? 'Carregando...' : 'Atualizar Todos'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Error Alert */}
@@ -347,6 +395,22 @@ export default function AdminContentSearchPage() {
           </div>
         </div>
       )}
+
+      {/* Info sobre buckets */}
+      <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
+        <div className="flex items-center mb-2">
+          <span className="material-symbols-outlined text-blue-600 mr-2">info</span>
+          <h3 className="font-medium text-blue-800">Buckets Configurados ({availableBuckets.length})</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+          {availableBuckets.map((bucket, index) => (
+            <div key={index} className="bg-white p-2 rounded border">
+              <div className="font-medium text-blue-700">{bucket.label}</div>
+              <div className="text-gray-600 text-xs">{bucket.name}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Filtros Globais */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -402,66 +466,73 @@ export default function AdminContentSearchPage() {
       </div>
 
       {/* Abas */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <span className="material-symbols-outlined text-sm">{tab.icon}</span>
-                <span>{tab.label}</span>
-                {contents[tab.id] && (
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                    {contents[tab.id].length}
+      {availableBuckets.length > 0 && (
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              {availableBuckets.map((bucket) => (
+                <button
+                  key={bucket.category}
+                  onClick={() => setActiveTab(bucket.category)}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200 ${
+                    activeTab === bucket.category
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-sm">
+                    {bucket.category === 'literario' ? 'book' : 
+                     bucket.category === 'professor' ? 'school' : 'person'}
                   </span>
-                )}
-              </button>
-            ))}
-          </nav>
+                  <span>{bucket.label}</span>
+                  {contents[bucket.category] && (
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
+                      {contents[bucket.category].length}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex items-center">
-            <span className="material-symbols-outlined text-blue-600 mr-2">folder</span>
-            <div>
-              <p className="text-sm text-gray-600">Total de Arquivos</p>
-              <p className="text-xl font-semibold">{filteredContent.length}</p>
+      {activeTab && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <div className="flex items-center">
+              <span className="material-symbols-outlined text-blue-600 mr-2">folder</span>
+              <div>
+                <p className="text-sm text-gray-600">Total de Arquivos</p>
+                <p className="text-xl font-semibold">{filteredContent.length}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <div className="flex items-center">
+              <span className="material-symbols-outlined text-green-600 mr-2">check_circle</span>
+              <div>
+                <p className="text-sm text-gray-600">Com Referência DB</p>
+                <p className="text-xl font-semibold text-green-600">
+                  {filteredContent.filter(item => item.hasDbReference).length}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <div className="flex items-center">
+              <span className="material-symbols-outlined text-red-600 mr-2">warning</span>
+              <div>
+                <p className="text-sm text-gray-600">Sem Referência DB</p>
+                <p className="text-xl font-semibold text-red-600">
+                  {filteredContent.filter(item => !item.hasDbReference).length}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex items-center">
-            <span className="material-symbols-outlined text-green-600 mr-2">check_circle</span>
-            <div>
-              <p className="text-sm text-gray-600">Com Referência DB</p>
-              <p className="text-xl font-semibold text-green-600">
-                {filteredContent.filter(item => item.hasDbReference).length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex items-center">
-            <span className="material-symbols-outlined text-red-600 mr-2">warning</span>
-            <div>
-              <p className="text-sm text-gray-600">Sem Referência DB</p>
-              <p className="text-xl font-semibold text-red-600">
-                {filteredContent.filter(item => !item.hasDbReference).length}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Lista de Conteúdo */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -607,7 +678,9 @@ export default function AdminContentSearchPage() {
           <div className="text-center py-12">
             <span className="material-symbols-outlined text-gray-400 text-6xl mb-4">folder_open</span>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum arquivo encontrado</h3>
-            <p className="text-gray-500">Tente ajustar os filtros ou adicione novos arquivos.</p>
+            <p className="text-gray-500">
+              {activeTab ? 'Tente ajustar os filtros ou adicione novos arquivos.' : 'Selecione uma aba para ver os arquivos.'}
+            </p>
           </div>
         ) : null}
       </div>
@@ -619,6 +692,83 @@ export default function AdminContentSearchPage() {
         onChange={handleFileReplace}
         className="hidden"
       />
+
+      {/* Modal de Adicionar Bucket */}
+      {showBucketModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Adicionar Novo Bucket</h3>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Bucket</label>
+                <input
+                  type="text"
+                  value={newBucketName}
+                  onChange={(e) => setNewBucketName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="nome-do-bucket"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
+                <input
+                  type="text"
+                  value={newBucketLabel}
+                  onChange={(e) => setNewBucketLabel(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Nome amigável do bucket"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                <input
+                  type="text"
+                  value={newBucketCategory}
+                  onChange={(e) => setNewBucketCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="categoria-unica"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                <textarea
+                  value={newBucketDescription}
+                  onChange={(e) => setNewBucketDescription(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  placeholder="Descrição do bucket"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => {
+                    setShowBucketModal(false)
+                    setNewBucketName('')
+                    setNewBucketLabel('')
+                    setNewBucketCategory('')
+                    setNewBucketDescription('')
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={addNewBucket}
+                  disabled={loading || !newBucketName || !newBucketLabel || !newBucketCategory}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+                >
+                  {loading ? 'Adicionando...' : 'Adicionar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Criar Referência */}
       {showCreateRefModal && selectedItem && (
@@ -755,8 +905,8 @@ export default function AdminContentSearchPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Selecione o bucket</option>
-                  {BUCKETS.filter(bucket => bucket.value !== selectedItem?.bucket).map(bucket => (
-                    <option key={bucket.value} value={bucket.value}>{bucket.label}</option>
+                  {availableBuckets.filter(bucket => bucket.name !== selectedItem?.bucket).map(bucket => (
+                    <option key={bucket.name} value={bucket.name}>{bucket.label}</option>
                   ))}
                 </select>
               </div>

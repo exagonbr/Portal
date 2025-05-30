@@ -16,7 +16,6 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
@@ -27,16 +26,16 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     }
 
     // Listen for the beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e: Event) => { // Use standard Event type
+    const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent); // Cast to specific type
-      setIsInstallable(true);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
+    
     // Listen for successful installation
-    window.addEventListener('appinstalled', () => {
+    window.addEventListener('appinstalled', (e) => {
+      e.preventDefault();
       setIsInstalled(true);
       setDeferredPrompt(null);
     });
@@ -44,10 +43,14 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [registration]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      // Se não há prompt nativo, tentar abrir instruções manuais ou reload
+      alert('Para instalar este app:\n\n• No Chrome: Menu > Instalar app\n• No Firefox: Menu > Instalar\n• No Safari: Compartilhar > Adicionar à Tela Inicial');
+      return;
+    }
 
     try {
       await deferredPrompt.prompt();
@@ -58,13 +61,13 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
       }
 
       setDeferredPrompt(null);
-      setIsInstallable(false);
     } catch (error) {
       console.error('Error installing PWA:', error);
     }
   };
 
-  if (!registration || isInstalled || !isInstallable) {
+  // Só oculta se estiver instalado
+  if (isInstalled) {
     return null;
   }
 
