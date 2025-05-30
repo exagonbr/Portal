@@ -5,37 +5,135 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const [showUnauthorizedMessage, setShowUnauthorizedMessage] = useState(false);
+  const { settings, isLoading } = useSystemSettings();
 
   useEffect(() => {
-    const error = searchParams.get('error');
+    const error = searchParams?.get('error');
     if (error === 'unauthorized') {
       setShowUnauthorizedMessage(true);
       // Remove the error parameter from URL after showing the message
-      const url = new URL(window.location.href);
-      url.searchParams.delete('error');
-      window.history.replaceState({}, '', url.toString());
+      const newUrl = window.location.pathname;
+      router.replace(newUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
+  const renderBackground = () => {
+    if (isLoading) return null;
+
+    const { loginBackground } = settings;
+
+    switch (loginBackground.type) {
+      case 'video':
+        return (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute min-w-full min-h-full object-cover opacity-100"
+            preload="auto"
+          >
+            <source src={loginBackground.value} type="video/mp4" />
+            Seu navegador não suporta a tag de vídeo.
+          </video>
+        );
+
+      case 'url':
+        // Detectar se é vídeo ou imagem pela extensão
+        const isVideo = loginBackground.value.match(/\.(mp4|webm|ogg)$/i);
+        
+        if (isVideo) {
+          return (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute min-w-full min-h-full object-cover opacity-100"
+              preload="auto"
+            >
+              <source src={loginBackground.value} type="video/mp4" />
+              Seu navegador não suporta a tag de vídeo.
+            </video>
+          );
+        } else {
+          return (
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: `url(${loginBackground.value})`,
+                opacity: (loginBackground.opacity || 100) / 100
+              }}
+            />
+          );
+        }
+
+      case 'color':
+        return (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: loginBackground.value,
+              opacity: (loginBackground.opacity || 100) / 100
+            }}
+          />
+        );
+
+      default:
+        return (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute min-w-full min-h-full object-cover opacity-100"
+            preload="auto"
+          >
+            <source src="/back_video4.mp4" type="video/mp4" />
+            Seu navegador não suporta a tag de vídeo.
+          </video>
+        );
+    }
+  };
+
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Redirecionando...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen flex items-center justify-center" role="main">
-      {/* Video Background */}
+      {/* Background */}
       <div className="absolute inset-0 w-full h-full overflow-hidden" aria-hidden="true">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute min-w-full min-h-full object-cover opacity-100"
-          preload="auto"
-        >
-          <source src="/back_video4.mp4" type="video/mp4" />
-          Seu navegador não suporta a tag de vídeo.
-        </video>
+        {renderBackground()}
+        {/* Overlay opcional para melhor legibilidade */}
+        {settings.loginBackground.overlay && (
+          <div className="absolute inset-0 bg-black/20" />
+        )}
       </div>
 
       {/* Content */}
@@ -55,18 +153,16 @@ export default function LoginPage() {
 
         {/* Unauthorized Message */}
         {showUnauthorizedMessage && (
-          <div className="rounded-md bg-orange-50 p-4 border border-orange-200" role="alert">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <span className="material-symbols-outlined text-orange-400" aria-hidden="true">warning</span>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-orange-800">Não autorizado</h3>
-                <p className="text-sm text-orange-700 mt-1">
-                  Você precisa fazer login para acessar esta página.
-                </p>
-              </div>
-            </div>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            <span className="block sm:inline">
+              Acesso negado. Você precisa fazer login para acessar esta página.
+            </span>
+            <span
+              className="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer"
+              onClick={() => setShowUnauthorizedMessage(false)}
+            >
+              <span className="material-symbols-outlined">close</span>
+            </span>
           </div>
         )}
 

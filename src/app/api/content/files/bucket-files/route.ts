@@ -1,99 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
-import { S3FileInfo } from '@/types/files'
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
-  }
-})
-
-// Mapeamento de categorias para buckets
-const BUCKET_MAPPING: Record<string, string> = {
-  'literario': 'sabercon-liberty',
-  'professor': 'editora-sabercon', 
-  'aluno': 'editora-sabercon'
-}
-
-// Função para determinar o tipo do arquivo
-function getFileType(fileName: string): string {
-  const extension = fileName.split('.').pop()?.toLowerCase()
-  
-  switch (extension) {
-    case 'pdf': return 'PDF'
-    case 'docx': case 'doc': return 'DOCX'
-    case 'pptx': case 'ppt': return 'PPTX'
-    case 'epub': return 'EPUB'
-    case 'zip': case 'rar': return 'ZIP'
-    case 'mp4': case 'avi': case 'mkv': return 'MP4'
-    case 'mp3': case 'wav': return 'MP3'
-    default: return 'OUTROS'
-  }
-}
-
-// Função para formatar o tamanho do arquivo
-function formatFileSize(sizeInBytes: number): string {
-  if (sizeInBytes === 0) return '0 B'
-  
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(sizeInBytes) / Math.log(k))
-  
-  return parseFloat((sizeInBytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
+import { getDatabase } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
+  const db = getDatabase()
+  
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
 
     if (!category) {
-      return NextResponse.json({ error: 'Categoria é obrigatória' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Categoria é obrigatória' },
+        { status: 400 }
+      )
     }
 
-    const bucketName = BUCKET_MAPPING[category]
-    if (!bucketName) {
-      return NextResponse.json({ error: 'Categoria inválida' }, { status: 400 })
+    if (!['literario', 'professor', 'aluno'].includes(category)) {
+      return NextResponse.json(
+        { error: 'Categoria inválida. Use: literario, professor ou aluno' },
+        { status: 400 }
+      )
     }
 
-    console.log(`Buscando arquivos no bucket: ${bucketName}`)
+    console.log(`🔍 Buscando arquivos da categoria: ${category}`)
 
-    // Listar todos os objetos do bucket
-    const command = new ListObjectsV2Command({
-      Bucket: bucketName,
-      MaxKeys: 1000 // Ajustar conforme necessário
-    })
+    // Buscar todos os arquivos ativos da categoria específica
+    const files = await db('files')
+      .select([
+        'id',
+        'name',
+        'original_name',
+        'type',
+        'size',
+        'size_formatted',
+        'bucket',
+        's3_key',
+        's3_url',
+        'description',
+        'category',
+        'metadata',
+        'tags',
+        'is_active',
+        'created_at',
+        'updated_at'
+      ])
+      .where({
+        category: category,
+        is_active: true
+      })
+      .orderBy('name', 'asc')
 
-    const response = await s3Client.send(command)
-    
-    if (!response.Contents) {
-      return NextResponse.json([])
-    }
+    console.log(`✅ Encontrados ${files.length} arquivos na categoria ${category}`)
 
-    // Converter objetos S3 para formato S3FileInfo
-    const files: S3FileInfo[] = response.Contents
-      .filter(obj => obj.Key && obj.Size !== undefined && obj.LastModified)
-      .map(obj => ({
-        id: obj.Key!, // Usar S3 key como ID temporário
-        name: obj.Key!.split('/').pop() || obj.Key!,
-        type: getFileType(obj.Key!),
-        size: formatFileSize(obj.Size!),
-        bucket: bucketName,
-        lastModified: obj.LastModified!.toISOString(),
-        description: '', // Vazio para arquivos não vinculados
-        url: `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${obj.Key}`,
-        hasDbReference: false, // Será determinado na função que combina os dados
-        dbRecord: null
-      }))
+    // Transformar dados para o formato esperado pelo frontend
+    const transformedFiles = files.map(file => ({
+      id: file.id,
+      name: file.name,
+      originalName: file.original_name,
+      type: file.type,
+      size: file.size_formatted,
+      sizeBytes: file.size,
+      bucket: file.bucket,
+      s3Key: file.s3_key,
+      url: file.s3_url,
+      description: file.description || '',
+      category: file.category,
+      metadata: file.metadata || {},
+      tags: file.tags || [],
+      lastModified: file.updated_at,
+      createdAt: file.created_at,
+      hasDbReference: true // Todos os arquivos retornados têm referência no banco
+    }))
 
-    return NextResponse.json(files)
+    return NextResponse.json(transformedFiles)
 
   } catch (error) {
-    console.error('Erro ao listar arquivos S3 do bucket:', error)
+    console.error('❌ Erro ao buscar arquivos do bucket:', error)
+    
+    // Log detalhado do erro para debug
+    if (error instanceof Error) {
+      console.error('Detalhes do erro:', {
+        message: error.message,
+        stack: error.stack
+      })
+    }
+
     return NextResponse.json(
-      { error: 'Erro ao buscar arquivos do bucket' },
+      { error: 'Erro interno do servidor ao buscar arquivos' },
       { status: 500 }
     )
   }

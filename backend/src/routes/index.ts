@@ -1,7 +1,8 @@
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger';
-
+import { createAwsRoutes } from './awsRoutes';
+import db from '../config/database';
 
 // API Routes
 import pushSubscriptionRoutes from './pushSubscription';
@@ -47,7 +48,6 @@ router.get('/docs.json', (req, res) => {
 });
 
 // API Routes
-// API Routes
 router.use('/push-subscriptions', pushSubscriptionRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/institutions', institutionsRouter);
@@ -68,5 +68,6 @@ router.use('/content-collections', contentCollectionsRouter);
 router.use('/auth', authRouter);
 router.use('/sessions', sessionsRouter);
 router.use('/dashboard', dashboardRouter);
+router.use('/aws', createAwsRoutes(db));
 
 export default router;

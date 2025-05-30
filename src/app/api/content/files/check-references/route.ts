@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getDatabase } from '@/lib/database'
 
 // Para agora, vou usar uma versão simplificada sem AWS SDK até que as dependências sejam instaladas
 export async function GET(request: NextRequest) {
+  const db = getDatabase()
+  
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
@@ -13,135 +16,88 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Mock data com informações de referência
-    const mockFilesWithReferences = {
-      literario: [
-        {
-          id: 'lit_1',
-          name: 'Dom Casmurro.pdf',
-          type: 'PDF',
-          size: '2.4 MB',
-          bucket: 'literario-bucket',
-          lastModified: '2024-01-15',
-          description: 'Clássico da literatura brasileira',
-          url: 'https://literario-bucket.s3.amazonaws.com/dom-casmurro.pdf',
-          hasDbReference: true,
-          dbRecord: {
-            id: 'db_1',
-            createdAt: '2024-01-15',
-            uploadedBy: 'admin',
-            tags: ['literatura', 'clássico']
-          }
-        },
-        {
-          id: 'lit_2',
-          name: 'Vidas Secas.epub',
-          type: 'EPUB',
-          size: '1.8 MB',
-          bucket: 'literario-bucket',
-          lastModified: '2024-02-10',
-          description: 'Romance regionalista de Graciliano Ramos',
-          url: 'https://literario-bucket.s3.amazonaws.com/vidas-secas.epub',
-          hasDbReference: false,
-          dbRecord: null
-        },
-        {
-          id: 'lit_3',
-          name: 'O Cortiço.pdf',
-          type: 'PDF',
-          size: '3.1 MB',
-          bucket: 'literario-bucket',
-          lastModified: '2024-03-01',
-          description: 'Sem descrição',
-          url: 'https://literario-bucket.s3.amazonaws.com/o-cortico.pdf',
-          hasDbReference: false,
-          dbRecord: null
-        }
-      ],
-      professor: [
-        {
-          id: 'prof_1',
-          name: 'Plano de Aula - Matemática.docx',
-          type: 'DOCX',
-          size: '856 KB',
-          bucket: 'professor-bucket',
-          lastModified: '2024-03-05',
-          description: 'Plano de aula para ensino fundamental',
-          url: 'https://professor-bucket.s3.amazonaws.com/plano-matematica.docx',
-          hasDbReference: true,
-          dbRecord: {
-            id: 'db_2',
-            createdAt: '2024-03-05',
-            uploadedBy: 'prof.silva',
-            tags: ['matemática', 'plano-aula']
-          }
-        },
-        {
-          id: 'prof_2',
-          name: 'Apresentação História.pptx',
-          type: 'PPTX',
-          size: '15.2 MB',
-          bucket: 'professor-bucket',
-          lastModified: '2024-02-28',
-          description: 'Slides sobre história do Brasil',
-          url: 'https://professor-bucket.s3.amazonaws.com/apresentacao-historia.pptx',
-          hasDbReference: false,
-          dbRecord: null
-        }
-      ],
-      aluno: [
-        {
-          id: 'alun_1',
-          name: 'Exercícios Matemática 6º Ano.pdf',
-          type: 'PDF',
-          size: '3.2 MB',
-          bucket: 'aluno-bucket',
-          lastModified: '2024-03-10',
-          description: 'Lista de exercícios para estudantes',
-          url: 'https://aluno-bucket.s3.amazonaws.com/exercicios-mat-6ano.pdf',
-          hasDbReference: true,
-          dbRecord: {
-            id: 'db_3',
-            createdAt: '2024-03-10',
-            uploadedBy: 'admin',
-            tags: ['exercícios', 'matemática', '6ano']
-          }
-        },
-        {
-          id: 'alun_2',
-          name: 'Jogo Educativo.zip',
-          type: 'ZIP',
-          size: '45.8 MB',
-          bucket: 'aluno-bucket',
-          lastModified: '2024-01-20',
-          description: 'Jogo interativo de ciências',
-          url: 'https://aluno-bucket.s3.amazonaws.com/jogo-educativo.zip',
-          hasDbReference: false,
-          dbRecord: null
-        },
-        {
-          id: 'alun_3',
-          name: 'Video Aula Fisica.mp4',
-          type: 'MP4',
-          size: '120.5 MB',
-          bucket: 'aluno-bucket',
-          lastModified: '2024-03-15',
-          description: 'Sem descrição',
-          url: 'https://aluno-bucket.s3.amazonaws.com/video-fisica.mp4',
-          hasDbReference: false,
-          dbRecord: null
-        }
-      ]
+    if (!['literario', 'professor', 'aluno'].includes(category)) {
+      return NextResponse.json(
+        { error: 'Categoria inválida. Use: literario, professor ou aluno' },
+        { status: 400 }
+      )
     }
 
-    const files = mockFilesWithReferences[category as keyof typeof mockFilesWithReferences] || []
-    
-    return NextResponse.json(files)
+    console.log(`🔍 Verificando referências para categoria: ${category}`)
+
+    // Buscar arquivos com suas referências
+    const filesWithReferences = await db('files')
+      .select([
+        'files.id',
+        'files.name',
+        'files.original_name',
+        'files.type',
+        'files.size_formatted',
+        'files.bucket',
+        'files.s3_url',
+        'files.description',
+        'files.category',
+        'files.metadata',
+        'files.created_at',
+        'files.updated_at',
+        // Referências para livros
+        'books.id as book_id',
+        'books.title as book_title',
+        'books.author as book_author',
+        'books.status as book_status'
+      ])
+      .leftJoin('books', 'files.s3_url', 'books.file_url')
+      .where({
+        'files.category': category,
+        'files.is_active': true
+      })
+      .orderBy('files.name', 'asc')
+
+    console.log(`✅ Encontrados ${filesWithReferences.length} arquivos com verificação de referências`)
+
+    // Transformar dados para o formato esperado
+    const transformedFiles = filesWithReferences.map(file => ({
+      id: file.id,
+      name: file.name,
+      originalName: file.original_name,
+      type: file.type,
+      size: file.size_formatted,
+      bucket: file.bucket,
+      url: file.s3_url,
+      description: file.description || '',
+      category: file.category,
+      metadata: file.metadata || {},
+      lastModified: file.updated_at,
+      createdAt: file.created_at,
+      hasDbReference: true, // Todos estão no banco
+      dbRecord: {
+        id: file.id,
+        name: file.name,
+        hasBookReference: !!file.book_id,
+        bookData: file.book_id ? {
+          id: file.book_id,
+          title: file.book_title,
+          author: file.book_author,
+          status: file.book_status
+        } : null
+      }
+    }))
+
+    return NextResponse.json(transformedFiles)
 
   } catch (error) {
-    console.error('Erro ao verificar referências:', error)
+    console.error('❌ Erro ao verificar referências:', error)
+    
+    // Log detalhado do erro para debug
+    if (error instanceof Error) {
+      console.error('Detalhes do erro:', {
+        message: error.message,
+        stack: error.stack
+      })
+    }
+
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor ao verificar referências' },
       { status: 500 }
     )
   }

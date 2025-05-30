@@ -260,4 +260,57 @@ export class FileService {
       throw error
     }
   }
+
+  // Desvincular arquivo do conteúdo
+  static async unlinkFromContent(fileId: string): Promise<FileRecord> {
+    try {
+      const response = await fetch(`${API_BASE}/${fileId}/unlink`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao desvincular arquivo do conteúdo')
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao desvincular do conteúdo:', error)
+      throw error
+    }
+  }
+
+  // Adicionar arquivo à biblioteca de livros (books)
+  static async addToBookLibrary(fileId: string, bookData: {
+    title: string
+    author: string
+    publisher: string
+    format: string
+    category: string
+    thumbnail: string
+    fileUrl: string
+    fileSize: string
+    description: string
+  }): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE}/${fileId}/add-book`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bookData)
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao adicionar arquivo à biblioteca de livros')
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao adicionar à biblioteca de livros:', error)
+      throw error
+    }
+  }
 } 

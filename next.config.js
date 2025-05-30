@@ -7,13 +7,24 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development' && process.env.DISABLE_PWA === 'true',
   runtimeCaching: [
     {
-      urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+      urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
       handler: 'CacheFirst',
       options: {
         cacheName: 'google-fonts',
         expiration: {
           maxEntries: 4,
-          maxAgeSeconds: 365 * 24 * 60 * 60
+          maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
+        }
+      }
+    },
+    {
+      urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-fonts-static',
+        expiration: {
+          maxEntries: 4,
+          maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
         }
       }
     },
@@ -123,6 +134,9 @@ const nextConfig = {
       }
     ]
   },
+  env: {
+    CUSTOM_KEY: 'my-value',
+  },
   webpack: (config, { isServer }) => {
     config.module.rules.push({
       test: /\.(pdf)$/i,
@@ -132,19 +146,30 @@ const nextConfig = {
       }
     });
 
-    // Resolve Node.js modules for client-side
-    if (!isServer) {
+    // Ignorar dependências opcionais que não são usadas
+    config.externals = config.externals || []
+    
+    if (isServer) {
+      config.externals.push({
+        'oracledb': 'commonjs oracledb',
+        'mysql': 'commonjs mysql',
+        'mysql2': 'commonjs mysql2',
+        'sqlite3': 'commonjs sqlite3',
+        'better-sqlite3': 'commonjs better-sqlite3',
+        'tedious': 'commonjs tedious'
+      })
+    } else {
+      // Para client-side, ignorar completamente
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        dgram: false,
-        dns: false,
-        child_process: false,
-        'native-dns': false,
-        'native-dns-cache': false,
-      };
+        'oracledb': false,
+        'mysql': false,
+        'mysql2': false,
+        'sqlite3': false,
+        'better-sqlite3': false,
+        'tedious': false,
+        'pg-native': false
+      }
     }
 
     return config;
