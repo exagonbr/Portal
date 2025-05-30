@@ -97,6 +97,8 @@ echo ""
 # Permissões
 print_step "Configurando permissões de execução..."
 chmod 777 deploy.sh
+chmod 777 quick-ssl-setup.sh
+chmod 777 setup-ssl.sh
 check_status "Permissões configuradas"
 echo ""
 
