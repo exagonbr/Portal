@@ -87,12 +87,12 @@ export default function CoordinatorCurriculumPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Gestão Curricular</h1>
+            <h1 className="text-2xl font-bold text-primary">Gestão Curricular</h1>
             <p className="text-gray-600">Gerencie o currículo e competências por ciclo educacional</p>
           </div>
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors"
           >
             <span className="material-symbols-outlined">add</span>
             <span>Nova Disciplina</span>
@@ -104,7 +104,7 @@ export default function CoordinatorCurriculumPage() {
           <select 
             value={selectedCycle}
             onChange={(e) => setSelectedCycle(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos os Ciclos</option>
             <option value="Ensino Fundamental I">Ensino Fundamental I</option>
@@ -115,7 +115,7 @@ export default function CoordinatorCurriculumPage() {
           <select 
             value={selectedGrade}
             onChange={(e) => setSelectedGrade(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todas as Séries</option>
             <option value="1º Ano">1º Ano</option>
@@ -132,33 +132,33 @@ export default function CoordinatorCurriculumPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Disciplinas</div>
-            <div className="text-2xl font-bold text-gray-800">24</div>
+            <div className="text-2xl font-bold text-primary">24</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 2</span>
+              <span className="text-accent-green text-sm">↑ 2</span>
               <span className="text-gray-500 text-sm ml-2">este semestre</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Carga Horária Total</div>
-            <div className="text-2xl font-bold text-gray-800">3.840h</div>
+            <div className="text-2xl font-bold text-primary">3.840h</div>
             <div className="mt-4 flex items-center">
-              <span className="text-blue-500 text-sm">→ 0h</span>
+              <span className="text-primary text-sm">→ 0h</span>
               <span className="text-gray-500 text-sm ml-2">este semestre</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Aprovadas</div>
-            <div className="text-2xl font-bold text-gray-800">18</div>
+            <div className="text-2xl font-bold text-primary">18</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 3</span>
+              <span className="text-accent-green text-sm">↑ 3</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Em Revisão</div>
-            <div className="text-2xl font-bold text-gray-800">6</div>
+            <div className="text-2xl font-bold text-primary">6</div>
             <div className="mt-4 flex items-center">
-              <span className="text-yellow-500 text-sm">↓ 2</span>
+              <span className="text-accent-yellow text-sm">↓ 2</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
             </div>
           </div>
@@ -171,10 +171,10 @@ export default function CoordinatorCurriculumPage() {
           <div key={curriculumItem.id} className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h3 className="text-xl font-semibold text-gray-800">{curriculumItem.cycle}</h3>
+                <h3 className="text-xl font-semibold text-primary">{curriculumItem.cycle}</h3>
                 <p className="text-gray-600">{curriculumItem.grade}</p>
               </div>
-              <button className="text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+              <button className="text-primary hover:text-primary-dark flex items-center space-x-1 transition-colors">
                 <span className="material-symbols-outlined text-sm">download</span>
                 <span>Exportar Grade</span>
               </button>
@@ -184,18 +184,18 @@ export default function CoordinatorCurriculumPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">Disciplina</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">Carga Horária</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">Competências</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-700">Ações</th>
+                    <th className="text-left py-3 px-4 font-medium text-primary">Disciplina</th>
+                    <th className="text-left py-3 px-4 font-medium text-primary">Carga Horária</th>
+                    <th className="text-left py-3 px-4 font-medium text-primary">Competências</th>
+                    <th className="text-left py-3 px-4 font-medium text-primary">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-primary">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {curriculumItem.subjects.map((subject) => (
                     <tr key={subject.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4">
-                        <div className="font-medium text-gray-800">{subject.name}</div>
+                        <div className="font-medium text-primary-dark">{subject.name}</div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="text-sm text-gray-600">
@@ -208,7 +208,7 @@ export default function CoordinatorCurriculumPage() {
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
                           {subject.competencies.slice(0, 2).map((competency, index) => (
-                            <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                            <span key={index} className="px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
                               {competency}
                             </span>
                           ))}
@@ -221,11 +221,11 @@ export default function CoordinatorCurriculumPage() {
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          subject.status === 'Aprovado' 
-                            ? 'bg-green-100 text-green-800'
+                          subject.status === 'Aprovado'
+                            ? 'bg-accent-green/20 text-accent-green'
                             : subject.status === 'Em revisão'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-accent-yellow/20 text-accent-yellow'
+                            : 'bg-error/20 text-error'
                         }`}>
                           {subject.status}
                         </span>
@@ -234,14 +234,14 @@ export default function CoordinatorCurriculumPage() {
                         <div className="flex space-x-2">
                           <button 
                             onClick={() => setEditingSubject(subject)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-primary hover:text-primary-dark transition-colors"
                           >
                             <span className="material-symbols-outlined text-sm">edit</span>
                           </button>
-                          <button className="text-green-600 hover:text-green-800">
+                          <button className="text-accent-green hover:text-accent-green/80 transition-colors">
                             <span className="material-symbols-outlined text-sm">visibility</span>
                           </button>
-                          <button className="text-red-600 hover:text-red-800">
+                          <button className="text-error hover:text-error/80 transition-colors">
                             <span className="material-symbols-outlined text-sm">delete</span>
                           </button>
                         </div>
@@ -260,7 +260,7 @@ export default function CoordinatorCurriculumPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-lg font-semibold text-primary">
                 {editingSubject ? 'Editar Disciplina' : 'Nova Disciplina'}
               </h3>
               <button 
@@ -278,7 +278,7 @@ export default function CoordinatorCurriculumPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ciclo</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                     <option>Ensino Fundamental I</option>
                     <option>Ensino Fundamental II</option>
                     <option>Ensino Médio</option>
@@ -287,7 +287,7 @@ export default function CoordinatorCurriculumPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Série</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                     <option>1º Ano</option>
                     <option>2º Ano</option>
                     <option>3º Ano</option>
@@ -299,7 +299,7 @@ export default function CoordinatorCurriculumPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Disciplina</label>
                 <input 
                   type="text" 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Ex: Matemática"
                   defaultValue={editingSubject?.name}
                 />
@@ -310,7 +310,7 @@ export default function CoordinatorCurriculumPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Carga Horária Semanal</label>
                   <input 
                     type="number" 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="5"
                     defaultValue={editingSubject?.weeklyHours}
                   />
@@ -320,7 +320,7 @@ export default function CoordinatorCurriculumPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Carga Horária Total</label>
                   <input 
                     type="number" 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="200"
                     defaultValue={editingSubject?.totalHours}
                   />
@@ -330,7 +330,7 @@ export default function CoordinatorCurriculumPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Competências</label>
                 <textarea 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   rows={4}
                   placeholder="Digite as competências separadas por vírgula"
                   defaultValue={editingSubject?.competencies?.join(', ')}
@@ -350,7 +350,7 @@ export default function CoordinatorCurriculumPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
                 >
                   {editingSubject ? 'Salvar Alterações' : 'Criar Disciplina'}
                 </button>

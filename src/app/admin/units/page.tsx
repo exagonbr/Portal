@@ -97,16 +97,16 @@ const UnitCard: React.FC<{
   onEdit: (unit: UnitDisplayData) => void;
 }> = ({ unit, onEdit }) => {
   const typeColors = {
-    'Campus Principal': 'bg-purple-100 text-purple-800',
-    'Unidade': 'bg-blue-100 text-blue-800',
-    'Polo': 'bg-indigo-100 text-indigo-800',
+    'Campus Principal': 'bg-accent-purple/20 text-accent-purple',
+    'Unidade': 'bg-primary/10 text-primary',
+    'Polo': 'bg-accent-blue/20 text-accent-blue',
     'Extensão': 'bg-gray-100 text-gray-800'
   };
 
   const statusColors = {
-    'Ativa': 'bg-green-100 text-green-800',
-    'Inativa': 'bg-red-100 text-red-800',
-    'Em Manutenção': 'bg-yellow-100 text-yellow-800'
+    'Ativa': 'bg-accent-green/20 text-accent-green',
+    'Inativa': 'bg-error/20 text-error',
+    'Em Manutenção': 'bg-accent-yellow/20 text-accent-yellow'
   };
 
   return (
@@ -159,7 +159,7 @@ const UnitCard: React.FC<{
           <div className="flex space-x-2">
             <button
               onClick={() => onEdit(unit)}
-              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
             >
               Detalhes
             </button>
@@ -325,7 +325,7 @@ export default function AdminUnitsPage() {
             </button>
             <button
               onClick={handleOpenAddModal}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
             >
               Nova Unidade
             </button>
@@ -367,12 +367,12 @@ export default function AdminUnitsPage() {
               placeholder="Pesquisar unidades..."
               value={filters.searchTerm}
               onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue transition-all"
             />
             <select
               value={filters.institution}
               onChange={(e) => handleFilterChange('institution', e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue transition-all"
             >
               <option value="">Todas as Instituições</option>
               {institutions.map(inst => (
@@ -382,7 +382,7 @@ export default function AdminUnitsPage() {
             <select
               value={filters.type}
               onChange={(e) => handleFilterChange('type', e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue transition-all"
             >
               <option value="">Tipo de Unidade</option>
               {UNIT_TYPES.map(type => (
@@ -392,7 +392,7 @@ export default function AdminUnitsPage() {
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue transition-all"
             >
               <option value="">Status</option>
               {UNIT_STATUSES.map(status => (
@@ -429,7 +429,7 @@ export default function AdminUnitsPage() {
               <p className="text-gray-500 text-lg">Nenhuma unidade encontrada com os filtros aplicados.</p>
               <button
                 onClick={handleClearFilters}
-                className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+                className="mt-4 text-primary hover:text-primary-dark font-medium transition-colors duration-200"
               >
                 Limpar filtros
               </button>
@@ -533,7 +533,7 @@ export default function AdminUnitsPage() {
                           onClick={() => handlePageChange(page as number)}
                           className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-all ${
                             page === currentPage
-                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                              ? 'z-10 bg-primary/10 border-primary text-primary'
                               : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                           }`}
                           aria-current={page === currentPage ? 'page' : undefined}

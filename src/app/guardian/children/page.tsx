@@ -81,10 +81,10 @@ export default function GuardianChildrenPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-text-primary">Meus Filhos</h1>
-            <p className="text-text-secondary">Acompanhe o desenvolvimento acadêmico dos seus filhos</p>
+            <h1 className="text-2xl font-bold text-primary">Meus Filhos</h1>
+            <p className="text-gray-600">Acompanhe o desenvolvimento acadêmico dos seus filhos</p>
           </div>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+          <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors">
             <span className="material-symbols-outlined">download</span>
             <span>Relatório Completo</span>
           </button>
@@ -98,15 +98,15 @@ export default function GuardianChildrenPage() {
               onClick={() => setSelectedChild(child)}
               className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all ${
                 selectedChild.id === child.id
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-primary bg-primary/10'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <div className="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600">person</span>
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary">person</span>
               </div>
               <div className="text-left">
-                <div className="font-medium text-gray-800">{child.name}</div>
+                <div className="font-medium text-primary-dark">{child.name}</div>
                 <div className="text-sm text-gray-600">{child.grade}</div>
               </div>
             </button>
@@ -115,48 +115,48 @@ export default function GuardianChildrenPage() {
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-background-primary rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-text-tertiary mb-1">Média Atual</div>
-            <div className="text-2xl font-bold text-text-primary">{selectedChild.academicInfo.currentAverage}</div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="text-sm font-medium text-gray-500 mb-1">Média Atual</div>
+            <div className="text-2xl font-bold text-primary">{selectedChild.academicInfo.currentAverage}</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 0.3</span>
-              <span className="text-text-tertiary text-sm ml-2">este bimestre</span>
+              <span className="text-accent-green text-sm">↑ 0.3</span>
+              <span className="text-gray-500 text-sm ml-2">este bimestre</span>
             </div>
           </div>
-          <div className="bg-background-primary rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-text-tertiary mb-1">Frequência</div>
-            <div className="text-2xl font-bold text-text-primary">{selectedChild.academicInfo.attendance}%</div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="text-sm font-medium text-gray-500 mb-1">Frequência</div>
+            <div className="text-2xl font-bold text-primary">{selectedChild.academicInfo.attendance}%</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 2%</span>
-              <span className="text-text-tertiary text-sm ml-2">este mês</span>
+              <span className="text-accent-green text-sm">↑ 2%</span>
+              <span className="text-gray-500 text-sm ml-2">este mês</span>
             </div>
           </div>
-          <div className="bg-background-primary rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-text-tertiary mb-1">Comportamento</div>
-            <div className="text-2xl font-bold text-text-primary">{selectedChild.academicInfo.behavior}</div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="text-sm font-medium text-gray-500 mb-1">Comportamento</div>
+            <div className="text-2xl font-bold text-primary">{selectedChild.academicInfo.behavior}</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">→ 0</span>
-              <span className="text-text-tertiary text-sm ml-2">este mês</span>
+              <span className="text-accent-green text-sm">→ 0</span>
+              <span className="text-gray-500 text-sm ml-2">este mês</span>
             </div>
           </div>
-          <div className="bg-background-primary rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-text-tertiary mb-1">Idade</div>
-            <div className="text-2xl font-bold text-text-primary">{selectedChild.age} anos</div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="text-sm font-medium text-gray-500 mb-1">Idade</div>
+            <div className="text-2xl font-bold text-primary">{selectedChild.age} anos</div>
             <div className="mt-4 flex items-center">
-              <span className="text-text-tertiary text-sm">{selectedChild.grade}</span>
+              <span className="text-gray-500 text-sm">{selectedChild.grade}</span>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-border mb-6">
+        <div className="border-b border-gray-200 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setSelectedTab('overview')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 selectedTab === 'overview'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Visão Geral
@@ -165,8 +165,8 @@ export default function GuardianChildrenPage() {
               onClick={() => setSelectedTab('grades')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 selectedTab === 'grades'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Notas Recentes
@@ -175,8 +175,8 @@ export default function GuardianChildrenPage() {
               onClick={() => setSelectedTab('schedule')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 selectedTab === 'schedule'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Próximos Eventos
@@ -185,8 +185,8 @@ export default function GuardianChildrenPage() {
               onClick={() => setSelectedTab('teachers')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 selectedTab === 'teachers'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-text-tertiary hover:text-text-secondary hover:border-border'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Professores
@@ -198,24 +198,24 @@ export default function GuardianChildrenPage() {
       {selectedTab === 'overview' && (
         <div className="space-y-6">
           {/* Student Profile */}
-          <div className="bg-background-primary rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-text-primary mb-4">Perfil do Aluno</h3>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-primary mb-4">Perfil do Aluno</h3>
             <div className="flex items-start space-x-6">
-              <div className="w-24 h-24 rounded-full bg-blue-600/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600 text-3xl">person</span>
+              <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-3xl">person</span>
               </div>
               <div className="flex-1">
-                <h4 className="text-xl font-semibold text-text-primary">{selectedChild.name}</h4>
+                <h4 className="text-xl font-semibold text-primary">{selectedChild.name}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <p className="text-sm text-text-secondary">Matrícula: {selectedChild.studentId}</p>
-                    <p className="text-sm text-text-secondary">Turma: {selectedChild.grade}</p>
-                    <p className="text-sm text-text-secondary">Escola: {selectedChild.school}</p>
+                    <p className="text-sm text-gray-600">Matrícula: {selectedChild.studentId}</p>
+                    <p className="text-sm text-gray-600">Turma: {selectedChild.grade}</p>
+                    <p className="text-sm text-gray-600">Escola: {selectedChild.school}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-text-secondary">Data de Nascimento: {new Date(selectedChild.birthDate).toLocaleDateString('pt-BR')}</p>
-                    <p className="text-sm text-text-secondary">Idade: {selectedChild.age} anos</p>
-                    <p className="text-sm text-text-secondary">Status: {selectedChild.status}</p>
+                    <p className="text-sm text-gray-600">Data de Nascimento: {new Date(selectedChild.birthDate).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-sm text-gray-600">Idade: {selectedChild.age} anos</p>
+                    <p className="text-sm text-gray-600">Status: {selectedChild.status}</p>
                   </div>
                 </div>
               </div>
@@ -223,29 +223,29 @@ export default function GuardianChildrenPage() {
           </div>
 
           {/* Academic Summary */}
-          <div className="bg-background-primary rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-text-primary mb-4">Resumo Acadêmico</h3>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-primary mb-4">Resumo Acadêmico</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium text-text-primary mb-3">Desempenho Atual</h4>
+                <h4 className="font-medium text-primary-dark mb-3">Desempenho Atual</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Média Geral:</span>
-                    <span className="font-semibold text-text-primary">{selectedChild.academicInfo.currentAverage}</span>
+                    <span className="text-gray-600">Média Geral:</span>
+                    <span className="font-semibold text-primary">{selectedChild.academicInfo.currentAverage}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Frequência:</span>
-                    <span className="font-semibold text-text-primary">{selectedChild.academicInfo.attendance}%</span>
+                    <span className="text-gray-600">Frequência:</span>
+                    <span className="font-semibold text-primary">{selectedChild.academicInfo.attendance}%</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-text-secondary">Comportamento:</span>
-                    <span className="font-semibold text-text-primary">{selectedChild.academicInfo.behavior}</span>
+                    <span className="text-gray-600">Comportamento:</span>
+                    <span className="font-semibold text-primary">{selectedChild.academicInfo.behavior}</span>
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-text-primary mb-3">Última Avaliação</h4>
-                <p className="text-text-secondary">
+                <h4 className="font-medium text-primary-dark mb-3">Última Avaliação</h4>
+                <p className="text-gray-600">
                   {new Date(selectedChild.academicInfo.lastEvaluation).toLocaleDateString('pt-BR')}
                 </p>
               </div>
@@ -256,25 +256,25 @@ export default function GuardianChildrenPage() {
 
       {/* Grades Tab */}
       {selectedTab === 'grades' && (
-        <div className="bg-background-primary rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-text-primary mb-4">Notas Recentes</h3>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Notas Recentes</h3>
           <div className="space-y-4">
             {selectedChild.recentGrades.map((grade, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-blue-600 text-sm">school</span>
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-sm">school</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-text-primary">{grade.subject}</h4>
-                    <p className="text-sm text-text-secondary">{new Date(grade.date).toLocaleDateString('pt-BR')}</p>
+                    <h4 className="font-medium text-primary">{grade.subject}</h4>
+                    <p className="text-sm text-gray-600">{new Date(grade.date).toLocaleDateString('pt-BR')}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className={`text-2xl font-bold ${
-                    grade.grade >= 9 ? 'text-green-600' :
-                    grade.grade >= 7 ? 'text-blue-600' :
-                    grade.grade >= 5 ? 'text-yellow-600' : 'text-red-600'
+                    grade.grade >= 9 ? 'text-accent-green' :
+                    grade.grade >= 7 ? 'text-primary' :
+                    grade.grade >= 5 ? 'text-accent-yellow' : 'text-error'
                   }`}>
                     {grade.grade.toFixed(1)}
                   </div>
@@ -287,21 +287,21 @@ export default function GuardianChildrenPage() {
 
       {/* Schedule Tab */}
       {selectedTab === 'schedule' && (
-        <div className="bg-background-primary rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-text-primary mb-4">Próximos Eventos</h3>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Próximos Eventos</h3>
           <div className="space-y-4">
             {selectedChild.upcomingEvents.map((event, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center space-x-4">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    event.type === 'Prova' ? 'bg-red-100' :
-                    event.type === 'Trabalho' ? 'bg-blue-100' :
-                    event.type === 'Apresentação' ? 'bg-purple-100' : 'bg-green-100'
+                    event.type === 'Prova' ? 'bg-error/20' :
+                    event.type === 'Trabalho' ? 'bg-primary/20' :
+                    event.type === 'Apresentação' ? 'bg-accent-purple/20' : 'bg-accent-green/20'
                   }`}>
                     <span className={`material-symbols-outlined text-sm ${
-                      event.type === 'Prova' ? 'text-red-600' :
-                      event.type === 'Trabalho' ? 'text-blue-600' :
-                      event.type === 'Apresentação' ? 'text-purple-600' : 'text-green-600'
+                      event.type === 'Prova' ? 'text-error' :
+                      event.type === 'Trabalho' ? 'text-primary' :
+                      event.type === 'Apresentação' ? 'text-accent-purple' : 'text-accent-green'
                     }`}>
                       {event.type === 'Prova' ? 'quiz' :
                        event.type === 'Trabalho' ? 'assignment' :
@@ -309,16 +309,16 @@ export default function GuardianChildrenPage() {
                     </span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-text-primary">{event.type}</h4>
-                    <p className="text-sm text-text-secondary">
+                    <h4 className="font-medium text-primary">{event.type}</h4>
+                    <p className="text-sm text-gray-600">
                       {event.subject ? `${event.subject} - ` : ''}{new Date(event.date).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  event.type === 'Prova' ? 'bg-red-100 text-red-800' :
-                  event.type === 'Trabalho' ? 'bg-blue-100 text-blue-800' :
-                  event.type === 'Apresentação' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                  event.type === 'Prova' ? 'bg-error/20 text-error' :
+                  event.type === 'Trabalho' ? 'bg-primary/20 text-primary' :
+                  event.type === 'Apresentação' ? 'bg-accent-purple/20 text-accent-purple' : 'bg-accent-green/20 text-accent-green'
                 }`}>
                   {event.type}
                 </span>
@@ -330,23 +330,23 @@ export default function GuardianChildrenPage() {
 
       {/* Teachers Tab */}
       {selectedTab === 'teachers' && (
-        <div className="bg-background-primary rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-text-primary mb-4">Professores</h3>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-primary mb-4">Professores</h3>
           <div className="space-y-4">
             {selectedChild.teachers.map((teacher, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-purple-600">person</span>
+                  <div className="w-12 h-12 rounded-full bg-accent-purple/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-accent-purple">person</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-text-primary">{teacher.name}</h4>
-                    <p className="text-sm text-text-secondary">{teacher.subject}</p>
-                    <p className="text-xs text-text-tertiary">{teacher.contact}</p>
+                    <h4 className="font-medium text-primary">{teacher.name}</h4>
+                    <p className="text-sm text-gray-600">{teacher.subject}</p>
+                    <p className="text-xs text-gray-500">{teacher.contact}</p>
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <button className="text-blue-600 hover:text-blue-800 flex items-center space-x-1">
+                  <button className="text-primary hover:text-primary-dark flex items-center space-x-1 transition-colors">
                     <span className="material-symbols-outlined text-sm">mail</span>
                     <span className="text-sm">Contatar</span>
                   </button>

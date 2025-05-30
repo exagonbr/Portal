@@ -190,9 +190,9 @@ export default function InstitutionManagerDashboard() {
 
   const getStatusColor = (status: SchoolOverview['status']) => {
     switch (status) {
-      case 'excellent': return 'text-green-600 bg-green-100';
-      case 'good': return 'text-blue-600 bg-blue-100';
-      case 'attention': return 'text-yellow-600 bg-yellow-100';
+      case 'excellent': return 'text-accent-green bg-green-100';
+      case 'good': return 'text-primary bg-primary/10';
+      case 'attention': return 'text-accent-yellow bg-yellow-100';
       case 'critical': return 'text-red-600 bg-red-100';
     }
   };
@@ -209,15 +209,15 @@ export default function InstitutionManagerDashboard() {
   const getPriorityColor = (priority: Announcement['priority']) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-blue-100 text-blue-800';
+      case 'medium': return 'bg-accent-yellow/10 text-accent-yellow';
+      case 'low': return 'bg-primary/10 text-primary-dark';
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark"></div>
       </div>
     );
   }
@@ -229,7 +229,7 @@ export default function InstitutionManagerDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-violet-600" />
+              <Building2 className="w-8 h-8 text-primary-dark" />
               Painel de Gestão Institucional
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -240,14 +240,14 @@ export default function InstitutionManagerDashboard() {
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 dark:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-dark dark:bg-gray-700"
             >
               <option value="week">Última Semana</option>
               <option value="month">Último Mês</option>
               <option value="quarter">Último Trimestre</option>
               <option value="year">Último Ano</option>
             </select>
-            <button className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-primary transition-colors flex items-center gap-2">
               <Settings className="w-4 h-4" />
               Configurações
             </button>
@@ -264,7 +264,7 @@ export default function InstitutionManagerDashboard() {
           subtitle="91.7% operacionais"
           trend="+2"
           trendUp={true}
-          color="bg-violet-500"
+          color="bg-primary-dark"
         />
         <StatCard
           icon={Users}
@@ -273,7 +273,7 @@ export default function InstitutionManagerDashboard() {
           subtitle={`${stats.totalTeachers} professores`}
           trend="+5.2%"
           trendUp={true}
-          color="bg-blue-500"
+          color="bg-primary"
         />
         <StatCard
           icon={TrendingUp}
@@ -282,7 +282,7 @@ export default function InstitutionManagerDashboard() {
           subtitle="Meta: 80%"
           trend="+2.3%"
           trendUp={true}
-          color="bg-green-500"
+          color="bg-accent-green"
         />
         <StatCard
           icon={DollarSign}
@@ -291,7 +291,7 @@ export default function InstitutionManagerDashboard() {
           subtitle="R$ 650k disponível"
           trend="74%"
           trendUp={false}
-          color="bg-yellow-500"
+          color="bg-accent-yellow"
         />
       </div>
 
@@ -302,21 +302,21 @@ export default function InstitutionManagerDashboard() {
           value={stats.attendanceRate}
           target={95}
           icon={UserPlus}
-          color="blue"
+          color="primary"
         />
         <PerformanceIndicator
           title="Taxa de Aprovação"
           value={stats.graduationRate}
           target={90}
           icon={GraduationCap}
-          color="green"
+          color="accent-green"
         />
         <PerformanceIndicator
           title="Satisfação Geral"
           value={85.6}
           target={90}
           icon={Award}
-          color="purple"
+          color="accent-purple"
         />
       </div>
 
@@ -326,10 +326,10 @@ export default function InstitutionManagerDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
-                <School className="w-5 h-5 mr-2 text-violet-500" />
+                <School className="w-5 h-5 mr-2 text-primary-dark" />
                 Escolas da Rede
               </h2>
-              <button className="text-sm text-violet-600 hover:text-violet-800">
+              <button className="text-sm text-primary-dark hover:text-primary">
                 Ver todas
               </button>
             </div>
@@ -367,7 +367,7 @@ export default function InstitutionManagerDashboard() {
                         </div>
                       </div>
                     </div>
-                    <button className="px-3 py-1 text-sm bg-violet-100 text-violet-700 rounded-lg hover:bg-violet-200">
+                    <button className="px-3 py-1 text-sm bg-primary-dark/10 text-primary-dark rounded-lg hover:bg-primary-dark/20">
                       Detalhes
                     </button>
                   </div>
@@ -399,19 +399,19 @@ export default function InstitutionManagerDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
             <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-primary transition-colors flex items-center justify-center gap-2">
                 <School className="w-4 h-4" />
                 Nova Escola
               </button>
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
                 <Users className="w-4 h-4" />
                 Gerenciar Usuários
               </button>
-              <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                 <FileText className="w-4 h-4" />
                 Relatórios
               </button>
-              <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                 <Bell className="w-4 h-4" />
                 Comunicados
               </button>
@@ -421,7 +421,7 @@ export default function InstitutionManagerDashboard() {
           {/* Comunicados */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-orange-500" />
+              <Bell className="w-5 h-5 mr-2 text-accent-orange" />
               Comunicados Recentes
             </h3>
             <div className="space-y-3">
@@ -452,7 +452,7 @@ export default function InstitutionManagerDashboard() {
           {/* Metas e Objetivos */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Target className="w-5 h-5 mr-2 text-green-500" />
+              <Target className="w-5 h-5 mr-2 text-accent-green" />
               Metas do Período
             </h3>
             <div className="space-y-3">
@@ -507,7 +507,7 @@ function StatCard({ icon: Icon, title, value, subtitle, trend, trendUp, color }:
           <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
         </div>
         <span className={`text-sm font-medium flex items-center gap-1 ${
-          trendUp ? 'text-green-600' : 'text-gray-600'
+          trendUp ? 'text-accent-green' : 'text-gray-600'
         }`}>
           {trendUp && <TrendingUp className="w-4 h-4" />}
           {trend}
@@ -539,7 +539,7 @@ function PerformanceIndicator({ title, value, target, icon: Icon, color }: Perfo
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</h3>
-        <Icon className={`w-5 h-5 text-${color}-500`} />
+        <Icon className={`w-5 h-5 ${color === 'primary' ? 'text-primary' : color === 'accent-green' ? 'text-accent-green' : 'text-accent-purple'}`} />
       </div>
       <div className="flex items-end gap-2 mb-2">
         <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}%</p>
@@ -547,15 +547,15 @@ function PerformanceIndicator({ title, value, target, icon: Icon, color }: Perfo
       </div>
       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
         <div
-          className={`h-2 rounded-full bg-${color}-500 transition-all duration-300`}
+          className={`h-2 rounded-full ${color === 'primary' ? 'bg-primary' : color === 'accent-green' ? 'bg-accent-green' : 'bg-accent-purple'} transition-all duration-300`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />
       </div>
       <div className="flex items-center justify-between text-xs">
-        <span className={isAboveTarget ? 'text-green-600' : 'text-yellow-600'}>
+        <span className={isAboveTarget ? 'text-accent-green' : 'text-accent-yellow'}>
           {isAboveTarget ? 'Meta atingida' : `Faltam ${(target - value).toFixed(1)}%`}
         </span>
-        {isAboveTarget && <CheckCircle className="w-4 h-4 text-green-600" />}
+        {isAboveTarget && <CheckCircle className="w-4 h-4 text-accent-green" />}
       </div>
     </div>
   );
@@ -584,7 +584,7 @@ function MetricProgress({ label, current, target, unit }: MetricProgressProps) {
       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
         <div
           className={`h-2 rounded-full transition-all duration-300 ${
-            isComplete ? 'bg-green-500' : percentage >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+            isComplete ? 'bg-accent-green' : percentage >= 70 ? 'bg-accent-yellow' : 'bg-red-500'
           }`}
           style={{ width: `${Math.min(percentage, 100)}%` }}
         />

@@ -252,7 +252,7 @@ export default function ManagerDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -261,7 +261,7 @@ export default function ManagerDashboard() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold text-primary-dark dark:text-white mb-2">
           Painel de Gestão
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
@@ -275,7 +275,7 @@ export default function ManagerDashboard() {
         <select
           value={selectedPeriod}
           onChange={(e) => setSelectedPeriod(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
         >
           <option value="week">Última Semana</option>
           <option value="month">Último Mês</option>
@@ -292,7 +292,7 @@ export default function ManagerDashboard() {
           value={stats.totalStudents}
           trend="+5%"
           trendUp={true}
-          color="bg-blue-500"
+          color="bg-primary"
         />
         <StatCard
           icon={UserCheck}
@@ -300,7 +300,7 @@ export default function ManagerDashboard() {
           value={stats.totalTeachers}
           trend="+2"
           trendUp={true}
-          color="bg-green-500"
+          color="bg-accent-green"
         />
         <StatCard
           icon={BookOpen}
@@ -308,7 +308,7 @@ export default function ManagerDashboard() {
           value={`${stats.activeClasses}/${stats.totalClasses}`}
           trend="89%"
           trendUp={true}
-          color="bg-purple-500"
+          color="bg-accent-purple"
         />
         <StatCard
           icon={Activity}
@@ -316,7 +316,7 @@ export default function ManagerDashboard() {
           value={`${stats.averageAttendance}%`}
           trend="-2%"
           trendUp={false}
-          color="bg-yellow-500"
+          color="bg-accent-yellow"
         />
       </div>
 
@@ -324,13 +324,13 @@ export default function ManagerDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <DollarSign className="w-5 h-5 mr-2 text-green-500" />
-            Indicadores Financeiros
+            <DollarSign className="w-5 h-5 mr-2 text-accent-green" />
+            <span className="text-primary-dark">Indicadores Financeiros</span>
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Receita Mensal</p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-accent-green">
                 R$ {stats.monthlyRevenue.toLocaleString('pt-BR')}
               </p>
             </div>
@@ -345,8 +345,8 @@ export default function ManagerDashboard() {
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Target className="w-5 h-5 mr-2 text-blue-500" />
-            Metas do Período
+            <Target className="w-5 h-5 mr-2 text-primary" />
+            <span className="text-primary-dark">Metas do Período</span>
           </h3>
           <div className="space-y-3">
             <ProgressBar label="Matrículas" value={85} target={100} />
@@ -362,10 +362,10 @@ export default function ManagerDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2 text-purple-500" />
-                Desempenho das Turmas
+                <BarChart3 className="w-5 h-5 mr-2 text-accent-purple" />
+                <span className="text-primary-dark">Desempenho das Turmas</span>
               </h2>
-              <button className="text-sm text-blue-600 hover:text-blue-800">
+              <button className="text-sm text-primary hover:text-primary-dark transition-colors duration-200">
                 Ver todas
               </button>
             </div>
@@ -406,8 +406,8 @@ export default function ManagerDashboard() {
           {/* Desempenho dos Professores */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Award className="w-5 h-5 mr-2 text-indigo-500" />
-              Top Professores
+              <Award className="w-5 h-5 mr-2 text-primary" />
+              <span className="text-primary-dark">Top Professores</span>
             </h2>
             <div className="space-y-3">
               {teacherPerformance.map((teacher, index) => (
@@ -416,7 +416,7 @@ export default function ManagerDashboard() {
                   className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold">
                       {index + 1}
                     </div>
                     <div>
@@ -440,8 +440,8 @@ export default function ManagerDashboard() {
         <div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-orange-500" />
-              Alertas e Avisos
+              <Bell className="w-5 h-5 mr-2 text-accent-orange" />
+              <span className="text-primary-dark">Alertas e Avisos</span>
             </h2>
             <div className="space-y-3">
               {alerts.map((alert) => (
@@ -480,17 +480,17 @@ export default function ManagerDashboard() {
 
           {/* Ações Rápidas */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6">
-            <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
+            <h3 className="text-lg font-semibold mb-4 text-primary-dark">Ações Rápidas</h3>
             <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
                 <FileText className="w-4 h-4" />
                 Gerar Relatório
               </button>
-              <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Agendar Reunião
               </button>
-              <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                 <Bell className="w-4 h-4" />
                 Enviar Comunicado
               </button>
@@ -506,14 +506,14 @@ export default function ManagerDashboard() {
       {/* Gráficos */}
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Evolução de Matrículas</h3>
+          <h3 className="text-lg font-semibold mb-4 text-primary-dark">Evolução de Matrículas</h3>
           <div className="h-64 flex items-center justify-center text-gray-500">
             Gráfico de linha (implementar com Chart.js)
           </div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Distribuição por Turno</h3>
+          <h3 className="text-lg font-semibold mb-4 text-primary-dark">Distribuição por Turno</h3>
           <div className="h-64 flex items-center justify-center text-gray-500">
             Gráfico de pizza (implementar com Chart.js)
           </div>
@@ -544,7 +544,7 @@ function StatCard({ icon: Icon, title, value, trend, trendUp, color }: StatCardP
           {trend}
         </span>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <p className="text-2xl font-bold text-primary-dark dark:text-white">
         {value}
       </p>
       <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
@@ -561,7 +561,7 @@ interface ProgressBarProps {
 
 function ProgressBar({ label, value, target }: ProgressBarProps) {
   const percentage = (value / target) * 100;
-  const color = percentage >= 90 ? 'bg-green-500' : percentage >= 70 ? 'bg-yellow-500' : 'bg-red-500';
+  const color = percentage >= 90 ? 'bg-accent-green' : percentage >= 70 ? 'bg-accent-yellow' : 'bg-error';
 
   return (
     <div>

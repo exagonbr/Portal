@@ -83,7 +83,7 @@ export default function AdminContentSearchPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue"
               placeholder="Digite palavras-chave..."
             />
           </div>
@@ -93,7 +93,7 @@ export default function AdminContentSearchPage() {
             <select
               value={contentType}
               onChange={(e) => setContentType(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue"
             >
               {CONTENT_TYPES.map(type => (
                 <option key={type} value={type}>{type}</option>
@@ -106,7 +106,7 @@ export default function AdminContentSearchPage() {
             <select
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue"
             >
               {SUBJECTS.map(subj => (
                 <option key={subj} value={subj}>{subj}</option>
@@ -119,7 +119,7 @@ export default function AdminContentSearchPage() {
             <select
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue"
             >
               {GRADES.map(gr => (
                 <option key={gr} value={gr}>{gr}</option>
@@ -134,7 +134,7 @@ export default function AdminContentSearchPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue"
             >
               <option value="relevance">Relevância</option>
               <option value="date">Data</option>
@@ -145,7 +145,7 @@ export default function AdminContentSearchPage() {
           
           <button
             onClick={handleSearch}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors duration-200"
           >
             <span className="material-symbols-outlined">search</span>
             <span>Buscar</span>
@@ -160,7 +160,7 @@ export default function AdminContentSearchPage() {
           <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
             <span className="material-symbols-outlined">view_list</span>
           </button>
-          <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-blue-50 border-blue-300">
+          <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 bg-primary/10 border-primary/30">
             <span className="material-symbols-outlined">grid_view</span>
           </button>
         </div>
@@ -175,9 +175,9 @@ export default function AdminContentSearchPage() {
                 <p className="text-sm text-gray-600 mb-2">{item.author}</p>
                 <div className="flex items-center space-x-2 mb-2">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    item.type === 'Livro Digital' ? 'bg-blue-100 text-blue-800' :
-                    item.type === 'Vídeo Aula' ? 'bg-red-100 text-red-800' :
-                    'bg-green-100 text-green-800'
+                    item.type === 'Livro Digital' ? 'bg-primary/10 text-primary' :
+                    item.type === 'Vídeo Aula' ? 'bg-error/20 text-error' :
+                    'bg-accent-green/20 text-accent-green'
                   }`}>
                     {item.type}
                   </span>
@@ -209,7 +209,7 @@ export default function AdminContentSearchPage() {
             </div>
             
             <div className="flex space-x-2">
-              <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 text-sm">
+              <button className="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary-dark text-sm transition-colors duration-200">
                 Visualizar
               </button>
               <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">

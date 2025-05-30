@@ -328,9 +328,9 @@ export default function GuardianDashboard() {
 
   const getBehaviorColor = (behavior: StudentPerformance['behavior']) => {
     switch (behavior) {
-      case 'excellent': return 'text-green-600 bg-green-100';
-      case 'good': return 'text-blue-600 bg-blue-100';
-      case 'regular': return 'text-yellow-600 bg-yellow-100';
+      case 'excellent': return 'text-accent-green bg-green-100';
+      case 'good': return 'text-primary bg-primary/10';
+      case 'regular': return 'text-accent-yellow bg-yellow-100';
       case 'needs-attention': return 'text-red-600 bg-red-100';
     }
   };
@@ -346,8 +346,8 @@ export default function GuardianDashboard() {
 
   const getFinancialStatusColor = (status: FinancialInfo['status']) => {
     switch (status) {
-      case 'paid': return 'text-green-600 bg-green-100';
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'paid': return 'text-accent-green bg-green-100';
+      case 'pending': return 'text-accent-yellow bg-yellow-100';
       case 'overdue': return 'text-red-600 bg-red-100';
     }
   };
@@ -355,7 +355,7 @@ export default function GuardianDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -366,8 +366,8 @@ export default function GuardianDashboard() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <Shield className="w-8 h-8 text-indigo-600" />
+            <h1 className="text-3xl font-bold text-primary-dark dark:text-white flex items-center gap-3">
+              <Shield className="w-8 h-8 text-primary-dark" />
               Portal do Responsável
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -378,7 +378,7 @@ export default function GuardianDashboard() {
             <select
               value={selectedStudent}
               onChange={(e) => setSelectedStudent(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
             >
               <option value="all">Todos os filhos</option>
               {students.map(student => (
@@ -391,8 +391,8 @@ export default function GuardianDashboard() {
               <button
                 onClick={() => setSelectedView('overview')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedView === 'overview' 
-                    ? 'bg-indigo-600 text-white' 
+                  selectedView === 'overview'
+                    ? 'bg-primary-dark text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -401,8 +401,8 @@ export default function GuardianDashboard() {
               <button
                 onClick={() => setSelectedView('academic')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedView === 'academic' 
-                    ? 'bg-indigo-600 text-white' 
+                  selectedView === 'academic'
+                    ? 'bg-primary-dark text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -411,8 +411,8 @@ export default function GuardianDashboard() {
               <button
                 onClick={() => setSelectedView('communication')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedView === 'communication' 
-                    ? 'bg-indigo-600 text-white' 
+                  selectedView === 'communication'
+                    ? 'bg-primary-dark text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -421,8 +421,8 @@ export default function GuardianDashboard() {
               <button
                 onClick={() => setSelectedView('financial')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedView === 'financial' 
-                    ? 'bg-indigo-600 text-white' 
+                  selectedView === 'financial'
+                    ? 'bg-primary-dark text-white'
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
               >
@@ -463,42 +463,42 @@ export default function GuardianDashboard() {
           title="Filhos"
           value={stats.totalStudents}
           subtitle="matriculados"
-          color="bg-indigo-500"
+          color="bg-primary-dark"
         />
         <StatCard
           icon={TrendingUp}
           title="Média Geral"
           value={stats.averageGrade.toFixed(1)}
           subtitle="de 10.0"
-          color="bg-blue-500"
+          color="bg-primary"
         />
         <StatCard
           icon={Calendar}
           title="Frequência"
           value={`${stats.averageAttendance}%`}
           subtitle="média"
-          color="bg-green-500"
+          color="bg-accent-green"
         />
         <StatCard
           icon={FileText}
           title="Tarefas"
           value={stats.pendingTasks}
           subtitle="pendentes"
-          color="bg-yellow-500"
+          color="bg-accent-yellow"
         />
         <StatCard
           icon={Video}
           title="Reuniões"
           value={stats.upcomingMeetings}
           subtitle="agendadas"
-          color="bg-purple-500"
+          color="bg-accent-purple"
         />
         <StatCard
           icon={MessageSquare}
           title="Mensagens"
           value={stats.unreadMessages}
           subtitle="não lidas"
-          color="bg-orange-500"
+          color="bg-accent-orange"
         />
       </div>
 
@@ -509,8 +509,8 @@ export default function GuardianDashboard() {
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <Users className="w-5 h-5 mr-2 text-indigo-500" />
-                Desempenho dos Filhos
+                <Users className="w-5 h-5 mr-2 text-primary-dark" />
+                <span className="text-primary-dark">Desempenho dos Filhos</span>
               </h2>
               
               <div className="space-y-4">
@@ -536,7 +536,7 @@ export default function GuardianDashboard() {
                         <p className="text-sm text-gray-500">Média</p>
                         <p className="text-xl font-bold flex items-center gap-1">
                           {performance.currentGrade.toFixed(1)}
-                          {performance.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-500" />}
+                          {performance.trend === 'up' && <TrendingUp className="w-4 h-4 text-accent-green" />}
                           {performance.trend === 'down' && <TrendingUp className="w-4 h-4 text-red-500 rotate-180" />}
                         </p>
                       </div>
@@ -552,26 +552,26 @@ export default function GuardianDashboard() {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Pendentes</p>
-                        <p className="text-xl font-bold text-yellow-600">{performance.pendingTasks}</p>
+                        <p className="text-xl font-bold text-accent-yellow">{performance.pendingTasks}</p>
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                       <div>
-                        <p className="font-medium text-green-600 mb-1">Pontos Fortes:</p>
+                        <p className="font-medium text-accent-green mb-1">Pontos Fortes:</p>
                         <div className="flex flex-wrap gap-1">
                           {performance.strengths.map((strength, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                            <span key={idx} className="px-2 py-1 bg-green-100 text-accent-green rounded-full text-xs">
                               {strength}
                             </span>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <p className="font-medium text-orange-600 mb-1">Áreas de Melhoria:</p>
+                        <p className="font-medium text-accent-orange mb-1">Áreas de Melhoria:</p>
                         <div className="flex flex-wrap gap-1">
                           {performance.challenges.map((challenge, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
+                            <span key={idx} className="px-2 py-1 bg-orange-100 text-accent-orange rounded-full text-xs">
                               {challenge}
                             </span>
                           ))}
@@ -580,7 +580,7 @@ export default function GuardianDashboard() {
                     </div>
                     
                     <div className="mt-4 flex gap-2">
-                      <button className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+                      <button className="px-3 py-1 bg-primary-dark text-white rounded text-sm hover:bg-indigo-700">
                         Ver Detalhes
                       </button>
                       <button className="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-500">
@@ -595,8 +595,8 @@ export default function GuardianDashboard() {
             {/* Próximos Eventos */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-blue-500" />
-                Próximos Eventos
+                <Calendar className="w-5 h-5 mr-2 text-primary" />
+                <span className="text-primary-dark">Próximos Eventos</span>
               </h2>
               
               <div className="space-y-3">
@@ -604,8 +604,8 @@ export default function GuardianDashboard() {
                   <div
                     key={event.id}
                     className={`p-4 rounded-lg border ${
-                      event.isImportant 
-                        ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20' 
+                      event.isImportant
+                        ? 'border-primary/30 bg-primary/5 dark:border-primary/50 dark:bg-primary/10'
                         : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700'
                     }`}
                   >
@@ -613,7 +613,7 @@ export default function GuardianDashboard() {
                       <div className="flex items-start gap-3">
                         <div className={`p-2 rounded-lg ${
                           event.type === 'exam' ? 'bg-red-100 text-red-600' :
-                          event.type === 'meeting' ? 'bg-blue-100 text-blue-600' :
+                          event.type === 'meeting' ? 'bg-primary/20 text-primary' :
                           event.type === 'assignment' ? 'bg-yellow-100 text-yellow-600' :
                           event.type === 'event' ? 'bg-green-100 text-green-600' :
                           'bg-gray-100 text-gray-600'
@@ -624,7 +624,7 @@ export default function GuardianDashboard() {
                            <Calendar className="w-4 h-4" />}
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-medium">{event.title}</h3>
+                          <h3 className="font-medium text-primary-dark">{event.title}</h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             {event.description}
                           </p>
@@ -660,21 +660,21 @@ export default function GuardianDashboard() {
           <div className="space-y-6">
             {/* Ações Rápidas */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
+              <h3 className="text-lg font-semibold mb-4 text-primary-dark">Ações Rápidas</h3>
               <div className="space-y-2">
-                <button className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                <button className="w-full px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
                   <MessageSquare className="w-4 h-4" />
                   Enviar Mensagem
                 </button>
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
                   <Video className="w-4 h-4" />
                   Agendar Reunião
                 </button>
-                <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                   <Download className="w-4 h-4" />
                   Baixar Boletim
                 </button>
-                <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                   <Phone className="w-4 h-4" />
                   Contatar Escola
                 </button>
@@ -684,8 +684,8 @@ export default function GuardianDashboard() {
             {/* Relatórios Comportamentais Recentes */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <Heart className="w-5 h-5 mr-2 text-red-500" />
-                Comportamento
+                <Heart className="w-5 h-5 mr-2 text-accent-orange" />
+                <span className="text-primary-dark">Comportamento</span>
               </h3>
               <div className="space-y-3">
                 {behaviorReports.slice(0, 3).map((report) => (
@@ -700,7 +700,7 @@ export default function GuardianDashboard() {
                     <div className="flex items-start justify-between mb-1">
                       <p className="font-medium text-sm">{report.title}</p>
                       {report.type === 'positive' ? (
-                        <Star className="w-4 h-4 text-green-600" />
+                        <Star className="w-4 h-4 text-accent-green" />
                       ) : report.type === 'negative' ? (
                         <AlertCircle className="w-4 h-4 text-red-600" />
                       ) : (
@@ -716,14 +716,14 @@ export default function GuardianDashboard() {
                   </div>
                 ))}
               </div>
-              <button className="w-full mt-3 text-sm text-indigo-600 hover:text-indigo-800">
+              <button className="w-full mt-3 text-sm text-primary-dark hover:text-indigo-800">
                 Ver todos os relatórios
               </button>
             </div>
 
             {/* Informações de Contato */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Contatos Importantes</h3>
+              <h3 className="text-lg font-semibold mb-4 text-primary-dark">Contatos Importantes</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-gray-500" />
@@ -759,10 +759,10 @@ export default function GuardianDashboard() {
             <div key={performance.studentId} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-6 flex items-center justify-between">
                 <span className="flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2 text-blue-500" />
-                  Desempenho Acadêmico - {performance.studentName}
+                  <BookOpen className="w-5 h-5 mr-2 text-primary" />
+                  <span className="text-primary-dark">Desempenho Acadêmico - {performance.studentName}</span>
                 </span>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
                   <Download className="w-4 h-4" />
                   Baixar Relatório
                 </button>
@@ -788,7 +788,7 @@ export default function GuardianDashboard() {
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-green-500 h-2 rounded-full"
+                          className="bg-accent-green h-2 rounded-full"
                           style={{ width: `${performance.attendance}%` }}
                         />
                       </div>
@@ -800,7 +800,7 @@ export default function GuardianDashboard() {
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-blue-500 h-2 rounded-full"
+                          className="bg-primary h-2 rounded-full"
                           style={{ width: `${(performance.completedTasks / (performance.completedTasks + performance.pendingTasks)) * 100}%` }}
                         />
                       </div>
@@ -821,13 +821,13 @@ export default function GuardianDashboard() {
               
               {/* Detalhes por matéria */}
               <div className="border-t pt-6">
-                <h3 className="font-semibold mb-4">Desempenho por Disciplina</h3>
+                <h3 className="font-semibold mb-4 text-primary-dark">Desempenho por Disciplina</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {['Matemática', 'Português', 'Ciências', 'História', 'Geografia', 'Inglês'].map((subject) => (
                     <div key={subject} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium">{subject}</h4>
-                        <span className="text-lg font-bold text-blue-600">8.5</span>
+                        <span className="text-lg font-bold text-primary">8.5</span>
                       </div>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -859,10 +859,10 @@ export default function GuardianDashboard() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center justify-between">
                 <span className="flex items-center">
-                  <MessageSquare className="w-5 h-5 mr-2 text-indigo-500" />
-                  Mensagens
+                  <MessageSquare className="w-5 h-5 mr-2 text-primary-dark" />
+                  <span className="text-primary-dark">Mensagens</span>
                 </span>
-                <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                <button className="px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-indigo-700 transition-colors">
                   Nova Mensagem
                 </button>
               </h2>
@@ -872,8 +872,8 @@ export default function GuardianDashboard() {
                   <div
                     key={message.id}
                     className={`p-4 rounded-lg border ${
-                      !message.isRead 
-                        ? 'border-indigo-200 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-900/20' 
+                      !message.isRead
+                        ? 'border-primary-dark/30 bg-primary-dark/5 dark:border-primary-dark/50 dark:bg-primary-dark/10'
                         : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700'
                     }`}
                   >
@@ -899,7 +899,7 @@ export default function GuardianDashboard() {
                       {message.preview}
                     </p>
                     <div className="flex gap-2">
-                      <button className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+                      <button className="px-3 py-1 bg-primary-dark text-white rounded text-sm hover:bg-indigo-700">
                         Ler Completa
                       </button>
                       <button className="px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-500">
@@ -915,12 +915,12 @@ export default function GuardianDashboard() {
           <div className="space-y-6">
             {/* Canais de Comunicação */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Canais de Comunicação</h3>
+              <h3 className="text-lg font-semibold mb-4 text-primary-dark">Canais de Comunicação</h3>
               <div className="space-y-3">
                 <button className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Video className="w-5 h-5 text-blue-500" />
+                      <Video className="w-5 h-5 text-primary" />
                       <div>
                         <p className="font-medium">Videochamada</p>
                         <p className="text-xs text-gray-500">Agendar reunião online</p>
@@ -932,7 +932,7 @@ export default function GuardianDashboard() {
                 <button className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Phone className="w-5 h-5 text-green-500" />
+                      <Phone className="w-5 h-5 text-accent-green" />
                       <div>
                         <p className="font-medium">Telefone</p>
                         <p className="text-xs text-gray-500">Ligar para a escola</p>
@@ -944,7 +944,7 @@ export default function GuardianDashboard() {
                 <button className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-purple-500" />
+                      <Mail className="w-5 h-5 text-accent-purple" />
                       <div>
                         <p className="font-medium">E-mail</p>
                         <p className="text-xs text-gray-500">Enviar mensagem</p>
@@ -958,24 +958,24 @@ export default function GuardianDashboard() {
 
             {/* Histórico de Comunicações */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Histórico Recente</h3>
+              <h3 className="text-lg font-semibold mb-4 text-primary-dark">Histórico Recente</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-sm">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-accent-green rounded-full"></div>
                   <div className="flex-1">
                     <p className="font-medium">Reunião realizada</p>
                     <p className="text-xs text-gray-500">Prof. Ana - 15/01/2025</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
                   <div className="flex-1">
                     <p className="font-medium">Mensagem enviada</p>
                     <p className="text-xs text-gray-500">Coordenação - 10/01/2025</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-accent-purple rounded-full"></div>
                   <div className="flex-1">
                     <p className="font-medium">Ligação realizada</p>
                     <p className="text-xs text-gray-500">Secretaria - 05/01/2025</p>
@@ -993,10 +993,10 @@ export default function GuardianDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-6 flex items-center justify-between">
               <span className="flex items-center">
-                <Briefcase className="w-5 h-5 mr-2 text-green-500" />
-                Informações Financeiras
+                <Briefcase className="w-5 h-5 mr-2 text-accent-green" />
+                <span className="text-primary-dark">Informações Financeiras</span>
               </span>
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+              <button className="px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
                 <Download className="w-4 h-4" />
                 Baixar Extrato
               </button>
@@ -1049,7 +1049,7 @@ export default function GuardianDashboard() {
                   
                   {info.status !== 'paid' && (
                     <div className="mt-4 flex gap-2">
-                      <button className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                      <button className="flex-1 px-4 py-2 bg-accent-green text-white rounded hover:bg-green-700">
                         Pagar Agora
                       </button>
                       <button className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600">
@@ -1064,7 +1064,7 @@ export default function GuardianDashboard() {
 
           {/* Histórico de Pagamentos */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Histórico de Pagamentos</h3>
+            <h3 className="text-lg font-semibold mb-4 text-primary-dark">Histórico de Pagamentos</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -1089,7 +1089,7 @@ export default function GuardianDashboard() {
                       <td className="py-3 text-sm">R$ {payment.value.toFixed(2)}</td>
                       <td className="py-3 text-sm">{payment.date}</td>
                       <td className="py-3">
-                        <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
+                        <span className="px-2 py-1 text-xs bg-green-100 text-accent-green rounded-full">
                           Pago
                         </span>
                       </td>
@@ -1122,7 +1122,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
           <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <p className="text-2xl font-bold text-primary-dark dark:text-white">
         {value}
       </p>
       <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>

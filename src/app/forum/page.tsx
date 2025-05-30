@@ -79,7 +79,7 @@ export default function ForumPage() {
           name: 'Avisos e Comunicados',
           description: 'Informações importantes da instituição',
           icon: '📢',
-          color: 'bg-blue-500',
+          color: 'bg-accent-blue',
           topicsCount: 15,
           postsCount: 45,
           lastPost: {
@@ -94,7 +94,7 @@ export default function ForumPage() {
           name: 'Dúvidas Acadêmicas',
           description: 'Tire suas dúvidas sobre conteúdos e atividades',
           icon: '❓',
-          color: 'bg-green-500',
+          color: 'bg-accent-green',
           topicsCount: 128,
           postsCount: 512,
           lastPost: {
@@ -109,7 +109,7 @@ export default function ForumPage() {
           name: 'Projetos e Trabalhos',
           description: 'Discussões sobre projetos em grupo',
           icon: '💡',
-          color: 'bg-purple-500',
+          color: 'bg-accent-purple',
           topicsCount: 34,
           postsCount: 156,
           lastPost: {
@@ -124,7 +124,7 @@ export default function ForumPage() {
           name: 'Eventos e Atividades',
           description: 'Informações sobre eventos escolares',
           icon: '🎉',
-          color: 'bg-yellow-500',
+          color: 'bg-accent-yellow',
           topicsCount: 22,
           postsCount: 89,
           lastPost: {
@@ -208,7 +208,7 @@ export default function ForumPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -220,14 +220,14 @@ export default function ForumPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <MessageSquare className="w-8 h-8 text-blue-600" />
+              <MessageSquare className="w-8 h-8 text-primary" />
               Fórum da Comunidade
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               Participe das discussões e compartilhe conhecimento
             </p>
           </div>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+          <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
             <Plus className="w-5 h-5" />
             Novo Tópico
           </button>
@@ -242,7 +242,7 @@ export default function ForumPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar tópicos..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-accent-blue dark:bg-gray-700"
             />
           </div>
           <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
@@ -262,7 +262,7 @@ export default function ForumPage() {
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Tópicos</p>
             </div>
-            <MessageSquare className="w-8 h-8 text-blue-500 opacity-50" />
+            <MessageSquare className="w-8 h-8 text-accent-blue opacity-50" />
           </div>
         </div>
 
@@ -274,7 +274,7 @@ export default function ForumPage() {
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Respostas</p>
             </div>
-            <MessageCircle className="w-8 h-8 text-green-500 opacity-50" />
+            <MessageCircle className="w-8 h-8 text-accent-green opacity-50" />
           </div>
         </div>
 
@@ -286,7 +286,7 @@ export default function ForumPage() {
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Membros Ativos</p>
             </div>
-            <User className="w-8 h-8 text-purple-500 opacity-50" />
+            <User className="w-8 h-8 text-accent-purple opacity-50" />
           </div>
         </div>
 
@@ -298,7 +298,7 @@ export default function ForumPage() {
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Taxa de Resposta</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-yellow-500 opacity-50" />
+            <TrendingUp className="w-8 h-8 text-accent-yellow opacity-50" />
           </div>
         </div>
       </div>
@@ -350,7 +350,7 @@ export default function ForumPage() {
         {/* Tópicos Recentes */}
         <div>
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-blue-500" />
+            <Clock className="w-5 h-5 text-accent-blue" />
             Tópicos Recentes
           </h2>
           <div className="space-y-3">
@@ -364,7 +364,7 @@ export default function ForumPage() {
                     <div className="flex items-center gap-2 mb-2">
                       {topic.isPinned && <Pin className="w-4 h-4 text-red-500" />}
                       {topic.isLocked && <Lock className="w-4 h-4 text-gray-500" />}
-                      <h3 className="font-medium hover:text-blue-600 transition-colors">
+                      <h3 className="font-medium hover:text-primary transition-colors">
                         {topic.title}
                       </h3>
                     </div>
@@ -410,7 +410,7 @@ export default function ForumPage() {
         {/* Tópicos Populares */}
         <div>
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-500" />
+            <TrendingUp className="w-5 h-5 text-accent-green" />
             Tópicos Populares
           </h2>
           <div className="space-y-3">
@@ -424,7 +424,7 @@ export default function ForumPage() {
                     <div className="flex items-center gap-2 mb-2">
                       {topic.isPinned && <Pin className="w-4 h-4 text-red-500" />}
                       {topic.isLocked && <Lock className="w-4 h-4 text-gray-500" />}
-                      <h3 className="font-medium hover:text-blue-600 transition-colors">
+                      <h3 className="font-medium hover:text-primary transition-colors">
                         {topic.title}
                       </h3>
                     </div>

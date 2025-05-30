@@ -96,16 +96,16 @@ const MOCK_ASSIGNMENTS: Assignment[] = [
 ]
 
 const STATUS_COLORS: Record<AssignmentStatus, { bg: string; text: string; label: string }> = {
-  pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pendente' },
-  in_progress: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Em Andamento' },
-  completed: { bg: 'bg-green-100', text: 'text-green-800', label: 'Concluída' },
-  late: { bg: 'bg-red-100', text: 'text-red-800', label: 'Atrasada' }
+  pending: { bg: 'bg-accent-yellow/20', text: 'text-accent-yellow', label: 'Pendente' },
+  in_progress: { bg: 'bg-primary/20', text: 'text-primary', label: 'Em Andamento' },
+  completed: { bg: 'bg-accent-green/20', text: 'text-accent-green', label: 'Concluída' },
+  late: { bg: 'bg-error/20', text: 'text-error', label: 'Atrasada' }
 }
 
 const PRIORITY_ICONS: Record<PriorityLevel, { icon: string; color: string }> = {
-  high: { icon: 'priority_high', color: 'text-red-500' },
-  medium: { icon: 'remove', color: 'text-yellow-500' },
-  low: { icon: 'arrow_downward', color: 'text-green-500' }
+  high: { icon: 'priority_high', color: 'text-error' },
+  medium: { icon: 'remove', color: 'text-primary' },
+  low: { icon: 'arrow_downward', color: 'text-accent-green' }
 }
 
 export default function AssignmentsPage() {
@@ -117,15 +117,15 @@ export default function AssignmentsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Minhas Atividades</h1>
+            <h1 className="text-2xl font-bold text-primary-dark">Minhas Atividades</h1>
             <p className="text-gray-600">Acompanhe e gerencie suas atividades acadêmicas</p>
           </div>
           <div className="flex space-x-4">
-            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
+            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200">
               <span className="material-icons text-sm mr-2">filter_list</span>
               Filtros
             </button>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
               <span className="material-icons text-sm mr-2">add</span>
               Adicionar Atividade
             </button>
@@ -136,33 +136,33 @@ export default function AssignmentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Atividades</div>
-            <div className="text-2xl font-bold text-gray-800">5</div>
+            <div className="text-2xl font-bold text-primary-dark">5</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 2</span>
+              <span className="text-accent-green text-sm">↑ 2</span>
               <span className="text-gray-500 text-sm ml-2">nesta semana</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Pendentes</div>
-            <div className="text-2xl font-bold text-yellow-600">2</div>
+            <div className="text-2xl font-bold text-accent-yellow">2</div>
             <div className="mt-4 flex items-center">
-              <span className="text-yellow-500 text-sm">!</span>
+              <span className="text-accent-yellow text-sm">!</span>
               <span className="text-gray-500 text-sm ml-2">para os próximos 7 dias</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Em Andamento</div>
-            <div className="text-2xl font-bold text-blue-600">2</div>
+            <div className="text-2xl font-bold text-primary">2</div>
             <div className="mt-4 flex items-center">
-              <span className="text-blue-500 text-sm">↑ 1</span>
+              <span className="text-primary text-sm">↑ 1</span>
               <span className="text-gray-500 text-sm ml-2">em andamento</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Concluídas</div>
-            <div className="text-2xl font-bold text-green-600">1</div>
+            <div className="text-2xl font-bold text-accent-green">1</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 1</span>
+              <span className="text-accent-green text-sm">↑ 1</span>
               <span className="text-gray-500 text-sm ml-2">nesta semana</span>
             </div>
           </div>
@@ -175,21 +175,21 @@ export default function AssignmentsPage() {
           <input
             type="text"
             placeholder="Buscar atividades..."
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="">Todos os Cursos</option>
             <option value="math">Matemática Avançada</option>
             <option value="physics">Física Fundamental</option>
             <option value="chemistry">Química Orgânica</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="">Todos os Tipos</option>
             <option value="exercise">Exercício</option>
             <option value="report">Relatório</option>
             <option value="quiz">Questionário</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="">Ordenar por</option>
             <option value="date">Data de entrega</option>
             <option value="priority">Prioridade</option>
@@ -200,16 +200,16 @@ export default function AssignmentsPage() {
 
       {/* Status Filters */}
       <div className="flex space-x-2 mb-6">
-        <button className="px-4 py-2 text-sm rounded-lg bg-blue-100 text-blue-800">
+        <button className="px-4 py-2 text-sm rounded-lg bg-primary/10 text-primary font-medium">
           Todas (5)
         </button>
-        <button className="px-4 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-100">
+        <button className="px-4 py-2 text-sm rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors duration-200">
           Pendentes (2)
         </button>
-        <button className="px-4 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-100">
+        <button className="px-4 py-2 text-sm rounded-lg text-primary hover:bg-primary/10 transition-colors duration-200">
           Em Andamento (2)
         </button>
-        <button className="px-4 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-100">
+        <button className="px-4 py-2 text-sm rounded-lg text-accent-green hover:bg-accent-green/10 transition-colors duration-200">
           Concluídas (1)
         </button>
       </div>
@@ -228,24 +228,24 @@ export default function AssignmentsPage() {
                     <span className={`material-icons mr-2 ${PRIORITY_ICONS[assignment.priority].color}`}>
                       {PRIORITY_ICONS[assignment.priority].icon}
                     </span>
-                    <h3 className="text-lg font-semibold">{assignment.title}</h3>
+                    <h3 className="text-lg font-semibold text-primary-dark">{assignment.title}</h3>
                   </div>
                   <p className="text-gray-600 mb-4">{assignment.description}</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-500">
                     <div className="flex items-center">
-                      <span className="material-icons text-gray-400 text-base mr-2">school</span>
+                      <span className="material-icons text-primary/60 text-base mr-2">school</span>
                       <span>{assignment.course}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="material-icons text-gray-400 text-base mr-2">event</span>
+                      <span className="material-icons text-primary/60 text-base mr-2">event</span>
                       <span>Data limite: {new Date(assignment.dueDate).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="material-icons text-gray-400 text-base mr-2">schedule</span>
+                      <span className="material-icons text-primary/60 text-base mr-2">schedule</span>
                       <span>{assignment.timeEstimate}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="material-icons text-gray-400 text-base mr-2">stars</span>
+                      <span className="material-icons text-primary/60 text-base mr-2">stars</span>
                       <span>{assignment.points} pontos</span>
                     </div>
                   </div>
@@ -257,11 +257,11 @@ export default function AssignmentsPage() {
                   <div className="flex items-center space-x-2">
                     {assignment.status === 'completed' ? (
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{assignment.grade}</div>
-                        <div className="text-xs text-gray-500">Nota final</div>
+                        <div className="text-2xl font-bold text-accent-green">{assignment.grade}</div>
+                        <div className="text-xs text-gray-600">Nota final</div>
                       </div>
                     ) : (
-                      <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                      <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
                         {assignment.status === 'in_progress' ? 'Continuar' : 'Iniciar'}
                       </button>
                     )}
@@ -269,15 +269,15 @@ export default function AssignmentsPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-6 mt-4 text-sm">
-                <div className="flex items-center text-gray-500">
-                  <span className="material-icons text-gray-400 text-base mr-1">attach_file</span>
+                <div className="flex items-center text-gray-600">
+                  <span className="material-icons text-primary/60 text-base mr-1">attach_file</span>
                   <span>{assignment.attachments} arquivos anexos</span>
                 </div>
-                <div className="flex items-center text-gray-500">
-                  <span className="material-icons text-gray-400 text-base mr-1">history</span>
+                <div className="flex items-center text-gray-600">
+                  <span className="material-icons text-primary/60 text-base mr-1">history</span>
                   <span>{assignment.submissions} tentativas</span>
                 </div>
-                <button className="text-blue-600 hover:text-blue-800">
+                <button className="text-primary hover:text-primary-dark transition-colors duration-200">
                   Ver detalhes
                 </button>
               </div>

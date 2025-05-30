@@ -64,13 +64,13 @@ export default function GuardianHistoryPage() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'grade': return 'bg-success/10 text-success'
-      case 'attendance': return 'bg-error/10 text-error'
-      case 'assignment': return 'bg-accent-blue/10 text-accent-blue'
-      case 'message': return 'bg-purple/10 text-purple'
-      case 'payment': return 'bg-green/10 text-green'
-      case 'meeting': return 'bg-warning/10 text-warning'
-      default: return 'bg-background-tertiary text-text-secondary'
+      case 'grade': return 'bg-accent-green/20 text-accent-green'
+      case 'attendance': return 'bg-error/20 text-error'
+      case 'assignment': return 'bg-primary/20 text-primary'
+      case 'message': return 'bg-accent-purple/20 text-accent-purple'
+      case 'payment': return 'bg-accent-green/20 text-accent-green'
+      case 'meeting': return 'bg-accent-yellow/20 text-accent-yellow'
+      default: return 'bg-gray-100 text-gray-600'
     }
   }
 
@@ -101,12 +101,12 @@ export default function GuardianHistoryPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">Histórico de Atividades</h1>
+        <h1 className="text-2xl font-bold text-primary">Histórico de Atividades</h1>
         <div className="flex space-x-2">
-          <select 
+          <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="bg-background-primary border border-border text-text-primary px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue"
+            className="bg-white border border-gray-200 text-primary px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todas as atividades</option>
             <option value="grade">Notas</option>
@@ -116,7 +116,7 @@ export default function GuardianHistoryPage() {
             <option value="payment">Pagamentos</option>
             <option value="meeting">Reuniões</option>
           </select>
-          <button className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/90 transition-colors">
+          <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
             Exportar
           </button>
         </div>
@@ -125,7 +125,7 @@ export default function GuardianHistoryPage() {
       {/* Estatísticas */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         {['grade', 'attendance', 'assignment', 'message', 'payment', 'meeting'].map((type) => (
-          <div key={type} className="bg-background-primary rounded-lg border border-border p-4 text-center">
+          <div key={type} className="bg-white rounded-lg border border-gray-200 p-4 text-center">
             <div className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center ${getTypeColor(type)}`}>
               <span className="material-symbols-outlined text-[16px]">
                 {type === 'grade' ? 'grade' :
@@ -136,8 +136,8 @@ export default function GuardianHistoryPage() {
                  'event'}
               </span>
             </div>
-            <p className="text-sm font-medium text-text-secondary">{getTypeText(type)}</p>
-            <p className="text-lg font-bold text-text-primary">
+            <p className="text-sm font-medium text-gray-600">{getTypeText(type)}</p>
+            <p className="text-lg font-bold text-primary">
               {activities.filter(a => a.type === type).length}
             </p>
           </div>
@@ -145,9 +145,9 @@ export default function GuardianHistoryPage() {
       </div>
 
       {/* Timeline de Atividades */}
-      <div className="bg-background-primary rounded-lg border border-border">
-        <div className="p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-text-primary">
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-primary">
             Timeline de Atividades ({filteredActivities.length} itens)
           </h2>
         </div>
@@ -166,7 +166,7 @@ export default function GuardianHistoryPage() {
                       </span>
                     </div>
                     {index < filteredActivities.length - 1 && (
-                      <div className="w-0.5 h-8 bg-border mt-2"></div>
+                      <div className="w-0.5 h-8 bg-gray-200 mt-2"></div>
                     )}
                   </div>
                   
@@ -174,12 +174,12 @@ export default function GuardianHistoryPage() {
                   <div className="flex-1 pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="text-lg font-medium text-text-primary">{activity.title}</h3>
-                        <p className="text-text-secondary mt-1">{activity.description}</p>
-                        <p className="text-sm text-text-tertiary mt-1">Aluno: {activity.student}</p>
+                        <h3 className="text-lg font-medium text-primary">{activity.title}</h3>
+                        <p className="text-gray-600 mt-1">{activity.description}</p>
+                        <p className="text-sm text-gray-500 mt-1">Aluno: {activity.student}</p>
                       </div>
                       
-                      <div className="text-right text-sm text-text-secondary">
+                      <div className="text-right text-sm text-gray-600">
                         <p>{date}</p>
                         <p>{time}</p>
                       </div>
@@ -191,7 +191,7 @@ export default function GuardianHistoryPage() {
           </div>
           
           {filteredActivities.length === 0 && (
-            <div className="text-center py-8 text-text-secondary">
+            <div className="text-center py-8 text-gray-600">
               Nenhuma atividade encontrada para o filtro selecionado.
             </div>
           )}

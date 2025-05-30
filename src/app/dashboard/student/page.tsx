@@ -387,7 +387,7 @@ function StudentDashboardContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -399,7 +399,7 @@ function StudentDashboardContent() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold daarktext-gray-900 dark:text-gray-800 mb-2 flex items-center gap-3">
-              <BookOpen className="w-8 h-8 text-blue-600" />
+              <BookOpen className="w-8 h-8 text-primary" />
               Meu Painel de Estudos
             </h1>
             <p className="dark:text-gray-800 dark:text-gray-800">
@@ -411,7 +411,7 @@ function StudentDashboardContent() {
               onClick={() => setSelectedView('overview')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'overview'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
               }`}
             >
@@ -421,7 +421,7 @@ function StudentDashboardContent() {
               onClick={() => setSelectedView('learning')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'learning'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
               }`}
             >
@@ -431,7 +431,7 @@ function StudentDashboardContent() {
               onClick={() => setSelectedView('social')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'social'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
               }`}
             >
@@ -441,7 +441,7 @@ function StudentDashboardContent() {
               onClick={() => setSelectedView('achievements')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'achievements'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
               }`}
             >
@@ -452,7 +452,7 @@ function StudentDashboardContent() {
       </div>
 
       {/* Barra de Progresso e Gamificação */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-gradient-to-r from-accent-purple to-primary text-white rounded-lg shadow-md p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -509,7 +509,7 @@ function StudentDashboardContent() {
           title="Média Geral"
           value={stats.averageGrade.toFixed(1)}
           subtitle="de 10.0"
-          color="bg-blue-500"
+          color="bg-primary-light"
           trend="+0.5"
         />
         <StatCard
@@ -517,21 +517,21 @@ function StudentDashboardContent() {
           title="Tarefas"
           value={stats.completedTasks}
           subtitle={`${stats.pendingTasks} pendentes`}
-          color="bg-green-500"
+          color="bg-accent-green"
         />
         <StatCard
           icon={Calendar}
           title="Frequência"
           value={`${stats.attendance}%`}
           subtitle="de presença"
-          color="bg-purple-500"
+          color="bg-accent-purple"
         />
         <StatCard
           icon={Activity}
           title="Atividade"
           value={`${stats.streakDays}d`}
           subtitle="sequência atual"
-          color="bg-orange-500"
+          color="bg-accent-orange"
         />
       </div>
 
@@ -542,14 +542,14 @@ function StudentDashboardContent() {
         <div className="lg:col-span-2">
           <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-blue-500" />
+              <FileText className="w-5 h-5 mr-2 text-primary" />
               Minhas Tarefas
             </h2>
             <div className="space-y-3">
               {assignments.map((assignment) => (
                 <div
                   key={assignment.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 bg-blue-300 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-gray-50 bg-primary/10 rounded-lg"
                 >
                   <div className="flex-1">
                     <h3 className="font-medium">{assignment.title}</h3>
@@ -576,7 +576,7 @@ function StudentDashboardContent() {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-4 text-center text-sm text-blue-600 hover:text-blue-800">
+            <button className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark">
               Ver todas as tarefas
             </button>
           </div>
@@ -584,14 +584,14 @@ function StudentDashboardContent() {
           {/* Notas Recentes */}
           <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6 mt-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <BarChart className="w-5 h-5 mr-2 text-green-500" />
+              <BarChart className="w-5 h-5 mr-2 text-accent-green" />
               Notas Recentes
             </h2>
             <div className="space-y-3">
               {recentGrades.map((grade) => (
                 <div
                   key={grade.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 bg-blue-300 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-gray-50 bg-primary/10 rounded-lg"
                 >
                   <div>
                     <h3 className="font-medium">{grade.subject}</h3>
@@ -614,12 +614,12 @@ function StudentDashboardContent() {
           {/* Trilhas de Aprendizagem */}
           <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6 mt-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Brain className="w-5 h-5 mr-2 text-purple-500" />
+              <Brain className="w-5 h-5 mr-2 text-accent-purple" />
               Minhas Trilhas de Aprendizagem
             </h2>
             <div className="space-y-4">
               {learningPaths.map((path) => (
-                <div key={path.id} className="p-4 bg-gray-50 bg-blue-300 rounded-lg">
+                <div key={path.id} className="p-4 bg-gray-50 bg-primary/10 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h3 className="font-semibold">{path.subject}</h3>
@@ -636,7 +636,7 @@ function StudentDashboardContent() {
                     </div>
                     <div className="w-full bg-gray-200 bg-gray-600 rounded-full h-2">
                       <div
-                        className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                        className="bg-accent-purple h-2 rounded-full transition-all duration-300"
                         style={{ width: `${path.progress}%` }}
                       />
                     </div>
@@ -644,7 +644,7 @@ function StudentDashboardContent() {
                   <p className="text-xs text-gray-500">
                     Próximo: {path.nextTopic}
                   </p>
-                  <button className="mt-2 text-sm text-purple-600 hover:text-purple-800">
+                  <button className="mt-2 text-sm text-accent-purple hover:text-purple-800">
                     Continuar aprendendo →
                   </button>
                 </div>
@@ -676,22 +676,22 @@ function StudentDashboardContent() {
           </div>
 
           {/* Materiais de Estudo */}
-          <div className="bg-white bg-blue-300 rounded-lg shadow-md p-6">
+          <div className="bg-white bg-primary/10 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-purple-500" />
+              <BookOpen className="w-5 h-5 mr-2 text-accent-purple" />
               Materiais de Estudo
             </h2>
             <div className="space-y-3">
               {studyMaterials.map((material) => (
                 <div
                   key={material.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 bg-blue-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-3 bg-gray-50 bg-primary/10 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${
                       material.type === 'pdf' ? 'bg-red-100 text-red-600' :
-                      material.type === 'video' ? 'bg-blue-100 text-blue-600' :
-                      material.type === 'document' ? 'bg-green-100 text-green-600' :
+                      material.type === 'video' ? 'bg-primary/20 text-primary' :
+                      material.type === 'document' ? 'bg-accent-green/20 text-accent-green' :
                       'bg-gray-100 text-gray-600'
                     }`}>
                       <FileText className="w-4 h-4" />
@@ -705,7 +705,7 @@ function StudentDashboardContent() {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-4 text-center text-sm text-blue-600 hover:text-blue-800">
+            <button className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark">
               Ver todos os materiais
             </button>
           </div>
@@ -713,14 +713,14 @@ function StudentDashboardContent() {
           {/* Comunicados */}
           <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-orange-500" />
+              <Bell className="w-5 h-5 mr-2 text-accent-orange" />
               Comunicados
             </h2>
             <div className="space-y-3">
               {announcements.map((announcement) => (
                 <div
                   key={announcement.id}
-                  className="p-3 bg-gray-50 bg-blue-300 rounded-lg"
+                  className="p-3 bg-gray-50 bg-primary/10 rounded-lg"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-medium text-sm">{announcement.title}</h3>
@@ -743,24 +743,24 @@ function StudentDashboardContent() {
           {/* Próximas Conquistas */}
           <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
+              <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
               Próximas Conquistas
             </h3>
             <div className="space-y-3">
               {achievements.filter(a => !a.unlocked).slice(0, 3).map((achievement) => (
-                <div key={achievement.id} className="p-3 bg-gray-50 bg-blue-300 rounded-lg">
+                <div key={achievement.id} className="p-3 bg-gray-50 bg-primary/10 rounded-lg">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="font-medium text-sm">{achievement.title}</p>
                       <p className="text-xs text-gray-500">{achievement.description}</p>
                     </div>
-                    <span className="text-xs text-purple-600 font-medium">
+                    <span className="text-xs text-accent-purple font-medium">
                       +{achievement.xpReward} XP
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 bg-gray-600 rounded-full h-2">
                     <div
-                      className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-accent-yellow h-2 rounded-full transition-all duration-300"
                       style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
                     />
                   </div>
@@ -776,19 +776,19 @@ function StudentDashboardContent() {
           <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
             <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
                 <Video className="w-4 h-4" />
                 Aula ao Vivo
               </button>
-              <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                 <Gamepad2 className="w-4 h-4" />
                 Quiz Interativo
               </button>
-              <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                 <Users className="w-4 h-4" />
                 Grupo de Estudos
               </button>
-              <button className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-orange text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2">
                 <MessageSquare className="w-4 h-4" />
                 Falar com Professor
               </button>
@@ -804,13 +804,13 @@ function StudentDashboardContent() {
           <div className="lg:col-span-2">
             <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <Brain className="w-5 h-5 mr-2 text-purple-500" />
+                <Brain className="w-5 h-5 mr-2 text-accent-purple" />
                 Recursos de Aprendizagem Personalizados
               </h2>
               
               <div className="mb-6">
                 <div className="flex gap-2 mb-4">
-                  <button className="px-4 py-2 bg-purple-600 text-white rounded-lg">
+                  <button className="px-4 py-2 bg-accent-purple text-white rounded-lg">
                     Para Você
                   </button>
                   <button className="px-4 py-2 bg-gray-200 bg-gray-700 rounded-lg">
@@ -830,8 +830,8 @@ function StudentDashboardContent() {
                       <div className="flex items-start justify-between mb-3">
                         <div className={`p-3 rounded-lg ${
                           material.type === 'video' ? 'bg-red-100 text-red-600' :
-                          material.type === 'pdf' ? 'bg-blue-100 text-blue-600' :
-                          material.type === 'document' ? 'bg-green-100 text-green-600' :
+                          material.type === 'pdf' ? 'bg-primary/20 text-primary' :
+                          material.type === 'document' ? 'bg-accent-green/20 text-accent-green' :
                           'bg-gray-100 text-gray-600'
                         }`}>
                           {material.type === 'video' ? <Video className="w-6 h-6" /> :
@@ -849,7 +849,7 @@ function StudentDashboardContent() {
                         <span className="text-xs text-gray-500">
                           {new Date(material.uploadDate).toLocaleDateString('pt-BR')}
                         </span>
-                        <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                        <button className="px-3 py-1 bg-accent-purple text-white rounded text-sm hover:bg-purple-700">
                           Acessar
                         </button>
                       </div>
@@ -861,23 +861,23 @@ function StudentDashboardContent() {
               {/* Jogos Educativos */}
               <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <Gamepad2 className="w-5 h-5 mr-2 text-green-500" />
+                  <Gamepad2 className="w-5 h-5 mr-2 text-accent-green" />
                   Jogos Educativos
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg">
+                  <div className="p-4 bg-gradient-to-br from-primary-light to-primary text-white rounded-lg">
                     <Zap className="w-8 h-8 mb-2" />
                     <h4 className="font-semibold">Math Quest</h4>
                     <p className="text-sm text-blue-100">Aventura matemática</p>
                     <button className="mt-2 text-sm underline">Jogar →</button>
                   </div>
-                  <div className="p-4 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg">
+                  <div className="p-4 bg-gradient-to-br from-accent-green to-green-600 text-white rounded-lg">
                     <Brain className="w-8 h-8 mb-2" />
                     <h4 className="font-semibold">Word Master</h4>
                     <p className="text-sm text-green-100">Desafio de palavras</p>
                     <button className="mt-2 text-sm underline">Jogar →</button>
                   </div>
-                  <div className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg">
+                  <div className="p-4 bg-gradient-to-br from-accent-purple to-purple-600 text-white rounded-lg">
                     <Star className="w-8 h-8 mb-2" />
                     <h4 className="font-semibold">Science Lab</h4>
                     <p className="text-sm text-purple-100">Experimentos virtuais</p>
@@ -901,7 +901,7 @@ function StudentDashboardContent() {
                   <p className="text-xs text-gray-600 text-gray-400 mt-1">
                     Melhore sua nota em matemática
                   </p>
-                  <button className="mt-2 text-xs text-blue-600 hover:text-blue-800">
+                  <button className="mt-2 text-xs text-primary hover:text-primary-dark">
                     Começar agora →
                   </button>
                 </div>
@@ -910,7 +910,7 @@ function StudentDashboardContent() {
                   <p className="text-xs text-gray-600 text-gray-400 mt-1">
                     Pratique escrita criativa
                   </p>
-                  <button className="mt-2 text-xs text-green-600 hover:text-green-800">
+                  <button className="mt-2 text-xs text-accent-green hover:text-green-800">
                     Aceitar desafio →
                   </button>
                 </div>
@@ -927,7 +927,7 @@ function StudentDashboardContent() {
                     <span className="font-medium">2h 15min</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '75%' }} />
+                    <div className="bg-primary h-2 rounded-full" style={{ width: '75%' }} />
                   </div>
                 </div>
                 <div>
@@ -936,7 +936,7 @@ function StudentDashboardContent() {
                     <span className="font-medium">18/25</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '72%' }} />
+                    <div className="bg-accent-green h-2 rounded-full" style={{ width: '72%' }} />
                   </div>
                 </div>
                 <div>
@@ -945,7 +945,7 @@ function StudentDashboardContent() {
                     <span className="font-medium">5/8</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: '62.5%' }} />
+                    <div className="bg-accent-purple h-2 rounded-full" style={{ width: '62.5%' }} />
                   </div>
                 </div>
               </div>
@@ -960,7 +960,7 @@ function StudentDashboardContent() {
           <div className="lg:col-span-2">
             <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <Users className="w-5 h-5 mr-2 text-blue-500" />
+                <Users className="w-5 h-5 mr-2 text-primary" />
                 Grupos de Estudo
               </h2>
               
@@ -987,7 +987,7 @@ function StudentDashboardContent() {
                       <p className="text-sm text-gray-500">
                         Próximo encontro: {new Date(group.nextMeeting).toLocaleString('pt-BR')}
                       </p>
-                      <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                      <button className="px-3 py-1 bg-primary text-white rounded text-sm hover:bg-primary-dark">
                         Participar
                       </button>
                     </div>
@@ -1003,7 +1003,7 @@ function StudentDashboardContent() {
             {/* Ranking da Turma */}
             <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6 mt-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
+                <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
                 Ranking da Turma
               </h2>
               
@@ -1012,7 +1012,7 @@ function StudentDashboardContent() {
                   <div
                     key={position}
                     className={`flex items-center justify-between p-3 rounded-lg ${
-                      position === stats.ranking ? 'bg-blue-50 bg-blue-900/20 border border-blue-200 border-blue-800' : 'bg-gray-50 bg-gray-700'
+                      position === stats.ranking ? 'bg-primary/10 border border-primary/30' : 'bg-gray-50 bg-gray-700'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -1047,7 +1047,7 @@ function StudentDashboardContent() {
               <h3 className="text-lg font-semibold mb-4">Atividade dos Amigos</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
                     M
                   </div>
                   <div className="flex-1">
@@ -1058,7 +1058,7 @@ function StudentDashboardContent() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full bg-accent-green flex items-center justify-center text-white text-sm font-bold">
                     J
                   </div>
                   <div className="flex-1">
@@ -1069,7 +1069,7 @@ function StudentDashboardContent() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-8 h-8 rounded-full bg-accent-purple flex items-center justify-center text-white text-sm font-bold">
                     A
                   </div>
                   <div className="flex-1">
@@ -1086,7 +1086,7 @@ function StudentDashboardContent() {
             <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Desafios em Grupo</h3>
               <div className="space-y-3">
-                <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg">
+                <div className="p-3 bg-gradient-to-r from-accent-purple to-pink-500 text-white rounded-lg">
                   <h4 className="font-medium">Maratona de Matemática</h4>
                   <p className="text-sm text-purple-100 mt-1">
                     Resolva 50 problemas em equipe
@@ -1107,7 +1107,7 @@ function StudentDashboardContent() {
         <div className="space-y-6">
           <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-6 flex items-center">
-              <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
+              <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
               Minhas Conquistas
             </h2>
             
@@ -1175,17 +1175,17 @@ function StudentDashboardContent() {
           {/* Estatísticas de Conquistas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-              <Gem className="w-12 h-12 mx-auto mb-3 text-purple-500" />
+              <Gem className="w-12 h-12 mx-auto mb-3 text-accent-purple" />
               <h3 className="text-2xl font-bold mb-1">{stats.badges}</h3>
               <p className="text-gray-600 dark:text-gray-400">Conquistas Desbloqueadas</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-              <Zap className="w-12 h-12 mx-auto mb-3 text-yellow-500" />
+              <Zap className="w-12 h-12 mx-auto mb-3 text-accent-yellow" />
               <h3 className="text-2xl font-bold mb-1">{stats.xpPoints}</h3>
               <p className="text-gray-600 dark:text-gray-400">Pontos de Experiência</p>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-              <Flame className="w-12 h-12 mx-auto mb-3 text-orange-500" />
+              <Flame className="w-12 h-12 mx-auto mb-3 text-accent-orange" />
               <h3 className="text-2xl font-bold mb-1">{stats.streakDays}</h3>
               <p className="text-gray-600 dark:text-gray-400">Dias de Sequência</p>
             </div>
@@ -1205,7 +1205,7 @@ export default function StudentDashboard() {
       loadingComponent={
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">Verificando permissões...</p>
           </div>
         </div>
@@ -1224,7 +1224,7 @@ export default function StudentDashboard() {
             </p>
             <button
               onClick={() => window.location.href = '/login'}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
             >
               Fazer Login
             </button>

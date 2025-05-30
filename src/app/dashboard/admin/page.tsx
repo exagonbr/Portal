@@ -139,7 +139,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark"></div>
       </div>
     );
   }
@@ -227,7 +227,7 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-semibold">Instituições Recentes</h2>
             <button
               onClick={() => window.location.href = '/institution/manage'}
-              className="text-indigo-600 hover:text-indigo-700 text-sm"
+              className="text-primary-dark hover:text-primary text-sm"
             >
               Ver todas
             </button>
@@ -264,7 +264,7 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-semibold">Escolas Recentes</h2>
             <button
               onClick={() => window.location.href = '/institution/schools'}
-              className="text-indigo-600 hover:text-indigo-700 text-sm"
+              className="text-primary-dark hover:text-primary text-sm"
             >
               Ver todas
             </button>
@@ -384,10 +384,10 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, subtitle, trend, color }: StatCardProps) {
   const colorClasses = {
-    purple: 'bg-indigo-100 text-indigo-600',
-    blue: 'bg-sky-100 text-sky-600',
-    green: 'bg-emerald-100 text-emerald-600',
-    orange: 'bg-amber-100 text-amber-600'
+    purple: 'bg-primary-dark/10 text-primary-dark',
+    blue: 'bg-primary/10 text-primary',
+    green: 'bg-accent-green/10 text-accent-green',
+    orange: 'bg-accent-orange/10 text-accent-orange'
   };
 
   return (
@@ -397,7 +397,7 @@ function StatCard({ icon: Icon, title, value, subtitle, trend, color }: StatCard
           <Icon className="w-6 h-6" />
         </div>
         {trend && (
-          <span className="text-sm text-green-600 font-medium">
+          <span className="text-sm text-accent-green font-medium">
             {trend}
           </span>
         )}
@@ -428,8 +428,8 @@ function QuickActionCard({ title, description, icon: Icon, onClick }: QuickActio
       className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow text-left"
     >
       <div className="flex items-center mb-3">
-                <div className="p-2 bg-sky-100 rounded-lg mr-3">
-                  <Icon className="w-5 h-5 text-sky-600" />
+                <div className="p-2 bg-primary/10 rounded-lg mr-3">
+                  <Icon className="w-5 h-5 text-primary" />
                 </div>
                 <Plus className="w-4 h-4 text-slate-400" />
       </div>
@@ -448,9 +448,9 @@ interface EventItemProps {
 
 function EventItem({ date, title, type }: EventItemProps) {
   const typeColors = {
-    meeting: 'bg-sky-100 text-sky-800',
-    holiday: 'bg-emerald-100 text-emerald-800',
-    enrollment: 'bg-indigo-100 text-indigo-800'
+    meeting: 'bg-primary/10 text-primary-dark',
+    holiday: 'bg-accent-green/10 text-accent-green',
+    enrollment: 'bg-primary-dark/10 text-primary-dark'
   };
 
   return (

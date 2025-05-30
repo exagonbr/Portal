@@ -117,10 +117,10 @@ const MOCK_LESSONS: Lesson[] = [
 ]
 
 const STATUS_COLORS = {
-  available: { bg: 'bg-green-100', text: 'text-green-800', label: 'Disponível' },
-  in_progress: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Em Andamento' },
-  completed: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Concluída' },
-  locked: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Bloqueada' }
+  available: { bg: 'bg-accent-green/20', text: 'text-accent-green', label: 'Disponível' },
+  in_progress: { bg: 'bg-accent-blue/20', text: 'text-accent-blue', label: 'Em Andamento' },
+  completed: { bg: 'bg-accent-purple/20', text: 'text-accent-purple', label: 'Concluída' },
+  locked: { bg: 'bg-accent-yellow/20', text: 'text-accent-yellow', label: 'Bloqueada' }
 }
 
 export default function LessonsPage() {
@@ -140,7 +140,7 @@ export default function LessonsPage() {
               <span className="material-icons text-sm mr-2">filter_list</span>
               Filtrar
             </button>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
               <span className="material-icons text-sm mr-2">bookmark</span>
               Salvos
             </button>
@@ -153,7 +153,7 @@ export default function LessonsPage() {
             <div className="text-sm font-medium text-gray-500 mb-1">Aulas Concluídas</div>
             <div className="text-2xl font-bold text-gray-800">12/20</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">60%</span>
+              <span className="text-accent-green text-sm">60%</span>
               <span className="text-gray-500 text-sm ml-2">concluído</span>
             </div>
           </div>
@@ -161,7 +161,7 @@ export default function LessonsPage() {
             <div className="text-sm font-medium text-gray-500 mb-1">Tempo de Estudo</div>
             <div className="text-2xl font-bold text-gray-800">8h 30min</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 2h</span>
+              <span className="text-accent-green text-sm">↑ 2h</span>
               <span className="text-gray-500 text-sm ml-2">esta semana</span>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function LessonsPage() {
             <div className="text-sm font-medium text-gray-500 mb-1">Média nos Quizzes</div>
             <div className="text-2xl font-bold text-gray-800">85%</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 5%</span>
+              <span className="text-accent-green text-sm">↑ 5%</span>
               <span className="text-gray-500 text-sm ml-2">vs. média anterior</span>
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function LessonsPage() {
             <div className="text-sm font-medium text-gray-500 mb-1">Certificados</div>
             <div className="text-2xl font-bold text-gray-800">2</div>
             <div className="mt-4 flex items-center">
-              <span className="text-blue-500 text-sm">1 pendente</span>
+              <span className="text-accent-blue text-sm">1 pendente</span>
               <span className="text-gray-500 text-sm ml-2">para emissão</span>
             </div>
           </div>
@@ -190,21 +190,21 @@ export default function LessonsPage() {
           <input
             type="text"
             placeholder="Pesquisar aulas..."
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
           />
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
             <option value="">Todos os Cursos</option>
             <option value="math">Matemática Avançada</option>
             <option value="physics">Física Fundamental</option>
             <option value="chemistry">Química Orgânica</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
             <option value="">Todos os Módulos</option>
             <option value="1">Módulo 1</option>
             <option value="2">Módulo 2</option>
             <option value="3">Módulo 3</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
             <option value="">Ordenar por</option>
             <option value="recent">Mais Recentes</option>
             <option value="title">Título</option>
@@ -215,7 +215,7 @@ export default function LessonsPage() {
 
       {/* Status Filters */}
       <div className="flex space-x-2 mb-6">
-        <button className="px-4 py-2 text-sm rounded-lg bg-blue-100 text-blue-800">
+        <button className="px-4 py-2 text-sm rounded-lg bg-primary/10 text-primary font-medium">
           Todas (4)
         </button>
         <button className="px-4 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-100">
@@ -244,7 +244,7 @@ export default function LessonsPage() {
                     <div className="flex items-center mb-2">
                       <h3 className="text-lg font-semibold">{lesson.title}</h3>
                       {lesson.status === 'completed' && (
-                        <span className="material-icons text-green-500 ml-2">check_circle</span>
+                        <span className="material-icons text-accent-green ml-2">check_circle</span>
                       )}
                     </div>
                     <p className="text-gray-600 mb-4">{lesson.description}</p>
@@ -274,9 +274,9 @@ export default function LessonsPage() {
                     {lesson.status !== 'locked' && (
                       <button 
                         className={`px-6 py-2 rounded-lg ${
-                          lesson.status === 'completed' 
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                          lesson.status === 'completed'
+                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200'
+                            : 'bg-primary text-white hover:bg-primary-dark transition-colors duration-200'
                         }`}
                       >
                         {lesson.status === 'completed' ? 'Rever' : 'Continuar'}
@@ -314,7 +314,7 @@ export default function LessonsPage() {
                       <div className="flex items-center space-x-2">
                         <div className="w-32 bg-gray-200 rounded-full h-2">
                           <div 
-                            className="bg-blue-600 h-2 rounded-full" 
+                            className="bg-primary h-2 rounded-full"
                             style={{ width: `${lesson.progress}%` }}
                           ></div>
                         </div>

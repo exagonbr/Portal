@@ -253,9 +253,9 @@ export default function CoordinatorDashboard() {
 
   const getStatusColor = (status: EducationCycleOverview['status']) => {
     switch (status) {
-      case 'on-track': return 'text-green-600 bg-green-100';
-      case 'ahead': return 'text-blue-600 bg-blue-100';
-      case 'delayed': return 'text-yellow-600 bg-yellow-100';
+      case 'on-track': return 'text-accent-green bg-green-100';
+      case 'ahead': return 'text-primary bg-primary/10';
+      case 'delayed': return 'text-accent-yellow bg-yellow-100';
       case 'at-risk': return 'text-red-600 bg-red-100';
     }
   };
@@ -271,24 +271,24 @@ export default function CoordinatorDashboard() {
 
   const getCurriculumStatusColor = (status: CurriculumItem['status']) => {
     switch (status) {
-      case 'approved': return 'text-green-600 bg-green-100';
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'revision': return 'text-orange-600 bg-orange-100';
+      case 'approved': return 'text-accent-green bg-green-100';
+      case 'pending': return 'text-accent-yellow bg-yellow-100';
+      case 'revision': return 'text-accent-orange bg-orange-100';
     }
   };
 
   const getSeverityIcon = (severity: AcademicAlert['severity']) => {
     switch (severity) {
       case 'high': return <AlertCircle className="w-5 h-5 text-red-600" />;
-      case 'medium': return <AlertCircle className="w-5 h-5 text-yellow-600" />;
-      case 'low': return <AlertCircle className="w-5 h-5 text-blue-600" />;
+      case 'medium': return <AlertCircle className="w-5 h-5 text-accent-yellow" />;
+      case 'low': return <AlertCircle className="w-5 h-5 text-primary" />;
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -300,7 +300,7 @@ export default function CoordinatorDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <GraduationCap className="w-8 h-8 text-blue-600" />
+              <GraduationCap className="w-8 h-8 text-primary" />
               Coordenação Acadêmica
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -311,14 +311,14 @@ export default function CoordinatorDashboard() {
             <select
               value={selectedCycle}
               onChange={(e) => setSelectedCycle(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700"
             >
               <option value="all">Todos os Ciclos</option>
               <option value="fundamental1">Fundamental I</option>
               <option value="fundamental2">Fundamental II</option>
               <option value="medio">Ensino Médio</option>
             </select>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" />
               Relatório
             </button>
@@ -334,8 +334,8 @@ export default function CoordinatorDashboard() {
               key={alert.id}
               className={`p-4 rounded-lg border ${
                 alert.severity === 'high' ? 'bg-red-50 border-red-200' :
-                alert.severity === 'medium' ? 'bg-yellow-50 border-yellow-200' :
-                'bg-blue-50 border-blue-200'
+                alert.severity === 'medium' ? 'bg-accent-yellow/10 border-accent-yellow/20' :
+                'bg-primary/10 border-primary/20'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -344,7 +344,7 @@ export default function CoordinatorDashboard() {
                   <h3 className="font-semibold">{alert.title}</h3>
                   <p className="text-sm text-gray-600 mt-1">{alert.description}</p>
                 </div>
-                <button className="text-sm text-blue-600 hover:text-blue-800">
+                <button className="text-sm text-primary hover:text-primary-dark">
                   Tomar ação
                 </button>
               </div>
@@ -360,28 +360,28 @@ export default function CoordinatorDashboard() {
           title="Ciclos Ativos"
           value={`${stats.activeCycles}/${stats.totalCycles}`}
           subtitle="83% em andamento"
-          color="bg-blue-500"
+          color="bg-primary"
         />
         <StatCard
           icon={Users}
           title="Professores"
           value={stats.totalTeachers}
           subtitle={`${stats.totalStudents} alunos`}
-          color="bg-green-500"
+          color="bg-accent-green"
         />
         <StatCard
           icon={TrendingUp}
           title="Desempenho Médio"
           value={`${stats.averagePerformance}%`}
           subtitle="Meta: 80%"
-          color="bg-purple-500"
+          color="bg-accent-purple"
         />
         <StatCard
           icon={Target}
           title="Currículo"
           value={`${stats.curriculumCompletion}%`}
           subtitle="Completo"
-          color="bg-yellow-500"
+          color="bg-accent-yellow"
         />
       </div>
 
@@ -413,10 +413,10 @@ export default function CoordinatorDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-blue-500" />
+                <Calendar className="w-5 h-5 mr-2 text-primary" />
                 Ciclos Educacionais
               </h2>
-              <button className="text-sm text-blue-600 hover:text-blue-800">
+              <button className="text-sm text-primary hover:text-primary-dark">
                 Gerenciar ciclos
               </button>
             </div>
@@ -459,7 +459,7 @@ export default function CoordinatorDashboard() {
                   <div className="mt-3">
                     <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                       <div
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
                         style={{ width: `${cycle.completion}%` }}
                       />
                     </div>
@@ -473,10 +473,10 @@ export default function CoordinatorDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
-                <Briefcase className="w-5 h-5 mr-2 text-green-500" />
+                <Briefcase className="w-5 h-5 mr-2 text-accent-green" />
                 Desempenho Docente
               </h2>
-              <button className="text-sm text-blue-600 hover:text-blue-800">
+              <button className="text-sm text-primary hover:text-primary-dark">
                 Ver todos
               </button>
             </div>
@@ -504,8 +504,8 @@ export default function CoordinatorDashboard() {
                       <td className="py-3 text-sm">{teacher.classes}</td>
                       <td className="py-3">
                         <span className={`font-medium ${
-                          teacher.averageGrade >= 8 ? 'text-green-600' :
-                          teacher.averageGrade >= 6 ? 'text-yellow-600' : 'text-red-600'
+                          teacher.averageGrade >= 8 ? 'text-accent-green' :
+                          teacher.averageGrade >= 6 ? 'text-accent-yellow' : 'text-red-600'
                         }`}>
                           {teacher.averageGrade.toFixed(1)}
                         </span>
@@ -515,8 +515,8 @@ export default function CoordinatorDashboard() {
                           <div className="w-16 bg-gray-200 rounded-full h-2">
                             <div
                               className={`h-2 rounded-full ${
-                                teacher.satisfaction >= 90 ? 'bg-green-500' :
-                                teacher.satisfaction >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                                teacher.satisfaction >= 90 ? 'bg-accent-green' :
+                                teacher.satisfaction >= 70 ? 'bg-accent-yellow' : 'bg-red-500'
                               }`}
                               style={{ width: `${teacher.satisfaction}%` }}
                             />
@@ -525,7 +525,7 @@ export default function CoordinatorDashboard() {
                         </div>
                       </td>
                       <td className="py-3">
-                        <button className="text-blue-600 hover:text-blue-800 text-sm">
+                        <button className="text-primary hover:text-primary-dark text-sm">
                           Detalhes
                         </button>
                       </td>
@@ -543,19 +543,19 @@ export default function CoordinatorDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
             <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Novo Ciclo
               </button>
-              <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                 <BookOpen className="w-4 h-4" />
                 Atualizar Currículo
               </button>
-              <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                 <UserCheck className="w-4 h-4" />
                 Avaliar Professores
               </button>
-              <button className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-yellow text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2">
                 <FileText className="w-4 h-4" />
                 Relatórios
               </button>
@@ -565,7 +565,7 @@ export default function CoordinatorDashboard() {
           {/* Status do Currículo */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-purple-500" />
+              <BookOpen className="w-5 h-5 mr-2 text-accent-purple" />
               Status Curricular
             </h3>
             <div className="space-y-3">
@@ -590,7 +590,7 @@ export default function CoordinatorDashboard() {
                   </div>
                   <div className="mt-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1">
                     <div
-                      className="bg-purple-500 h-1 rounded-full"
+                      className="bg-accent-purple h-1 rounded-full"
                       style={{ width: `${item.completion}%` }}
                     />
                   </div>
@@ -602,7 +602,7 @@ export default function CoordinatorDashboard() {
           {/* Métricas de Qualidade */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Award className="w-5 h-5 mr-2 text-yellow-500" />
+              <Award className="w-5 h-5 mr-2 text-accent-yellow" />
               Indicadores de Qualidade
             </h3>
             <div className="space-y-4">
@@ -612,7 +612,7 @@ export default function CoordinatorDashboard() {
                   <span className="font-medium">87%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '87%' }} />
+                  <div className="bg-accent-green h-2 rounded-full" style={{ width: '87%' }} />
                 </div>
               </div>
               <div>
@@ -630,7 +630,7 @@ export default function CoordinatorDashboard() {
                   <span className="font-medium">72%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: '72%' }} />
+                  <div className="bg-primary h-2 rounded-full" style={{ width: '72%' }} />
                 </div>
               </div>
             </div>
@@ -677,8 +677,8 @@ interface QualityIndicatorProps {
 
 function QualityIndicator({ title, value, icon: Icon, description }: QualityIndicatorProps) {
   const getColor = () => {
-    if (value >= 85) return 'text-green-600';
-    if (value >= 70) return 'text-yellow-600';
+    if (value >= 85) return 'text-accent-green';
+    if (value >= 70) return 'text-accent-yellow';
     return 'text-red-600';
   };
 

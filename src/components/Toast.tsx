@@ -42,49 +42,54 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       {/* Toast Container */}
-      <div className="fixed bottom-0 right-0 p-4 z-50 space-y-4">
+      <div className="fixed bottom-0 right-0 p-4 z-[100000] space-y-4">
         {toasts.map(toast => (
           <div
             key={toast.id}
-            className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden ${
-              toast.type === 'success' ? 'border-l-4 border-green-500' :
-              toast.type === 'error' ? 'border-l-4 border-red-500' :
-              toast.type === 'warning' ? 'border-l-4 border-yellow-500' :
-              'border-l-4 border-blue-500'
+            className={`max-w-sm w-full bg-background-primary shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden border-l-4 ${
+              toast.type === 'success' ? 'border-success-DEFAULT' :
+              toast.type === 'error' ? 'border-error-DEFAULT' :
+              toast.type === 'warning' ? 'border-warning-DEFAULT' :
+              'border-info-DEFAULT' // Default to info border
             }`}
           >
             <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   {toast.type === 'success' && (
-                    <svg className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-6 w-6 text-success-DEFAULT" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
                   {toast.type === 'error' && (
-                    <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-6 w-6 text-error-DEFAULT" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
                   {toast.type === 'warning' && (
-                    <svg className="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-6 w-6 text-warning-DEFAULT" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   )}
                   {toast.type === 'info' && (
-                    <svg className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg className="h-6 w-6 text-info-DEFAULT" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
                 </div>
                 <div className="ml-3 w-0 flex-1 pt-0.5">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className={`text-sm font-medium ${
+                    toast.type === 'success' ? 'text-success-text' :
+                    toast.type === 'error' ? 'text-error-text' :
+                    toast.type === 'warning' ? 'text-warning-text' :
+                    'text-info-text' // Default to info text
+                  }`}>
                     {toast.message}
                   </p>
                 </div>
                 <div className="ml-4 flex-shrink-0 flex">
                   <button
-                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="bg-background-primary rounded-md inline-flex text-text-tertiary hover:text-text-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-DEFAULT"
                     onClick={() => removeToast(toast.id)}
                   >
                     <span className="sr-only">Fechar</span>

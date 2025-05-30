@@ -35,10 +35,10 @@ export default function GuardianAnnouncementsPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-error/10 text-error border-error/20'
-      case 'medium': return 'bg-warning/10 text-warning border-warning/20'
-      case 'low': return 'bg-accent-blue/10 text-accent-blue border-accent-blue/20'
-      default: return 'bg-background-tertiary text-text-secondary border-border'
+      case 'high': return 'bg-error/20 text-error border-error/20'
+      case 'medium': return 'bg-accent-yellow/20 text-accent-yellow border-accent-yellow/20'
+      case 'low': return 'bg-primary/20 text-primary border-primary/20'
+      default: return 'bg-gray-100 text-gray-600 border-gray-200'
     }
   }
 
@@ -54,9 +54,9 @@ export default function GuardianAnnouncementsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">Comunicados</h1>
+        <h1 className="text-2xl font-bold text-primary">Comunicados</h1>
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-text-secondary">
+          <span className="text-sm text-gray-600">
             {announcements.filter(a => !a.read).length} não lidos
           </span>
         </div>
@@ -66,24 +66,24 @@ export default function GuardianAnnouncementsPage() {
         {announcements.map((announcement) => (
           <div 
             key={announcement.id} 
-            className={`bg-background-primary rounded-lg border p-6 transition-all ${
-              !announcement.read ? 'border-accent-blue/20 bg-accent-blue/5' : 'border-border'
+            className={`bg-white rounded-lg border p-6 transition-all ${
+              !announcement.read ? 'border-primary/20 bg-primary/5' : 'border-gray-200'
             }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
-                  <h3 className={`text-lg font-semibold ${!announcement.read ? 'text-text-primary' : 'text-text-secondary'}`}>
+                  <h3 className={`text-lg font-semibold ${!announcement.read ? 'text-primary' : 'text-gray-600'}`}>
                     {announcement.title}
                   </h3>
                   {!announcement.read && (
-                    <div className="w-2 h-2 rounded-full bg-accent-blue"></div>
+                    <div className="w-2 h-2 rounded-full bg-primary"></div>
                   )}
                 </div>
                 
-                <p className="text-text-secondary mb-3">{announcement.content}</p>
+                <p className="text-gray-600 mb-3">{announcement.content}</p>
                 
-                <div className="flex items-center space-x-4 text-sm text-text-tertiary">
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <span>{announcement.author}</span>
                   <span>•</span>
                   <span>{new Date(announcement.date).toLocaleDateString('pt-BR')}</span>
@@ -94,7 +94,7 @@ export default function GuardianAnnouncementsPage() {
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(announcement.priority)}`}>
                   {getPriorityText(announcement.priority)}
                 </span>
-                <button className="text-text-secondary hover:text-text-primary">
+                <button className="text-gray-600 hover:text-primary transition-colors">
                   <span className="material-symbols-outlined">bookmark_border</span>
                 </button>
               </div>

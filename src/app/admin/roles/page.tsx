@@ -62,7 +62,7 @@ function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
                 placeholder="Ex: Coordenador Pedagógico"
                 required
               />
@@ -74,7 +74,7 @@ function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
                 placeholder="Descreva as responsabilidades desta função"
                 rows={3}
                 required
@@ -87,7 +87,7 @@ function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'system' | 'custom' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
               >
                 <option value="custom">Personalizada</option>
                 <option value="system">Sistema</option>
@@ -103,7 +103,7 @@ function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-blue transition-colors duration-200"
               >
                 Criar Função
               </button>
@@ -148,7 +148,7 @@ function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
                 required
               />
             </div>
@@ -159,7 +159,7 @@ function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
                 rows={3}
                 required
               />
@@ -171,7 +171,7 @@ function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
               <select
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'system' | 'custom' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
                 disabled={role.type === 'system'}
               >
                 <option value="custom">Personalizada</option>
@@ -191,7 +191,7 @@ function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-blue transition-colors duration-200"
               >
                 Salvar Alterações
               </button>
@@ -247,7 +247,7 @@ function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalPro
                         type="checkbox"
                         checked={selectedPermissions.includes(permission.id)}
                         onChange={() => handlePermissionToggle(permission.id)}
-                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mt-1 h-4 w-4 text-primary focus:ring-accent-blue border-gray-300 rounded"
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900">
@@ -272,7 +272,7 @@ function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalPro
             </button>
             <button
               onClick={handleSubmit}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-blue transition-colors duration-200"
             >
               Salvar Permissões
             </button>
@@ -354,7 +354,7 @@ export default function AdminRolesPage() {
         </div>
         <button 
           onClick={() => setNewRoleModalOpen(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
         >
           Nova Função
         </button>
@@ -366,21 +366,21 @@ export default function AdminRolesPage() {
           <div className="text-sm font-medium text-gray-500 mb-1">Total de Funções</div>
           <div className="text-2xl font-bold text-gray-800">{totalRoles}</div>
           <div className="mt-4 flex items-center">
-            <span className="text-blue-500 text-sm">Sistema</span>
+            <span className="text-primary text-sm">Sistema</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Funções Personalizadas</div>
           <div className="text-2xl font-bold text-gray-800">{customRoles}</div>
           <div className="mt-4 flex items-center">
-            <span className="text-purple-500 text-sm">Customizadas</span>
+            <span className="text-accent-purple text-sm">Customizadas</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Permissões</div>
           <div className="text-2xl font-bold text-gray-800">{totalPermissions}</div>
           <div className="mt-4 flex items-center">
-            <span className="text-green-500 text-sm">Ativas</span>
+            <span className="text-accent-green text-sm">Ativas</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -426,8 +426,8 @@ export default function AdminRolesPage() {
                 <tr key={role.id}>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8 rounded-md bg-blue-100 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-blue-600 text-sm">
+                      <div className="flex-shrink-0 h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-primary text-sm">
                           {role.type === 'system' ? 'admin_panel_settings' : 'person'}
                         </span>
                       </div>
@@ -439,9 +439,9 @@ export default function AdminRolesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      role.type === 'system' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-purple-100 text-purple-800'
+                      role.type === 'system'
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-accent-purple/20 text-accent-purple'
                     }`}>
                       {role.type === 'system' ? 'Sistema' : 'Personalizada'}
                     </span>
@@ -457,9 +457,9 @@ export default function AdminRolesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      role.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
+                      role.status === 'active'
+                        ? 'bg-accent-green/20 text-accent-green'
+                        : 'bg-error/20 text-error'
                     }`}>
                       {role.status === 'active' ? 'Ativo' : 'Inativo'}
                     </span>
@@ -467,20 +467,20 @@ export default function AdminRolesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button 
                       onClick={() => openEditModal(role)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      className="text-primary hover:text-primary-dark mr-3 transition-colors duration-200"
                     >
                       Editar
                     </button>
                     <button 
                       onClick={() => openPermissionsModal(role)}
-                      className="text-purple-600 hover:text-purple-900 mr-3"
+                      className="text-accent-purple hover:text-accent-purple/80 mr-3 transition-colors duration-200"
                     >
                       Permissões
                     </button>
                     {role.type === 'custom' && (
                       <button 
                         onClick={() => handleDeleteRole(role.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-error hover:text-error/80 transition-colors duration-200"
                       >
                         Excluir
                       </button>
@@ -534,7 +534,7 @@ export default function AdminRolesPage() {
                       <td key={action} className="px-6 py-4 text-center">
                         <input 
                           type="checkbox" 
-                          className="h-4 w-4 text-blue-600" 
+                          className="h-4 w-4 text-primary"
                           checked={!!hasPermission} 
                           readOnly 
                         />

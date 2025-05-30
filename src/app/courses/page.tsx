@@ -90,13 +90,13 @@ export default function CoursesPage() {
             <p className="text-gray-600">Gerencie seus cursos e acompanhe seu progresso</p>
           </div>
           <div className="flex space-x-4">
-            <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="">Todas as Categorias</option>
             <option value="exatas">Exatas</option>
             <option value="humanas">Humanas</option>
             <option value="ciencias">Ciências</option>
             </select>
-            <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="">Ordenar por</option>
             <option value="progress">Progresso</option>
             <option value="name">Nome</option>
@@ -111,7 +111,7 @@ export default function CoursesPage() {
             <div className="text-sm font-medium text-gray-500 mb-1">Cursos Ativos</div>
             <div className="text-2xl font-bold text-gray-800">6</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 2</span>
+              <span className="text-accent-green text-sm">↑ 2</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function CoursesPage() {
             <div className="text-sm font-medium text-gray-500 mb-1">Média de Progresso</div>
             <div className="text-2xl font-bold text-gray-800">52%</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 8%</span>
+              <span className="text-accent-green text-sm">↑ 8%</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function CoursesPage() {
             <div className="text-sm font-medium text-gray-500 mb-1">Horas Estudadas</div>
             <div className="text-2xl font-bold text-gray-800">145h</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 12h</span>
+              <span className="text-accent-green text-sm">↑ 12h</span>
               <span className="text-gray-500 text-sm ml-2">esta semana</span>
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function CoursesPage() {
             <div className="text-sm font-medium text-gray-500 mb-1">Certificados</div>
             <div className="text-2xl font-bold text-gray-800">3</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 1</span>
+              <span className="text-accent-green text-sm">↑ 1</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function CoursesPage() {
           <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="h-48 bg-gray-200 relative">
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                <span className="px-2 py-1 bg-primary text-white text-xs rounded-full">
                   {course.category}
                 </span>
               </div>
@@ -171,7 +171,7 @@ export default function CoursesPage() {
                   <span className="text-gray-600">{course.enrolled} alunos</span>
                 </div>
                 <div className="flex items-center text-sm">
-                  <span className="material-icons text-yellow-400 text-base mr-2">star</span>
+                  <span className="material-icons text-accent-yellow text-base mr-2">star</span>
                   <span className="text-gray-600">{course.rating}/5.0</span>
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function CoursesPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full" 
+                      className="bg-primary h-2 rounded-full"
                       style={{ width: `${course.progress}%` }}
                     ></div>
                   </div>
@@ -194,7 +194,7 @@ export default function CoursesPage() {
                   <button className="text-gray-600 hover:text-gray-800">
                     <span className="material-icons">bookmark_border</span>
                   </button>
-                  <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                  <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
                     Continuar
                   </button>
                 </div>
@@ -204,7 +204,7 @@ export default function CoursesPage() {
         ))}
 
         {/* Add New Course Card */}
-        <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center text-gray-500 hover:border-blue-500 hover:text-blue-500 cursor-pointer">
+        <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center text-gray-500 hover:border-primary hover:text-primary cursor-pointer transition-colors duration-200">
           <span className="material-icons text-4xl mb-2">add_circle_outline</span>
           <span className="text-sm font-medium">Adicionar Novo Curso</span>
         </div>

@@ -27,9 +27,9 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     }
 
     // Listen for the beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
+    const handleBeforeInstallPrompt = (e: Event) => { // Use standard Event type
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent); // Cast to specific type
       setIsInstallable(true);
     };
 
@@ -52,11 +52,11 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     try {
       await deferredPrompt.prompt();
       const choiceResult = await deferredPrompt.userChoice;
-      
+
       if (choiceResult.outcome === 'accepted') {
         console.log('PWA installed successfully');
       }
-      
+
       setDeferredPrompt(null);
       setIsInstallable(false);
     } catch (error) {
@@ -72,7 +72,7 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     <div className="fixed bottom-4 right-8 z-50">
       <button
         onClick={handleInstallClick}
-        className="flex items-center gap-2 px-4 py-3 bg-green-800 text-white rounded-lg shadow-lg hover:bg-orange transition-colors duration-200"
+        className="flex items-center gap-2 px-4 py-3 bg-primary-DEFAULT text-white rounded-lg shadow-lg hover:bg-primary-dark transition-colors duration-200"
         aria-label="Install PWA"
       >
         <FaDownload className="text-lg" />

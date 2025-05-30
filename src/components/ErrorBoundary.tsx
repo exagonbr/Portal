@@ -16,29 +16,29 @@ function ErrorDisplay({ error, resetError }: ErrorDisplayProps) {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-white px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
+    <div className="min-h-screen bg-background-primary px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
       <div className="max-w-max mx-auto">
         <main className="sm:flex">
-          <p className="text-4xl font-extrabold text-blue-600 sm:text-5xl">Ops!</p>
+          <p className="text-4xl font-extrabold text-primary-DEFAULT sm:text-5xl">Ops!</p>
           <div className="sm:ml-6">
-            <div className="sm:border-l sm:border-gray-200 sm:pl-6">
-              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
+            <div className="sm:border-l sm:border-border-DEFAULT sm:pl-6">
+              <h1 className="text-4xl font-extrabold text-text-primary tracking-tight sm:text-5xl">
                 Algo deu errado
               </h1>
-              <p className="mt-4 text-base text-gray-500">
+              <p className="mt-4 text-base text-text-secondary">
                 {error.message || 'Ocorreu um erro inesperado.'}
               </p>
             </div>
             <div className="mt-10 flex space-x-3 sm:border-l sm:border-transparent sm:pl-6">
               <button
                 onClick={() => router.push('/')}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-DEFAULT hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light"
               >
                 Voltar para Início
               </button>
               <button
                 onClick={resetError}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-dark bg-primary-light/30 hover:bg-primary-light/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-DEFAULT"
               >
                 Tentar Novamente
               </button>
@@ -70,21 +70,21 @@ export function ErrorBoundary({ children }: ErrorBoundaryProps) {
   return <>{children}</>
 }
 
-export function ErrorMessage({ 
-  message, 
+export function ErrorMessage({
+  message,
   action,
   actionText = 'Tentar Novamente'
-}: { 
+}: {
   message: string
   action?: () => void
   actionText?: string
 }) {
   return (
-    <div className="rounded-md bg-red-50 p-4">
+    <div className="rounded-md bg-error-light/20 p-4">
       <div className="flex">
         <div className="flex-shrink-0">
           <svg
-            className="h-5 w-5 text-red-400"
+            className="h-5 w-5 text-error-DEFAULT"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -98,8 +98,8 @@ export function ErrorMessage({
           </svg>
         </div>
         <div className="ml-3">
-          <h3 className="text-sm font-medium text-red-800">Erro</h3>
-          <div className="mt-2 text-sm text-red-700">
+          <h3 className="text-sm font-medium text-error-dark">Erro</h3>
+          <div className="mt-2 text-sm text-error-text">
             <p>{message}</p>
           </div>
           {action && (
@@ -108,7 +108,7 @@ export function ErrorMessage({
                 <button
                   type="button"
                   onClick={action}
-                  className="bg-red-50 px-2 py-1.5 rounded-md text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                  className="bg-error-light/30 px-2 py-1.5 rounded-md text-sm font-medium text-error-dark hover:bg-error-light/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-error-light focus:ring-error-DEFAULT"
                 >
                   {actionText}
                 </button>
@@ -130,21 +130,21 @@ export function NotFound({
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-white px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
+    <div className="min-h-screen bg-background-primary px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
       <div className="max-w-max mx-auto">
         <main className="sm:flex">
-          <p className="text-4xl font-extrabold text-blue-600 sm:text-5xl">404</p>
+          <p className="text-4xl font-extrabold text-primary-DEFAULT sm:text-5xl">404</p>
           <div className="sm:ml-6">
-            <div className="sm:border-l sm:border-gray-200 sm:pl-6">
-              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
+            <div className="sm:border-l sm:border-border-DEFAULT sm:pl-6">
+              <h1 className="text-4xl font-extrabold text-text-primary tracking-tight sm:text-5xl">
                 {title}
               </h1>
-              <p className="mt-1 text-base text-gray-500">{message}</p>
+              <p className="mt-1 text-base text-text-secondary">{message}</p>
             </div>
             <div className="mt-10 flex space-x-3 sm:border-l sm:border-transparent sm:pl-6">
               <button
                 onClick={() => router.push(actionHref)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-DEFAULT hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light"
               >
                 {actionText}
               </button>

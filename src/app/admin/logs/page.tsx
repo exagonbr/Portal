@@ -16,7 +16,7 @@ export default function AdminLogsPage() {
           <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
             Exportar Logs
           </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
             Limpar Logs
           </button>
         </div>
@@ -25,14 +25,14 @@ export default function AdminLogsPage() {
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
             <option value="all">Todos os Níveis</option>
             <option value="info">Info</option>
             <option value="warning">Warning</option>
             <option value="error">Error</option>
             <option value="critical">Critical</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
             <option value="all">Todas as Categorias</option>
             <option value="auth">Autenticação</option>
             <option value="system">Sistema</option>
@@ -41,14 +41,14 @@ export default function AdminLogsPage() {
           </select>
           <input
             type="date"
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
           />
           <input
             type="text"
             placeholder="Pesquisar logs..."
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
           />
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
             <option value="newest">Mais Recentes</option>
             <option value="oldest">Mais Antigos</option>
           </select>
@@ -61,23 +61,23 @@ export default function AdminLogsPage() {
           <div className="text-sm font-medium text-gray-500 mb-1">Total de Logs</div>
           <div className="text-2xl font-bold text-gray-800">12,458</div>
           <div className="mt-4 flex items-center">
-            <span className="text-green-500 text-sm">↑ 234</span>
+            <span className="text-accent-green text-sm">↑ 234</span>
             <span className="text-gray-500 text-sm ml-2">hoje</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Erros</div>
-          <div className="text-2xl font-bold text-red-600">23</div>
+          <div className="text-2xl font-bold text-error">23</div>
           <div className="mt-4 flex items-center">
-            <span className="text-red-500 text-sm">↑ 5</span>
+            <span className="text-error text-sm">↑ 5</span>
             <span className="text-gray-500 text-sm ml-2">hoje</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Warnings</div>
-          <div className="text-2xl font-bold text-yellow-600">45</div>
+          <div className="text-2xl font-bold text-accent-yellow">45</div>
           <div className="mt-4 flex items-center">
-            <span className="text-yellow-500 text-sm">↑ 12</span>
+            <span className="text-accent-yellow text-sm">↑ 12</span>
             <span className="text-gray-500 text-sm ml-2">hoje</span>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function AdminLogsPage() {
           <div className="text-sm font-medium text-gray-500 mb-1">Tamanho dos Logs</div>
           <div className="text-2xl font-bold text-gray-800">2.4GB</div>
           <div className="mt-4 flex items-center">
-            <span className="text-blue-500 text-sm">+156MB</span>
+            <span className="text-accent-blue text-sm">+156MB</span>
             <span className="text-gray-500 text-sm ml-2">hoje</span>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function AdminLogsPage() {
                   2024-01-15 14:23:45
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-error/20 text-error">
                     Error
                   </span>
                 </td>
@@ -143,8 +143,8 @@ export default function AdminLogsPage() {
                   anonymous
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900 mr-3">Detalhes</button>
-                  <button className="text-red-600 hover:text-red-900">Excluir</button>
+                  <button className="text-primary hover:text-primary-dark mr-3 transition-colors duration-200">Detalhes</button>
+                  <button className="text-error hover:text-error/80 transition-colors duration-200">Excluir</button>
                 </td>
               </tr>
               <tr>
@@ -152,7 +152,7 @@ export default function AdminLogsPage() {
                   2024-01-15 14:22:30
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent-green/20 text-accent-green">
                     Info
                   </span>
                 </td>
@@ -169,8 +169,8 @@ export default function AdminLogsPage() {
                   system
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900 mr-3">Detalhes</button>
-                  <button className="text-red-600 hover:text-red-900">Excluir</button>
+                  <button className="text-primary hover:text-primary-dark mr-3 transition-colors duration-200">Detalhes</button>
+                  <button className="text-error hover:text-error/80 transition-colors duration-200">Excluir</button>
                 </td>
               </tr>
             </tbody>

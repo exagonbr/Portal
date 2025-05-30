@@ -16,7 +16,7 @@ export default function AdminAnalyticsPage() {
           <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
             Exportar Dados
           </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
             Atualizar
           </button>
         </div>
@@ -25,7 +25,7 @@ export default function AdminAnalyticsPage() {
       {/* Time Period Selector */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
             <option value="realtime">Tempo Real</option>
             <option value="today">Hoje</option>
             <option value="week">Esta Semana</option>
@@ -35,14 +35,14 @@ export default function AdminAnalyticsPage() {
           <div className="col-span-2 grid grid-cols-2 gap-4">
             <input
               type="date"
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
             />
             <input
               type="date"
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
             />
           </div>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
             <option value="all">Todas Instituições</option>
             <option value="inst1">Instituição 1</option>
             <option value="inst2">Instituição 2</option>
@@ -56,7 +56,7 @@ export default function AdminAnalyticsPage() {
           <div className="text-sm font-medium text-gray-500 mb-1">Usuários Online</div>
           <div className="text-2xl font-bold text-gray-800">1,234</div>
           <div className="mt-4 flex items-center">
-            <span className="text-green-500 text-sm">↑ 12%</span>
+            <span className="text-accent-green text-sm">↑ 12%</span>
             <span className="text-gray-500 text-sm ml-2">vs. média</span>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function AdminAnalyticsPage() {
           <div className="text-sm font-medium text-gray-500 mb-1">Aulas em Andamento</div>
           <div className="text-2xl font-bold text-gray-800">45</div>
           <div className="mt-4 flex items-center">
-            <span className="text-blue-500 text-sm">= Estável</span>
+            <span className="text-accent-blue text-sm">= Estável</span>
             <span className="text-gray-500 text-sm ml-2">vs. média</span>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function AdminAnalyticsPage() {
           <div className="text-sm font-medium text-gray-500 mb-1">Carga do Sistema</div>
           <div className="text-2xl font-bold text-gray-800">68%</div>
           <div className="mt-4 flex items-center">
-            <span className="text-yellow-500 text-sm">↑ 5%</span>
+            <span className="text-accent-yellow text-sm">↑ 5%</span>
             <span className="text-gray-500 text-sm ml-2">vs. média</span>
           </div>
         </div>
@@ -80,7 +80,7 @@ export default function AdminAnalyticsPage() {
           <div className="text-sm font-medium text-gray-500 mb-1">Tempo de Resposta</div>
           <div className="text-2xl font-bold text-gray-800">245ms</div>
           <div className="mt-4 flex items-center">
-            <span className="text-green-500 text-sm">↓ 12ms</span>
+            <span className="text-accent-green text-sm">↓ 12ms</span>
             <span className="text-gray-500 text-sm ml-2">vs. média</span>
           </div>
         </div>
@@ -119,7 +119,7 @@ export default function AdminAnalyticsPage() {
                 <span className="text-gray-800">45%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '45%' }}></div>
+                <div className="bg-accent-green h-2 rounded-full" style={{ width: '45%' }}></div>
               </div>
             </div>
             <div>
@@ -128,7 +128,7 @@ export default function AdminAnalyticsPage() {
                 <span className="text-gray-800">68%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '68%' }}></div>
+                <div className="bg-accent-yellow h-2 rounded-full" style={{ width: '68%' }}></div>
               </div>
             </div>
             <div>
@@ -137,7 +137,7 @@ export default function AdminAnalyticsPage() {
                 <span className="text-gray-800">32%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '32%' }}></div>
+                <div className="bg-primary h-2 rounded-full" style={{ width: '32%' }}></div>
               </div>
             </div>
             <div>
@@ -146,7 +146,7 @@ export default function AdminAnalyticsPage() {
                 <span className="text-gray-800">85%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-red-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+                <div className="bg-error h-2 rounded-full" style={{ width: '85%' }}></div>
               </div>
             </div>
           </div>
@@ -156,22 +156,22 @@ export default function AdminAnalyticsPage() {
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Eventos do Sistema</h3>
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <span className="h-2 w-2 bg-green-500 rounded-full"></span>
+              <span className="h-2 w-2 bg-accent-green rounded-full"></span>
               <span className="text-sm text-gray-600">Sistema iniciado com sucesso</span>
               <span className="text-xs text-gray-500">2min atrás</span>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="h-2 w-2 bg-yellow-500 rounded-full"></span>
+              <span className="h-2 w-2 bg-accent-yellow rounded-full"></span>
               <span className="text-sm text-gray-600">Alto uso de memória detectado</span>
               <span className="text-xs text-gray-500">5min atrás</span>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="h-2 w-2 bg-red-500 rounded-full"></span>
+              <span className="h-2 w-2 bg-error rounded-full"></span>
               <span className="text-sm text-gray-600">Falha na sincronização de dados</span>
               <span className="text-xs text-gray-500">15min atrás</span>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="h-2 w-2 bg-blue-500 rounded-full"></span>
+              <span className="h-2 w-2 bg-primary rounded-full"></span>
               <span className="text-sm text-gray-600">Backup automático concluído</span>
               <span className="text-xs text-gray-500">1h atrás</span>
             </div>
@@ -232,7 +232,7 @@ export default function AdminAnalyticsPage() {
                   45min
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent-green/20 text-accent-green">
                     Ativo
                   </span>
                 </td>

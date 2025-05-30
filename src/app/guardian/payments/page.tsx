@@ -42,10 +42,10 @@ export default function GuardianPaymentsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid': return 'bg-success/10 text-success'
-      case 'pending': return 'bg-warning/10 text-warning'
-      case 'overdue': return 'bg-error/10 text-error'
-      default: return 'bg-accent-blue/10 text-accent-blue'
+      case 'paid': return 'bg-accent-green/20 text-accent-green'
+      case 'pending': return 'bg-accent-yellow/20 text-accent-yellow'
+      case 'overdue': return 'bg-error/20 text-error'
+      default: return 'bg-primary/20 text-primary'
     }
   }
 
@@ -68,47 +68,47 @@ export default function GuardianPaymentsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">Pagamentos</h1>
-        <button className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/90 transition-colors">
+        <h1 className="text-2xl font-bold text-primary">Pagamentos</h1>
+        <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
           Gerar Boleto
         </button>
       </div>
 
       {/* Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-background-primary rounded-lg border border-border p-4">
-          <h3 className="text-sm font-medium text-text-secondary">Total Pendente</h3>
-          <p className="text-2xl font-bold text-warning mt-1">
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="text-sm font-medium text-gray-600">Total Pendente</h3>
+          <p className="text-2xl font-bold text-accent-yellow mt-1">
             {formatCurrency(payments.filter(p => p.status === 'pending' || p.status === 'overdue').reduce((sum, p) => sum + p.amount, 0))}
           </p>
         </div>
-        <div className="bg-background-primary rounded-lg border border-border p-4">
-          <h3 className="text-sm font-medium text-text-secondary">Pago este Mês</h3>
-          <p className="text-2xl font-bold text-success mt-1">
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="text-sm font-medium text-gray-600">Pago este Mês</h3>
+          <p className="text-2xl font-bold text-accent-green mt-1">
             {formatCurrency(payments.filter(p => p.status === 'paid' && p.paidDate?.includes('2025-06')).reduce((sum, p) => sum + p.amount, 0))}
           </p>
         </div>
-        <div className="bg-background-primary rounded-lg border border-border p-4">
-          <h3 className="text-sm font-medium text-text-secondary">Próximo Vencimento</h3>
-          <p className="text-lg font-semibold text-text-primary mt-1">10/06/2025</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="text-sm font-medium text-gray-600">Próximo Vencimento</h3>
+          <p className="text-lg font-semibold text-primary mt-1">10/06/2025</p>
         </div>
       </div>
 
       {/* Lista de Pagamentos */}
-      <div className="bg-background-primary rounded-lg border border-border">
-        <div className="p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-text-primary">Histórico de Pagamentos</h2>
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-primary">Histórico de Pagamentos</h2>
         </div>
         
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-gray-200">
           {payments.map((payment) => (
-            <div key={payment.id} className="p-6 hover:bg-background-secondary transition-colors">
+            <div key={payment.id} className="p-6 hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-lg font-medium text-text-primary">{payment.description}</h3>
-                  <p className="text-sm text-text-secondary mt-1">Aluno: {payment.student}</p>
+                  <h3 className="text-lg font-medium text-primary">{payment.description}</h3>
+                  <p className="text-sm text-gray-600 mt-1">Aluno: {payment.student}</p>
                   
-                  <div className="flex items-center space-x-4 mt-2 text-sm text-text-secondary">
+                  <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <span className="material-symbols-outlined text-[16px]">calendar_month</span>
                       <span>Vencimento: {new Date(payment.dueDate).toLocaleDateString('pt-BR')}</span>
@@ -124,14 +124,14 @@ export default function GuardianPaymentsPage() {
                 
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <p className="text-xl font-bold text-text-primary">{formatCurrency(payment.amount)}</p>
+                    <p className="text-xl font-bold text-primary">{formatCurrency(payment.amount)}</p>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
                       {getStatusText(payment.status)}
                     </span>
                   </div>
                   
                   {payment.status === 'pending' && (
-                    <button className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/90 transition-colors">
+                    <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
                       Pagar
                     </button>
                   )}

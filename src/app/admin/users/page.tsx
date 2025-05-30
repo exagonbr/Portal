@@ -84,7 +84,7 @@ export default function UsersManagementPage() {
         <h1 className="text-2xl font-bold">Admin User Dashboard</h1>
         <button
           onClick={handleOpenModal} // Open modal instead of navigating
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors duration-200"
         >
           Add New User
         </button>
@@ -101,25 +101,25 @@ export default function UsersManagementPage() {
         {/* Stat Card: Total Users */}
         <div className="bg-white p-6 shadow-lg rounded-xl transform hover:scale-105 transition-transform duration-300 ease-in-out">
           <h3 className="text-md font-semibold text-gray-600">Total Users</h3>
-          <p className="text-3xl font-bold text-indigo-600 mt-2">{users.length}</p>
+          <p className="text-3xl font-bold text-primary mt-2">{users.length}</p>
         </div>
         
         {/* Stat Card: Administrators */}
         <div className="bg-white p-6 shadow-lg rounded-xl transform hover:scale-105 transition-transform duration-300 ease-in-out">
           <h3 className="text-md font-semibold text-gray-600">Administrators</h3>
-          <p className="text-3xl font-bold text-indigo-600 mt-2">{users.filter(u => u.role === 'admin').length}</p>
+          <p className="text-3xl font-bold text-primary mt-2">{users.filter(u => u.role === 'admin').length}</p>
         </div>
         
         {/* Stat Card: Managers */}
         <div className="bg-white p-6 shadow-lg rounded-xl transform hover:scale-105 transition-transform duration-300 ease-in-out">
           <h3 className="text-md font-semibold text-gray-600">Managers</h3>
-          <p className="text-3xl font-bold text-indigo-600 mt-2">{users.filter(u => u.role === 'manager').length}</p>
+          <p className="text-3xl font-bold text-primary mt-2">{users.filter(u => u.role === 'manager').length}</p>
         </div>
 
         {/* Stat Card: Other Users */}
         <div className="bg-white p-6 shadow-lg rounded-xl transform hover:scale-105 transition-transform duration-300 ease-in-out">
           <h3 className="text-md font-semibold text-gray-600">Other Users</h3>
-          <p className="text-3xl font-bold text-indigo-600 mt-2">{users.filter(u => !['admin', 'manager'].includes(u.role)).length}</p>
+          <p className="text-3xl font-bold text-primary mt-2">{users.filter(u => !['admin', 'manager'].includes(u.role)).length}</p>
         </div>
       </div>
 
@@ -153,14 +153,14 @@ export default function UsersManagementPage() {
                   <div className="text-sm text-gray-500">{user.email}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent-green/20 text-accent-green">
                     {user.role}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
                     onClick={() => handleDeleteUser(user.id)}
-                    className="text-red-600 hover:text-red-900 ml-4"
+                    className="text-error hover:text-error/80 ml-4 transition-colors duration-200"
                     disabled={user.role === 'admin' || user.role === 'manager'} // Prevent deleting admin and managers
                   >
                     Delete

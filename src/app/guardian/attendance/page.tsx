@@ -63,11 +63,11 @@ export default function GuardianAttendancePage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'present':
-        return 'text-green-600 bg-green-100'
+        return 'text-accent-green bg-accent-green/20'
       case 'absent':
-        return 'text-red-600 bg-red-100'
+        return 'text-error bg-error/20'
       case 'late':
-        return 'text-yellow-600 bg-yellow-100'
+        return 'text-accent-yellow bg-accent-yellow/20'
       default:
         return 'text-gray-600 bg-gray-100'
     }
@@ -92,20 +92,20 @@ export default function GuardianAttendancePage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Frequência Escolar</h1>
+            <h1 className="text-2xl font-bold text-primary">Frequência Escolar</h1>
             <p className="text-gray-600">Acompanhe a frequência dos seus filhos</p>
           </div>
           <div className="flex space-x-4">
             <select 
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="month">Mês Atual</option>
               <option value="semester">Semestre</option>
               <option value="year">Ano Letivo</option>
             </select>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+            <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors">
               <span className="material-symbols-outlined">download</span>
               <span>Relatório</span>
             </button>
@@ -120,15 +120,15 @@ export default function GuardianAttendancePage() {
               onClick={() => setSelectedChild(child)}
               className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all ${
                 selectedChild.childId === child.childId
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-primary bg-primary/10'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <div className="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600">person</span>
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary">person</span>
               </div>
               <div className="text-left">
-                <div className="font-medium text-gray-800">{child.childName}</div>
+                <div className="font-medium text-primary-dark">{child.childName}</div>
                 <div className="text-sm text-gray-600">{child.grade}</div>
               </div>
             </button>
@@ -139,12 +139,12 @@ export default function GuardianAttendancePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Frequência</div>
-            <div className="text-2xl font-bold text-gray-800">{selectedChild.currentMonth.attendanceRate}%</div>
+            <div className="text-2xl font-bold text-primary">{selectedChild.currentMonth.attendanceRate}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div 
                 className={`h-2 rounded-full ${
-                  selectedChild.currentMonth.attendanceRate >= 95 ? 'bg-green-500' :
-                  selectedChild.currentMonth.attendanceRate >= 85 ? 'bg-yellow-500' : 'bg-red-500'
+                  selectedChild.currentMonth.attendanceRate >= 95 ? 'bg-accent-green' :
+                  selectedChild.currentMonth.attendanceRate >= 85 ? 'bg-accent-yellow' : 'bg-error'
                 }`}
                 style={{ width: `${selectedChild.currentMonth.attendanceRate}%` }}
               ></div>
@@ -153,7 +153,7 @@ export default function GuardianAttendancePage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Dias Presentes</div>
-            <div className="text-2xl font-bold text-green-600">{selectedChild.currentMonth.presentDays}</div>
+            <div className="text-2xl font-bold text-accent-green">{selectedChild.currentMonth.presentDays}</div>
             <div className="text-sm text-gray-600 mt-1">
               de {selectedChild.currentMonth.totalDays} dias letivos
             </div>
@@ -161,7 +161,7 @@ export default function GuardianAttendancePage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Faltas</div>
-            <div className="text-2xl font-bold text-red-600">{selectedChild.currentMonth.absentDays}</div>
+            <div className="text-2xl font-bold text-error">{selectedChild.currentMonth.absentDays}</div>
             <div className="text-sm text-gray-600 mt-1">
               {selectedChild.currentMonth.absentDays === 0 ? 'Nenhuma falta' : 'faltas este mês'}
             </div>
@@ -169,7 +169,7 @@ export default function GuardianAttendancePage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Atrasos</div>
-            <div className="text-2xl font-bold text-yellow-600">{selectedChild.currentMonth.lateArrivals}</div>
+            <div className="text-2xl font-bold text-accent-yellow">{selectedChild.currentMonth.lateArrivals}</div>
             <div className="text-sm text-gray-600 mt-1">
               {selectedChild.currentMonth.lateArrivals === 0 ? 'Nenhum atraso' : 'atrasos este mês'}
             </div>
@@ -183,7 +183,7 @@ export default function GuardianAttendancePage() {
               onClick={() => setSelectedTab('current')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 selectedTab === 'current'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -193,7 +193,7 @@ export default function GuardianAttendancePage() {
               onClick={() => setSelectedTab('history')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 selectedTab === 'history'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -203,7 +203,7 @@ export default function GuardianAttendancePage() {
               onClick={() => setSelectedTab('records')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 selectedTab === 'records'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -218,10 +218,10 @@ export default function GuardianAttendancePage() {
         <div className="space-y-6">
           {/* Current Month Overview */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Resumo do Mês - {selectedChild.childName}</h3>
+            <h3 className="text-lg font-semibold text-primary mb-4">Resumo do Mês - {selectedChild.childName}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium text-gray-700 mb-3">Estatísticas</h4>
+                <h4 className="font-medium text-primary-dark mb-3">Estatísticas</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Total de dias letivos:</span>
@@ -229,31 +229,31 @@ export default function GuardianAttendancePage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Dias presentes:</span>
-                    <span className="font-semibold text-green-600">{selectedChild.currentMonth.presentDays}</span>
+                    <span className="font-semibold text-accent-green">{selectedChild.currentMonth.presentDays}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Faltas:</span>
-                    <span className="font-semibold text-red-600">{selectedChild.currentMonth.absentDays}</span>
+                    <span className="font-semibold text-error">{selectedChild.currentMonth.absentDays}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Atrasos:</span>
-                    <span className="font-semibold text-yellow-600">{selectedChild.currentMonth.lateArrivals}</span>
+                    <span className="font-semibold text-accent-yellow">{selectedChild.currentMonth.lateArrivals}</span>
                   </div>
                 </div>
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-700 mb-3">Status da Frequência</h4>
+                <h4 className="font-medium text-primary-dark mb-3">Status da Frequência</h4>
                 <div className="text-center">
                   <div className={`text-4xl font-bold mb-2 ${
-                    selectedChild.currentMonth.attendanceRate >= 95 ? 'text-green-600' :
-                    selectedChild.currentMonth.attendanceRate >= 85 ? 'text-yellow-600' : 'text-red-600'
+                    selectedChild.currentMonth.attendanceRate >= 95 ? 'text-accent-green' :
+                    selectedChild.currentMonth.attendanceRate >= 85 ? 'text-accent-yellow' : 'text-error'
                   }`}>
                     {selectedChild.currentMonth.attendanceRate}%
                   </div>
                   <div className={`px-4 py-2 rounded-full text-sm font-medium ${
-                    selectedChild.currentMonth.attendanceRate >= 95 ? 'bg-green-100 text-green-800' :
-                    selectedChild.currentMonth.attendanceRate >= 85 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                    selectedChild.currentMonth.attendanceRate >= 95 ? 'bg-accent-green/20 text-accent-green' :
+                    selectedChild.currentMonth.attendanceRate >= 85 ? 'bg-accent-yellow/20 text-accent-yellow' : 'bg-error/20 text-error'
                   }`}>
                     {selectedChild.currentMonth.attendanceRate >= 95 ? 'Excelente' :
                      selectedChild.currentMonth.attendanceRate >= 85 ? 'Boa' : 'Atenção Necessária'}
@@ -272,26 +272,26 @@ export default function GuardianAttendancePage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left py-3 px-6 font-medium text-gray-700">Mês</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-700">Presentes</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-700">Faltas</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-700">Atrasos</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-700">Taxa</th>
-                  <th className="text-left py-3 px-6 font-medium text-gray-700">Status</th>
+                  <th className="text-left py-3 px-6 font-medium text-primary">Mês</th>
+                  <th className="text-left py-3 px-6 font-medium text-primary">Presentes</th>
+                  <th className="text-left py-3 px-6 font-medium text-primary">Faltas</th>
+                  <th className="text-left py-3 px-6 font-medium text-primary">Atrasos</th>
+                  <th className="text-left py-3 px-6 font-medium text-primary">Taxa</th>
+                  <th className="text-left py-3 px-6 font-medium text-primary">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {selectedChild.monthlyHistory.map((month, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-4 px-6 font-medium text-gray-800">{month.month}</td>
-                    <td className="py-4 px-6 text-green-600">{month.present}</td>
-                    <td className="py-4 px-6 text-red-600">{month.absent}</td>
-                    <td className="py-4 px-6 text-yellow-600">{month.late}</td>
+                    <td className="py-4 px-6 font-medium text-primary-dark">{month.month}</td>
+                    <td className="py-4 px-6 text-accent-green">{month.present}</td>
+                    <td className="py-4 px-6 text-error">{month.absent}</td>
+                    <td className="py-4 px-6 text-accent-yellow">{month.late}</td>
                     <td className="py-4 px-6 font-medium">{month.rate}%</td>
                     <td className="py-4 px-6">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        month.rate >= 95 ? 'bg-green-100 text-green-800' :
-                        month.rate >= 85 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                        month.rate >= 95 ? 'bg-accent-green/20 text-accent-green' :
+                        month.rate >= 85 ? 'bg-accent-yellow/20 text-accent-yellow' : 'bg-error/20 text-error'
                       }`}>
                         {month.rate >= 95 ? 'Excelente' :
                          month.rate >= 85 ? 'Boa' : 'Atenção'}
@@ -313,19 +313,19 @@ export default function GuardianAttendancePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    record.status === 'present' ? 'bg-green-100' :
-                    record.status === 'absent' ? 'bg-red-100' : 'bg-yellow-100'
+                    record.status === 'present' ? 'bg-accent-green/20' :
+                    record.status === 'absent' ? 'bg-error/20' : 'bg-accent-yellow/20'
                   }`}>
                     <span className={`material-symbols-outlined text-sm ${
-                      record.status === 'present' ? 'text-green-600' :
-                      record.status === 'absent' ? 'text-red-600' : 'text-yellow-600'
+                      record.status === 'present' ? 'text-accent-green' :
+                      record.status === 'absent' ? 'text-error' : 'text-accent-yellow'
                     }`}>
                       {record.status === 'present' ? 'check' :
                        record.status === 'absent' ? 'close' : 'schedule'}
                     </span>
                   </div>
                   <div>
-                    <div className="font-medium text-gray-800">
+                    <div className="font-medium text-primary-dark">
                       {new Date(record.date).toLocaleDateString('pt-BR', { 
                         weekday: 'long', 
                         year: 'numeric', 
@@ -337,7 +337,7 @@ export default function GuardianAttendancePage() {
                       {record.time && `Horário: ${record.time}`}
                     </div>
                     {record.notes && (
-                      <div className="text-sm text-blue-600 mt-1">
+                      <div className="text-sm text-primary mt-1">
                         <strong>Observação:</strong> {record.notes}
                       </div>
                     )}

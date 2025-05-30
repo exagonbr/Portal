@@ -105,8 +105,8 @@ const MOCK_STUDENTS: Student[] = [
 ]
 
 const STATUS_COLORS = {
-  active: { bg: 'bg-green-100', text: 'text-green-800', label: 'Ativo' },
-  inactive: { bg: 'bg-red-100', text: 'text-red-800', label: 'Inativo' }
+  active: { bg: 'bg-accent-green/20', text: 'text-accent-green', label: 'Ativo' },
+  inactive: { bg: 'bg-error/20', text: 'text-error', label: 'Inativo' }
 }
 
 export default function TeacherStudentsPage() {
@@ -118,15 +118,15 @@ export default function TeacherStudentsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Meus Alunos</h1>
+            <h1 className="text-2xl font-bold text-primary">Meus Alunos</h1>
             <p className="text-gray-600">Gerencie e acompanhe o desempenho dos seus alunos</p>
           </div>
           <div className="flex space-x-4">
-            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200" aria-label="Exportar lista de alunos">
+            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Exportar lista de alunos">
               <span className="material-icons text-sm mr-2"></span>
               Exportar
             </button>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" aria-label="Adicionar novo aluno">
+            <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors" aria-label="Adicionar novo aluno">
               <span className="material-icons text-sm mr-2"></span>
               Adicionar Aluno
             </button>
@@ -137,33 +137,33 @@ export default function TeacherStudentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Alunos</div>
-            <div className="text-2xl font-bold text-gray-800">126</div>
+            <div className="text-2xl font-bold text-primary">126</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 12</span>
+              <span className="text-accent-green text-sm">↑ 12</span>
               <span className="text-gray-500 text-sm ml-2">este semestre</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Média de Notas</div>
-            <div className="text-2xl font-bold text-blue-600">8.2</div>
+            <div className="text-2xl font-bold text-primary">8.2</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 0.3</span>
+              <span className="text-accent-green text-sm">↑ 0.3</span>
               <span className="text-gray-500 text-sm ml-2">vs. semestre anterior</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Frequência Média</div>
-            <div className="text-2xl font-bold text-green-600">92%</div>
+            <div className="text-2xl font-bold text-accent-green">92%</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 2%</span>
+              <span className="text-accent-green text-sm">↑ 2%</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Alunos em Risco</div>
-            <div className="text-2xl font-bold text-red-600">8</div>
+            <div className="text-2xl font-bold text-error">8</div>
             <div className="mt-4 flex items-center">
-              <span className="text-red-500 text-sm">Requer atenção</span>
+              <span className="text-error text-sm">Requer atenção</span>
             </div>
           </div>
         </div>
@@ -176,19 +176,19 @@ export default function TeacherStudentsPage() {
             type="text"
             placeholder="Pesquisar alunos..."
             aria-label="Pesquisar alunos"
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por turma">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Filtrar por turma">
             <option value="">Todas as Turmas</option>
             <option value="A">Turma A</option>
             <option value="B">Turma B</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por status">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Filtrar por status">
             <option value="">Status</option>
             <option value="active">Ativos</option>
             <option value="inactive">Inativos</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Ordenar alunos">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Ordenar alunos">
             <option value="">Ordenar por</option>
             <option value="name">Nome</option>
             <option value="grade">Nota</option>
@@ -202,7 +202,7 @@ export default function TeacherStudentsPage() {
         {MOCK_STUDENTS.map((student) => (
           <div key={student.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             {/* Student Card Header */}
-            <div className="relative h-32 bg-gradient-to-r from-blue-500 to-blue-600">
+            <div className="relative h-32 bg-gradient-to-r from-primary to-primary-dark">
               <div className="absolute -bottom-10 left-6">
                 <img
                   src={student.avatar}
@@ -216,7 +216,7 @@ export default function TeacherStudentsPage() {
             <div className="pt-12 p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{student.name}</h3>
+                  <h3 className="text-lg font-semibold text-primary">{student.name}</h3>
                   <p className="text-sm text-gray-500">{student.email}</p>
                 </div>
                 <span className={`px-3 py-1 ${STATUS_COLORS[student.status].bg} ${STATUS_COLORS[student.status].text} rounded-full text-sm`}>
@@ -235,13 +235,13 @@ export default function TeacherStudentsPage() {
                 </div>
                 <div>
                   <p className="text-gray-500">Frequência</p>
-                  <p className={`font-medium ${student.attendance >= 75 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`font-medium ${student.attendance >= 75 ? 'text-accent-green' : 'text-error'}`}>
                     {student.attendance}%
                   </p>
                 </div>
                 <div>
                   <p className="text-gray-500">Nota Média</p>
-                  <p className={`font-medium ${student.grade >= 7 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`font-medium ${student.grade >= 7 ? 'text-accent-green' : 'text-error'}`}>
                     {student.grade.toFixed(1)}
                   </p>
                 </div>
@@ -256,10 +256,10 @@ export default function TeacherStudentsPage() {
 <span className="material-icons">mais_vert</span>
                 </button>
                 <div className="flex space-x-2">
-                  <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">
+                  <button className="px-3 py-1 text-sm text-primary hover:text-primary-dark transition-colors">
                     Ver Detalhes
                   </button>
-                  <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  <button className="px-3 py-1 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
                     Enviar Mensagem
                   </button>
                 </div>

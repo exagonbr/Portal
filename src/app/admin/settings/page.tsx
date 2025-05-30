@@ -16,7 +16,7 @@ export default function AdminSettingsPage() {
           <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
             Restaurar Padrões
           </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
             Salvar Alterações
           </button>
         </div>
@@ -36,7 +36,7 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   defaultValue="Portal Educacional"
                 />
               </div>
@@ -46,7 +46,7 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   defaultValue="https://portal.educacional.com"
                 />
               </div>
@@ -56,7 +56,7 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="email"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   defaultValue="suporte@portal.educacional.com"
                 />
               </div>
@@ -66,7 +66,7 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   defaultValue="/back_video1.mp4"
                 />
               </div>
@@ -83,15 +83,15 @@ export default function AdminSettingsPage() {
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center">
-                    <input type="checkbox" className="h-4 w-4 text-blue-600" defaultChecked />
+                    <input type="checkbox" className="h-4 w-4 text-primary" defaultChecked />
                     <span className="ml-2 text-sm text-gray-600">Mínimo 8 caracteres</span>
                   </div>
                   <div className="flex items-center">
-                    <input type="checkbox" className="h-4 w-4 text-blue-600" defaultChecked />
+                    <input type="checkbox" className="h-4 w-4 text-primary" defaultChecked />
                     <span className="ml-2 text-sm text-gray-600">Exigir caracteres especiais</span>
                   </div>
                   <div className="flex items-center">
-                    <input type="checkbox" className="h-4 w-4 text-blue-600" defaultChecked />
+                    <input type="checkbox" className="h-4 w-4 text-primary" defaultChecked />
                     <span className="ml-2 text-sm text-gray-600">Exigir números</span>
                   </div>
                 </div>
@@ -100,7 +100,7 @@ export default function AdminSettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Autenticação em Duas Etapas
                 </label>
-                <select className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
                   <option value="optional">Opcional</option>
                   <option value="required">Obrigatório</option>
                   <option value="disabled">Desativado</option>
@@ -112,7 +112,7 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="number"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   defaultValue="30"
                 />
               </div>
@@ -129,7 +129,7 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   placeholder="smtp.servidor.com"
                 />
               </div>
@@ -140,7 +140,7 @@ export default function AdminSettingsPage() {
                   </label>
                   <input
                     type="number"
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                     placeholder="587"
                   />
                 </div>
@@ -148,7 +148,7 @@ export default function AdminSettingsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Criptografia
                   </label>
-                  <select className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
                     <option value="tls">TLS</option>
                     <option value="ssl">SSL</option>
                     <option value="none">Nenhuma</option>
@@ -161,7 +161,7 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="email"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   placeholder="noreply@portal.educacional.com"
                 />
               </div>
@@ -185,7 +185,7 @@ export default function AdminSettingsPage() {
               </div>
               <div>
                 <span className="text-sm text-gray-600">Status</span>
-                <p className="text-sm font-medium text-green-600">Operacional</p>
+                <p className="text-sm font-medium text-accent-green">Operacional</p>
               </div>
             </div>
           </div>
@@ -200,7 +200,7 @@ export default function AdminSettingsPage() {
                   <span className="text-gray-800">75%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '75%' }}></div>
+                  <div className="bg-primary h-2 rounded-full" style={{ width: '75%' }}></div>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">750GB de 1TB usado</p>
               </div>
@@ -218,7 +218,7 @@ export default function AdminSettingsPage() {
                 <span className="text-sm text-gray-600">Status</span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-blue/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
               <div>
@@ -226,7 +226,7 @@ export default function AdminSettingsPage() {
                   Mensagem de Manutenção
                 </label>
                 <textarea
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   rows={3}
                   placeholder="Sistema em manutenção..."
                 ></textarea>

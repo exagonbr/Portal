@@ -64,15 +64,15 @@ const InstitutionCard: React.FC<{
   onEdit: (institution: InstitutionDisplayData) => void;
 }> = ({ institution, onEdit }) => {
   const statusColors = {
-    'Ativa': 'bg-green-100 text-green-800',
-    'Inativa': 'bg-red-100 text-red-800',
-    'Pendente': 'bg-yellow-100 text-yellow-800'
+    'Ativa': 'bg-accent-green/20 text-accent-green',
+    'Inativa': 'bg-error/20 text-error',
+    'Pendente': 'bg-accent-yellow/20 text-accent-yellow'
   };
 
   const typeColors = {
-    'Universidade': 'text-purple-600',
-    'Escola': 'text-blue-600',
-    'Centro de Treinamento': 'text-indigo-600',
+    'Universidade': 'text-accent-purple',
+    'Escola': 'text-primary',
+    'Centro de Treinamento': 'text-accent-blue',
     'Instituto': 'text-gray-600'
   };
 
@@ -119,7 +119,7 @@ const InstitutionCard: React.FC<{
           <div className="flex space-x-2">
             <button
               onClick={() => onEdit(institution)}
-              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
             >
               Gerenciar
             </button>
@@ -315,7 +315,7 @@ export default function AdminInstitutionsPage() {
             </button>
             <button
               onClick={handleOpenAddModal}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
             >
               Nova Instituição
             </button>
@@ -354,12 +354,12 @@ export default function AdminInstitutionsPage() {
               placeholder="Pesquisar instituições..."
               value={filters.searchTerm}
               onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue transition-all"
             />
             <select
               value={filters.type}
               onChange={(e) => handleFilterChange('type', e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue transition-all"
             >
               <option value="">Todos os Tipos</option>
               {INSTITUTION_TYPES.map(type => (
@@ -369,7 +369,7 @@ export default function AdminInstitutionsPage() {
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue transition-all"
             >
               <option value="">Todos os Status</option>
               {INSTITUTION_STATUSES.map(status => (
@@ -379,7 +379,7 @@ export default function AdminInstitutionsPage() {
             <select
               value={filters.sortBy}
               onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue transition-all"
             >
               <option value="name">Ordenar por Nome</option>
               <option value="students">Ordenar por Alunos</option>
@@ -415,7 +415,7 @@ export default function AdminInstitutionsPage() {
               <p className="text-gray-500 text-lg">Nenhuma instituição encontrada com os filtros aplicados.</p>
               <button
                 onClick={handleClearFilters}
-                className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+                className="mt-4 text-primary hover:text-primary-dark font-medium transition-colors duration-200"
               >
                 Limpar filtros
               </button>
@@ -519,7 +519,7 @@ export default function AdminInstitutionsPage() {
                           onClick={() => handlePageChange(page as number)}
                           className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-all ${
                             page === currentPage
-                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                              ? 'z-10 bg-primary/10 border-primary text-primary'
                               : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                           }`}
                           aria-current={page === currentPage ? 'page' : undefined}

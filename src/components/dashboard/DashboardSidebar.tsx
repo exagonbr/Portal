@@ -61,15 +61,15 @@ const getRoleLabel = (role: UserRole): string => {
 const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boolean }) => (
   <div className="px-3 py-2 border-b border-white/10 flex-shrink-0">
     <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-2'}`}>
-      <div className="w-8 h-8 rounded-full bg-accent-blue/20 flex items-center justify-center flex-shrink-0">
-        <span className={`material-symbols-outlined text-accent-blue ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}>
+      <div className="w-8 h-8 rounded-full bg-primary-light/30 flex items-center justify-center flex-shrink-0">
+        <span className={`material-symbols-outlined text-primary ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}>
           person
         </span>
       </div>
       {!isCollapsed && (
         <div className="overflow-hidden">
-          <p className="text-xs font-medium text-sidebar-text-active truncate">{user?.name}</p>
-            <span className="text-xs text-gray-500">
+          <p className="text-xs font-semibold text-sidebar-text-active truncate">{user?.name}</p>
+            <span className="text-xs text-gray-400">
             {user?.role && getRoleLabel(user.role)}
           </span>
         </div>
@@ -108,7 +108,7 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
     {/* Tooltip for collapsed state */}
     {isCollapsed && (
       <div
-        className="absolute left-full ml-2 px-3 py-2 bg-primary text-sidebar-text-active text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg"
+        className="absolute left-full ml-2 px-3 py-2 bg-primary-dark text-sidebar-text-active text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
         role="tooltip"
       >
         {item.label}
@@ -126,7 +126,7 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick }:
 }) => (
   <div className="mb-2">
     {!isCollapsed && (
-      <p className="px-2 py-1 text-[10px] font-semibold text-sidebar-text uppercase tracking-wider">
+      <p className="px-2 py-1 text-[10px] font-bold text-sidebar-text uppercase tracking-wider">
         {section}
       </p>
     )}
@@ -163,7 +163,7 @@ const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, on
     {/* Tooltip for collapsed state */}
     {isCollapsed && (
       <div
-        className="absolute left-full ml-2 px-3 py-2 bg-primary text-sidebar-text-active text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg"
+        className="absolute left-full ml-2 px-3 py-2 bg-primary-dark text-sidebar-text-active text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
         role="tooltip"
       >
         Sair da Plataforma
@@ -881,7 +881,7 @@ const navItems = getNavItems()
       {/* Mobile Menu Button */}
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-4 left-4 z-50 bg-sidebar-bg rounded-lg p-2 text-sidebar-text hover:bg-sidebar-hover transition-colors"
+        className="md:hidden fixed top-4 left-4 z-50 bg-sidebar-bg rounded-lg p-2 text-sidebar-text hover:bg-sidebar-hover transition-colors shadow-md"
         aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
         aria-expanded={isMobileOpen}
         aria-controls="sidebar-menu"
@@ -910,7 +910,7 @@ const navItems = getNavItems()
         aria-label="Menu principal"
       >
         {/* Sidebar Content */}
-        <aside className="bg-sidebar-bg text-sidebar-text h-full flex flex-col shadow-xl overflow-hidden">
+        <aside className="bg-sidebar-bg text-sidebar-text h-full flex flex-col shadow-xl overflow-hidden border-r border-primary-dark/20">
           {/* Logo */}
           <div className="p-3 border-b border-white/10 relative flex-shrink-0">
             {/* Desktop Toggle Button */}

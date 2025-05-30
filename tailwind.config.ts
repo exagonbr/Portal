@@ -9,49 +9,98 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Cores principais baseadas no Figma
-        primary: {
-          DEFAULT: '#1e293b', // Navy blue escuro da sidebar
-          dark: '#0f172a',
-          light: '#334155'
+        // Cores principais para ambiente educacional, empresarial, universitário e escolar.
+        // Paleta clara e profissional.
+        primary: { // Azul principal: amigável, profissional e moderno.
+          DEFAULT: '#4A90E2', // Azul médio (Tailwind blue-500ish)
+          dark: '#357ABD',    // Tom mais escuro para hover/active
+          light: '#7BB6F3'   // Tom mais claro para fundos ou destaques sutis
         },
-        secondary: {
-          DEFAULT: '#64748b',
-          dark: '#475569',
-          light: '#94a3b8'
+        secondary: { // Cinza neutro: para texto secundário, bordas e fundos.
+          DEFAULT: '#A0AEC0', // Cinza médio (Tailwind gray-400)
+          dark: '#718096',    // Cinza mais escuro (Tailwind gray-500)
+          light: '#E2E8F0'   // Cinza claro (Tailwind gray-300)
         },
-        accent: {
-          blue: '#3b82f6',
-          green: '#10b981',
-          orange: '#f59e0b',
-          purple: '#8b5cf6',
-          yellow: '#eab308'
+        accent: { // Cores de destaque para interações e informações visuais.
+          blue: {
+            DEFAULT: '#3B82F6', // Azul vibrante (Tailwind blue-500)
+            dark: '#2563EB',
+            light: '#60A5FA'
+          },
+          green: {
+            DEFAULT: '#10B981', // Verde positivo (Tailwind emerald-500)
+            dark: '#059669',
+            light: '#34D399'
+          },
+          orange: {
+            DEFAULT: '#F59E0B', // Laranja para alertas (Tailwind amber-500)
+            dark: '#D97706',
+            light: '#FBBF24'
+          },
+          purple: { // Roxo suave para elementos criativos ou informativos.
+            DEFAULT: '#8B5CF6', // (Tailwind violet-500)
+            dark: '#7C3AED',
+            light: '#A78BFA'
+          },
+          yellow: { // Amarelo quente para avisos leves ou destaques.
+            DEFAULT: '#FBBF24', // (Tailwind amber-400)
+            dark: '#F59E0B',
+            light: '#FCD34D'
+          }
         },
-        success: '#10b981',
-        warning: '#f59e0b',
-        error: '#ef4444',
-        info: '#3b82f6',
+        // Cores de status semânticas
+        success: {
+          DEFAULT: '#10B981', // Verde (accent.green.DEFAULT)
+          dark: '#059669',
+          light: '#34D399',
+          text: '#065F46' // Texto escuro para contraste em fundo claro de sucesso
+        },
+        warning: {
+          DEFAULT: '#F59E0B', // Laranja (accent.orange.DEFAULT)
+          dark: '#D97706',
+          light: '#FBBF24',
+          text: '#9A3412' // Texto escuro para contraste
+        },
+        error: {
+          DEFAULT: '#EF4444', // Vermelho (Tailwind red-500)
+          dark: '#DC2626',
+          light: '#F87171',
+          text: '#991B1B' // Texto escuro para contraste
+        },
+        info: {
+          DEFAULT: '#3B82F6', // Azul (accent.blue.DEFAULT)
+          dark: '#2563EB',
+          light: '#60A5FA',
+          text: '#1E40AF' // Texto escuro para contraste
+        },
+        // Fundos claros para manter a leveza.
         background: {
-          primary: '#ffffff',
-          secondary: '#f8fafc',
-          tertiary: '#f1f5f9'
+          primary: '#FFFFFF',    // Fundo principal branco
+          secondary: '#F7FAFC',  // Cinza muito claro (Tailwind gray-50)
+          tertiary: '#EDF2F7'   // Cinza suave (Tailwind gray-100)
         },
+        // Textos com bom contraste sobre fundos claros.
         text: {
-          primary: '#1e293b',
-          secondary: '#64748b',
-          tertiary: '#94a3b8'
+          primary: '#1A202C',   // Cinza bem escuro, quase preto (Tailwind gray-900)
+          secondary: '#2D3748', // Cinza escuro (Tailwind gray-800)
+          tertiary: '#4A5568',  // Cinza médio (Tailwind gray-700)
+          disabled: '#A0AEC0'  // Cinza para texto desabilitado (secondary.DEFAULT)
         },
+        // Bordas suaves e claras.
         border: {
-          DEFAULT: '#e2e8f0',
-          light: '#f1f5f9',
-          dark: '#cbd5e1'
+          DEFAULT: '#E2E8F0', // Cinza claro (Tailwind gray-300)
+          light: '#EDF2F7',   // Cinza muito claro (Tailwind gray-200)
+          dark: '#CBD5E0'    // Cinza médio-claro (Tailwind gray-400)
         },
+        // Sidebar com tema claro.
+
         sidebar: {
-          bg: '#1e293b',
-          hover: '#334155',
-          active: '#3b82f6',
-          text: '#e2e8f0',
-          textActive: '#ffffff'
+          bg: '#0C1E33',          // Fundo branco ou muito claro (background.primary)
+          hover: '#EDF2F7',       // Fundo de hover sutil (background.tertiary)
+          active: '#E0E7FF',      // Fundo ativo com tom azulado claro (Tailwind indigo-100)
+          text: '#2D3748',        // Texto escuro (text.secondary)
+          textActive: '#4338CA',  // Texto ativo com cor primária ou de destaque (Tailwind indigo-700)
+          border: '#E2E8F0'       // Borda do sidebar (border.DEFAULT)
         }
       },
       animation: {

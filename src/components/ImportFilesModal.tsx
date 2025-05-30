@@ -56,20 +56,20 @@ export default function ImportFilesModal({ isOpen, onClose, onImport }: ImportFi
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-4">Importar Livros</h2>
+    <div className="fixed inset-0 bg-text-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-background-primary rounded-lg p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-xl">
+        <h2 className="text-2xl font-bold mb-4 text-text-primary">Importar Livros</h2>
 
         <div
-          className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer ${
-            dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+          className={`border-2 border-dashed rounded-md p-6 text-center cursor-pointer transition-colors duration-200 ${
+            dragOver ? 'border-primary-DEFAULT bg-primary-light/20' : 'border-border-DEFAULT hover:border-primary-light'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => document.getElementById('fileInput')?.click()}
         >
-          <p className="text-gray-500">
+          <p className="text-text-secondary">
             Arraste e solte arquivos aqui ou clique para selecionar
           </p>
           <input
@@ -78,19 +78,20 @@ export default function ImportFilesModal({ isOpen, onClose, onImport }: ImportFi
             multiple
             className="hidden"
             onChange={handleFileChange}
+            accept=".epub,.pdf,.mobi" // Example: accept specific book formats
           />
         </div>
 
         {selectedFiles.length > 0 && (
           <div className="mt-4">
-            <h3 className="font-semibold mb-2">Arquivos Selecionados:</h3>
-            <ul className="max-h-40 overflow-y-auto border border-gray-200 rounded p-2">
+            <h3 className="font-semibold mb-2 text-text-primary">Arquivos Selecionados:</h3>
+            <ul className="max-h-40 overflow-y-auto border border-border-light rounded p-2 bg-background-secondary">
               {selectedFiles.map((file, index) => (
-                <li key={index} className="flex justify-between items-center py-1">
-                  <span className="truncate">{file.name}</span>
+                <li key={index} className="flex justify-between items-center py-1.5 px-2 hover:bg-background-tertiary rounded">
+                  <span className="truncate text-sm text-text-secondary">{file.name}</span>
                   <button
                     onClick={() => handleRemoveFile(index)}
-                    className="text-red-500 hover:text-red-700 ml-2"
+                    className="text-error-DEFAULT hover:text-error-dark ml-2 text-lg"
                     aria-label={`Remover ${file.name}`}
                   >
                     ×
@@ -104,17 +105,17 @@ export default function ImportFilesModal({ isOpen, onClose, onImport }: ImportFi
         <div className="flex justify-end space-x-4 mt-6">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            className="px-4 py-2 text-text-secondary hover:text-text-primary transition-colors rounded-md border border-border-DEFAULT hover:bg-background-tertiary"
           >
             Cancelar
           </button>
           <button
             onClick={handleImport}
             disabled={selectedFiles.length === 0}
-            className={`px-4 py-2 rounded text-white ${
+            className={`px-4 py-2 rounded text-white font-medium transition-colors ${
               selectedFiles.length === 0
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600'
+                ? 'bg-secondary-light text-text-disabled cursor-not-allowed'
+                : 'bg-primary-DEFAULT hover:bg-primary-dark'
             }`}
           >
             Importar

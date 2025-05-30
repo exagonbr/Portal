@@ -200,16 +200,16 @@ export default function SystemAdminDashboard() {
       case 'critical':
         return <AlertTriangle className="w-5 h-5 text-red-600" />;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+        return <AlertTriangle className="w-5 h-5 text-accent-yellow" />;
       case 'info':
-        return <CheckCircle className="w-5 h-5 text-blue-600" />;
+        return <CheckCircle className="w-5 h-5 text-primary" />;
     }
   };
 
   const getStatusColor = (status: InstitutionOverview['status']) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-accent-green/10 text-accent-green';
       case 'inactive':
         return 'bg-gray-100 text-gray-800';
       case 'suspended':
@@ -218,15 +218,15 @@ export default function SystemAdminDashboard() {
   };
 
   const getHealthColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 70) return 'text-yellow-600';
+    if (score >= 90) return 'text-accent-green';
+    if (score >= 70) return 'text-accent-yellow';
     return 'text-red-600';
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -238,7 +238,7 @@ export default function SystemAdminDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <Shield className="w-8 h-8 text-red-600" />
+              <Shield className="w-8 h-8 text-primary" />
               Painel do Administrador do Sistema
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -247,7 +247,7 @@ export default function SystemAdminDashboard() {
           </div>
           <button 
             onClick={loadSystemMetrics}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
             Atualizar
@@ -263,8 +263,8 @@ export default function SystemAdminDashboard() {
               key={alert.id}
               className={`p-4 rounded-lg border ${
                 alert.type === 'critical' ? 'bg-red-50 border-red-200' :
-                alert.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
-                'bg-blue-50 border-blue-200'
+                alert.type === 'warning' ? 'bg-accent-yellow/10 border-accent-yellow/20' :
+                'bg-primary/10 border-primary/20'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -292,14 +292,14 @@ export default function SystemAdminDashboard() {
           title="Uptime do Sistema"
           value={`${stats.systemUptime}%`}
           subtitle="Últimos 30 dias"
-          color="bg-green-500"
+          color="bg-accent-green"
         />
         <MetricCard
           icon={Cpu}
           title="Uso de CPU"
           value={`${stats.cpuUsage.toFixed(1)}%`}
           subtitle="Média dos servidores"
-          color="bg-blue-500"
+          color="bg-primary"
           isRealtime
         />
         <MetricCard
@@ -307,7 +307,7 @@ export default function SystemAdminDashboard() {
           title="Memória"
           value={`${stats.memoryUsage.toFixed(1)}%`}
           subtitle="16GB / 32GB"
-          color="bg-purple-500"
+          color="bg-accent-purple"
           isRealtime
         />
         <MetricCard
@@ -315,7 +315,7 @@ export default function SystemAdminDashboard() {
           title="Armazenamento"
           value={`${stats.storageUsage}%`}
           subtitle="380GB / 1TB"
-          color="bg-yellow-500"
+          color="bg-accent-yellow"
         />
       </div>
 
@@ -326,28 +326,28 @@ export default function SystemAdminDashboard() {
           title="Instituições"
           value={stats.totalInstitutions}
           subtitle={`${stats.activeInstitutions} ativas`}
-          color="bg-indigo-500"
+          color="bg-primary-dark"
         />
         <StatCard
           icon={School}
           title="Escolas"
           value={stats.totalSchools}
           subtitle="Total cadastradas"
-          color="bg-blue-500"
+          color="bg-primary"
         />
         <StatCard
           icon={Users}
           title="Usuários"
           value={stats.totalUsers.toLocaleString('pt-BR')}
           subtitle={`${stats.activeUsers.toLocaleString('pt-BR')} ativos`}
-          color="bg-green-500"
+          color="bg-accent-green"
         />
         <StatCard
           icon={Globe}
           title="Conexões"
           value={stats.activeConnections.toLocaleString('pt-BR')}
           subtitle="Usuários online"
-          color="bg-purple-500"
+          color="bg-accent-purple"
           isRealtime
         />
         <StatCard
@@ -355,7 +355,7 @@ export default function SystemAdminDashboard() {
           title="Requisições"
           value={`${(stats.requestsPerMinute / 1000).toFixed(1)}k`}
           subtitle="Por minuto"
-          color="bg-yellow-500"
+          color="bg-accent-yellow"
           isRealtime
         />
         <StatCard
@@ -372,7 +372,7 @@ export default function SystemAdminDashboard() {
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Building2 className="w-5 h-5 mr-2 text-indigo-500" />
+              <Building2 className="w-5 h-5 mr-2 text-primary-dark" />
               Instituições Cadastradas
             </h2>
             <div className="space-y-3">
@@ -408,7 +408,7 @@ export default function SystemAdminDashboard() {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-4 text-center text-sm text-blue-600 hover:text-blue-800">
+            <button className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark">
               Ver todas as instituições
             </button>
           </div>
@@ -436,15 +436,15 @@ export default function SystemAdminDashboard() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações do Sistema</h3>
             <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
                 <Building2 className="w-4 h-4" />
                 Nova Instituição
               </button>
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
                 <Users className="w-4 h-4" />
                 Gerenciar Usuários
               </button>
-              <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                 <Lock className="w-4 h-4" />
                 Políticas de Segurança
               </button>
@@ -480,7 +480,7 @@ export default function SystemAdminDashboard() {
                 </p>
               </div>
             </div>
-            <button className="w-full mt-4 text-center text-sm text-blue-600 hover:text-blue-800">
+            <button className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark">
               Ver todos os logs
             </button>
           </div>
@@ -521,7 +521,7 @@ function MetricCard({ icon: Icon, title, value, subtitle, color, isRealtime }: M
         </div>
         {isRealtime && (
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-accent-green rounded-full animate-pulse"></div>
             <span className="text-xs text-gray-500">Tempo real</span>
           </div>
         )}
@@ -553,7 +553,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color, isRealtime }: Sta
           <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
         </div>
         {isRealtime && (
-          <Activity className="w-3 h-3 text-green-500 animate-pulse" />
+          <Activity className="w-3 h-3 text-accent-green animate-pulse" />
         )}
       </div>
       <p className="text-xl font-bold text-gray-900 dark:text-white">
@@ -574,8 +574,8 @@ interface ServiceStatusProps {
 function ServiceStatus({ name, status }: ServiceStatusProps) {
   const getStatusColor = () => {
     switch (status) {
-      case 'online': return 'bg-green-500';
-      case 'degraded': return 'bg-yellow-500';
+      case 'online': return 'bg-accent-green';
+      case 'degraded': return 'bg-accent-yellow';
       case 'offline': return 'bg-red-500';
     }
   };

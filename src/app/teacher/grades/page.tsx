@@ -98,10 +98,10 @@ const MOCK_GRADES: Grade[] = [
 ]
 
 const STATUS_COLORS = {
-  graded: { bg: 'bg-green-100', text: 'text-green-800', label: 'Corrigido' },
-  pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pendente' },
-  late: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Atrasado' },
-  missing: { bg: 'bg-red-100', text: 'text-red-800', label: 'Não Entregue' }
+  graded: { bg: 'bg-accent-green/20', text: 'text-accent-green', label: 'Corrigido' },
+  pending: { bg: 'bg-accent-yellow/20', text: 'text-accent-yellow', label: 'Pendente' },
+  late: { bg: 'bg-accent-orange/20', text: 'text-accent-orange', label: 'Atrasado' },
+  missing: { bg: 'bg-error/20', text: 'text-error', label: 'Não Entregue' }
 }
 
 const ACTIVITY_TYPE_ICONS = {
@@ -120,15 +120,15 @@ export default function TeacherGradesPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Notas e Avaliações</h1>
+            <h1 className="text-2xl font-bold text-primary">Notas e Avaliações</h1>
             <p className="text-gray-600">Gerencie as notas e avaliações dos seus alunos</p>
           </div>
           <div className="flex space-x-4">
-            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
+            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
               <span className="material-icons text-sm mr-2">file_download</span>
               Exportar
             </button>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
               <span className="material-icons text-sm mr-2">add</span>
               Nova Avaliação
             </button>
@@ -139,33 +139,33 @@ export default function TeacherGradesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Média Geral</div>
-            <div className="text-2xl font-bold text-gray-800">8.2</div>
+            <div className="text-2xl font-bold text-primary">8.2</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 0.3</span>
+              <span className="text-accent-green text-sm">↑ 0.3</span>
               <span className="text-gray-500 text-sm ml-2">vs. último período</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Avaliações</div>
-            <div className="text-2xl font-bold text-blue-600">24</div>
+            <div className="text-2xl font-bold text-primary">24</div>
             <div className="mt-4 flex items-center">
-              <span className="text-blue-500 text-sm">15 corrigidas</span>
+              <span className="text-primary text-sm">15 corrigidas</span>
               <span className="text-gray-500 text-sm ml-2">9 pendentes</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Aprovação</div>
-            <div className="text-2xl font-bold text-green-600">85%</div>
+            <div className="text-2xl font-bold text-accent-green">85%</div>
             <div className="mt-4 flex items-center">
-              <span className="text-green-500 text-sm">↑ 5%</span>
+              <span className="text-accent-green text-sm">↑ 5%</span>
               <span className="text-gray-500 text-sm ml-2">este semestre</span>
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Alunos em Recuperação</div>
-            <div className="text-2xl font-bold text-red-600">12</div>
+            <div className="text-2xl font-bold text-error">12</div>
             <div className="mt-4 flex items-center">
-              <span className="text-red-500 text-sm">9.5%</span>
+              <span className="text-error text-sm">9.5%</span>
               <span className="text-gray-500 text-sm ml-2">da turma</span>
             </div>
           </div>
@@ -179,21 +179,21 @@ export default function TeacherGradesPage() {
             type="text"
             placeholder="Pesquisar avaliações..."
             aria-label="Pesquisar avaliações"
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por turma">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Filtrar por turma">
             <option value="">Todas as Turmas</option>
             <option value="A">Turma A</option>
             <option value="B">Turma B</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por tipo de avaliação">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Filtrar por tipo de avaliação">
             <option value="">Tipo de Avaliação</option>
             <option value="exam">Provas</option>
             <option value="quiz">Quizzes</option>
             <option value="assignment">Trabalhos</option>
             <option value="project">Projetos</option>
           </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Filtrar por status">
+          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Filtrar por status">
             <option value="">Status</option>
             <option value="graded">Corrigidas</option>
             <option value="pending">Pendentes</option>
@@ -207,7 +207,7 @@ export default function TeacherGradesPage() {
         {MOCK_GRADES.map((grade) => (
           <div key={grade.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             {/* Activity Image Header */}
-            <div className="relative h-48 bg-gradient-to-r from-blue-500 to-blue-600">
+            <div className="relative h-48 bg-gradient-to-r from-primary to-primary-dark">
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="material-icons text-white text-6xl">
                   {ACTIVITY_TYPE_ICONS[grade.activity.type]}
@@ -232,7 +232,7 @@ export default function TeacherGradesPage() {
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{grade.activity.title}</h3>
+                  <h3 className="text-lg font-semibold text-primary">{grade.activity.title}</h3>
                   <p className="text-sm text-gray-500">Peso: {(grade.activity.weight * 100)}%</p>
                 </div>
                 <span className={`px-3 py-1 ${STATUS_COLORS[grade.status].bg} ${STATUS_COLORS[grade.status].text} rounded-full text-sm`}>
@@ -252,9 +252,9 @@ export default function TeacherGradesPage() {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full ${
-                          (grade.score / grade.activity.maxScore) >= 0.7 
-                            ? 'bg-green-600' 
-                            : 'bg-red-600'
+                          (grade.score / grade.activity.maxScore) >= 0.7
+                            ? 'bg-accent-green'
+                            : 'bg-error'
                         }`}
                         style={{ width: `${(grade.score / grade.activity.maxScore) * 100}%` }}
                       ></div>
@@ -286,11 +286,11 @@ export default function TeacherGradesPage() {
 <span className="material-icons">mais_vert</span>
                 </button>
                 <div className="flex space-x-2">
-                  <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700">
+                  <button className="px-3 py-1 text-sm text-primary hover:text-primary-dark transition-colors">
                     Ver Detalhes
                   </button>
                   {grade.status === 'pending' && (
-                    <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <button className="px-3 py-1 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
                       Corrigir
                     </button>
                   )}

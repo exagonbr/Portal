@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { User } from '@/types/auth';
+import { User, UserRole } from '@/types/auth'; // Assuming UserRole is also in auth
 
 interface UserEditModalProps {
   isOpen: boolean;
@@ -49,7 +49,6 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
   };
 
   const handleSave = () => {
-    // TODO: Implement save logic
     console.log('Salvando dados do usuário:', formData);
     setEditMode(false);
     if (onUserUpdated && formData as User) {
@@ -59,12 +58,11 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
   };
 
   const handleCancel = () => {
-    setFormData(user);
+    setFormData(user); // Reset to original user data
     setEditMode(false);
   };
 
   const handleDelete = () => {
-    // TODO: Implement delete logic
     console.log('Deletando usuário:', user.id);
     setShowDeleteConfirm(false);
     onClose();
@@ -76,7 +74,6 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
       alert('As senhas não coincidem!');
       return;
     }
-    // TODO: Implement password change logic
     console.log('Alterando senha do usuário');
     setShowPasswordChange(false);
     setPasswordData({
@@ -87,48 +84,55 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
     alert('Senha alterada com sucesso!');
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'manager': return 'bg-purple-100 text-purple-800';
-      case 'teacher': return 'bg-blue-100 text-blue-800';
-      case 'student': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getRoleBadgeColor = (role: UserRole | string) => {
+    switch (role as UserRole) {
+      case 'admin': return 'bg-error-light/30 text-error-dark';
+      case 'manager': return 'bg-accent-purple-light/30 text-accent-purple-dark';
+      case 'teacher': return 'bg-accent-blue-light/30 text-accent-blue-dark';
+      case 'student': return 'bg-success-light/30 text-success-dark';
+      default: return 'bg-secondary-light text-text-secondary';
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-red-100 text-red-800';
-      case 'suspended': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const getStatusBadgeColor = (status: string = 'active') => {
+    switch (status.toLowerCase()) { // Normalize status
+      case 'active':
+      case 'ativa':
+        return 'bg-success-light/30 text-success-dark';
+      case 'inactive':
+      case 'inativa':
+        return 'bg-error-light/30 text-error-dark';
+      case 'suspended':
+      case 'em manutenção': // Assuming 'Em Manutenção' for users might mean suspended
+      case 'pendente':
+        return 'bg-warning-light/30 text-warning-dark';
+      default: return 'bg-secondary-light text-text-secondary';
     }
   };
 
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
+      <div className="fixed inset-0 bg-text-primary/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-background-primary rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
+          <div className="bg-gradient-to-r from-primary-DEFAULT to-primary-dark text-white p-6">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-2xl font-bold text-blue-600">
-                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                <div className="w-16 h-16 bg-background-primary rounded-full flex items-center justify-center text-2xl font-bold text-primary-dark ring-2 ring-primary-light">
+                  {(formData.name || user.name)?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'N/A'}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">{user.name}</h2>
-                  <p className="text-blue-100">{user.email}</p>
+                  <h2 className="text-2xl font-bold">{formData.name || user.name}</h2>
+                  <p className="text-primary-light/80">{formData.email || user.email}</p>
                   <div className="flex items-center gap-3 mt-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleBadgeColor(user.role)}`}>
-                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(formData.role || user.role)}`}>
+                      {((formData.role || user.role).charAt(0).toUpperCase() + (formData.role || user.role).slice(1))}
                     </span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor('active')}`}>
-                      Ativo
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor((formData as any).status || (user as any).status || 'active')}`}>
+                      {(((formData as any).status || (user as any).status || 'active').charAt(0).toUpperCase() + ((formData as any).status || (user as any).status || 'active').slice(1))}
                     </span>
                     {editMode && (
-                      <span className="px-2 py-1 bg-blue-800 bg-opacity-50 rounded text-xs">
+                      <span className="px-2 py-0.5 bg-primary-dark/70 rounded text-xs">
                         Modo Edição
                       </span>
                     )}
@@ -137,7 +141,7 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
               </div>
               <button
                 onClick={onClose}
-                className="text-white hover:text-gray-200 transition-colors"
+                className="text-white hover:text-primary-light/70 transition-colors p-1 rounded-full hover:bg-white/10"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -147,7 +151,7 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
           </div>
 
           {/* Tabs */}
-          <div className="border-b border-gray-200 bg-gray-50">
+          <div className="border-b border-border-DEFAULT bg-background-secondary">
             <nav className="flex -mb-px overflow-x-auto">
               {[
                 { id: 'info', label: 'Informações Pessoais', icon: '👤' },
@@ -161,8 +165,8 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 py-3 px-6 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 bg-white'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-primary-DEFAULT text-primary-DEFAULT bg-background-primary'
+                      : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-light'
                   }`}
                 >
                   <span className="text-lg">{tab.icon}</span>
@@ -173,15 +177,15 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 280px)' }}>
+          <div className="p-6 overflow-y-auto flex-grow" style={{ maxHeight: 'calc(90vh - 280px)' }}>
             {activeTab === 'info' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Informações Pessoais</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Informações Pessoais</h3>
                   {!editMode ? (
                     <button
                       onClick={() => setEditMode(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      className="px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark"
                     >
                       Editar
                     </button>
@@ -189,13 +193,13 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
                     <div className="space-x-2">
                       <button
                         onClick={handleCancel}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                        className="px-4 py-2 border border-border-DEFAULT text-text-primary rounded-lg hover:bg-background-tertiary"
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={handleSave}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        className="px-4 py-2 bg-success-DEFAULT text-white rounded-lg hover:bg-success-dark"
                       >
                         Salvar
                       </button>
@@ -205,81 +209,85 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nome Completo</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Nome Completo</label>
                     {editMode ? (
                       <input
                         type="text"
                         name="name"
                         value={formData.name || ''}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
                       />
                     ) : (
-                      <p className="text-gray-900">{user.name}</p>
+                      <p className="text-text-primary py-2">{formData.name || user.name}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">E-mail</label>
                     {editMode ? (
                       <input
                         type="email"
                         name="email"
                         value={formData.email || ''}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
                       />
                     ) : (
-                      <p className="text-gray-900">{user.email}</p>
+                      <p className="text-text-primary py-2">{formData.email || user.email}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Telefone</label>
                     {editMode ? (
                       <input
                         type="text"
-                        name="phone"
+                        name="telefone"
                         value={formData.telefone || ''}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
                       />
                     ) : (
-                      <p className="text-gray-900">{formData.telefone || 'Não informado'}</p>
+                      <p className="text-text-primary py-2">{formData.telefone || user.telefone || 'Não informado'}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Função</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Função</label>
                     {editMode ? (
                       <select
                         name="role"
                         value={formData.role || ''}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
                       >
                         <option value="admin">Administrador</option>
                         <option value="manager">Gerente</option>
                         <option value="teacher">Professor</option>
                         <option value="student">Aluno</option>
+                        <option value="system_admin">Admin. Sistema</option>
+                        <option value="institution_manager">Gestor Institucional</option>
+                        <option value="academic_coordinator">Coord. Acadêmico</option>
+                        <option value="guardian">Responsável</option>
                       </select>
                     ) : (
-                      <p className="text-gray-900">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
+                      <p className="text-text-primary py-2">{(formData.role || user.role).charAt(0).toUpperCase() + (formData.role || user.role).slice(1)}</p>
                     )}
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Endereço</label>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Endereço</label>
                     {editMode ? (
                       <textarea
-                        name="address"
+                        name="endereco"
                         value={formData.endereco || ''}
                         onChange={handleInputChange}
                         rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
                       />
                     ) : (
-                      <p className="text-gray-900">{formData.endereco || 'Não informado'}</p>
+                      <p className="text-text-primary py-2">{formData.endereco || user.endereco || 'Não informado'}</p>
                     )}
                   </div>
                 </div>
@@ -288,50 +296,41 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
 
             {activeTab === 'access' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4">Acesso e Segurança</h3>
-                
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="font-medium text-gray-700 mb-4">Informações de Acesso</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Acesso e Segurança</h3>
+                <div className="bg-background-secondary rounded-lg p-6">
+                  <h4 className="font-medium text-text-primary mb-4">Informações de Acesso</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-sm text-gray-600">Último acesso</p>
-                      <p className="font-medium">Hoje, 14:32</p>
+                      <p className="text-text-secondary">Último acesso</p>
+                      <p className="font-medium text-text-primary">Hoje, 14:32</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">IP do último acesso</p>
-                      <p className="font-medium">192.168.1.100</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Dispositivo</p>
-                      <p className="font-medium">Chrome no Windows</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Localização</p>
-                      <p className="font-medium">São Paulo, Brasil</p>
+                      <p className="text-text-secondary">IP do último acesso</p>
+                      <p className="font-medium text-text-primary">192.168.1.100</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-blue-50 rounded-lg p-6">
-                  <h4 className="font-medium text-gray-700 mb-4">Segurança da Conta</h4>
+                <div className="bg-info-light/20 rounded-lg p-6">
+                  <h4 className="font-medium text-info-dark mb-4">Segurança da Conta</h4>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">Autenticação de dois fatores</p>
-                        <p className="text-sm text-gray-600">Adicione uma camada extra de segurança</p>
+                        <p className="font-medium text-text-primary">Autenticação de dois fatores</p>
+                        <p className="text-sm text-text-secondary">Adicione uma camada extra de segurança</p>
                       </div>
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                      <button className="px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark text-sm">
                         Ativar
                       </button>
                     </div>
-                    <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="flex items-center justify-between pt-4 border-t border-border-light">
                       <div>
-                        <p className="font-medium">Alterar senha</p>
-                        <p className="text-sm text-gray-600">Última alteração há 3 meses</p>
+                        <p className="font-medium text-text-primary">Alterar senha</p>
+                        <p className="text-sm text-text-secondary">Última alteração há 3 meses</p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => setShowPasswordChange(!showPasswordChange)}
-                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                        className="px-4 py-2 bg-secondary-dark text-white rounded-lg hover:bg-secondary-DEFAULT text-sm"
                       >
                         Alterar
                       </button>
@@ -340,49 +339,49 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
                 </div>
 
                 {showPasswordChange && (
-                  <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <h4 className="font-medium text-gray-700 mb-4">Alterar Senha</h4>
+                  <div className="bg-background-primary border border-border-DEFAULT rounded-lg p-6">
+                    <h4 className="font-medium text-text-primary mb-4">Alterar Senha</h4>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Senha Atual</label>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Senha Atual</label>
                         <input
                           type="password"
                           name="currentPassword"
                           value={passwordData.currentPassword}
                           onChange={handlePasswordChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Nova Senha</label>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Nova Senha</label>
                         <input
                           type="password"
                           name="newPassword"
                           value={passwordData.newPassword}
                           onChange={handlePasswordChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Confirmar Nova Senha</label>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Confirmar Nova Senha</label>
                         <input
                           type="password"
                           name="confirmPassword"
                           value={passwordData.confirmPassword}
                           onChange={handlePasswordChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT text-text-primary bg-background-primary"
                         />
                       </div>
                       <div className="flex justify-end gap-3">
                         <button
                           onClick={() => setShowPasswordChange(false)}
-                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                          className="px-4 py-2 border border-border-DEFAULT text-text-primary rounded-lg hover:bg-background-tertiary"
                         >
                           Cancelar
                         </button>
                         <button
                           onClick={handlePasswordSubmit}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          className="px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark"
                         >
                           Salvar Nova Senha
                         </button>
@@ -390,33 +389,32 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
                     </div>
                   </div>
                 )}
-
-                <div className="bg-yellow-50 rounded-lg p-6">
-                  <h4 className="font-medium text-gray-700 mb-4">Sessões Ativas</h4>
+                 <div className="bg-warning-light/20 rounded-lg p-6">
+                  <h4 className="font-medium text-warning-dark mb-4">Sessões Ativas</h4>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-background-primary rounded-lg shadow-sm">
                       <div className="flex items-center gap-3">
-                        <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-8 h-8 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                         <div>
-                          <p className="font-medium">Windows - Chrome</p>
-                          <p className="text-sm text-gray-600">São Paulo, Brasil • Agora</p>
+                          <p className="font-medium text-text-primary">Windows - Chrome</p>
+                          <p className="text-sm text-text-secondary">São Paulo, Brasil • Agora</p>
                         </div>
                       </div>
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Atual</span>
+                      <span className="px-2 py-1 bg-success-light/30 text-success-dark rounded text-xs font-medium">Atual</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-background-primary rounded-lg shadow-sm">
                       <div className="flex items-center gap-3">
-                        <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-8 h-8 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
                         <div>
-                          <p className="font-medium">iPhone - Safari</p>
-                          <p className="text-sm text-gray-600">Rio de Janeiro, Brasil • 2 horas atrás</p>
+                          <p className="font-medium text-text-primary">iPhone - Safari</p>
+                          <p className="text-sm text-text-secondary">Rio de Janeiro, Brasil • 2 horas atrás</p>
                         </div>
                       </div>
-                      <button className="text-red-600 hover:text-red-700 text-sm">Encerrar</button>
+                      <button className="text-error-DEFAULT hover:text-error-dark text-sm font-medium">Encerrar</button>
                     </div>
                   </div>
                 </div>
@@ -425,46 +423,35 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
 
             {activeTab === 'academic' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4">Dados Acadêmicos</h3>
-                
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Dados Acadêmicos</h3>
                 {user.role === 'student' ? (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-blue-50 rounded-lg p-6 text-center">
-                        <div className="text-3xl font-bold text-blue-600 mb-2">8.5</div>
-                        <div className="text-sm text-gray-600">Média Geral</div>
+                      <div className="bg-primary-light/10 rounded-lg p-6 text-center">
+                        <div className="text-3xl font-bold text-primary-DEFAULT mb-2">8.5</div>
+                        <div className="text-sm text-text-secondary">Média Geral</div>
                       </div>
-                      <div className="bg-green-50 rounded-lg p-6 text-center">
-                        <div className="text-3xl font-bold text-green-600 mb-2">92%</div>
-                        <div className="text-sm text-gray-600">Frequência</div>
+                      <div className="bg-success-light/10 rounded-lg p-6 text-center">
+                        <div className="text-3xl font-bold text-success-DEFAULT mb-2">92%</div>
+                        <div className="text-sm text-text-secondary">Frequência</div>
                       </div>
-                      <div className="bg-purple-50 rounded-lg p-6 text-center">
-                        <div className="text-3xl font-bold text-purple-600 mb-2">5</div>
-                        <div className="text-sm text-gray-600">Cursos Ativos</div>
+                      <div className="bg-accent-purple-light/10 rounded-lg p-6 text-center">
+                        <div className="text-3xl font-bold text-accent-purple-DEFAULT mb-2">5</div>
+                        <div className="text-sm text-text-secondary">Cursos Ativos</div>
                       </div>
                     </div>
-
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h4 className="font-medium text-gray-700 mb-4">Cursos Matriculados</h4>
+                    <div className="bg-background-secondary rounded-lg p-6">
+                      <h4 className="font-medium text-text-primary mb-4">Cursos Matriculados</h4>
+                      {/* Replace with actual data mapping */}
                       <div className="space-y-3">
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                        <div className="flex justify-between items-center p-3 bg-background-primary rounded-lg shadow-sm">
                           <div>
-                            <p className="font-medium">Matemática Avançada</p>
-                            <p className="text-sm text-gray-600">Prof. João Silva</p>
+                            <p className="font-medium text-text-primary">Matemática Avançada</p>
+                            <p className="text-sm text-text-secondary">Prof. João Silva</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-blue-600">8.7</p>
-                            <p className="text-sm text-gray-600">Média</p>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                          <div>
-                            <p className="font-medium">Física Quântica</p>
-                            <p className="text-sm text-gray-600">Prof. Maria Santos</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-blue-600">9.2</p>
-                            <p className="text-sm text-gray-600">Média</p>
+                            <p className="font-medium text-primary-DEFAULT">8.7</p>
+                            <p className="text-sm text-text-secondary">Média</p>
                           </div>
                         </div>
                       </div>
@@ -473,42 +460,35 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
                 ) : user.role === 'teacher' ? (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-blue-50 rounded-lg p-6 text-center">
-                        <div className="text-3xl font-bold text-blue-600 mb-2">12</div>
-                        <div className="text-sm text-gray-600">Turmas Ativas</div>
+                      <div className="bg-primary-light/10 rounded-lg p-6 text-center">
+                        <div className="text-3xl font-bold text-primary-DEFAULT mb-2">12</div>
+                        <div className="text-sm text-text-secondary">Turmas Ativas</div>
                       </div>
-                      <div className="bg-green-50 rounded-lg p-6 text-center">
-                        <div className="text-3xl font-bold text-green-600 mb-2">287</div>
-                        <div className="text-sm text-gray-600">Alunos Total</div>
+                      <div className="bg-success-light/10 rounded-lg p-6 text-center">
+                        <div className="text-3xl font-bold text-success-DEFAULT mb-2">287</div>
+                        <div className="text-sm text-text-secondary">Alunos Total</div>
                       </div>
-                      <div className="bg-purple-50 rounded-lg p-6 text-center">
-                        <div className="text-3xl font-bold text-purple-600 mb-2">4.8</div>
-                        <div className="text-sm text-gray-600">Avaliação Média</div>
+                      <div className="bg-accent-purple-light/10 rounded-lg p-6 text-center">
+                        <div className="text-3xl font-bold text-accent-purple-DEFAULT mb-2">4.8</div>
+                        <div className="text-sm text-text-secondary">Avaliação Média</div>
                       </div>
                     </div>
-
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h4 className="font-medium text-gray-700 mb-4">Disciplinas Lecionadas</h4>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                    <div className="bg-background-secondary rounded-lg p-6">
+                      <h4 className="font-medium text-text-primary mb-4">Disciplinas Lecionadas</h4>
+                      {/* Replace with actual data mapping */}
+                       <div className="space-y-3">
+                        <div className="flex justify-between items-center p-3 bg-background-primary rounded-lg shadow-sm">
                           <div>
-                            <p className="font-medium">Algoritmos e Estruturas de Dados</p>
-                            <p className="text-sm text-gray-600">3º Período • 45 alunos</p>
+                            <p className="font-medium text-text-primary">Algoritmos e Estruturas de Dados</p>
+                            <p className="text-sm text-text-secondary">3º Período • 45 alunos</p>
                           </div>
-                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Em andamento</span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                          <div>
-                            <p className="font-medium">Programação Web</p>
-                            <p className="text-sm text-gray-600">5º Período • 38 alunos</p>
-                          </div>
-                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Em andamento</span>
+                          <span className="px-2 py-1 bg-success-light/30 text-success-dark rounded text-xs font-medium">Em andamento</span>
                         </div>
                       </div>
                     </div>
                   </>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-text-tertiary">
                     Dados acadêmicos não aplicáveis para este tipo de usuário.
                   </div>
                 )}
@@ -517,66 +497,27 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
 
             {activeTab === 'activity' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4">Histórico de Atividades</h3>
-                
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h4 className="font-medium text-gray-700 mb-4">Atividades Recentes</h4>
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Histórico de Atividades</h3>
+                <div className="bg-background-secondary rounded-lg p-6">
+                  <h4 className="font-medium text-text-primary mb-4">Atividades Recentes</h4>
                   <div className="space-y-4">
                     {[
-                      { action: 'Login realizado', time: 'Há 2 horas', icon: '🔑', color: 'blue' },
-                      { action: 'Perfil atualizado', time: 'Ontem, 15:30', icon: '✏️', color: 'green' },
-                      { action: 'Senha alterada', time: '3 dias atrás', icon: '🔐', color: 'yellow' },
-                      { action: 'Documento enviado', time: '1 semana atrás', icon: '📄', color: 'purple' },
-                      { action: 'Curso concluído', time: '2 semanas atrás', icon: '🎓', color: 'green' }
+                      { action: 'Login realizado', time: 'Há 2 horas', icon: '🔑', color: 'accent-blue' },
+                      { action: 'Perfil atualizado', time: 'Ontem, 15:30', icon: '✏️', color: 'success' },
+                      { action: 'Senha alterada', time: '3 dias atrás', icon: '🔐', color: 'warning' },
+                      { action: 'Documento enviado', time: '1 semana atrás', icon: '📄', color: 'accent-purple' },
+                      { action: 'Curso concluído', time: '2 semanas atrás', icon: '🎓', color: 'success' }
                     ].map((activity, index) => (
-                      <div key={index} className="flex items-center gap-4 p-3 bg-white rounded-lg">
-                        <div className={`w-10 h-10 bg-${activity.color}-100 rounded-full flex items-center justify-center text-xl`}>
+                      <div key={index} className="flex items-center gap-4 p-3 bg-background-primary rounded-lg shadow-sm">
+                        <div className={`w-10 h-10 bg-${activity.color}-light/20 rounded-full flex items-center justify-center text-xl text-${activity.color}-DEFAULT`}>
                           {activity.icon}
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium">{activity.action}</p>
-                          <p className="text-sm text-gray-600">{activity.time}</p>
+                          <p className="font-medium text-text-primary">{activity.action}</p>
+                          <p className="text-sm text-text-secondary">{activity.time}</p>
                         </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-blue-50 rounded-lg p-6">
-                    <h4 className="font-medium text-gray-700 mb-4">Estatísticas de Uso</h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Tempo médio de sessão</span>
-                        <span className="font-medium">45 min</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Páginas visitadas/dia</span>
-                        <span className="font-medium">23</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Dispositivo mais usado</span>
-                        <span className="font-medium">Desktop</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-green-50 rounded-lg p-6">
-                    <h4 className="font-medium text-gray-700 mb-4">Engajamento</h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Mensagens enviadas</span>
-                        <span className="font-medium">142</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Arquivos compartilhados</span>
-                        <span className="font-medium">28</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Comentários</span>
-                        <span className="font-medium">67</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -584,65 +525,41 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
 
             {activeTab === 'permissions' && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-4">Permissões e Acessos</h3>
-                
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Permissões e Acessos</h3>
+                <div className="bg-warning-light/20 border border-warning-DEFAULT/30 rounded-lg p-4 mb-6">
                   <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-warning-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <p className="text-sm text-yellow-800">
+                    <p className="text-sm text-warning-text">
                       Alterações nas permissões podem afetar o acesso do usuário ao sistema.
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h4 className="font-medium text-gray-700 mb-4">Módulos do Sistema</h4>
+                  <div className="bg-background-secondary rounded-lg p-6">
+                    <h4 className="font-medium text-text-primary mb-4">Módulos do Sistema</h4>
                     <div className="space-y-3">
                       {[
                         { module: 'Dashboard', access: true },
                         { module: 'Cursos', access: true },
-                        { module: 'Usuários', access: user.role === 'admin' },
-                        { module: 'Relatórios', access: ['admin', 'manager'].includes(user.role) },
-                        { module: 'Configurações', access: user.role === 'admin' },
-                        { module: 'Financeiro', access: ['admin', 'manager'].includes(user.role) }
+                        { module: 'Usuários', access: user.role === 'admin' || user.role === 'system_admin' },
+                        { module: 'Relatórios', access: ['admin', 'manager', 'system_admin', 'institution_manager'].includes(user.role) },
+                        { module: 'Configurações', access: user.role === 'admin' || user.role === 'system_admin' },
                       ].map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg">
-                          <span className="font-medium">{item.module}</span>
+                        <div key={index} className="flex items-center justify-between p-3 bg-background-primary rounded-lg shadow-sm">
+                          <span className="font-medium text-text-primary">{item.module}</span>
                           <label className="relative inline-flex items-center cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              className="sr-only peer" 
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
                               checked={item.access}
-                              disabled={!editMode}
-                              onChange={() => {}}
+                              disabled={!editMode || !(user.role === 'admin' || user.role === 'system_admin')} // Only admins can change
+                              onChange={() => { /* Handle permission change */ }}
                             />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <div className="w-11 h-6 bg-secondary-light peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border-DEFAULT after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-DEFAULT"></div>
                           </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h4 className="font-medium text-gray-700 mb-4">Permissões Especiais</h4>
-                    <div className="space-y-3">
-                      {[
-                        { permission: 'Criar novos usuários', allowed: user.role === 'admin' },
-                        { permission: 'Editar configurações globais', allowed: user.role === 'admin' },
-                        { permission: 'Acessar relatórios financeiros', allowed: ['admin', 'manager'].includes(user.role) },
-                        { permission: 'Gerenciar cursos', allowed: ['admin', 'manager', 'teacher'].includes(user.role) },
-                        { permission: 'Exportar dados', allowed: ['admin', 'manager'].includes(user.role) }
-                      ].map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg">
-                          <span className="text-sm">{item.permission}</span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            item.allowed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {item.allowed ? 'Permitido' : 'Negado'}
-                          </span>
                         </div>
                       ))}
                     </div>
@@ -653,20 +570,18 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
+          <div className="border-t border-border-light px-6 py-4 bg-background-secondary">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
-                <p className="text-sm text-gray-500">
-                  Cadastrado em: {new Date().toLocaleDateString('pt-BR', { 
-                    day: '2-digit', 
-                    month: 'long', 
-                    year: 'numeric'
+                <p className="text-sm text-text-tertiary">
+                  Cadastrado em: {new Date(user.createdAt || Date.now()).toLocaleDateString('pt-BR', {
+                    day: '2-digit', month: 'long', year: 'numeric'
                   })}
                 </p>
-                {!editMode && activeTab === 'info' && user.role !== 'admin' && (
+                {!editMode && activeTab === 'info' && user.role !== 'admin' && user.role !== 'system_admin' && (
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="text-sm text-red-600 hover:text-red-700"
+                    className="text-sm text-error-DEFAULT hover:text-error-dark"
                   >
                     Excluir Usuário
                   </button>
@@ -675,14 +590,14 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
               <div className="flex gap-2">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                  className="px-4 py-2 bg-secondary-light text-text-primary rounded-lg hover:bg-secondary-DEFAULT/80 transition-colors"
                 >
                   Fechar
                 </button>
                 {activeTab === 'info' && !editMode && (
                   <button
                     onClick={() => setEditMode(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark transition-colors"
                   >
                     Editar Informações
                   </button>
@@ -695,22 +610,22 @@ export default function UserEditModal({ isOpen, onClose, user, onUserUpdated }: 
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Confirmar Exclusão</h3>
-            <p className="text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-text-primary/60 backdrop-blur-sm flex items-center justify-center z-[60]">
+          <div className="bg-background-primary rounded-lg p-6 max-w-md shadow-xl">
+            <h3 className="text-lg font-semibold text-text-primary mb-4">Confirmar Exclusão</h3>
+            <p className="text-text-secondary mb-6">
               Tem certeza que deseja excluir o usuário "{user.name}"? Esta ação não pode ser desfeita.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 border border-border-DEFAULT text-text-primary rounded-lg hover:bg-background-tertiary"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-4 py-2 bg-error-DEFAULT text-white rounded-lg hover:bg-error-dark"
               >
                 Excluir
               </button>

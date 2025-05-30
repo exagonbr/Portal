@@ -28,10 +28,10 @@ export default function GuardianMeetingsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'bg-warning/10 text-warning'
-      case 'confirmed': return 'bg-success/10 text-success'
-      case 'cancelled': return 'bg-error/10 text-error'
-      default: return 'bg-accent-blue/10 text-accent-blue'
+      case 'scheduled': return 'bg-accent-yellow/20 text-accent-yellow'
+      case 'confirmed': return 'bg-accent-green/20 text-accent-green'
+      case 'cancelled': return 'bg-error/20 text-error'
+      default: return 'bg-primary/20 text-primary'
     }
   }
 
@@ -47,21 +47,21 @@ export default function GuardianMeetingsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-primary">Reuniões</h1>
-        <button className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/90 transition-colors">
+        <h1 className="text-2xl font-bold text-primary">Reuniões</h1>
+        <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
           Agendar Reunião
         </button>
       </div>
 
       <div className="grid gap-4">
         {meetings.map((meeting) => (
-          <div key={meeting.id} className="bg-background-primary rounded-lg border border-border p-6">
+          <div key={meeting.id} className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-text-primary">{meeting.title}</h3>
-                <p className="text-text-secondary mt-1">{meeting.subject} - {meeting.teacher}</p>
+                <h3 className="text-lg font-semibold text-primary">{meeting.title}</h3>
+                <p className="text-gray-600 mt-1">{meeting.subject} - {meeting.teacher}</p>
                 
-                <div className="flex items-center space-x-4 mt-3 text-sm text-text-secondary">
+                <div className="flex items-center space-x-4 mt-3 text-sm text-gray-600">
                   <div className="flex items-center space-x-1">
                     <span className="material-symbols-outlined text-[16px]">calendar_month</span>
                     <span>{new Date(meeting.date).toLocaleDateString('pt-BR')}</span>
@@ -83,7 +83,7 @@ export default function GuardianMeetingsPage() {
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(meeting.status)}`}>
                   {getStatusText(meeting.status)}
                 </span>
-                <button className="text-text-secondary hover:text-text-primary">
+                <button className="text-gray-600 hover:text-primary transition-colors">
                   <span className="material-symbols-outlined">more_vert</span>
                 </button>
               </div>

@@ -16,7 +16,7 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
 
   const getGradeOptions = () => {
     if (!selectedLevel) return []
-    
+
     switch (selectedLevel) {
       case 'INFANTIL':
         return [
@@ -37,11 +37,11 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
 
   const getSubjects = () => {
     if (!selectedLevel) return []
-    
+
     switch (selectedLevel) {
       case 'FUNDAMENTAL':
-        return selectedGrade.startsWith('1') || selectedGrade.startsWith('2') || 
-               selectedGrade.startsWith('3') || selectedGrade.startsWith('4') || 
+        return selectedGrade.startsWith('1') || selectedGrade.startsWith('2') ||
+               selectedGrade.startsWith('3') || selectedGrade.startsWith('4') ||
                selectedGrade.startsWith('5')
           ? CORE_SUBJECTS.FUNDAMENTAL_INICIAL
           : CORE_SUBJECTS.FUNDAMENTAL_FINAL
@@ -55,7 +55,7 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const form = e.target as HTMLFormElement
-    
+
     const lessonPlan: LessonPlan = {
       id: crypto.randomUUID(),
       teacherId,
@@ -95,16 +95,16 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold text-[#1B365D] mb-6">Criar Plano de Aula</h2>
-      
+    <div className="bg-background-primary p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold text-text-primary mb-6">Criar Plano de Aula</h2>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nível de Ensino</label>
+            <label className="block text-sm font-medium text-text-secondary">Nível de Ensino</label>
             <select
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value as keyof typeof BRAZILIAN_EDUCATION)}
               required
@@ -117,9 +117,9 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Série/Ano</label>
+            <label className="block text-sm font-medium text-text-secondary">Série/Ano</label>
             <select
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               value={selectedGrade}
               onChange={(e) => setSelectedGrade(e.target.value)}
               required
@@ -133,9 +133,9 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Disciplina</label>
+            <label className="block text-sm font-medium text-text-secondary">Disciplina</label>
             <select
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
               required
@@ -152,32 +152,32 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
         {/* Unit Information */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Número da Unidade</label>
+            <label className="block text-sm font-medium text-text-secondary">Número da Unidade</label>
             <input
               type="number"
               name="unitNumber"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               min="1"
             />
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Título da Unidade</label>
+            <label className="block text-sm font-medium text-text-secondary">Título da Unidade</label>
             <input
               type="text"
               name="unitTitle"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Descrição da Unidade</label>
+          <label className="block text-sm font-medium text-text-secondary">Descrição da Unidade</label>
           <textarea
             name="unitDescription"
             rows={3}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+            className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
             required
           />
         </div>
@@ -185,21 +185,21 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
         {/* Content Planning */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Objetivos (um por linha)</label>
+            <label className="block text-sm font-medium text-text-secondary">Objetivos (um por linha)</label>
             <textarea
               name="objectives"
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               placeholder="Digite cada objetivo em uma nova linha"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tópicos (um por linha)</label>
+            <label className="block text-sm font-medium text-text-secondary">Tópicos (um por linha)</label>
             <textarea
               name="topics"
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               placeholder="Digite cada tópico em uma nova linha"
             />
@@ -208,21 +208,21 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Atividades (uma por linha)</label>
+            <label className="block text-sm font-medium text-text-secondary">Atividades (uma por linha)</label>
             <textarea
               name="activities"
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               placeholder="Digite cada atividade em uma nova linha"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Recursos (um por linha)</label>
+            <label className="block text-sm font-medium text-text-secondary">Recursos (um por linha)</label>
             <textarea
               name="resources"
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               placeholder="Digite cada recurso em uma nova linha"
             />
@@ -230,11 +230,11 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Metodologia (uma por linha)</label>
+          <label className="block text-sm font-medium text-text-secondary">Metodologia (uma por linha)</label>
           <textarea
             name="methodology"
             rows={4}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+            className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
             required
             placeholder="Digite cada método em uma nova linha"
           />
@@ -243,21 +243,21 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
         {/* Evaluation */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Critérios de Avaliação (um por linha)</label>
+            <label className="block text-sm font-medium text-text-secondary">Critérios de Avaliação (um por linha)</label>
             <textarea
               name="evaluationCriteria"
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               placeholder="Digite cada critério em uma nova linha"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Instrumentos de Avaliação (um por linha)</label>
+            <label className="block text-sm font-medium text-text-secondary">Instrumentos de Avaliação (um por linha)</label>
             <textarea
               name="evaluationInstruments"
               rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               placeholder="Digite cada instrumento em uma nova linha"
             />
@@ -266,40 +266,40 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Peso da Avaliação</label>
+            <label className="block text-sm font-medium text-text-secondary">Peso da Avaliação</label>
             <input
               type="number"
               name="evaluationWeight"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               min="1"
               max="100"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Data de Início</label>
+            <label className="block text-sm font-medium text-text-secondary">Data de Início</label>
             <input
               type="date"
               name="startDate"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Data de Término</label>
+            <label className="block text-sm font-medium text-text-secondary">Data de Término</label>
             <input
               type="date"
               name="endDate"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Horas Semanais</label>
+            <label className="block text-sm font-medium text-text-secondary">Horas Semanais</label>
             <input
               type="number"
               name="weeklyHours"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+              className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
               required
               min="1"
             />
@@ -307,11 +307,11 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Total de Horas</label>
+          <label className="block text-sm font-medium text-text-secondary">Total de Horas</label>
           <input
             type="number"
             name="totalHours"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#1B365D] focus:ring-[#1B365D]"
+            className="mt-1 block w-full rounded-md border-border-DEFAULT shadow-sm focus:border-primary-DEFAULT focus:ring-primary-DEFAULT"
             required
             min="1"
           />
@@ -320,7 +320,7 @@ export default function LessonPlanManager({ teacherId, onSave }: LessonPlanManag
         <div className="flex justify-end">
           <button
             type="submit"
-            className="bg-[#1B365D] text-white px-4 py-2 rounded-md hover:bg-[#2A4C80] focus:outline-none focus:ring-2 focus:ring-[#1B365D] focus:ring-offset-2"
+            className="bg-primary-DEFAULT text-white px-4 py-2 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT focus:ring-offset-2"
           >
             Criar Plano de Aula
           </button>

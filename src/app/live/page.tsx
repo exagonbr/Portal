@@ -60,21 +60,21 @@ export default function LiveClassesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Aulas ao Vivo</h1>
+          <h1 className="text-2xl font-bold text-primary-dark">Aulas ao Vivo</h1>
           <p className="text-gray-600">Participe das aulas ao vivo e interaja com professores</p>
         </div>
         <div className="flex space-x-4">
           {activeClass && (
             <button
               onClick={() => setShowRecordings(!showRecordings)}
-              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
             >
               <span className="material-icons text-sm mr-2">video_library</span>
               {showRecordings ? 'Voltar à Aula' : 'Ver Gravações'}
             </button>
           )}
           {user?.role === 'teacher' && (
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
               <span className="material-icons text-sm mr-2">video_call</span>
               Nova Aula
             </button>
@@ -96,26 +96,26 @@ export default function LiveClassesPage() {
 
         {showRecordings && (
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Gravações Disponíveis</h2>
+            <h2 className="text-xl font-semibold mb-4 text-primary-dark">Gravações Disponíveis</h2>
             <div className="space-y-4">
               {recordings.map((recording) => (
                 <div
                   key={recording.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors duration-200"
                 >
                   <div>
-                    <p className="font-medium">Gravação - {formatDate(recording.startTime)}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-primary-dark">Gravação - {formatDate(recording.startTime)}</p>
+                    <p className="text-sm text-gray-600">
                       Duração: {Math.floor(recording.duration / 60)}min {recording.duration % 60}s
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 text-sm rounded-full ${
                       recording.status === 'ready'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-accent-green/20 text-accent-green'
                         : recording.status === 'processing'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
+                        ? 'bg-accent-yellow/20 text-accent-yellow'
+                        : 'bg-error/20 text-error'
                     }`}>
                       {recording.status === 'ready'
                         ? 'Pronto'
@@ -128,7 +128,7 @@ export default function LiveClassesPage() {
                         href={recording.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                        className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
                       >
                         <span className="material-icons text-sm">play_circle</span>
                       </a>
@@ -137,7 +137,7 @@ export default function LiveClassesPage() {
                 </div>
               ))}
               {recordings.length === 0 && (
-                <p className="text-gray-500 text-center py-8">
+                <p className="text-gray-600 text-center py-8">
                   Nenhuma gravação disponível para esta aula.
                 </p>
               )}
@@ -147,7 +147,7 @@ export default function LiveClassesPage() {
 
         {!activeClass && !showRecordings && (
           <div className="p-6 text-center">
-            <p className="text-gray-500">
+            <p className="text-gray-600">
               Nenhuma aula ao vivo no momento. Aguarde o início da próxima aula ou crie uma nova.
             </p>
           </div>

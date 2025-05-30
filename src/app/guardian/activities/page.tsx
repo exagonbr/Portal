@@ -100,13 +100,13 @@ export default function GuardianActivitiesPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800'
+        return 'bg-accent-green/20 text-accent-green'
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-primary/20 text-primary'
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-accent-yellow/20 text-accent-yellow'
       case 'overdue':
-        return 'bg-red-100 text-red-800'
+        return 'bg-error/20 text-error'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -130,11 +130,11 @@ export default function GuardianActivitiesPage() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 text-red-800'
+        return 'bg-error/20 text-error'
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-accent-yellow/20 text-accent-yellow'
       case 'low':
-        return 'bg-green-100 text-green-800'
+        return 'bg-accent-green/20 text-accent-green'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -176,10 +176,10 @@ export default function GuardianActivitiesPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Atividades Escolares</h1>
+            <h1 className="text-2xl font-bold text-primary">Atividades Escolares</h1>
             <p className="text-gray-600">Acompanhe as atividades e tarefas dos seus filhos</p>
           </div>
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+          <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors">
             <span className="material-symbols-outlined">download</span>
             <span>Relatório</span>
           </button>
@@ -193,15 +193,15 @@ export default function GuardianActivitiesPage() {
               onClick={() => setSelectedChild(child)}
               className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all ${
                 selectedChild.childId === child.childId
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-primary bg-primary/10'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <div className="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600">person</span>
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary">person</span>
               </div>
               <div className="text-left">
-                <div className="font-medium text-gray-800">{child.childName}</div>
+                <div className="font-medium text-primary-dark">{child.childName}</div>
                 <div className="text-sm text-gray-600">{child.grade}</div>
               </div>
             </button>
@@ -212,13 +212,13 @@ export default function GuardianActivitiesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Atividades</div>
-            <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+            <div className="text-2xl font-bold text-primary">{stats.total}</div>
             <div className="text-sm text-gray-600 mt-1">Este período</div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Concluídas</div>
-            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+            <div className="text-2xl font-bold text-accent-green">{stats.completed}</div>
             <div className="text-sm text-gray-600 mt-1">
               {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% do total
             </div>
@@ -226,13 +226,13 @@ export default function GuardianActivitiesPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Em Andamento</div>
-            <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
+            <div className="text-2xl font-bold text-primary">{stats.inProgress}</div>
             <div className="text-sm text-gray-600 mt-1">Sendo desenvolvidas</div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Pendentes</div>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+            <div className="text-2xl font-bold text-accent-yellow">{stats.pending}</div>
             <div className="text-sm text-gray-600 mt-1">Aguardando início</div>
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function GuardianActivitiesPage() {
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos os Status</option>
             <option value="pending">Pendentes</option>
@@ -254,7 +254,7 @@ export default function GuardianActivitiesPage() {
           <select 
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todas as Prioridades</option>
             <option value="high">Alta</option>
@@ -270,7 +270,7 @@ export default function GuardianActivitiesPage() {
           <div key={activity.id} className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800">{activity.title}</h3>
+                <h3 className="text-lg font-semibold text-primary">{activity.title}</h3>
                 <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                   <span>{activity.subject}</span>
                   <span>•</span>
@@ -289,10 +289,10 @@ export default function GuardianActivitiesPage() {
                   {getStatusText(activity.status)}
                 </span>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  activity.type === 'Trabalho' ? 'bg-blue-100 text-blue-800' :
-                  activity.type === 'Projeto' ? 'bg-purple-100 text-purple-800' :
-                  activity.type === 'Exercícios' ? 'bg-green-100 text-green-800' :
-                  'bg-orange-100 text-orange-800'
+                  activity.type === 'Trabalho' ? 'bg-primary/20 text-primary' :
+                  activity.type === 'Projeto' ? 'bg-accent-purple/20 text-accent-purple' :
+                  activity.type === 'Exercícios' ? 'bg-accent-green/20 text-accent-green' :
+                  'bg-accent-orange/20 text-accent-orange'
                 }`}>
                   {activity.type}
                 </span>
@@ -315,7 +315,7 @@ export default function GuardianActivitiesPage() {
               
               <button 
                 onClick={() => setSelectedActivity(activity)}
-                className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                className="text-primary hover:text-primary-dark flex items-center space-x-1 transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">visibility</span>
                 <span>Ver Detalhes</span>
@@ -330,7 +330,7 @@ export default function GuardianActivitiesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">Detalhes da Atividade</h3>
+              <h3 className="text-xl font-semibold text-primary">Detalhes da Atividade</h3>
               <button 
                 onClick={() => setSelectedActivity(null)}
                 className="text-gray-400 hover:text-gray-600"
@@ -341,7 +341,7 @@ export default function GuardianActivitiesPage() {
             
             <div className="space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-gray-800">{selectedActivity.title}</h4>
+                <h4 className="text-lg font-semibold text-primary">{selectedActivity.title}</h4>
                 <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                   <span>{selectedActivity.subject}</span>
                   <span>•</span>
@@ -351,7 +351,7 @@ export default function GuardianActivitiesPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h5 className="font-medium text-gray-700 mb-2">Informações Gerais</h5>
+                  <h5 className="font-medium text-primary-dark mb-2">Informações Gerais</h5>
                   <div className="space-y-2 text-sm">
                     <div><span className="font-medium">Tipo:</span> {selectedActivity.type}</div>
                     <div><span className="font-medium">Data de Entrega:</span> {new Date(selectedActivity.dueDate).toLocaleDateString('pt-BR')}</div>
@@ -362,11 +362,11 @@ export default function GuardianActivitiesPage() {
                 </div>
 
                 <div>
-                  <h5 className="font-medium text-gray-700 mb-2">Materiais Necessários</h5>
+                  <h5 className="font-medium text-primary-dark mb-2">Materiais Necessários</h5>
                   <div className="space-y-1">
                     {selectedActivity.materials.map((material: string, index: number) => (
                       <div key={index} className="flex items-center space-x-2 text-sm">
-                        <span className="material-symbols-outlined text-xs text-blue-600">check</span>
+                        <span className="material-symbols-outlined text-xs text-primary">check</span>
                         <span>{material}</span>
                       </div>
                     ))}
@@ -375,20 +375,20 @@ export default function GuardianActivitiesPage() {
               </div>
 
               <div>
-                <h5 className="font-medium text-gray-700 mb-2">Descrição</h5>
+                <h5 className="font-medium text-primary-dark mb-2">Descrição</h5>
                 <p className="text-gray-600">{selectedActivity.description}</p>
               </div>
 
               <div>
-                <h5 className="font-medium text-gray-700 mb-2">Instruções Detalhadas</h5>
+                <h5 className="font-medium text-primary-dark mb-2">Instruções Detalhadas</h5>
                 <p className="text-gray-600">{selectedActivity.instructions}</p>
               </div>
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50">
+                <button className="px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors">
                   Contatar Professor
                 </button>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                <button className="px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-accent-green/80 transition-colors">
                   Marcar como Concluída
                 </button>
               </div>

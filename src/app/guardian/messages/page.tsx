@@ -99,12 +99,12 @@ export default function GuardianMessagesPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Mensagens</h1>
+            <h1 className="text-2xl font-bold text-primary">Mensagens</h1>
             <p className="text-gray-600">Comunicação com a escola e professores</p>
           </div>
           <button 
             onClick={() => setShowCompose(true)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors"
           >
             <span className="material-symbols-outlined">add</span>
             <span>Nova Mensagem</span>
@@ -115,19 +115,19 @@ export default function GuardianMessagesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Mensagens</div>
-            <div className="text-2xl font-bold text-gray-800">{MOCK_MESSAGES.length}</div>
+            <div className="text-2xl font-bold text-primary">{MOCK_MESSAGES.length}</div>
             <div className="text-sm text-gray-600 mt-1">Este mês</div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Não Lidas</div>
-            <div className="text-2xl font-bold text-red-600">{unreadCount}</div>
+            <div className="text-2xl font-bold text-error">{unreadCount}</div>
             <div className="text-sm text-gray-600 mt-1">Requerem atenção</div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Alta Prioridade</div>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-accent-orange">
               {MOCK_MESSAGES.filter(m => m.priority === 'high').length}
             </div>
             <div className="text-sm text-gray-600 mt-1">Urgentes</div>
@@ -135,7 +135,7 @@ export default function GuardianMessagesPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">De Professores</div>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-primary">
               {MOCK_MESSAGES.filter(m => m.fromRole.includes('Professor')).length}
             </div>
             <div className="text-sm text-gray-600 mt-1">Comunicações acadêmicas</div>
@@ -147,7 +147,7 @@ export default function GuardianMessagesPage() {
           <select 
             value={filterRead}
             onChange={(e) => setFilterRead(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todas</option>
             <option value="unread">Não Lidas</option>
@@ -157,7 +157,7 @@ export default function GuardianMessagesPage() {
           <select 
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todas as Prioridades</option>
             <option value="high">Alta Prioridade</option>
@@ -167,7 +167,7 @@ export default function GuardianMessagesPage() {
           <select 
             value={filterChild}
             onChange={(e) => setFilterChild(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">Todos os Filhos</option>
             <option value="Geral">Mensagens Gerais</option>
@@ -184,7 +184,7 @@ export default function GuardianMessagesPage() {
           <div 
             key={message.id} 
             className={`bg-white rounded-lg shadow-md p-6 cursor-pointer transition-all hover:shadow-lg ${
-              !message.read ? 'border-l-4 border-blue-500' : ''
+              !message.read ? 'border-l-4 border-primary' : ''
             }`}
             onClick={() => {
               setSelectedMessage(message)
@@ -198,7 +198,7 @@ export default function GuardianMessagesPage() {
                     {message.subject}
                   </h3>
                   {!message.read && (
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
                   )}
                 </div>
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
@@ -212,7 +212,7 @@ export default function GuardianMessagesPage() {
               
               <div className="flex items-center space-x-3">
                 {message.priority === 'high' && (
-                  <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                  <span className="px-2 py-1 bg-error/20 text-error rounded-full text-xs font-medium">
                     Alta Prioridade
                   </span>
                 )}
@@ -220,9 +220,9 @@ export default function GuardianMessagesPage() {
                   <span className="material-symbols-outlined text-gray-400">attach_file</span>
                 )}
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  message.childName === 'Geral' 
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-blue-100 text-blue-800'
+                  message.childName === 'Geral'
+                    ? 'bg-accent-purple/20 text-accent-purple'
+                    : 'bg-primary/20 text-primary'
                 }`}>
                   {message.childName}
                 </span>
@@ -241,7 +241,7 @@ export default function GuardianMessagesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">Detalhes da Mensagem</h3>
+              <h3 className="text-xl font-semibold text-primary">Detalhes da Mensagem</h3>
               <button 
                 onClick={() => setSelectedMessage(null)}
                 className="text-gray-400 hover:text-gray-600"
@@ -252,7 +252,7 @@ export default function GuardianMessagesPage() {
             
             <div className="space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-gray-800">{selectedMessage.subject}</h4>
+                <h4 className="text-lg font-semibold text-primary">{selectedMessage.subject}</h4>
                 <div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
                   <span><strong>De:</strong> {selectedMessage.from}</span>
                   <span>•</span>
@@ -262,14 +262,14 @@ export default function GuardianMessagesPage() {
                 </div>
                 <div className="flex items-center space-x-3 mt-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    selectedMessage.childName === 'Geral' 
-                      ? 'bg-purple-100 text-purple-800'
-                      : 'bg-blue-100 text-blue-800'
+                    selectedMessage.childName === 'Geral'
+                      ? 'bg-accent-purple/20 text-accent-purple'
+                      : 'bg-primary/20 text-primary'
                   }`}>
                     {selectedMessage.childName}
                   </span>
                   {selectedMessage.priority === 'high' && (
-                    <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                    <span className="px-2 py-1 bg-error/20 text-error rounded-full text-xs font-medium">
                       Alta Prioridade
                     </span>
                   )}
@@ -282,13 +282,13 @@ export default function GuardianMessagesPage() {
 
               {selectedMessage.attachments.length > 0 && (
                 <div className="border-t border-gray-200 pt-6">
-                  <h5 className="font-medium text-gray-700 mb-3">Anexos</h5>
+                  <h5 className="font-medium text-primary-dark mb-3">Anexos</h5>
                   <div className="space-y-2">
                     {selectedMessage.attachments.map((attachment: string, index: number) => (
                       <div key={index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                        <span className="material-symbols-outlined text-blue-600">description</span>
+                        <span className="material-symbols-outlined text-primary">description</span>
                         <span className="text-gray-700">{attachment}</span>
-                        <button className="ml-auto text-blue-600 hover:text-blue-800">
+                        <button className="ml-auto text-primary hover:text-primary-dark transition-colors">
                           <span className="material-symbols-outlined">download</span>
                         </button>
                       </div>
@@ -298,10 +298,10 @@ export default function GuardianMessagesPage() {
               )}
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button className="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50">
+                <button className="px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors">
                   Responder
                 </button>
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                <button className="px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-accent-green/80 transition-colors">
                   Marcar como Lida
                 </button>
               </div>
@@ -315,7 +315,7 @@ export default function GuardianMessagesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Nova Mensagem</h3>
+              <h3 className="text-lg font-semibold text-primary">Nova Mensagem</h3>
               <button 
                 onClick={() => setShowCompose(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -326,8 +326,8 @@ export default function GuardianMessagesPage() {
             
             <form className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Para</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-primary-dark mb-1">Para</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                   <option>Selecione o destinatário</option>
                   <option>Direção</option>
                   <option>Coordenação Pedagógica</option>
@@ -339,8 +339,8 @@ export default function GuardianMessagesPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Referente ao aluno</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-primary-dark mb-1">Referente ao aluno</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                   <option>Selecione o aluno</option>
                   {children.map(child => (
                     <option key={child} value={child}>{child}</option>
@@ -350,26 +350,26 @@ export default function GuardianMessagesPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assunto</label>
+                <label className="block text-sm font-medium text-primary-dark mb-1">Assunto</label>
                 <input 
                   type="text" 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Digite o assunto da mensagem"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mensagem</label>
+                <label className="block text-sm font-medium text-primary-dark mb-1">Mensagem</label>
                 <textarea 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   rows={6}
                   placeholder="Digite sua mensagem aqui..."
                 ></textarea>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label className="block text-sm font-medium text-primary-dark mb-1">Prioridade</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                   <option value="normal">Normal</option>
                   <option value="high">Alta</option>
                 </select>
@@ -379,13 +379,13 @@ export default function GuardianMessagesPage() {
                 <button 
                   type="button"
                   onClick={() => setShowCompose(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button 
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
                 >
                   Enviar Mensagem
                 </button>

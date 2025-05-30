@@ -49,15 +49,15 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
   const modalContent = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop with blur */}
-      <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      <div
+        className="fixed inset-0 bg-text-primary/60 backdrop-blur-sm animate-fadeIn"
         onClick={onClose}
-        aria-hidden="true" 
+        aria-hidden="true"
       />
-      
+
       {/* Modal Container - centered in viewport */}
-      <div 
-        className="relative w-[95%] max-w-3xl max-h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden animate-modalSlideIn"
+      <div
+        className="relative w-[95%] max-w-3xl max-h-[90vh] bg-background-primary rounded-xl shadow-2xl overflow-hidden animate-modalSlideIn"
         style={{
           position: 'fixed',
           left: '50%',
@@ -66,11 +66,11 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
         }}
       >
         {/* Header */}
-        <div className="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+        <div className="bg-primary-DEFAULT text-white px-6 py-4 flex justify-between items-center">
           <h2 className="text-xl font-semibold truncate">{book.title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-white/20 transition-colors"
+            className="p-1.5 rounded-full hover:bg-primary-light/20 transition-colors"
             aria-label="Fechar detalhes do livro"
           >
             <XMarkIcon className="w-6 h-6" />
@@ -83,18 +83,18 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
             <div className="flex flex-col md:flex-row gap-8">
               {/* Left Column - Image and Quick Info */}
               <div className="w-full md:w-1/3 space-y-4 flex-shrink-0">
-                <img 
-                  src={book.thumbnail} 
+                <img
+                  src={book.thumbnail}
                   alt={book.title}
                   className="w-full rounded-lg shadow-lg"
                 />
-                
-                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+
+                <div className="bg-background-secondary rounded-lg p-4 space-y-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                    <div className="px-3 py-1 bg-primary-light/20 text-primary-dark rounded-full text-sm font-medium">
                       {book.duration}
                     </div>
-                    <div className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">
+                    <div className="px-3 py-1 bg-secondary-light text-text-secondary rounded-full text-sm">
                       {book.format || 'Digital'}
                     </div>
                   </div>
@@ -102,12 +102,12 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
                   {book.progress !== undefined && (
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Progresso</span>
-                        <span className="font-medium">{book.progress}%</span>
+                        <span className="text-text-secondary">Progresso</span>
+                        <span className="font-medium text-text-primary">{book.progress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      <div className="w-full bg-secondary-light rounded-full h-2">
+                        <div
+                          className="bg-primary-DEFAULT h-2 rounded-full transition-all duration-300"
                           style={{ width: `${book.progress}%` }}
                         />
                       </div>
@@ -121,20 +121,20 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
                 {/* Author & Publisher */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">AUTOR(A)</h3>
-                    <p className="text-gray-900">{book.author}</p>
+                    <h3 className="text-sm font-medium text-text-secondary mb-1">AUTOR(A)</h3>
+                    <p className="text-text-primary">{book.author}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">EDITORA</h3>
-                    <p className="text-gray-900">{book.publisher}</p>
+                    <h3 className="text-sm font-medium text-text-secondary mb-1">EDITORA</h3>
+                    <p className="text-text-primary">{book.publisher}</p>
                   </div>
                 </div>
 
                 {/* Synopsis */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-3">SINOPSE</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-700 text-sm leading-relaxed">
+                  <h3 className="text-sm font-medium text-text-secondary mb-3">SINOPSE</h3>
+                  <div className="bg-background-secondary rounded-lg p-4">
+                    <p className="text-text-secondary text-sm leading-relaxed">
                       {book.synopsis || 'Não disponível'}
                     </p>
                   </div>
@@ -142,10 +142,10 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
 
                 {/* Action Buttons */}
                 <div className="flex gap-4 pt-4">
-                  <button className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                  <button className="flex-1 bg-primary-DEFAULT text-white px-4 py-2.5 rounded-lg hover:bg-primary-dark transition-colors font-medium">
                     Começar Leitura
                   </button>
-                  <button className="px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button className="px-4 py-2.5 border border-border-DEFAULT rounded-lg hover:bg-background-secondary transition-colors text-text-primary">
                     Adicionar à Lista
                   </button>
                 </div>
@@ -162,11 +162,11 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
         }
 
         @keyframes modalSlideIn {
-          from { 
+          from {
             opacity: 0;
             transform: translate(-50%, -48%);
           }
-          to { 
+          to {
             opacity: 1;
             transform: translate(-50%, -50%);
           }

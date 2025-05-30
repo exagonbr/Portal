@@ -72,15 +72,15 @@ export function PWARegistration() {
   return (
     <>
       <OfflineIndicator isOnline={isOnline} />
-      
+
       {isUpdateAvailable && (
-        <div className="fixed bottom-4 right-4 z-50 p-4 bg-white rounded-lg shadow-lg border border-border">
+        <div className="fixed bottom-20 right-4 z-50 p-4 bg-background-primary rounded-lg shadow-lg border border-border-DEFAULT">
           <p className="text-sm text-text-primary mb-2">
             Nova versão disponível!
           </p>
           <button
             onClick={handleUpdate}
-            className="px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-primary-dark transition-colors duration-200"
+            className="px-4 py-2 bg-primary-DEFAULT text-white rounded-md text-sm hover:bg-primary-dark transition-colors duration-200"
           >
             Atualizar
           </button>

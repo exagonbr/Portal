@@ -247,7 +247,7 @@ export default function BooksPage() {
                     setFilters(prev => ({ ...prev, search: e.target.value }))
                   }
                   placeholder="Procurar por título, autor ou editora"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-blue focus:border-transparent"
                 />
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               </div>
@@ -260,7 +260,7 @@ export default function BooksPage() {
                   onClick={() => setFilters(prev => ({ ...prev, view: 'grid' }))}
                   className={`p-2 rounded-md transition-all ${
                     filters.view === 'grid'
-                      ? 'bg-white shadow text-blue-600'
+                      ? 'bg-white shadow text-primary'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                   title="Visualização em grade"
@@ -271,7 +271,7 @@ export default function BooksPage() {
                   onClick={() => setFilters(prev => ({ ...prev, view: 'list' }))}
                   className={`p-2 rounded-md transition-all ${
                     filters.view === 'list'
-                      ? 'bg-white shadow text-blue-600'
+                      ? 'bg-white shadow text-primary'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                   title="Visualização em lista"
@@ -282,7 +282,7 @@ export default function BooksPage() {
                   onClick={() => setFilters(prev => ({ ...prev, view: 'cover' }))}
                   className={`p-2 rounded-md transition-all ${
                     filters.view === 'cover'
-                      ? 'bg-white shadow text-blue-600'
+                      ? 'bg-white shadow text-primary'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                   title="Visualização em Capa"
@@ -292,7 +292,7 @@ export default function BooksPage() {
               </div>
               <button
                 onClick={() => setIsImportModalOpen(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors duration-200"
               >
                 Importar
               </button>
@@ -308,7 +308,7 @@ export default function BooksPage() {
                 onChange={(e) =>
                   setFilters(prev => ({ ...prev, category: e.target.value }))
                 }
-                className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-blue focus:border-transparent bg-white"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
@@ -330,7 +330,7 @@ export default function BooksPage() {
                   }
                   className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                     filters.showType === type.value
-                      ? 'bg-blue-100 text-blue-700'
+                      ? 'bg-primary/10 text-primary'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -343,7 +343,7 @@ export default function BooksPage() {
               onChange={(e) =>
                 setFilters(prev => ({ ...prev, orderBy: e.target.value }))
               }
-              className="p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+              className="p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-blue focus:border-transparent bg-white text-sm"
             >
               <option value="title">Título</option>
               <option value="author">Autor</option>
