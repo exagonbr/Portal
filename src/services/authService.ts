@@ -32,6 +32,7 @@ export class AuthService {
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/login`, loginData);
 
       // Verifica se a resposta tem o formato esperado
+<<<<<<< HEAD
       // Extrair dados diretamente da resposta, seja dentro de data ou na raiz
       const responseData = response.data || response;
 
@@ -45,6 +46,11 @@ export class AuthService {
 
       if (!user || !token) {
         console.error('Resposta de login incompleta:', responseData);
+=======
+      const responseData = (response.data || response) as AuthResponseDto;
+
+      if (!responseData.user || !responseData.token) {
+>>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
         return {
           success: false,
           message: 'Resposta do servidor incompleta'
@@ -53,14 +59,21 @@ export class AuthService {
 
       // Salva o token e dados do usuário
       this.saveAuthData(
+<<<<<<< HEAD
         token,
         sessionId,
         user,
         expiresAt
+=======
+        responseData.token,
+        responseData.sessionId || '',
+        responseData.user,
+        responseData.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+>>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
       );
 
       // Converte UserResponseDto para User (compatibilidade)
-      const compatibleUser = this.convertToCompatibleUser(user);
+      const compatibleUser = this.convertToCompatibleUser(responseData.user);
 
       return {
         success: true,

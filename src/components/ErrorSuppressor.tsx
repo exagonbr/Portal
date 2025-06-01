@@ -21,6 +21,7 @@ export default function ErrorSuppressor() {
       'Observation loop error'
     ];
 
+<<<<<<< HEAD
     // Lista de erros relacionados à autenticação que podem ser suprimidos
     const authErrorsToSuppress = [
       'No active session',
@@ -33,10 +34,21 @@ export default function ErrorSuppressor() {
 
     // Lista de padrões que NÃO devem ser suprimidos (logs importantes)
     const importantPatterns = [
+=======
+    // Lista de padrões que NÃO devem ser suprimidos (logs importantes)
+    const importantPatterns = [
+      'auth',
+      'login',
+>>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
       'dashboard',
       'redirect',
       'role',
       'permission',
+<<<<<<< HEAD
+=======
+      'user',
+      'session',
+>>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
       'navigation',
       'router',
       '🔐', '🚀', '✅', '❌', '🔍', '🔄', // Emojis dos logs importantes
@@ -49,6 +61,18 @@ export default function ErrorSuppressor() {
       
       // Se contém padrões importantes, NÃO suprimir
       const hasImportantPattern = importantPatterns.some(pattern => 
+<<<<<<< HEAD
+=======
+        message.toLowerCase().includes(pattern.toLowerCase())
+      );
+      
+      if (hasImportantPattern) {
+        return false; // NÃO suprimir logs importantes
+      }
+      
+      // Se contém padrões do ResizeObserver, suprimir
+      return resizeObserverErrorPatterns.some(pattern => 
+>>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
         message.toLowerCase().includes(pattern.toLowerCase())
       );
       
@@ -69,6 +93,16 @@ export default function ErrorSuppressor() {
       );
 
       return isAuthError;
+    };
+
+    // Função para verificar se qualquer argumento contém padrões importantes
+    const hasImportantArgs = (args: any[]): boolean => {
+      return args.some(arg => {
+        const argString = String(arg);
+        return importantPatterns.some(pattern => 
+          argString.toLowerCase().includes(pattern.toLowerCase())
+        );
+      });
     };
 
     // Função para verificar se qualquer argumento contém padrões importantes
@@ -103,7 +137,11 @@ export default function ErrorSuppressor() {
           return;
         }
 
+<<<<<<< HEAD
         // Verificar se é um erro do ResizeObserver ou autenticação
+=======
+        // Verificar se é um erro do ResizeObserver
+>>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
         const firstArg = args[0];
         
         if (shouldSuppressError(String(firstArg))) {

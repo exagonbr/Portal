@@ -70,19 +70,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const normalizedRole = convertBackendRole(role);
     
     if (!normalizedRole || !isValidRole(normalizedRole)) {
+<<<<<<< HEAD
       console.error(`❌ Role inválida: ${role} -> ${normalizedRole}`);
       setError('Perfil de usuário inválido. Por favor, entre em contato com o administrador.');
       return;
     }
     
+=======
+      console.error(`❌ Role inválida no redirecionamento: ${userRole} -> ${normalizedRole}`);
+      router.push('/login?error=unauthorized');
+      return;
+    }
+    
+    // Obtém o caminho do dashboard baseado na role
+>>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
     const dashboardPath = getDashboardPath(normalizedRole);
     
     if (dashboardPath) {
       console.log(`✅ Redirecionando para: ${dashboardPath}`);
       router.push(dashboardPath);
     } else {
+<<<<<<< HEAD
       console.error(`❌ Dashboard não encontrado para: ${normalizedRole}`);
       setError('Erro interno. Por favor, entre em contato com o administrador.');
+=======
+      console.error(`❌ Dashboard não encontrado para role: ${normalizedRole}`);
+      router.push('/login?error=unauthorized');
+>>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
     }
   }, [router]);
 
