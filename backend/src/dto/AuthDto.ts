@@ -5,8 +5,8 @@ export interface CreateUserDto {
   email: string;
   password: string;
   name: string;
-  role_id: string;
-  institution_id?: string;
+  role_id: number;
+  institution_id?: number;
   endereco?: string;
   telefone?: string;
   usuario?: string;
@@ -24,8 +24,8 @@ export interface UpdateUserDto {
   email?: string;
   password?: string;
   name?: string;
-  role_id?: string;
-  institution_id?: string;
+  role_id?: number;
+  institution_id?: number;
   endereco?: string;
   telefone?: string;
   usuario?: string;
@@ -52,17 +52,32 @@ export interface AuthResponseDto {
 }
 
 export interface UserResponseDto {
-  id: string;
+  id: number;
   email: string;
   name: string;
-  role: Role;
-  institution?: Institution;
+  role?: {
+    id: number;
+    name: string;
+    permissions?: string[];
+  };
+  institution?: {
+    id: number;
+    name: string;
+  };
   endereco?: string;
   telefone?: string;
   usuario?: string;
   unidade_ensino?: string;
-  created_at: string;
-  updated_at: string;
+  cpf?: string;
+  phone?: string;
+  birth_date?: Date;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface ChangePasswordDto {

@@ -1,10 +1,9 @@
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { AppDataSource } from '../config/typeorm.config';
-import { User } from '../entities/User';
-import { Role, UserRole } from '../entities/Role';
+import { UserRepository } from '../repositories/UserRepository';
 import { CreateUserDto, LoginDto, AuthResponseDto } from '../dto/AuthDto';
 import { AuthTokenPayload } from '../types/express';
+import { UserWithRelations } from '../entities/User';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
 const JWT_EXPIRES_IN = '24h';
@@ -19,7 +18,7 @@ interface ClientInfo {
 }
 
 interface SessionData {
-  userId: string;
+  userId: number;
   user: any;
   createdAt: number;
   lastActivity: number;
@@ -29,14 +28,6 @@ interface SessionData {
 }
 
 export class AuthService {
-  private static get userRepository() {
-    return AppDataSource.getRepository(User);
-  }
-  
-  private static get roleRepository() {
-    return AppDataSource.getRepository(Role);
-  }
-  
   private static redis = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
@@ -49,12 +40,12 @@ export class AuthService {
   private static readonly ACTIVE_USERS_SET = 'active_users';
   private static readonly SESSION_TTL = 24 * 60 * 60; // 24 hours
 
-  static generateToken(user: User, sessionId?: string): string {
+  static generateToken(user: UserWithRelations, sessionId?: string): string {
     const payload: Partial<AuthTokenPayload> = {
-      userId: user.id,
+      userId: user.id.toString(),
       email: user.email,
-      permissions: user.role.permissions,
-      role: user.role.name.toUpperCase(),
+      permissions: user.role?.permissions || [],
+      role: user.role?.name?.toUpperCase() || 'USER',
       sessionId: sessionId
     };
 
@@ -90,7 +81,7 @@ export class AuthService {
     await this.redis.sadd(`${this.USER_SESSIONS_PREFIX}${user.id}`, sessionId);
     
     // Add user to active users set
-    await this.redis.sadd(this.ACTIVE_USERS_SET, user.id);
+    await this.redis.sadd(this.ACTIVE_USERS_SET, user.id.toString());
 
     // Set TTL for user sessions list
     await this.redis.expire(`${this.USER_SESSIONS_PREFIX}${user.id}`, this.SESSION_TTL);
@@ -156,7 +147,7 @@ export class AuthService {
         
         if (userSessions.length === 0) {
           // Remove user from active users set
-          await this.redis.srem(this.ACTIVE_USERS_SET, sessionData.userId);
+          await this.redis.srem(this.ACTIVE_USERS_SET, sessionData.userId.toString());
           // Remove user sessions key
           await this.redis.del(`${this.USER_SESSIONS_PREFIX}${sessionData.userId}`);
         }
@@ -174,74 +165,45 @@ export class AuthService {
 
   static async register(userData: CreateUserDto, clientInfo: ClientInfo): Promise<AuthResponseDto> {
     // Check if user already exists
-    const existingUser = await this.userRepository.findOne({
-      where: { email: userData.email }
-    });
+    const existingUser = await UserRepository.findByEmail(userData.email);
 
     if (existingUser) {
       throw new Error('Usuário já existe');
     }
 
-    // Find role
-    const role = await this.roleRepository.findOne({
-      where: { id: userData.role_id }
-    });
+    // Create new user
+    const user = await UserRepository.create(userData);
 
-    if (!role) {
-      throw new Error('Role não encontrada');
+    // Get user with relations for response
+    const userWithRelations = await UserRepository.findById(user.id);
+    
+    if (!userWithRelations) {
+      throw new Error('Erro ao buscar usuário criado');
     }
 
-    // Create new user
-    const user = this.userRepository.create({
-      ...userData,
-      role
-    });
+    // Create session
+    const sessionId = await this.createSession(userWithRelations, clientInfo);
 
-    // Save user (password hashing is done automatically in @BeforeInsert)
-    const savedUser = await this.userRepository.save(user);
+    // Generate token
+    const token = this.generateToken(userWithRelations, sessionId);
 
-    // Create session first
-    const userForSession = {
-      ...savedUser,
-      role_name: role.name,
-      institution_name: savedUser.institution?.name
-    };
-    const sessionId = await this.createSession(userForSession, clientInfo);
-
-    // Generate token with sessionId
-    const token = this.generateToken(savedUser, sessionId);
-
-    // Remove password from response
-    const { password, ...userWithoutPassword } = savedUser;
+    // Calculate expiration
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
     return {
-      user: {
-        ...userWithoutPassword,
-        role_name: role.name,
-        institution_name: savedUser.institution?.name,
-        created_at: savedUser.created_at.toISOString(),
-        updated_at: savedUser.updated_at.toISOString()
-      } as any,
+      user: this.formatUserResponse(userWithRelations),
       token,
       sessionId,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      expires_at: expiresAt.toISOString()
     };
   }
 
   static async login(loginData: LoginDto, clientInfo: ClientInfo): Promise<AuthResponseDto> {
-    // Find user with role only (removing institution relation temporarily)
-    const user = await this.userRepository.findOne({
-      where: { email: loginData.email },
-      relations: ['role']
-    });
+    // Find user by email
+    const user = await UserRepository.findByEmail(loginData.email);
 
     if (!user) {
-      throw new Error('Credenciais inválidas');
-    }
-
-    // Verify password
-    const isValidPassword = await user.comparePassword(loginData.password);
-    if (!isValidPassword) {
       throw new Error('Credenciais inválidas');
     }
 
@@ -250,29 +212,28 @@ export class AuthService {
       throw new Error('Usuário inativo');
     }
 
-    // Create session first
-    const userForSession = {
-      ...user,
-      role_name: user.role.name,
-      institution_name: null // Temporarily set to null
-    };
-    const sessionId = await this.createSession(userForSession, clientInfo);
+    // Verify password
+    const isPasswordValid = await UserRepository.comparePassword(loginData.password, user.password);
 
-    // Generate token with sessionId
+    if (!isPasswordValid) {
+      throw new Error('Credenciais inválidas');
+    }
+
+    // Create session
+    const sessionId = await this.createSession(user, clientInfo);
+
+    // Generate token
     const token = this.generateToken(user, sessionId);
 
-    // Remove password from response
-    const { password, ...userWithoutPassword } = user;
+    // Calculate expiration
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
     return {
-      user: {
-        ...userWithoutPassword,
-        role_name: user.role.name,
-        institution_name: null // Temporarily set to null
-      } as any,
+      user: this.formatUserResponse(user),
       token,
       sessionId,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      expires_at: expiresAt.toISOString()
     };
   }
 
@@ -280,75 +241,65 @@ export class AuthService {
     await this.destroySession(sessionId);
   }
 
-  static async logoutAllDevices(userId: string): Promise<number> {
+  static async logoutAllDevices(userId: number): Promise<number> {
     try {
-      const sessionIds = await this.redis.smembers(`${this.USER_SESSIONS_PREFIX}${userId}`);
+      const userSessions = await this.redis.smembers(`${this.USER_SESSIONS_PREFIX}${userId}`);
       
-      if (sessionIds.length === 0) {
-        return 0;
+      let destroyedCount = 0;
+      for (const sessionId of userSessions) {
+        const destroyed = await this.destroySession(sessionId);
+        if (destroyed) destroyedCount++;
       }
-
-      // Remove all sessions
-      const sessionKeys = sessionIds.map(id => `${this.SESSION_PREFIX}${id}`);
-      await this.redis.del(...sessionKeys);
       
-      // Remove user sessions list
+      // Clean up user sessions list
       await this.redis.del(`${this.USER_SESSIONS_PREFIX}${userId}`);
+      await this.redis.srem(this.ACTIVE_USERS_SET, userId.toString());
       
-      // Remove user from active users set
-      await this.redis.srem(this.ACTIVE_USERS_SET, userId);
-      
-      console.log(`✅ ${sessionIds.length} sessions removed for user ${userId}`);
-      return sessionIds.length;
+      return destroyedCount;
     } catch (error) {
       console.error('Error logging out all devices:', error);
       return 0;
     }
   }
 
-  static async refreshToken(userId: string, sessionId?: string): Promise<{ token: string; expires_at: string }> {
-    const user = await this.getUserById(userId);
+  static async refreshToken(userId: number, sessionId?: string): Promise<{ token: string; expires_at: string }> {
+    const user = await UserRepository.findById(userId);
     
     if (!user) {
       throw new Error('Usuário não encontrado');
     }
 
-    // Update session activity if session ID provided
-    if (sessionId) {
-      await this.updateSessionActivity(sessionId);
-    }
-
-    const token = this.generateToken(user);
+    const token = this.generateToken(user, sessionId);
+    
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
     return {
       token,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      expires_at: expiresAt.toISOString()
     };
   }
 
-  static async getUserSessions(userId: string): Promise<any[]> {
+  static async getUserSessions(userId: number): Promise<any[]> {
     try {
       const sessionIds = await this.redis.smembers(`${this.USER_SESSIONS_PREFIX}${userId}`);
-      const sessions: any[] = [];
-
+      const sessions = [];
+      
       for (const sessionId of sessionIds) {
         const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
-        
         if (sessionDataStr) {
-          const sessionData: SessionData = JSON.parse(sessionDataStr);
+          const sessionData = JSON.parse(sessionDataStr);
           sessions.push({
             sessionId,
-            userId: sessionData.userId,
-            user: sessionData.user,
             createdAt: new Date(sessionData.createdAt),
             lastActivity: new Date(sessionData.lastActivity),
             ipAddress: sessionData.ipAddress,
             userAgent: sessionData.userAgent,
-            deviceInfo: sessionData.deviceInfo,
+            deviceInfo: sessionData.deviceInfo
           });
         }
       }
-
+      
       return sessions.sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
     } catch (error) {
       console.error('Error getting user sessions:', error);
@@ -356,13 +307,8 @@ export class AuthService {
     }
   }
 
-  static async getUserById(userId: string): Promise<User | null> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['role'] // Removing institution relation temporarily
-    });
-
-    return user;
+  static async getUserById(userId: number): Promise<UserWithRelations | null> {
+    return UserRepository.findById(userId);
   }
 
   static async validateToken(token: string): Promise<AuthTokenPayload> {
@@ -374,73 +320,24 @@ export class AuthService {
     }
   }
 
-  static async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId }
-    });
-
+  static async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await UserRepository.findById(userId);
+    
     if (!user) {
       throw new Error('Usuário não encontrado');
     }
 
-    // Verify current password
-    const isValidPassword = await user.comparePassword(currentPassword);
-    if (!isValidPassword) {
+    const isCurrentPasswordValid = await UserRepository.comparePassword(currentPassword, user.password);
+    
+    if (!isCurrentPasswordValid) {
       throw new Error('Senha atual incorreta');
     }
 
-    // Update password
-    user.password = newPassword;
-    await this.userRepository.save(user);
+    await UserRepository.update(userId, { password: newPassword });
   }
 
-  static async createDefaultRoles(): Promise<void> {
-    const roles = Object.values(UserRole);
-    
-    for (const roleName of roles) {
-      const existingRole = await this.roleRepository.findOne({
-        where: { name: roleName }
-      });
-
-      if (!existingRole) {
-        const role = this.roleRepository.create({
-          name: roleName,
-          description: Role.getDefaultPermissions(roleName).join(', '),
-          permissions: Role.getDefaultPermissions(roleName),
-          active: true
-        });
-
-        await this.roleRepository.save(role);
-        console.log(`Role ${roleName} criada com sucesso`);
-      }
-    }
-  }
-
-  static async createDefaultAdminUser(): Promise<void> {
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@portal.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-
-    const existingAdmin = await this.userRepository.findOne({
-      where: { email: adminEmail }
-    });
-
-    if (!existingAdmin) {
-      const adminRole = await this.roleRepository.findOne({
-        where: { name: UserRole.SYSTEM_ADMIN }
-      });
-
-      if (adminRole) {
-        const admin = this.userRepository.create({
-          email: adminEmail,
-          password: adminPassword,
-          name: 'Administrador do Sistema',
-          role: adminRole,
-          is_active: true
-        });
-
-        await this.userRepository.save(admin);
-        console.log('Usuário administrador criado com sucesso');
-      }
-    }
+  private static formatUserResponse(user: UserWithRelations): any {
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 }

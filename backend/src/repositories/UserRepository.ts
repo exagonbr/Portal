@@ -1,146 +1,228 @@
-import { BaseRepository } from './BaseRepository';
-import { User, CreateUserData, UpdateUserData, UserWithoutPassword } from '../models/User';
+import db from '../config/database';
+import bcrypt from 'bcryptjs';
+import { User, CreateUserData, UpdateUserData, UserWithRelations } from '../entities/User';
 
-export class UserRepository extends BaseRepository<User> {
-  constructor() {
-    super('users');
+export class UserRepository {
+  private static readonly TABLE_NAME = 'users';
+
+  static async findById(id: number): Promise<UserWithRelations | null> {
+    try {
+      const user = await db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .where('users.id', id)
+        .first();
+
+      if (!user) return null;
+
+      return this.mapUserWithRelations(user);
+    } catch (error) {
+      console.error('Erro ao buscar usuário por ID:', error);
+      throw error;
+    }
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return this.findOne({ email } as Partial<User>);
+  static async findByEmail(email: string): Promise<UserWithRelations | null> {
+    try {
+      const user = await db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .where('users.email', email)
+        .first();
+
+      if (!user) return null;
+
+      return this.mapUserWithRelations(user);
+    } catch (error) {
+      console.error('Erro ao buscar usuário por email:', error);
+      throw error;
+    }
   }
 
-  async findByInstitution(institutionId: string): Promise<User[]> {
-    return this.findAll({ institution_id: institutionId } as Partial<User>);
+  static async create(userData: CreateUserData): Promise<User> {
+    try {
+      // Hash da senha antes de salvar
+      if (userData.password) {
+        const salt = await bcrypt.genSalt(12);
+        userData.password = await bcrypt.hash(userData.password, salt);
+      }
+
+      const [user] = await db(this.TABLE_NAME)
+        .insert({
+          ...userData,
+          is_active: userData.is_active ?? true,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning('*');
+
+      return user;
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error);
+      throw error;
+    }
   }
 
-  async findByRole(roleId: string): Promise<User[]> {
-    return this.findAll({ role_id: roleId } as Partial<User>);
+  static async update(id: number, userData: UpdateUserData): Promise<User | null> {
+    try {
+      // Hash da senha se fornecida
+      if (userData.password) {
+        const salt = await bcrypt.genSalt(12);
+        userData.password = await bcrypt.hash(userData.password, salt);
+      }
+
+      const [user] = await db(this.TABLE_NAME)
+        .where('id', id)
+        .update({
+          ...userData,
+          updated_at: new Date()
+        })
+        .returning('*');
+
+      return user || null;
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      throw error;
+    }
   }
 
-  async createUser(data: CreateUserData): Promise<User> {
-    return this.create(data);
+  static async delete(id: number): Promise<boolean> {
+    try {
+      const deletedRows = await db(this.TABLE_NAME)
+        .where('id', id)
+        .del();
+
+      return deletedRows > 0;
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error);
+      throw error;
+    }
   }
 
-  async updateUser(id: string, data: UpdateUserData): Promise<User | null> {
-    return this.update(id, data);
+  static async findAll(limit?: number, offset?: number): Promise<UserWithRelations[]> {
+    try {
+      let query = db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .orderBy('users.created_at', 'desc');
+
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      if (offset) {
+        query = query.offset(offset);
+      }
+
+      const users = await query;
+      return users.map(user => this.mapUserWithRelations(user));
+    } catch (error) {
+      console.error('Erro ao buscar todos os usuários:', error);
+      throw error;
+    }
   }
 
-  async deleteUser(id: string): Promise<boolean> {
-    return this.delete(id);
+  static async findByInstitution(institutionId: number): Promise<UserWithRelations[]> {
+    try {
+      const users = await db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .where('users.institution_id', institutionId)
+        .orderBy('users.created_at', 'desc');
+
+      return users.map(user => this.mapUserWithRelations(user));
+    } catch (error) {
+      console.error('Erro ao buscar usuários por instituição:', error);
+      throw error;
+    }
   }
 
-  async findUserWithoutPassword(id: string): Promise<UserWithoutPassword | null> {
-    const user = await this.db(this.tableName)
-      .where('id', id)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at')
-      .first();
-    
-    return user || null;
+  static async comparePassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+    try {
+      return await bcrypt.compare(plainPassword, hashedPassword);
+    } catch (error) {
+      console.error('Erro ao comparar senhas:', error);
+      throw error;
+    }
   }
 
-  async findUsersWithoutPassword(filters?: Partial<User>): Promise<UserWithoutPassword[]> {
-    let query = this.db(this.tableName)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at');
+  static async count(): Promise<number> {
+    try {
+      const result = await db(this.TABLE_NAME).count('id as total').first();
+      return parseInt(result?.total as string) || 0;
+    } catch (error) {
+      console.error('Erro ao contar usuários:', error);
+      throw error;
+    }
+  }
 
-    if (filters) {
-      query = query.where(filters);
+  private static mapUserWithRelations(row: any): UserWithRelations {
+    const user: UserWithRelations = {
+      id: row.id,
+      version: row.version,
+      email: row.email,
+      password: row.password,
+      name: row.name,
+      cpf: row.cpf,
+      phone: row.phone,
+      birth_date: row.birth_date,
+      address: row.address,
+      city: row.city,
+      state: row.state,
+      zip_code: row.zip_code,
+      endereco: row.endereco,
+      telefone: row.telefone,
+      usuario: row.usuario,
+      unidade_ensino: row.unidade_ensino,
+      is_active: row.is_active,
+      role_id: row.role_id,
+      institution_id: row.institution_id,
+      created_at: row.created_at,
+      updated_at: row.updated_at
+    };
+
+    if (row.role_name) {
+      user.role = {
+        id: row.role_id,
+        name: row.role_name
+      };
     }
 
-    return query;
-  }
-
-  async searchUsers(searchTerm: string, institutionId?: string): Promise<UserWithoutPassword[]> {
-    let query = this.db(this.tableName)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at')
-      .where('name', 'ilike', `%${searchTerm}%`)
-      .orWhere('email', 'ilike', `%${searchTerm}%`);
-
-    if (institutionId) {
-      query = query.andWhere('institution_id', institutionId);
+    if (row.institution_name) {
+      user.institution = {
+        id: row.institution_id,
+        name: row.institution_name
+      };
     }
 
-    return query;
-  }
-
-  async getUsersWithRoleAndInstitution(): Promise<any[]> {
-    return this.db(this.tableName)
-      .select(
-        'users.id',
-        'users.email',
-        'users.name',
-        'users.endereco',
-        'users.telefone',
-        'users.school_id',
-        'users.is_active',
-        'users.created_at',
-        'users.updated_at',
-        'roles.name as role_name',
-        'institutions.name as institution_name',
-        'schools.name as school_name'
-      )
-      .leftJoin('roles', 'users.role_id', 'roles.id')
-      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-      .leftJoin('schools', 'users.school_id', 'schools.id');
-  }
-
-  async getUserWithRoleAndInstitution(id: string): Promise<User | null> {
-    const result = await this.db(this.tableName)
-      .select(
-        'users.id',
-        'users.email',
-        'users.name',
-        'users.endereco',
-        'users.telefone',
-        'users.school_id',
-        'users.is_active',
-        'users.created_at',
-        'users.updated_at',
-        'roles.name as role_name',
-        'institutions.name as institution_name',
-        'schools.name as school_name'
-      )
-      .leftJoin('roles', 'users.role_id', 'roles.id')
-      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-      .leftJoin('schools', 'users.school_id', 'schools.id')
-      .where('users.id', id)
-      .first();
-
-    return result || null;
-  }
-
-  async updateLastLogin(id: string): Promise<void> {
-    await this.db(this.tableName)
-      .where('id', id)
-      .update({ last_login: new Date() });
-  }
-
-  async getUserCourses(userId: string): Promise<any[]> {
-    // Get courses where user is a student
-    const studentCourses = await this.db('course_students')
-      .select(
-        'courses.*',
-        'course_students.progress',
-        'course_students.grades',
-        'course_students.enrolled_at',
-        this.db.raw("'student' as user_role")
-      )
-      .leftJoin('courses', 'course_students.course_id', 'courses.id')
-      .where('course_students.user_id', userId);
-
-    // Get courses where user is a teacher
-    const teacherCourses = await this.db('course_teachers')
-      .select(
-        'courses.*',
-        this.db.raw('NULL as progress'),
-        this.db.raw('NULL as grades'),
-        'course_teachers.assigned_at as enrolled_at',
-        this.db.raw("'teacher' as user_role")
-      )
-      .leftJoin('courses', 'course_teachers.course_id', 'courses.id')
-      .where('course_teachers.user_id', userId);
-
-    // Combine both results
-    return [...studentCourses, ...teacherCourses];
+    return user;
   }
 }

@@ -73,10 +73,10 @@ export class AuthController {
 
   static async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = parseInt((req as any).user?.userId);
       const sessionId = (req as any).sessionId;
       
-      if (!userId) {
+      if (!userId || isNaN(userId)) {
         return res.status(401).json({
           success: false,
           message: 'Usuário não autenticado'
@@ -103,11 +103,7 @@ export class AuthController {
       return res.json({
         success: true,
         data: {
-          user: {
-            ...userWithoutPassword,
-            role_name: user.role?.name,
-            institution_name: user.institution?.name
-          }
+          user: userWithoutPassword
         }
       });
     } catch (error: any) {
@@ -155,10 +151,10 @@ export class AuthController {
 
   static async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = parseInt((req as any).user?.userId);
       const sessionId = (req as any).sessionId;
 
-      if (!userId) {
+      if (!userId || isNaN(userId)) {
         return res.status(401).json({
           success: false,
           message: 'Usuário não autenticado'
@@ -183,7 +179,7 @@ export class AuthController {
 
   static async logout(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = parseInt((req as any).user?.userId);
       const sessionId = (req as any).sessionId || req.body.sessionId;
 
       if (sessionId) {
@@ -205,26 +201,26 @@ export class AuthController {
 
   static async logoutAllDevices(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = parseInt((req as any).user?.userId);
 
-      if (!userId) {
+      if (!userId || isNaN(userId)) {
         return res.status(401).json({
           success: false,
           message: 'Usuário não autenticado'
         });
       }
 
-      const removedCount = await AuthService.logoutAllDevices(userId);
+      const destroyedSessions = await AuthService.logoutAllDevices(userId);
 
       return res.json({
         success: true,
-        message: `Logout realizado em ${removedCount} dispositivos`,
-        removedSessions: removedCount
+        message: `${destroyedSessions} sessões encerradas`,
+        destroyedSessions
       });
     } catch (error: any) {
       return res.status(500).json({
         success: false,
-        message: 'Erro ao fazer logout de todos os dispositivos',
+        message: 'Erro ao encerrar todas as sessões',
         error: error.message
       });
     }
@@ -232,13 +228,20 @@ export class AuthController {
 
   static async changePassword(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = parseInt((req as any).user?.userId);
       const { currentPassword, newPassword } = req.body;
 
-      if (!userId) {
+      if (!userId || isNaN(userId)) {
         return res.status(401).json({
           success: false,
           message: 'Usuário não autenticado'
+        });
+      }
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Senha atual e nova senha são obrigatórias'
         });
       }
 
@@ -266,9 +269,9 @@ export class AuthController {
 
   static async getUserSessions(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
+      const userId = parseInt((req as any).user?.userId);
 
-      if (!userId) {
+      if (!userId || isNaN(userId)) {
         return res.status(401).json({
           success: false,
           message: 'Usuário não autenticado'
