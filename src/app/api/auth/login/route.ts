@@ -8,6 +8,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = body;
 
+    console.log('🔐 Tentativa de login para:', email);
+
     // Fazer requisição para o backend
     const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: 'POST',
@@ -18,25 +20,43 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
+    
+    console.log('📊 Status da resposta do backend:', response.status);
+    console.log('📊 Headers da resposta:', Object.fromEntries(response.headers.entries()));
+    console.log('📊 Dados retornados do backend:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
+      console.log('❌ Resposta não OK do backend');
       return NextResponse.json(
         { success: false, message: data.message || 'Erro ao fazer login' },
         { status: response.status }
       );
     }
 
+    // Verificar se o backend retornou success: true
+    if (!data.success) {
+      console.log('❌ Backend retornou success: false');
+      return NextResponse.json(
+        { success: false, message: data.message || 'Falha na autenticação' },
+        { status: 200 }
+      );
+    }
+
+    console.log('✅ Login bem-sucedido no backend, configurando cookies...');
+
     // Configurar cookies com os tokens recebidos do backend
     const cookieStore = cookies();
     
     // Token de acesso
-    cookieStore.set('auth_token', data.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 horas
-      path: '/',
-    });
+    if (data.token) {
+      cookieStore.set('auth_token', data.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24, // 24 horas
+        path: '/',
+      });
+    }
 
     // Token de refresh
     if (data.refreshToken) {
@@ -62,11 +82,11 @@ export async function POST(request: NextRequest) {
 
     // Dados do usuário (não sensíveis)
     const userData = {
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      role: data.user.role,
-      permissions: data.user.permissions || [],
+      id: data.user?.id,
+      name: data.user?.name,
+      email: data.user?.email,
+      role: data.user?.role,
+      permissions: data.user?.permissions || [],
     };
 
     cookieStore.set('user_data', encodeURIComponent(JSON.stringify(userData)), {
@@ -77,13 +97,15 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
+    console.log('✅ Retornando resposta de sucesso para o frontend');
+
     return NextResponse.json({
       success: true,
       user: userData,
       token: data.token,
     });
   } catch (error) {
-    console.error('Erro no login:', error);
+    console.error('❌ Erro no login:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

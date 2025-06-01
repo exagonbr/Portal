@@ -8,41 +8,45 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
   // Roles em inglês (padrão do sistema)
   'student': '/dashboard/student',
   'teacher': '/dashboard/teacher',
-  'admin': '/dashboard/admin',
-  'manager': '/dashboard/manager',
-  'system_admin': '/dashboard/admin',
+  'admin': '/dashboard/system-admin',
+  'manager': '/dashboard/institution-manager',
+  'system_admin': '/dashboard/system-admin',
   'institution_manager': '/dashboard/institution-manager',
   'academic_coordinator': '/dashboard/coordinator',
+  'coordinator': '/dashboard/coordinator',
   'guardian': '/dashboard/guardian',
   
   // Roles em português (vindas do backend) - lowercase
   'aluno': '/dashboard/student',
   'professor': '/dashboard/teacher',
-  'administrador': '/dashboard/admin',
-  'gestor': '/dashboard/manager',
+  'administrador': '/dashboard/system-admin',
+  'gestor': '/dashboard/institution-manager',
   'coordenador acadêmico': '/dashboard/coordinator',
+  'coordenador': '/dashboard/coordinator',
   'responsável': '/dashboard/guardian',
   
   // Roles em português com primeira letra maiúscula
   'Aluno': '/dashboard/student',
   'Professor': '/dashboard/teacher',
-  'Administrador': '/dashboard/admin',
-  'Gestor': '/dashboard/manager',
+  'Administrador': '/dashboard/system-admin',
+  'Gestor': '/dashboard/institution-manager',
   'Coordenador Acadêmico': '/dashboard/coordinator',
+  'Coordenador': '/dashboard/coordinator',
   'Responsável': '/dashboard/guardian',
   
   // Variações em maiúsculas
   'ALUNO': '/dashboard/student',
   'PROFESSOR': '/dashboard/teacher',
-  'ADMINISTRADOR': '/dashboard/admin',
-  'GESTOR': '/dashboard/manager',
+  'ADMINISTRADOR': '/dashboard/system-admin',
+  'GESTOR': '/dashboard/institution-manager',
   'COORDENADOR ACADÊMICO': '/dashboard/coordinator',
+  'COORDENADOR': '/dashboard/coordinator',
   'RESPONSÁVEL': '/dashboard/guardian',
   
-  // Roles do enum UserRole
+  // Roles do enum UserRole (CRÍTICO: SYSTEM_ADMIN deve ir para system-admin)
   'STUDENT': '/dashboard/student',
   'TEACHER': '/dashboard/teacher',
-  'SYSTEM_ADMIN': '/dashboard/admin',
+  'SYSTEM_ADMIN': '/dashboard/system-admin',
   'INSTITUTION_MANAGER': '/dashboard/institution-manager',
   'ACADEMIC_COORDINATOR': '/dashboard/coordinator',
   'GUARDIAN': '/dashboard/guardian'
@@ -65,17 +69,19 @@ export function normalizeRole(role: string | undefined | null): string | null {
     'estudante': 'student',
     'professor': 'teacher',
     'docente': 'teacher',
-    'administrador': 'admin',
-    'admin': 'admin',
-    'gestor': 'manager',
-    'gerente': 'manager',
+    'administrador': 'system_admin',
+    'admin': 'system_admin',
+    'system_admin': 'system_admin',
+    'gestor': 'institution_manager',
+    'gerente': 'institution_manager',
+    'institution_manager': 'institution_manager',
     'coordenador acadêmico': 'academic_coordinator',
     'coordenador': 'academic_coordinator',
+    'academic_coordinator': 'academic_coordinator',
     'responsável': 'guardian',
     'pai': 'guardian',
     'mãe': 'guardian',
-    'system_admin': 'admin',
-    'institution_manager': 'manager'
+    'guardian': 'guardian'
   };
   
   return roleVariations[normalized] || normalized;
@@ -88,13 +94,17 @@ export function normalizeRole(role: string | undefined | null): string | null {
  */
 export function getDashboardPath(role: string | undefined | null): string | null {
   if (!role) {
+    console.log('❌ getDashboardPath: role é null/undefined');
     return null;
   }
+
+  console.log(`🔍 getDashboardPath: buscando dashboard para role "${role}"`);
 
   // Primeiro tenta buscar exatamente como recebido
   let dashboardPath = ROLE_DASHBOARD_MAP[role];
   
   if (dashboardPath) {
+    console.log(`✅ getDashboardPath: encontrado diretamente - ${role} -> ${dashboardPath}`);
     return dashboardPath;
   }
 
@@ -104,6 +114,7 @@ export function getDashboardPath(role: string | undefined | null): string | null
     dashboardPath = ROLE_DASHBOARD_MAP[normalizedRole];
     
     if (dashboardPath) {
+      console.log(`✅ getDashboardPath: encontrado após normalização - ${role} -> ${normalizedRole} -> ${dashboardPath}`);
       return dashboardPath;
     }
   }
@@ -113,8 +124,12 @@ export function getDashboardPath(role: string | undefined | null): string | null
   dashboardPath = ROLE_DASHBOARD_MAP[lowercaseRole];
   
   if (dashboardPath) {
+    console.log(`✅ getDashboardPath: encontrado em lowercase - ${role} -> ${lowercaseRole} -> ${dashboardPath}`);
     return dashboardPath;
   }
+  
+  console.log(`❌ getDashboardPath: nenhum dashboard encontrado para role "${role}"`);
+  console.log(`🔍 Roles disponíveis:`, Object.keys(ROLE_DASHBOARD_MAP));
   
   return null;
 }
@@ -162,6 +177,36 @@ export function getAllValidRoles(): string[] {
 export function convertBackendRole(backendRole: string | undefined | null): string | null {
   if (!backendRole) return null;
   
+  console.log(`🔄 convertBackendRole: convertendo "${backendRole}"`);
+  
+  // Para SYSTEM_ADMIN, retorna diretamente
+  if (backendRole === 'SYSTEM_ADMIN') {
+    console.log(`✅ convertBackendRole: SYSTEM_ADMIN -> system_admin`);
+    return 'system_admin';
+  }
+  
   const normalized = normalizeRole(backendRole);
+  console.log(`✅ convertBackendRole: ${backendRole} -> ${normalized}`);
+  
   return normalized || backendRole.toLowerCase();
+}
+
+/**
+ * Função de teste para verificar o mapeamento de roles
+ */
+export function testRoleMapping() {
+  const testRoles = ['SYSTEM_ADMIN', 'TEACHER', 'STUDENT', 'GUARDIAN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR'];
+  
+  console.log('🧪 Testando mapeamento de roles:');
+  testRoles.forEach(role => {
+    const dashboard = getDashboardPath(role);
+    const normalized = convertBackendRole(role);
+    const valid = isValidRole(role);
+    
+    console.log(`  ${role}:`);
+    console.log(`    Dashboard: ${dashboard}`);
+    console.log(`    Normalizada: ${normalized}`);
+    console.log(`    Válida: ${valid}`);
+    console.log('');
+  });
 }

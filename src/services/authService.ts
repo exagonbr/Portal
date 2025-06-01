@@ -31,19 +31,10 @@ export class AuthService {
       
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/login`, loginData);
 
-      if (!response.success || !response.data) {
-        return {
-          success: false,
-          message: response.message || 'Falha na autenticação'
-        };
-      }
+      // Verifica se a resposta tem o formato esperado
+      const responseData = (response.data || response) as AuthResponseDto;
 
-      // O backend retorna { success: true, user: {...}, token: "...", expires_at: "..." }
-      // O apiClient coloca isso em response.data
-      // Então acessamos diretamente response.data.user, response.data.token, etc.
-      const { user, token, expires_at } = response.data;
-
-      if (!user || !token || !expires_at) {
+      if (!responseData.user || !responseData.token) {
         return {
           success: false,
           message: 'Resposta do servidor incompleta'
@@ -51,10 +42,15 @@ export class AuthService {
       }
 
       // Salva o token e dados do usuário
-      this.saveAuthData(token, user, expires_at);
+      this.saveAuthData(
+        responseData.token,
+        responseData.sessionId || '',
+        responseData.user,
+        responseData.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      );
 
       // Converte UserResponseDto para User (compatibilidade)
-      const compatibleUser = this.convertToCompatibleUser(user);
+      const compatibleUser = this.convertToCompatibleUser(responseData.user);
 
       return {
         success: true,
@@ -96,10 +92,8 @@ export class AuthService {
     institutionId?: string
   ): Promise<RegisterResponse> {
     try {
-      // Para registro, precisamos mapear o tipo para role_id
-      // Isso pode ser melhorado com um endpoint para buscar roles
       const roleMapping = {
-        'student': 'student-role-id', // Substituir pelos IDs reais
+        'student': 'student-role-id',
         'teacher': 'teacher-role-id'
       };
 
@@ -108,7 +102,7 @@ export class AuthService {
         email,
         password,
         role_id: roleMapping[type],
-        institution_id: institutionId || 'default-institution-id' // Substituir por ID real
+        institution_id: institutionId || 'default-institution-id'
       };
 
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/register`, registerData);
@@ -120,11 +114,9 @@ export class AuthService {
         };
       }
 
-      // O backend retorna { success: true, user: {...}, token: "...", expires_at: "..." }
-      // O apiClient coloca isso em response.data
-      const { user, token, expires_at } = response.data;
+      const { user, token, sessionId, expires_at } = response.data;
 
-      if (!user || !token || !expires_at) {
+      if (!user || !token || !sessionId || !expires_at) {
         return {
           success: false,
           message: 'Resposta do servidor incompleta'
@@ -132,7 +124,7 @@ export class AuthService {
       }
 
       // Salva o token e dados do usuário
-      this.saveAuthData(token, user, expires_at);
+      this.saveAuthData(token, sessionId, user, expires_at);
 
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(user);
@@ -241,186 +233,65 @@ export class AuthService {
   }
 
   /**
-   * Atualiza token de autenticação
+   * Salva dados de autenticação
    */
-  async refreshToken(): Promise<boolean> {
-    try {
-      const response = await apiClient.post<AuthResponseDto>('/auth/refresh');
-
-      if (!response.success || !response.data) {
-        this.clearAuthData();
-        return false;
-      }
-
-      const { token, expires_at } = response.data;
-      
-      // Atualiza token
-      apiClient.setAuthToken(token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_expires_at', expires_at);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Erro ao renovar token:', error);
-      this.clearAuthData();
-      return false;
-    }
-  }
-
-  /**
-   * Altera senha do usuário
-   */
-  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-    try {
-      const response = await apiClient.post('/users/me/change-password', {
-        currentPassword,
-        newPassword
-      });
-
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao alterar senha');
-      }
-    } catch (error) {
-      console.error('Erro ao alterar senha:', error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Solicita recuperação de senha
-   */
-  async requestPasswordReset(email: string): Promise<void> {
-    try {
-      const response = await apiClient.post('/auth/forgot-password', { email });
-
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao solicitar recuperação de senha');
-      }
-    } catch (error) {
-      console.error('Erro ao solicitar recuperação de senha:', error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Redefine senha com token
-   */
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    try {
-      const response = await apiClient.post('/auth/reset-password', {
-        token,
-        password: newPassword
-      });
-
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao redefinir senha');
-      }
-    } catch (error) {
-      console.error('Erro ao redefinir senha:', error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  // Métodos privados para gerenciamento de dados
-
-  private saveAuthData(token: string, user: UserResponseDto, expiresAt: string): void {
+  private saveAuthData(token: string, refreshToken: string, user: UserResponseDto, expiresAt: string): void {
     if (typeof window === 'undefined') return;
 
-    // Salva token
-    apiClient.setAuthToken(token);
-    
-    // Salva dados adicionais
-    localStorage.setItem('auth_expires_at', expiresAt);
-    
+    // Salva tokens
+    apiClient.setAuthToken(token, refreshToken, expiresAt);
+
     // Salva dados do usuário
-    const compatibleUser = this.convertToCompatibleUser(user);
-    this.saveUserData(compatibleUser);
+    this.saveUserData(this.convertToCompatibleUser(user));
   }
 
+  /**
+   * Salva dados do usuário
+   */
   private saveUserData(user: User): void {
     if (typeof window === 'undefined') return;
-
-    localStorage.setItem('user', JSON.stringify(user));
-    
-    // Também salva em cookie para SSR
-    const expires = new Date();
-    expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-    document.cookie = `user_data=${encodeURIComponent(JSON.stringify(user))};expires=${expires.toUTCString()};path=/;secure;samesite=strict`;
+    localStorage.setItem('user_data', JSON.stringify(user));
   }
 
+  /**
+   * Limpa dados de autenticação
+   */
   private clearAuthData(): void {
     if (typeof window === 'undefined') return;
-
-    // Limpa API client
+    
     apiClient.clearAuth();
-    
-    // Limpa localStorage
-    localStorage.removeItem('auth_expires_at');
-    localStorage.removeItem('user');
-    localStorage.removeItem('session_id');
-    
-    // Limpa cookies
-    const cookiesToClear = ['auth_token', 'user_data', 'session_id'];
-    cookiesToClear.forEach(cookieName => {
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
-    });
+    localStorage.removeItem('user_data');
   }
 
+  /**
+   * Obtém token armazenado
+   */
   private getStoredToken(): string | null {
     if (typeof window === 'undefined') return null;
-
-    // Tenta localStorage primeiro
-    const token = localStorage.getItem('auth_token');
-    if (token) return token;
-
-    // Fallback para cookies
-    const cookieToken = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('auth_token='))
-      ?.split('=')[1];
-
-    return cookieToken || null;
+    return localStorage.getItem('auth_token');
   }
 
+  /**
+   * Converte UserResponseDto para User
+   */
   private convertToCompatibleUser(apiUser: UserResponseDto): User {
-    // Mapear role_id para role baseado no UserWithRoleDto se disponível
-    let role: UserRole = 'student'; // default
-    if ('role_name' in apiUser) {
-      const roleMapping: Record<string, UserRole> = {
-        'Aluno': 'student',
-        'Professor': 'teacher',
-        'Gestor': 'manager',
-        'Administrador': 'admin',
-        'Coordenador Acadêmico': 'academic_coordinator',
-        'Responsável': 'guardian'
-      };
-      role = roleMapping[(apiUser as UserWithRoleDto).role_name] || 'student';
-    }
-
     return {
       id: apiUser.id,
       name: apiUser.name,
       email: apiUser.email,
-      role: role,
-      endereco: apiUser.endereco,
-      telefone: apiUser.telefone,
-      institution_id: apiUser.institution_id,
-      school_id: apiUser.school_id,
-      is_active: apiUser.is_active,
-      created_at: new Date(apiUser.created_at),
-      updated_at: new Date(apiUser.updated_at),
-      courses: [] // Será preenchido quando necessário
+      role: apiUser.role?.name?.toLowerCase() as UserRole || 'student',
+      permissions: apiUser.role?.permissions || [],
+      institutionId: apiUser.institution_id,
+      createdAt: apiUser.created_at,
+      updatedAt: apiUser.updated_at
     };
   }
 }
 
-// Instância singleton do serviço de autenticação
-export const authService = new AuthService();
+// Instância do serviço
+const authService = new AuthService();
 
-// Funções de conveniência para compatibilidade com código existente
+// Exporta funções do serviço
 export const login = (email: string, password: string) => authService.login(email, password);
 export const register = (name: string, email: string, password: string, type: 'student' | 'teacher') => 
   authService.register(name, email, password, type);
