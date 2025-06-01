@@ -123,7 +123,7 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
 const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick }: { 
   section: string, 
   items: NavItem[], 
-  pathname: string,
+  pathname: string | null,
   isCollapsed: boolean,
   onItemClick?: () => void
 }) => (

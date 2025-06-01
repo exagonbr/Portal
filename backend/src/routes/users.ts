@@ -1,10 +1,9 @@
 import express from 'express';
 import { validateJWT, requireRole } from '../middleware/auth';
-import { UserRepository } from '../repositories/UserRepository';
-import bcrypt from 'bcryptjs';
+import db from '../config/database';
+import bcrypt from 'bcrypt';
 
 const router = express.Router();
-const userRepository = new UserRepository();
 
 /**
  * @swagger
@@ -16,56 +15,84 @@ const userRepository = new UserRepository();
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: Filter by role
+ *       - in: query
  *         name: institution_id
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Filter users by institution ID
+ *         description: Filter by institution
  *       - in: query
- *         name: role
+ *         name: page
  *         schema:
- *           type: string
- *           enum: [admin, teacher, student]
- *         description: Filter users by role
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
  *     responses:
  *       200:
  *         description: List of users
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/User'
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
  */
-router.get('/', validateJWT, requireRole(['admin']), async (req, res) => {
+router.get('/', validateJWT, async (req, res) => {
   try {
-    const { institution_id, role } = req.query;
-    
-    let users;
-    
-    if (institution_id || role) {
-      // Filtrar por parâmetros específicos
-      const filters: any = {};
-      if (institution_id) filters.institution_id = institution_id;
-      if (role) {
-        // Buscar role_id pelo nome da role (seria necessário um join ou busca prévia)
-        // Por simplicidade, assumindo que role é o role_id
-        filters.role_id = role;
-      }
-      users = await userRepository.findUsersWithoutPassword(filters);
-    } else {
-      // Buscar todos os usuários com informações de role e instituição
-      users = await userRepository.getUsersWithRoleAndInstitution();
+    const { role, institution_id, page = 1, limit = 20 } = req.query;
+    const userInstitutionId = req.user?.institutionId;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    let query = db('users')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+      .select([
+        'users.id',
+        'users.name',
+        'users.email',
+        'users.is_active',
+        'users.created_at',
+        'users.updated_at',
+        'roles.name as role_name',
+        'institutions.name as institution_name'
+      ])
+      .where('users.is_active', true);
+
+    // Filtrar por instituição do usuário se não for admin
+    if (userInstitutionId && req.user?.role !== 'admin') {
+      query = query.where('users.institution_id', userInstitutionId);
     }
+
+    // Aplicar filtros
+    if (role) {
+      query = query.where('roles.name', role);
+    }
+
+    if (institution_id) {
+      query = query.where('users.institution_id', institution_id);
+    }
+
+    // Contar total
+    const totalQuery = query.clone();
+    const [{ count }] = await totalQuery.count('* as count');
+    const total = Number(count);
+
+    // Aplicar paginação
+    const users = await query
+      .orderBy('users.name')
+      .limit(Number(limit))
+      .offset(offset);
+
+    const totalPages = Math.ceil(total / Number(limit));
 
     res.json({
       success: true,
       data: users,
-      total: users.length
+      total,
+      page: Number(page),
+      totalPages
     });
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -105,7 +132,23 @@ router.get('/me', validateJWT, async (req, res) => {
       });
     }
 
-    const user = await userRepository.getUserWithRoleAndInstitution(userId);
+    const user = await db('users')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+      .select([
+        'users.id',
+        'users.name',
+        'users.email',
+        'users.phone',
+        'users.profile_picture',
+        'users.is_active',
+        'users.created_at',
+        'users.updated_at',
+        'roles.name as role_name',
+        'institutions.name as institution_name'
+      ])
+      .where('users.id', userId)
+      .first();
     
     if (!user) {
       return res.status(404).json({
@@ -172,7 +215,7 @@ router.put('/me', validateJWT, async (req, res) => {
     const { name, password, endereco, telefone } = req.body;
 
     // Verificar se o usuário existe
-    const existingUser = await userRepository.findById(userId);
+    const existingUser = await db('users').where('id', userId).first();
     if (!existingUser) {
       return res.status(404).json({
         success: false,
@@ -181,10 +224,12 @@ router.put('/me', validateJWT, async (req, res) => {
     }
 
     // Preparar dados para atualização (usuário só pode alterar dados pessoais)
-    const updateData: any = {};
+    const updateData: any = {
+      updated_at: new Date()
+    };
     if (name) updateData.name = name;
     if (endereco !== undefined) updateData.endereco = endereco;
-    if (telefone !== undefined) updateData.telefone = telefone;
+    if (telefone !== undefined) updateData.phone = telefone;
 
     // Hash da nova senha se fornecida
     if (password) {
@@ -195,14 +240,29 @@ router.put('/me', validateJWT, async (req, res) => {
         });
       }
       const saltRounds = 10;
-      updateData.password = await bcrypt.hash(password, saltRounds);
+      updateData.password_hash = await bcrypt.hash(password, saltRounds);
     }
 
     // Atualizar usuário
-    await userRepository.updateUser(userId, updateData);
+    await db('users').where('id', userId).update(updateData);
     
     // Buscar usuário atualizado com informações de role e instituição
-    const updatedUser = await userRepository.getUserWithRoleAndInstitution(userId);
+    const updatedUser = await db('users')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+      .select([
+        'users.id',
+        'users.name',
+        'users.email',
+        'users.phone',
+        'users.is_active',
+        'users.created_at',
+        'users.updated_at',
+        'roles.name as role_name',
+        'institutions.name as institution_name'
+      ])
+      .where('users.id', userId)
+      .first();
 
     return res.json({
       success: true,
@@ -236,30 +296,44 @@ router.put('/me', validateJWT, async (req, res) => {
  *     responses:
  *       200:
  *         description: User found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       404:
  *         description: User not found
  */
 router.get('/:id', validateJWT, async (req, res) => {
   try {
     const { id } = req.params;
-    
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID do usuário é obrigatório'
-      });
-    }
-    
-    const user = await userRepository.getUserWithRoleAndInstitution(id);
-    
+    const userInstitutionId = req.user?.institutionId;
+
+    const user = await db('users')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+      .select([
+        'users.id',
+        'users.name',
+        'users.email',
+        'users.phone',
+        'users.profile_picture',
+        'users.is_active',
+        'users.created_at',
+        'users.updated_at',
+        'roles.name as role_name',
+        'institutions.name as institution_name'
+      ])
+      .where('users.id', id)
+      .first();
+
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'Usuário não encontrado'
+      });
+    }
+
+    // Verificar permissões de acesso
+    if (userInstitutionId && user.institution_id !== userInstitutionId && req.user?.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Acesso negado'
       });
     }
 
@@ -291,53 +365,66 @@ router.get('/:id', validateJWT, async (req, res) => {
  *           schema:
  *             type: object
  *             required:
+ *               - name
  *               - email
  *               - password
- *               - name
- *               - role
+ *               - role_id
  *               - institution_id
  *             properties:
+ *               name:
+ *                 type: string
  *               email:
  *                 type: string
  *                 format: email
  *               password:
  *                 type: string
- *                 format: password
- *                 minLength: 8
- *               name:
+ *                 minLength: 6
+ *               phone:
  *                 type: string
- *               role:
+ *               role_id:
  *                 type: string
- *                 enum: [admin, teacher, student]
+ *                 format: uuid
  *               institution_id:
  *                 type: string
  *                 format: uuid
  *     responses:
  *       201:
  *         description: User created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       400:
  *         description: Invalid input
- *       409:
- *         description: Email already exists
  */
 router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
   try {
-    const { email, password, name, role_id, institution_id, endereco, telefone, usuario, unidade_ensino } = req.body;
+    const {
+      name,
+      email,
+      password,
+      phone,
+      role_id,
+      institution_id,
+      profile_picture
+    } = req.body;
+
+    const userInstitutionId = req.user?.institutionId;
 
     // Validar campos obrigatórios
-    if (!email || !password || !name || !role_id || !institution_id || !usuario) {
+    if (!name || !email || !password || !role_id || !institution_id) {
       return res.status(400).json({
         success: false,
-        message: 'Campos obrigatórios: email, password, name, role_id, institution_id, usuario'
+        message: 'Campos obrigatórios: name, email, password, role_id, institution_id'
       });
     }
 
-    // Verificar se o email já existe
-    const existingUser = await userRepository.findByEmail(email);
+    // Verificar se pode criar usuário nesta instituição
+    if (userInstitutionId && institution_id !== userInstitutionId && req.user?.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Você só pode criar usuários em sua própria instituição'
+      });
+    }
+
+    // Verificar se email já existe
+    const existingUser = await db('users').where('email', email).first();
     if (existingUser) {
       return res.status(409).json({
         success: false,
@@ -346,30 +433,26 @@ router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
     }
 
     // Hash da senha
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Criar usuário
     const userData = {
-      email,
-      password: hashedPassword,
       name,
+      email,
+      password_hash: hashedPassword,
+      phone,
       role_id,
       institution_id,
-      endereco,
-      telefone,
-      usuario,
-      unidade_ensino
+      profile_picture,
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date()
     };
 
-    const newUser = await userRepository.createUser(userData);
-    
-    // Buscar usuário criado com informações de role e instituição
-    const userWithDetails = await userRepository.getUserWithRoleAndInstitution(newUser.id);
+    const [newUser] = await db('users').insert(userData).returning(['id', 'name', 'email', 'is_active', 'created_at']);
 
     return res.status(201).json({
       success: true,
-      data: userWithDetails,
+      data: newUser,
       message: 'Usuário criado com sucesso'
     });
   } catch (error) {
@@ -403,41 +486,29 @@ router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
+ *               name:
+ *                 type: string
  *               email:
  *                 type: string
  *                 format: email
- *               name:
+ *               phone:
  *                 type: string
- *               role:
- *                 type: string
- *                 enum: [admin, teacher, student]
- *               institution_id:
- *                 type: string
- *                 format: uuid
+ *               is_active:
+ *                 type: boolean
  *     responses:
  *       200:
  *         description: User updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       404:
  *         description: User not found
  */
 router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, name, role_id, institution_id, endereco, telefone, usuario, unidade_ensino, password } = req.body;
+    const userInstitutionId = req.user?.institutionId;
 
-    // Verificar se o usuário existe
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID do usuário é obrigatório'
-      });
-    }
-    
-    const existingUser = await userRepository.findById(id);
+    // Verificar se usuário existe
+    const existingUser = await db('users').where('id', id).first();
+
     if (!existingUser) {
       return res.status(404).json({
         success: false,
@@ -445,10 +516,36 @@ router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
       });
     }
 
-    // Verificar se o email já está em uso por outro usuário
+    // Verificar permissões
+    if (userInstitutionId && existingUser.institution_id !== userInstitutionId && req.user?.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Você não tem permissão para editar este usuário'
+      });
+    }
+
+    const {
+      name,
+      email,
+      phone,
+      profile_picture,
+      is_active
+    } = req.body;
+
+    const updateData: any = {
+      updated_at: new Date()
+    };
+
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (profile_picture !== undefined) updateData.profile_picture = profile_picture;
+    if (is_active !== undefined) updateData.is_active = is_active;
+
+    // Verificar se novo email já existe (se alterado)
     if (email && email !== existingUser.email) {
-      const emailInUse = await userRepository.findByEmail(email);
-      if (emailInUse) {
+      const emailExists = await db('users').where('email', email).first();
+      if (emailExists) {
         return res.status(409).json({
           success: false,
           message: 'Email já está em uso'
@@ -456,28 +553,24 @@ router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
       }
     }
 
-    // Preparar dados para atualização
-    const updateData: any = {};
-    if (email) updateData.email = email;
-    if (name) updateData.name = name;
-    if (role_id) updateData.role_id = role_id;
-    if (institution_id) updateData.institution_id = institution_id;
-    if (endereco !== undefined) updateData.endereco = endereco;
-    if (telefone !== undefined) updateData.telefone = telefone;
-    if (usuario) updateData.usuario = usuario;
-    if (unidade_ensino !== undefined) updateData.unidade_ensino = unidade_ensino;
+    await db('users').where('id', id).update(updateData);
 
-    // Hash da nova senha se fornecida
-    if (password) {
-      const saltRounds = 10;
-      updateData.password = await bcrypt.hash(password, saltRounds);
-    }
-
-    // Atualizar usuário
-    await userRepository.updateUser(id, updateData);
-    
-    // Buscar usuário atualizado com informações de role e instituição
-    const updatedUser = await userRepository.getUserWithRoleAndInstitution(id);
+    const updatedUser = await db('users')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+      .select([
+        'users.id',
+        'users.name',
+        'users.email',
+        'users.phone',
+        'users.is_active',
+        'users.created_at',
+        'users.updated_at',
+        'roles.name as role_name',
+        'institutions.name as institution_name'
+      ])
+      .where('users.id', id)
+      .first();
 
     return res.json({
       success: true,
@@ -518,15 +611,8 @@ router.delete('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verificar se o usuário existe
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID do usuário é obrigatório'
-      });
-    }
-    
-    const existingUser = await userRepository.findById(id);
+    const existingUser = await db('users').where('id', id).first();
+
     if (!existingUser) {
       return res.status(404).json({
         success: false,
@@ -534,27 +620,17 @@ router.delete('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
       });
     }
 
-    // Não permitir que o admin delete a si mesmo
-    if (req.user?.userId === id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Não é possível deletar seu próprio usuário'
+    // Soft delete: marcar como inativo
+    await db('users')
+      .where('id', id)
+      .update({
+        is_active: false,
+        updated_at: new Date()
       });
-    }
-
-    // Deletar usuário
-    const deleted = await userRepository.deleteUser(id);
-    
-    if (!deleted) {
-      return res.status(500).json({
-        success: false,
-        message: 'Erro ao deletar usuário'
-      });
-    }
 
     return res.json({
       success: true,
-      message: 'Usuário deletado com sucesso'
+      message: 'Usuário removido com sucesso'
     });
   } catch (error) {
     console.error('Error deleting user:', error);
@@ -564,7 +640,6 @@ router.delete('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
     });
   }
 });
-
 
 export default router;
 

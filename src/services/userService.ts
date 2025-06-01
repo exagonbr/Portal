@@ -22,7 +22,7 @@ import {
 } from '../types/api';
 
 export class UserService {
-  private readonly baseEndpoint = '/users';
+  private readonly baseEndpoint = '/api/users';
 
   /**
    * Lista todos os usuários com filtros e paginação

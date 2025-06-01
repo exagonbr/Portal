@@ -20,7 +20,7 @@ export interface RegisterResponse {
 }
 
 export class AuthService {
-  private readonly baseEndpoint = '/auth';
+  private readonly baseEndpoint = '/api/auth';
 
   /**
    * Realiza login no sistema
@@ -38,7 +38,17 @@ export class AuthService {
         };
       }
 
+      // O backend retorna { success: true, user: {...}, token: "...", expires_at: "..." }
+      // O apiClient coloca isso em response.data
+      // Então acessamos diretamente response.data.user, response.data.token, etc.
       const { user, token, expires_at } = response.data;
+
+      if (!user || !token || !expires_at) {
+        return {
+          success: false,
+          message: 'Resposta do servidor incompleta'
+        };
+      }
 
       // Salva o token e dados do usuário
       this.saveAuthData(token, user, expires_at);
@@ -110,7 +120,16 @@ export class AuthService {
         };
       }
 
+      // O backend retorna { success: true, user: {...}, token: "...", expires_at: "..." }
+      // O apiClient coloca isso em response.data
       const { user, token, expires_at } = response.data;
+
+      if (!user || !token || !expires_at) {
+        return {
+          success: false,
+          message: 'Resposta do servidor incompleta'
+        };
+      }
 
       // Salva o token e dados do usuário
       this.saveAuthData(token, user, expires_at);

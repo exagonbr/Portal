@@ -9,99 +9,79 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Cores principais para ambiente educacional, empresarial, universitário e escolar.
-        // Paleta clara e profissional.
-        primary: { // Azul principal: amigável, profissional e moderno.
-          DEFAULT: '#4A90E2', // Azul médio (Tailwind blue-500ish)
-          dark: '#357ABD',    // Tom mais escuro para hover/active
-          light: '#7BB6F3'   // Tom mais claro para fundos ou destaques sutis
+        // Cores principais baseadas nas variáveis CSS do globals.css
+        primary: {
+          DEFAULT: 'var(--primary)',
+          dark: 'var(--primary-dark)',
+          light: 'var(--primary-light)'
         },
-        secondary: { // Cinza neutro: para texto secundário, bordas e fundos.
-          DEFAULT: '#A0AEC0', // Cinza médio (Tailwind gray-400)
-          dark: '#718096',    // Cinza mais escuro (Tailwind gray-500)
-          light: '#E2E8F0'   // Cinza claro (Tailwind gray-300)
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          dark: 'var(--secondary-dark)',
+          light: 'var(--secondary-light)'
         },
-        accent: { // Cores de destaque para interações e informações visuais.
-          blue: {
-            DEFAULT: '#3B82F6', // Azul vibrante (Tailwind blue-500)
-            dark: '#2563EB',
-            light: '#60A5FA'
-          },
-          green: {
-            DEFAULT: '#10B981', // Verde positivo (Tailwind emerald-500)
-            dark: '#059669',
-            light: '#34D399'
-          },
-          orange: {
-            DEFAULT: '#F59E0B', // Laranja para alertas (Tailwind amber-500)
-            dark: '#D97706',
-            light: '#FBBF24'
-          },
-          purple: { // Roxo suave para elementos criativos ou informativos.
-            DEFAULT: '#8B5CF6', // (Tailwind violet-500)
-            dark: '#7C3AED',
-            light: '#A78BFA'
-          },
-          yellow: { // Amarelo quente para avisos leves ou destaques.
-            DEFAULT: '#FBBF24', // (Tailwind amber-400)
-            dark: '#F59E0B',
-            light: '#FCD34D'
-          }
+        // Cores de destaque
+        accent: {
+          blue: 'var(--accent-blue)',
+          cyan: 'var(--accent-cyan)',
+          green: 'var(--accent-green)',
+          orange: 'var(--accent-orange)',
+          purple: 'var(--accent-purple)',
+          yellow: 'var(--accent-yellow)'
         },
-        // Cores de status semânticas
-        success: {
-          DEFAULT: '#10B981', // Verde (accent.green.DEFAULT)
-          dark: '#059669',
-          light: '#34D399',
-          text: '#065F46' // Texto escuro para contraste em fundo claro de sucesso
-        },
-        warning: {
-          DEFAULT: '#F59E0B', // Laranja (accent.orange.DEFAULT)
-          dark: '#D97706',
-          light: '#FBBF24',
-          text: '#9A3412' // Texto escuro para contraste
-        },
-        error: {
-          DEFAULT: '#EF4444', // Vermelho (Tailwind red-500)
-          dark: '#DC2626',
-          light: '#F87171',
-          text: '#991B1B' // Texto escuro para contraste
-        },
-        info: {
-          DEFAULT: '#3B82F6', // Azul (accent.blue.DEFAULT)
-          dark: '#2563EB',
-          light: '#60A5FA',
-          text: '#1E40AF' // Texto escuro para contraste
-        },
-        // Fundos claros para manter a leveza.
+        // Cores de status
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        error: 'var(--error)',
+        info: 'var(--info)',
+        // Backgrounds
         background: {
-          primary: '#FFFFFF',    // Fundo principal branco
-          secondary: '#F7FAFC',  // Cinza muito claro (Tailwind gray-50)
-          tertiary: '#EDF2F7'   // Cinza suave (Tailwind gray-100)
+          primary: 'var(--background-primary)',
+          secondary: 'var(--background-secondary)',
+          tertiary: 'var(--background-tertiary)',
+          card: 'var(--background-card)',
+          hover: 'var(--background-hover)'
         },
-        // Textos com bom contraste sobre fundos claros.
+        // Textos
         text: {
-          primary: '#1A202C',   // Cinza bem escuro, quase preto (Tailwind gray-900)
-          secondary: '#2D3748', // Cinza escuro (Tailwind gray-800)
-          tertiary: '#4A5568',  // Cinza médio (Tailwind gray-700)
-          disabled: '#A0AEC0'  // Cinza para texto desabilitado (secondary.DEFAULT)
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          tertiary: 'var(--text-tertiary)',
+          muted: 'var(--text-muted)'
         },
-        // Bordas suaves e claras.
+        // Bordas
         border: {
-          DEFAULT: '#E2E8F0', // Cinza claro (Tailwind gray-300)
-          light: '#EDF2F7',   // Cinza muito claro (Tailwind gray-200)
-          dark: '#CBD5E0'    // Cinza médio-claro (Tailwind gray-400)
+          DEFAULT: 'var(--border)',
+          light: 'var(--border-light)',
+          dark: 'var(--border-dark)'
         },
-        // Sidebar com tema claro.
-
+        // Sidebar
         sidebar: {
-          bg: '#0f3460',          // Fundo branco ou muito claro (background.primary)
-          hover: '#1e4d82',       // Fundo de hover sutil (background.tertiary)
-          active: '#1e40af',      // Fundo ativo com tom azulado claro (Tailwind indigo-100)
-          text: '#e2e8f0',        // Texto escuro (text.secondary)
-          textActive: '#ffffff',  // Texto ativo com cor primária ou de destaque (Tailwind indigo-700)
-          border: '#E2E8F0'       // Borda do sidebar (border.DEFAULT)
+          bg: 'var(--sidebar-bg)',
+          'bg-light': 'var(--sidebar-bg-light)',
+          hover: 'var(--sidebar-hover)',
+          active: 'var(--sidebar-active)',
+          text: 'var(--sidebar-text)',
+          'text-active': 'var(--sidebar-text-active)',
+          border: 'var(--sidebar-border)'
         }
+      },
+      // Configuração para ring colors
+      ringColor: {
+        primary: 'var(--primary)',
+        secondary: 'var(--secondary)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        error: 'var(--error)',
+        info: 'var(--info)',
+      },
+      // Configuração para border colors
+      borderColor: {
+        primary: 'var(--primary)',
+        secondary: 'var(--secondary)',
+        light: 'var(--border-light)',
+        dark: 'var(--border-dark)',
+        DEFAULT: 'var(--border)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',

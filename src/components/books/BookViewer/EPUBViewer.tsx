@@ -93,65 +93,64 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
 
   // Redimensionamento responsivo
   useEffect(() => {
+    if (!containerRef.current) return;
+
     let timeoutId: NodeJS.Timeout;
     let isObserving = false;
 
+    // Função de atualização de dimensões simplificada
     const updateDimensions = () => {
+      if (isObserving || !containerRef.current) return;
+      
+      isObserving = true;
       clearTimeout(timeoutId);
+      
       timeoutId = setTimeout(() => {
-        if (!containerRef.current || isObserving) return;
-        
-        isObserving = true;
-        
         try {
+          if (!containerRef.current) return;
+          
           const container = containerRef.current;
           const rect = container.getBoundingClientRect();
-          const availableWidth = rect.width - 40; // margem
-          const availableHeight = rect.height - 80; // margem + controles
           
           const newDimensions = {
-            width: Math.max(600, availableWidth),
-            height: Math.max(400, availableHeight)
+            width: Math.max(300, rect.width - 40), // Mínimo 300px com padding
+            height: Math.max(400, rect.height - 40) // Mínimo 400px com padding
           };
-          
-          // Só atualizar se houve mudança significativa (> 10px)
+
           setDimensions(prevDimensions => {
             const widthDiff = Math.abs(newDimensions.width - prevDimensions.width);
             const heightDiff = Math.abs(newDimensions.height - prevDimensions.height);
             
+            // Só atualizar se a diferença for significativa (mais que 10px)
             if (widthDiff > 10 || heightDiff > 10) {
               return newDimensions;
             }
             return prevDimensions;
           });
         } catch (error) {
-          // Ignorar erros do ResizeObserver
+          // Ignorar erros silenciosamente
         } finally {
           isObserving = false;
         }
-      }, 200); // Aumentar throttle para 200ms
+      }, 250); // Delay maior para evitar loops
     };
 
+    // Atualização inicial
     updateDimensions();
     
+    // Usar o ResizeObserver global otimizado
     let resizeObserver: ResizeObserver | null = null;
     
     try {
-      resizeObserver = new ResizeObserver((entries) => {
-        // Verificar se há mudanças significativas antes de processar
-        const entry = entries[0];
-        if (entry && entry.contentRect) {
-          updateDimensions();
-        }
+      resizeObserver = new ResizeObserver(() => {
+        updateDimensions();
       });
       
-      if (containerRef.current) {
-        resizeObserver.observe(containerRef.current);
-      }
+      resizeObserver.observe(containerRef.current);
     } catch (error) {
-      // Fallback para resize da window se ResizeObserver falhar
+      // Fallback para window resize se necessário
       const handleWindowResize = () => updateDimensions();
-      window.addEventListener('resize', handleWindowResize);
+      window.addEventListener('resize', handleWindowResize, { passive: true });
       
       return () => {
         clearTimeout(timeoutId);
@@ -169,7 +168,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
         }
       }
     };
-  }, []);
+  }, []); // Sem dependências para evitar recriações desnecessárias
 
   const initializeEPUB = useCallback(async () => {
     if (!viewerRef.current) return;

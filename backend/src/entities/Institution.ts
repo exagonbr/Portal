@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from './User';
 import { School } from './School';
+import { TvShow } from './TvShow';
 
 export enum InstitutionType {
   PUBLIC = 'PUBLIC',
@@ -68,6 +69,9 @@ export class Institution {
 
   @OneToMany(() => School, school => school.institution)
   schools: School[];
+
+  @OneToMany(() => TvShow, tvShow => tvShow.institution)
+  tvShows: TvShow[];
 
   @CreateDateColumn()
   created_at: Date;

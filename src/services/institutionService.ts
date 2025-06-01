@@ -24,7 +24,7 @@ export interface InstitutionListOptions {
 }
 
 export class InstitutionService {
-  private readonly baseEndpoint = '/institutions';
+  private readonly baseEndpoint = '/api/institutions';
 
   /**
    * Busca todas as instituições com paginação e filtros

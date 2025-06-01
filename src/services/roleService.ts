@@ -31,7 +31,7 @@ export interface RoleListOptions {
 }
 
 export class RoleService {
-  private readonly baseEndpoint = '/roles';
+  private readonly baseEndpoint = '/api/roles';
 
   /**
    * Busca todas as roles com paginação e filtros

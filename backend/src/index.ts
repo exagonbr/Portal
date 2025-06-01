@@ -6,8 +6,9 @@ import morgan from 'morgan';
 import * as dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
-// import testDatabaseConnection from "./config/database";
+import { testDatabaseConnection } from "./config/database";
 import { testRedisConnection } from './config/redis';
+import { initializeDatabase, closeDatabaseConnection } from './config/typeorm.config';
 import apiRoutes from './routes';
 
 // Carrega variáveis de ambiente
@@ -58,17 +59,12 @@ app.get('/health', (_, res) => {
 });
 
 // Swagger UI at /backend/docs
-app.use('/backend/docs', swaggerUi.serve);
-app.get('/backend/docs', swaggerUi.setup(swaggerSpec, {
+app.use('/docs', swaggerUi.serve);
+app.get('/docs', swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Portal Sabercon API Documentation',
   customfavIcon: '/favicon.ico',
 }));
-
-// Redirect /backend to /backend/docs
-app.get('/backend', (_, res) => {
-  res.redirect('/backend/docs');
-});
 
 // Mount API Routes
 app.use('/api', apiRoutes);
@@ -112,10 +108,14 @@ async function startServer() {
     // Testa conexões
     console.log('📊 Testando conexões...');
     
-    // const dbConnected = await testDatabaseConnection();
-    // if (!dbConnected) {
-    //   throw new Error('Falha na conexão com PostgreSQL');
-    // }
+    const dbConnected = await testDatabaseConnection();
+    if (!dbConnected) {
+      throw new Error('Falha na conexão com PostgreSQL');
+    }
+    
+    // Inicializa TypeORM DataSource
+    console.log('📊 Inicializando TypeORM...');
+    await initializeDatabase();
     
     const redisConnected = await testRedisConnection();
     if (!redisConnected) {
@@ -127,7 +127,7 @@ async function startServer() {
       console.log(`✅ Servidor rodando na porta ${PORT}`);
       console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
       console.log(`📋 Health check: http://localhost:${PORT}/health`);
-      console.log(`🔗 API: http://localhost:${PORT}/api`);
+      console.log(`🔗 API: http://localhost:${PORT}/docs`);
     });
     
   } catch (error) {
@@ -137,13 +137,15 @@ async function startServer() {
 }
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('🛑 SIGTERM recebido, encerrando servidor...');
+  await closeDatabaseConnection();
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('🛑 SIGINT recebido, encerrando servidor...');
+  await closeDatabaseConnection();
   process.exit(0);
 });
 

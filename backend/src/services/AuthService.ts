@@ -29,8 +29,14 @@ interface SessionData {
 }
 
 export class AuthService {
-  private static userRepository = AppDataSource.getRepository(User);
-  private static roleRepository = AppDataSource.getRepository(Role);
+  private static get userRepository() {
+    return AppDataSource.getRepository(User);
+  }
+  
+  private static get roleRepository() {
+    return AppDataSource.getRepository(Role);
+  }
+  
   private static redis = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
@@ -223,10 +229,10 @@ export class AuthService {
   }
 
   static async login(loginData: LoginDto, clientInfo: ClientInfo): Promise<AuthResponseDto> {
-    // Find user with role and institution
+    // Find user with role only (removing institution relation temporarily)
     const user = await this.userRepository.findOne({
       where: { email: loginData.email },
-      relations: ['role', 'institution']
+      relations: ['role']
     });
 
     if (!user) {
@@ -248,7 +254,7 @@ export class AuthService {
     const userForSession = {
       ...user,
       role_name: user.role.name,
-      institution_name: user.institution?.name
+      institution_name: null // Temporarily set to null
     };
     const sessionId = await this.createSession(userForSession, clientInfo);
 
@@ -262,7 +268,7 @@ export class AuthService {
       user: {
         ...userWithoutPassword,
         role_name: user.role.name,
-        institution_name: user.institution?.name
+        institution_name: null // Temporarily set to null
       } as any,
       token,
       sessionId,
@@ -353,7 +359,7 @@ export class AuthService {
   static async getUserById(userId: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['role', 'institution']
+      relations: ['role'] // Removing institution relation temporarily
     });
 
     return user;

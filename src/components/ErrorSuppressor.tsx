@@ -4,36 +4,107 @@ import { useEffect } from 'react';
 
 export default function ErrorSuppressor() {
   useEffect(() => {
-    // Suprimir o erro específico do ResizeObserver que é benigno
-    const originalError = console.error;
-    console.error = (...args) => {
-      // Verificar se é o erro específico do ResizeObserver
-      if (
-        args.length > 0 &&
-        typeof args[0] === 'string' &&
-        (args[0].includes('ResizeObserver loop completed with undelivered notifications') ||
-         args[0].includes('ResizeObserver loop limit exceeded') ||
-         args[0].includes('Script error') ||
-         args[0].includes('Non-Error promise rejection captured'))
-      ) {
-        // Ignorar este erro específico - é um problema conhecido e benigno
-        return;
-      }
-      // Para todos os outros erros, usar o comportamento normal
-      originalError.apply(console, args);
+    // Lista de padrões de erro relacionados ao ResizeObserver para suprimir
+    const resizeObserverErrorPatterns = [
+      'ResizeObserver loop completed with undelivered notifications',
+      'ResizeObserver loop limit exceeded',
+      'ResizeObserver loop',
+      'Script error',
+      'Non-Error promise rejection captured',
+      'ResizeObserver callback timeout',
+      'Unable to process ResizeObserver loop',
+      'ResizeObserver: callback timeout exceeded',
+      // Variações em inglês e português
+      'Erro do ResizeObserver',
+      'ResizeObserver erro',
+      'Observer loop error',
+      'Observation loop error'
+    ];
+
+    // Função para verificar se o erro deve ser suprimido
+    const shouldSuppressError = (message: string): boolean => {
+      if (!message || typeof message !== 'string') return false;
+      
+      return resizeObserverErrorPatterns.some(pattern => 
+        message.toLowerCase().includes(pattern.toLowerCase())
+      );
     };
 
-    // Também capturar erros não tratados do ResizeObserver
+    // Flags para prevenir recursão
+    let isProcessingError = false;
+    let isProcessingWarn = false;
+
+    // Sobrescrever console.error
+    const originalError = console.error;
+    console.error = (...args) => {
+      // Prevenir recursão
+      if (isProcessingError) {
+        return originalError(...args);
+      }
+
+      isProcessingError = true;
+
+      try {
+        // Verificar se é um erro do ResizeObserver
+        const firstArg = args[0];
+        
+        if (shouldSuppressError(String(firstArg))) {
+          // Ignorar completamente este erro
+          isProcessingError = false;
+          return;
+        }
+
+        // Verificar se algum dos argumentos contém mensagem relacionada
+        const hasResizeObserverError = args.some(arg => 
+          shouldSuppressError(String(arg))
+        );
+
+        if (hasResizeObserverError) {
+          isProcessingError = false;
+          return;
+        }
+
+        // Para todos os outros erros, usar o comportamento normal
+        originalError(...args);
+      } catch (error) {
+        // Em caso de erro durante o processamento, usar método original diretamente
+        originalError(...args);
+      } finally {
+        isProcessingError = false;
+      }
+    };
+
+    // Sobrescrever console.warn para casos onde o erro aparece como warning
+    const originalWarn = console.warn;
+    console.warn = (...args) => {
+      // Prevenir recursão
+      if (isProcessingWarn) {
+        return originalWarn(...args);
+      }
+
+      isProcessingWarn = true;
+
+      try {
+        const firstArg = args[0];
+        
+        if (shouldSuppressError(String(firstArg))) {
+          isProcessingWarn = false;
+          return;
+        }
+
+        originalWarn(...args);
+      } catch (error) {
+        originalWarn(...args);
+      } finally {
+        isProcessingWarn = false;
+      }
+    };
+
+    // Capturar erros globais não tratados
     const handleError = (event: ErrorEvent) => {
-      if (
-        event.message &&
-        (event.message.includes('ResizeObserver loop completed with undelivered notifications') ||
-         event.message.includes('ResizeObserver loop limit exceeded') ||
-         event.message.includes('Script error') ||
-         event.message.includes('Non-Error promise rejection captured'))
-      ) {
-        // Prevenir que o erro apareça no console
+      if (event.message && shouldSuppressError(event.message)) {
         event.preventDefault();
+        event.stopPropagation();
         return false;
       }
     };
@@ -41,26 +112,36 @@ export default function ErrorSuppressor() {
     // Capturar erros de promise rejeitadas não tratadas
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const reason = event.reason;
-      if (
-        reason &&
-        typeof reason === 'object' &&
-        reason.message &&
-        (reason.message.includes('ResizeObserver loop completed with undelivered notifications') ||
-         reason.message.includes('ResizeObserver loop limit exceeded'))
-      ) {
-        event.preventDefault();
-        return false;
+      
+      if (reason) {
+        let reasonMessage = '';
+        
+        // Extrair mensagem do erro de diferentes formas
+        if (typeof reason === 'string') {
+          reasonMessage = reason;
+        } else if (reason.message) {
+          reasonMessage = reason.message;
+        } else if (reason.toString) {
+          reasonMessage = reason.toString();
+        }
+
+        if (shouldSuppressError(reasonMessage)) {
+          event.preventDefault();
+          return false;
+        }
       }
     };
 
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    // Event listeners
+    window.addEventListener('error', handleError, true);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection, true);
 
     // Cleanup
     return () => {
       console.error = originalError;
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      console.warn = originalWarn;
+      window.removeEventListener('error', handleError, true);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection, true);
     };
   }, []);
 

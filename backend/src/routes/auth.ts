@@ -1,6 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { AuthService } from '../services/auth';
+import { AuthService } from '../services/AuthService';
 import { validateJWT } from '../middleware/auth';
 
 const router = express.Router();
@@ -78,7 +78,13 @@ router.post(
         });
       }
 
-      const result = await AuthService.register(req.body);
+      const clientInfo = {
+        ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown',
+        deviceInfo: 'web'
+      };
+
+      const result = await AuthService.register(req.body, clientInfo);
 
       return res.status(201).json({
         success: true,
@@ -157,7 +163,14 @@ router.post(
       }
 
       const { email, password } = req.body;
-      const result = await AuthService.login(email, password);
+      
+      const clientInfo = {
+        ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown',
+        deviceInfo: 'web'
+      };
+      
+      const result = await AuthService.login({ email, password }, clientInfo);
 
       return res.json({
         success: true,

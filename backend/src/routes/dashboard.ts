@@ -13,6 +13,7 @@ import {
   AuthenticatedRequest,
   requireRole 
 } from '../middleware/sessionMiddleware';
+import db from '../config/database';
 
 const router = express.Router();
 
@@ -533,5 +534,454 @@ router.get('/health',
     }
   }
 );
+
+/**
+ * @swagger
+ * /api/dashboard/teacher:
+ *   get:
+ *     summary: Get teacher dashboard data
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Teacher dashboard data
+ */
+router.get('/teacher', validateJWTAndSession, requireRole(['teacher']), async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+
+    // Buscar cursos do professor
+    const courses = await db('courses')
+      .where('teacher_id', userId)
+      .where('status', '!=', 'archived');
+
+    // Estatísticas básicas
+    const totalCourses = courses.length;
+    const activeCourses = courses.filter(course => course.status === 'published').length;
+
+    // Buscar estudantes únicos nos cursos (simulado - precisaria de tabela de matrículas)
+    const totalStudents = 0; // Seria calculado com base nas matrículas
+
+    // Buscar atividades recentes
+    const recentActivities = await db('content')
+      .join('modules', 'content.module_id', 'modules.id')
+      .join('courses', 'modules.course_id', 'courses.id')
+      .select([
+        'content.id',
+        'content.title',
+        'content.type',
+        'content.created_at',
+        'courses.title as course_title'
+      ])
+      .where('courses.teacher_id', userId)
+      .orderBy('content.created_at', 'desc')
+      .limit(10);
+
+    // Próximas aulas (simulado)
+    const upcomingClasses: any[] = []; // Seria baseado em um sistema de agendamento
+
+    const dashboardData = {
+      totalStudents,
+      totalCourses,
+      activeCourses,
+      averageAttendance: 0, // Seria calculado com base nos dados de presença
+      courses: courses.map(course => ({
+        id: course.id,
+        title: course.title,
+        status: course.status,
+        students_count: 0, // Seria calculado
+        created_at: course.created_at
+      })),
+      recentActivities,
+      upcomingClasses,
+      performance: {
+        coursesCreated: totalCourses,
+        contentCreated: recentActivities.length,
+        studentsEngaged: totalStudents
+      }
+    };
+
+    return res.json({
+      success: true,
+      data: dashboardData
+    });
+  } catch (error) {
+    console.error('Error fetching teacher dashboard:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/student:
+ *   get:
+ *     summary: Get student dashboard data
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Student dashboard data
+ */
+router.get('/student', validateJWTAndSession, requireRole(['student']), async (req, res) => {
+  try {
+    // Buscar cursos em que o estudante está matriculado (simulado)
+    const enrolledCourses = await db('courses')
+      .join('users as teachers', 'courses.teacher_id', 'teachers.id')
+      .select([
+        'courses.*',
+        'teachers.name as teacher_name'
+      ])
+      .where('courses.status', 'published')
+      .limit(10); // Simulado - seria baseado em matrículas
+
+    // Progresso dos cursos (simulado)
+    const courseProgress = enrolledCourses.map(course => ({
+      course_id: course.id,
+      course_title: course.title,
+      progress: Math.floor(Math.random() * 100), // Simulado
+      completed_modules: Math.floor(Math.random() * 10),
+      total_modules: Math.floor(Math.random() * 15) + 10
+    }));
+
+    // Atividades pendentes (simulado)
+    const pendingActivities = await db('content')
+      .join('modules', 'content.module_id', 'modules.id')
+      .join('courses', 'modules.course_id', 'courses.id')
+      .select([
+        'content.id',
+        'content.title',
+        'content.type',
+        'courses.title as course_title',
+        'content.created_at'
+      ])
+      .where('content.type', 'assignment')
+      .orderBy('content.created_at', 'desc')
+      .limit(5);
+
+    // Livros recentes
+    const recentBooks = await db('books')
+      .where('status', 'available')
+      .orderBy('created_at', 'desc')
+      .limit(5);
+
+    // Vídeos recentes
+    const recentVideos = await db('content')
+      .where('type', 'video')
+      .where('status', 'active')
+      .orderBy('created_at', 'desc')
+      .limit(5);
+
+    const dashboardData = {
+      enrolledCourses: enrolledCourses.length,
+      completedAssignments: 0, // Seria calculado
+      averageGrade: 0, // Seria calculado
+      attendanceRate: 0, // Seria calculado
+      courseProgress,
+      pendingActivities,
+      recentBooks,
+      recentVideos,
+      achievements: [], // Sistema de conquistas
+      upcomingDeadlines: [] // Prazos próximos
+    };
+
+    return res.json({
+      success: true,
+      data: dashboardData
+    });
+  } catch (error) {
+    console.error('Error fetching student dashboard:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/admin:
+ *   get:
+ *     summary: Get admin dashboard data
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Admin dashboard data
+ */
+router.get('/admin', validateJWTAndSession, requireRole(['admin']), async (req, res) => {
+  try {
+    const institutionId = req.user?.institutionId;
+
+    // Estatísticas gerais
+    let userQuery = db('users').where('is_active', true);
+    let courseQuery = db('courses').where('status', '!=', 'archived');
+    let bookQuery = db('books').where('status', 'available');
+
+    // Filtrar por instituição se não for super admin
+    if (institutionId) {
+      userQuery = userQuery.where('institution_id', institutionId);
+      courseQuery = courseQuery.where('institution_id', institutionId);
+      bookQuery = bookQuery.where('institution_id', institutionId);
+    }
+
+    const [
+      totalUsers,
+      totalCourses,
+      totalBooks,
+      totalInstitutions
+    ] = await Promise.all([
+      userQuery.count('* as count').first().then(result => Number(result?.count) || 0),
+      courseQuery.count('* as count').first().then(result => Number(result?.count) || 0),
+      bookQuery.count('* as count').first().then(result => Number(result?.count) || 0),
+      institutionId ? 1 : db('institutions').where('status', 'active').count('* as count').first().then(result => Number(result?.count) || 0)
+    ]);
+
+    // Distribuição de usuários por role
+    const usersByRole = await db('users')
+      .join('roles', 'users.role_id', 'roles.id')
+      .select('roles.name as role_name')
+      .count('users.id as count')
+      .where('users.is_active', true)
+      .modify(query => {
+        if (institutionId) {
+          query.where('users.institution_id', institutionId);
+        }
+      })
+      .groupBy('roles.name');
+
+    // Cursos mais populares (simulado)
+    const popularCourses = await courseQuery
+      .select(['id', 'title', 'created_at'])
+      .orderBy('created_at', 'desc')
+      .limit(5);
+
+    // Atividade recente
+    const recentActivity = await db('users')
+      .select(['name', 'email', 'created_at'])
+      .where('is_active', true)
+      .modify(query => {
+        if (institutionId) {
+          query.where('institution_id', institutionId);
+        }
+      })
+      .orderBy('created_at', 'desc')
+      .limit(10);
+
+    const dashboardData = {
+      overview: {
+        totalUsers,
+        totalCourses,
+        totalBooks,
+        totalInstitutions
+      },
+      usersByRole,
+      popularCourses,
+      recentActivity,
+      systemHealth: {
+        database: 'online',
+        redis: 'online',
+        storage: 'online'
+      }
+    };
+
+    return res.json({
+      success: true,
+      data: dashboardData
+    });
+  } catch (error) {
+    console.error('Error fetching admin dashboard:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/coordinator:
+ *   get:
+ *     summary: Get coordinator dashboard data
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Coordinator dashboard data
+ */
+router.get('/coordinator', validateJWTAndSession, requireRole(['coordinator', 'admin']), async (req, res) => {
+  try {
+    const institutionId = req.user?.institutionId;
+
+    if (!institutionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Coordenador deve estar associado a uma instituição'
+      });
+    }
+
+    // Estatísticas da instituição
+    const [
+      totalStudents,
+      totalTeachers,
+      totalCourses,
+      activeCourses
+    ] = await Promise.all([
+      db('users').join('roles', 'users.role_id', 'roles.id')
+        .where('users.institution_id', institutionId)
+        .where('roles.name', 'student')
+        .where('users.is_active', true)
+        .count('* as count').first().then(result => Number(result?.count) || 0),
+      db('users').join('roles', 'users.role_id', 'roles.id')
+        .where('users.institution_id', institutionId)
+        .where('roles.name', 'teacher')
+        .where('users.is_active', true)
+        .count('* as count').first().then(result => Number(result?.count) || 0),
+      db('courses')
+        .where('institution_id', institutionId)
+        .count('* as count').first().then(result => Number(result?.count) || 0),
+      db('courses')
+        .where('institution_id', institutionId)
+        .where('status', 'published')
+        .count('* as count').first().then(result => Number(result?.count) || 0)
+    ]);
+
+    // Performance dos cursos
+    const coursePerformance = await db('courses')
+      .join('users as teachers', 'courses.teacher_id', 'teachers.id')
+      .select([
+        'courses.id',
+        'courses.title',
+        'courses.status',
+        'courses.created_at',
+        'teachers.name as teacher_name'
+      ])
+      .where('courses.institution_id', institutionId)
+      .orderBy('courses.created_at', 'desc')
+      .limit(10);
+
+    // Professores mais ativos
+    const activeTeachers = await db('users')
+      .join('roles', 'users.role_id', 'roles.id')
+      .leftJoin('courses', 'users.id', 'courses.teacher_id')
+      .select([
+        'users.id',
+        'users.name',
+        'users.email'
+      ])
+      .count('courses.id as course_count')
+      .where('users.institution_id', institutionId)
+      .where('roles.name', 'teacher')
+      .where('users.is_active', true)
+      .groupBy('users.id', 'users.name', 'users.email')
+      .orderBy('course_count', 'desc')
+      .limit(5);
+
+    const dashboardData = {
+      overview: {
+        totalStudents,
+        totalTeachers,
+        totalCourses,
+        activeCourses,
+        averageAttendance: 0, // Seria calculado com dados de presença
+        completionRate: 0 // Seria calculado com dados de progresso
+      },
+      coursePerformance,
+      activeTeachers,
+      monthlyStats: [], // Estatísticas mensais
+      alerts: [] // Alertas do sistema
+    };
+
+    return res.json({
+      success: true,
+      data: dashboardData
+    });
+  } catch (error) {
+    console.error('Error fetching coordinator dashboard:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/dashboard/guardian:
+ *   get:
+ *     summary: Get guardian dashboard data
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Guardian dashboard data
+ */
+router.get('/guardian', validateJWTAndSession, requireRole(['guardian']), async (req, res) => {
+  try {
+    // Buscar filhos/estudantes associados ao responsável (simulado)
+    // Seria necessária uma tabela de relacionamento guardians_students
+    const students = await db('users')
+      .join('roles', 'users.role_id', 'roles.id')
+      .select([
+        'users.id',
+        'users.name',
+        'users.email'
+      ])
+      .where('roles.name', 'student')
+      .where('users.is_active', true)
+      .limit(3); // Simulado
+
+    // Para cada estudante, buscar informações acadêmicas
+    const studentsData = await Promise.all(
+      students.map(async (student) => {
+        // Cursos do estudante (simulado)
+        const courses = await db('courses')
+          .select(['id', 'title'])
+          .where('status', 'published')
+          .limit(3);
+
+        return {
+          id: student.id,
+          name: student.name,
+          email: student.email,
+          grade: '9º Ano', // Simulado
+          averageGrade: 8.5, // Simulado
+          attendance: 95, // Simulado
+          courses: courses.length,
+          upcomingActivities: [] // Atividades próximas
+        };
+      })
+    );
+
+    const dashboardData = {
+      students: studentsData,
+      notifications: [], // Notificações para responsáveis
+      calendar: [], // Eventos do calendário escolar
+      summary: {
+        totalStudents: studentsData.length,
+        averageGrade: studentsData.reduce((acc, s) => acc + s.averageGrade, 0) / studentsData.length || 0,
+        averageAttendance: studentsData.reduce((acc, s) => acc + s.attendance, 0) / studentsData.length || 0
+      }
+    };
+
+    return res.json({
+      success: true,
+      data: dashboardData
+    });
+  } catch (error) {
+    console.error('Error fetching guardian dashboard:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
 
 export default router; 

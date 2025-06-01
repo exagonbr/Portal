@@ -1,23 +1,53 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
-  Bars3Icon,
-  MagnifyingGlassIcon,
-  Squares2X2Icon,
-  AdjustmentsHorizontalIcon,
-  Square2StackIcon,
-  DocumentArrowUpIcon,
-  BookOpenIcon
-} from '@heroicons/react/24/outline';
+  Search,
+  Grid,
+  List,
+  Filter,
+  Upload,
+  BookOpen,
+  Settings,
+  Eye,
+  Star,
+  Clock,
+  TrendingUp,
+  Download,
+  Users,
+  Book,
+  Library
+} from 'lucide-react';
 import BookCard from '../../../components/BookCard';
-import { mockBooks, Book } from '../../../constants/mockData';
 import ImportFilesModal from '../../../components/ImportFilesModal';
 import { s3Service } from '../../../services/s3Service';
 import { useToast } from '../../../components/Toast';
 import SimpleCarousel from '../../../components/SimpleCarousel';
-import { carouselBookImages } from '../../../constants/mockData';
 import OptimizedViewer from '../../../components/books/BookViewer/OptimizedViewer';
+import { apiService } from '../../../services/api';
+
+interface BookType {
+  id: string;
+  title: string;
+  author: string;
+  isbn?: string;
+  description?: string;
+  publisher?: string;
+  publication_year?: number;
+  language?: string;
+  pages?: number;
+  category?: string;
+  cover_url?: string;
+  file_url?: string;
+  file_type?: string;
+  file_size?: number;
+  status: 'available' | 'unavailable';
+  institution_id: string;
+  institution_name?: string;
+  created_at: string;
+  updated_at: string;
+  progress?: number;
+}
 
 interface Filters {
   search: string;
@@ -37,6 +67,12 @@ const showTypes = [
   { value: 'notStarted', label: 'Não Iniciados' }
 ];
 
+const carouselBookImages: string[] = [
+  '/images/books/book1.jpg',
+  '/images/books/book2.jpg',
+  '/images/books/book3.jpg'
+];
+
 export default function BooksPage() {
   const [filters, setFilters] = useState<Filters>({
     search: '',
@@ -47,51 +83,55 @@ export default function BooksPage() {
     showType: 'all'
   });
 
+  const [books, setBooks] = useState<BookType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [selectedBook, setSelectedBook] = useState<BookType | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const { showToast } = useToast();
 
+  // Carregar livros da API
+  useEffect(() => {
+    const loadBooks = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getBooks({
+          search: filters.search || undefined
+        });
+
+        if (response.success && Array.isArray(response.data)) {
+          setBooks(response.data);
+        } else {
+          setBooks([]);
+          showToast({ type: 'error', message: 'Erro ao carregar livros' });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar livros:', error);
+        showToast({ type: 'error', message: 'Erro ao carregar livros' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBooks();
+  }, [filters.search, showToast]);
+
   // Filtrar e ordenar livros
   const filteredBooks = useMemo(() => {
-    let result = [...mockBooks];
-
-    // Filtro de busca
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        book =>
-          book.title.toLowerCase().includes(searchLower) ||
-          book.author.toLowerCase().includes(searchLower) ||
-          book.publisher.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Filtro de categoria
-    if (filters.category !== 'all') {
-      result = result.filter(book => 
-        book.title.includes(filters.category)
-      );
-    }
+    let result = [...books];
 
     // Filtro de formato
     if (filters.format !== 'all') {
-      result = result.filter(book => book.format?.toUpperCase() === filters.format);
+      result = result.filter(book => book.file_type?.toUpperCase() === filters.format);
     }
 
-    // Filtro por tipo de progresso
+    // Filtro por tipo de progresso (simulado - seria necessário implementar no backend)
     if (filters.showType !== 'all') {
-      switch (filters.showType) {
-        case 'inProgress':
-          result = result.filter(book => book.progress && book.progress > 0 && book.progress < 100);
-          break;
-        case 'completed':
-          result = result.filter(book => book.progress === 100);
-          break;
-        case 'notStarted':
-          result = result.filter(book => !book.progress || book.progress === 0);
-          break;
+      // Por enquanto, todos os livros são considerados "não iniciados"
+      // Isso seria implementado com dados reais de progresso do usuário
+      if (filters.showType !== 'notStarted') {
+        result = [];
       }
     }
 
@@ -102,15 +142,13 @@ export default function BooksPage() {
           return a.title.localeCompare(b.title);
         case 'author':
           return a.author.localeCompare(b.author);
-        case 'progress':
-          return ((b.progress || 0) - (a.progress || 0));
         case 'recent':
-          return a.id.localeCompare(b.id);
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         default:
           return 0;
       }
     });
-  }, [filters]);
+  }, [books, filters]);
 
   const handleImport = async (files: File[]) => {
     if (!window.confirm(`Confirma a importação de ${files.length} arquivo(s)?`)) {
@@ -143,6 +181,12 @@ export default function BooksPage() {
         }
 
         showToast({ type: 'success', message: `${file.name} importado com sucesso!` });
+        
+        // Recarregar livros após importação
+        const booksResponse = await apiService.getBooks({ search: undefined });
+        if (booksResponse.success && Array.isArray(booksResponse.data)) {
+          setBooks(booksResponse.data);
+        }
       } catch (error) {
         console.error(error);
         showToast({ 
@@ -153,7 +197,7 @@ export default function BooksPage() {
     }
   };
 
-  const handleBookOpen = useCallback((book: Book) => {
+  const handleBookOpen = useCallback((book: BookType) => {
     try {
       console.log('📖 Tentando abrir livro:', book);
       
@@ -170,8 +214,8 @@ export default function BooksPage() {
         return;
       }
       
-      if (!book.format || (book.format !== 'pdf' && book.format !== 'epub')) {
-        console.error('❌ Formato do livro inválido:', book.format);
+      if (!book.file_type || (book.file_type.toLowerCase() !== 'pdf' && book.file_type.toLowerCase() !== 'epub')) {
+        console.error('❌ Formato do livro inválido:', book.file_type);
         showToast({ type: 'error', message: 'Erro: Formato de livro não suportado' });
         return;
       }
@@ -198,245 +242,387 @@ export default function BooksPage() {
     showToast({ type: 'success', message: 'Anotação adicionada com sucesso!' });
   }, [showToast]);
 
-  const handleHighlightAdd = useCallback((highlight: any) => {
-    console.log('Destaque adicionado:', highlight);
-    showToast({ type: 'success', message: 'Destaque adicionado com sucesso!' });
-  }, [showToast]);
-
-  const handleBookmarkAdd = useCallback((bookmark: any) => {
-    console.log('Marcador adicionado:', bookmark);
-    showToast({ type: 'success', message: 'Marcador adicionado com sucesso!' });
-  }, [showToast]);
-
-  // Se o visualizador estiver aberto, mostrar apenas ele
-  if (isViewerOpen && selectedBook) {
-    // Verificação adicional de segurança
-    if (!selectedBook || !selectedBook.id) {
-      console.error('❌ Erro: selectedBook inválido no render');
-      setIsViewerOpen(false);
-      setSelectedBook(null);
-      showToast({ type: 'error', message: 'Erro: Dados do livro corrompidos' });
-      return null;
-    }
-
-    return (
-      <div className="h-screen w-full overflow-hidden">
-        <OptimizedViewer
-          book={selectedBook}
-          onBack={handleCloseViewer}
-          onAnnotationAdd={handleAnnotationAdd}
-          onHighlightAdd={handleHighlightAdd}
-          onBookmarkAdd={handleBookmarkAdd}
-        />
-      </div>
-    );
-  }
+  const updateFilters = (updates: Partial<Filters>) => {
+    setFilters(prev => ({ ...prev, ...updates }));
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Seção Hero com Carrossel - Sem título sobreposto */}
-      <section className="relative w-full h-[300px] lg:h-[350px] bg-gradient-to-b from-gray-900 to-gray-800 mb-6">
-        <SimpleCarousel images={carouselBookImages} autoplaySpeed={4000} />
-      </section>
-
-      {/* Barra de Filtros Aprimorada */}
-      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          {/* Linha principal com busca e controles */}
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-4">
-            
-            {/* Barra de Busca */}
-            <div className="flex-1 max-w-2xl">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={filters.search}
-                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                  placeholder="Buscar por título, autor ou editora..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <div className="min-h-screen bg-background-secondary">
+      {/* Header */}
+      <div className="bg-background-card border-b border-border-light sticky top-0 z-10 backdrop-blur-xl">
+        <div className="container-responsive py-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center">
+                <Library className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="page-title">Biblioteca Digital</h1>
+                <p className="page-subtitle">Acesse seus livros e materiais educacionais</p>
               </div>
             </div>
 
-            {/* Controles de Visualização e Botão Importar */}
-            <div className="flex flex-wrap gap-3 items-center">
-              
-              {/* Toggle de Visualização */}
-              <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, view: 'grid' }))}
-                  className={`p-2 rounded-md transition-all ${
-                    filters.view === 'grid'
-                      ? 'bg-white shadow text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                  title="Visualização em grade"
-                >
-                  <Squares2X2Icon className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, view: 'list' }))}
-                  className={`p-2 rounded-md transition-all ${
-                    filters.view === 'list'
-                      ? 'bg-white shadow text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                  title="Visualização em lista"
-                >
-                  <Bars3Icon className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, view: 'cover' }))}
-                  className={`p-2 rounded-md transition-all ${
-                    filters.view === 'cover'
-                      ? 'bg-white shadow text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                  title="Visualização em capa"
-                >
-                  <Square2StackIcon className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Botão Importar */}
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsImportModalOpen(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+                className="button-primary group inline-flex items-center gap-2"
               >
-                <DocumentArrowUpIcon className="w-5 h-5" />
+                <Upload className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
                 Importar Livros
+              </button>
+              <button className="button-icon">
+                <Settings className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Segunda linha com filtros */}
-          <div className="flex flex-wrap gap-3 items-center">
-            
-            {/* Filtro Categoria */}
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {category === 'all' ? 'Todas as Categorias' : category}
-                </option>
-              ))}
-            </select>
-
-            {/* Filtro Formato */}
-            <select
-              value={filters.format}
-              onChange={(e) => setFilters(prev => ({ ...prev, format: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              {formats.map(format => (
-                <option key={format} value={format}>
-                  {format === 'all' ? 'Todos os Formatos' : format}
-                </option>
-              ))}
-            </select>
-
-            {/* Filtros de Progresso */}
-            <div className="flex flex-wrap gap-2">
-              {showTypes.map(type => (
-                <button
-                  key={type.value}
-                  onClick={() =>
-                    setFilters(prev => ({
-                      ...prev,
-                      showType: type.value as Filters['showType']
-                    }))
-                  }
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    filters.showType === type.value
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Ordenação */}
-            <select
-              value={filters.orderBy}
-              onChange={(e) => setFilters(prev => ({ ...prev, orderBy: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="title">Título</option>
-              <option value="author">Autor</option>
-              <option value="progress">Progresso</option>
-              <option value="recent">Mais Recentes</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Grid de Livros com Layout Responsivo */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div
-          className={`${
-            filters.view === 'cover'
-              ? 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-4'
-              : filters.view === 'grid'
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6'
-              : 'space-y-4'
-          }`}
-        >
-          {filteredBooks.map(book => (
-            <div key={book.id} className="h-full">
-              <BookCard
-                viewMode={filters.view}
-                id={book.id}
-                thumbnail={book.thumbnail}
-                title={book.title}
-                author={book.author}
-                publisher={book.publisher}
-                synopsis={book.synopsis}
-                duration={book.duration}
-                progress={book.progress}
-                format={book.format}
-                pageCount={book.pageCount}
-                onBookOpen={() => handleBookOpen(book)}
+          {/* Search and Filters */}
+          <div className="flex flex-col lg:flex-row gap-4 mt-6">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Buscar livros por título, autor ou editora..."
+                value={filters.search}
+                onChange={(e) => updateFilters({ search: e.target.value })}
+                className="input-field-modern pl-10"
               />
             </div>
-          ))}
-        </div>
-
-        {/* Mensagem quando não há livros */}
-        {filteredBooks.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpenIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhum livro encontrado
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Tente ajustar os filtros ou importar novos livros.
-            </p>
-            <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 inline-flex items-center gap-2"
-            >
-              <DocumentArrowUpIcon className="w-5 h-5" />
-              Importar Primeiro Livro
-            </button>
+            
+            <div className="flex items-center gap-3 flex-wrap">
+              <select
+                value={filters.category}
+                onChange={(e) => updateFilters({ category: e.target.value })}
+                className="input-field-modern min-w-[150px]"
+              >
+                <option value="all">Todas as matérias</option>
+                {categories.slice(1).map(category => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+              
+              <select
+                value={filters.showType}
+                onChange={(e) => updateFilters({ showType: e.target.value as any })}
+                className="input-field-modern min-w-[150px]"
+              >
+                {showTypes.map(type => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+              
+              <select
+                value={filters.orderBy}
+                onChange={(e) => updateFilters({ orderBy: e.target.value })}
+                className="input-field-modern min-w-[120px]"
+              >
+                <option value="title">Título</option>
+                <option value="author">Autor</option>
+                <option value="recent">Recentes</option>
+              </select>
+              
+              <div className="flex items-center gap-1 bg-background-tertiary rounded-xl p-1">
+                <button
+                  onClick={() => updateFilters({ view: 'grid' })}
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    filters.view === 'grid' 
+                      ? 'bg-primary text-white shadow-lg' 
+                      : 'text-text-secondary hover:text-primary hover:bg-background-hover'
+                  }`}
+                >
+                  <Grid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => updateFilters({ view: 'list' })}
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    filters.view === 'list' 
+                      ? 'bg-primary text-white shadow-lg' 
+                      : 'text-text-secondary hover:text-primary hover:bg-background-hover'
+                  }`}
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <button className="button-icon">
+                <Filter className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Espaço adicional no final para garantir rolagem completa */}
-        <div className="h-20"></div>
+        </div>
       </div>
 
-      {/* Modal de Importação */}
-      <ImportFilesModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        onImport={handleImport}
-      />
+      <div className="container-responsive py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-8">
+            {/* Featured Carousel */}
+            <div className="card-modern overflow-hidden">
+              <div className="p-6">
+                <h2 className="section-title mb-4 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-accent-yellow" />
+                  Livros em Destaque
+                </h2>
+                <SimpleCarousel images={carouselBookImages} />
+              </div>
+            </div>
+
+            {/* Books Grid/List */}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="section-title">
+                  Minha Biblioteca ({filteredBooks.length} livros)
+                </h2>
+                <div className="text-sm text-text-tertiary">
+                  Ordenado por: {
+                    filters.orderBy === 'title' ? 'Título' :
+                    filters.orderBy === 'author' ? 'Autor' : 'Recentes'
+                  }
+                </div>
+              </div>
+              
+              {filteredBooks.length > 0 ? (
+                <div className={
+                  filters.view === 'grid' 
+                    ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                    : 'space-y-4'
+                }>
+                  {filteredBooks.map((book) => (
+                    <div
+                      key={book.id}
+                      className={
+                        filters.view === 'list'
+                          ? 'card hover-lift cursor-pointer'
+                          : 'group'
+                      }
+                      onClick={() => handleBookOpen(book)}
+                    >
+                      {filters.view === 'list' ? (
+                        <div className="p-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-20 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <BookOpen className="w-8 h-8 text-primary" />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-bold text-text-primary group-hover:text-primary transition-colors line-clamp-1">
+                                {book.title}
+                              </h3>
+                              <p className="text-sm text-text-secondary mt-1">
+                                por {book.author}
+                              </p>
+                              <p className="text-xs text-text-tertiary mt-1">
+                                {book.publisher}
+                              </p>
+                              
+                              {book.progress !== undefined && (
+                                <div className="mt-3">
+                                  <div className="flex items-center justify-between text-xs text-text-tertiary mb-1">
+                                    <span>Progresso</span>
+                                    <span>{book.progress}%</span>
+                                  </div>
+                                  <div className="w-full bg-background-tertiary rounded-full h-2">
+                                    <div 
+                                      className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-300"
+                                      style={{ width: `${book.progress}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                              <span className={`badge ${
+                                book.file_type?.toUpperCase() === 'PDF' ? 'badge-primary' : 'badge-info'
+                              }`}>
+                                {book.file_type?.toUpperCase() || 'PDF'}
+                              </span>
+                              <button className="button-icon opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <BookCard 
+                          book={book} 
+                          onOpen={() => handleBookOpen(book)}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="w-24 h-24 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <BookOpen className="w-12 h-12 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold text-text-primary mb-2">
+                    Nenhum livro encontrado
+                  </h3>
+                  <p className="text-text-secondary mb-6">
+                    Tente ajustar os filtros ou importe novos livros para sua biblioteca
+                  </p>
+                  <button
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="button-primary"
+                  >
+                    Importar Livros
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Stats */}
+            <div className="card-modern">
+              <div className="p-6">
+                <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  Estatísticas
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="stat-card">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="stat-label">Total de Livros</p>
+                        <p className="stat-value text-primary">{books.length}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <Book className="w-6 h-6 text-primary" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="stat-card">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="stat-label">Em Progresso</p>
+                        <p className="stat-value text-secondary">
+                          {books.filter(b => b.progress && b.progress > 0 && b.progress < 100).length}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-secondary" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="stat-card">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="stat-label">Concluídos</p>
+                        <p className="stat-value text-accent-green">
+                          {books.filter(b => b.progress === 100).length}
+                        </p>
+                      </div>
+                      <div className="w-12 h-12 bg-accent-green/10 rounded-xl flex items-center justify-center">
+                        <Star className="w-6 h-6 text-accent-green" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="card-modern">
+              <div className="p-6">
+                <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-accent-orange" />
+                  Atividade Recente
+                </h3>
+                
+                <div className="space-y-3">
+                  {books.slice(0, 4).map((book, index) => (
+                    <div key={book.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-background-hover transition-colors cursor-pointer">
+                      <div className="w-8 h-10 bg-gradient-to-br from-primary/20 to-secondary/20 rounded flex items-center justify-center flex-shrink-0">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary line-clamp-1">
+                          {book.title}
+                        </p>
+                        <p className="text-xs text-text-tertiary">
+                          {book.author}
+                        </p>
+                      </div>
+                      {book.progress !== undefined && (
+                        <div className="text-xs text-text-tertiary">
+                          {book.progress}%
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="card-modern">
+              <div className="p-6">
+                <h3 className="font-bold text-text-primary mb-4">Ações Rápidas</h3>
+                
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-background-hover transition-colors text-left group"
+                  >
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Upload className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-text-primary font-medium">Importar Livros</span>
+                  </button>
+                  
+                  <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-background-hover transition-colors text-left group">
+                    <div className="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center group-hover:bg-secondary/20 transition-colors">
+                      <Download className="w-5 h-5 text-secondary" />
+                    </div>
+                    <span className="text-text-primary font-medium">Baixar Offline</span>
+                  </button>
+                  
+                  <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-background-hover transition-colors text-left group">
+                    <div className="w-10 h-10 bg-accent-green/10 rounded-xl flex items-center justify-center group-hover:bg-accent-green/20 transition-colors">
+                      <Users className="w-5 h-5 text-accent-green" />
+                    </div>
+                    <span className="text-text-primary font-medium">Compartilhar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Import Modal */}
+      {isImportModalOpen && (
+        <ImportFilesModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onImport={handleImport}
+          acceptedTypes={['.pdf', '.epub']}
+          maxFiles={10}
+          title="Importar Livros"
+          description="Selecione arquivos PDF ou EPUB para adicionar à sua biblioteca"
+        />
+      )}
+
+      {/* Book Viewer */}
+      {isViewerOpen && selectedBook && (
+        <OptimizedViewer
+          book={selectedBook}
+          isOpen={isViewerOpen}
+          onClose={handleCloseViewer}
+          onAnnotationAdd={handleAnnotationAdd}
+        />
+      )}
     </div>
   );
 }

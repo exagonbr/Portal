@@ -1,413 +1,238 @@
-import {User, UserEssentials, TokenPayload, Permission, UserRole} from '../types/auth';
-import {getSession, signOut} from 'next-auth/react';
-import {MOCK_USERS} from '../constants/mockData';
+import { apiService } from './api';
+import { UserEssentials, Permission } from '@/types/auth';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role_name: string;
+  institution_id?: string;
+  institution_name?: string;
+  is_active: boolean;
+  profile_picture?: string;
+  phone?: string;
+}
 
 export interface LoginResponse {
   success: boolean;
+  data?: {
+    token: string;
+    user: UserEssentials;
+  };
   user?: UserEssentials;
-  token?: string;
-  expiresAt?: number;
   message?: string;
+  error?: string;
 }
 
 export interface RegisterResponse {
   success: boolean;
-  user?: UserEssentials;
-  token?: string;
-  expiresAt?: number;
   message?: string;
+  error?: string;
 }
 
-// Configuration constants
-const AUTH_CONFIG = {
-  COOKIES: {
-    AUTH_TOKEN: 'auth_token',
-    SESSION_ID: 'session_id',
-    USER_DATA: 'user_data'
-  },
-  STORAGE_KEYS: {
-    AUTH_TOKEN: 'auth_token',
-    USER: 'user'
-  },
-  DEFAULT_COOKIE_DAYS: 7
-} as const;
+class AuthService {
+  private user: User | null = null;
 
-// Cookie management utilities
-class CookieManager {
-  static set(name: string, value: string, days: number = AUTH_CONFIG.DEFAULT_COOKIE_DAYS): void {
-    if (typeof window === 'undefined') return;
-    
-    const expires = new Date();
-    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
-  }
-
-  static remove(name: string): void {
-    if (typeof window === 'undefined') return;
-    
-    const domains = [
-      '', // Current domain
-      window.location.hostname,
-      `.${window.location.hostname}`
-    ];
-
-    const paths = ['/', ''];
-
-    // Try removing cookie with different domain and path combinations
-    domains.forEach(domain => {
-      paths.forEach(path => {
-        const domainPart = domain ? `;domain=${domain}` : '';
-        const pathPart = path ? `;path=${path}` : '';
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart}`;
-      });
-    });
-  }
-
-  static clearAll(): void {
-    if (typeof window === 'undefined') return;
-
-    // Get all cookies
-    const cookies = document.cookie.split(';');
-    
-    // Remove each cookie
-    cookies.forEach(cookie => {
-      const eqPos = cookie.indexOf('=');
-      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-      if (name) {
-        this.remove(name);
+  async login(email: string, password: string): Promise<LoginResponse> {
+    try {
+      const response = await apiService.login(email, password);
+      
+      if (response.success && response.data && typeof response.data === 'object') {
+        const data = response.data as any;
+        if (data.token && data.user) {
+          const { token, user } = data;
+          
+          // Armazenar token
+          apiService.setAuthToken(token);
+          
+          // Armazenar usuário
+          this.user = user as User;
+          localStorage.setItem('user', JSON.stringify(user));
+          
+          const userEssentials = this.convertToUserEssentials(user as User);
+          
+          return {
+            success: true,
+            data: { token, user: userEssentials },
+            user: userEssentials
+          };
+        }
       }
-    });
-  }
-
-  static clearAuthCookies(): void {
-    Object.values(AUTH_CONFIG.COOKIES).forEach(cookieName => {
-      this.remove(cookieName);
-    });
-  }
-}
-
-// Local storage utilities
-class StorageManager {
-  static get(key: string): string | null {
-    if (typeof window === 'undefined') return null;
-    try {
-      return localStorage.getItem(key);
+      
+      return {
+        success: false,
+        error: response.error || 'Erro no login'
+      };
     } catch (error) {
-      console.error(`Error getting localStorage item ${key}:`, error);
-      return null;
+      return {
+        success: false,
+        error: 'Erro de conexão'
+      };
     }
   }
 
-  static set(key: string, value: string): void {
-    if (typeof window === 'undefined') return;
+  async logout(): Promise<void> {
     try {
-      localStorage.setItem(key, value);
+      await apiService.logout();
     } catch (error) {
-      console.error(`Error setting localStorage item ${key}:`, error);
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      // Limpar dados locais
+      this.user = null;
+      apiService.removeAuthToken();
+      localStorage.removeItem('user');
     }
   }
 
-  static remove(key: string): void {
-    if (typeof window === 'undefined') return;
+  async register(userData: {
+    name: string;
+    email: string;
+    password: string;
+    role_id: string;
+    institution_id: string;
+    phone?: string;
+  }): Promise<LoginResponse> {
     try {
-      localStorage.removeItem(key);
+      const response = await apiService.register(userData);
+      
+      if (response.success) {
+        // Após registro bem-sucedido, fazer login automático para obter o usuário
+        const loginResponse = await this.login(userData.email, userData.password);
+        return loginResponse;
+      }
+      
+      return {
+        success: false,
+        error: response.error || 'Erro no registro'
+      };
     } catch (error) {
-      console.error(`Error removing localStorage item ${key}:`, error);
+      return {
+        success: false,
+        error: 'Erro de conexão'
+      };
     }
   }
 
-  static clearAuthData(): void {
-    Object.values(AUTH_CONFIG.STORAGE_KEYS).forEach(key => {
-      this.remove(key);
-    });
-  }
-}
+  async getCurrentUser(): Promise<UserEssentials | null> {
+    // Verificar se já temos o usuário em memória
+    if (this.user) {
+      return this.convertToUserEssentials(this.user);
+    }
 
-// Session management
-class SessionManager {
-  static async invalidateRedisSession(sessionId: string): Promise<boolean> {
+    // Verificar se há usuário no localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        this.user = JSON.parse(storedUser) as User;
+        return this.convertToUserEssentials(this.user);
+      } catch (error) {
+        console.error('Erro ao parsing do usuário armazenado:', error);
+      }
+    }
+
+    // Buscar usuário atual da API
     try {
-      const response = await fetch('/api/sessions/invalidate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
-      });
-      return response.ok;
+      const response = await apiService.getProfile();
+      if (response.success && response.data) {
+        this.user = response.data as User;
+        localStorage.setItem('user', JSON.stringify(this.user));
+        return this.convertToUserEssentials(this.user);
+      }
     } catch (error) {
-      console.error('Error invalidating Redis session:', error);
+      console.error('Erro ao buscar usuário atual:', error);
+    }
+
+    return null;
+  }
+
+  // Função auxiliar para converter User para UserEssentials
+  private convertToUserEssentials(user: User): UserEssentials {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role_name as any, // Conversão de role_name para role
+      permissions: [] // Adicionar lógica para mapear permissões se necessário
+    };
+  }
+
+  async updateProfile(userData: Partial<User>): Promise<{ success: boolean; error?: string }> {
+    try {
+      const currentUser = await this.getCurrentUser();
+      if (!currentUser) {
+        return { success: false, error: 'Usuário não autenticado' };
+      }
+
+      const response = await apiService.updateUser(currentUser.id, userData);
+      
+      if (response.success && response.data) {
+        this.user = response.data as User;
+        localStorage.setItem('user', JSON.stringify(this.user));
+        return { success: true };
+      }
+      
+      return {
+        success: false,
+        error: response.error || 'Erro ao atualizar perfil'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Erro de conexão'
+      };
+    }
+  }
+
+  isAuthenticated(): boolean {
+    const token = apiService.getAuthToken();
+    return !!token;
+  }
+
+  hasRole(role: string): boolean {
+    return this.user?.role_name === role;
+  }
+
+  hasAnyRole(roles: string[]): boolean {
+    return this.user?.role_name ? roles.includes(this.user.role_name) : false;
+  }
+
+  getUserInstitutionId(): string | null {
+    return this.user?.institution_id || null;
+  }
+
+  // Método para validar se o token ainda é válido
+  async validateToken(): Promise<boolean> {
+    try {
+      const response = await apiService.getProfile();
+      return response.success;
+    } catch (error) {
       return false;
     }
   }
-
-  static getSessionId(): string | null {
-    if (typeof window === 'undefined') return null;
-    
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === AUTH_CONFIG.COOKIES.SESSION_ID) {
-        return value;
-      }
-    }
-    return null;
-  }
 }
 
-// User management functions
-export const listUsers = async (): Promise<User[]> => {
-  return Object.values(MOCK_USERS);
-};
+export const authService = new AuthService();
 
-export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
-  const newUser: User = {
-    ...userData,
-    id: Math.random().toString(36).substr(2, 9),
-    name: userData.name || '',
-    email: userData.email || '',
-    role: (userData.role as UserRole) || 'student'
+// Funções legadas para compatibilidade
+export const login = authService.login.bind(authService);
+export const logout = authService.logout.bind(authService);
+export const getCurrentUser = authService.getCurrentUser.bind(authService);
+
+// Wrapper para register que aceita a assinatura esperada pelo AuthContext
+export const register = (name: string, email: string, password: string, type: 'student' | 'teacher') => {
+  // Mapear tipo para role_id (você pode ajustar esses IDs conforme necessário)
+  const roleMapping = {
+    'student': 'student-role-id',
+    'teacher': 'teacher-role-id'
   };
-  MOCK_USERS[userData.email] = newUser;
-  return newUser;
-};
-
-export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
-  const user = Object.values(MOCK_USERS).find(u => u.id === id);
-  if (!user) return null;
-
-  const updatedUser: User = { ...user, ...userData };
-  MOCK_USERS[user.email] = updatedUser;
-  return updatedUser;
-};
-
-/**
- * Extrai apenas os campos essenciais do usuário para autenticação
- */
-export const extractUserEssentials = (user: User): UserEssentials => {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: (user.role as UserRole),
-    permissions: (user.permissions as Permission[])
-  };
-};
-
-export const deleteUser = async (id: string): Promise<boolean> => {
-  const user = Object.values(MOCK_USERS).find(u => u.id === id);
-  if (!user) return false;
-
-  delete MOCK_USERS[user.email];
-  return true;
-};
-
-// Authentication functions
-export const login = async (email: string, password: string): Promise<LoginResponse> => {
-  try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Erro ao fazer login');
-    }
-
-    // Extrair apenas os campos essenciais do usuário
-    const userEssentials = data.user ? extractUserEssentials(data.user) : undefined;
-    
-    // Armazenar dados do usuário no localStorage para acesso rápido
-    if (userEssentials) {
-      StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.USER, JSON.stringify(userEssentials));
-      if (data.token) {
-        StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.token);
-      }
-    }
-
-    return {
-      success: true,
-      user: userEssentials,
-      token: data.token,
-      expiresAt: data.expiresAt
-    };
-  } catch (error) {
-    console.error('Erro no login:', error);
-    throw error;
-  }
-};
-
-export const register = async (
-    name: string,
-    email: string,
-    password: string,
-    type: 'student' | 'teacher'
-): Promise<RegisterResponse> => {
-  try {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        role: type
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Erro ao registrar usuário');
-    }
-
-    // Extrair apenas os campos essenciais do usuário
-    const userEssentials = data.user ? extractUserEssentials(data.user) : undefined;
-    
-    // Armazenar dados do usuário no localStorage para acesso rápido
-    if (userEssentials) {
-      StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.USER, JSON.stringify(userEssentials));
-      if (data.token) {
-        StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.token);
-      }
-    }
-
-    return {
-      success: true,
-      user: userEssentials,
-      token: data.token,
-      expiresAt: data.expiresAt,
-      message: data.message,
-    };
-  } catch (error) {
-    console.error('Erro no registro:', error);
-    throw error;
-  }
-};
-
-export const getCurrentUser = async (): Promise<UserEssentials | null> => {
-  // First try to get user from NextAuth session
-  const session = await getSession();
-  if (session?.user) {
-    return {
-      id: Math.random().toString(36).substr(2, 9), // Generate random ID for Google users
-      name: session.user.name || '',
-      email: session.user.email || '',
-      role: 'teacher' as UserRole,
-      permissions: []
-    };
-  }
-
-  // If no NextAuth session, try local storage
-  const userStr = StorageManager.get(AUTH_CONFIG.STORAGE_KEYS.USER);
-  if (userStr) {
-    try {
-      const userData = JSON.parse(userStr);
-      // Garantir que estamos retornando apenas os campos essenciais
-      if (userData.id && userData.email) {
-        return {
-          id: userData.id,
-          email: userData.email,
-          name: userData.name || '',
-          role: (userData.role as UserRole) || 'student',
-          permissions: (userData.permissions as Permission[]) || []
-        };
-      }
-      return null;
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      return null;
-    }
-  }
-  return null;
-};
-
-export const logout = async (): Promise<void> => {
-  console.log('Iniciando processo de logout...');
   
-  try {
-    // 1. Chamar API de logout
-    const response = await fetch('/api/auth/logout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      console.error('Erro na resposta do logout:', response.status);
-    }
-    
-    // 2. Sign out from NextAuth (se ainda estiver usando)
-    try {
-      console.log('Fazendo logout do NextAuth...');
-      await signOut({ redirect: false });
-    } catch (error) {
-      console.error('Erro ao fazer logout do NextAuth:', error);
-    }
-    
-    // 3. Clear local storage
-    console.log('Limpando localStorage...');
-    StorageManager.clearAuthData();
-    
-    // 4. Clear authentication cookies (fallback)
-    console.log('Limpando cookies de autenticação (fallback)...');
-    CookieManager.clearAuthCookies();
-    
-    // 5. Small delay to ensure all operations complete
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    console.log('Logout concluído com sucesso');
-  } catch (error) {
-    console.error('Erro durante logout:', error);
-    
-    // Fallback: force clear everything even if some operations failed
-    try {
-      StorageManager.clearAuthData();
-      CookieManager.clearAuthCookies();
-    } catch (fallbackError) {
-      console.error('Erro no fallback de logout:', fallbackError);
-    }
-    
-    throw error;
-  }
+  return authService.register({
+    name,
+    email,
+    password,
+    role_id: roleMapping[type],
+    institution_id: 'default-institution-id' // Ajuste conforme necessário
+  });
 };
 
-export const isAuthenticated = async (): Promise<boolean> => {
-  try {
-    // Primeiro verificar NextAuth
-    const session = await getSession();
-    if (session) return true;
-
-    // Depois verificar token local
-    const token = StorageManager.get(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN);
-    if (!token && typeof window !== 'undefined') {
-      // Verificar cookies como fallback
-      const hasCookie = document.cookie.includes(`${AUTH_CONFIG.COOKIES.AUTH_TOKEN}=`);
-      if (!hasCookie) return false;
-    }
-
-    // Validar token com o backend
-    const response = await fetch('/api/auth/validate', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return data.valid;
-    }
-
-    return false;
-  } catch (error) {
-    console.error('Erro ao verificar autenticação:', error);
-    return false;
-  }
-};
+export default authService; 

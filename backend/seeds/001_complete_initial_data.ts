@@ -143,40 +143,34 @@ export async function seed(knex: Knex): Promise<void> {
   // 3. Inserir roles
   const roles = await knex('roles').insert([
     {
-      name: 'Aluno',
+      name: 'STUDENT',
       description: 'Estudante com acesso ao conteúdo educacional',
-      type: 'system',
-      status: 'active'
+      active: true
     },
     {
-      name: 'Professor',
+      name: 'TEACHER',
       description: 'Educador responsável pelo ensino e avaliação',
-      type: 'system',
-      status: 'active'
+      active: true
     },
     {
-      name: 'Gestor',
+      name: 'INSTITUTION_MANAGER',
       description: 'Gerente institucional com acesso administrativo',
-      type: 'system',
-      status: 'active'
+      active: true
     },
     {
-      name: 'Administrador',
+      name: 'SYSTEM_ADMIN',
       description: 'Administrador com acesso total ao sistema',
-      type: 'system',
-      status: 'active'
+      active: true
     },
     {
-      name: 'Coordenador Acadêmico',
+      name: 'ACADEMIC_COORDINATOR',
       description: 'Coordenador responsável pela gestão acadêmica',
-      type: 'system',
-      status: 'active'
+      active: true
     },
     {
-      name: 'Responsável',
+      name: 'GUARDIAN',
       description: 'Responsável pelos estudantes',
-      type: 'system',
-      status: 'active'
+      active: true
     }
   ]).returning('*');
 
@@ -193,7 +187,7 @@ export async function seed(knex: Knex): Promise<void> {
 
   // 5. Definir permissões por role
   const rolePermissionsMap = {
-    'Aluno': [
+    'STUDENT': [
       'students.communicate',
       'schedule.view.own',
       'grades.view.own',
@@ -205,7 +199,7 @@ export async function seed(knex: Knex): Promise<void> {
       'forum.access',
       'student.portal.access'
     ],
-    'Professor': [
+    'TEACHER': [
       'attendance.manage',
       'grades.manage',
       'lessons.manage',
@@ -221,7 +215,7 @@ export async function seed(knex: Knex): Promise<void> {
       'teachers.message',
       'announcements.receive'
     ],
-    'Gestor': [
+    'INSTITUTION_MANAGER': [
       'users.manage.institution',
       'classes.manage',
       'analytics.view.institution',
@@ -238,7 +232,7 @@ export async function seed(knex: Knex): Promise<void> {
       'grades.manage',
       'students.view'
     ],
-    'Administrador': [
+    'SYSTEM_ADMIN': [
       'admin.access',
       'users.manage',
       'roles.manage',
@@ -261,7 +255,7 @@ export async function seed(knex: Knex): Promise<void> {
       'teachers.message',
       'forum.moderate'
     ],
-    'Coordenador Acadêmico': [
+    'ACADEMIC_COORDINATOR': [
       'cycles.manage',
       'curriculum.manage',
       'teachers.monitor',
@@ -276,7 +270,7 @@ export async function seed(knex: Knex): Promise<void> {
       'courses.manage',
       'students.view'
     ],
-    'Responsável': [
+    'GUARDIAN': [
       'children.view.info',
       'children.view.grades',
       'children.view.attendance',
@@ -314,7 +308,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'admin@sabercon.edu.br',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
       name: 'Administrador Sistema',
-      role_id: roleLookup['Administrador'],
+      role_id: roleLookup['SYSTEM_ADMIN'],
       institution_id: institutions[0].id,
       endereco: 'Rua da Administração, 100',
       telefone: '(11) 98765-4321',
@@ -325,7 +319,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'gestor@sabercon.edu.br',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
       name: 'Marina Silva',
-      role_id: roleLookup['Gestor'],
+      role_id: roleLookup['INSTITUTION_MANAGER'],
       institution_id: institutions[0].id,
       endereco: 'Av. dos Gestores, 200',
       telefone: '(11) 97654-3210',
@@ -336,7 +330,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'professor@sabercon.edu.br',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
       name: 'Ricardo Santos',
-      role_id: roleLookup['Professor'],
+      role_id: roleLookup['TEACHER'],
       institution_id: institutions[0].id,
       endereco: 'Rua dos Professores, 300',
       telefone: '(11) 96543-2109',
@@ -347,7 +341,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'julia.c@ifsp.com',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
       name: 'Julia Costa',
-      role_id: roleLookup['Aluno'],
+      role_id: roleLookup['STUDENT'],
       institution_id: institutions[0].id,
       endereco: 'Rua dos Estudantes, 400',
       telefone: '(11) 95432-1098',
@@ -358,7 +352,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'coordenador@sabercon.edu.com',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
       name: 'Luciana Lima',
-      role_id: roleLookup['Coordenador Acadêmico'],
+      role_id: roleLookup['ACADEMIC_COORDINATOR'],
       institution_id: institutions[0].id,
       endereco: 'Av. da Coordenação, 500',
       telefone: '(11) 94321-0987',
@@ -369,7 +363,7 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'renato@gmail.com',
       password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
       name: 'Renato Oliveira',
-      role_id: roleLookup['Responsável'],
+      role_id: roleLookup['GUARDIAN'],
       institution_id: institutions[0].id,
       endereco: 'Rua dos Responsáveis, 600',
       telefone: '(11) 93210-9876',

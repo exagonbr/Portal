@@ -12,7 +12,13 @@
     "test:pwa": "node scripts/test-pwa-features.js",
     "test:redis": "node scripts/test-redis.js",
     "generate:vapid": "node scripts/generate-vapid-keys.js",
-    "test:push": "node scripts/test-push-notifications.js"
+    "test:push": "node scripts/test-push-notifications.js",
+    "replicate": "cd backend && npm run replicate",
+    "replicate:test": "cd backend && npm run replicate:test",
+    "replicate:generate": "cd backend && npm run replicate:generate",
+    "replicate:sync": "cd backend && npm run replicate:sync",
+    "replicate:start": "cd backend && npm run replicate:start",
+    "replicate:status": "cd backend && npm run replicate:status"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.820.0",

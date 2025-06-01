@@ -22,7 +22,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   // Don't use dashboard layout for public routes
-  if (publicRoutes.includes(pathname)) {
+  if (pathname && publicRoutes.includes(pathname)) {
     return <div className="h-full w-full">{children}</div>
   }
 

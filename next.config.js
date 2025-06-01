@@ -173,19 +173,6 @@ const nextConfig = {
     }
 
     return config;
-  },
-  async headers() {
-    return [
-      {
-        source: '/books/:path*',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/epub+zip'
-          }
-        ]
-      }
-    ];
   }
 };
 

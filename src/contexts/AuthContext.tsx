@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserEssentials, Permission } from '@/types/auth';
-import * as authService from '@/services/auth';
-import { getDashboardPath } from '@/utils/roleRedirect';
+import * as authService from '@/services/authService';
+import { getDashboardPath, convertBackendRole, isValidRole } from '@/utils/roleRedirect';
 
 interface AuthContextType {
   user: UserEssentials | null;
@@ -28,24 +28,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   // Função para buscar o usuário atual
-  const fetchCurrentUser = useCallback(async () => {
+  const fetchCurrentUser = async () => {
     try {
-      setLoading(true);
+      console.log('🔍 Buscando usuário atual...');
+      
       const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
-      setError(null);
-    } catch (err) {
-      console.error('Erro ao buscar usuário:', err);
+      
+      if (currentUser) {
+        setUser(currentUser);
+        console.log('✅ Usuário encontrado:', currentUser.name, currentUser.role);
+      } else {
+        setUser(null);
+        console.log('❌ Nenhum usuário autenticado');
+      }
+    } catch (err: any) {
+      console.error('❌ Erro ao buscar usuário:', err.message);
       setUser(null);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  // Verificar autenticação ao montar o componente
+  // Função auxiliar para redirecionamento seguro
+  const handleRedirect = (userRole: string, context: string) => {
+    console.log(`🚀 Redirecionando usuário (${context}) com role: ${userRole}`);
+    
+    // Converte role do backend para formato do frontend
+    const normalizedRole = convertBackendRole(userRole);
+    
+    if (!normalizedRole || !isValidRole(normalizedRole)) {
+      console.error(`❌ Role inválida: ${userRole} -> ${normalizedRole}`);
+      setError('Perfil de usuário inválido. Por favor, entre em contato com o administrador.');
+      return;
+    }
+    
+    // Obtém o caminho do dashboard
+    const dashboardPath = getDashboardPath(normalizedRole);
+    
+    if (dashboardPath) {
+      console.log(`✅ Redirecionando para: ${dashboardPath}`);
+      router.push(dashboardPath);
+    } else {
+      console.log(`⚠️ Dashboard não encontrado para ${normalizedRole}, usando fallback`);
+      router.push('/dashboard');
+    }
+  };
+
+  // Carregar usuário no mount
   useEffect(() => {
     fetchCurrentUser();
-  }, [fetchCurrentUser]);
+  }, []);
 
   // Login
   const login = async (email: string, password: string) => {
@@ -53,24 +86,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
+      console.log('🔐 Iniciando login para:', email);
+      
       const response = await authService.login(email, password);
       
       if (response.success && response.user) {
         setUser(response.user);
-        
-        // Normaliza a role para lowercase
-        const normalizedRole = response.user.role?.toLowerCase();
+        console.log('✅ Login bem-sucedido:', response.user.name, response.user.role);
         
         // Redirecionar para o dashboard apropriado
-        const dashboardPath = getDashboardPath(normalizedRole || response.user.role);
-        if (dashboardPath) {
-          router.push(dashboardPath);
-        } else {
-          router.push('/dashboard');
-        }
+        handleRedirect(response.user.role, 'login');
+      } else {
+        console.error('❌ Falha no login:', response.message);
+        console.error('📊 Detalhes da resposta:', response);
+        setError(response.message || 'Falha na autenticação');
       }
     } catch (err: any) {
-      console.error('Erro no login:', err);
+      console.error('❌ Erro no login:', err.message);
       setError(err.message || 'Erro ao fazer login');
       throw err;
     } finally {
@@ -84,24 +116,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
+      console.log('📝 Iniciando registro:', name, email, type);
+      
       const response = await authService.register(name, email, password, type);
       
       if (response.success && response.user) {
         setUser(response.user);
-        
-        // Normaliza a role para lowercase
-        const normalizedRole = response.user.role?.toLowerCase();
+        console.log('✅ Registro bem-sucedido:', response.user.name, response.user.role);
         
         // Redirecionar para o dashboard apropriado
-        const dashboardPath = getDashboardPath(normalizedRole || response.user.role);
-        if (dashboardPath) {
-          router.push(dashboardPath);
-        } else {
-          router.push('/dashboard');
-        }
+        handleRedirect(response.user.role, 'register');
+      } else {
+        console.error('❌ Falha no registro:', response.message);
+        setError(response.message || 'Falha no registro');
       }
     } catch (err: any) {
-      console.error('Erro no registro:', err);
+      console.error('❌ Erro no registro:', err.message);
       setError(err.message || 'Erro ao registrar usuário');
       throw err;
     } finally {
@@ -113,12 +143,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       setLoading(true);
+      console.log('👋 Fazendo logout...');
+      
       await authService.logout();
       setUser(null);
       setError(null);
+      
+      console.log('✅ Logout realizado');
       router.push('/login');
     } catch (err: any) {
-      console.error('Erro no logout:', err);
+      console.error('❌ Erro no logout:', err.message);
       setError(err.message || 'Erro ao fazer logout');
     } finally {
       setLoading(false);
@@ -127,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Refresh user data
   const refreshUser = async () => {
+    console.log('🔄 Atualizando dados do usuário...');
     await fetchCurrentUser();
   };
 
@@ -177,6 +212,7 @@ export function useRequireAuth(redirectTo = '/login') {
 
   useEffect(() => {
     if (!loading && !user) {
+      console.log('🔒 Usuário não autenticado, redirecionando para:', redirectTo);
       router.push(redirectTo);
     }
   }, [user, loading, router, redirectTo]);
@@ -191,13 +227,17 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
 
   useEffect(() => {
     if (!loading && user) {
-      // Normaliza a role para lowercase para comparação
-      const normalizedRole = user.role?.toLowerCase();
-      const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
+      // Normaliza a role do usuário e as roles permitidas
+      const normalizedUserRole = convertBackendRole(user.role);
+      const normalizedAllowedRoles = allowedRoles.map(r => convertBackendRole(r)).filter(Boolean);
       
-      if (!normalizedAllowedRoles.includes(normalizedRole)) {
-        const dashboardPath = getDashboardPath(normalizedRole);
-        router.push(dashboardPath || redirectTo);
+      if (!normalizedUserRole || !normalizedAllowedRoles.includes(normalizedUserRole)) {
+        const dashboardPath = getDashboardPath(normalizedUserRole || user.role.toLowerCase());
+        const finalRedirect = dashboardPath || redirectTo;
+        
+        console.log(`🚫 Role ${user.role} não permitida, redirecionando para: ${finalRedirect}`);
+        
+        router.push(finalRedirect);
       }
     }
   }, [user, loading, allowedRoles, router, redirectTo]);
@@ -205,6 +245,6 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
   return {
     user,
     loading,
-    hasRole: user ? allowedRoles.map(r => r.toLowerCase()).includes(user.role.toLowerCase()) : false
+    hasRole: user ? allowedRoles.map(r => convertBackendRole(r)).includes(convertBackendRole(user.role)) : false
   };
 }

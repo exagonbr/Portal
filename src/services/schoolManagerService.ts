@@ -8,8 +8,8 @@ import {
 } from '@/types/schoolManager';
 import { PaginatedResponseDto } from '@/types/common';
 
-class SchoolManagerService {
-  private baseUrl = '/school-managers';
+export class SchoolManagerService {
+  private baseUrl = '/api/school-managers';
 
   async list(filter?: SchoolManagerFilter): Promise<PaginatedResponseDto<SchoolManager>> {
     const response = await api.get<PaginatedResponseDto<SchoolManager>>(this.baseUrl, { params: filter });
