@@ -3,11 +3,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn
+  UpdateDateColumn
 } from 'typeorm';
-import { User } from './User';
 
 @Entity('files')
 export class File {
@@ -52,10 +49,6 @@ export class File {
 
   @Column({ nullable: true })
   uploaded_by?: string;
-
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'uploaded_by' })
-  uploader?: User;
 
   @Column({ default: true })
   is_active: boolean;

@@ -8,7 +8,6 @@ import {
   JoinColumn
 } from 'typeorm';
 import { TvShow } from './TvShow';
-import { Video } from './Video';
 
 @Entity('tv_show_videos')
 export class TvShowVideo {
@@ -24,10 +23,6 @@ export class TvShowVideo {
 
   @Column()
   video_id: string;
-
-  @ManyToOne(() => Video)
-  @JoinColumn({ name: 'video_id' })
-  video: Video;
 
   @Column({ type: 'int', default: 1 })
   season_number: number;

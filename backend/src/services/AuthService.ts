@@ -4,6 +4,8 @@ import { UserRepository } from '../repositories/UserRepository';
 import { CreateUserDto, LoginDto, AuthResponseDto } from '../dto/AuthDto';
 import { AuthTokenPayload } from '../types/express';
 import { UserWithRelations } from '../entities/User';
+import { AppDataSource } from '../config/typeorm.config';
+import { Role, UserRole } from '../entities/Role';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
 const JWT_EXPIRES_IN = '24h';
@@ -337,7 +339,170 @@ export class AuthService {
   }
 
   private static formatUserResponse(user: UserWithRelations): any {
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      institution: user.institution,
+      cpf: user.cpf,
+      phone: user.phone,
+      birth_date: user.birth_date,
+      address: user.address,
+      city: user.city,
+      state: user.state,
+      zip_code: user.zip_code,
+      is_active: user.is_active,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    };
+  }
+
+  /**
+   * Cria as roles padrão do sistema
+   */
+  static async createDefaultRoles(): Promise<void> {
+    try {
+      if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+      }
+
+      const roleRepository = AppDataSource.getRepository(Role);
+
+      // Define as roles padrão
+      const defaultRoles = [
+        {
+          name: UserRole.SYSTEM_ADMIN,
+          description: 'Administrador do sistema com acesso completo',
+          permissions: Role.getDefaultPermissions(UserRole.SYSTEM_ADMIN),
+          active: true
+        },
+        {
+          name: UserRole.INSTITUTION_MANAGER,
+          description: 'Gerente de instituição com acesso administrativo',
+          permissions: Role.getDefaultPermissions(UserRole.INSTITUTION_MANAGER),
+          active: true
+        },
+        {
+          name: UserRole.ACADEMIC_COORDINATOR,
+          description: 'Coordenador acadêmico',
+          permissions: Role.getDefaultPermissions(UserRole.ACADEMIC_COORDINATOR),
+          active: true
+        },
+        {
+          name: UserRole.TEACHER,
+          description: 'Professor com acesso a turmas e conteúdos',
+          permissions: Role.getDefaultPermissions(UserRole.TEACHER),
+          active: true
+        },
+        {
+          name: UserRole.STUDENT,
+          description: 'Estudante com acesso a materiais e atividades',
+          permissions: Role.getDefaultPermissions(UserRole.STUDENT),
+          active: true
+        },
+        {
+          name: UserRole.GUARDIAN,
+          description: 'Responsável com acesso a informações dos filhos',
+          permissions: Role.getDefaultPermissions(UserRole.GUARDIAN),
+          active: true
+        }
+      ];
+
+      for (const roleData of defaultRoles) {
+        // Verifica se a role já existe
+        const existingRole = await roleRepository.findOne({
+          where: { name: roleData.name }
+        });
+
+        if (!existingRole) {
+          const role = roleRepository.create(roleData);
+          await roleRepository.save(role);
+          console.log(`✅ Role criada: ${roleData.name}`);
+        } else {
+          console.log(`ℹ️  Role já existe: ${roleData.name}`);
+        }
+      }
+
+      console.log('✅ Todas as roles padrão foram verificadas/criadas');
+    } catch (error) {
+      console.error('❌ Erro ao criar roles padrão:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cria o usuário administrador padrão
+   */
+  static async createDefaultAdminUser(): Promise<void> {
+    try {
+      // Verifica se já existe um usuário admin
+      const existingAdmin = await UserRepository.findByEmail('admin@portal.com');
+
+      if (existingAdmin) {
+        console.log('ℹ️  Usuário administrador já existe');
+        return;
+      }
+
+      // Busca a role de SYSTEM_ADMIN
+      if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+      }
+
+      const roleRepository = AppDataSource.getRepository(Role);
+      const adminRole = await roleRepository.findOne({
+        where: { name: UserRole.SYSTEM_ADMIN }
+      });
+
+      if (!adminRole) {
+        throw new Error('Role SYSTEM_ADMIN não encontrada. Execute createDefaultRoles primeiro.');
+      }
+
+      // Tenta criar com diferentes estratégias de role_id para compatibilidade
+      let adminData: CreateUserDto;
+      
+      // Primeira tentativa: assumir que role_id é string/UUID
+      try {
+        adminData = {
+          email: 'admin@portal.com',
+          password: 'admin123',
+          name: 'Administrador do Sistema',
+          role_id: adminRole.id as any // Força o tipo para permitir UUID
+        };
+
+        const adminUser = await UserRepository.create(adminData);
+        console.log(`✅ Usuário administrador criado: ${adminUser.email}`);
+        return;
+      } catch (firstError: any) {
+        console.log('Primeira tentativa falhou, tentando com role_id como número...');
+        
+        // Segunda tentativa: tentar converter UUID para número (hash)
+        try {
+          // Cria um hash numérico do UUID para compatibilidade
+          const roleIdHash = Math.abs(adminRole.id.split('').reduce((a, b) => {
+            a = ((a << 5) - a) + b.charCodeAt(0);
+            return a & a;
+          }, 0));
+
+          adminData = {
+            email: 'admin@portal.com',
+            password: 'admin123',
+            name: 'Administrador do Sistema',
+            role_id: roleIdHash
+          };
+
+          const adminUser = await UserRepository.create(adminData);
+          console.log(`✅ Usuário administrador criado com role_id numérico: ${adminUser.email}`);
+          return;
+        } catch (secondError: any) {
+          console.error('Ambas as tentativas falharam:', { firstError, secondError });
+          throw new Error(`Não foi possível criar usuário administrador. Erros: ${firstError.message}, ${secondError.message}`);
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao criar usuário administrador:', error);
+      throw error;
+    }
   }
 }

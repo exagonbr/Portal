@@ -1,5 +1,5 @@
 import { InstitutionType } from '../models/Institution';
-import { PaginationParams, PaginationResult } from '../types/common';
+import { PaginationResult } from '../types/common';
 
 export interface InstitutionDto {
   id: string;

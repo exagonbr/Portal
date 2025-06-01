@@ -151,8 +151,8 @@ export class AuthController {
 
   static async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = parseInt((req as any).user?.userId);
       const sessionId = (req as any).sessionId;
+      const userId = parseInt((req as any).user?.userId);
 
       if (!userId || isNaN(userId)) {
         return res.status(401).json({

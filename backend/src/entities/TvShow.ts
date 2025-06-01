@@ -8,7 +8,6 @@ import {
   OneToMany,
   JoinColumn
 } from 'typeorm';
-import { User } from './User';
 import { Institution } from './Institution';
 import { TvShowVideo } from './TvShowVideo';
 
@@ -60,10 +59,6 @@ export class TvShow {
   // Relacionamentos
   @Column({ nullable: true })
   created_by?: string;
-
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'created_by' })
-  creator?: User;
 
   @Column()
   institution_id: string;

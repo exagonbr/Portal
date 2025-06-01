@@ -122,7 +122,7 @@ router.get('/system',
  */
 router.get('/user', validateJWTAndSession, async (req: AuthenticatedRequest, res: express.Response) => {
   try {
-    const userId = req.user!.userId;
+    const userId = parseInt(req.user!.userId, 10);
     const dashboardData = await DashboardService.getUserDashboard(userId);
 
     return res.json({
@@ -349,7 +349,7 @@ router.get('/summary', validateJWTAndSession, async (req: AuthenticatedRequest, 
     }
 
     // Adiciona dados personalizados para o usuário
-    const userDashboard = await DashboardService.getUserDashboard(userId);
+    const userDashboard = await DashboardService.getUserDashboard(parseInt(userId, 10));
     summary.personalStats = userDashboard.user.stats;
 
     return res.json({

@@ -61,7 +61,7 @@ export const authorizePermissions = (...requiredPermissions: string[]) => {
     }
 
     try {
-      const user = await AuthService.getUserById(req.user.userId);
+      const user = await AuthService.getUserById(parseInt(req.user.userId, 10));
       
       if (!user || !user.role) {
         return res.status(403).json({
@@ -71,7 +71,7 @@ export const authorizePermissions = (...requiredPermissions: string[]) => {
       }
 
       const hasAllPermissions = requiredPermissions.every(permission =>
-        user.role.permissions.includes(permission)
+        user.role?.permissions?.includes(permission) || false
       );
 
       if (!hasAllPermissions) {

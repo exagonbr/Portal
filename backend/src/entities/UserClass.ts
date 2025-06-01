@@ -7,7 +7,6 @@ import {
   ManyToOne,
   JoinColumn
 } from 'typeorm';
-import { User } from './User';
 import { Class } from './Class';
 
 export enum UserClassRole {
@@ -23,10 +22,6 @@ export class UserClass {
 
   @Column()
   user_id: string;
-
-  @ManyToOne(() => User, user => user.userClasses)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
 
   @Column()
   class_id: string;

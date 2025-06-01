@@ -1,5 +1,7 @@
-import { Institution } from "../entities/Institution";
-import { Role } from "../entities/Role";
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
 
 export interface CreateUserDto {
   email: string;

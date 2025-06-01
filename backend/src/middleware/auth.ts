@@ -40,9 +40,7 @@ export const validateJWT = async (
     // Se o role não estiver no token, buscar no banco de dados
     if (!decoded.role && decoded.userId) {
       try {
-        const userRepository = new UserRepository();
-        const roleRepository = new RoleRepository();
-        const user = await userRepository.findByEmail(decoded.email!);
+        const user = await UserRepository.findByEmail(decoded.email!);
         
         if (!user) {
           return res.status(401).json({
@@ -60,7 +58,8 @@ export const validateJWT = async (
           'Gerente': 'manager'
         };
         
-        const role = await roleRepository.findById(user.role_id);
+        const roleRepository = new RoleRepository();
+        const role = await roleRepository.findById(user.role_id?.toString() || '');
 
         if (!role) {
           return res.status(401).json({

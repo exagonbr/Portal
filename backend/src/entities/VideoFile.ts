@@ -7,7 +7,6 @@ import {
   ManyToOne,
   JoinColumn
 } from 'typeorm';
-import { Video } from './Video';
 import { File } from './File';
 
 @Entity('video_files')
@@ -17,10 +16,6 @@ export class VideoFile {
 
   @Column()
   video_id: string;
-
-  @ManyToOne(() => Video, video => video.files)
-  @JoinColumn({ name: 'video_id' })
-  video: Video;
 
   @Column()
   file_id: string;

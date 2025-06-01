@@ -1,6 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
-import { User } from '../entities/User';
 import { Role } from '../entities/Role';
 import { Institution } from '../entities/Institution';
 import { School } from '../entities/School';
@@ -12,7 +11,6 @@ import { Course } from '../entities/Course';
 import { Notification } from '../entities/Notification';
 import { Collection } from '../entities/Collection';
 import { Module } from '../entities/Module';
-import { Video } from '../entities/Video';
 import { VideoFile } from '../entities/VideoFile';
 import { File } from '../entities/File';
 import { Author } from '../entities/Author';
@@ -42,7 +40,6 @@ export const dataSourceOptions: DataSourceOptions = {
   synchronize: environment === 'development',
   logging: environment === 'development',
   entities: [
-    User,
     Role,
     Institution,
     School,
@@ -54,7 +51,6 @@ export const dataSourceOptions: DataSourceOptions = {
     Notification,
     Collection,
     Module,
-    Video,
     VideoFile,
     File,
     Author,

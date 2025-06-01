@@ -2,11 +2,8 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  ManyToOne,
-  JoinColumn
+  CreateDateColumn
 } from 'typeorm';
-import { User } from './User';
 
 @Entity('chat_messages')
 export class ChatMessage {
@@ -15,10 +12,6 @@ export class ChatMessage {
 
   @Column()
   sender_id: string;
-
-  @ManyToOne(() => User, user => user.sentMessages)
-  @JoinColumn({ name: 'sender_id' })
-  sender: User;
 
   @Column({ type: 'text' })
   content: string;
