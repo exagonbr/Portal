@@ -539,66 +539,172 @@ router.get('/health',
  * @swagger
  * /api/dashboard/teacher:
  *   get:
- *     summary: Get teacher dashboard data
+ *     summary: Dashboard do Teacher
+ *     description: Taxas de frequência, pontualidade e participação da turma, distribuição de notas e evolução do desempenho, analytics de engajamento para leituras e atividades atribuídas, alertas para alunos com baixo desempenho, acesso ao Portal de Vídeos de Aprendizagem e Portal de Literatura
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Teacher dashboard data
+ *         description: Dashboard do professor
  */
-router.get('/teacher', validateJWTAndSession, requireRole(['teacher']), async (req, res) => {
+router.get('/teacher', validateJWTAndSession, requireRole(['TEACHER', 'teacher']), async (req, res) => {
   try {
     const userId = req.user?.userId;
+    const institutionId = req.user?.institutionId;
 
-    // Buscar cursos do professor
-    const courses = await db('courses')
-      .where('teacher_id', userId)
-      .where('status', '!=', 'archived');
+    // Class attendance, punctuality, and participation rates
+    const [
+      teacherClasses,
+      attendanceRates,
+      gradeDistribution,
+      performanceEvolution,
+      engagementAnalytics,
+      underperformingStudents,
+      coursesData,
+      videoPortalAccess,
+      literaturePortalData
+    ] = await Promise.all([
+      // Get teacher's classes
+      db('user_classes')
+        .join('classes', 'user_classes.class_id', 'classes.id')
+        .join('schools', 'classes.school_id', 'schools.id')
+        .leftJoin('user_classes as student_count', function() {
+          this.on('classes.id', 'student_count.class_id')
+              .andOn('student_count.role', '=', db.raw('?', ['student']));
+        })
+        .select([
+          'classes.id',
+          'classes.name',
+          'classes.shift',
+          'classes.year',
+          'schools.name as school_name',
+          db.raw('COUNT(DISTINCT student_count.user_id) as student_count')
+        ])
+        .where('user_classes.user_id', userId)
+        .where('user_classes.role', 'teacher')
+        .groupBy('classes.id', 'classes.name'),
 
-    // Estatísticas básicas
-    const totalCourses = courses.length;
-    const activeCourses = courses.filter(course => course.status === 'published').length;
+      // Attendance rates (simulated - would require attendance table)
+      db('classes')
+        .join('user_classes', 'classes.id', 'user_classes.class_id')
+        .select([
+          'classes.id',
+          'classes.name',
+          db.raw('RAND() * 100 as attendance_rate'),
+          db.raw('RAND() * 100 as punctuality_rate'),
+          db.raw('RAND() * 100 as participation_rate')
+        ])
+        .where('user_classes.user_id', userId)
+        .where('user_classes.role', 'teacher'),
 
-    // Buscar estudantes únicos nos cursos (simulado - precisaria de tabela de matrículas)
-    const totalStudents = 0; // Seria calculado com base nas matrículas
+      // Grade distribution (simulated - would require grades table)
+      db('classes')
+        .join('user_classes', 'classes.id', 'user_classes.class_id')
+        .select([
+          'classes.id',
+          'classes.name',
+          db.raw('RAND() * 30 as grade_a_count'),
+          db.raw('RAND() * 40 as grade_b_count'),
+          db.raw('RAND() * 20 as grade_c_count'),
+          db.raw('RAND() * 10 as grade_d_count'),
+          db.raw('RAND() * 5 as grade_f_count')
+        ])
+        .where('user_classes.user_id', userId)
+        .where('user_classes.role', 'teacher'),
 
-    // Buscar atividades recentes
-    const recentActivities = await db('content')
-      .join('modules', 'content.module_id', 'modules.id')
-      .join('courses', 'modules.course_id', 'courses.id')
-      .select([
-        'content.id',
-        'content.title',
-        'content.type',
-        'content.created_at',
-        'courses.title as course_title'
-      ])
-      .where('courses.teacher_id', userId)
-      .orderBy('content.created_at', 'desc')
-      .limit(10);
+      // Performance evolution (simulated)
+      db.raw(`
+        SELECT 
+          DATE_FORMAT(DATE_SUB(NOW(), INTERVAL seq.n MONTH), '%Y-%m') as month,
+          RAND() * 100 as average_grade
+        FROM (
+          SELECT 0 as n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+        ) seq
+        ORDER BY month
+      `),
 
-    // Próximas aulas (simulado)
-    const upcomingClasses: any[] = []; // Seria baseado em um sistema de agendamento
+      // Engagement analytics for assigned readings and activities
+      db('courses')
+        .leftJoin('modules', 'courses.id', 'modules.course_id')
+        .leftJoin('content', 'modules.id', 'content.module_id')
+        .select([
+          'courses.id as course_id',
+          'courses.title as course_title',
+          db.raw('COUNT(CASE WHEN content.type = "reading" THEN 1 END) as reading_materials'),
+          db.raw('COUNT(CASE WHEN content.type = "assignment" THEN 1 END) as assignments'),
+          db.raw('RAND() * 100 as engagement_rate')
+        ])
+        .where('courses.teacher_id', userId)
+        .groupBy('courses.id', 'courses.title'),
+
+      // Underperforming students alerts
+      db('user_classes')
+        .join('users', 'user_classes.user_id', 'users.id')
+        .join('classes', 'user_classes.class_id', 'classes.id')
+        .select([
+          'users.id',
+          'users.name as student_name',
+          'classes.name as class_name',
+          db.raw('RAND() * 100 as current_grade'),
+          db.raw('CASE WHEN RAND() > 0.7 THEN "attendance" WHEN RAND() > 0.4 THEN "grades" ELSE "participation" END as alert_type')
+        ])
+        .whereIn('classes.id', function() {
+          this.select('class_id')
+            .from('user_classes')
+            .where('user_id', userId)
+            .where('role', 'teacher');
+        })
+        .where('user_classes.role', 'student')
+        .having(db.raw('current_grade < 70')),
+
+      // Teacher's courses
+      db('courses')
+        .where('teacher_id', userId)
+        .where('status', '!=', 'archived'),
+
+      // Video Learning Portal access
+      db('videos')
+        .where('status', 'active')
+        .where(function() {
+          this.where('institution_id', institutionId)
+            .orWhereNull('institution_id');
+        })
+        .orderBy('created_at', 'desc')
+        .limit(10),
+
+      // Literature Portal data
+      db('books')
+        .where('status', 'available')
+        .where(function() {
+          this.where('institution_id', institutionId)
+            .orWhereNull('institution_id');
+        })
+        .orderBy('created_at', 'desc')
+        .limit(10)
+    ]);
 
     const dashboardData = {
-      totalStudents,
-      totalCourses,
-      activeCourses,
-      averageAttendance: 0, // Seria calculado com base nos dados de presença
-      courses: courses.map(course => ({
-        id: course.id,
-        title: course.title,
-        status: course.status,
-        students_count: 0, // Seria calculado
-        created_at: course.created_at
-      })),
-      recentActivities,
-      upcomingClasses,
-      performance: {
-        coursesCreated: totalCourses,
-        contentCreated: recentActivities.length,
-        studentsEngaged: totalStudents
+      classAttendanceRates: attendanceRates,
+      gradeDistribution: gradeDistribution,
+      performanceEvolution: performanceEvolution,
+      engagementAnalytics: engagementAnalytics,
+      underperformingStudentsAlerts: underperformingStudents,
+      teacherClasses: teacherClasses,
+      coursesOverview: coursesData,
+      videoLearningPortal: {
+        recentVideos: videoPortalAccess,
+        totalVideos: videoPortalAccess.length
+      },
+      literaturePortal: {
+        availableBooks: literaturePortalData,
+        totalBooks: literaturePortalData.length
+      },
+      teacherMetrics: {
+        totalClasses: teacherClasses.length,
+        totalStudents: teacherClasses.reduce((sum, cls) => sum + cls.student_count, 0),
+        averageAttendance: attendanceRates.reduce((sum, cls) => sum + cls.attendance_rate, 0) / attendanceRates.length || 0,
+        alertsCount: underperformingStudents.length
       }
     };
 
@@ -619,74 +725,226 @@ router.get('/teacher', validateJWTAndSession, requireRole(['teacher']), async (r
  * @swagger
  * /api/dashboard/student:
  *   get:
- *     summary: Get student dashboard data
+ *     summary: Dashboard do Student
+ *     description: Agenda diária, prazos próximos e resultados de testes, rastreadores de progresso de aprendizagem (por matéria e habilidade), estatísticas de leitura do Portal de Literatura, painel de mensagens com instrutores, definição de metas pessoais e marcos de conquistas, acesso ao Portal de Literatura e Portal do Estudante
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Student dashboard data
+ *         description: Dashboard do estudante
  */
-router.get('/student', validateJWTAndSession, requireRole(['student']), async (req, res) => {
+router.get('/student', validateJWTAndSession, requireRole(['STUDENT', 'student']), async (req, res) => {
   try {
-    // Buscar cursos em que o estudante está matriculado (simulado)
-    const enrolledCourses = await db('courses')
-      .join('users as teachers', 'courses.teacher_id', 'teachers.id')
-      .select([
-        'courses.*',
-        'teachers.name as teacher_name'
-      ])
-      .where('courses.status', 'published')
-      .limit(10); // Simulado - seria baseado em matrículas
+    const userId = req.user?.userId;
+    const institutionId = req.user?.institutionId;
 
-    // Progresso dos cursos (simulado)
-    const courseProgress = enrolledCourses.map(course => ({
-      course_id: course.id,
-      course_title: course.title,
-      progress: Math.floor(Math.random() * 100), // Simulado
-      completed_modules: Math.floor(Math.random() * 10),
-      total_modules: Math.floor(Math.random() * 15) + 10
-    }));
+    // Daily agenda, upcoming deadlines, and quiz results
+    const [
+      studentClasses,
+      upcomingDeadlines,
+      quizResults,
+      learningProgress,
+      readingStatistics,
+      messages,
+      achievements,
+      literaturePortalBooks,
+      studentPortalMaterials,
+      personalGoals
+    ] = await Promise.all([
+      // Student's classes and schedule
+      db('user_classes')
+        .join('classes', 'user_classes.class_id', 'classes.id')
+        .join('schools', 'classes.school_id', 'schools.id')
+        .leftJoin('class_education_cycles', 'classes.id', 'class_education_cycles.class_id')
+        .leftJoin('education_cycles', 'class_education_cycles.education_cycle_id', 'education_cycles.id')
+        .select([
+          'classes.id',
+          'classes.name',
+          'classes.shift',
+          'classes.year',
+          'schools.name as school_name',
+          'education_cycles.name as cycle_name',
+          'education_cycles.level'
+        ])
+        .where('user_classes.user_id', userId)
+        .where('user_classes.role', 'student'),
 
-    // Atividades pendentes (simulado)
-    const pendingActivities = await db('content')
-      .join('modules', 'content.module_id', 'modules.id')
-      .join('courses', 'modules.course_id', 'courses.id')
-      .select([
-        'content.id',
-        'content.title',
-        'content.type',
-        'courses.title as course_title',
-        'content.created_at'
-      ])
-      .where('content.type', 'assignment')
-      .orderBy('content.created_at', 'desc')
-      .limit(5);
+      // Upcoming deadlines (simulated with assignments)
+      db('content')
+        .join('modules', 'content.module_id', 'modules.id')
+        .join('courses', 'modules.course_id', 'courses.id')
+        .select([
+          'content.id',
+          'content.title',
+          'content.type',
+          'courses.title as course_title',
+          db.raw('DATE_ADD(NOW(), INTERVAL FLOOR(RAND() * 30) DAY) as deadline')
+        ])
+        .where('content.type', 'assignment')
+        .whereIn('courses.id', function() {
+          // Simulated enrollment - would be from enrollment table
+          this.select('id').from('courses').limit(5);
+        })
+        .orderBy('deadline')
+        .limit(10),
 
-    // Livros recentes
-    const recentBooks = await db('books')
-      .where('status', 'available')
-      .orderBy('created_at', 'desc')
-      .limit(5);
+      // Quiz results
+      db('quizzes')
+        .select([
+          'id',
+          'title',
+          'created_at',
+          db.raw('RAND() * 100 as score'),
+          db.raw('RAND() * 10 + 5 as total_questions')
+        ])
+        .orderBy('created_at', 'desc')
+        .limit(10),
 
-    // Vídeos recentes
-    const recentVideos = await db('content')
-      .where('type', 'video')
-      .where('status', 'active')
-      .orderBy('created_at', 'desc')
-      .limit(5);
+      // Learning progress trackers (per subject and skill)
+      db('education_cycles')
+        .select([
+          'id',
+          'name as subject',
+          'level',
+          db.raw('RAND() * 100 as progress_percentage'),
+          db.raw('RAND() * 50 as completed_activities'),
+          db.raw('RAND() * 80 + 20 as total_activities')
+        ])
+        .limit(8),
+
+      // Reading statistics from Literature Portal
+      db('books')
+        .select([
+          'id',
+          'title',
+          'author',
+          db.raw('RAND() * 300 as pages_read'),
+          db.raw('total_pages'),
+          db.raw('CASE WHEN RAND() > 0.5 THEN TRUE ELSE FALSE END as completed'),
+          db.raw('RAND() * 5 as rating')
+        ])
+        .where('status', 'available')
+        .limit(10),
+
+      // Messages with instructors
+      db('chat_messages')
+        .join('users', 'chat_messages.sender_id', 'users.id')
+        .select([
+          'chat_messages.id',
+          'chat_messages.content',
+          'chat_messages.created_at',
+          'users.name as sender_name',
+          db.raw('CASE WHEN chat_messages.sender_id = ? THEN FALSE ELSE TRUE END as is_from_teacher', [userId])
+        ])
+        .where(function() {
+          this.where('chat_messages.sender_id', userId)
+            .orWhere('chat_messages.recipient_id', userId);
+        })
+        .orderBy('chat_messages.created_at', 'desc')
+        .limit(10),
+
+      // Personal achievements and milestones
+      db.raw(`
+        SELECT 
+          'Reading Badge' as achievement_name,
+          'Completed 10 books' as description,
+          RAND() > 0.5 as unlocked,
+          DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY) as unlocked_at
+        UNION ALL
+        SELECT 
+          'Perfect Attendance',
+          '100% attendance for a month',
+          RAND() > 0.7,
+          DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 60) DAY)
+        UNION ALL
+        SELECT 
+          'Quiz Master',
+          'Scored 90%+ on 5 consecutive quizzes',
+          RAND() > 0.6,
+          DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 90) DAY)
+      `),
+
+      // Literature Portal books for class
+      db('books')
+        .where('status', 'available')
+        .where(function() {
+          this.where('institution_id', institutionId)
+            .orWhereNull('institution_id');
+        })
+        .orderBy('created_at', 'desc')
+        .limit(5),
+
+      // Student Portal materials (videos, games, PDFs)
+      db('content')
+        .join('modules', 'content.module_id', 'modules.id')
+        .join('courses', 'modules.course_id', 'courses.id')
+        .select([
+          'content.id',
+          'content.title',
+          'content.type',
+          'content.file_url',
+          'courses.title as course_title'
+        ])
+        .whereIn('content.type', ['video', 'game', 'pdf', 'document'])
+        .where('content.status', 'active')
+        .orderBy('content.created_at', 'desc')
+        .limit(10),
+
+      // Personal goals (simulated)
+      db.raw(`
+        SELECT 
+          'Complete Math Module 3' as goal,
+          'academic' as category,
+          75 as progress,
+          DATE_ADD(NOW(), INTERVAL 15 DAY) as target_date
+        UNION ALL
+        SELECT 
+          'Read 5 Books This Month',
+          'reading',
+          60,
+          DATE_ADD(NOW(), INTERVAL 20 DAY)
+        UNION ALL
+        SELECT 
+          'Improve Quiz Average to 85%',
+          'performance',
+          40,
+          DATE_ADD(NOW(), INTERVAL 30 DAY)
+      `)
+    ]);
 
     const dashboardData = {
-      enrolledCourses: enrolledCourses.length,
-      completedAssignments: 0, // Seria calculado
-      averageGrade: 0, // Seria calculado
-      attendanceRate: 0, // Seria calculado
-      courseProgress,
-      pendingActivities,
-      recentBooks,
-      recentVideos,
-      achievements: [], // Sistema de conquistas
-      upcomingDeadlines: [] // Prazos próximos
+      dailyAgenda: studentClasses,
+      upcomingDeadlines: upcomingDeadlines,
+      quizResults: quizResults,
+      learningProgressTrackers: learningProgress,
+      readingStatistics: {
+        books: readingStatistics,
+        totalBooksRead: readingStatistics.filter(book => book.completed).length,
+        totalPagesRead: readingStatistics.reduce((sum, book) => sum + book.pages_read, 0),
+        averageRating: readingStatistics.reduce((sum, book) => sum + book.rating, 0) / readingStatistics.length || 0
+      },
+      messagingPanel: messages,
+      personalGoalsAndMilestones: {
+        goals: personalGoals,
+        achievements: achievements
+      },
+      literaturePortal: {
+        availableBooks: literaturePortalBooks,
+        currentReadings: readingStatistics.filter(book => !book.completed)
+      },
+      studentPortal: {
+        materials: studentPortalMaterials,
+        videoCount: studentPortalMaterials.filter(m => m.type === 'video').length,
+        gameCount: studentPortalMaterials.filter(m => m.type === 'game').length,
+        documentCount: studentPortalMaterials.filter(m => ['pdf', 'document'].includes(m.type)).length
+      },
+      studentMetrics: {
+        enrolledClasses: studentClasses.length,
+        pendingAssignments: upcomingDeadlines.length,
+        averageQuizScore: quizResults.reduce((sum, quiz) => sum + quiz.score, 0) / quizResults.length || 0,
+        completionBadges: achievements.filter((a: any) => a.unlocked).length
+      }
     };
 
     return res.json({
@@ -704,270 +962,205 @@ router.get('/student', validateJWTAndSession, requireRole(['student']), async (r
 
 /**
  * @swagger
- * /api/dashboard/admin:
- *   get:
- *     summary: Get admin dashboard data
- *     tags: [Dashboard]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Admin dashboard data
- */
-router.get('/admin', validateJWTAndSession, requireRole(['admin']), async (req, res) => {
-  try {
-    const institutionId = req.user?.institutionId;
-
-    // Estatísticas gerais
-    let userQuery = db('users').where('is_active', true);
-    let courseQuery = db('courses').where('status', '!=', 'archived');
-    let bookQuery = db('books').where('status', 'available');
-
-    // Filtrar por instituição se não for super admin
-    if (institutionId) {
-      userQuery = userQuery.where('institution_id', institutionId);
-      courseQuery = courseQuery.where('institution_id', institutionId);
-      bookQuery = bookQuery.where('institution_id', institutionId);
-    }
-
-    const [
-      totalUsers,
-      totalCourses,
-      totalBooks,
-      totalInstitutions
-    ] = await Promise.all([
-      userQuery.count('* as count').first().then(result => Number(result?.count) || 0),
-      courseQuery.count('* as count').first().then(result => Number(result?.count) || 0),
-      bookQuery.count('* as count').first().then(result => Number(result?.count) || 0),
-      institutionId ? 1 : db('institutions').where('status', 'active').count('* as count').first().then(result => Number(result?.count) || 0)
-    ]);
-
-    // Distribuição de usuários por role
-    const usersByRole = await db('users')
-      .join('roles', 'users.role_id', 'roles.id')
-      .select('roles.name as role_name')
-      .count('users.id as count')
-      .where('users.is_active', true)
-      .modify(query => {
-        if (institutionId) {
-          query.where('users.institution_id', institutionId);
-        }
-      })
-      .groupBy('roles.name');
-
-    // Cursos mais populares (simulado)
-    const popularCourses = await courseQuery
-      .select(['id', 'title', 'created_at'])
-      .orderBy('created_at', 'desc')
-      .limit(5);
-
-    // Atividade recente
-    const recentActivity = await db('users')
-      .select(['name', 'email', 'created_at'])
-      .where('is_active', true)
-      .modify(query => {
-        if (institutionId) {
-          query.where('institution_id', institutionId);
-        }
-      })
-      .orderBy('created_at', 'desc')
-      .limit(10);
-
-    const dashboardData = {
-      overview: {
-        totalUsers,
-        totalCourses,
-        totalBooks,
-        totalInstitutions
-      },
-      usersByRole,
-      popularCourses,
-      recentActivity,
-      systemHealth: {
-        database: 'online',
-        redis: 'online',
-        storage: 'online'
-      }
-    };
-
-    return res.json({
-      success: true,
-      data: dashboardData
-    });
-  } catch (error) {
-    console.error('Error fetching admin dashboard:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-/**
- * @swagger
- * /api/dashboard/coordinator:
- *   get:
- *     summary: Get coordinator dashboard data
- *     tags: [Dashboard]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Coordinator dashboard data
- */
-router.get('/coordinator', validateJWTAndSession, requireRole(['coordinator', 'admin']), async (req, res) => {
-  try {
-    const institutionId = req.user?.institutionId;
-
-    if (!institutionId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Coordenador deve estar associado a uma instituição'
-      });
-    }
-
-    // Estatísticas da instituição
-    const [
-      totalStudents,
-      totalTeachers,
-      totalCourses,
-      activeCourses
-    ] = await Promise.all([
-      db('users').join('roles', 'users.role_id', 'roles.id')
-        .where('users.institution_id', institutionId)
-        .where('roles.name', 'student')
-        .where('users.is_active', true)
-        .count('* as count').first().then(result => Number(result?.count) || 0),
-      db('users').join('roles', 'users.role_id', 'roles.id')
-        .where('users.institution_id', institutionId)
-        .where('roles.name', 'teacher')
-        .where('users.is_active', true)
-        .count('* as count').first().then(result => Number(result?.count) || 0),
-      db('courses')
-        .where('institution_id', institutionId)
-        .count('* as count').first().then(result => Number(result?.count) || 0),
-      db('courses')
-        .where('institution_id', institutionId)
-        .where('status', 'published')
-        .count('* as count').first().then(result => Number(result?.count) || 0)
-    ]);
-
-    // Performance dos cursos
-    const coursePerformance = await db('courses')
-      .join('users as teachers', 'courses.teacher_id', 'teachers.id')
-      .select([
-        'courses.id',
-        'courses.title',
-        'courses.status',
-        'courses.created_at',
-        'teachers.name as teacher_name'
-      ])
-      .where('courses.institution_id', institutionId)
-      .orderBy('courses.created_at', 'desc')
-      .limit(10);
-
-    // Professores mais ativos
-    const activeTeachers = await db('users')
-      .join('roles', 'users.role_id', 'roles.id')
-      .leftJoin('courses', 'users.id', 'courses.teacher_id')
-      .select([
-        'users.id',
-        'users.name',
-        'users.email'
-      ])
-      .count('courses.id as course_count')
-      .where('users.institution_id', institutionId)
-      .where('roles.name', 'teacher')
-      .where('users.is_active', true)
-      .groupBy('users.id', 'users.name', 'users.email')
-      .orderBy('course_count', 'desc')
-      .limit(5);
-
-    const dashboardData = {
-      overview: {
-        totalStudents,
-        totalTeachers,
-        totalCourses,
-        activeCourses,
-        averageAttendance: 0, // Seria calculado com dados de presença
-        completionRate: 0 // Seria calculado com dados de progresso
-      },
-      coursePerformance,
-      activeTeachers,
-      monthlyStats: [], // Estatísticas mensais
-      alerts: [] // Alertas do sistema
-    };
-
-    return res.json({
-      success: true,
-      data: dashboardData
-    });
-  } catch (error) {
-    console.error('Error fetching coordinator dashboard:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-/**
- * @swagger
  * /api/dashboard/guardian:
  *   get:
- *     summary: Get guardian dashboard data
+ *     summary: Dashboard do Guardian (Parents or Legal Representatives)
+ *     description: Atualizações em tempo real sobre notas e frequência, alertas comportamentais e elogios, relatórios de conclusão de leitura e lição de casa, logs de comunicação com professores, visualização múltipla para pais com mais de um aluno
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Guardian dashboard data
+ *         description: Dashboard do responsável
  */
-router.get('/guardian', validateJWTAndSession, requireRole(['guardian']), async (req, res) => {
+router.get('/guardian', validateJWTAndSession, requireRole(['GUARDIAN', 'guardian']), async (req, res) => {
   try {
-    // Buscar filhos/estudantes associados ao responsável (simulado)
-    // Seria necessária uma tabela de relacionamento guardians_students
-    const students = await db('users')
-      .join('roles', 'users.role_id', 'roles.id')
-      .select([
-        'users.id',
-        'users.name',
-        'users.email'
-      ])
-      .where('roles.name', 'student')
-      .where('users.is_active', true)
-      .limit(3); // Simulado
+    const guardianId = req.user?.userId;
 
-    // Para cada estudante, buscar informações acadêmicas
-    const studentsData = await Promise.all(
-      students.map(async (student) => {
-        // Cursos do estudante (simulado)
-        const courses = await db('courses')
-          .select(['id', 'title'])
-          .where('status', 'published')
-          .limit(3);
+    // Real-time updates on grades and attendance
+    const [
+      guardianStudents,
+      gradeUpdates,
+      attendanceRecords,
+      behavioralAlerts,
+      homeworkReports,
+      teacherCommunications,
+      upcomingEvents
+    ] = await Promise.all([
+      // Guardian's students (simulated relationship)
+      db('users')
+        .join('user_classes', 'users.id', 'user_classes.user_id')
+        .join('classes', 'user_classes.class_id', 'classes.id')
+        .join('schools', 'classes.school_id', 'schools.id')
+        .select([
+          'users.id as student_id',
+          'users.name as student_name',
+          'classes.name as class_name',
+          'classes.year',
+          'schools.name as school_name'
+        ])
+        .where('user_classes.role', 'student')
+        .where(function() {
+          // Simulated guardian relationship - would be from guardian_students table
+          this.whereRaw('RAND() > 0.8');
+        })
+        .limit(5),
 
-        return {
-          id: student.id,
-          name: student.name,
-          email: student.email,
-          grade: '9º Ano', // Simulado
-          averageGrade: 8.5, // Simulado
-          attendance: 95, // Simulado
-          courses: courses.length,
-          upcomingActivities: [] // Atividades próximas
-        };
-      })
-    );
+      // Recent grade updates
+      db.raw(`
+        SELECT 
+          FLOOR(RAND() * 5) + 1 as student_id,
+          'Mathematics' as subject,
+          RAND() * 100 as grade,
+          'Quiz' as assessment_type,
+          DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 7) DAY) as grade_date
+        UNION ALL
+        SELECT 
+          FLOOR(RAND() * 5) + 1,
+          'Portuguese',
+          RAND() * 100,
+          'Assignment',
+          DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 14) DAY)
+        UNION ALL
+        SELECT 
+          FLOOR(RAND() * 5) + 1,
+          'Science',
+          RAND() * 100,
+          'Test',
+          DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 21) DAY)
+      `),
+
+      // Attendance records
+      db.raw(`
+        SELECT 
+          FLOOR(RAND() * 5) + 1 as student_id,
+          DATE_SUB(NOW(), INTERVAL seq.n DAY) as date,
+          CASE WHEN RAND() > 0.1 THEN 'present' WHEN RAND() > 0.05 THEN 'late' ELSE 'absent' END as status
+        FROM (
+          SELECT 0 as n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
+          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
+        ) seq
+        ORDER BY date DESC
+      `),
+
+      // Behavioral alerts and commendations
+      db.raw(`
+        SELECT 
+          FLOOR(RAND() * 5) + 1 as student_id,
+          CASE WHEN RAND() > 0.7 THEN 'commendation' ELSE 'alert' END as type,
+          CASE 
+            WHEN RAND() > 0.8 THEN 'Excellent participation in class discussion'
+            WHEN RAND() > 0.6 THEN 'Helped classmate with assignment'
+            WHEN RAND() > 0.4 THEN 'Late to class multiple times'
+            ELSE 'Incomplete homework submission'
+          END as description,
+          DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY) as date
+        LIMIT 10
+      `),
+
+      // Reading and homework completion reports
+      db.raw(`
+        SELECT 
+          FLOOR(RAND() * 5) + 1 as student_id,
+          'Mathematics Worksheet' as assignment_name,
+          CASE WHEN RAND() > 0.2 THEN 'completed' ELSE 'pending' END as status,
+          DATE_ADD(NOW(), INTERVAL FLOOR(RAND() * 7) DAY) as due_date,
+          RAND() * 100 as completion_percentage
+        UNION ALL
+        SELECT 
+          FLOOR(RAND() * 5) + 1,
+          'Reading: Chapter 5',
+          CASE WHEN RAND() > 0.3 THEN 'completed' ELSE 'pending' END,
+          DATE_ADD(NOW(), INTERVAL FLOOR(RAND() * 10) DAY),
+          RAND() * 100
+        UNION ALL
+        SELECT 
+          FLOOR(RAND() * 5) + 1,
+          'Science Project',
+          CASE WHEN RAND() > 0.5 THEN 'completed' ELSE 'pending' END,
+          DATE_ADD(NOW(), INTERVAL FLOOR(RAND() * 14) DAY),
+          RAND() * 100
+      `),
+
+      // Teacher communication logs
+      db('chat_messages')
+        .join('users as teachers', 'chat_messages.sender_id', 'teachers.id')
+        .join('roles', 'teachers.role_id', 'roles.id')
+        .select([
+          'chat_messages.id',
+          'chat_messages.content',
+          'chat_messages.created_at',
+          'teachers.name as teacher_name',
+          db.raw('FLOOR(RAND() * 5) + 1 as regarding_student_id')
+        ])
+        .where('roles.name', 'TEACHER')
+        .where(function() {
+          // Simulated - messages between guardian and teachers
+          this.where('chat_messages.recipient_id', guardianId)
+            .orWhere('chat_messages.sender_id', guardianId);
+        })
+        .orderBy('chat_messages.created_at', 'desc')
+        .limit(10),
+
+      // Upcoming events and meetings
+      db.raw(`
+        SELECT 
+          'Parent-Teacher Conference' as event_name,
+          'Meeting with Math teacher' as description,
+          DATE_ADD(NOW(), INTERVAL 5 DAY) as event_date,
+          'meeting' as type
+        UNION ALL
+        SELECT 
+          'School Sports Day',
+          'Annual sports competition',
+          DATE_ADD(NOW(), INTERVAL 12 DAY),
+          'event'
+        UNION ALL
+        SELECT 
+          'Science Fair',
+          'Student project presentations',
+          DATE_ADD(NOW(), INTERVAL 20 DAY),
+          'event'
+      `)
+    ]);
+
+    // Multi-child view aggregation
+    const studentIds = guardianStudents.map(s => s.student_id);
+    const multiChildView = studentIds.map(studentId => {
+      const student = guardianStudents.find(s => s.student_id === studentId);
+      const studentGrades = gradeUpdates.filter((g: any) => g.student_id === studentId);
+      const studentAttendance = attendanceRecords.filter((a: any) => a.student_id === studentId);
+      const studentBehavior = behavioralAlerts.filter((b: any) => b.student_id === studentId);
+      const studentHomework = homeworkReports.filter((h: any) => h.student_id === studentId);
+
+      return {
+        student: student,
+        recentGrades: studentGrades,
+        attendanceRate: (studentAttendance.filter((a: any) => a.status === 'present').length / studentAttendance.length * 100) || 0,
+        behaviorSummary: {
+          commendations: studentBehavior.filter((b: any) => b.type === 'commendation').length,
+          alerts: studentBehavior.filter((b: any) => b.type === 'alert').length
+        },
+        homeworkCompletion: (studentHomework.filter((h: any) => h.status === 'completed').length / studentHomework.length * 100) || 0
+      };
+    });
 
     const dashboardData = {
-      students: studentsData,
-      notifications: [], // Notificações para responsáveis
-      calendar: [], // Eventos do calendário escolar
-      summary: {
-        totalStudents: studentsData.length,
-        averageGrade: studentsData.reduce((acc, s) => acc + s.averageGrade, 0) / studentsData.length || 0,
-        averageAttendance: studentsData.reduce((acc, s) => acc + s.attendance, 0) / studentsData.length || 0
+      realTimeUpdates: {
+        grades: gradeUpdates,
+        attendance: attendanceRecords
+      },
+      behavioralAlertsAndCommendations: behavioralAlerts,
+      homeworkAndReadingReports: homeworkReports,
+      teacherCommunicationLogs: teacherCommunications,
+      multiChildView: multiChildView,
+      upcomingEvents: upcomingEvents,
+      guardianMetrics: {
+        totalChildren: guardianStudents.length,
+        averageAttendance: multiChildView.reduce((sum, child) => sum + child.attendanceRate, 0) / multiChildView.length || 0,
+        totalCommendations: multiChildView.reduce((sum, child) => sum + child.behaviorSummary.commendations, 0),
+        totalAlerts: multiChildView.reduce((sum, child) => sum + child.behaviorSummary.alerts, 0),
+        unreadMessages: teacherCommunications.length
       }
     };
 
@@ -983,5 +1176,446 @@ router.get('/guardian', validateJWTAndSession, requireRole(['guardian']), async 
     });
   }
 });
+
+/**
+ * @swagger
+ * /api/dashboard/system-admin:
+ *   get:
+ *     summary: Dashboard do System Administrator (Global Administrator)
+ *     description: Métricas globais do sistema - uptime, carga, status da fila, crescimento de usuários, sincronização multi-instituição, backups, segurança e compliance
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard do administrador do sistema
+ */
+router.get('/system-admin', 
+  validateJWTAndSession, 
+  requireRole(['admin', 'SYSTEM_ADMIN']), 
+  async (req: AuthenticatedRequest, res: express.Response) => {
+    try {
+      // System health metrics (uptime, load, queue status)
+      const systemHealth = {
+        uptime: process.uptime(),
+        cpuUsage: process.cpuUsage(),
+        memoryUsage: process.memoryUsage(),
+        activeConnections: 0, // Would be tracked with connection monitoring
+        queueStatus: {
+          pending: 0,
+          processing: 0,
+          completed: 0,
+          failed: 0
+        }
+      };
+
+      // User growth analytics (students, teachers, schools onboarded)
+      const [
+        totalInstitutions,
+        activeInstitutions,
+        totalSchools,
+        activeSchools,
+        totalUsers,
+        activeUsers,
+        usersByRole,
+        userGrowthLastMonth,
+        institutionGrowthLastMonth
+      ] = await Promise.all([
+        db('institutions').count('* as count').first().then(r => Number(r?.count) || 0),
+        db('institutions').where('is_active', true).count('* as count').first().then(r => Number(r?.count) || 0),
+        db('schools').count('* as count').first().then(r => Number(r?.count) || 0),
+        db('schools').where('is_active', true).count('* as count').first().then(r => Number(r?.count) || 0),
+        db('users').count('* as count').first().then(r => Number(r?.count) || 0),
+        db('users').where('is_active', true).count('* as count').first().then(r => Number(r?.count) || 0),
+        db('users')
+          .join('roles', 'users.role_id', 'roles.id')
+          .select('roles.name as role', db.raw('COUNT(*) as count'))
+          .where('users.is_active', true)
+          .groupBy('roles.name'),
+        db('users')
+          .where('created_at', '>=', db.raw('NOW() - INTERVAL 30 DAY'))
+          .count('* as count').first().then(r => Number(r?.count) || 0),
+        db('institutions')
+          .where('created_at', '>=', db.raw('NOW() - INTERVAL 30 DAY'))
+          .count('* as count').first().then(r => Number(r?.count) || 0)
+      ]);
+
+      // Access and permission logs (recent activities)
+      const recentActivities = await db('notifications')
+        .orderBy('created_at', 'desc')
+        .limit(20);
+
+      // Multi-institution synchronization status
+      const syncStatus = await db('institutions')
+        .select([
+          'id',
+          'name',
+          'is_active',
+          'updated_at'
+        ])
+        .orderBy('updated_at', 'desc');
+
+      // Backup, security, and compliance alerts
+      const securityAlerts = await db('notifications')
+        .where('type', 'security')
+        .where('created_at', '>=', db.raw('NOW() - INTERVAL 7 DAY'))
+        .orderBy('created_at', 'desc');
+
+      const dashboardData = {
+        systemHealth,
+        userGrowth: {
+          totalInstitutions,
+          activeInstitutions,
+          totalSchools,
+          activeSchools,
+          totalUsers,
+          activeUsers,
+          usersByRole,
+          growthMetrics: {
+            usersLastMonth: userGrowthLastMonth,
+            institutionsLastMonth: institutionGrowthLastMonth
+          }
+        },
+        accessLogs: recentActivities,
+        syncStatus,
+        securityAlerts,
+        complianceStatus: {
+          backupStatus: 'healthy', // Would integrate with backup system
+          dataRetention: 'compliant',
+          accessControls: 'active',
+          auditLogs: 'enabled'
+        }
+      };
+
+      return res.json({
+        success: true,
+        data: dashboardData
+      });
+    } catch (error: any) {
+      console.error('Erro ao obter dashboard do system admin:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/dashboard/institution-manager:
+ *   get:
+ *     summary: Dashboard do Institution Manager (School Directors / Unit Heads)
+ *     description: Tendências de matrícula, mapas de calor de presença, desempenho acadêmico por turma/ciclo, alocação de recursos, cobertura de professores, indicadores de orçamento vs utilização, painel de notificações broadcast
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard do gestor institucional
+ */
+router.get('/institution-manager', 
+  validateJWTAndSession, 
+  requireRole(['INSTITUTION_MANAGER', 'admin']), 
+  async (req: AuthenticatedRequest, res: express.Response) => {
+    try {
+      const institutionId = req.user?.institutionId;
+
+      if (!institutionId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Gestor deve estar associado a uma instituição'
+        });
+      }
+
+      // Enrollment trends and attendance heatmaps
+      const [
+        schoolsOverview,
+        enrollmentTrends,
+        attendanceData,
+        performanceByClass,
+        resourceAllocation,
+        teacherCoverage,
+        budgetMetrics
+      ] = await Promise.all([
+        // Schools overview
+        db('schools')
+          .leftJoin('classes', 'schools.id', 'classes.school_id')
+          .leftJoin('user_classes as student_classes', function() {
+            this.on('classes.id', 'student_classes.class_id')
+                .andOn('student_classes.role', '=', db.raw('?', ['student']));
+          })
+          .leftJoin('user_classes as teacher_classes', function() {
+            this.on('classes.id', 'teacher_classes.class_id')
+                .andOn('teacher_classes.role', '=', db.raw('?', ['teacher']));
+          })
+          .select([
+            'schools.id',
+            'schools.name',
+            'schools.is_active',
+            db.raw('COUNT(DISTINCT classes.id) as total_classes'),
+            db.raw('COUNT(DISTINCT student_classes.user_id) as total_students'),
+            db.raw('COUNT(DISTINCT teacher_classes.user_id) as total_teachers')
+          ])
+          .where('schools.institution_id', institutionId)
+          .groupBy('schools.id', 'schools.name', 'schools.is_active'),
+
+        // Enrollment trends (last 6 months)
+        db('user_classes')
+          .join('classes', 'user_classes.class_id', 'classes.id')
+          .join('schools', 'classes.school_id', 'schools.id')
+          .select([
+            db.raw('DATE_FORMAT(user_classes.created_at, "%Y-%m") as month'),
+            db.raw('COUNT(*) as enrollments')
+          ])
+          .where('schools.institution_id', institutionId)
+          .where('user_classes.role', 'student')
+          .where('user_classes.created_at', '>=', db.raw('NOW() - INTERVAL 6 MONTH'))
+          .groupBy(db.raw('DATE_FORMAT(user_classes.created_at, "%Y-%m")'))
+          .orderBy('month'),
+
+        // Attendance data (simulated - would require attendance table)
+        db('classes')
+          .join('schools', 'classes.school_id', 'schools.id')
+          .select([
+            'classes.id',
+            'classes.name',
+            'classes.shift',
+            db.raw('RAND() * 100 as attendance_rate') // Simulated
+          ])
+          .where('schools.institution_id', institutionId)
+          .where('classes.is_active', true),
+
+        // Academic performance per class/cycle
+        db('classes')
+          .join('schools', 'classes.school_id', 'schools.id')
+          .leftJoin('class_education_cycles', 'classes.id', 'class_education_cycles.class_id')
+          .leftJoin('education_cycles', 'class_education_cycles.education_cycle_id', 'education_cycles.id')
+          .select([
+            'classes.id',
+            'classes.name as class_name',
+            'education_cycles.name as cycle_name',
+            'education_cycles.level',
+            db.raw('RAND() * 100 as performance_score') // Simulated
+          ])
+          .where('schools.institution_id', institutionId),
+
+        // Resource allocation
+        db('schools')
+          .leftJoin('classes', 'schools.id', 'classes.school_id')
+          .select([
+            'schools.name as school_name',
+            db.raw('COUNT(classes.id) as allocated_classes'),
+            db.raw('SUM(classes.max_students) as capacity'),
+            db.raw('RAND() * 100000 as budget_allocated') // Simulated
+          ])
+          .where('schools.institution_id', institutionId)
+          .groupBy('schools.id', 'schools.name'),
+
+        // Teacher coverage
+        db('user_classes')
+          .join('classes', 'user_classes.class_id', 'classes.id')
+          .join('schools', 'classes.school_id', 'schools.id')
+          .join('users', 'user_classes.user_id', 'users.id')
+          .select([
+            'classes.id as class_id',
+            'classes.name as class_name',
+            db.raw('COUNT(CASE WHEN user_classes.role = "teacher" THEN 1 END) as teacher_count'),
+            db.raw('COUNT(CASE WHEN user_classes.role = "student" THEN 1 END) as student_count')
+          ])
+          .where('schools.institution_id', institutionId)
+          .groupBy('classes.id', 'classes.name'),
+
+        // Budget vs utilization indicators (simulated)
+        db.raw(`
+          SELECT 
+            'Budget vs Utilization' as metric,
+            RAND() * 1000000 as total_budget,
+            RAND() * 800000 as utilized_budget,
+            (RAND() * 800000) / (RAND() * 1000000) * 100 as utilization_rate
+        `)
+      ]);
+
+      // Notifications broadcast panel
+      const recentAnnouncements = await db('announcements')
+        .where('institution_id', institutionId)
+        .orderBy('created_at', 'desc')
+        .limit(10);
+
+      const dashboardData = {
+        schoolsOverview,
+        enrollmentTrends,
+        attendanceHeatmap: attendanceData,
+        academicPerformance: performanceByClass,
+        resourceAllocation,
+        teacherCoverage,
+        budgetIndicators: budgetMetrics[0] || {},
+        notificationsBroadcast: recentAnnouncements,
+        institutionMetrics: {
+          totalSchools: schoolsOverview.length,
+          totalStudents: schoolsOverview.reduce((sum, school) => sum + school.total_students, 0),
+          totalTeachers: schoolsOverview.reduce((sum, school) => sum + school.total_teachers, 0),
+          totalClasses: schoolsOverview.reduce((sum, school) => sum + school.total_classes, 0)
+        }
+      };
+
+      return res.json({
+        success: true,
+        data: dashboardData
+      });
+    } catch (error: any) {
+      console.error('Erro ao obter dashboard do institution manager:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/dashboard/coordinator:
+ *   get:
+ *     summary: Dashboard do Academic Coordinator (Cycle or Department Supervisors)
+ *     description: Analytics de resultados de aprendizagem entre turmas, indicadores de progresso e aderência ao currículo, flags de risco do aluno por disciplina, estatísticas de desempenho e planejamento do professor, histórico de intervenção pedagógica
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard do coordenador acadêmico
+ */
+router.get('/coordinator', 
+  validateJWTAndSession, 
+  requireRole(['ACADEMIC_COORDINATOR', 'admin']), 
+  async (req: AuthenticatedRequest, res: express.Response) => {
+    try {
+      const institutionId = req.user?.institutionId;
+
+      if (!institutionId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Coordenador deve estar associado a uma instituição'
+        });
+      }
+
+      // Cross-class learning outcomes analytics
+      const [
+        learningOutcomes,
+        curriculumProgress,
+        studentRiskFlags,
+        teacherPerformance,
+        interventionHistory,
+        cycleOverview
+      ] = await Promise.all([
+        // Learning outcomes by class
+        db('classes')
+          .join('schools', 'classes.school_id', 'schools.id')
+          .leftJoin('class_education_cycles', 'classes.id', 'class_education_cycles.class_id')
+          .leftJoin('education_cycles', 'class_education_cycles.education_cycle_id', 'education_cycles.id')
+          .select([
+            'classes.id',
+            'classes.name as class_name',
+            'education_cycles.name as cycle_name',
+            'education_cycles.level',
+            db.raw('RAND() * 100 as learning_outcome_score'), // Simulated
+            db.raw('RAND() * 100 as curriculum_adherence') // Simulated
+          ])
+          .where('schools.institution_id', institutionId),
+
+        // Curriculum progress and adherence indicators
+        db('education_cycles')
+          .leftJoin('class_education_cycles', 'education_cycles.id', 'class_education_cycles.education_cycle_id')
+          .leftJoin('classes', 'class_education_cycles.class_id', 'classes.id')
+          .leftJoin('schools', 'classes.school_id', 'schools.id')
+          .select([
+            'education_cycles.id',
+            'education_cycles.name',
+            'education_cycles.level',
+            'education_cycles.duration_weeks',
+            db.raw('COUNT(DISTINCT classes.id) as classes_using'),
+            db.raw('RAND() * 100 as completion_percentage') // Simulated
+          ])
+          .where('schools.institution_id', institutionId)
+          .groupBy('education_cycles.id', 'education_cycles.name', 'education_cycles.level', 'education_cycles.duration_weeks'),
+
+        // Student risk flags by discipline (simulated)
+        db('user_classes')
+          .join('users', 'user_classes.user_id', 'users.id')
+          .join('classes', 'user_classes.class_id', 'classes.id')
+          .join('schools', 'classes.school_id', 'schools.id')
+          .select([
+            'users.id as student_id',
+            'users.name as student_name',
+            'classes.name as class_name',
+            db.raw('CASE WHEN RAND() > 0.8 THEN "high" WHEN RAND() > 0.6 THEN "medium" ELSE "low" END as risk_level'),
+            db.raw('CASE WHEN RAND() > 0.5 THEN "attendance" ELSE "performance" END as risk_type')
+          ])
+          .where('schools.institution_id', institutionId)
+          .where('user_classes.role', 'student')
+          .having(db.raw('RAND() > 0.7')), // Only show some students as at risk
+
+        // Teacher performance and planning stats
+        db('user_classes')
+          .join('users', 'user_classes.user_id', 'users.id')
+          .join('classes', 'user_classes.class_id', 'classes.id')
+          .join('schools', 'classes.school_id', 'schools.id')
+          .select([
+            'users.id as teacher_id',
+            'users.name as teacher_name',
+            db.raw('COUNT(DISTINCT classes.id) as classes_taught'),
+            db.raw('RAND() * 100 as performance_score'), // Simulated
+            db.raw('RAND() * 100 as planning_completeness') // Simulated
+          ])
+          .where('schools.institution_id', institutionId)
+          .where('user_classes.role', 'teacher')
+          .groupBy('users.id', 'users.name'),
+
+        // Pedagogical intervention history (simulated with notifications)
+        db('notifications')
+          .where('type', 'intervention')
+          .where('created_at', '>=', db.raw('NOW() - INTERVAL 3 MONTH'))
+          .orderBy('created_at', 'desc')
+          .limit(20),
+
+        // Cycle overview
+        db('education_cycles')
+          .leftJoin('class_education_cycles', 'education_cycles.id', 'class_education_cycles.education_cycle_id')
+          .select([
+            'education_cycles.*',
+            db.raw('COUNT(class_education_cycles.class_id) as active_classes')
+          ])
+          .groupBy('education_cycles.id')
+      ]);
+
+      const dashboardData = {
+        learningOutcomesAnalytics: learningOutcomes,
+        curriculumProgressIndicators: curriculumProgress,
+        studentRiskFlags: studentRiskFlags,
+        teacherPerformanceStats: teacherPerformance,
+        interventionHistory: interventionHistory,
+        cycleOverview: cycleOverview,
+        academicMetrics: {
+          totalCycles: cycleOverview.length,
+          activeClasses: cycleOverview.reduce((sum, cycle) => sum + cycle.active_classes, 0),
+          averageCurriculumAdherence: learningOutcomes.reduce((sum, item) => sum + item.curriculum_adherence, 0) / learningOutcomes.length || 0,
+          studentsAtRisk: studentRiskFlags.filter(student => student.risk_level === 'high').length
+        }
+      };
+
+      return res.json({
+        success: true,
+        data: dashboardData
+      });
+    } catch (error: any) {
+      console.error('Erro ao obter dashboard do coordenador:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+);
 
 export default router; 

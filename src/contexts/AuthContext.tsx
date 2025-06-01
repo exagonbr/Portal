@@ -58,20 +58,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const normalizedRole = convertBackendRole(userRole);
     
     if (!normalizedRole || !isValidRole(normalizedRole)) {
-      console.error(`❌ Role inválida: ${userRole} -> ${normalizedRole}`);
-      setError('Perfil de usuário inválido. Por favor, entre em contato com o administrador.');
+      console.error(`❌ Role inválida no redirecionamento: ${userRole} -> ${normalizedRole}`);
+      router.push('/login?error=unauthorized');
       return;
     }
     
-    // Obtém o caminho do dashboard
+    // Obtém o caminho do dashboard baseado na role
     const dashboardPath = getDashboardPath(normalizedRole);
     
     if (dashboardPath) {
       console.log(`✅ Redirecionando para: ${dashboardPath}`);
       router.push(dashboardPath);
     } else {
-      console.log(`⚠️ Dashboard não encontrado para ${normalizedRole}, usando fallback`);
-      router.push('/dashboard');
+      console.error(`❌ Dashboard não encontrado para role: ${normalizedRole}`);
+      router.push('/login?error=unauthorized');
     }
   };
 

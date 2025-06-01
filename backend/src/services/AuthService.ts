@@ -217,8 +217,9 @@ export class AuthService {
     // Verify password
     const isPasswordValid = await UserRepository.comparePassword(loginData.password, user.password);
 
-    if (!isPasswordValid) {
-      throw new Error('Credenciais inválidas');
+      const isValidPassword = await bcrypt.compare(credentials.password, user.password);
+      if (!isValidPassword) {
+        throw new Error('Email ou senha incorretos. Por favor, verifique suas credenciais.');
     }
 
     // Create session

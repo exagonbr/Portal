@@ -21,13 +21,49 @@ export default function ErrorSuppressor() {
       'Observation loop error'
     ];
 
+    // Lista de padrões que NÃO devem ser suprimidos (logs importantes)
+    const importantPatterns = [
+      'auth',
+      'login',
+      'dashboard',
+      'redirect',
+      'role',
+      'permission',
+      'user',
+      'session',
+      'navigation',
+      'router',
+      '🔐', '🚀', '✅', '❌', '🔍', '🔄', // Emojis dos logs importantes
+      'API'
+    ];
+
     // Função para verificar se o erro deve ser suprimido
     const shouldSuppressError = (message: string): boolean => {
       if (!message || typeof message !== 'string') return false;
       
+      // Se contém padrões importantes, NÃO suprimir
+      const hasImportantPattern = importantPatterns.some(pattern => 
+        message.toLowerCase().includes(pattern.toLowerCase())
+      );
+      
+      if (hasImportantPattern) {
+        return false; // NÃO suprimir logs importantes
+      }
+      
+      // Se contém padrões do ResizeObserver, suprimir
       return resizeObserverErrorPatterns.some(pattern => 
         message.toLowerCase().includes(pattern.toLowerCase())
       );
+    };
+
+    // Função para verificar se qualquer argumento contém padrões importantes
+    const hasImportantArgs = (args: any[]): boolean => {
+      return args.some(arg => {
+        const argString = String(arg);
+        return importantPatterns.some(pattern => 
+          argString.toLowerCase().includes(pattern.toLowerCase())
+        );
+      });
     };
 
     // Flags para prevenir recursão
@@ -45,6 +81,13 @@ export default function ErrorSuppressor() {
       isProcessingError = true;
 
       try {
+        // Se tem argumentos importantes, sempre mostrar
+        if (hasImportantArgs(args)) {
+          originalError(...args);
+          isProcessingError = false;
+          return;
+        }
+
         // Verificar se é um erro do ResizeObserver
         const firstArg = args[0];
         
@@ -85,6 +128,13 @@ export default function ErrorSuppressor() {
       isProcessingWarn = true;
 
       try {
+        // Se tem argumentos importantes, sempre mostrar
+        if (hasImportantArgs(args)) {
+          originalWarn(...args);
+          isProcessingWarn = false;
+          return;
+        }
+
         const firstArg = args[0];
         
         if (shouldSuppressError(String(firstArg))) {

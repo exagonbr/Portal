@@ -23,12 +23,14 @@ interface RequestOptions {
   body?: any;
   params?: Record<string, string | number | boolean>;
   timeout?: number;
+  skipAuthRefresh?: boolean;
 }
 
 // Classe principal do cliente API
 export class ApiClient {
   private baseURL: string;
   private defaultHeaders: Record<string, string>;
+  private refreshPromise: Promise<void> | null = null;
 
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
@@ -54,6 +56,56 @@ export class ApiClient {
       ?.split('=')[1];
 
     return cookieToken || null;
+  }
+
+  /**
+   * Obtém o refresh token
+   */
+  private getRefreshToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('refresh_token');
+  }
+
+  /**
+   * Atualiza o token de autenticação
+   */
+  private async refreshAuthToken(): Promise<void> {
+    try {
+      const refreshToken = this.getRefreshToken();
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const data = await response.json();
+      
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token);
+        if (data.refresh_token) {
+          localStorage.setItem('refresh_token', data.refresh_token);
+        }
+        if (data.expires_at) {
+          localStorage.setItem('auth_expires_at', data.expires_at);
+        }
+      } else {
+        throw new Error('Invalid refresh response');
+      }
+    } catch (error) {
+      // Limpa dados de autenticação em caso de erro
+      this.clearAuth();
+      throw error;
+    }
   }
 
   /**
@@ -100,7 +152,8 @@ export class ApiClient {
       headers: customHeaders,
       body,
       params,
-      timeout = 30000
+      timeout = 30000,
+      skipAuthRefresh = false
     } = options;
 
     try {
@@ -128,6 +181,22 @@ export class ApiClient {
       });
 
       clearTimeout(timeoutId);
+
+      // Se receber 401 e não estiver tentando refresh, tenta atualizar o token
+      if (response.status === 401 && !skipAuthRefresh) {
+        if (!this.refreshPromise) {
+          this.refreshPromise = this.refreshAuthToken();
+        }
+        
+        await this.refreshPromise;
+        this.refreshPromise = null;
+        
+        // Tenta a requisição novamente com o novo token
+        return this.makeRequest<T>(endpoint, {
+          ...options,
+          skipAuthRefresh: true
+        });
+      }
 
       // Parse da resposta
       let responseData: ApiResponse<T>;
@@ -260,30 +329,33 @@ export class ApiClient {
   }
 
   /**
-   * Limpa o cache de autenticação
+   * Limpa dados de autenticação
    */
   clearAuth(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
-      
-      // Remove cookies
-      document.cookie = 'auth_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-      document.cookie = 'user_data=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-    }
+    if (typeof window === 'undefined') return;
+
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('auth_expires_at');
+    localStorage.removeItem('user_data');
+
+    // Limpa cookies também
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   }
 
   /**
    * Define o token de autenticação
    */
-  setAuthToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
-      
-      // Também salva em cookie para SSR
-      const expires = new Date();
-      expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
-      document.cookie = `auth_token=${token};expires=${expires.toUTCString()};path=/;secure;samesite=strict`;
+  setAuthToken(token: string, refreshToken?: string, expiresAt?: string): void {
+    if (typeof window === 'undefined') return;
+
+    localStorage.setItem('auth_token', token);
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    }
+    if (expiresAt) {
+      localStorage.setItem('auth_expires_at', expiresAt);
     }
   }
 }
