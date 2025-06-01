@@ -59,11 +59,11 @@ const router = express.Router();
 router.post(
   '/register',
   [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }),
-    body('name').trim().notEmpty(),
-    body('role_id').isInt({ min: 1 }),
-    body('institution_id').optional().isInt({ min: 1 }),
+    body('email').isEmail().normalizeEmail().withMessage('Por favor, forneça um email válido'),
+    body('password').isLength({ min: 6 }).withMessage('A senha deve ter pelo menos 6 caracteres'),
+    body('name').trim().notEmpty().withMessage('O nome é obrigatório'),
+    body('role_id').isInt({ min: 1 }).withMessage('Selecione um tipo de usuário válido'),
+    body('institution_id').optional().isInt({ min: 1 }).withMessage('Instituição inválida'),
   ],
   async (req: express.Request, res: express.Response) => {
     try {
@@ -71,7 +71,11 @@ router.post(
       if (!errors.isEmpty()) {
         return res.status(400).json({
           success: false,
-          errors: errors.array(),
+          message: 'Por favor, corrija os erros no formulário',
+          errors: errors.array().map(err => ({
+            field: err.type === 'field' ? err.path : 'unknown',
+            message: err.msg
+          }))
         });
       }
 
@@ -86,18 +90,20 @@ router.post(
       return res.status(201).json({
         success: true,
         ...result,
+        message: 'Conta criada com sucesso!',
       });
     } catch (error: any) {
       if (error.message === 'Usuário já existe') {
         return res.status(409).json({
           success: false,
-          message: error.message,
+          message: 'Este email já está cadastrado. Por favor, use outro email ou faça login.',
         });
       }
 
+      console.error('Erro no registro:', error);
       return res.status(500).json({
         success: false,
-        message: 'Erro ao registrar usuário',
+        message: 'Não foi possível criar sua conta. Por favor, tente novamente mais tarde.',
       });
     }
   }
@@ -146,8 +152,8 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').isEmail().normalizeEmail(),
-    body('password').notEmpty(),
+    body('email').isEmail().normalizeEmail().withMessage('Por favor, forneça um email válido'),
+    body('password').notEmpty().withMessage('A senha é obrigatória'),
   ],
   async (req: express.Request, res: express.Response) => {
     try {
@@ -155,7 +161,11 @@ router.post(
       if (!errors.isEmpty()) {
         return res.status(400).json({
           success: false,
-          errors: errors.array(),
+          message: 'Por favor, corrija os erros no formulário',
+          errors: errors.array().map(err => ({
+            field: err.type === 'field' ? err.path : 'unknown',
+            message: err.msg
+          }))
         });
       }
 
@@ -172,18 +182,34 @@ router.post(
       return res.json({
         success: true,
         ...result,
+        message: 'Login realizado com sucesso!',
       });
     } catch (error: any) {
-      if (error.message === 'Credenciais inválidas' || error.message === 'Usuário inativo') {
+      if (error.message === 'Credenciais inválidas') {
         return res.status(401).json({
           success: false,
-          message: error.message,
+          message: 'Email ou senha incorretos. Por favor, verifique suas credenciais.',
         });
       }
 
+      if (error.message === 'Usuário inativo') {
+        return res.status(401).json({
+          success: false,
+          message: 'Sua conta está inativa. Entre em contato com o administrador do sistema.',
+        });
+      }
+
+      if (error.message === 'Conta bloqueada') {
+        return res.status(401).json({
+          success: false,
+          message: 'Sua conta está bloqueada por motivos de segurança. Entre em contato com o suporte.',
+        });
+      }
+
+      console.error('Erro no login:', error);
       return res.status(500).json({
         success: false,
-        message: 'Erro ao fazer login',
+        message: 'Não foi possível realizar o login. Por favor, tente novamente mais tarde.',
       });
     }
   }
@@ -225,7 +251,7 @@ router.get('/me', validateJWT, async (req: express.Request, res: express.Respons
     if (!userId || isNaN(userId)) {
       return res.status(401).json({
         success: false,
-        message: 'Usuário não autenticado'
+        message: 'Sessão inválida. Por favor, faça login novamente.'
       });
     }
 
@@ -234,29 +260,28 @@ router.get('/me', validateJWT, async (req: express.Request, res: express.Respons
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Usuário não encontrado'
+        message: 'Usuário não encontrado. Por favor, faça login novamente.'
       });
     }
 
-    // Atualiza atividade da sessão se disponível
     if (sessionId) {
       await AuthService.updateSessionActivity(sessionId);
     }
 
-    // Remove senha da resposta
     const { password, ...userWithoutPassword } = user;
 
     return res.json({
       success: true,
+      message: 'Perfil carregado com sucesso!',
       data: {
         user: userWithoutPassword
       }
     });
   } catch (error: any) {
+    console.error('Erro ao buscar perfil:', error);
     return res.status(500).json({
       success: false,
-      message: 'Erro ao buscar perfil do usuário',
-      error: error.message
+      message: 'Não foi possível carregar seu perfil. Por favor, tente novamente mais tarde.',
     });
   }
 });
@@ -287,13 +312,13 @@ router.post('/logout', validateJWT, async (req: express.Request, res: express.Re
 
     return res.json({
       success: true,
-      message: 'Logout realizado com sucesso'
+      message: 'Logout realizado com sucesso! Até logo!'
     });
   } catch (error: any) {
+    console.error('Erro no logout:', error);
     return res.status(500).json({
       success: false,
-      message: 'Erro ao fazer logout',
-      error: error.message
+      message: 'Não foi possível realizar o logout. Por favor, tente novamente.',
     });
   }
 });

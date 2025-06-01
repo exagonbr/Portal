@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useForm } from '@/hooks/useForm';
 import { getDashboardPath, isValidRole, convertBackendRole } from '@/utils/roleRedirect';
+import { useToast } from '@/components/Toast';
+import Link from 'next/link';
+import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 interface LoginFormData {
   email: string;
@@ -33,84 +34,57 @@ const validationRules = {
 export function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
-  const [submitError, setSubmitError] = useState('');
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const { showToast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const {
-    values,
-    errors,
-    touched,
-    isSubmitting,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-  } = useForm<LoginFormData>({
-    initialValues,
-    validationRules,
-    onSubmit: async (formValues) => {
-      try {
-        setSubmitError('');
-        console.log('🔐 Iniciando login via formulário para:', formValues.email);
-        await login(formValues.email, formValues.password);
-      } catch (error) {
-        console.error('❌ Erro durante o login:', error);
-        setSubmitError('Email ou senha incorretos. Por favor, tente novamente.');
-      }
-    }
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-  const handleGoogleLogin = async () => {
     try {
-      setIsGoogleLoading(true);
-      setSubmitError('');
-      
-      console.log('🔐 Iniciando login Google');
-      
-      const result = await signIn('google', { redirect: false });
-      
-      if (result?.ok && !result?.error) {
-        const response = await fetch('/api/auth/session');
-        const session = await response.json();
-        
-        console.log('✅ Sessão Google obtida:', session?.user?.name);
-        
-        if (session?.user?.role) {
-          const userRole = session.user.role;
-          
-          // Converte role do backend para formato do frontend
-          const normalizedRole = convertBackendRole(userRole);
-          
-          if (!normalizedRole || !isValidRole(normalizedRole)) {
-            console.error(`❌ Role inválida no login Google: ${userRole} -> ${normalizedRole}`);
-            await signOut();
-            setSubmitError('Perfil de usuário inválido. Por favor, entre em contato com o administrador.');
-            return;
-          }
-          
-          const dashboardPath = getDashboardPath(normalizedRole);
-          
-          if (dashboardPath) {
-            console.log(`✅ Redirecionando usuário Google ${session.user.name} para: ${dashboardPath}`);
-            router.push(dashboardPath);
-          } else {
-            console.error(`❌ Dashboard não encontrado para: ${normalizedRole}`);
-            setSubmitError('Erro interno. Por favor, entre em contato com o administrador.');
-          }
-        } else {
-          console.error('❌ Sessão Google inválida');
-          setSubmitError('Sessão inválida. Por favor, tente novamente.');
-        }
+      // Validação básica
+      if (!email.trim()) {
+        throw new Error('Por favor, informe seu email.');
       }
-      
-      if (result?.error) {
-        console.error('❌ Erro no login Google:', result.error);
-        setSubmitError('Erro ao realizar login com Google. Por favor, tente novamente.');
+
+      if (!password.trim()) {
+        throw new Error('Por favor, informe sua senha.');
       }
-    } catch (error) {
-      console.error('❌ Erro durante login Google:', error);
-      setSubmitError('Erro ao realizar login com Google. Por favor, tente novamente.');
+
+      if (!email.includes('@')) {
+        throw new Error('Por favor, informe um email válido.');
+      }
+
+      if (password.length < 6) {
+        throw new Error('A senha deve ter pelo menos 6 caracteres.');
+      }
+
+      const result = await login(email, password);
+
+      if (result.success) {
+        showToast({
+          type: 'success',
+          title: 'Sucesso!',
+          message: 'Login realizado com sucesso! Redirecionando...'
+        });
+        router.push('/dashboard');
+      } else {
+        throw new Error(result.message || 'Não foi possível realizar o login. Por favor, tente novamente.');
+      }
+    } catch (err: any) {
+      console.error('Erro no login:', err);
+      setError(err.message || 'Ocorreu um erro ao tentar fazer login. Por favor, tente novamente.');
+      showToast({
+        type: 'error',
+        title: 'Erro no Login',
+        message: err.message || 'Não foi possível realizar o login. Por favor, tente novamente.'
+      });
     } finally {
-      setIsGoogleLoading(false);
+      setLoading(false);
     }
   };
 
@@ -128,20 +102,16 @@ export function LoginForm() {
               type="email"
               autoComplete="email"
               required
-              value={values.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              aria-invalid={touched.email && errors.email ? 'true' : 'false'}
-              aria-describedby={touched.email && errors.email ? 'email-error' : undefined}
-              className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200 ${
-                touched.email && errors.email
-                  ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-accent-blue focus:border-accent-blue'
-              }`}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`appearance-none block w-full px-3 py-2 border ${
+                error && !email.trim() ? 'border-red-300' : 'border-gray-300'
+              } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
+              placeholder="seu@email.com"
             />
-            {touched.email && errors.email && (
-              <p className="mt-2 text-sm text-red-600" id="email-error" role="alert">
-                {errors.email}
+            {error && !email.trim() && (
+              <p className="mt-2 text-sm text-red-600">
+                Por favor, informe seu email.
               </p>
             )}
           </div>
@@ -158,33 +128,34 @@ export function LoginForm() {
               type="password"
               autoComplete="current-password"
               required
-              value={values.password}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              aria-invalid={touched.password && errors.password ? 'true' : 'false'}
-              aria-describedby={touched.password && errors.password ? 'password-error' : undefined}
-              className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200 ${
-                touched.password && errors.password
-                  ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-accent-blue focus:border-accent-blue'
-              }`}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`appearance-none block w-full px-3 py-2 border ${
+                error && !password.trim() ? 'border-red-300' : 'border-gray-300'
+              } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
+              placeholder="••••••••"
             />
-            {touched.password && errors.password && (
-              <p className="mt-2 text-sm text-red-600" id="password-error" role="alert">
-                {errors.password}
+            {error && !password.trim() && (
+              <p className="mt-2 text-sm text-red-600">
+                Por favor, informe sua senha.
               </p>
             )}
           </div>
         </div>
 
-        {submitError && (
-          <div className="rounded-md bg-red-50 p-4" role="alert">
+        {error && (
+          <div className="rounded-md bg-red-50 p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <span className="material-symbols-outlined text-red-400" aria-hidden="true">error</span>
+                <ExclamationCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">{submitError}</h3>
+                <h3 className="text-sm font-medium text-red-800">
+                  Erro no Login
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -193,53 +164,62 @@ export function LoginForm() {
         <div>
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            aria-busy={isSubmitting}
+            disabled={loading}
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+              loading
+                ? 'bg-primary-400 cursor-not-allowed'
+                : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
+            }`}
           >
-            {isSubmitting ? 'Acessando...' : 'Acessar'}
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Entrando...
+              </>
+            ) : (
+              'Entrar'
+            )}
           </button>
         </div>
+
+        <div className="flex items-center justify-between">
+          <div className="text-sm">
+            <Link
+              href="/forgot-password"
+              className="font-medium text-primary-600 hover:text-primary-500"
+            >
+              Esqueceu sua senha?
+            </Link>
+          </div>
+          <div className="text-sm">
+            <Link
+              href="/register"
+              className="font-medium text-primary-600 hover:text-primary-500"
+            >
+              Criar uma conta
+            </Link>
+          </div>
+        </div>
       </form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">ou</span>
-        </div>
-      </div>
-
-      <div>
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={isGoogleLoading}
-          className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-busy={isGoogleLoading}
-        >
-          <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              fill="#4285F4"
-            />
-            <path
-              d="M1 12.23c0-.78.07-1.53.2-2.25h5.92v4.26H4.56l-.01.07C4.13 15.36 2.62 17.25 1 12.23z"
-              fill="#34A853"
-            />
-            <path
-              d="M8.07 17.93c-3.09-.63-5.6-3.12-6.19-6.23L4.56 14.28c.63 1.73 2.04 3.16 3.51 3.65z"
-              fill="#EA4335"
-            />
-            <path
-              d="M8.07 6.07c3.09.63 5.6 3.12 6.19 6.23L11.58 9.72c-.63-1.73-2.04-3.16-3.51-3.65z"
-              fill="#FBBC05"
-            />
-          </svg>
-          {isGoogleLoading ? 'Conectando...' : 'Continuar com Google'}
-        </button>
-      </div>
     </div>
   );
 }

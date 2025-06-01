@@ -9,10 +9,12 @@ export async function GET() {
     if (session) {
       return NextResponse.json(session);
     } else {
-      return NextResponse.json(
-        { message: 'No active session' },
-        { status: 401 }
-      );
+      // Retorna um objeto de sessão vazio em vez de status 401
+      // Isso evita que o cliente exiba erros
+      return NextResponse.json({ 
+        user: null, 
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() 
+      });
     }
   } catch (error) {
     console.error('Error getting session:', error);

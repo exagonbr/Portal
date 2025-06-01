@@ -21,16 +21,22 @@ export default function ErrorSuppressor() {
       'Observation loop error'
     ];
 
+    // Lista de erros relacionados à autenticação que podem ser suprimidos
+    const authErrorsToSuppress = [
+      'No active session',
+      'CLIENT_FETCH_ERROR',
+      '[next-auth][error]',
+      'Sessão inválida',
+      '401 (Unauthorized)',
+      'Unauthorized'
+    ];
+
     // Lista de padrões que NÃO devem ser suprimidos (logs importantes)
     const importantPatterns = [
-      'auth',
-      'login',
       'dashboard',
       'redirect',
       'role',
       'permission',
-      'user',
-      'session',
       'navigation',
       'router',
       '🔐', '🚀', '✅', '❌', '🔍', '🔄', // Emojis dos logs importantes
@@ -51,9 +57,18 @@ export default function ErrorSuppressor() {
       }
       
       // Se contém padrões do ResizeObserver, suprimir
-      return resizeObserverErrorPatterns.some(pattern => 
+      const isResizeObserverError = resizeObserverErrorPatterns.some(pattern => 
         message.toLowerCase().includes(pattern.toLowerCase())
       );
+
+      if (isResizeObserverError) return true;
+
+      // Se contém padrões de erro de autenticação, suprimir
+      const isAuthError = authErrorsToSuppress.some(pattern => 
+        message.includes(pattern)
+      );
+
+      return isAuthError;
     };
 
     // Função para verificar se qualquer argumento contém padrões importantes
@@ -88,7 +103,7 @@ export default function ErrorSuppressor() {
           return;
         }
 
-        // Verificar se é um erro do ResizeObserver
+        // Verificar se é um erro do ResizeObserver ou autenticação
         const firstArg = args[0];
         
         if (shouldSuppressError(String(firstArg))) {
@@ -98,11 +113,11 @@ export default function ErrorSuppressor() {
         }
 
         // Verificar se algum dos argumentos contém mensagem relacionada
-        const hasResizeObserverError = args.some(arg => 
+        const shouldSuppress = args.some(arg => 
           shouldSuppressError(String(arg))
         );
 
-        if (hasResizeObserverError) {
+        if (shouldSuppress) {
           isProcessingError = false;
           return;
         }

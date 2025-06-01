@@ -169,7 +169,7 @@ export class AuthService {
     // Check if user already exists
     const existingUser = await UserRepository.findByEmail(userData.email);
 
-    if (existingUser) {
+      if (existingUser) {
       throw new Error('Usuário já existe');
     }
 
@@ -188,56 +188,54 @@ export class AuthService {
 
     // Generate token
     const token = this.generateToken(userWithRelations, sessionId);
-
+      
     // Calculate expiration
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
-
-    return {
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+      
+      return {
       user: this.formatUserResponse(userWithRelations),
-      token,
-      sessionId,
-      expires_at: expiresAt.toISOString()
-    };
+        token,
+        sessionId,
+        expires_at: expiresAt.toISOString()
+      };
   }
 
   static async login(loginData: LoginDto, clientInfo: ClientInfo): Promise<AuthResponseDto> {
     // Find user by email
     const user = await UserRepository.findByEmail(loginData.email);
 
-    if (!user) {
+      if (!user) {
       throw new Error('Credenciais inválidas');
-    }
+      }
 
     // Check if user is active
     if (!user.is_active) {
       throw new Error('Usuário inativo');
-    }
+      }
 
     // Verify password
     const isPasswordValid = await UserRepository.comparePassword(loginData.password, user.password);
-
-      const isValidPassword = await bcrypt.compare(credentials.password, user.password);
-      if (!isValidPassword) {
-        throw new Error('Email ou senha incorretos. Por favor, verifique suas credenciais.');
+    if (!isPasswordValid) {
+      throw new Error('Email ou senha incorretos. Por favor, verifique suas credenciais.');
     }
 
     // Create session
-    const sessionId = await this.createSession(user, clientInfo);
+      const sessionId = await this.createSession(user, clientInfo);
 
     // Generate token
-    const token = this.generateToken(user, sessionId);
+      const token = this.generateToken(user, sessionId);
 
     // Calculate expiration
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
 
-    return {
+      return {
       user: this.formatUserResponse(user),
-      token,
+        token,
       sessionId,
-      expires_at: expiresAt.toISOString()
-    };
+        expires_at: expiresAt.toISOString()
+      };
   }
 
   static async logout(sessionId: string): Promise<void> {
@@ -337,26 +335,6 @@ export class AuthService {
     }
 
     await UserRepository.update(userId, { password: newPassword });
-  }
-
-  private static formatUserResponse(user: UserWithRelations): any {
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      institution: user.institution,
-      cpf: user.cpf,
-      phone: user.phone,
-      birth_date: user.birth_date,
-      address: user.address,
-      city: user.city,
-      state: user.state,
-      zip_code: user.zip_code,
-      is_active: user.is_active,
-      created_at: user.created_at,
-      updated_at: user.updated_at
-    };
   }
 
   /**
@@ -505,5 +483,17 @@ export class AuthService {
       console.error('❌ Erro ao criar usuário administrador:', error);
       throw error;
     }
+  }
+
+  static formatUserResponse(user: UserWithRelations): any {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      is_active: user.is_active,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    };
   }
 }

@@ -2,10 +2,11 @@
 
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 
-interface Toast {
+export interface Toast {
   id: string
   type: 'success' | 'error' | 'info' | 'warning'
-  message: string
+  title: string
+  message?: string
   duration?: number
 }
 
@@ -22,9 +23,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(toast => toast.id !== id))
   }, [])
 
-  const showToast = useCallback(({ type, message, duration = 5000 }: Omit<Toast, 'id'>) => {
+  const showToast = useCallback(({ type, title, message, duration = 5000 }: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9)
-    setToasts(prev => [...prev, { id, type, message, duration }])
+    setToasts(prev => [...prev, { id, type, title, message, duration }])
   }, [])
 
   useEffect(() => {
@@ -84,6 +85,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     toast.type === 'warning' ? 'text-warning-text' :
                     'text-info-text' // Default to info text
                   }`}>
+                    {toast.title}
+                  </p>
+                  <p className={`text-sm ${
+                    toast.type === 'success' ? 'text-success-text' :
+                    toast.type === 'error' ? 'text-error-text' :
+                    toast.type === 'warning' ? 'text-warning-text' :
+                    'text-info-text' // Default to info text
+                  }`}>
                     {toast.message}
                   </p>
                 </div>
@@ -119,18 +128,38 @@ export function useToast() {
 export const toast = {
   success: (message: string, duration?: number) => {
     const context = useContext(ToastContext)
-    context?.showToast({ type: 'success', message, duration })
+    context?.showToast({ 
+      type: 'success', 
+      title: 'Sucesso!',
+      message, 
+      duration 
+    })
   },
   error: (message: string, duration?: number) => {
     const context = useContext(ToastContext)
-    context?.showToast({ type: 'error', message, duration })
+    context?.showToast({ 
+      type: 'error', 
+      title: 'Erro!',
+      message, 
+      duration 
+    })
   },
   warning: (message: string, duration?: number) => {
     const context = useContext(ToastContext)
-    context?.showToast({ type: 'warning', message, duration })
+    context?.showToast({ 
+      type: 'warning', 
+      title: 'Atenção!',
+      message, 
+      duration 
+    })
   },
   info: (message: string, duration?: number) => {
     const context = useContext(ToastContext)
-    context?.showToast({ type: 'info', message, duration })
+    context?.showToast({ 
+      type: 'info', 
+      title: 'Informação',
+      message, 
+      duration 
+    })
   }
 }

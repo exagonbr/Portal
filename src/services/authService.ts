@@ -5,12 +5,12 @@ import {
   UserResponseDto,
   UserWithRoleDto 
 } from '../types/api';
-import { User, UserRole } from '../types/auth';
+import { User, UserRole, UserEssentials } from '../types/auth';
 
-export interface LoginResponse {
+export interface AuthResponse {
   success: boolean;
-  user?: User;
   message?: string;
+  user?: UserEssentials;
 }
 
 export interface RegisterResponse {
@@ -25,16 +25,26 @@ export class AuthService {
   /**
    * Realiza login no sistema
    */
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(email: string, password: string): Promise<AuthResponse> {
     try {
       const loginData: LoginDto = { email, password };
       
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/login`, loginData);
 
       // Verifica se a resposta tem o formato esperado
-      const responseData = (response.data || response) as AuthResponseDto;
+      // Extrair dados diretamente da resposta, seja dentro de data ou na raiz
+      const responseData = response.data || response;
 
-      if (!responseData.user || !responseData.token) {
+      // Verifica se os dados essenciais existem
+      // Usamos type assertion para acessar as propriedades, já que a estrutura pode variar
+      const respData = responseData as any;
+      const user = respData.user;
+      const token = respData.token;
+      const sessionId = respData.sessionId || '';
+      const expiresAt = respData.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+      if (!user || !token) {
+        console.error('Resposta de login incompleta:', responseData);
         return {
           success: false,
           message: 'Resposta do servidor incompleta'
@@ -43,14 +53,14 @@ export class AuthService {
 
       // Salva o token e dados do usuário
       this.saveAuthData(
-        responseData.token,
-        responseData.sessionId || '',
-        responseData.user,
-        responseData.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        token,
+        sessionId,
+        user,
+        expiresAt
       );
 
       // Converte UserResponseDto para User (compatibilidade)
-      const compatibleUser = this.convertToCompatibleUser(responseData.user);
+      const compatibleUser = this.convertToCompatibleUser(user);
 
       return {
         success: true,
@@ -161,19 +171,25 @@ export class AuthService {
   /**
    * Obtém usuário atual autenticado
    */
-  async getCurrentUser(): Promise<User | null> {
+  async getCurrentUser(): Promise<AuthResponse> {
     try {
       // Verifica se há token válido
       if (!this.isAuthenticated()) {
-        return null;
+        return {
+          success: false,
+          message: 'Usuário não autenticado'
+        };
       }
 
-      const response = await apiClient.get<UserWithRoleDto>('/users/me');
+      const response = await apiClient.get<UserWithRoleDto>('/api/users/me');
 
       if (!response.success || !response.data) {
         // Token pode estar expirado, limpa dados
         this.clearAuthData();
-        return null;
+        return {
+          success: false,
+          message: 'Erro ao buscar usuário'
+        };
       }
 
       const user = this.convertToCompatibleUser(response.data);
@@ -181,7 +197,10 @@ export class AuthService {
       // Atualiza dados do usuário no storage
       this.saveUserData(user);
 
-      return user;
+      return {
+        success: true,
+        user: user
+      };
     } catch (error) {
       console.error('Erro ao buscar usuário atual:', error);
       
@@ -190,23 +209,32 @@ export class AuthService {
         this.clearAuthData();
       }
 
-      return null;
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Erro ao buscar usuário'
+      };
     }
   }
 
   /**
    * Realiza logout
    */
-  async logout(): Promise<void> {
+  async logout(): Promise<AuthResponse> {
     try {
       // Tenta fazer logout no servidor
       await apiClient.post('/auth/logout');
+      this.clearAuthData();
+      return {
+        success: true,
+      };
     } catch (error) {
       console.error('Erro no logout do servidor:', error);
       // Continua com logout local mesmo se houver erro no servidor
-    } finally {
-      // Sempre limpa dados locais
       this.clearAuthData();
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Erro ao fazer logout'
+      };
     }
   }
 

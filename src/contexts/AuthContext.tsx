@@ -1,194 +1,283 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserEssentials, Permission } from '@/types/auth';
 import * as authService from '@/services/authService';
 import { getDashboardPath, convertBackendRole, isValidRole } from '@/utils/roleRedirect';
 
-interface AuthContextType {
-  user: UserEssentials | null;
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  permissions: string[];
+  institution?: {
+    id: number;
+    name: string;
+  };
+}
+
+interface AuthResponse {
+  success: boolean;
+  message?: string;
+  user?: User;
+  token?: string;
+  sessionId?: string;
+}
+
+interface RegisterResponse {
+  success: boolean;
+  message?: string;
+}
+
+interface AuthContextData {
+  user: User | null;
+  token: string | null;
+  sessionId: string | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<{ success: boolean; message: string }>;
+  logout: () => Promise<{ success: boolean; message: string }>;
+  checkAuth: () => Promise<{ success: boolean; message?: string }>;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   hasAllPermissions: (permissions: string[]) => boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserEssentials | null>(null);
+const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Função para buscar o usuário atual
-  const fetchCurrentUser = async () => {
-    try {
-      console.log('🔍 Buscando usuário atual...');
-      
-      const currentUser = await authService.getCurrentUser();
-      
-      if (currentUser) {
-        setUser(currentUser);
-        console.log('✅ Usuário encontrado:', currentUser.name, currentUser.role);
-      } else {
-        setUser(null);
-        console.log('❌ Nenhum usuário autenticado');
-      }
-    } catch (err: any) {
-      console.error('❌ Erro ao buscar usuário:', err.message);
-      setUser(null);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
-  // Função auxiliar para redirecionamento seguro
-  const handleRedirect = (userRole: string, context: string) => {
-    console.log(`🚀 Redirecionando usuário (${context}) com role: ${userRole}`);
+  const handleRedirect = useCallback((role: string, source: string) => {
+    console.log(`🔄 Redirecionando usuário (${source}) com role: ${role}`);
     
-    // Converte role do backend para formato do frontend
-    const normalizedRole = convertBackendRole(userRole);
+    const normalizedRole = convertBackendRole(role);
     
     if (!normalizedRole || !isValidRole(normalizedRole)) {
-      console.error(`❌ Role inválida no redirecionamento: ${userRole} -> ${normalizedRole}`);
-      router.push('/login?error=unauthorized');
+      console.error(`❌ Role inválida: ${role} -> ${normalizedRole}`);
+      setError('Perfil de usuário inválido. Por favor, entre em contato com o administrador.');
       return;
     }
     
-    // Obtém o caminho do dashboard baseado na role
     const dashboardPath = getDashboardPath(normalizedRole);
     
     if (dashboardPath) {
       console.log(`✅ Redirecionando para: ${dashboardPath}`);
       router.push(dashboardPath);
     } else {
-      console.error(`❌ Dashboard não encontrado para role: ${normalizedRole}`);
-      router.push('/login?error=unauthorized');
+      console.error(`❌ Dashboard não encontrado para: ${normalizedRole}`);
+      setError('Erro interno. Por favor, entre em contato com o administrador.');
     }
-  };
+  }, [router]);
 
-  // Carregar usuário no mount
-  useEffect(() => {
-    fetchCurrentUser();
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await authService.getCurrentUser() as AuthResponse;
+      
+      if (response?.success && response?.user) {
+        setUser(response.user);
+        console.log('✅ Usuário atual carregado:', response.user.name);
+      } else {
+        console.error('❌ Falha ao carregar usuário:', response?.message);
+        setError(response?.message || 'Erro ao carregar usuário');
+      }
+    } catch (err: any) {
+      console.error('❌ Erro ao carregar usuário:', err.message);
+      setError(err.message || 'Erro ao carregar usuário');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Login
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('🔐 Iniciando login para:', email);
+      const response = await authService.login(email, password) as AuthResponse;
       
-      const response = await authService.login(email, password);
-      
-      if (response.success && response.user) {
+      if (response.success && response.user && response.token && response.sessionId) {
         setUser(response.user);
-        console.log('✅ Login bem-sucedido:', response.user.name, response.user.role);
-        
-        // Redirecionar para o dashboard apropriado
-        handleRedirect(response.user.role, 'login');
+        setToken(response.token);
+        setSessionId(response.sessionId);
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('sessionId', response.sessionId);
+        return { success: true, message: 'Login realizado com sucesso!' };
       } else {
-        console.error('❌ Falha no login:', response.message);
-        console.error('📊 Detalhes da resposta:', response);
-        setError(response.message || 'Falha na autenticação');
+        return { 
+          success: false, 
+          message: response.message || 'Não foi possível realizar o login. Por favor, tente novamente.' 
+        };
       }
-    } catch (err: any) {
-      console.error('❌ Erro no login:', err.message);
-      setError(err.message || 'Erro ao fazer login');
-      throw err;
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Não foi possível realizar o login. Por favor, tente novamente mais tarde.' 
+      };
     } finally {
       setLoading(false);
     }
   };
 
-  // Register
   const register = async (name: string, email: string, password: string, type: 'student' | 'teacher') => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('📝 Iniciando registro:', name, email, type);
+      const response = await authService.register(name, email, password, type) as RegisterResponse;
       
-      const response = await authService.register(name, email, password, type);
-      
-      if (response.success && response.user) {
-        setUser(response.user);
-        console.log('✅ Registro bem-sucedido:', response.user.name, response.user.role);
-        
-        // Redirecionar para o dashboard apropriado
-        handleRedirect(response.user.role, 'register');
+      if (response.success) {
+        return { success: true, message: 'Conta criada com sucesso!' };
       } else {
-        console.error('❌ Falha no registro:', response.message);
-        setError(response.message || 'Falha no registro');
+        return { 
+          success: false, 
+          message: response.message || 'Não foi possível criar sua conta. Por favor, tente novamente.' 
+        };
       }
-    } catch (err: any) {
-      console.error('❌ Erro no registro:', err.message);
-      setError(err.message || 'Erro ao registrar usuário');
-      throw err;
+    } catch (error: any) {
+      console.error('Erro no registro:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Não foi possível criar sua conta. Por favor, tente novamente mais tarde.' 
+      };
     } finally {
       setLoading(false);
     }
   };
 
-  // Logout
   const logout = async () => {
     try {
       setLoading(true);
-      console.log('👋 Fazendo logout...');
-      
-      await authService.logout();
-      setUser(null);
       setError(null);
       
-      console.log('✅ Logout realizado');
-      router.push('/login');
-    } catch (err: any) {
-      console.error('❌ Erro no logout:', err.message);
-      setError(err.message || 'Erro ao fazer logout');
+      const response = await authService.logout() as AuthResponse;
+      
+      if (response.success) {
+        setUser(null);
+        setToken(null);
+        setSessionId(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('sessionId');
+        return { success: true, message: 'Logout realizado com sucesso! Até logo!' };
+      } else {
+        return { 
+          success: false, 
+          message: response.message || 'Não foi possível realizar o logout. Por favor, tente novamente.' 
+        };
+      }
+    } catch (error: any) {
+      console.error('Erro no logout:', error);
+      setUser(null);
+      setToken(null);
+      setSessionId(null);
+      localStorage.removeItem('token');
+      localStorage.removeItem('sessionId');
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Não foi possível realizar o logout. Por favor, tente novamente mais tarde.' 
+      };
     } finally {
       setLoading(false);
     }
   };
 
-  // Refresh user data
-  const refreshUser = async () => {
-    console.log('🔄 Atualizando dados do usuário...');
-    await fetchCurrentUser();
+  const checkAuth = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('token');
+      const sessionId = localStorage.getItem('sessionId');
+      
+      if (!token || !sessionId) {
+        // Não lança erro, apenas indica que não há sessão
+        setUser(null);
+        setToken(null);
+        setSessionId(null);
+        return { success: false, message: 'Sessão não encontrada' };
+      }
+
+      try {
+        const response = await authService.getCurrentUser() as AuthResponse;
+        
+        if (response.success && response.user) {
+          setUser(response.user);
+          setToken(token);
+          setSessionId(sessionId);
+          return { success: true };
+        } else {
+          // Limpa os dados da sessão inválida
+          setUser(null);
+          setToken(null);
+          setSessionId(null);
+          localStorage.removeItem('token');
+          localStorage.removeItem('sessionId');
+          return { 
+            success: false, 
+            message: response.message || 'Não foi possível carregar seu perfil. Por favor, faça login novamente.' 
+          };
+        }
+      } catch (error: any) {
+        console.error('Erro ao verificar autenticação:', error);
+        // Limpa os dados da sessão com erro
+        setUser(null);
+        setToken(null);
+        setSessionId(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('sessionId');
+        return { 
+          success: false, 
+          message: error.message || 'Não foi possível verificar sua autenticação. Por favor, faça login novamente.' 
+        };
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Permission check helpers
-  const hasPermission = useCallback((permission: string): boolean => {
-    if (!user?.permissions) return false;
-    return user.permissions.includes(permission as Permission);
-  }, [user]);
+  const hasPermission = (permission: string): boolean => {
+    return user?.permissions?.includes(permission) || false;
+  };
 
-  const hasAnyPermission = useCallback((permissions: string[]): boolean => {
-    if (!user?.permissions) return false;
-    return permissions.some(permission => user.permissions?.includes(permission as Permission));
-  }, [user]);
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    return permissions.some(permission => hasPermission(permission));
+  };
 
-  const hasAllPermissions = useCallback((permissions: string[]): boolean => {
-    if (!user?.permissions) return false;
-    return permissions.every(permission => user.permissions?.includes(permission as Permission));
-  }, [user]);
+  const hasAllPermissions = (permissions: string[]): boolean => {
+    return permissions.every(permission => hasPermission(permission));
+  };
 
   const value = {
     user,
+    token,
+    sessionId,
     loading,
     error,
     login,
     register,
     logout,
-    refreshUser,
+    checkAuth,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
@@ -197,11 +286,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+
+  if (!context) {
     throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
+
   return context;
 }
 

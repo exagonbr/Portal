@@ -1,149 +1,76 @@
-import { Request, Response, NextFunction } from 'express';
-import * as jwt from 'jsonwebtoken';
-import { UserRepository } from '../repositories/UserRepository';
+import express from 'express';
+import jwt from 'jsonwebtoken';
 import { AuthTokenPayload } from '../types/express';
-import { RoleRepository } from '../repositories/RoleRepository';
 
 export const validateJWT = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+): Promise<express.Response | void> => {
   try {
     const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+    if (!authHeader) {
       return res.status(401).json({
         success: false,
-        message: 'No authorization token provided'
+        message: 'Acesso não autorizado. Por favor, faça login para continuar.'
       });
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = authHeader.split(' ')[1];
+
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid token format'
+        message: 'Token de acesso inválido. Por favor, faça login novamente.'
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
-    const decoded = jwt.verify(token, secret) as any;
-    
-    if (typeof decoded === 'string' || !isAuthTokenPayload(decoded)) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token payload'
-      });
-    }
-    
-    // Se o role não estiver no token, buscar no banco de dados
-    if (!decoded.role && decoded.userId) {
-      try {
-        const user = await UserRepository.findByEmail(decoded.email!);
-        
-        if (!user) {
-          return res.status(401).json({
-            success: false,
-            message: 'User not found'
-          });
-        }
-        
-        // Mapear nomes de roles para slugs
-        const roleMapping: { [key: string]: string } = {
-          'Administrador': 'admin',
-          'Professor': 'teacher',
-          'Estudante': 'student',
-          'Aluno': 'student',
-          'Gerente': 'manager'
-        };
-        
-        const roleRepository = new RoleRepository();
-        const role = await roleRepository.findById(user.role_id?.toString() || '');
-
-        if (!role) {
-          return res.status(401).json({
-            success: false,
-            message: 'Role not found'
-          });
-        }
-        const roleName = role.name;
-        decoded.role = roleMapping[roleName] || roleName.toLowerCase();
-      } catch (dbError) {
-        console.error('Error fetching user role:', dbError);
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AuthTokenPayload;
+      req.user = decoded;
+      return next();
+    } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
         return res.status(401).json({
           success: false,
-          message: 'Authentication failed'
+          message: 'Sessão inválida. Por favor, faça login novamente.'
         });
       }
+      if (error instanceof jwt.TokenExpiredError) {
+        return res.status(401).json({
+          success: false,
+          message: 'Sua sessão expirou. Por favor, faça login novamente.'
+        });
+      }
+      throw error;
     }
-    
-    // Garantir que o role seja sempre definido
-    if (!decoded.role) {
-      decoded.role = 'user'; // Role padrão se não foi possível determinar
-    }
-    
-    // Criar objeto com tipo garantido
-    const authenticatedUser: AuthTokenPayload = {
-      ...decoded,
-      role: decoded.role! // Usar non-null assertion pois garantimos acima que existe
-    };
-    
-    req.user = authenticatedUser;
-    next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token'
-      });
-    }
-    if (error instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token expired'
-      });
-    }
+    console.error('Erro na autenticação:', error);
     return res.status(401).json({
       success: false,
-      message: 'Authentication failed'
+      message: 'Não foi possível autenticar sua sessão. Por favor, faça login novamente.'
     });
   }
 };
 
-// Type guard to verify JWT payload structure
-function isAuthTokenPayload(payload: any): payload is AuthTokenPayload {
-  return (
-    typeof payload === 'object' &&
-    typeof payload.userId === 'string' &&
-    (payload.institutionId === undefined || typeof payload.institutionId === 'string') &&
-    (payload.email === undefined || typeof payload.email === 'string') &&
-    (payload.name === undefined || typeof payload.name === 'string') &&
-    (payload.role === undefined || typeof payload.role === 'string') &&
-    (payload.permissions === undefined || Array.isArray(payload.permissions)) &&
-    (payload.sessionId === undefined || typeof payload.sessionId === 'string') &&
-    (payload.iat === undefined || typeof payload.iat === 'number') &&
-    (payload.exp === undefined || typeof payload.exp === 'number')
-  );
-}
-
 export const requireRole = (roles: string[]) => {
   return (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Response | void => {
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ): express.Response | void => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required'
+        message: 'Acesso não autorizado. Por favor, faça login para continuar.'
       });
     }
 
     if (!req.user.role || !roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Insufficient permissions'
+        message: 'Você não tem permissão para acessar este recurso.'
       });
     }
 
@@ -152,14 +79,14 @@ export const requireRole = (roles: string[]) => {
 };
 
 export const requireInstitution = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Response | void => {
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+): express.Response | void => {
   if (!req.user?.institutionId) {
     return res.status(403).json({
       success: false,
-      message: 'Institution access required'
+      message: 'Você precisa estar vinculado a uma instituição para acessar este recurso.'
     });
   }
 
