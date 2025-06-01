@@ -132,7 +132,7 @@ export async function seed(knex: Knex): Promise<void> {
       
       if (backdrop_image_id) {
         const mapping = await knex('sabercon_migration_mapping')
-          .where({ table_name: 'file', original_id: safeBigInt(backdrop_image_id)?.toString() })
+          .where({ table_name: 'file', original_id: safeBigInt(backdrop_image_id) })
           .first();
         if (mapping) {
           // Verificar se o arquivo realmente existe
@@ -143,7 +143,7 @@ export async function seed(knex: Knex): Promise<void> {
       
       if (poster_image_id) {
         const mapping = await knex('sabercon_migration_mapping')
-          .where({ table_name: 'file', original_id: safeBigInt(poster_image_id)?.toString() })
+          .where({ table_name: 'file', original_id: safeBigInt(poster_image_id) })
           .first();
         if (mapping) {
           // Verificar se o arquivo realmente existe
@@ -154,7 +154,7 @@ export async function seed(knex: Knex): Promise<void> {
       
       if (still_image_id) {
         const mapping = await knex('sabercon_migration_mapping')
-          .where({ table_name: 'file', original_id: safeBigInt(still_image_id)?.toString() })
+          .where({ table_name: 'file', original_id: safeBigInt(still_image_id) })
           .first();
         if (mapping) {
           // Verificar se o arquivo realmente existe
@@ -165,7 +165,7 @@ export async function seed(knex: Knex): Promise<void> {
       
       if (tv_show_id) {
         const mapping = await knex('sabercon_migration_mapping')
-          .where({ table_name: 'tv_show', original_id: safeBigInt(tv_show_id)?.toString() })
+          .where({ table_name: 'tv_show', original_id: safeBigInt(tv_show_id) })
           .first();
         if (mapping) {
           // Verificar se o TV show realmente existe
@@ -218,7 +218,7 @@ export async function seed(knex: Knex): Promise<void> {
       // Mapear ID original para novo ID
       await knex('sabercon_migration_mapping').insert({
         table_name: 'video',
-        original_id: validId.toString(),
+        original_id: validId,
         new_id: newVideo[0].id
       });
     }
@@ -236,11 +236,11 @@ export async function seed(knex: Knex): Promise<void> {
       
       // Buscar IDs mapeados
       const videoMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'video', original_id: validVideoId.toString() })
+        .where({ table_name: 'video', original_id: validVideoId })
         .first();
       
       const fileMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'file', original_id: validFileId.toString() })
+        .where({ table_name: 'file', original_id: validFileId })
         .first();
       
       if (videoMapping && fileMapping) {
@@ -293,11 +293,11 @@ export async function seed(knex: Knex): Promise<void> {
       
       // Buscar IDs mapeados
       const videoMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'video', original_id: validVideoId.toString() })
+        .where({ table_name: 'video', original_id: validVideoId })
         .first();
       
       const authorMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'author', original_id: validAuthorId.toString() })
+        .where({ table_name: 'author', original_id: validAuthorId })
         .first();
       
       if (videoMapping && authorMapping) {
@@ -336,11 +336,11 @@ export async function seed(knex: Knex): Promise<void> {
       
       // Buscar IDs mapeados
       const videoMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'video', original_id: video_id.toString() })
+        .where({ table_name: 'video', original_id: video_id })
         .first();
       
       const themeMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'theme', original_id: theme_id.toString() })
+        .where({ table_name: 'theme', original_id: theme_id })
         .first();
       
       if (videoMapping && themeMapping) {
@@ -379,11 +379,11 @@ export async function seed(knex: Knex): Promise<void> {
       
       // Buscar IDs mapeados
       const videoMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'video', original_id: video_id.toString() })
+        .where({ table_name: 'video', original_id: video_id })
         .first();
       
       const stageMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'educational_stage', original_id: educational_stage_id.toString() })
+        .where({ table_name: 'educational_stage', original_id: educational_stage_id })
         .first();
       
       if (videoMapping && stageMapping) {
@@ -422,11 +422,11 @@ export async function seed(knex: Knex): Promise<void> {
       
       // Buscar IDs mapeados
       const videoMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'video', original_id: video_id.toString() })
+        .where({ table_name: 'video', original_id: video_id })
         .first();
       
       const periodMapping = await knex('sabercon_migration_mapping')
-        .where({ table_name: 'education_period', original_id: education_period_id.toString() })
+        .where({ table_name: 'education_period', original_id: education_period_id })
         .first();
       
       if (videoMapping && periodMapping) {

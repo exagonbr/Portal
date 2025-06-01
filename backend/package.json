@@ -22,6 +22,7 @@
     "migrate:dump": "ts-node src/scripts/run-complete-migration.ts",
     "migrate:dump:dry": "ts-node src/scripts/run-complete-migration.ts -- --dry-run",
     "migrate:dump:test": "ts-node src/scripts/test-dump-parser.ts",
+    "migrate:legados": "ts-node scripts/migrar-dados-legados.ts",
     "replicate": "ts-node scripts/mysql-replication.ts",
     "replicate:test": "ts-node scripts/mysql-replication.ts test",
     "replicate:sync": "ts-node scripts/mysql-replication.ts sync",

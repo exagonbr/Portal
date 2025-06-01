@@ -13,6 +13,12 @@ import { Notification } from '../entities/Notification';
 import { Collection } from '../entities/Collection';
 import { Module } from '../entities/Module';
 import { Video } from '../entities/Video';
+import { VideoFile } from '../entities/VideoFile';
+import { File } from '../entities/File';
+import { Author } from '../entities/Author';
+import { ContentAuthor } from '../entities/ContentAuthor';
+import { TvShow } from '../entities/TvShow';
+import { TvShowVideo } from '../entities/TvShowVideo';
 import { Book } from '../entities/Book';
 import { Quiz } from '../entities/Quiz';
 import { Question } from '../entities/Question';
@@ -49,6 +55,12 @@ export const dataSourceOptions: DataSourceOptions = {
     Collection,
     Module,
     Video,
+    VideoFile,
+    File,
+    Author,
+    ContentAuthor,
+    TvShow,
+    TvShowVideo,
     Book,
     Quiz,
     Question,

@@ -75,14 +75,14 @@ router.get('/', validateJWT, async (req: Request, res: Response) => {
       tvShows = await tvShowRepository.findByInstitution(user.institution_id);
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: tvShows,
       total: tvShows.length
     });
   } catch (error) {
     console.error('Error fetching TV shows:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error retrieving TV shows',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -111,7 +111,7 @@ router.get('/', validateJWT, async (req: Request, res: Response) => {
  *       404:
  *         description: TV show not found
  */
-router.get('/:id', validateJWT, async (req: Request, res: Response) => {
+router.get('/:id', validateJWT, async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
     const tvShow = await tvShowRepository.getTvShowWithEpisodes(id);
@@ -129,7 +129,7 @@ router.get('/:id', validateJWT, async (req: Request, res: Response) => {
     // Buscar autores
     const authors = await authorRepository.getContentAuthors(id, 'tv_show');
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         ...tvShow,
@@ -138,7 +138,7 @@ router.get('/:id', validateJWT, async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching TV show:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error retrieving TV show',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -198,7 +198,7 @@ router.get('/:id', validateJWT, async (req: Request, res: Response) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, async (req: Request, res: Response) => {
+router.post('/', validateJWT, async (req: Request, res: Response): Promise<Response> => {
   try {
     const user = (req as any).user;
     
@@ -220,14 +220,14 @@ router.post('/', validateJWT, async (req: Request, res: Response) => {
 
     const tvShow = await tvShowRepository.create(tvShowData);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: tvShow,
       message: 'TV show created successfully'
     });
   } catch (error) {
     console.error('Error creating TV show:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error creating TV show',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -294,7 +294,7 @@ router.post('/', validateJWT, async (req: Request, res: Response) => {
  *       404:
  *         description: TV show not found
  */
-router.put('/:id', validateJWT, async (req: Request, res: Response) => {
+router.put('/:id', validateJWT, async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
     const updateData = {
@@ -311,14 +311,14 @@ router.put('/:id', validateJWT, async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: tvShow,
       message: 'TV show updated successfully'
     });
   } catch (error) {
     console.error('Error updating TV show:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error updating TV show',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -346,7 +346,7 @@ router.put('/:id', validateJWT, async (req: Request, res: Response) => {
  *       404:
  *         description: TV show not found
  */
-router.delete('/:id', validateJWT, async (req: Request, res: Response) => {
+router.delete('/:id', validateJWT, async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
     const deleted = await tvShowRepository.delete(id);
@@ -358,13 +358,13 @@ router.delete('/:id', validateJWT, async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'TV show deleted successfully'
     });
   } catch (error) {
     console.error('Error deleting TV show:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error deleting TV show',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -395,13 +395,13 @@ router.post('/:id/like', validateJWT, async (req: Request, res: Response) => {
     const { id } = req.params;
     await tvShowRepository.updateStatistics(id, 'like');
 
-    res.json({
+    return res.json({
       success: true,
       message: 'TV show liked successfully'
     });
   } catch (error) {
     console.error('Error liking TV show:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error liking TV show',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -440,7 +440,7 @@ router.post('/:id/like', validateJWT, async (req: Request, res: Response) => {
  *       200:
  *         description: TV show rated successfully
  */
-router.post('/:id/rate', validateJWT, async (req: Request, res: Response) => {
+router.post('/:id/rate', validateJWT, async (req: Request, res: Response): Promise<Response> => {
   try {
     const { id } = req.params;
     const { rating } = req.body;
@@ -454,13 +454,13 @@ router.post('/:id/rate', validateJWT, async (req: Request, res: Response) => {
 
     await tvShowRepository.updateStatistics(id, 'rating', rating);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'TV show rated successfully'
     });
   } catch (error) {
     console.error('Error rating TV show:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error rating TV show',
       error: error instanceof Error ? error.message : 'Unknown error'
