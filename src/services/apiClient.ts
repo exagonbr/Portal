@@ -73,9 +73,11 @@ export class ApiClient {
     try {
       const refreshToken = this.getRefreshToken();
       if (!refreshToken) {
-        throw new Error('No refresh token available');
+        throw new Error('Refresh token não disponível');
       }
 
+      console.log('🔄 Tentando atualizar token de autenticação...');
+      
       const response = await fetch(`${this.baseURL}/auth/refresh`, {
         method: 'POST',
         headers: {
@@ -85,7 +87,9 @@ export class ApiClient {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to refresh token');
+        const errorText = await response.text();
+        console.error(`❌ Falha ao atualizar token (${response.status}):`, errorText);
+        throw new Error(`Falha ao atualizar token: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -98,12 +102,15 @@ export class ApiClient {
         if (data.expires_at) {
           localStorage.setItem('auth_expires_at', data.expires_at);
         }
+        console.log('✅ Token atualizado com sucesso');
       } else {
-        throw new Error('Invalid refresh response');
+        console.error('❌ Resposta inválida ao atualizar token:', data);
+        throw new Error('Resposta inválida ao atualizar token');
       }
     } catch (error) {
       // Limpa dados de autenticação em caso de erro
       this.clearAuth();
+      console.error('❌ Erro ao atualizar token:', error);
       throw error;
     }
   }

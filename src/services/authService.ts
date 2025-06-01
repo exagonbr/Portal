@@ -5,12 +5,12 @@ import {
   UserResponseDto,
   UserWithRoleDto 
 } from '../types/api';
-import { User, UserRole, UserEssentials } from '../types/auth';
+import { User, UserRole } from '../types/auth';
 
-export interface AuthResponse {
+export interface LoginResponse {
   success: boolean;
+  user?: User;
   message?: string;
-  user?: UserEssentials;
 }
 
 export interface RegisterResponse {
@@ -25,71 +25,56 @@ export class AuthService {
   /**
    * Realiza login no sistema
    */
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(email: string, password: string): Promise<LoginResponse> {
     try {
+      console.log('🔐 AuthService: Iniciando login para:', email);
       const loginData: LoginDto = { email, password };
       
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/login`, loginData);
 
       // Verifica se a resposta tem o formato esperado
-<<<<<<< HEAD
-      // Extrair dados diretamente da resposta, seja dentro de data ou na raiz
-      const responseData = response.data || response;
-
-      // Verifica se os dados essenciais existem
-      // Usamos type assertion para acessar as propriedades, já que a estrutura pode variar
-      const respData = responseData as any;
-      const user = respData.user;
-      const token = respData.token;
-      const sessionId = respData.sessionId || '';
-      const expiresAt = respData.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-      if (!user || !token) {
-        console.error('Resposta de login incompleta:', responseData);
-=======
       const responseData = (response.data || response) as AuthResponseDto;
 
       if (!responseData.user || !responseData.token) {
->>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
+        console.error('❌ AuthService: Resposta de login incompleta:', responseData);
         return {
           success: false,
           message: 'Resposta do servidor incompleta'
         };
       }
 
+      console.log('✅ AuthService: Login bem-sucedido, salvando dados do usuário');
+      console.log(`🔍 AuthService: Role recebida do backend: "${responseData.user.role}"`);
+
       // Salva o token e dados do usuário
       this.saveAuthData(
-<<<<<<< HEAD
-        token,
-        sessionId,
-        user,
-        expiresAt
-=======
         responseData.token,
         responseData.sessionId || '',
         responseData.user,
         responseData.expires_at || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
->>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
       );
 
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(responseData.user);
+      console.log(`✅ AuthService: Usuário convertido com role: "${compatibleUser.role}"`);
 
       return {
         success: true,
         user: compatibleUser
       };
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.error('❌ AuthService: Erro no login:', error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 401) {
+          console.error('❌ AuthService: Credenciais inválidas (401)');
           return {
             success: false,
             message: 'Email ou senha incorretos'
           };
         }
         if (error.status === 400) {
+          console.error('❌ AuthService: Dados inválidos (400):', error.errors);
           return {
             success: false,
             message: error.errors?.join(', ') || 'Dados inválidos'
@@ -184,25 +169,19 @@ export class AuthService {
   /**
    * Obtém usuário atual autenticado
    */
-  async getCurrentUser(): Promise<AuthResponse> {
+  async getCurrentUser(): Promise<User | null> {
     try {
       // Verifica se há token válido
       if (!this.isAuthenticated()) {
-        return {
-          success: false,
-          message: 'Usuário não autenticado'
-        };
+        return null;
       }
 
-      const response = await apiClient.get<UserWithRoleDto>('/api/users/me');
+      const response = await apiClient.get<UserWithRoleDto>('/users/me');
 
       if (!response.success || !response.data) {
         // Token pode estar expirado, limpa dados
         this.clearAuthData();
-        return {
-          success: false,
-          message: 'Erro ao buscar usuário'
-        };
+        return null;
       }
 
       const user = this.convertToCompatibleUser(response.data);
@@ -210,10 +189,7 @@ export class AuthService {
       // Atualiza dados do usuário no storage
       this.saveUserData(user);
 
-      return {
-        success: true,
-        user: user
-      };
+      return user;
     } catch (error) {
       console.error('Erro ao buscar usuário atual:', error);
       
@@ -222,32 +198,23 @@ export class AuthService {
         this.clearAuthData();
       }
 
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Erro ao buscar usuário'
-      };
+      return null;
     }
   }
 
   /**
    * Realiza logout
    */
-  async logout(): Promise<AuthResponse> {
+  async logout(): Promise<void> {
     try {
       // Tenta fazer logout no servidor
       await apiClient.post('/auth/logout');
-      this.clearAuthData();
-      return {
-        success: true,
-      };
     } catch (error) {
       console.error('Erro no logout do servidor:', error);
       // Continua com logout local mesmo se houver erro no servidor
+    } finally {
+      // Sempre limpa dados locais
       this.clearAuthData();
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Erro ao fazer logout'
-      };
     }
   }
 

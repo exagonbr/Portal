@@ -110,11 +110,13 @@ export function getDashboardPath(role: string | undefined | null): string | null
 
   // Se não encontrou, tenta normalizar
   const normalizedRole = normalizeRole(role);
+  console.log(`🔄 getDashboardPath: role normalizada: "${role}" → "${normalizedRole}"`);
+  
   if (normalizedRole) {
     dashboardPath = ROLE_DASHBOARD_MAP[normalizedRole];
     
     if (dashboardPath) {
-      console.log(`✅ getDashboardPath: encontrado após normalização - ${role} -> ${normalizedRole} -> ${dashboardPath}`);
+      console.log(`✅ getDashboardPath: encontrado após normalização - ${role} → ${normalizedRole} → ${dashboardPath}`);
       return dashboardPath;
     }
   }
@@ -124,14 +126,28 @@ export function getDashboardPath(role: string | undefined | null): string | null
   dashboardPath = ROLE_DASHBOARD_MAP[lowercaseRole];
   
   if (dashboardPath) {
-    console.log(`✅ getDashboardPath: encontrado em lowercase - ${role} -> ${lowercaseRole} -> ${dashboardPath}`);
+    console.log(`✅ getDashboardPath: encontrado em lowercase - ${role} → ${lowercaseRole} → ${dashboardPath}`);
     return dashboardPath;
   }
   
-  console.log(`❌ getDashboardPath: nenhum dashboard encontrado para role "${role}"`);
-  console.log(`🔍 Roles disponíveis:`, Object.keys(ROLE_DASHBOARD_MAP));
+  // Se mesmo assim não encontrou, tenta matching parcial
+  const matchingRoles = Object.keys(ROLE_DASHBOARD_MAP).filter(
+    key => key.includes(role) || role.includes(key)
+  );
   
-  return null;
+  if (matchingRoles.length > 0) {
+    const closestMatch = matchingRoles[0];
+    dashboardPath = ROLE_DASHBOARD_MAP[closestMatch];
+    console.log(`⚠️ getDashboardPath: usando matching parcial - ${role} → ${closestMatch} → ${dashboardPath}`);
+    return dashboardPath;
+  }
+  
+  // Último recurso: dashboard genérico
+  console.error(`❌ getDashboardPath: nenhum dashboard encontrado para role "${role}"`);
+  console.log(`🔍 Roles disponíveis:`, Object.keys(ROLE_DASHBOARD_MAP).join(', '));
+  
+  // Fallback para dashboard genérico
+  return '/dashboard';
 }
 
 /**

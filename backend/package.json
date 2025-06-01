@@ -34,7 +34,10 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "queue:dev": "nodemon src/queues/worker.ts"
+    "queue:dev": "nodemon src/queues/worker.ts",
+    "clean:migrations": "ts-node scripts/clean-legacy-migrations.ts",
+    "add:missing:columns": "ts-node scripts/add-missing-columns.ts",
+    "migrate:fresh": "npm run clean:migrations && ts-node scripts/reset-migrations.ts && knex migrate:latest && npm run add:missing:columns && knex seed:run --specific=001_default_roles_and_permissions.ts"
   },
   "keywords": [
     "education",

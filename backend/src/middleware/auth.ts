@@ -28,7 +28,19 @@ export const validateJWT = async (
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AuthTokenPayload;
+      
+      // Verifica se é uma sessão de fallback (criada quando Redis não está disponível)
+      if (decoded.sessionId && decoded.sessionId.startsWith('fallback-')) {
+        console.log('⚠️ Usando sessão de fallback (Redis não disponível):', decoded.sessionId);
+      }
+      
       req.user = decoded;
+      
+      // Armazena o sessionId para uso em outras partes da aplicação
+      if (decoded.sessionId) {
+        (req as any).sessionId = decoded.sessionId;
+      }
+      
       return next();
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {

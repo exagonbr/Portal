@@ -172,6 +172,7 @@ class RoleAccessControl {
     
     // Converte role do backend para formato do frontend
     const normalizedRole = convertBackendRole(userRole);
+    console.log(`🔍 Middleware: Verificando acesso com role: ${userRole} → ${normalizedRole}`);
     
     // Verifica se é um caminho de dashboard específico
     const isDashboardPath = pathname.startsWith('/dashboard/');
@@ -188,14 +189,32 @@ class RoleAccessControl {
     
     // Verifica se o usuário está tentando acessar seu próprio dashboard
     const userDashboardPath = getDashboardPath(normalizedRole);
-    if (userDashboardPath && pathname.startsWith(userDashboardPath)) {
-      console.log(`Middleware: Acesso ao próprio dashboard permitido: ${pathname} (role: ${normalizedRole})`);
+    
+    if (!userDashboardPath) {
+      console.error(`❌ Middleware: Não foi possível determinar dashboard para role: ${normalizedRole}`);
+      return false;
+    }
+    
+    if (pathname.startsWith(userDashboardPath)) {
+      console.log(`✅ Middleware: Acesso ao próprio dashboard permitido: ${pathname} (role: ${normalizedRole})`);
       return true; // Permite acesso ao próprio dashboard
     }
     
-    console.warn(`Middleware: Acesso negado: ${pathname} (role: ${normalizedRole}, dashboard esperado: ${userDashboardPath})`);
-    // Nega acesso a dashboards de outras roles
-    return false;
+    // Permissões especiais para admin e manager
+    if (normalizedRole === 'system_admin' || normalizedRole === 'admin' || 
+        normalizedRole === 'administrador' || normalizedRole === 'SYSTEM_ADMIN') {
+      console.log(`✅ Middleware: Acesso permitido para administrador: ${pathname}`);
+      return true; // Admins podem acessar qualquer dashboard
+    }
+    
+    if (normalizedRole === 'institution_manager' || normalizedRole === 'manager' || 
+        normalizedRole === 'gestor' || normalizedRole === 'INSTITUTION_MANAGER') {
+      console.log(`✅ Middleware: Acesso permitido para gestor: ${pathname}`);
+      return true; // Managers podem acessar qualquer dashboard (exceto admin)
+    }
+    
+    console.warn(`❌ Middleware: Acesso negado: ${pathname} (role: ${normalizedRole}, dashboard esperado: ${userDashboardPath})`);
+    return false; // Nega acesso a dashboards de outras roles
   }
 
   static getCorrectDashboardForRole(userRole: string | undefined): string | null {
@@ -234,6 +253,31 @@ export async function middleware(request: NextRequest) {
   const isProtectedPath = MiddlewareUtils.isPathMatch(pathname, ROUTES.PROTECTED);
   const isAuthPath = MiddlewareUtils.isPathMatch(pathname, ROUTES.AUTH);
 
+  // 3. Process auth paths
+  if (isAuthPath) {
+    // Se já está autenticado e tenta acessar login/register, redireciona para dashboard
+    if (token && userDataCookie) {
+      try {
+        const userData = MiddlewareUtils.parseUserData(userDataCookie);
+        
+        if (userData && userData.role) {
+          console.log(`🔄 Middleware: Usuário já autenticado tentando acessar ${pathname}, redirecionando para dashboard`);
+          
+          const normalizedRole = convertBackendRole(userData.role);
+          const dashboardPath = getDashboardPath(normalizedRole);
+          
+          if (dashboardPath) {
+            console.log(`✅ Middleware: Redirecionando usuário autenticado para: ${dashboardPath}`);
+            return MiddlewareUtils.createRedirectResponse(dashboardPath, request);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Middleware: Erro ao processar redirecionamento de usuário autenticado:', error);
+      }
+    }
+    return NextResponse.next(); // Permite acesso às rotas de autenticação
+  }
+
   // 4. Handle protected paths - authentication check
   if (isProtectedPath) {
     const authResult = await SessionValidator.isAuthenticated(token);
@@ -248,127 +292,75 @@ export async function middleware(request: NextRequest) {
       console.log(`🔄 Middleware: Atualizando dados do usuário ${authResult.user.name}`);
       const response = NextResponse.next();
       const userData = {
-        id: authResult.user.id,
-        name: authResult.user.name,
-        email: authResult.user.email,
         role: authResult.user.role,
+        name: authResult.user.name,
+        id: authResult.user.id
       };
-      response.cookies.set(CONFIG.COOKIES.USER_DATA, encodeURIComponent(JSON.stringify(userData)), {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24,
-        path: '/',
-      });
+      response.cookies.set(CONFIG.COOKIES.USER_DATA, JSON.stringify(userData), { path: '/' });
+      MiddlewareUtils.addSessionHeaders(response, sessionId, pathname);
       return response;
     }
-  }
 
-  // 4.5. Handle portal paths with degraded access when backend is unavailable
-  if (pathname.startsWith('/portal')) {
-    // Se tem token mas não conseguiu validar (backend offline), permite acesso limitado
-    if (token && !userDataCookie) {
-      console.log('⚠️ Middleware: Modo degradado ativado para portal - backend indisponível');
-      const response = NextResponse.next();
-      // Define dados temporários para modo offline
-      const offlineUserData = {
-        id: 'offline-user',
-        name: 'Usuário Offline',
-        email: 'offline@local',
-        role: 'student', // Role padrão para modo offline
-        offline: true
-      };
-      response.cookies.set(CONFIG.COOKIES.USER_DATA, encodeURIComponent(JSON.stringify(offlineUserData)), {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60, // 1 hora apenas para modo offline
-        path: '/',
-      });
-      return response;
-    }
-    // Se não tem token, permite acesso público ao portal
-    if (!token) {
-      console.log('✅ Middleware: Acesso público ao portal permitido');
-      return NextResponse.next();
-    }
-  }
-
-  // 4. Handle authenticated users trying to access auth pages
-  if (isAuthPath && token) {
-    if (userDataCookie) {
-      const userData = MiddlewareUtils.parseUserData(userDataCookie);
-      if (userData) {
-        const dashboardPath = RoleAccessControl.getCorrectDashboardForRole(userData.role);
-        if (dashboardPath) {
-          console.log(`🔄 Middleware: Usuário autenticado tentando acessar ${pathname}, redirecionando para ${dashboardPath}`);
-          return MiddlewareUtils.createRedirectResponse(dashboardPath, request);
+    // Se o usuário está tentando acessar o dashboard genérico, redirecionar para o específico
+    if (pathname === '/dashboard' && userDataCookie) {
+      try {
+        const userData = MiddlewareUtils.parseUserData(userDataCookie);
+        
+        if (userData && userData.role) {
+          console.log(`🔄 Middleware: Redirecionando usuário de /dashboard para dashboard específico`);
+          
+          const normalizedRole = convertBackendRole(userData.role);
+          const dashboardPath = getDashboardPath(normalizedRole);
+          
+          if (dashboardPath && dashboardPath !== '/dashboard') {
+            console.log(`✅ Middleware: Redirecionando para dashboard específico: ${dashboardPath}`);
+            return MiddlewareUtils.createRedirectResponse(dashboardPath, request);
+          }
         }
+      } catch (error) {
+        console.error('❌ Middleware: Erro ao processar redirecionamento para dashboard específico:', error);
       }
     }
-    // Fallback to portal if role determination fails
-    console.log(`🔄 Middleware: Falha na determinação da role, redirecionando para portal`);
-    return MiddlewareUtils.createRedirectResponse('/portal/videos', request);
+
+    // Verificar permissões de acesso ao dashboard específico
+    if (pathname.startsWith('/dashboard/') && userDataCookie) {
+      try {
+        const userData = MiddlewareUtils.parseUserData(userDataCookie);
+        
+        if (!userData || !userData.role) {
+          console.error('❌ Middleware: Dados de usuário inválidos para verificação de acesso');
+          return MiddlewareUtils.createRedirectWithClearCookies('/login?error=invalid_user_data', request);
+        }
+        
+        const hasAccess = RoleAccessControl.hasAccessToPath(userData.role, pathname);
+        
+        if (!hasAccess) {
+          console.log(`❌ Middleware: Acesso negado para ${pathname}`);
+          
+          // Redirecionar para o dashboard correto
+          const normalizedRole = convertBackendRole(userData.role);
+          const correctDashboard = getDashboardPath(normalizedRole);
+          
+          if (correctDashboard) {
+            console.log(`🔄 Middleware: Redirecionando para dashboard correto: ${correctDashboard}`);
+            return MiddlewareUtils.createRedirectResponse(correctDashboard, request);
+          } else {
+            return MiddlewareUtils.createRedirectResponse('/dashboard', request);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Middleware: Erro ao verificar permissões de acesso:', error);
+      }
+    }
+
+    // Se tudo está ok, permitir acesso
+    const response = NextResponse.next();
+    MiddlewareUtils.addSessionHeaders(response, sessionId, pathname);
+    return response;
   }
 
-  // 5. Role-based access control for authenticated users
-  if (userDataCookie) {
-    const userData = MiddlewareUtils.parseUserData(userDataCookie);
-    
-    if (!userData) {
-      console.log('❌ Middleware: Dados do usuário inválidos, redirecionando para login');
-      return MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
-    }
-
-    console.log(`👤 Middleware: Usuário ${userData.name} (${userData.role}) acessando ${pathname}`);
-
-    // Validate role - se não tiver role, permite acesso mas sem permissões específicas
-    if (userData.role && !RoleAccessControl.validateRole(userData.role)) {
-      console.log(`❌ Middleware: Role inválida para usuário ${userData.name}: ${userData.role}`);
-      return MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
-    }
-
-    // Redirect generic dashboard to role-specific dashboard PRIMEIRO
-    if (pathname === '/dashboard') {
-      const specificDashboard = RoleAccessControl.getCorrectDashboardForRole(userData.role);
-      if (specificDashboard) {
-        console.log(`🚀 Middleware: Redirecionando ${userData.name} (${userData.role}) de /dashboard para ${specificDashboard}`);
-        return MiddlewareUtils.createRedirectResponse(specificDashboard, request);
-      } else {
-        console.warn(`⚠️ Middleware: Dashboard específico não encontrado para ${userData.role}, mantendo /dashboard`);
-      }
-    }
-
-    // Check access permissions DEPOIS
-    if (!RoleAccessControl.hasAccessToPath(userData.role, pathname)) {
-      console.warn(`🚫 Middleware: Usuário ${userData.name} (${userData.role}) tentou acessar ${pathname} sem permissão`);
-      const correctDashboard = RoleAccessControl.getCorrectDashboardForRole(userData.role);
-      
-      // IMPORTANTE: Só redireciona se não estiver já no dashboard correto
-      if (correctDashboard && pathname !== correctDashboard && !pathname.startsWith(correctDashboard)) {
-        console.log(`🔄 Middleware: Redirecionando para dashboard correto: ${correctDashboard}`);
-        return MiddlewareUtils.createRedirectResponse(correctDashboard, request);
-      }
-      
-      // Se já está no dashboard correto mas sem acesso, vai para portal
-      if (!correctDashboard || pathname.startsWith(correctDashboard)) {
-        console.log('ℹ️ Middleware: Usuário já está no dashboard correto, permitindo acesso');
-        // Não redireciona, deixa o RoleProtectedRoute lidar com isso
-      } else {
-        console.log('🔄 Middleware: Redirecionando para portal/videos como fallback');
-        return MiddlewareUtils.createRedirectResponse('/portal/videos', request);
-      }
-    } else {
-      console.log(`✅ Middleware: Acesso permitido para ${userData.name} em ${pathname}`);
-    }
-  }
-
-  // 6. Create response with session headers
-  const response = NextResponse.next();
-  MiddlewareUtils.addSessionHeaders(response, sessionId, pathname);
-  
-  console.log(`✅ Middleware: Processamento concluído para ${pathname}`);
-  return response;
+  // Permitir acesso a outras rotas
+  return NextResponse.next();
 }
 
 export const config = {

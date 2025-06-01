@@ -21,7 +21,6 @@ export default function ErrorSuppressor() {
       'Observation loop error'
     ];
 
-<<<<<<< HEAD
     // Lista de erros relacionados à autenticação que podem ser suprimidos
     const authErrorsToSuppress = [
       'No active session',
@@ -32,52 +31,97 @@ export default function ErrorSuppressor() {
       'Unauthorized'
     ];
 
+    // Lista de erros de token que NÃO devem ser suprimidos (importantes para debugging)
+    const tokenErrorsToLog = [
+      'Failed to refresh token',
+      'Falha ao atualizar token',
+      'refresh token',
+      'Refresh token',
+      'token expired',
+      'Token expired',
+      'token expirado',
+      'Token expirado'
+    ];
+
+    // Lista de erros de React Hooks que precisam ser tratados
+    const reactHookErrors = [
+      'Invalid hook call',
+      'Hooks can only be called inside',
+      'Rules of Hooks',
+      'more than one copy of React'
+    ];
+
     // Lista de padrões que NÃO devem ser suprimidos (logs importantes)
     const importantPatterns = [
-=======
-    // Lista de padrões que NÃO devem ser suprimidos (logs importantes)
-    const importantPatterns = [
-      'auth',
-      'login',
->>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
       'dashboard',
       'redirect',
       'role',
       'permission',
-<<<<<<< HEAD
-=======
-      'user',
-      'session',
->>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
       'navigation',
       'router',
       '🔐', '🚀', '✅', '❌', '🔍', '🔄', // Emojis dos logs importantes
-      'API'
+      'API',
+      'login', // Adicionando 'login' como padrão importante
+      'Login',  // Adicionando 'Login' com maiúscula
+      'autenticação', // Adicionando autenticação em português
+      'não foi possível', // Adicionando mensagem comum de erro
+      'token' // Adicionando token como padrão importante
     ];
 
     // Função para verificar se o erro deve ser suprimido
     const shouldSuppressError = (message: string): boolean => {
       if (!message || typeof message !== 'string') return false;
       
-      // Se contém padrões importantes, NÃO suprimir
-      const hasImportantPattern = importantPatterns.some(pattern => 
-<<<<<<< HEAD
-=======
-        message.toLowerCase().includes(pattern.toLowerCase())
-      );
-      
-      if (hasImportantPattern) {
-        return false; // NÃO suprimir logs importantes
+      // Detectar erros de login específicos que NÃO devem ser suprimidos
+      if (message.includes('Erro no login') || 
+          message.includes('não foi possível realizar o login') ||
+          message.includes('Não foi possível realizar o login')) {
+        return false; // Nunca suprimir erros de login
       }
       
-      // Se contém padrões do ResizeObserver, suprimir
-      return resizeObserverErrorPatterns.some(pattern => 
->>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
+      // Detectar erros de React Hooks - apenas registrar para diagnóstico,
+      // mas não suprimir completamente
+      const hasReactHookError = reactHookErrors.some(pattern => 
+        message.includes(pattern)
+      );
+      
+      if (hasReactHookError) {
+        // Registrar o erro, mas não suprimir completamente
+        const timestamp = new Date().toISOString();
+        console.warn(`[${timestamp}] [ErrorSuppressor] ⚠️ Detectado erro de React Hook: ${message}`);
+        // Poderia salvar em armazenamento local para diagnóstico futuro
+        try {
+          const hookErrors = JSON.parse(localStorage.getItem('reactHookErrors') || '[]');
+          hookErrors.push({ timestamp, message });
+          localStorage.setItem('reactHookErrors', JSON.stringify(hookErrors.slice(-20))); // Manter apenas os 20 mais recentes
+        } catch (e) {
+          // Silenciosamente ignorar erros de localStorage
+        }
+        
+        // Mesmo que seja um erro importante, permitimos que seja registrado
+        // mas não queremos que interrompa a aplicação
+        return true;
+      }
+      
+      // Detectar erros de refresh token que NÃO devem ser suprimidos
+      const hasTokenError = tokenErrorsToLog.some(pattern => 
         message.toLowerCase().includes(pattern.toLowerCase())
       );
       
-      if (hasImportantPattern) {
-        return false; // NÃO suprimir logs importantes
+      if (hasTokenError) {
+        // Log especial para erros de token, mas não suprimir
+        const timestamp = new Date().toISOString();
+        console.error(`[${timestamp}] [ErrorSuppressor] ❌ Erro durante o login: ${message}`);
+        return false; // Não suprimir erros de token
+      }
+      
+      // Se contém padrões importantes, NÃO suprimir
+      const hasImportantPattern = importantPatterns.some(pattern => 
+        message.toLowerCase().includes(pattern.toLowerCase())
+      );
+      
+      if (hasImportantPattern && !hasReactHookError) {
+        return false; // NÃO suprimir logs importantes (exceto hooks errors que já tratamos acima)
       }
       
       // Se contém padrões do ResizeObserver, suprimir
@@ -98,20 +142,20 @@ export default function ErrorSuppressor() {
     // Função para verificar se qualquer argumento contém padrões importantes
     const hasImportantArgs = (args: any[]): boolean => {
       return args.some(arg => {
-        const argString = String(arg);
-        return importantPatterns.some(pattern => 
-          argString.toLowerCase().includes(pattern.toLowerCase())
-        );
-      });
-    };
+        try {
+          // Converte o argumento para string de forma segura
+          const argString = arg instanceof Error 
+            ? `${arg.message}\n${arg.stack || ''}`
+            : String(arg || '');
 
-    // Função para verificar se qualquer argumento contém padrões importantes
-    const hasImportantArgs = (args: any[]): boolean => {
-      return args.some(arg => {
-        const argString = String(arg);
-        return importantPatterns.some(pattern => 
-          argString.toLowerCase().includes(pattern.toLowerCase())
-        );
+          // Verifica se contém algum padrão importante
+          return importantPatterns.some(pattern => 
+            argString.toLowerCase().includes(pattern.toLowerCase())
+          );
+        } catch (error) {
+          // Em caso de erro na conversão, considera como não importante
+          return false;
+        }
       });
     };
 
@@ -130,18 +174,31 @@ export default function ErrorSuppressor() {
       isProcessingError = true;
 
       try {
-        // Se tem argumentos importantes, sempre mostrar
-        if (hasImportantArgs(args)) {
+        // Verificar especificamente por erros de React Hooks
+        const firstArgString = String(args[0] || '');
+        const isReactHookError = reactHookErrors.some(pattern => 
+          firstArgString.includes(pattern)
+        );
+
+        // Se for erro de hooks, registrar mas continuar a execução
+        if (isReactHookError) {
+          const timestamp = new Date().toISOString();
+          originalError(`[${timestamp}] [ErrorSuppressor] Erro de React Hook detectado:`);
           originalError(...args);
           isProcessingError = false;
           return;
         }
+        
+        // Se tem argumentos importantes, sempre mostrar
+        if (hasImportantArgs(args)) {
+          // Adiciona timestamp e contexto ao log
+          const timestamp = new Date().toISOString();
+          const context = 'ErrorSuppressor';
+          originalError(`[${timestamp}] [${context}]`, ...args);
+          isProcessingError = false;
+          return;
+        }
 
-<<<<<<< HEAD
-        // Verificar se é um erro do ResizeObserver ou autenticação
-=======
-        // Verificar se é um erro do ResizeObserver
->>>>>>> 2d85e2b6d52603d50528b369453e0382e6816aae
         const firstArg = args[0];
         
         if (shouldSuppressError(String(firstArg))) {

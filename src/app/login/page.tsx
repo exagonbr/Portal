@@ -3,18 +3,26 @@
 import { LoginForm } from '../../components/auth/LoginForm';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user } = useAuth();
   const searchParams = useSearchParams();
   const [showUnauthorizedMessage, setShowUnauthorizedMessage] = useState(false);
   const { settings, isLoading } = useSystemSettings();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  
+  // Usar useAuth dentro de um try-catch para evitar quebrar a página em caso de erro
+  let user = null;
+  try {
+    const authContext = useAuth();
+    user = authContext?.user;
+  } catch (error) {
+    console.warn('⚠️ Erro ao usar AuthContext na página de login:', error);
+  }
 
   useEffect(() => {
     const error = searchParams?.get('error');
@@ -29,6 +37,7 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
+      setIsRedirecting(true);
       router.push('/dashboard');
     }
   }, [user, router]);
@@ -112,7 +121,7 @@ export default function LoginPage() {
     }
   };
 
-  if (user) {
+  if (isRedirecting) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md w-full space-y-8">

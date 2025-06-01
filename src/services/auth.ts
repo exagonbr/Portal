@@ -11,6 +11,7 @@ export interface User {
   is_active: boolean;
   profile_picture?: string;
   phone?: string;
+  permissions?: Permission[];
 }
 
 export interface LoginResponse {
@@ -152,7 +153,7 @@ class AuthService {
       email: user.email,
       name: user.name,
       role: user.role_name as any, // Conversão de role_name para role
-      permissions: [] // Adicionar lógica para mapear permissões se necessário
+      permissions: user.permissions || [] // Usar as permissões do usuário
     };
   }
 

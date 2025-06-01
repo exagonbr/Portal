@@ -14,6 +14,7 @@ export class UserRepository {
           'users.*',
           'roles.id as role_id',
           'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
           'institutions.id as institution_id',
           'institutions.name as institution_name'
         )
@@ -38,6 +39,7 @@ export class UserRepository {
           'users.*',
           'roles.id as role_id',
           'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
           'institutions.id as institution_id',
           'institutions.name as institution_name'
         )
@@ -122,6 +124,7 @@ export class UserRepository {
           'users.*',
           'roles.id as role_id',
           'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
           'institutions.id as institution_id',
           'institutions.name as institution_name'
         )
@@ -152,6 +155,7 @@ export class UserRepository {
           'users.*',
           'roles.id as role_id',
           'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
           'institutions.id as institution_id',
           'institutions.name as institution_name'
         )
@@ -210,9 +214,43 @@ export class UserRepository {
     };
 
     if (row.role_name) {
+      let permissions = [];
+      
+      // Tenta extrair as permissões independentemente do formato
+      if (row.role_permissions) {
+        try {
+          // Se for string, tenta fazer parse
+          if (typeof row.role_permissions === 'string') {
+            try {
+              permissions = JSON.parse(row.role_permissions);
+            } catch (e) {
+              console.warn('Erro ao fazer parse de permissões como string:', e);
+              permissions = [];
+            }
+          } 
+          // Se já for objeto (PostgreSQL pode retornar JSONB como objeto)
+          else if (typeof row.role_permissions === 'object') {
+            if (Array.isArray(row.role_permissions)) {
+              permissions = row.role_permissions;
+            } else {
+              // Se for objeto mas não array, pode ser que o driver esteja retornando de forma específica
+              console.warn('role_permissions é um objeto não-array:', row.role_permissions);
+              permissions = [];
+            }
+          } else {
+            console.warn('role_permissions tem tipo inesperado:', typeof row.role_permissions);
+            permissions = [];
+          }
+        } catch (error) {
+          console.warn('Erro ao processar permissões:', error);
+          permissions = [];
+        }
+      }
+      
       user.role = {
         id: row.role_id,
-        name: row.role_name
+        name: row.role_name,
+        permissions: permissions
       };
     }
 
@@ -224,5 +262,81 @@ export class UserRepository {
     }
 
     return user;
+  }
+
+  static async findByRole(roleName: string): Promise<UserWithRelations[]> {
+    try {
+      const users = await db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .where('roles.name', roleName)
+        .orderBy('users.created_at', 'desc');
+
+      return users.map(user => this.mapUserWithRelations(user));
+    } catch (error) {
+      console.error('Erro ao buscar usuários por role:', error);
+      throw error;
+    }
+  }
+
+  static async searchUsers(searchTerm: string, institutionId?: string): Promise<UserWithRelations[]> {
+    try {
+      let query = db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .where(builder => {
+          builder
+            .where('users.name', 'ilike', `%${searchTerm}%`)
+            .orWhere('users.email', 'ilike', `%${searchTerm}%`);
+        });
+
+      if (institutionId) {
+        query = query.where('users.institution_id', institutionId);
+      }
+
+      const users = await query.orderBy('users.name', 'asc');
+      return users.map(user => this.mapUserWithRelations(user));
+    } catch (error) {
+      console.error('Erro ao buscar usuários por termo de pesquisa:', error);
+      throw error;
+    }
+  }
+
+  static async getUsersWithRoleAndInstitution(): Promise<UserWithRelations[]> {
+    try {
+      const users = await db(this.TABLE_NAME)
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('institutions', 'users.institution_id', 'institutions.id')
+        .select(
+          'users.*',
+          'roles.id as role_id',
+          'roles.name as role_name',
+          db.raw('roles.permissions as role_permissions'),
+          'institutions.id as institution_id',
+          'institutions.name as institution_name'
+        )
+        .orderBy('users.name', 'asc');
+
+      return users.map(user => this.mapUserWithRelations(user));
+    } catch (error) {
+      console.error('Erro ao buscar usuários com roles e instituições:', error);
+      throw error;
+    }
   }
 }

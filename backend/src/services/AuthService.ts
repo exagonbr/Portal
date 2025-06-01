@@ -93,6 +93,20 @@ export class AuthService {
   }
 
   static async validateSession(sessionId: string): Promise<SessionData | null> {
+    // Verifica se é uma sessão de fallback (criada quando Redis não está disponível)
+    if (sessionId.startsWith('fallback-')) {
+      // Retorna uma sessão simulada para sessões de fallback
+      const parts = sessionId.split('-');
+      const timestamp = parts[1] ? parseInt(parts[1]) : Date.now();
+      
+      return {
+        userId: 0, // Será preenchido pelo payload do token JWT
+        user: null, // Será preenchido pelo payload do token JWT
+        createdAt: timestamp,
+        lastActivity: Date.now()
+      };
+    }
+    
     try {
       const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
       
@@ -220,26 +234,38 @@ export class AuthService {
       throw new Error('Email ou senha incorretos. Por favor, verifique suas credenciais.');
     }
 
-    // Create session
-      const sessionId = await this.createSession(user, clientInfo);
+    // Tenta criar sessão com Redis, mas continua se falhar
+    let sessionId = '';
+    try {
+      sessionId = await this.createSession(user, clientInfo);
+    } catch (error: any) {
+      console.warn('⚠️ Redis não disponível, continuando sem sessão:', error.message);
+      // Gera um ID de sessão alternativo quando Redis falha
+      sessionId = `fallback-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    }
 
     // Generate token
-      const token = this.generateToken(user, sessionId);
+    const token = this.generateToken(user, sessionId);
 
     // Calculate expiration
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
-      return {
+    return {
       user: this.formatUserResponse(user),
-        token,
+      token,
       sessionId,
-        expires_at: expiresAt.toISOString()
-      };
+      expires_at: expiresAt.toISOString()
+    };
   }
 
   static async logout(sessionId: string): Promise<void> {
-    await this.destroySession(sessionId);
+    try {
+      await this.destroySession(sessionId);
+    } catch (error: any) {
+      console.warn('⚠️ Redis não disponível, logout parcial:', error.message);
+      // Continua normalmente, mesmo sem poder destruir a sessão no Redis
+    }
   }
 
   static async logoutAllDevices(userId: number): Promise<number> {
@@ -490,7 +516,10 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
+      role: {
+        name: user.role?.name || 'user',
+        permissions: user.role?.permissions || []
+      },
       is_active: user.is_active,
       created_at: user.created_at,
       updated_at: user.updated_at
