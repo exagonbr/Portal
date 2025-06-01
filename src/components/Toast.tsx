@@ -52,6 +52,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
+      <ToastListener />
       {/* Toast Container */}
       <div className="fixed bottom-0 right-0 p-4 z-[100000] flex flex-col gap-2">
         {toasts.map(toast => (
@@ -152,86 +153,95 @@ interface ToastOptions {
 // Helper functions for common toast types
 export const toast = {
   success: (messageOrOptions: string | ToastOptions, duration?: number) => {
-    const context = useContext(ToastContext)
-    if (!context) return;
-
-    if (typeof messageOrOptions === 'string') {
+    const showToastSuccess = (options: ToastOptions) => {
+      const context = useContext(ToastContext);
+      if (!context) return;
       context.showToast({
         type: 'success',
-        title: 'Sucesso!',
-        message: messageOrOptions,
-        duration
-      })
-    } else {
-      context.showToast({
+        title: options.title || 'Sucesso!',
+        message: options.message,
+        duration: options.duration
+      });
+    };
+    
+    if (typeof window === 'undefined') return; // Prevenir execução durante SSR
+    
+    // Enviar evento personalizado ao invés de usar hook diretamente
+    const event = new CustomEvent('toast', {
+      detail: {
         type: 'success',
-        title: messageOrOptions.title || 'Sucesso!',
-        message: messageOrOptions.message,
-        duration: messageOrOptions.duration
-      })
-    }
+        title: typeof messageOrOptions === 'string' ? 'Sucesso!' : messageOrOptions.title || 'Sucesso!',
+        message: typeof messageOrOptions === 'string' ? messageOrOptions : messageOrOptions.message,
+        duration: typeof messageOrOptions === 'string' ? duration : messageOrOptions.duration
+      }
+    });
+    window.dispatchEvent(event);
   },
   
   error: (messageOrOptions: string | ToastOptions, duration?: number) => {
-    const context = useContext(ToastContext)
-    if (!context) return;
-
-    if (typeof messageOrOptions === 'string') {
-      context.showToast({
+    if (typeof window === 'undefined') return; // Prevenir execução durante SSR
+    
+    // Enviar evento personalizado ao invés de usar hook diretamente
+    const event = new CustomEvent('toast', {
+      detail: {
         type: 'error',
-        title: 'Erro!',
-        message: messageOrOptions,
-        duration
-      })
-    } else {
-      context.showToast({
-        type: 'error',
-        title: messageOrOptions.title || 'Erro!',
-        message: messageOrOptions.message,
-        duration: messageOrOptions.duration
-      })
-    }
+        title: typeof messageOrOptions === 'string' ? 'Erro!' : messageOrOptions.title || 'Erro!',
+        message: typeof messageOrOptions === 'string' ? messageOrOptions : messageOrOptions.message,
+        duration: typeof messageOrOptions === 'string' ? duration : messageOrOptions.duration
+      }
+    });
+    window.dispatchEvent(event);
   },
   
   warning: (messageOrOptions: string | ToastOptions, duration?: number) => {
-    const context = useContext(ToastContext)
-    if (!context) return;
-
-    if (typeof messageOrOptions === 'string') {
-      context.showToast({
+    if (typeof window === 'undefined') return; // Prevenir execução durante SSR
+    
+    // Enviar evento personalizado ao invés de usar hook diretamente
+    const event = new CustomEvent('toast', {
+      detail: {
         type: 'warning',
-        title: 'Atenção!',
-        message: messageOrOptions,
-        duration
-      })
-    } else {
-      context.showToast({
-        type: 'warning',
-        title: messageOrOptions.title || 'Atenção!',
-        message: messageOrOptions.message,
-        duration: messageOrOptions.duration
-      })
-    }
+        title: typeof messageOrOptions === 'string' ? 'Atenção!' : messageOrOptions.title || 'Atenção!',
+        message: typeof messageOrOptions === 'string' ? messageOrOptions : messageOrOptions.message,
+        duration: typeof messageOrOptions === 'string' ? duration : messageOrOptions.duration
+      }
+    });
+    window.dispatchEvent(event);
   },
   
   info: (messageOrOptions: string | ToastOptions, duration?: number) => {
-    const context = useContext(ToastContext)
-    if (!context) return;
-
-    if (typeof messageOrOptions === 'string') {
-      context.showToast({
+    if (typeof window === 'undefined') return; // Prevenir execução durante SSR
+    
+    // Enviar evento personalizado ao invés de usar hook diretamente
+    const event = new CustomEvent('toast', {
+      detail: {
         type: 'info',
-        title: 'Informação',
-        message: messageOrOptions,
-        duration
-      })
-    } else {
-      context.showToast({
-        type: 'info',
-        title: messageOrOptions.title || 'Informação',
-        message: messageOrOptions.message,
-        duration: messageOrOptions.duration
-      })
-    }
+        title: typeof messageOrOptions === 'string' ? 'Informação' : messageOrOptions.title || 'Informação',
+        message: typeof messageOrOptions === 'string' ? messageOrOptions : messageOrOptions.message,
+        duration: typeof messageOrOptions === 'string' ? duration : messageOrOptions.duration
+      }
+    });
+    window.dispatchEvent(event);
   }
+}
+
+// Componente para escutar eventos de toast
+export function ToastListener() {
+  const context = useContext(ToastContext);
+  
+  useEffect(() => {
+    if (!context) return;
+    
+    const handleToastEvent = (event: CustomEvent) => {
+      context.showToast(event.detail);
+    };
+    
+    // TypeScript não reconhece CustomEvent por padrão no addEventListener
+    window.addEventListener('toast', handleToastEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('toast', handleToastEvent as EventListener);
+    };
+  }, [context]);
+  
+  return null; // Componente não renderiza nada
 }

@@ -87,6 +87,11 @@ export function LoginForm() {
           }
           if (data.refresh_token) {
             localStorage.setItem('refresh_token', data.refresh_token);
+            
+            // Salvar também como cookie para redundância
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + 30); // Expira em 30 dias
+            document.cookie = `refresh_token=${data.refresh_token}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
           }
           if (data.expires_at) {
             localStorage.setItem('auth_expires_at', data.expires_at);

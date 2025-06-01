@@ -63,7 +63,18 @@ export class ApiClient {
    */
   private getRefreshToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('refresh_token');
+    
+    // Tenta obter do localStorage primeiro
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (refreshToken) return refreshToken;
+    
+    // Fallback para cookies
+    const cookieRefreshToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('refresh_token='))
+      ?.split('=')[1];
+    
+    return cookieRefreshToken || null;
   }
 
   /**
@@ -73,7 +84,7 @@ export class ApiClient {
     try {
       const refreshToken = this.getRefreshToken();
       if (!refreshToken) {
-        throw new Error('Refresh token não disponível');
+        throw new Error('Refresh token não disponível. Por favor, faça login novamente.');
       }
 
       console.log('🔄 Tentando atualizar token de autenticação...');
@@ -98,6 +109,11 @@ export class ApiClient {
         localStorage.setItem('auth_token', data.token);
         if (data.refresh_token) {
           localStorage.setItem('refresh_token', data.refresh_token);
+          
+          // Atualizar também o cookie
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + 30); // Expira em 30 dias
+          document.cookie = `refresh_token=${data.refresh_token}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
         }
         if (data.expires_at) {
           localStorage.setItem('auth_expires_at', data.expires_at);
@@ -360,6 +376,11 @@ export class ApiClient {
     localStorage.setItem('auth_token', token);
     if (refreshToken) {
       localStorage.setItem('refresh_token', refreshToken);
+      
+      // Salvar também como cookie para redundância
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30); // Expira em 30 dias
+      document.cookie = `refresh_token=${refreshToken}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
     }
     if (expiresAt) {
       localStorage.setItem('auth_expires_at', expiresAt);
