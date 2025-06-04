@@ -1,6 +1,4 @@
-import type { Knex } from 'knex';
-
-export async function seed(knex: Knex): Promise<void> {
+export async function seed(knex: any): Promise<void> {
   // Limpar dados existentes
   await knex('files').del();
 

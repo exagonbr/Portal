@@ -1,10 +1,8 @@
-import { Knex } from 'knex';
-
-export async function seed(knex: Knex): Promise<void> {
+export async function seed(knex: any): Promise<void> {
   console.log('🌱 Populando dados de exemplo para arquivos e livros...');
 
   // Buscar uma instituição existente
-  const institution = await knex('institutions').where('is_active', true).first();
+  const institution = await knex('institutions').where('status', 'active').first();
   
   if (!institution) {
     console.log('❌ Nenhuma instituição encontrada. Execute primeiro o seed de instituições.');
@@ -181,7 +179,7 @@ export async function seed(knex: Knex): Promise<void> {
       pages: 208,
       category: 'literario',
       cover_url: 'https://sabercon-literario.s3.us-east-1.amazonaws.com/covers/dom-casmurro.jpg',
-      file_url: insertedFiles.find(f => f.name === 'Dom Casmurro.pdf')?.s3_url,
+      file_url: insertedFiles.find((f: any) => f.name === 'Dom Casmurro.pdf')?.s3_url,
       file_type: 'PDF',
       file_size: 2458624,
       institution_id: institution.id,
@@ -199,7 +197,7 @@ export async function seed(knex: Knex): Promise<void> {
       pages: 272,
       category: 'literario',
       cover_url: 'https://sabercon-literario.s3.us-east-1.amazonaws.com/covers/o-cortico.jpg',
-      file_url: insertedFiles.find(f => f.name === 'O Cortiço.epub')?.s3_url,
+      file_url: insertedFiles.find((f: any) => f.name === 'O Cortiço.epub')?.s3_url,
       file_type: 'EPUB',
       file_size: 1876345,
       institution_id: institution.id,
@@ -213,15 +211,15 @@ export async function seed(knex: Knex): Promise<void> {
   // Vincular arquivos aos livros usando a função do banco
   console.log('🔗 Vinculando arquivos aos livros...');
   
-  const domCasmurroFile = insertedFiles.find(f => f.name === 'Dom Casmurro.pdf');
-  const domCasmurroBook = insertedBooks.find(b => b.title === 'Dom Casmurro');
+  const domCasmurroFile = insertedFiles.find((f: any) => f.name === 'Dom Casmurro.pdf');
+  const domCasmurroBook = insertedBooks.find((b: any) => b.title === 'Dom Casmurro');
   
   if (domCasmurroFile && domCasmurroBook) {
     await knex.raw('SELECT link_file_to_book(?, ?)', [domCasmurroFile.id, domCasmurroBook.id]);
   }
 
-  const corticoFile = insertedFiles.find(f => f.name === 'O Cortiço.epub');
-  const corticoBook = insertedBooks.find(b => b.title === 'O Cortiço');
+  const corticoFile = insertedFiles.find((f: any) => f.name === 'O Cortiço.epub');
+  const corticoBook = insertedBooks.find((b: any) => b.title === 'O Cortiço');
   
   if (corticoFile && corticoBook) {
     await knex.raw('SELECT link_file_to_book(?, ?)', [corticoFile.id, corticoBook.id]);

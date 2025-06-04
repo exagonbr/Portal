@@ -1,6 +1,8 @@
 import type { Knex } from 'knex';
 
 export async function seed(knex: Knex): Promise<void> {
+  console.log('🚀 Iniciando seed de dados completos...');
+
   // Limpar todas as tabelas na ordem correta
   await knex('collections').del();
   await knex('announcements').del();
@@ -26,6 +28,8 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('roles').del();
   await knex('institutions').del();
 
+  console.log('✅ Tabelas limpas com sucesso');
+
   // 1. Inserir instituições
   const institutions = await knex('institutions').insert([
     {
@@ -50,135 +54,143 @@ export async function seed(knex: Knex): Promise<void> {
       state: 'SP',
       zip_code: '20000-000',
       phone: '(21) 9876-5432',
-      email: 'contato@eifsp.edu.br',
+      email: 'contato@ifsp.edu.br',
       status: 'active'
     }
   ]).returning('*');
 
-  // 2. Inserir permissões no formato correto
+  console.log(`✅ ${institutions.length} instituições inseridas`);
+
+  // 2. Inserir permissões conforme novo sistema
   const permissions = await knex('permissions').insert([
-    // Student permissions
-    { name: 'students.communicate', resource: 'students', action: 'communicate', description: 'Permite comunicação entre estudantes' },
+    // System Management - SYSTEM_ADMIN
+    { name: 'system.manage', resource: 'system', action: 'manage', description: 'Permite gerenciar todo o sistema' },
+    { name: 'institutions.manage', resource: 'institutions', action: 'manage', description: 'Permite gerenciar instituições' },
+    { name: 'users.manage.global', resource: 'users', action: 'manage', description: 'Permite gerenciar todos os usuários' },
+    { name: 'analytics.view.system', resource: 'analytics', action: 'view', description: 'Permite visualizar analytics do sistema' },
+    { name: 'security.manage', resource: 'security', action: 'manage', description: 'Permite gerenciar políticas de segurança' },
+    
+    // Institution Management
+    { name: 'schools.manage', resource: 'schools', action: 'manage', description: 'Permite gerenciar escolas' },
+    { name: 'users.manage.institution', resource: 'users', action: 'manage', description: 'Permite gerenciar usuários da instituição' },
+    { name: 'classes.manage', resource: 'classes', action: 'manage', description: 'Permite gerenciar turmas' },
+    { name: 'schedules.manage', resource: 'schedules', action: 'manage', description: 'Permite gerenciar horários' },
+    { name: 'analytics.view.institution', resource: 'analytics', action: 'view', description: 'Permite visualizar analytics da instituição' },
+    
+    // Academic Management
+    { name: 'cycles.manage', resource: 'cycles', action: 'manage', description: 'Permite gerenciar ciclos educacionais' },
+    { name: 'curriculum.manage', resource: 'curriculum', action: 'manage', description: 'Permite gerenciar currículo' },
+    { name: 'teachers.monitor', resource: 'teachers', action: 'monitor', description: 'Permite monitorar professores' },
+    { name: 'analytics.view.academic', resource: 'analytics', action: 'view', description: 'Permite visualizar analytics acadêmicas' },
+    { name: 'departments.coordinate', resource: 'departments', action: 'coordinate', description: 'Permite coordenar departamentos' },
+    
+    // Teaching
+    { name: 'attendance.manage', resource: 'attendance', action: 'manage', description: 'Permite gerenciar frequência' },
+    { name: 'grades.manage', resource: 'grades', action: 'manage', description: 'Permite gerenciar notas' },
+    { name: 'lessons.manage', resource: 'lessons', action: 'manage', description: 'Permite gerenciar planos de aula' },
+    { name: 'resources.upload', resource: 'resources', action: 'upload', description: 'Permite fazer upload de recursos' },
+    { name: 'students.communicate', resource: 'students', action: 'communicate', description: 'Permite comunicar com estudantes' },
+    { name: 'guardians.communicate', resource: 'guardians', action: 'communicate', description: 'Permite comunicar com responsáveis' },
+    
+    // Student Access
     { name: 'schedule.view.own', resource: 'schedule', action: 'view', description: 'Permite visualizar próprio cronograma' },
     { name: 'grades.view.own', resource: 'grades', action: 'view', description: 'Permite visualizar próprias notas' },
-    { name: 'materials.access', resource: 'materials', action: 'access', description: 'Permite acessar materiais educacionais' },
+    { name: 'materials.access', resource: 'materials', action: 'access', description: 'Permite acessar materiais de aprendizagem' },
     { name: 'assignments.submit', resource: 'assignments', action: 'submit', description: 'Permite submeter atividades' },
     { name: 'progress.track.own', resource: 'progress', action: 'track', description: 'Permite acompanhar próprio progresso' },
     { name: 'teachers.message', resource: 'teachers', action: 'message', description: 'Permite enviar mensagens para professores' },
-    { name: 'announcements.receive', resource: 'announcements', action: 'receive', description: 'Permite receber comunicados' },
-    { name: 'forum.access', resource: 'forum', action: 'access', description: 'Permite acessar fórum' },
-    { name: 'student.portal.access', resource: 'portal', action: 'access', description: 'Permite acessar portal do aluno' },
     
-    // Teacher permissions
-    { name: 'attendance.manage', resource: 'attendance', action: 'manage', description: 'Permite gerenciar frequência' },
-    { name: 'grades.manage', resource: 'grades', action: 'manage', description: 'Permite gerenciar notas' },
-    { name: 'lessons.manage', resource: 'lessons', action: 'manage', description: 'Permite gerenciar aulas' },
-    { name: 'courses.manage', resource: 'courses', action: 'manage', description: 'Permite gerenciar cursos' },
-    { name: 'assignments.manage', resource: 'assignments', action: 'manage', description: 'Permite gerenciar atividades' },
-    { name: 'live.manage', resource: 'live', action: 'manage', description: 'Permite gerenciar aulas ao vivo' },
-    { name: 'students.view', resource: 'students', action: 'view', description: 'Permite visualizar alunos' },
-    { name: 'reports.view.own', resource: 'reports', action: 'view', description: 'Permite visualizar próprios relatórios' },
-    { name: 'forum.moderate', resource: 'forum', action: 'moderate', description: 'Permite moderar fórum' },
-    { name: 'videos.access', resource: 'videos', action: 'access', description: 'Permite acessar vídeos' },
-    { name: 'books.access', resource: 'books', action: 'access', description: 'Permite acessar livros' },
-    
-    // Manager permissions
-    { name: 'users.manage.institution', resource: 'users', action: 'manage', description: 'Permite gerenciar usuários da instituição' },
-    { name: 'classes.manage', resource: 'classes', action: 'manage', description: 'Permite gerenciar turmas' },
-    { name: 'analytics.view.institution', resource: 'analytics', action: 'view', description: 'Permite visualizar analytics da instituição' },
-    { name: 'courses.manage.institution', resource: 'courses', action: 'manage', description: 'Permite gerenciar cursos da instituição' },
-    { name: 'attendance.view.institution', resource: 'attendance', action: 'view', description: 'Permite visualizar frequência da instituição' },
-    { name: 'schools.manage', resource: 'schools', action: 'manage', description: 'Permite gerenciar escolas' },
-    { name: 'curriculum.manage', resource: 'curriculum', action: 'manage', description: 'Permite gerenciar currículo' },
-    { name: 'calendar.manage', resource: 'calendar', action: 'manage', description: 'Permite gerenciar calendário' },
-    { name: 'financial.view', resource: 'financial', action: 'view', description: 'Permite visualizar dados financeiros' },
-    
-    // Admin permissions
-    { name: 'admin.access', resource: 'admin', action: 'access', description: 'Permite acesso administrativo' },
-    { name: 'users.manage', resource: 'users', action: 'manage', description: 'Permite gerenciar usuários' },
-    { name: 'roles.manage', resource: 'roles', action: 'manage', description: 'Permite gerenciar roles e permissões' },
-    { name: 'institutions.manage', resource: 'institutions', action: 'manage', description: 'Permite gerenciar instituições' },
-    { name: 'units.manage', resource: 'units', action: 'manage', description: 'Permite gerenciar unidades' },
-    { name: 'content.manage', resource: 'content', action: 'manage', description: 'Permite gerenciar conteúdo' },
-    { name: 'reports.access.all', resource: 'reports', action: 'access', description: 'Permite acessar todos os relatórios' },
-    { name: 'settings.manage', resource: 'settings', action: 'manage', description: 'Permite gerenciar configurações' },
-    { name: 'analytics.view.all', resource: 'analytics', action: 'view', description: 'Permite visualizar todas as analytics' },
-    { name: 'logs.view', resource: 'logs', action: 'view', description: 'Permite visualizar logs' },
-    { name: 'performance.view', resource: 'performance', action: 'view', description: 'Permite visualizar performance' },
-    
-    // System Admin permissions
-    { name: 'system.manage', resource: 'system', action: 'manage', description: 'Permite gerenciar sistema' },
-    { name: 'security.manage', resource: 'security', action: 'manage', description: 'Permite gerenciar segurança' },
-    { name: 'analytics.view.system', resource: 'analytics', action: 'view', description: 'Permite visualizar analytics do sistema' },
-    { name: 'users.manage.all', resource: 'users', action: 'manage', description: 'Permite gerenciar todos os usuários' },
-    { name: 'system.monitor', resource: 'system', action: 'monitor', description: 'Permite monitorar sistema' },
-    { name: 'logs.view.all', resource: 'logs', action: 'view', description: 'Permite visualizar todos os logs' },
-    { name: 'performance.view.all', resource: 'performance', action: 'view', description: 'Permite visualizar toda a performance' },
-    { name: 'audit.view', resource: 'audit', action: 'view', description: 'Permite visualizar auditoria' },
-    { name: 'backup.manage', resource: 'backup', action: 'manage', description: 'Permite gerenciar backup' },
-    
-    // Academic Coordinator permissions
-    { name: 'cycles.manage', resource: 'cycles', action: 'manage', description: 'Permite gerenciar ciclos educacionais' },
-    { name: 'teachers.monitor', resource: 'teachers', action: 'monitor', description: 'Permite monitorar professores' },
-    { name: 'evaluations.manage', resource: 'evaluations', action: 'manage', description: 'Permite gerenciar avaliações' },
-    { name: 'performance.view.academic', resource: 'performance', action: 'view', description: 'Permite visualizar performance acadêmica' },
-    { name: 'planning.manage', resource: 'planning', action: 'manage', description: 'Permite gerenciar planejamento' },
-    { name: 'meetings.manage', resource: 'meetings', action: 'manage', description: 'Permite gerenciar reuniões' },
-    { name: 'indicators.view', resource: 'indicators', action: 'view', description: 'Permite visualizar indicadores' },
-    { name: 'reports.view.academic', resource: 'reports', action: 'view', description: 'Permite visualizar relatórios acadêmicos' },
-    { name: 'improvements.manage', resource: 'improvements', action: 'manage', description: 'Permite gerenciar melhorias' },
-    
-    // Guardian permissions
+    // Guardian Access
     { name: 'children.view.info', resource: 'children', action: 'view', description: 'Permite visualizar informações dos filhos' },
     { name: 'children.view.grades', resource: 'children', action: 'view', description: 'Permite visualizar notas dos filhos' },
     { name: 'children.view.attendance', resource: 'children', action: 'view', description: 'Permite visualizar frequência dos filhos' },
-    { name: 'children.view.activities', resource: 'children', action: 'view', description: 'Permite visualizar atividades dos filhos' },
-    { name: 'guardian.communicate', resource: 'guardian', action: 'communicate', description: 'Permite comunicação do responsável' },
-    { name: 'guardian.meetings.view', resource: 'guardian', action: 'view', description: 'Permite visualizar reuniões' },
-    { name: 'guardian.announcements.view', resource: 'guardian', action: 'view', description: 'Permite visualizar comunicados' },
-    { name: 'guardian.financial.view', resource: 'guardian', action: 'view', description: 'Permite visualizar dados financeiros' },
-    { name: 'guardian.financial.history', resource: 'guardian', action: 'view', description: 'Permite visualizar histórico financeiro' }
+    { name: 'announcements.receive', resource: 'announcements', action: 'receive', description: 'Permite receber comunicados' },
+    { name: 'school.communicate', resource: 'school', action: 'communicate', description: 'Permite comunicar com a escola' },
+    
+    // Common permissions
+    { name: 'portal.access', resource: 'portal', action: 'access', description: 'Permite acessar portal' },
+    { name: 'forum.access', resource: 'forum', action: 'access', description: 'Permite acessar fórum' },
+    { name: 'chat.access', resource: 'chat', action: 'access', description: 'Permite acessar chat' },
+    { name: 'profile.manage', resource: 'profile', action: 'manage', description: 'Permite gerenciar próprio perfil' }
   ]).returning('*');
 
-  // 3. Inserir roles
-  const roles = await knex('roles').insert([
+  console.log(`✅ ${permissions.length} permissões inseridas`);
+
+  // 3. Inserir roles conforme nova estrutura
+  const rolesData = [
     {
-      name: 'Aluno',
-      description: 'Estudante com acesso ao conteúdo educacional',
-      type: 'system',
+      name: 'SYSTEM_ADMIN',
+      description: 'Administrador do Sistema - Acesso completo a toda a plataforma',
+      permissions: [
+        // ACESSO COMPLETO - Todas as permissões
+        'system.manage', 'institutions.manage', 'users.manage.global', 'analytics.view.system', 'security.manage',
+        'schools.manage', 'users.manage.institution', 'classes.manage', 'schedules.manage', 'analytics.view.institution',
+        'cycles.manage', 'curriculum.manage', 'teachers.monitor', 'analytics.view.academic', 'departments.coordinate',
+        'attendance.manage', 'grades.manage', 'lessons.manage', 'resources.upload', 'students.communicate', 'guardians.communicate',
+        'schedule.view.own', 'grades.view.own', 'materials.access', 'assignments.submit', 'progress.track.own', 'teachers.message',
+        'children.view.info', 'children.view.grades', 'children.view.attendance', 'announcements.receive', 'school.communicate',
+        'portal.access', 'forum.access', 'chat.access', 'profile.manage'
+      ],
       status: 'active'
     },
     {
-      name: 'Professor',
-      description: 'Educador responsável pelo ensino e avaliação',
-      type: 'system',
+      name: 'INSTITUTION_MANAGER',
+      description: 'Gestor Institucional - Gerencia operações de uma escola ou unidade educacional',
+      permissions: [
+        'schools.manage', 'users.manage.institution', 'classes.manage', 'schedules.manage', 'analytics.view.institution',
+        'cycles.manage', 'curriculum.manage', 'teachers.monitor', 'analytics.view.academic', 'departments.coordinate',
+        'students.communicate', 'guardians.communicate', 'announcements.receive',
+        'portal.access', 'forum.access', 'chat.access', 'profile.manage'
+      ],
       status: 'active'
     },
     {
-      name: 'Gestor',
-      description: 'Gerente institucional com acesso administrativo',
-      type: 'system',
+      name: 'ACADEMIC_COORDINATOR',
+      description: 'Coordenador Acadêmico - Supervisiona ciclos educacionais e departamentos',
+      permissions: [
+        'classes.manage', 'schedules.manage', 'analytics.view.institution',
+        'cycles.manage', 'curriculum.manage', 'teachers.monitor', 'analytics.view.academic', 'departments.coordinate',
+        'resources.upload', 'students.communicate', 'guardians.communicate', 'teachers.message', 'announcements.receive',
+        'portal.access', 'forum.access', 'chat.access', 'profile.manage'
+      ],
       status: 'active'
     },
     {
-      name: 'Administrador',
-      description: 'Administrador com acesso total ao sistema',
-      type: 'system',
+      name: 'TEACHER',
+      description: 'Professor - Acessa turmas para gerenciar aulas, notas e comunicação',
+      permissions: [
+        'attendance.manage', 'grades.manage', 'lessons.manage', 'resources.upload', 'students.communicate', 'guardians.communicate',
+        'schedule.view.own', 'materials.access', 'teachers.message', 'announcements.receive', 'school.communicate',
+        'portal.access', 'forum.access', 'chat.access', 'profile.manage'
+      ],
       status: 'active'
     },
     {
-      name: 'Coordenador Acadêmico',
-      description: 'Coordenador responsável pela gestão acadêmica',
-      type: 'system',
+      name: 'STUDENT',
+      description: 'Aluno - Acesso ao ambiente de aprendizagem personalizado',
+      permissions: [
+        'students.communicate', 'schedule.view.own', 'grades.view.own', 'materials.access', 'assignments.submit',
+        'progress.track.own', 'teachers.message', 'announcements.receive',
+        'portal.access', 'forum.access', 'chat.access', 'profile.manage'
+      ],
       status: 'active'
     },
     {
-      name: 'Responsável',
-      description: 'Responsável pelos estudantes',
-      type: 'system',
+      name: 'GUARDIAN',
+      description: 'Responsável - Acompanha o progresso acadêmico dos alunos sob seus cuidados',
+      permissions: [
+        'children.view.info', 'children.view.grades', 'children.view.attendance', 'announcements.receive', 'school.communicate',
+        'portal.access', 'chat.access', 'profile.manage'
+      ],
       status: 'active'
     }
-  ]).returning('*');
+  ];
+
+  const roles = await knex('roles').insert(
+    rolesData.map(({ permissions, ...role }) => role)
+  ).returning('*');
+
+  console.log(`✅ ${roles.length} roles inseridas`);
 
   // 4. Criar lookup de permissões e roles
   const permissionLookup = permissions.reduce((acc, perm) => {
@@ -191,194 +203,113 @@ export async function seed(knex: Knex): Promise<void> {
     return acc;
   }, {} as Record<string, string>);
 
-  // 5. Definir permissões por role
-  const rolePermissionsMap = {
-    'Aluno': [
-      'students.communicate',
-      'schedule.view.own',
-      'grades.view.own',
-      'materials.access',
-      'assignments.submit',
-      'progress.track.own',
-      'teachers.message',
-      'announcements.receive',
-      'forum.access',
-      'student.portal.access'
-    ],
-    'Professor': [
-      'attendance.manage',
-      'grades.manage',
-      'lessons.manage',
-      'courses.manage',
-      'assignments.manage',
-      'live.manage',
-      'students.view',
-      'reports.view.own',
-      'forum.moderate',
-      'videos.access',
-      'books.access',
-      'materials.access',
-      'teachers.message',
-      'announcements.receive'
-    ],
-    'Gestor': [
-      'users.manage.institution',
-      'classes.manage',
-      'analytics.view.institution',
-      'courses.manage.institution',
-      'attendance.view.institution',
-      'schools.manage',
-      'curriculum.manage',
-      'calendar.manage',
-      'financial.view',
-      'reports.view.own',
-      'materials.access',
-      'assignments.manage',
-      'lessons.manage',
-      'grades.manage',
-      'students.view'
-    ],
-    'Administrador': [
-      'admin.access',
-      'users.manage',
-      'roles.manage',
-      'institutions.manage',
-      'units.manage',
-      'content.manage',
-      'reports.access.all',
-      'settings.manage',
-      'analytics.view.all',
-      'logs.view',
-      'performance.view',
-      'system.manage',
-      'security.manage',
-      'materials.access',
-      'courses.manage',
-      'assignments.manage',
-      'lessons.manage',
-      'grades.manage',
-      'students.view',
-      'teachers.message',
-      'forum.moderate'
-    ],
-    'Coordenador Acadêmico': [
-      'cycles.manage',
-      'curriculum.manage',
-      'teachers.monitor',
-      'evaluations.manage',
-      'performance.view.academic',
-      'planning.manage',
-      'meetings.manage',
-      'indicators.view',
-      'reports.view.academic',
-      'improvements.manage',
-      'materials.access',
-      'courses.manage',
-      'students.view'
-    ],
-    'Responsável': [
-      'children.view.info',
-      'children.view.grades',
-      'children.view.attendance',
-      'children.view.activities',
-      'guardian.communicate',
-      'guardian.meetings.view',
-      'guardian.announcements.view',
-      'guardian.financial.view',
-      'guardian.financial.history'
-    ]
-  };
-
-  // 6. Inserir associações role-permission
+  // 5. Inserir associações role-permission baseadas na propriedade permissions de cada role
   const rolePermissions = [];
-  for (const [roleName, permissionNames] of Object.entries(rolePermissionsMap)) {
-    const roleId = roleLookup[roleName];
-    if (!roleId) continue;
-
-    for (const permissionName of permissionNames) {
+  for (const roleData of rolesData) {
+    const role = roles.find(r => r.name === roleData.name);
+    const roleId = role.id;
+    for (const permissionName of roleData.permissions) {
       const permissionId = permissionLookup[permissionName];
-      if (!permissionId) continue;
-
-      rolePermissions.push({
-        role_id: roleId,
-        permission_id: permissionId
-      });
+      if (permissionId) {
+        rolePermissions.push({
+          role_id: roleId,
+          permission_id: permissionId
+        });
+      }
     }
   }
 
   await knex('role_permissions').insert(rolePermissions);
+  console.log(`✅ ${rolePermissions.length} associações role-permission inseridas`);
 
-  // 7. Inserir usuários de exemplo
+  // 6. Inserir usuários de exemplo com senhas seguras
   const users = await knex('users').insert([
     {
       email: 'admin@sabercon.edu.br',
-      password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
-      name: 'Administrador Sistema',
-      role_id: roleLookup['Administrador'],
+      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      name: 'Administrador do Sistema Sabercon',
+      role_id: roleLookup['SYSTEM_ADMIN'],
       institution_id: institutions[0].id,
       endereco: 'Rua da Administração, 100',
-      telefone: '(11) 98765-4321',
-      school_id: null, // Admin não vinculado a escola específica
+      telefone: '(11) 99999-0001',
       is_active: true
     },
     {
       email: 'gestor@sabercon.edu.br',
-      password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
-      name: 'Marina Silva',
-      role_id: roleLookup['Gestor'],
+      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      name: 'Marina Silva Santos - Gestora Institucional',
+      role_id: roleLookup['INSTITUTION_MANAGER'],
       institution_id: institutions[0].id,
       endereco: 'Av. dos Gestores, 200',
-      telefone: '(11) 97654-3210',
-      school_id: null, // Gestor pode gerenciar múltiplas escolas
-      is_active: true
-    },
-    {
-      email: 'professor@sabercon.edu.br',
-      password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
-      name: 'Ricardo Santos',
-      role_id: roleLookup['Professor'],
-      institution_id: institutions[0].id,
-      endereco: 'Rua dos Professores, 300',
-      telefone: '(11) 96543-2109',
-      school_id: null, // Será definido após criar escolas
-      is_active: true
-    },
-    {
-      email: 'julia.c@ifsp.com',
-      password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
-      name: 'Julia Costa',
-      role_id: roleLookup['Aluno'],
-      institution_id: institutions[0].id,
-      endereco: 'Rua dos Estudantes, 400',
-      telefone: '(11) 95432-1098',
-      school_id: null, // Será definido após criar escolas
+      telefone: '(11) 99999-0002',
       is_active: true
     },
     {
       email: 'coordenador@sabercon.edu.com',
-      password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
-      name: 'Luciana Lima',
-      role_id: roleLookup['Coordenador Acadêmico'],
+      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      name: 'Luciana Lima Costa - Coordenadora Acadêmica',
+      role_id: roleLookup['ACADEMIC_COORDINATOR'],
       institution_id: institutions[0].id,
-      endereco: 'Av. da Coordenação, 500',
-      telefone: '(11) 94321-0987',
-      school_id: null, // Será definido após criar escolas
+      endereco: 'Av. da Coordenação, 300',
+      telefone: '(11) 99999-0003',
+      is_active: true
+    },
+    {
+      email: 'professor@sabercon.edu.br',
+      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      name: 'Ricardo Santos Oliveira - Professor',
+      role_id: roleLookup['TEACHER'],
+      institution_id: institutions[0].id,
+      endereco: 'Rua dos Professores, 400',
+      telefone: '(11) 99999-0004',
+      is_active: true
+    },
+    {
+      email: 'julia.c@ifsp.com',
+      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      name: 'Julia Costa Ferreira - Estudante IFSP',
+      role_id: roleLookup['STUDENT'],
+      institution_id: institutions[1].id,
+      endereco: 'Rua dos Estudantes, 500',
+      telefone: '(11) 99999-0005',
       is_active: true
     },
     {
       email: 'renato@gmail.com',
-      password: '$2a$12$.6ZtOp3v3WcvuZsumjrK.uaAeggqhA1z5AlnKDBaXc.XdXq6dGxdK', // password123
-      name: 'Renato Oliveira',
-      role_id: roleLookup['Responsável'],
+      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      name: 'Renato Oliveira Silva - Responsável',
+      role_id: roleLookup['GUARDIAN'],
       institution_id: institutions[0].id,
       endereco: 'Rua dos Responsáveis, 600',
-      telefone: '(11) 93210-9876',
-      school_id: null, // Responsável não vinculado diretamente a escola
+      telefone: '(11) 99999-0006',
+      is_active: true
+    },
+    // Usuários de backup do sistema para testes
+    {
+      email: 'admin@portal.com',
+      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      name: 'Admin Backup Portal',
+      role_id: roleLookup['SYSTEM_ADMIN'],
+      institution_id: institutions[0].id,
+      endereco: 'Av. Federal, 100',
+      telefone: '(21) 99999-1001',
+      is_active: true
+    },
+    {
+      email: 'prof.carlos@ifsp.edu.br',
+      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      name: 'Carlos Alberto Professor - IFSP',
+      role_id: roleLookup['TEACHER'],
+      institution_id: institutions[1].id,
+      endereco: 'Rua dos Docentes, 200',
+      telefone: '(21) 99999-1002',
       is_active: true
     }
   ]).returning('*');
 
-  // 8. Inserir escolas
+  console.log(`✅ ${users.length} usuários inseridos`);
+
+  // 7. Inserir escolas
   const schools = await knex('schools').insert([
     {
       name: 'Escola Central Sabercon',
@@ -392,10 +323,25 @@ export async function seed(knex: Knex): Promise<void> {
       email: 'central@sabercon.edu.br',
       institution_id: institutions[0].id,
       status: 'active'
+    },
+    {
+      name: 'Campus São Paulo - IFSP',
+      code: 'IFSP-SP',
+      description: 'Campus principal do IFSP em São Paulo',
+      address: 'Av. Principal, 456',
+      city: 'São Paulo',
+      state: 'SP',
+      zip_code: '20000-000',
+      phone: '(21) 9876-5432',
+      email: 'saopaulo@ifsp.edu.br',
+      institution_id: institutions[1].id,
+      status: 'active'
     }
   ]).returning('*');
 
-  // 9. Inserir ciclos educacionais
+  console.log(`✅ ${schools.length} escolas inseridas`);
+
+  // 8. Inserir ciclos educacionais
   const educationCycles = await knex('education_cycles').insert([
     {
       name: 'Ensino Fundamental I',
@@ -416,10 +362,32 @@ export async function seed(knex: Knex): Promise<void> {
       duration_years: 4,
       institution_id: institutions[0].id,
       status: 'active'
+    },
+    {
+      name: 'Ensino Médio',
+      code: 'EM',
+      description: 'Do 1º ao 3º ano do Ensino Médio',
+      min_age: 15,
+      max_age: 17,
+      duration_years: 3,
+      institution_id: institutions[0].id,
+      status: 'active'
+    },
+    {
+      name: 'Técnico em Informática',
+      code: 'TI',
+      description: 'Curso técnico em informática',
+      min_age: 16,
+      max_age: 50,
+      duration_years: 2,
+      institution_id: institutions[1].id,
+      status: 'active'
     }
   ]).returning('*');
 
-  // 10. Inserir turmas
+  console.log(`✅ ${educationCycles.length} ciclos educacionais inseridos`);
+
+  // 9. Inserir turmas
   const classes = await knex('classes').insert([
     {
       name: '5º Ano A',
@@ -428,20 +396,71 @@ export async function seed(knex: Knex): Promise<void> {
       year: 2024,
       semester: 1,
       max_students: 30,
-      current_students: 0,
+      current_students: 1,
       school_id: schools[0].id,
       education_cycle_id: educationCycles[0].id,
+      status: 'active'
+    },
+    {
+      name: '8º Ano B',
+      code: '8B2024',
+      description: 'Turma do 8º ano do ensino fundamental',
+      year: 2024,
+      semester: 1,
+      max_students: 32,
+      current_students: 0,
+      school_id: schools[0].id,
+      education_cycle_id: educationCycles[1].id,
+      status: 'active'
+    },
+    {
+      name: 'TI 1º Período',
+      code: 'TI1-2024',
+      description: 'Primeira turma do curso técnico em informática',
+      year: 2024,
+      semester: 1,
+      max_students: 25,
+      current_students: 0,
+      school_id: schools[1].id,
+      education_cycle_id: educationCycles[3].id,
       status: 'active'
     }
   ]).returning('*');
 
-  console.log('Dados iniciais inseridos com sucesso!');
-  console.log(`- ${institutions.length} instituições`);
-  console.log(`- ${permissions.length} permissões`);
-  console.log(`- ${roles.length} roles`);
-  console.log(`- ${rolePermissions.length} associações role-permission`);
-  console.log(`- ${users.length} usuários`);
-  console.log(`- ${schools.length} escolas`);
-  console.log(`- ${educationCycles.length} ciclos educacionais`);
-  console.log(`- ${classes.length} turmas`);
+  console.log(`✅ ${classes.length} turmas inseridas`);
+
+  // 10. Associar usuário estudante à turma
+  await knex('user_classes').insert([
+    {
+      user_id: users.find(u => u.email === 'julia.c@ifsp.com')?.id,
+      class_id: classes[2].id, // Associar à turma TI 1º Período do IFSP
+      enrollment_date: new Date(),
+      status: 'active'
+    }
+  ]);
+
+  console.log('✅ Associações usuário-turma inseridas');
+
+  // Resumo final
+  console.log('\n🎉 SEED CONCLUÍDO COM SUCESSO!');
+  console.log('==========================================');
+  console.log(`📊 Dados inseridos:`);
+  console.log(`   • ${institutions.length} instituições`);
+  console.log(`   • ${permissions.length} permissões`);
+  console.log(`   • ${roles.length} roles`);
+  console.log(`   • ${rolePermissions.length} associações role-permission`);
+  console.log(`   • ${users.length} usuários`);
+  console.log(`   • ${schools.length} escolas`);
+  console.log(`   • ${educationCycles.length} ciclos educacionais`);
+  console.log(`   • ${classes.length} turmas`);
+  console.log('\n🔐 Usuários de teste criados:');
+  console.log('   👑 ADMIN SABERCON: admin@sabercon.edu.br / admin123');
+  console.log('   🏢 GESTOR: gestor@sabercon.edu.br / admin123');
+  console.log('   📚 COORDENADOR: coordenador@sabercon.edu.com / admin123');
+  console.log('   👨‍🏫 PROFESSOR: professor@sabercon.edu.br / admin123');
+  console.log('   🎓 ALUNA JULIA: julia.c@ifsp.com / admin123');
+  console.log('   👨‍👩‍👧‍👦 RENATO: renato@gmail.com / admin123');
+  console.log('   🔧 ADMIN BACKUP: admin@portal.com / admin123');
+  console.log('   👨‍🏫 PROF IFSP: prof.carlos@ifsp.edu.br / admin123');
+  console.log('\n✅ Sistema pronto para uso!');
 }

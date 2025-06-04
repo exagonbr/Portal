@@ -58,8 +58,13 @@ export function RoleProtectedRoute({
       const normalizedUserRole = user.role.toLowerCase();
       const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase());
       
+      // SYSTEM_ADMIN tem acesso COMPLETO a todas as rotas
+      const isSystemAdmin = normalizedUserRole === 'system_admin' || 
+                           normalizedUserRole === 'administrador do sistema' ||
+                           normalizedUserRole === 'administrador';
+      
       // Verifica se o usuário tem permissão para acessar a rota
-      const hasPermission = normalizedAllowedRoles.includes(normalizedUserRole);
+      const hasPermission = isSystemAdmin || normalizedAllowedRoles.includes(normalizedUserRole);
 
       if (!hasPermission) {
         console.warn(`Usuário ${user.name} (${user.role}) tentou acessar rota não autorizada. Roles permitidas: ${allowedRoles.join(', ')}`);
@@ -77,7 +82,11 @@ export function RoleProtectedRoute({
         return;
       }
 
-      console.log(`Acesso autorizado para usuário ${user.name} (${user.role})`);
+      if (isSystemAdmin) {
+        console.log(`✅ SYSTEM_ADMIN ${user.name} tem acesso completo à rota`);
+      } else {
+        console.log(`Acesso autorizado para usuário ${user.name} (${user.role})`);
+      }
       setIsAuthorized(true);
     };
 

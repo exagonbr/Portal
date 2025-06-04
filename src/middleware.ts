@@ -187,6 +187,12 @@ class RoleAccessControl {
     // Normaliza a role para lowercase
     const normalizedRole = userRole.toLowerCase();
     
+    // SYSTEM_ADMIN tem acesso COMPLETO a todo o sistema
+    if (normalizedRole === 'system_admin' || normalizedRole === 'administrador do sistema') {
+      console.log(`✅ SYSTEM_ADMIN tem acesso completo ao caminho: ${pathname}`);
+      return true;
+    }
+    
     // Verifica se é um caminho de dashboard específico
     const isDashboardPath = pathname.startsWith('/dashboard/');
     if (!isDashboardPath) return true; // Se não é dashboard, permite acesso

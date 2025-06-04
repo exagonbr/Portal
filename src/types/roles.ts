@@ -49,44 +49,71 @@ export interface RolePermissions {
   canViewChildrenInfo: boolean;
   canViewChildrenGrades: boolean;
   canViewChildrenAttendance: boolean;
+  canViewChildrenAssignments: boolean;
   canReceiveAnnouncements: boolean;
   canCommunicateWithSchool: boolean;
+  canScheduleMeetings: boolean;
+  
+  // Financial Access
+  canViewFinancialInfo: boolean;
+  canViewPayments: boolean;
+  canViewBoletos: boolean;
+  canViewFinancialHistory: boolean;
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
   [UserRole.SYSTEM_ADMIN]: {
+    // System Management - ACESSO COMPLETO
     canManageSystem: true,
     canManageInstitutions: true,
     canManageGlobalUsers: true,
     canViewSystemAnalytics: true,
     canManageSecurityPolicies: true,
+    
+    // Institution Management - ACESSO COMPLETO (para supervisionar)
     canManageSchools: true,
     canManageInstitutionUsers: true,
     canManageClasses: true,
     canManageSchedules: true,
     canViewInstitutionAnalytics: true,
+    
+    // Academic Management - ACESSO COMPLETO (para supervisionar)
     canManageCycles: true,
     canManageCurriculum: true,
     canMonitorTeachers: true,
     canViewAcademicAnalytics: true,
     canCoordinateDepartments: true,
-    canManageAttendance: false,
-    canManageGrades: false,
-    canManageLessonPlans: false,
-    canUploadResources: false,
-    canCommunicateWithStudents: false,
-    canCommunicateWithGuardians: false,
-    canViewOwnSchedule: false,
-    canViewOwnGrades: false,
-    canAccessLearningMaterials: false,
-    canSubmitAssignments: false,
-    canTrackOwnProgress: false,
-    canMessageTeachers: false,
-    canViewChildrenInfo: false,
-    canViewChildrenGrades: false,
-    canViewChildrenAttendance: false,
-    canReceiveAnnouncements: false,
-    canCommunicateWithSchool: false
+    
+    // Teaching - ACESSO PARA SUPERVISÃO E SUPORTE
+    canManageAttendance: true,
+    canManageGrades: true,
+    canManageLessonPlans: true,
+    canUploadResources: true,
+    canCommunicateWithStudents: true,
+    canCommunicateWithGuardians: true,
+    
+    // Student Access - ACESSO PARA DEBUG E SUPORTE
+    canViewOwnSchedule: true,
+    canViewOwnGrades: true,
+    canAccessLearningMaterials: true,
+    canSubmitAssignments: true,
+    canTrackOwnProgress: true,
+    canMessageTeachers: true,
+    
+    // Guardian Access - ACESSO PARA SUPORTE
+    canViewChildrenInfo: true,
+    canViewChildrenGrades: true,
+    canViewChildrenAttendance: true,
+    canViewChildrenAssignments: true,
+    canReceiveAnnouncements: true,
+    canCommunicateWithSchool: true,
+    canScheduleMeetings: true,
+    
+    // Financial Access - ACESSO PARA SUPORTE
+    canViewFinancialInfo: true,
+    canViewPayments: true,
+    canViewBoletos: true,
+    canViewFinancialHistory: true
   },
   [UserRole.INSTITUTION_MANAGER]: {
     canManageSystem: false,
@@ -119,8 +146,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewChildrenInfo: false,
     canViewChildrenGrades: false,
     canViewChildrenAttendance: false,
+    canViewChildrenAssignments: false,
     canReceiveAnnouncements: true,
-    canCommunicateWithSchool: false
+    canCommunicateWithSchool: false,
+    canScheduleMeetings: false,
+    canViewFinancialInfo: false,
+    canViewPayments: false,
+    canViewBoletos: false,
+    canViewFinancialHistory: false
   },
   [UserRole.ACADEMIC_COORDINATOR]: {
     canManageSystem: false,
@@ -153,8 +186,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewChildrenInfo: false,
     canViewChildrenGrades: false,
     canViewChildrenAttendance: false,
+    canViewChildrenAssignments: false,
     canReceiveAnnouncements: true,
-    canCommunicateWithSchool: false
+    canCommunicateWithSchool: false,
+    canScheduleMeetings: false,
+    canViewFinancialInfo: false,
+    canViewPayments: false,
+    canViewBoletos: false,
+    canViewFinancialHistory: false
   },
   [UserRole.TEACHER]: {
     canManageSystem: false,
@@ -187,8 +226,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewChildrenInfo: false,
     canViewChildrenGrades: false,
     canViewChildrenAttendance: false,
+    canViewChildrenAssignments: false,
     canReceiveAnnouncements: true,
-    canCommunicateWithSchool: true
+    canCommunicateWithSchool: true,
+    canScheduleMeetings: false,
+    canViewFinancialInfo: false,
+    canViewPayments: false,
+    canViewBoletos: false,
+    canViewFinancialHistory: false
   },
   [UserRole.STUDENT]: {
     canManageSystem: false,
@@ -221,8 +266,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewChildrenInfo: false,
     canViewChildrenGrades: false,
     canViewChildrenAttendance: false,
+    canViewChildrenAssignments: false,
     canReceiveAnnouncements: true,
-    canCommunicateWithSchool: false
+    canCommunicateWithSchool: false,
+    canScheduleMeetings: false,
+    canViewFinancialInfo: false,
+    canViewPayments: false,
+    canViewBoletos: false,
+    canViewFinancialHistory: false
   },
   [UserRole.GUARDIAN]: {
     canManageSystem: false,
@@ -255,8 +306,14 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewChildrenInfo: true,
     canViewChildrenGrades: true,
     canViewChildrenAttendance: true,
+    canViewChildrenAssignments: true,
     canReceiveAnnouncements: true,
-    canCommunicateWithSchool: true
+    canCommunicateWithSchool: true,
+    canScheduleMeetings: true,
+    canViewFinancialInfo: true,
+    canViewPayments: true,
+    canViewBoletos: true,
+    canViewFinancialHistory: true
   }
 };
 

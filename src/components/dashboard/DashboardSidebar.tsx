@@ -5,23 +5,25 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../../contexts/AuthContext'
 import { useState, useEffect, useCallback, memo } from 'react'
-import { UserRole } from '@/types/auth'
+import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
 
 interface NavItem {
   href: string
   icon: string
   label: string
-  permissions?: string[] // Array of required permissions
+  permission?: keyof typeof ROLE_PERMISSIONS[UserRole.SYSTEM_ADMIN]
 }
+
 interface NavSection {
   section: string
   items: NavItem[]
 }
 
 // Constants
-const SIDEBAR_WIDTH = '16rem' // 256px - ligeiramente maior
-const COLLAPSED_WIDTH = '4rem' // 64px - mais compacto
+const SIDEBAR_WIDTH = '16rem'
+const COLLAPSED_WIDTH = '4rem'
 const MOBILE_BREAKPOINT = 768
+
 // Memoized Components
 const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
   <Link href="/" className="overflow-hidden flex items-center justify-center py-1">
@@ -45,22 +47,6 @@ const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
   </Link>
 ));
 
-// Função utilitária para mapear roles para labels em português
-const getRoleLabel = (role: UserRole): string => {
-  const roleLabels: Record<UserRole, string> = {
-    'student': 'Aluno',
-    'teacher': 'Professor',
-    'manager': 'Gestor',
-    'institution_manager': 'Gestor Institucional',
-    'admin': 'Administrador',
-    'system_admin': 'Administrador do Sistema',
-    'academic_coordinator': 'Coordenador Acadêmico',
-    'guardian': 'Responsável'
-  };
-  
-  return roleLabels[role] || role;
-};
-
 const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boolean }) => (
   <div className="px-2 py-3 border-b border-white/10 flex-shrink-0">
     <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
@@ -73,7 +59,7 @@ const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boole
         <div className="overflow-hidden min-w-0 flex-1">
           <p className="text-xs font-semibold text-sidebar-text-active truncate leading-tight">{user?.name}</p>
           <span className="text-[10px] text-gray-400 leading-tight">
-            {user?.role && getRoleLabel(user.role)}
+            {user?.role && ROLE_LABELS[user.role as UserRole]}
           </span>
         </div>
       )}
@@ -120,32 +106,43 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
   </Link>
 ));
 
-const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick }: { 
+const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole }: { 
   section: string, 
   items: NavItem[], 
-  pathname: string,
+  pathname: string | null,
   isCollapsed: boolean,
-  onItemClick?: () => void
-}) => (
-  <div className="mb-3">
-    {!isCollapsed && (
-      <p className="px-2 py-1 text-[10px] font-bold text-sidebar-text uppercase tracking-wider opacity-75">
-        {section}
-      </p>
-    )}
-    <div className="space-y-0.5">
-      {items.map((item) => (
-        <NavItem
-          key={item.href}
-          item={item}
-          isActive={pathname === item.href}
-          isCollapsed={isCollapsed}
-          onClick={onItemClick}
-        />
-      ))}
+  onItemClick?: () => void,
+  userRole: UserRole
+}) => {
+  // Filter items based on user permissions
+  const filteredItems = items.filter(item => {
+    if (!item.permission) return true;
+    return hasPermission(userRole, item.permission);
+  });
+
+  if (filteredItems.length === 0) return null;
+
+  return (
+    <div className="mb-3">
+      {!isCollapsed && (
+        <p className="px-2 py-1 text-[10px] font-bold text-sidebar-text uppercase tracking-wider opacity-75">
+          {section}
+        </p>
+      )}
+      <div className="space-y-0.5">
+        {filteredItems.map((item) => (
+          <NavItem
+            key={item.href}
+            item={item}
+            isActive={pathname === item.href}
+            isCollapsed={isCollapsed}
+            onClick={onItemClick}
+          />
+        ))}
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
 const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, onLogout: () => void }) => (
   <button
@@ -177,10 +174,13 @@ const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, on
 
 export default function DashboardSidebar() {
   const pathname = usePathname()
-  const { user, logout, hasPermission, hasAllPermissions } = useAuth()
+  const { user, logout } = useAuth()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   
+  // Get user role with fallback to STUDENT
+  const userRole: UserRole = (user?.role || 'STUDENT') as UserRole;
+
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
@@ -216,27 +216,23 @@ export default function DashboardSidebar() {
     }
   }, [])
 
-
   const getNavItems = useCallback((): NavSection[] => {
-    // Map roles to dashboard routes
-    const dashboardRoute = {
-      'aluno': '/dashboard/student',
-      'professor': '/dashboard/teacher',
-      'gestor': '/dashboard/manager',
-      'administrador': '/dashboard/admin',
-      'coordenador acadêmico': '/dashboard/coordinator',
-      'responsável': '/dashboard/guardian',
-      // Fallback para roles em inglês (compatibilidade)
-      'student': '/dashboard/student',
-      'teacher': '/dashboard/teacher',
-      'manager': '/dashboard/manager',
-      'admin': '/dashboard/admin',
-      'system_admin': '/dashboard/admin',
-      'institution_manager': '/dashboard/manager',
-      'academic_coordinator': '/dashboard/coordinator',
-      'guardian': '/dashboard/guardian',
-    }[user?.role || 'student'] || '/dashboard/'
+    // Get dashboard route based on role
+    const getDashboardRoute = (role: UserRole): string => {
+      const dashboardMap = {
+        [UserRole.SYSTEM_ADMIN]: '/dashboard/system-admin',
+        [UserRole.INSTITUTION_MANAGER]: '/dashboard/institution-manager',
+        [UserRole.ACADEMIC_COORDINATOR]: '/dashboard/coordinator',
+        [UserRole.TEACHER]: '/dashboard/teacher',
+        [UserRole.STUDENT]: '/dashboard/student',
+        [UserRole.GUARDIAN]: '/dashboard/guardian'
+      };
+      return dashboardMap[role] || '/dashboard';
+    };
 
+    const dashboardRoute = getDashboardRoute(userRole);
+
+    // Common items for all users
     const commonItems: NavSection[] = [
       {
         section: 'Principal',
@@ -244,640 +240,469 @@ export default function DashboardSidebar() {
           {
             href: dashboardRoute,
             icon: 'dashboard',
-            label: 'Painel Principal',
-            permissions: [] // Sem permissões específicas - todos podem ver o dashboard
+            label: 'Painel Principal'
           },
-          ...(hasPermission('students.communicate') || hasPermission('teachers.message')
-            ? [{
-                href: '/chat',
-                icon: 'chat',
-                label: 'Mensagens',
-                permissions: ['students.communicate', 'teachers.message']
-              }]
-            : []
-          ),
+          {
+            href: '/chat',
+            icon: 'chat',
+            label: 'Mensagens'
+          },
+          {
+            href: '/announcements',
+            icon: 'campaign',
+            label: 'Comunicados'
+          }
         ]
       }
     ];
 
+    // Role-specific sections
     let roleSpecificItems: NavSection[] = [];
 
-    if (hasAllPermissions(['schedule.view.own', 'materials.access', 'assignments.submit'])) {
-      roleSpecificItems = [
-        {
-          section: 'Área Acadêmica',
-          items: [
-            {
-              href: '/courses',
-              icon: 'school',
-              label: 'Meus Cursos',
-              permissions: ['materials.access']
-            },
-            {
-              href: '/assignments',
-              icon: 'assignment',
-              label: 'Atividades',
-              permissions: ['assignments.submit']
-            },
-            {
-              href: '/live',
-              icon: 'video_camera_front',
-              label: 'Aulas ao Vivo',
-              permissions: ['schedule.view.own']
-            },
-            {
-              href: '/lessons',
-              icon: 'school',
-              label: 'Aulas',
-              permissions: ['materials.access']
-            },
-            {
-              href: '/forum/student/assignments',
-              icon: 'forum',
-              label: 'Fórum',
-              permissions: ['forum.access']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Portais',
-          items: [
-            {
-              href: '/portal/books',
-              icon: 'auto_stories',
-              label: 'Portal de Literatura',
-              permissions: ['materials.access']
-            },
-            {
-              href: '/portal/student',
-              icon: 'person_outline',
-              label: 'Portal do Aluno',
-              permissions: ['student.portal.access']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        }
-      ];
-    }
+    switch (userRole) {
+      case UserRole.SYSTEM_ADMIN:
+        roleSpecificItems = [
+          {
+            section: 'Administração do Sistema',
+            items: [
+              {
+                href: '/institutions',
+                icon: 'business',
+                label: 'Gerenciar Instituições',
+                permission: 'canManageInstitutions'
+              },
+              {
+                href: '/system/users',
+                icon: 'manage_accounts',
+                label: 'Usuários Globais',
+                permission: 'canManageGlobalUsers'
+              },
+              {
+                href: '/system/security',
+                icon: 'security',
+                label: 'Políticas de Segurança',
+                permission: 'canManageSecurityPolicies'
+              },
+              {
+                href: '/system/settings',
+                icon: 'settings',
+                label: 'Configurações do Sistema',
+                permission: 'canManageSystem'
+              }
+            ]
+          },
+          {
+            section: 'Monitoramento',
+            items: [
+              {
+                href: '/system/analytics',
+                icon: 'analytics',
+                label: 'Analytics do Sistema',
+                permission: 'canViewSystemAnalytics'
+              },
+              {
+                href: '/system/logs',
+                icon: 'terminal',
+                label: 'Logs do Sistema',
+                permission: 'canManageSystem'
+              },
+              {
+                href: '/system/performance',
+                icon: 'speed',
+                label: 'Performance',
+                permission: 'canManageSystem'
+              }
+            ]
+          }
+        ];
+        break;
 
-    if (hasAllPermissions(['attendance.manage', 'grades.manage', 'lessons.manage'])) {
-      roleSpecificItems = [
-        {
-          section: 'Área do Professor',
-          items: [
-            {
-              href: '/courses/manage',
-              icon: 'school',
-              label: 'Gestão de Cursos',
-              permissions: ['courses.manage']
-            },
-            {
-              href: '/assignments/manage',
-              icon: 'assignment',
-              label: 'Gestão de Atividades',
-              permissions: ['assignments.manage']
-            },
-            {
-              href: '/live/manage',
-              icon: 'video_camera_front',
-              label: 'Gestão de Aulas ao Vivo',
-              permissions: ['live.manage']
-            },
-            {
-              href: '/lessons/manage',
-              icon: 'menu_book',
-              label: 'Gestão de Aulas',
-              permissions: ['lessons.manage']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Gestão da Turma',
-          items: [
-            {
-              href: '/teacher/students',
-              icon: 'group',
-              label: 'Alunos',
-              permissions: ['students.view']
-            },
-            {
-              href: '/teacher/grades',
-              icon: 'grade',
-              label: 'Avaliações',
-              permissions: ['grades.manage']
-            },
-            {
-              href: '/reports/teacher',
-              icon: 'analytics',
-              label: 'Relatórios',
-              permissions: ['reports.view.own']
-            },
-            {
-              href: '/forum/teacher/announcements',
-              icon: 'forum',
-              label: 'Fórum',
-              permissions: ['forum.moderate']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Portais',
-          items: [
-            {
-              href: '/portal/videos',
-              icon: 'play_circle',
-              label: 'Portal de Vídeos',
-              permissions: ['videos.access']
-            },
-            {
-              href: '/portal/books',
-              icon: 'auto_stories',
-              label: 'Portal de Literatura',
-              permissions: ['books.access']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        }
-      ];
-    }
+      case UserRole.INSTITUTION_MANAGER:
+        roleSpecificItems = [
+          {
+            section: 'Gestão Institucional',
+            items: [
+              {
+                href: '/institution/schools',
+                icon: 'school',
+                label: 'Escolas',
+                permission: 'canManageSchools'
+              },
+              {
+                href: '/institution/classes',
+                icon: 'class',
+                label: 'Turmas',
+                permission: 'canManageClasses'
+              },
+              {
+                href: '/institution/teachers',
+                icon: 'groups',
+                label: 'Professores',
+                permission: 'canManageInstitutionUsers'
+              },
+              {
+                href: '/institution/students',
+                icon: 'group',
+                label: 'Alunos',
+                permission: 'canManageInstitutionUsers'
+              }
+            ]
+          },
+          {
+            section: 'Acadêmico',
+            items: [
+              {
+                href: '/institution/courses',
+                icon: 'menu_book',
+                label: 'Cursos',
+                permission: 'canManageCurriculum'
+              },
+              {
+                href: '/institution/curriculum',
+                icon: 'assignment',
+                label: 'Currículo',
+                permission: 'canManageCurriculum'
+              },
+              {
+                href: '/institution/calendar',
+                icon: 'calendar_month',
+                label: 'Calendário',
+                permission: 'canManageSchedules'
+              }
+            ]
+          },
+          {
+            section: 'Relatórios',
+            items: [
+              {
+                href: '/institution/reports',
+                icon: 'analytics',
+                label: 'Relatórios Institucionais',
+                permission: 'canViewInstitutionAnalytics'
+              },
+              {
+                href: '/institution/performance',
+                icon: 'assessment',
+                label: 'Desempenho Acadêmico',
+                permission: 'canViewAcademicAnalytics'
+              },
+              {
+                href: '/institution/financial',
+                icon: 'payments',
+                label: 'Financeiro',
+                permission: 'canViewInstitutionAnalytics'
+              }
+            ]
+          }
+        ];
+        break;
 
-    if (hasAllPermissions(['users.manage.institution', 'classes.manage', 'analytics.view.institution'])) {
-      roleSpecificItems = [
-        {
-          section: 'Gestão Institucional',
-          items: [
-            {
-              href: '/institution/courses',
-              icon: 'school',
-              label: 'Gestão de Cursos',
-              permissions: ['courses.manage.institution']
-            },
-            {
-              href: '/institution/teachers',
-              icon: 'groups',
-              label: 'Gestão de Professores',
-              permissions: ['users.manage.institution']
-            },
-            {
-              href: '/institution/students',
-              icon: 'group',
-              label: 'Gestão de Alunos',
-              permissions: ['users.manage.institution']
-            },
-            {
-              href: '/institution/classes',
-              icon: 'class',
-              label: 'Gestão de Turmas',
-              permissions: ['classes.manage']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Relatórios',
-          items: [
-            {
-              href: '/reports/academic',
-              icon: 'analytics',
-              label: 'Relatórios Acadêmicos',
-              permissions: ['analytics.view.institution']
-            },
-            {
-              href: '/reports/performance',
-              icon: 'monitoring',
-              label: 'Desempenho',
-              permissions: ['analytics.view.institution']
-            },
-            {
-              href: '/reports/attendance',
-              icon: 'fact_check',
-              label: 'Frequência',
-              permissions: ['attendance.view.institution']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        }
-      ];
-    }
-// Itens para administradores
-if (hasPermission('admin.access')) {
-roleSpecificItems = [
-  {
-    section: 'Administração',
-    items: [
-      {
-        href: '/admin/users',
-        icon: 'manage_accounts',
-        label: 'Gestão de Usuários',
-        permissions: ['users.manage']
-      },
-      {
-        href: '/admin/roles',
-        icon: 'admin_panel_settings',
-        label: 'Gestão de Permissões',
-        permissions: ['roles.manage']
-      },
-      {
-        href: '/admin/institutions',
-        icon: 'business',
-        label: 'Gestão de Instituições',
-        permissions: ['institutions.manage']
-      },
-      {
-        href: '/admin/units',
-        icon: 'business',
-        label: 'Gestão de Unidades',
-        permissions: ['units.manage']
-      },
-    ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-  },
-  {
-    section: 'Gestão de Conteúdo',
-    items: [
-      {
-        href: '/admin/content/library',
-        icon: 'library_books',
-        label: 'Acervo Digital',
-        permissions: ['content.manage']
-      },
-      {
-        href: '/admin/content/search',
-        icon: 'manage_search',
-        label: 'Arquivos',
-        permissions: ['content.manage']
-      },
-    ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-  },
-  {
-    section: 'Relatórios',
-    items: [
-      {
-        href: '/portal/reports',
-        icon: 'analytics',
-        label: 'Portal de Relatórios',
-        permissions: ['reports.access.all']
-      },
-    ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-  },
-  {
-    section: 'Monitoramento',
-    items: [
-      {
-        href: '/admin/settings',
-        icon: 'settings',
-        label: 'Configurações do Sistema',
-        permissions: ['settings.manage']
-      },
-      {
-        href: '/admin/analytics',
-        icon: 'monitoring',
-        label: 'Análise de Dados',
-        permissions: ['analytics.view.all']
-      },
-      {
-        href: '/admin/logs',
-        icon: 'terminal',
-        label: 'Registros do Sistema',
-        permissions: ['logs.view']
-      },
-      {
-        href: '/admin/performance',
-        icon: 'speed',
-        label: 'Desempenho',
-        permissions: ['performance.view']
-      },
-    ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-  },
-];
-}
-    
+      case UserRole.ACADEMIC_COORDINATOR:
+        roleSpecificItems = [
+          {
+            section: 'Coordenação Acadêmica',
+            items: [
+              {
+                href: '/coordinator/cycles',
+                icon: 'school',
+                label: 'Ciclos Educacionais',
+                permission: 'canManageCycles'
+              },
+              {
+                href: '/coordinator/curriculum',
+                icon: 'menu_book',
+                label: 'Gestão Curricular',
+                permission: 'canManageCurriculum'
+              },
+              {
+                href: '/coordinator/teachers',
+                icon: 'groups',
+                label: 'Corpo Docente',
+                permission: 'canMonitorTeachers'
+              },
+              {
+                href: '/coordinator/evaluations',
+                icon: 'grade',
+                label: 'Avaliações',
+                permission: 'canViewAcademicAnalytics'
+              }
+            ]
+          },
+          {
+            section: 'Acompanhamento',
+            items: [
+              {
+                href: '/coordinator/performance',
+                icon: 'trending_up',
+                label: 'Desempenho',
+                permission: 'canViewAcademicAnalytics'
+              },
+              {
+                href: '/coordinator/planning',
+                icon: 'event_note',
+                label: 'Planejamento',
+                permission: 'canManageCurriculum'
+              },
+              {
+                href: '/coordinator/meetings',
+                icon: 'groups_2',
+                label: 'Reuniões',
+                permission: 'canCoordinateDepartments'
+              }
+            ]
+          },
+          {
+            section: 'Qualidade',
+            items: [
+              {
+                href: '/coordinator/indicators',
+                icon: 'analytics',
+                label: 'Indicadores',
+                permission: 'canViewAcademicAnalytics'
+              },
+              {
+                href: '/coordinator/reports',
+                icon: 'assessment',
+                label: 'Relatórios',
+                permission: 'canViewAcademicAnalytics'
+              },
+              {
+                href: '/coordinator/improvements',
+                icon: 'tips_and_updates',
+                label: 'Melhorias',
+                permission: 'canCoordinateDepartments'
+              }
+            ]
+          }
+        ];
+        break;
 
-    if (hasAllPermissions(['system.manage', 'security.manage', 'analytics.view.system'])) {
-      roleSpecificItems = [
-        {
-          section: 'Administração do Sistema',
-          items: [
-            {
-              href: '/admin/users',
-              icon: 'manage_accounts',
-              label: 'Gestão de Usuários',
-              permissions: ['users.manage.all']
-            },
-            {
-              href: '/admin/roles',
-              icon: 'admin_panel_settings',
-              label: 'Gestão de Permissões',
-              permissions: ['roles.manage']
-            },
-            {
-              href: '/admin/institutions',
-              icon: 'business',
-              label: 'Gestão de Instituições',
-              permissions: ['institutions.manage']
-            },
-            {
-              href: '/admin/system',
-              icon: 'settings_applications',
-              label: 'Configurações do Sistema',
-              permissions: ['system.manage']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Monitoramento',
-          items: [
-            {
-              href: '/admin/monitoring',
-              icon: 'monitoring',
-              label: 'Monitoramento',
-              permissions: ['system.monitor']
-            },
-            {
-              href: '/admin/analytics',
-              icon: 'analytics',
-              label: 'Análise de Dados',
-              permissions: ['analytics.view.system']
-            },
-            {
-              href: '/admin/logs',
-              icon: 'terminal',
-              label: 'Logs do Sistema',
-              permissions: ['logs.view.all']
-            },
-            {
-              href: '/admin/performance',
-              icon: 'speed',
-              label: 'Performance',
-              permissions: ['performance.view.all']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Segurança',
-          items: [
-            {
-              href: '/admin/security',
-              icon: 'security',
-              label: 'Segurança',
-              permissions: ['security.manage']
-            },
-            {
-              href: '/admin/audit',
-              icon: 'fact_check',
-              label: 'Auditoria',
-              permissions: ['audit.view']
-            },
-            {
-              href: '/admin/backup',
-              icon: 'backup',
-              label: 'Backup',
-              permissions: ['backup.manage']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        }
-      ];
-    }
+      case UserRole.TEACHER:
+        roleSpecificItems = [
+          {
+            section: 'Área do Professor',
+            items: [
+              {
+                href: '/teacher/courses',
+                icon: 'school',
+                label: 'Gestão de Cursos',
+                permission: 'canManageLessonPlans'
+              },
+              {
+                href: '/teacher/assignments',
+                icon: 'assignment',
+                label: 'Gestão de Atividades',
+                permission: 'canManageLessonPlans'
+              },
+              {
+                href: '/teacher/live-classes',
+                icon: 'video_camera_front',
+                label: 'Gestão de Aulas ao Vivo',
+                permission: 'canManageLessonPlans'
+              },
+              {
+                href: '/teacher/lessons',
+                icon: 'menu_book',
+                label: 'Gestão de Aulas',
+                permission: 'canManageLessonPlans'
+              }
+            ]
+          },
+          {
+            section: 'Gestão da Turma',
+            items: [
+              {
+                href: '/teacher/students',
+                icon: 'group',
+                label: 'Alunos',
+                permission: 'canCommunicateWithStudents'
+              },
+              {
+                href: '/teacher/grades',
+                icon: 'grade',
+                label: 'Avaliações',
+                permission: 'canManageGrades'
+              },
+              {
+                href: '/teacher/reports',
+                icon: 'analytics',
+                label: 'Relatórios',
+                permission: 'canManageGrades'
+              },
+              {
+                href: '/teacher/forum',
+                icon: 'forum',
+                label: 'Fórum',
+                permission: 'canCommunicateWithStudents'
+              }
+            ]
+          },
+          {
+            section: 'Portais',
+            items: [
+              {
+                href: '/portal/videos',
+                icon: 'play_circle',
+                label: 'Portal de Vídeos',
+                permission: 'canUploadResources'
+              },
+              {
+                href: '/portal/books',
+                icon: 'auto_stories',
+                label: 'Portal de Literatura',
+                permission: 'canUploadResources'
+              }
+            ]
+          }
+        ];
+        break;
 
-    if (hasAllPermissions(['schools.manage', 'users.manage.institution', 'analytics.view.institution'])) {
-      roleSpecificItems = [
-        {
-          section: 'Gestão Institucional',
-          items: [
-            {
-              href: '/institution/schools',
-              icon: 'school',
-              label: 'Escolas',
-              permissions: ['schools.manage']
-            },
-            {
-              href: '/institution/classes',
-              icon: 'class',
-              label: 'Turmas',
-              permissions: ['classes.manage']
-            },
-            {
-              href: '/institution/teachers',
-              icon: 'groups',
-              label: 'Professores',
-              permissions: ['users.manage.institution']
-            },
-            {
-              href: '/institution/students',
-              icon: 'group',
-              label: 'Alunos',
-              permissions: ['users.manage.institution']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Acadêmico',
-          items: [
-            {
-              href: '/institution/courses',
-              icon: 'menu_book',
-              label: 'Cursos',
-              permissions: ['courses.manage.institution']
-            },
-            {
-              href: '/institution/curriculum',
-              icon: 'assignment',
-              label: 'Currículo',
-              permissions: ['curriculum.manage']
-            },
-            {
-              href: '/institution/calendar',
-              icon: 'calendar_month',
-              label: 'Calendário',
-              permissions: ['calendar.manage']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Relatórios',
-          items: [
-            {
-              href: '/reports/institutional',
-              icon: 'analytics',
-              label: 'Relatórios Institucionais',
-              permissions: ['analytics.view.institution']
-            },
-            {
-              href: '/reports/academic',
-              icon: 'assessment',
-              label: 'Desempenho Acadêmico',
-              permissions: ['analytics.view.institution']
-            },
-            {
-              href: '/reports/financial',
-              icon: 'payments',
-              label: 'Financeiro',
-              permissions: ['financial.view']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        }
-      ];
-    }
+      case UserRole.STUDENT:
+        roleSpecificItems = [
+          {
+            section: 'Área Acadêmica',
+            items: [
+              {
+                href: '/student/courses',
+                icon: 'school',
+                label: 'Meus Cursos',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/student/assignments',
+                icon: 'assignment',
+                label: 'Atividades',
+                permission: 'canSubmitAssignments'
+              },
+              {
+                href: '/student/live-classes',
+                icon: 'video_camera_front',
+                label: 'Aulas ao Vivo',
+                permission: 'canViewOwnSchedule'
+              },
+              {
+                href: '/student/lessons',
+                icon: 'school',
+                label: 'Aulas',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/student/forum',
+                icon: 'forum',
+                label: 'Fórum',
+                permission: 'canCommunicateWithStudents'
+              }
+            ]
+          },
+          {
+            section: 'Portais',
+            items: [
+              {
+                href: '/portal/books',
+                icon: 'auto_stories',
+                label: 'Portal de Literatura',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/student',
+                icon: 'person_outline',
+                label: 'Portal do Aluno',
+                permission: 'canAccessLearningMaterials'
+              }
+            ]
+          }
+        ];
+        break;
 
-    if (hasAllPermissions(['cycles.manage', 'curriculum.manage', 'teachers.monitor'])) {
-      roleSpecificItems = [
-        {
-          section: 'Coordenação Acadêmica',
-          items: [
-            {
-              href: '/coordinator/cycles',
-              icon: 'school',
-              label: 'Ciclos Educacionais',
-              permissions: ['cycles.manage']
-            },
-            {
-              href: '/coordinator/curriculum',
-              icon: 'menu_book',
-              label: 'Gestão Curricular',
-              permissions: ['curriculum.manage']
-            },
-            {
-              href: '/coordinator/teachers',
-              icon: 'groups',
-              label: 'Corpo Docente',
-              permissions: ['teachers.monitor']
-            },
-            {
-              href: '/coordinator/evaluations',
-              icon: 'grade',
-              label: 'Avaliações',
-              permissions: ['evaluations.manage']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Acompanhamento',
-          items: [
-            {
-              href: '/coordinator/performance',
-              icon: 'trending_up',
-              label: 'Desempenho',
-              permissions: ['performance.view.academic']
-            },
-            {
-              href: '/coordinator/planning',
-              icon: 'event_note',
-              label: 'Planejamento',
-              permissions: ['planning.manage']
-            },
-            {
-              href: '/coordinator/meetings',
-              icon: 'groups_2',
-              label: 'Reuniões',
-              permissions: ['meetings.manage']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Qualidade',
-          items: [
-            {
-              href: '/coordinator/indicators',
-              icon: 'analytics',
-              label: 'Indicadores',
-              permissions: ['indicators.view']
-            },
-            {
-              href: '/coordinator/reports',
-              icon: 'assessment',
-              label: 'Relatórios',
-              permissions: ['reports.view.academic']
-            },
-            {
-              href: '/coordinator/improvements',
-              icon: 'tips_and_updates',
-              label: 'Melhorias',
-              permissions: ['improvements.manage']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        }
-      ];
-    }
+      case UserRole.GUARDIAN:
+        roleSpecificItems = [
+          {
+            section: 'Acompanhamento',
+            items: [
+              {
+                href: '/guardian/children',
+                icon: 'child_care',
+                label: 'Meus Filhos',
+                permission: 'canViewChildrenInfo'
+              },
+              {
+                href: '/guardian/grades',
+                icon: 'grade',
+                label: 'Notas',
+                permission: 'canViewChildrenGrades'
+              },
+              {
+                href: '/guardian/attendance',
+                icon: 'fact_check',
+                label: 'Frequência',
+                permission: 'canViewChildrenAttendance'
+              },
+              {
+                href: '/guardian/assignments',
+                icon: 'assignment',
+                label: 'Atividades',
+                permission: 'canViewChildrenAssignments'
+              }
+            ]
+          },
+          {
+            section: 'Comunicação',
+            items: [
+              {
+                href: '/guardian/messages',
+                icon: 'mail',
+                label: 'Mensagens',
+                permission: 'canCommunicateWithSchool'
+              },
+              {
+                href: '/guardian/meetings',
+                icon: 'video_call',
+                label: 'Reuniões',
+                permission: 'canScheduleMeetings'
+              },
+              {
+                href: '/guardian/announcements',
+                icon: 'campaign',
+                label: 'Comunicados',
+                permission: 'canReceiveAnnouncements'
+              }
+            ]
+          },
+          {
+            section: 'Financeiro',
+            items: [
+              {
+                href: '/guardian/payments',
+                icon: 'payments',
+                label: 'Pagamentos',
+                permission: 'canViewPayments'
+              },
+              {
+                href: '/guardian/boletos',
+                icon: 'receipt',
+                label: 'Boletos',
+                permission: 'canViewBoletos'
+              },
+              {
+                href: '/guardian/financial-history',
+                icon: 'history',
+                label: 'Histórico',
+                permission: 'canViewFinancialHistory'
+              }
+            ]
+          }
+        ];
+        break;
 
-    if (hasAllPermissions(['children.view.info', 'children.view.grades', 'children.view.attendance'])) {
-      roleSpecificItems = [
-        {
-          section: 'Acompanhamento',
-          items: [
-            {
-              href: '/guardian/children',
-              icon: 'child_care',
-              label: 'Meus Filhos',
-              permissions: ['children.view.info']
-            },
-            {
-              href: '/guardian/grades',
-              icon: 'grade',
-              label: 'Notas',
-              permissions: ['children.view.grades']
-            },
-            {
-              href: '/guardian/attendance',
-              icon: 'fact_check',
-              label: 'Frequência',
-              permissions: ['children.view.attendance']
-            },
-            {
-              href: '/guardian/activities',
-              icon: 'assignment',
-              label: 'Atividades',
-              permissions: ['children.view.activities']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Comunicação',
-          items: [
-            {
-              href: '/guardian/messages',
-              icon: 'mail',
-              label: 'Mensagens',
-              permissions: ['guardian.communicate']
-            },
-            {
-              href: '/guardian/meetings',
-              icon: 'video_call',
-              label: 'Reuniões',
-              permissions: ['guardian.meetings.view']
-            },
-            {
-              href: '/guardian/announcements',
-              icon: 'campaign',
-              label: 'Comunicados',
-              permissions: ['guardian.announcements.view']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        },
-        {
-          section: 'Financeiro',
-          items: [
-            {
-              href: '/guardian/payments',
-              icon: 'payments',
-              label: 'Pagamentos',
-              permissions: ['guardian.financial.view']
-            },
-            {
-              href: '/guardian/invoices',
-              icon: 'receipt',
-              label: 'Boletos',
-              permissions: ['guardian.financial.view']
-            },
-            {
-              href: '/guardian/history',
-              icon: 'history',
-              label: 'Histórico',
-              permissions: ['guardian.financial.history']
-            },
-          ].filter(item => !item.permissions || hasAllPermissions(item.permissions))
-        }
-      ];
+      default:
+        roleSpecificItems = [];
     }
 
     return [...commonItems, ...roleSpecificItems];
-  }, [user?.role, hasPermission, hasAllPermissions]);
+  }, [userRole]);
 
-const navItems = getNavItems()
+  const navItems = getNavItems();
+
   return (
     <>
       {/* Mobile Menu Button */}
@@ -943,6 +768,7 @@ const navItems = getNavItems()
                   pathname={pathname}
                   isCollapsed={isCollapsed}
                   onItemClick={closeMobileSidebar}
+                  userRole={userRole}
                 />
               ))}
             </div>

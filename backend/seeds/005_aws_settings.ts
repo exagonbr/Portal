@@ -1,32 +1,63 @@
-import type { Knex } from 'knex';
-
-export async function seed(knex: Knex): Promise<void> {
+export async function seed(knex: any): Promise<void> {
   // Deletar dados existentes
   await knex('aws_settings').del();
 
-  // Buscar um usuário admin para ser o criador das configurações padrão
-  const adminUser = await knex('users')
-    .join('roles', 'users.role_id', 'roles.id')
-    .where('roles.name', 'admin')
-    .select('users.id')
-    .first();
+  console.log('⚙️ Inserindo configurações AWS padrão...');
 
-  const defaultSettings = {
-    id: knex.raw('gen_random_uuid()'),
-    access_key_id: 'DEMO_ACCESS_KEY',
-    secret_access_key: 'DEMO_SECRET_KEY',
-    region: 'sa-east-1',
-    s3_bucket_name: 'portal-educacional-storage',
-    cloudwatch_namespace: 'Portal/Metrics',
-    update_interval: 30,
-    enable_real_time_updates: true,
-    is_active: true,
-    created_by: adminUser?.id || null,
-    updated_by: adminUser?.id || null,
-    created_at: new Date(),
-    updated_at: new Date()
-  };
+  const defaultSettings = [
+    {
+      setting_key: 'AWS_ACCESS_KEY_ID',
+      setting_value: 'DEMO_ACCESS_KEY',
+      description: 'Chave de acesso AWS para demonstração',
+      is_encrypted: true,
+      is_active: true
+    },
+    {
+      setting_key: 'AWS_SECRET_ACCESS_KEY',
+      setting_value: 'DEMO_SECRET_KEY',
+      description: 'Chave secreta AWS para demonstração',
+      is_encrypted: true,
+      is_active: true
+    },
+    {
+      setting_key: 'AWS_REGION',
+      setting_value: 'sa-east-1',
+      description: 'Região AWS padrão (São Paulo)',
+      is_encrypted: false,
+      is_active: true
+    },
+    {
+      setting_key: 'S3_BUCKET_NAME',
+      setting_value: 'portal-educacional-storage',
+      description: 'Nome do bucket S3 para armazenamento',
+      is_encrypted: false,
+      is_active: true
+    },
+    {
+      setting_key: 'CLOUDWATCH_NAMESPACE',
+      setting_value: 'Portal/Metrics',
+      description: 'Namespace do CloudWatch para métricas',
+      is_encrypted: false,
+      is_active: true
+    },
+    {
+      setting_key: 'UPDATE_INTERVAL',
+      setting_value: '30',
+      description: 'Intervalo de atualização em segundos',
+      is_encrypted: false,
+      is_active: true
+    },
+    {
+      setting_key: 'ENABLE_REAL_TIME_UPDATES',
+      setting_value: 'true',
+      description: 'Habilitar atualizações em tempo real',
+      is_encrypted: false,
+      is_active: true
+    }
+  ];
 
   // Inserir configurações padrão
   await knex('aws_settings').insert(defaultSettings);
+  
+  console.log(`✅ ${defaultSettings.length} configurações AWS inseridas`);
 } 

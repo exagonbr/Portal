@@ -167,26 +167,6 @@ export default function LoginPage() {
         )}
 
         <LoginForm />
-
-        <div className="text-center mt-4">
-          <Link
-            href="/forgot-password"
-            className="text-sm text-primary hover:text-primary-dark transition-colors duration-200"
-            aria-label="Recuperar senha"
-          >
-            Esqueceu sua senha?
-          </Link>
-        </div>
-        
-        <div className="text-center">
-          <Link
-            href="/register"
-            className="text-sm text-gray-600 hover:text-primary transition-colors duration-200"
-            aria-label="Criar nova conta"
-          >
-            Não tem uma conta? <span className="font-medium text-primary">Cadastre-se</span>
-          </Link>
-        </div>
       </div>
     </div>
   );

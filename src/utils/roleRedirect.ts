@@ -7,8 +7,8 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
   // Roles em inglês (mantidas para compatibilidade)
   'student': '/dashboard/student',
   'teacher': '/dashboard/teacher',
-  'admin': '/dashboard/admin',
-  'manager': '/dashboard/manager',
+  'admin': '/dashboard/system-admin',
+  'manager': '/dashboard/institution-manager',
   'system_admin': '/dashboard/system-admin',
   'institution_manager': '/dashboard/institution-manager',
   'academic_coordinator': '/dashboard/coordinator',
@@ -19,10 +19,14 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
   'Aluno': '/dashboard/student', // Adicionando versão com maiúscula
   'professor': '/dashboard/teacher',
   'Professor': '/dashboard/teacher', // Adicionando versão com maiúscula
-  'administrador': '/dashboard/admin',
-  'Administrador': '/dashboard/admin', // Adicionando versão com maiúscula
-  'gestor': '/dashboard/manager',
-  'Gestor': '/dashboard/manager', // Adicionando versão com maiúscula
+  'administrador': '/dashboard/system-admin',
+  'Administrador': '/dashboard/system-admin', // Adicionando versão com maiúscula
+  'administrador do sistema': '/dashboard/system-admin',
+  'Administrador do Sistema': '/dashboard/system-admin',
+  'gestor': '/dashboard/institution-manager',
+  'Gestor': '/dashboard/institution-manager', // Adicionando versão com maiúscula
+  'gestor institucional': '/dashboard/institution-manager',
+  'Gestor Institucional': '/dashboard/institution-manager',
   'coordenador acadêmico': '/dashboard/coordinator',
   'Coordenador Acadêmico': '/dashboard/coordinator', // Adicionando versão com maiúscula
   'responsável': '/dashboard/guardian',
