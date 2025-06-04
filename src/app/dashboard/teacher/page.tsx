@@ -500,7 +500,7 @@ function TeacherDashboardContent() {
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-primary">{upClass.time}</p>
+                      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800">{upClass.time}</p>
                     </div>
                     <div>
                       <p className="font-medium">{upClass.className}</p>

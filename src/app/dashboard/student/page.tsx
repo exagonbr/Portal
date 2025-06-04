@@ -137,7 +137,7 @@ function StudentDashboardContent() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
   const [studyGroups, setStudyGroups] = useState<StudyGroup[]>([]);
-  const [selectedView, setSelectedView] = useState<'overview' | 'learning' | 'social' | 'achievements'>('overview');
+  const [selectedView, setSelectedView] = useState<'overview' | 'academic' | 'activities' | 'calendar'>('overview');
 
   useEffect(() => {
     loadDashboardData();
@@ -397,59 +397,57 @@ function StudentDashboardContent() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold daarktext-gray-700 dark:text-gray-600 mb-2 flex items-center gap-3">
-              <BookOpen className="w-8 h-8 text-primary" />
-              Meu Painel de Estudos
-            </h1>
-            <p className="dark:text-gray-600 dark:text-gray-600">
-              Olá, {user?.name}! Continue sua jornada de aprendizado.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedView('overview')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedView === 'overview'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-              }`}
-            >
-              Visão Geral
-            </button>
-            <button
-              onClick={() => setSelectedView('learning')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedView === 'learning'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-              }`}
-            >
-              Aprendizado
-            </button>
-            <button
-              onClick={() => setSelectedView('social')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedView === 'social'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-              }`}
-            >
-              Social
-            </button>
-            <button
-              onClick={() => setSelectedView('achievements')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedView === 'achievements'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-              }`}
-            >
-              Conquistas
-            </button>
-          </div>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
+            <BookOpen className="w-8 h-8 text-primary" />
+            Portal do Estudante
+          </h1>
+          <p className="text-gray-600 dark:text-gray-600 mt-2">
+            Acompanhe seu progresso acadêmico e atividades
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSelectedView('overview')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              selectedView === 'overview'
+                ? 'bg-primary text-white'
+                : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
+            }`}
+          >
+            Visão Geral
+          </button>
+          <button
+            onClick={() => setSelectedView('academic')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              selectedView === 'academic'
+                ? 'bg-primary text-white'
+                : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
+            }`}
+          >
+            Acadêmico
+          </button>
+          <button
+            onClick={() => setSelectedView('activities')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              selectedView === 'activities'
+                ? 'bg-primary text-white'
+                : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
+            }`}
+          >
+            Atividades
+          </button>
+          <button
+            onClick={() => setSelectedView('calendar')}
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              selectedView === 'calendar'
+                ? 'bg-primary text-white'
+                : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
+            }`}
+          >
+            Calendário
+          </button>
         </div>
       </div>
 
@@ -542,7 +540,7 @@ function StudentDashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Tarefas Pendentes */}
         <div className="lg:col-span-2">
-          <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <FileText className="w-5 h-5 mr-2 text-primary" />
               Minhas Tarefas
@@ -587,7 +585,7 @@ function StudentDashboardContent() {
           </div>
 
           {/* Notas Recentes */}
-          <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6 mt-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mt-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <BarChart className="w-5 h-5 mr-2 text-accent-green" />
               Notas Recentes
@@ -617,7 +615,7 @@ function StudentDashboardContent() {
           </div>
 
           {/* Trilhas de Aprendizagem */}
-          <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6 mt-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mt-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <Brain className="w-5 h-5 mr-2 text-accent-purple" />
               Minhas Trilhas de Aprendizagem
@@ -628,7 +626,7 @@ function StudentDashboardContent() {
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h3 className="font-semibold">{path.subject}</h3>
-                      <p className="text-sm text-gray-600 text-gray-400">
+                      <p className="text-sm text-gray-600 dark:text-gray-600">
                         Tópico atual: {path.currentTopic}
                       </p>
                     </div>
@@ -719,7 +717,7 @@ function StudentDashboardContent() {
           </div>
 
           {/* Comunicados */}
-          <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <Bell className="w-5 h-5 mr-2 text-accent-orange" />
               Comunicados
@@ -749,7 +747,7 @@ function StudentDashboardContent() {
           </div>
 
           {/* Próximas Conquistas */}
-          <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
               Próximas Conquistas
@@ -781,7 +779,7 @@ function StudentDashboardContent() {
           </div>
 
           {/* Ações Rápidas */}
-          <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
             <div className="space-y-2">
               <button 
@@ -819,10 +817,10 @@ function StudentDashboardContent() {
       )}
 
       {/* View de Aprendizado */}
-      {selectedView === 'learning' && (
+      {selectedView === 'academic' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <Brain className="w-5 h-5 mr-2 text-accent-purple" />
                 Recursos de Aprendizagem Personalizados
@@ -833,10 +831,10 @@ function StudentDashboardContent() {
                   <button className="px-4 py-2 bg-accent-purple text-white rounded-lg">
                     Para Você
                   </button>
-                  <button className="px-4 py-2 bg-gray-200 bg-gray-300 rounded-lg">
+                  <button className="px-4 py-2 bg-gray-200 dark:bg-gray-300 rounded-lg">
                     Todos
                   </button>
-                  <button className="px-4 py-2 bg-gray-200 bg-gray-300 rounded-lg">
+                  <button className="px-4 py-2 bg-gray-200 dark:bg-gray-300 rounded-lg">
                     Favoritos
                   </button>
                 </div>
@@ -845,7 +843,7 @@ function StudentDashboardContent() {
                   {studyMaterials.map((material) => (
                     <div
                       key={material.id}
-                      className="p-4 border border-gray-200 border-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                      className="p-4 border border-gray-200 dark:border-gray-400 rounded-lg hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className={`p-3 rounded-lg ${
@@ -862,7 +860,7 @@ function StudentDashboardContent() {
                         </button>
                       </div>
                       <h3 className="font-semibold mb-1">{material.title}</h3>
-                      <p className="text-sm text-gray-600 text-gray-400 mb-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-600 mb-3">
                         {material.subject}
                       </p>
                       <div className="flex items-center justify-between">
@@ -910,15 +908,15 @@ function StudentDashboardContent() {
 
           <div className="space-y-6">
             {/* Recomendações Personalizadas */}
-            <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Recomendado para Você</h3>
-              <p className="text-sm text-gray-600 text-gray-400 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-600 mb-4">
                 Baseado no seu desempenho e interesses
               </p>
               <div className="space-y-3">
                 <div className="p-3 bg-blue-50 bg-blue-900/20 rounded-lg">
                   <p className="font-medium text-sm">Reforço em Frações</p>
-                  <p className="text-xs text-gray-600 text-gray-400 mt-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-600 mt-1">
                     Melhore sua nota em matemática
                   </p>
                   <button className="mt-2 text-xs text-primary hover:text-primary-dark">
@@ -927,7 +925,7 @@ function StudentDashboardContent() {
                 </div>
                 <div className="p-3 bg-green-50 bg-green-900/20 rounded-lg">
                   <p className="font-medium text-sm">Desafio de Redação</p>
-                  <p className="text-xs text-gray-600 text-gray-400 mt-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-600 mt-1">
                     Pratique escrita criativa
                   </p>
                   <button className="mt-2 text-xs text-accent-green hover:text-green-800">
@@ -938,7 +936,7 @@ function StudentDashboardContent() {
             </div>
 
             {/* Estatísticas de Aprendizado */}
-            <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Seu Progresso</h3>
               <div className="space-y-4">
                 <div>
@@ -975,10 +973,10 @@ function StudentDashboardContent() {
       )}
 
       {/* View Social */}
-      {selectedView === 'social' && (
+      {selectedView === 'activities' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <Users className="w-5 h-5 mr-2 text-primary" />
                 Grupos de Estudo
@@ -988,12 +986,12 @@ function StudentDashboardContent() {
                 {studyGroups.map((group) => (
                   <div
                     key={group.id}
-                    className="p-4 border border-gray-200 border-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                    className="p-4 border border-gray-200 dark:border-gray-400 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h3 className="font-semibold">{group.name}</h3>
-                        <p className="text-sm text-gray-600 text-gray-400">
+                        <p className="text-sm text-gray-600 dark:text-gray-600">
                           {group.subject} • {group.members} membros
                         </p>
                       </div>
@@ -1015,13 +1013,13 @@ function StudentDashboardContent() {
                 ))}
               </div>
 
-              <button className="w-full mt-4 px-4 py-2 bg-gray-200 bg-gray-300 rounded-lg hover:bg-gray-300 hover:bg-gray-600 transition-colors">
+              <button className="w-full mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-300 rounded-lg hover:bg-gray-300 hover:bg-gray-600 transition-colors">
                 Criar Novo Grupo
               </button>
             </div>
 
             {/* Ranking da Turma */}
-            <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6 mt-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mt-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center">
                 <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
                 Ranking da Turma
@@ -1063,7 +1061,7 @@ function StudentDashboardContent() {
 
           <div className="space-y-6">
             {/* Atividade dos Amigos */}
-            <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Atividade dos Amigos</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
@@ -1103,7 +1101,7 @@ function StudentDashboardContent() {
             </div>
 
             {/* Desafios em Grupo */}
-            <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Desafios em Grupo</h3>
               <div className="space-y-3">
                 <div className="p-3 bg-gradient-to-r from-accent-purple to-pink-500 text-white rounded-lg">
@@ -1123,9 +1121,9 @@ function StudentDashboardContent() {
       )}
 
       {/* View de Conquistas */}
-      {selectedView === 'achievements' && (
+      {selectedView === 'calendar' && (
         <div className="space-y-6">
-          <div className="bg-white bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-6 flex items-center">
               <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
               Minhas Conquistas
@@ -1138,14 +1136,14 @@ function StudentDashboardContent() {
                   className={`p-4 border rounded-lg ${
                     achievement.unlocked
                       ? 'border-yellow-400 bg-yellow-50 bg-yellow-900/20'
-                      : 'border-gray-200 border-gray-700 bg-gray-50 bg-gray-800'
+                      : 'border-gray-200 dark:border-gray-400 bg-gray-50 bg-gray-800'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className={`p-3 rounded-lg ${
                       achievement.unlocked
                         ? 'bg-yellow-200 text-yellow-800'
-                        : 'bg-gray-200 bg-gray-300 text-gray-500'
+                        : 'bg-gray-200 dark:bg-gray-300 text-gray-500'
                     }`}>
                       {achievement.icon === 'star' ? <Star className="w-6 h-6" /> :
                        achievement.icon === 'calculator' ? <Brain className="w-6 h-6" /> :
@@ -1269,7 +1267,7 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, subtitle, color, trend }: StatCardProps) {
   return (
-    <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
+    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
           <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
@@ -1278,7 +1276,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color, trend }: StatCard
           <span className="text-xs text-green-600 font-medium">{trend}</span>
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-700 dark:text-black">
+      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 dark:text-black">
         {value}
       </p>
       <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>

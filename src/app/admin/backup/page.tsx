@@ -42,7 +42,7 @@ export default function AdminBackupPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Backup</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Backup</h1>
             <p className="text-gray-600">Gerenciamento de backups do sistema</p>
           </div>
           <button 

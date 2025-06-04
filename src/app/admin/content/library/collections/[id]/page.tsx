@@ -21,7 +21,7 @@ export default function CollectionDetailPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-700">Detalhes da Coleção</h1>
+          <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Detalhes da Coleção</h1>
           <p className="text-gray-600">ID: {collectionId}</p>
         </div>
         <button

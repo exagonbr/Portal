@@ -9,7 +9,7 @@ export default function StudentAssignmentsPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-700 mb-4">My Assignments</h2>
+      <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800 mb-4">My Assignments</h2>
       <p className="text-gray-600">
         View and submit your assignments.
       </p>

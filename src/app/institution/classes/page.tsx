@@ -336,7 +336,7 @@ export default function ClassesManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white bg-gray-300 rounded-lg max-w-md w-full">
             <div className="p-6">
-              <h2 className="text-2xl font-bold text-primary mb-6">
+              <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800 mb-6">
                 {editingClass ? 'Editar Turma' : 'Nova Turma'}
               </h2>
 

@@ -556,7 +556,7 @@ export default function VideosPage() {
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-700">Continue Assistindo</h2>
+                <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Continue Assistindo</h2>
                 <p className="text-sm text-gray-600 mt-1">Retome de onde parou</p>
               </div>
               <button
@@ -591,7 +591,7 @@ export default function VideosPage() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-700">Mais Populares</h2>
+              <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Mais Populares</h2>
               <p className="text-sm text-gray-600 mt-1">Os conteúdos mais assistidos da biblioteca</p>
             </div>
             <button
@@ -628,7 +628,7 @@ export default function VideosPage() {
           <section className="mt-8 pt-8 border-t border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-700">
+                <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800">
                   {filters.searchQuery
                     ? `Resultados para "${filters.searchQuery}"`
                     : filters.category !== 'all'

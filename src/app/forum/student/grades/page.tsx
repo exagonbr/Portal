@@ -14,7 +14,7 @@ export default function StudentGradesPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-700 mb-4">My Grades</h2>
+      <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800 mb-4">My Grades</h2>
       <p className="text-gray-600">
         View your grades and academic progress.
       </p>

@@ -66,7 +66,7 @@ export default function GuardianInvoicesPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary">Faturas</h1>
+        <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Faturas</h1>
         <div className="flex space-x-2">
           <button className="bg-white border border-gray-200 text-primary px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
             Filtrar
@@ -81,11 +81,11 @@ export default function GuardianInvoicesPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h3 className="text-sm font-medium text-gray-600">Total de Faturas</h3>
-          <p className="text-2xl font-bold text-primary mt-1">{invoices.length}</p>
+          <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 mt-1">{invoices.length}</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h3 className="text-sm font-medium text-gray-600">Valor Total</h3>
-          <p className="text-2xl font-bold text-primary mt-1">
+          <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 mt-1">
             {formatCurrency(invoices.reduce((sum, inv) => sum + inv.amount, 0))}
           </p>
         </div>

@@ -60,7 +60,7 @@ export default function LiveClassesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-primary-dark">Aulas ao Vivo</h1>
+          <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800-dark">Aulas ao Vivo</h1>
           <p className="text-gray-600">Participe das aulas ao vivo e interaja com professores</p>
         </div>
         <div className="flex space-x-4">

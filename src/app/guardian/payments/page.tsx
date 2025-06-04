@@ -68,7 +68,7 @@ export default function GuardianPaymentsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary">Pagamentos</h1>
+        <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Pagamentos</h1>
         <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
           Gerar Boleto
         </button>

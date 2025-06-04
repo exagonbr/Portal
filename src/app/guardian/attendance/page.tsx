@@ -92,7 +92,7 @@ export default function GuardianAttendancePage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Frequência Escolar</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Frequência Escolar</h1>
             <p className="text-gray-600">Acompanhe a frequência dos seus filhos</p>
           </div>
           <div className="flex space-x-4">
@@ -139,7 +139,7 @@ export default function GuardianAttendancePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Frequência</div>
-            <div className="text-2xl font-bold text-primary">{selectedChild.currentMonth.attendanceRate}%</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{selectedChild.currentMonth.attendanceRate}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div 
                 className={`h-2 rounded-full ${

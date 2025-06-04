@@ -296,7 +296,7 @@ export default function SendNotificationPage() {
             </span>
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-700">Enviar Notificação</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Enviar Notificação</h1>
             <p className="text-sm text-gray-500">
               Criar e enviar notificações para usuários
             </p>

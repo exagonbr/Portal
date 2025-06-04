@@ -269,7 +269,7 @@ export default function AllStudyMaterialsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total de Materiais</p>
-              <p className="text-2xl font-bold text-gray-700">{materials.length}</p>
+              <p className="text-3xl font-bold text-gray-700 dark:text-gray-800">{materials.length}</p>
             </div>
             <BookOpen className="w-8 h-8 text-primary" />
           </div>

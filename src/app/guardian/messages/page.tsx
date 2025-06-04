@@ -99,7 +99,7 @@ export default function GuardianMessagesPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Mensagens</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Mensagens</h1>
             <p className="text-gray-600">Comunicação com a escola e professores</p>
           </div>
           <button 
@@ -115,7 +115,7 @@ export default function GuardianMessagesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Mensagens</div>
-            <div className="text-2xl font-bold text-primary">{MOCK_MESSAGES.length}</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{MOCK_MESSAGES.length}</div>
             <div className="text-sm text-gray-600 mt-1">Este mês</div>
           </div>
           
@@ -135,7 +135,7 @@ export default function GuardianMessagesPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">De Professores</div>
-            <div className="text-2xl font-bold text-primary">
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">
               {MOCK_MESSAGES.filter(m => m.fromRole.includes('Professor')).length}
             </div>
             <div className="text-sm text-gray-600 mt-1">Comunicações acadêmicas</div>

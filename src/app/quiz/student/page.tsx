@@ -396,7 +396,7 @@ export default function StudentQuizPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Quizzes Disponíveis</p>
-              <p className="text-2xl font-bold text-gray-700">{quizzes.length}</p>
+              <p className="text-3xl font-bold text-gray-700 dark:text-gray-800">{quizzes.length}</p>
             </div>
             <Gamepad2 className="w-8 h-8 text-primary" />
           </div>

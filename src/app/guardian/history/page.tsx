@@ -101,7 +101,7 @@ export default function GuardianHistoryPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary">Histórico de Atividades</h1>
+        <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Histórico de Atividades</h1>
         <div className="flex space-x-2">
           <select
             value={filter}

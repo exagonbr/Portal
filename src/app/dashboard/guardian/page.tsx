@@ -363,72 +363,70 @@ export default function GuardianDashboard() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-primary-dark dark:text-gray-800 flex items-center gap-3">
-              <Shield className="w-8 h-8 text-primary-dark" />
-              Portal do Responsável
-            </h1>
-            <p className="text-gray-600 dark:text-gray-600 mt-2">
-              Acompanhe o desenvolvimento dos seus filhos
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <select
-              value={selectedStudent}
-              onChange={(e) => setSelectedStudent(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-400 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-300"
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
+            <Shield className="w-8 h-8 text-primary" />
+            Portal do Responsável
+          </h1>
+          <p className="text-gray-600 dark:text-gray-600 mt-2">
+            Acompanhe o desenvolvimento dos seus filhos
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <select
+            value={selectedStudent}
+            onChange={(e) => setSelectedStudent(e.target.value)}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-400 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-300"
+          >
+            <option value="all">Todos os filhos</option>
+            {students.map(student => (
+              <option key={student.id} value={student.id}>
+                {student.name}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedView('overview')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                selectedView === 'overview'
+                  ? 'bg-primary-dark text-white'
+                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
+              }`}
             >
-              <option value="all">Todos os filhos</option>
-              {students.map(student => (
-                <option key={student.id} value={student.id}>
-                  {student.name}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setSelectedView('overview')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedView === 'overview'
-                    ? 'bg-primary-dark text-white'
-                    : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-                }`}
-              >
-                Visão Geral
-              </button>
-              <button
-                onClick={() => setSelectedView('academic')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedView === 'academic'
-                    ? 'bg-primary-dark text-white'
-                    : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-                }`}
-              >
-                Acadêmico
-              </button>
-              <button
-                onClick={() => setSelectedView('communication')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedView === 'communication'
-                    ? 'bg-primary-dark text-white'
-                    : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-                }`}
-              >
-                Comunicação
-              </button>
-              <button
-                onClick={() => setSelectedView('financial')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedView === 'financial'
-                    ? 'bg-primary-dark text-white'
-                    : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-                }`}
-              >
-                Financeiro
-              </button>
-            </div>
+              Visão Geral
+            </button>
+            <button
+              onClick={() => setSelectedView('academic')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                selectedView === 'academic'
+                  ? 'bg-primary-dark text-white'
+                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
+              }`}
+            >
+              Acadêmico
+            </button>
+            <button
+              onClick={() => setSelectedView('communication')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                selectedView === 'communication'
+                  ? 'bg-primary-dark text-white'
+                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
+              }`}
+            >
+              Comunicação
+            </button>
+            <button
+              onClick={() => setSelectedView('financial')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                selectedView === 'financial'
+                  ? 'bg-primary-dark text-white'
+                  : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
+              }`}
+            >
+              Financeiro
+            </button>
           </div>
         </div>
       </div>
@@ -1122,7 +1120,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
           <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-primary-dark dark:text-gray-800">
+      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800-dark dark:text-gray-800">
         {value}
       </p>
       <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>

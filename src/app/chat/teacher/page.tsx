@@ -398,7 +398,7 @@ export default function ChatWithTeacherPage() {
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-700">Chat com Professores</h1>
+                <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Chat com Professores</h1>
                 <p className="text-gray-600 mt-1">
                   Tire suas dúvidas diretamente com os professores
                 </p>

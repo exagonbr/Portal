@@ -9,7 +9,7 @@ export default function TeacherAnnouncementsPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-700 mb-4">Announcements</h2>
+      <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800 mb-4">Announcements</h2>
       <p className="text-gray-600">
         Create and manage announcements for your classes.
       </p>

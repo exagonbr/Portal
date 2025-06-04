@@ -150,7 +150,7 @@ export default function SentNotificationsPage() {
               </span>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-700">Notificações Enviadas</h1>
+              <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Notificações Enviadas</h1>
               <p className="text-sm text-gray-500">
                 Histórico de notificações que você enviou
               </p>

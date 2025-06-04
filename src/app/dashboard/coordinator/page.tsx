@@ -658,7 +658,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
           <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-700 dark:text-gray-800">
+      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 dark:text-gray-800">
         {value}
       </p>
       <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>

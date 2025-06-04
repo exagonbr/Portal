@@ -117,7 +117,7 @@ export default function AssignmentsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-primary-dark">Minhas Atividades</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800-dark">Minhas Atividades</h1>
             <p className="text-gray-600">Acompanhe e gerencie suas atividades acadêmicas</p>
           </div>
           <div className="flex space-x-4">
@@ -136,7 +136,7 @@ export default function AssignmentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Atividades</div>
-            <div className="text-2xl font-bold text-primary-dark">5</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800-dark">5</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 2</span>
               <span className="text-gray-500 text-sm ml-2">nesta semana</span>
@@ -152,7 +152,7 @@ export default function AssignmentsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Em Andamento</div>
-            <div className="text-2xl font-bold text-primary">2</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">2</div>
             <div className="mt-4 flex items-center">
               <span className="text-primary text-sm">↑ 1</span>
               <span className="text-gray-500 text-sm ml-2">em andamento</span>

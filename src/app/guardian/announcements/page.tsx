@@ -54,7 +54,7 @@ export default function GuardianAnnouncementsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-primary">Comunicados</h1>
+        <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Comunicados</h1>
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-600">
             {announcements.filter(a => !a.read).length} não lidos

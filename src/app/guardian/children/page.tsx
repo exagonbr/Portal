@@ -81,7 +81,7 @@ export default function GuardianChildrenPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Meus Filhos</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Meus Filhos</h1>
             <p className="text-gray-600">Acompanhe o desenvolvimento acadêmico dos seus filhos</p>
           </div>
           <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors">
@@ -117,7 +117,7 @@ export default function GuardianChildrenPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Média Atual</div>
-            <div className="text-2xl font-bold text-primary">{selectedChild.academicInfo.currentAverage}</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{selectedChild.academicInfo.currentAverage}</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 0.3</span>
               <span className="text-gray-500 text-sm ml-2">este bimestre</span>
@@ -125,7 +125,7 @@ export default function GuardianChildrenPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Frequência</div>
-            <div className="text-2xl font-bold text-primary">{selectedChild.academicInfo.attendance}%</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{selectedChild.academicInfo.attendance}%</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 2%</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -133,7 +133,7 @@ export default function GuardianChildrenPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Comportamento</div>
-            <div className="text-2xl font-bold text-primary">{selectedChild.academicInfo.behavior}</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{selectedChild.academicInfo.behavior}</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">→ 0</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -141,7 +141,7 @@ export default function GuardianChildrenPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Idade</div>
-            <div className="text-2xl font-bold text-primary">{selectedChild.age} anos</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{selectedChild.age} anos</div>
             <div className="mt-4 flex items-center">
               <span className="text-gray-500 text-sm">{selectedChild.grade}</span>
             </div>

@@ -544,7 +544,7 @@ function StatCard({ icon: Icon, title, value, trend, trendUp, color }: StatCardP
           {trend}
         </span>
       </div>
-      <p className="text-2xl font-bold text-primary-dark text-gray-600">
+      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800-dark text-gray-600">
         {value}
       </p>
       <p className="text-sm text-gray-600 text-gray-400">{title}</p>

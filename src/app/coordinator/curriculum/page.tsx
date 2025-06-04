@@ -87,7 +87,7 @@ export default function CoordinatorCurriculumPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Gestão Curricular</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Gestão Curricular</h1>
             <p className="text-gray-600">Gerencie o currículo e competências por ciclo educacional</p>
           </div>
           <button 
@@ -132,7 +132,7 @@ export default function CoordinatorCurriculumPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Disciplinas</div>
-            <div className="text-2xl font-bold text-primary">24</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">24</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 2</span>
               <span className="text-gray-500 text-sm ml-2">este semestre</span>
@@ -140,7 +140,7 @@ export default function CoordinatorCurriculumPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Carga Horária Total</div>
-            <div className="text-2xl font-bold text-primary">3.840h</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">3.840h</div>
             <div className="mt-4 flex items-center">
               <span className="text-primary text-sm">→ 0h</span>
               <span className="text-gray-500 text-sm ml-2">este semestre</span>
@@ -148,7 +148,7 @@ export default function CoordinatorCurriculumPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Aprovadas</div>
-            <div className="text-2xl font-bold text-primary">18</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">18</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 3</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -156,7 +156,7 @@ export default function CoordinatorCurriculumPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Em Revisão</div>
-            <div className="text-2xl font-bold text-primary">6</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">6</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-yellow text-sm">↓ 2</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>

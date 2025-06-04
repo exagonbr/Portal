@@ -47,7 +47,7 @@ export default function CoordinatorCyclesPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Gestão de Ciclos Educacionais</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Gestão de Ciclos Educacionais</h1>
             <p className="text-gray-600">Gerencie os ciclos educacionais da instituição</p>
           </div>
           <button 
@@ -63,7 +63,7 @@ export default function CoordinatorCyclesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Ciclos</div>
-            <div className="text-2xl font-bold text-primary">3</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">3</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 0</span>
               <span className="text-gray-500 text-sm ml-2">este ano</span>
@@ -71,7 +71,7 @@ export default function CoordinatorCyclesPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Alunos</div>
-            <div className="text-2xl font-bold text-primary">1.150</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">1.150</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 45</span>
               <span className="text-gray-500 text-sm ml-2">este ano</span>
@@ -79,7 +79,7 @@ export default function CoordinatorCyclesPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Turmas Ativas</div>
-            <div className="text-2xl font-bold text-primary">45</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">45</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 3</span>
               <span className="text-gray-500 text-sm ml-2">este ano</span>
@@ -87,7 +87,7 @@ export default function CoordinatorCyclesPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Aprovação</div>
-            <div className="text-2xl font-bold text-primary">94%</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">94%</div>
             <div className="mt-4 flex items-center">
               <span className="text-accent-green text-sm">↑ 2%</span>
               <span className="text-gray-500 text-sm ml-2">este ano</span>
@@ -122,7 +122,7 @@ export default function CoordinatorCyclesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
               <div className="text-center p-4 bg-primary/10 rounded-lg">
-                <div className="text-2xl font-bold text-primary">{cycle.totalStudents}</div>
+                <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{cycle.totalStudents}</div>
                 <div className="text-sm text-gray-600">Total de Alunos</div>
               </div>
               <div className="text-center p-4 bg-accent-green/10 rounded-lg">

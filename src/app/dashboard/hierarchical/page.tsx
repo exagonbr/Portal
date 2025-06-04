@@ -352,7 +352,7 @@ function StatCard({ icon: Icon, title, value, color }: StatCardProps) {
           <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-700 dark:text-gray-800">
+      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 dark:text-gray-800">
         {value.toLocaleString('pt-BR')}
       </p>
       <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>

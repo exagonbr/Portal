@@ -109,7 +109,7 @@ export default function AdminSecurityPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Segurança</h1>
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Segurança</h1>
             <p className="text-gray-600">Monitoramento e configuração de segurança</p>
           </div>
           <div className="flex space-x-4">
@@ -137,7 +137,7 @@ export default function AdminSecurityPage() {
                 SECURITY_DATA.overview.threatLevel === 'Médio' ? 'bg-accent-yellow' : 'bg-error'
               }`}></div>
             </div>
-            <div className="text-2xl font-bold text-primary">{SECURITY_DATA.overview.threatLevel}</div>
+            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{SECURITY_DATA.overview.threatLevel}</div>
             <div className="text-sm text-gray-600 mt-1">Sistema seguro</div>
           </div>
           

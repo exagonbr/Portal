@@ -235,7 +235,7 @@ export default function AdminPerformancePage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-primary">Performance do Sistema</h1>
+          <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Performance do Sistema</h1>
         </div>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <div className="flex items-center">
@@ -256,7 +256,7 @@ export default function AdminPerformancePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Performance do Sistema</h1>
+          <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Performance do Sistema</h1>
           <p className="text-gray-600 text-sm mt-1">
             Dados atualizados a cada {settings.updateInterval}s | Última atualização: {lastUpdate.toLocaleTimeString()}
           </p>
@@ -302,7 +302,7 @@ export default function AdminPerformancePage() {
           metrics.map((metric) => (
             <div key={metric.name} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm transition-all hover:shadow-md">
               <h3 className="text-sm font-medium text-gray-500">{metric.name}</h3>
-              <p className="text-2xl font-bold text-primary mt-2">{metric.value}</p>
+              <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 mt-2">{metric.value}</p>
               <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${getStatusColor(metric.status)}`}>
                 {getStatusText(metric.status)}
               </div>

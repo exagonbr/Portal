@@ -330,7 +330,7 @@ export default function StudentLiveClassPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Aulas Hoje</p>
-              <p className="text-2xl font-bold text-gray-700">
+              <p className="text-3xl font-bold text-gray-700 dark:text-gray-800">
                 {liveClasses.filter(c => new Date(c.startTime).toDateString() === new Date().toDateString()).length}
               </p>
             </div>
