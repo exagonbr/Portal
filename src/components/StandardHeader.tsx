@@ -549,6 +549,14 @@ const StandardHeader = ({
                     <h3 className="text-sm font-semibold text-slate-800">Notificações</h3>
                     <p className="text-xs text-slate-600">{unreadNotifications} não lidas</p>
                   </div>
+                  {user?.role !== 'student' && (
+                    <Link
+                      href="/notifications/send"
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Enviar Nova
+                    </Link>
+                  )}
                 </div>
                 
                 <div className="max-h-80 overflow-y-auto">

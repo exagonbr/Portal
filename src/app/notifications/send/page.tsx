@@ -62,6 +62,13 @@ export default function SendNotificationPage() {
       router.push('/notifications')
       return
     }
+
+    // Verificar se o usuário tem permissão para enviar notificações
+    const allowedRoles = ['admin', 'manager', 'teacher', 'institution_manager', 'academic_coordinator', 'guardian']
+    if (!allowedRoles.includes(user.role)) {
+      router.push('/notifications')
+      return
+    }
   }, [user, router])
 
   // Verificar status das push notifications
