@@ -241,16 +241,6 @@ export default function DashboardSidebar() {
             href: dashboardRoute,
             icon: 'dashboard',
             label: 'Painel Principal'
-          },
-          {
-            href: '/chat',
-            icon: 'chat',
-            label: 'Mensagens'
-          },
-          {
-            href: '/announcements',
-            icon: 'campaign',
-            label: 'Comunicados'
           }
         ]
       }
@@ -266,25 +256,43 @@ export default function DashboardSidebar() {
             section: 'Administração do Sistema',
             items: [
               {
-                href: '/institutions',
+                href: '/admin/institutions',
                 icon: 'business',
                 label: 'Gerenciar Instituições',
                 permission: 'canManageInstitutions'
               },
               {
-                href: '/system/users',
+                href: '/admin/users',
                 icon: 'manage_accounts',
                 label: 'Usuários Globais',
                 permission: 'canManageGlobalUsers'
               },
               {
-                href: '/system/security',
+                href: '/admin/security',
                 icon: 'security',
                 label: 'Políticas de Segurança',
                 permission: 'canManageSecurityPolicies'
               },
               {
-                href: '/system/settings',
+                href: '/admin/roles',
+                icon: 'key',
+                label: 'Gerenciar Permissões',
+                permission: 'canManageSystem'
+              },
+              {
+                href: '/admin/audit',
+                icon: 'history',
+                label: 'Logs de Auditoria',
+                permission: 'canManageSystem'
+              },
+              {
+                href: '/admin/backup',
+                icon: 'backup',
+                label: 'Backup do Sistema',
+                permission: 'canManageSystem'
+              },
+              {
+                href: '/admin/settings',
                 icon: 'settings',
                 label: 'Configurações do Sistema',
                 permission: 'canManageSystem'
@@ -295,19 +303,19 @@ export default function DashboardSidebar() {
             section: 'Monitoramento',
             items: [
               {
-                href: '/system/analytics',
+                href: '/admin/analytics',
                 icon: 'analytics',
                 label: 'Analytics do Sistema',
                 permission: 'canViewSystemAnalytics'
               },
               {
-                href: '/system/logs',
+                href: '/admin/logs',
                 icon: 'terminal',
                 label: 'Logs do Sistema',
                 permission: 'canManageSystem'
               },
               {
-                href: '/system/performance',
+                href: '/admin/performance',
                 icon: 'speed',
                 label: 'Performance',
                 permission: 'canManageSystem'

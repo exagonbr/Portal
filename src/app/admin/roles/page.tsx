@@ -2,97 +2,131 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { mockRoles, mockPermissions, mockResources, Role, Permission } from '@/constants/mockData'
+import { useRoleManagement } from '@/hooks/useRoleManagement'
+import { ExtendedRole, CustomRole, PERMISSION_GROUPS } from '@/types/roleManagement'
+import { RolePermissions } from '@/types/roles'
+import { ROLE_COLORS } from '@/types/roles'
 
 interface NewRoleModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (roleData: Partial<Role>) => void
+  onSave: (roleData: { name: string; description: string; permissions: RolePermissions }) => void
 }
 
 interface EditRoleModalProps {
   isOpen: boolean
   onClose: () => void
-  role: Role | null
-  onSave: (roleData: Partial<Role>) => void
+  role: (ExtendedRole | (CustomRole & { id: string })) | null
+  onSave: (updates: Partial<CustomRole>) => void
 }
 
 interface PermissionsModalProps {
   isOpen: boolean
   onClose: () => void
-  role: Role | null
-  onSave: (permissions: string[]) => void
+  role: (ExtendedRole | (CustomRole & { id: string })) | null
+  onSave: (permissions: RolePermissions) => void
 }
 
 // Modal Nova Função
 function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
+  const { createEmptyPermissions } = useRoleManagement()
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    type: 'custom' as 'system' | 'custom'
+    description: ''
   })
+  const [selectedPermissions, setSelectedPermissions] = useState<RolePermissions>(createEmptyPermissions())
 
   if (!isOpen) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave({
-      ...formData,
-      permissions: [],
-      userCount: 0,
-      status: 'active' as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      name: formData.name,
+      description: formData.description,
+      permissions: selectedPermissions
     })
-    setFormData({ name: '', description: '', type: 'custom' })
+    setFormData({ name: '', description: '' })
+    setSelectedPermissions(createEmptyPermissions())
     onClose()
+  }
+
+  const handlePermissionToggle = (key: keyof RolePermissions) => {
+    setSelectedPermissions(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }))
   }
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div className="relative top-10 mx-auto p-6 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
         <div className="mt-3">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Nova Função</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">Nova Função Personalizada</h3>
           <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nome da Função
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                placeholder="Ex: Coordenador Pedagógico"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nome da Função
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                  placeholder="Ex: Coordenador Especial"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descrição
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                  placeholder="Descreva as responsabilidades desta função"
+                  rows={3}
+                  required
+                />
+              </div>
             </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descrição
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                placeholder="Descreva as responsabilidades desta função"
-                rows={3}
-                required
-              />
-            </div>
+
+            {/* Permissões */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo
-              </label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as 'system' | 'custom' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
-              >
-                <option value="custom">Personalizada</option>
-                <option value="system">Sistema</option>
-              </select>
+              <h4 className="text-md font-semibold text-gray-800 mb-4">Permissões</h4>
+              <div className="max-h-96 overflow-y-auto border rounded-md p-4">
+                {PERMISSION_GROUPS.map(group => (
+                  <div key={group.id} className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <h5 className="text-sm font-semibold text-gray-700">{group.name}</h5>
+                      <span className="text-xs text-gray-500">{group.description}</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-4">
+                      {group.permissions.map(permission => (
+                        <label key={permission.key} className="flex items-start space-x-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedPermissions[permission.key]}
+                            onChange={() => handlePermissionToggle(permission.key)}
+                            className="mt-1 h-4 w-4 text-primary focus:ring-accent-blue border-gray-300 rounded"
+                          />
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900">
+                              {permission.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {permission.description}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+
             <div className="flex gap-3">
               <button
                 type="button"
@@ -119,16 +153,16 @@ function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
 function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
   const [formData, setFormData] = useState({
     name: role?.name || '',
-    description: role?.description || '',
-    type: role?.type || 'custom' as 'system' | 'custom'
+    description: role?.description || ''
   })
 
-  if (!isOpen || !role) return null
+  if (!isOpen || !role || !('id' in role)) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave({
-      ...formData,
+      name: formData.name,
+      description: formData.description,
       updatedAt: new Date().toISOString()
     })
     onClose()
@@ -152,7 +186,7 @@ function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
                 required
               />
             </div>
-            <div className="mb-4">
+            <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Descrição
               </label>
@@ -163,23 +197,6 @@ function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
                 rows={3}
                 required
               />
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo
-              </label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as 'system' | 'custom' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                disabled={role.type === 'system'}
-              >
-                <option value="custom">Personalizada</option>
-                <option value="system">Sistema</option>
-              </select>
-              {role.type === 'system' && (
-                <p className="text-xs text-gray-500 mt-1">Funções do sistema não podem ter o tipo alterado</p>
-              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -205,16 +222,17 @@ function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
 
 // Modal Permissões
 function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalProps) {
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(role?.permissions || [])
+  const [selectedPermissions, setSelectedPermissions] = useState<RolePermissions>(
+    role?.permissions || {} as RolePermissions
+  )
 
   if (!isOpen || !role) return null
 
-  const handlePermissionToggle = (permissionId: string) => {
-    setSelectedPermissions(prev => 
-      prev.includes(permissionId)
-        ? prev.filter(id => id !== permissionId)
-        : [...prev, permissionId]
-    )
+  const handlePermissionToggle = (key: keyof RolePermissions) => {
+    setSelectedPermissions(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }))
   }
 
   const handleSubmit = () => {
@@ -222,32 +240,39 @@ function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalPro
     onClose()
   }
 
-  const groupedPermissions = mockResources.map(resource => ({
-    resource,
-    permissions: mockPermissions.filter(p => p.resource === resource.id)
-  }))
+  const isSystemRole = role.type === 'system'
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
         <div className="mt-3">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Gerenciar Permissões - {role.name}
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              Gerenciar Permissões - {role.name}
+            </h3>
+            {isSystemRole && (
+              <span className="px-2 py-1 text-xs bg-amber-100 text-amber-800 rounded-full">
+                Função do Sistema (Somente Leitura)
+              </span>
+            )}
+          </div>
+          
           <div className="max-h-96 overflow-y-auto">
-            {groupedPermissions.map(({ resource, permissions }) => (
-              <div key={resource.id} className="mb-6">
-                <h4 className="text-md font-semibold text-gray-800 mb-3 border-b pb-2">
-                  {resource.name}
-                </h4>
+            {PERMISSION_GROUPS.map(group => (
+              <div key={group.id} className="mb-6">
+                <div className="flex items-center justify-between mb-3 border-b pb-2">
+                  <h4 className="text-md font-semibold text-gray-800">{group.name}</h4>
+                  <span className="text-xs text-gray-500">{group.description}</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {permissions.map(permission => (
-                    <label key={permission.id} className="flex items-start space-x-3 cursor-pointer">
+                  {group.permissions.map(permission => (
+                    <label key={permission.key} className="flex items-start space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedPermissions.includes(permission.id)}
-                        onChange={() => handlePermissionToggle(permission.id)}
-                        className="mt-1 h-4 w-4 text-primary focus:ring-accent-blue border-gray-300 rounded"
+                        checked={selectedPermissions[permission.key]}
+                        onChange={() => handlePermissionToggle(permission.key)}
+                        disabled={isSystemRole}
+                        className="mt-1 h-4 w-4 text-primary focus:ring-accent-blue border-gray-300 rounded disabled:opacity-50"
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900">
@@ -263,19 +288,22 @@ function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalPro
               </div>
             ))}
           </div>
+          
           <div className="flex gap-3 mt-6 pt-4 border-t">
             <button
               onClick={onClose}
               className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
-              Cancelar
+              {isSystemRole ? 'Fechar' : 'Cancelar'}
             </button>
-            <button
-              onClick={handleSubmit}
-              className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-blue transition-colors duration-200"
-            >
-              Salvar Permissões
-            </button>
+            {!isSystemRole && (
+              <button
+                onClick={handleSubmit}
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-blue transition-colors duration-200"
+              >
+                Salvar Permissões
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -285,114 +313,125 @@ function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalPro
 
 export default function AdminRolesPage() {
   const { user } = useAuth()
-  const [roles, setRoles] = useState<Role[]>(mockRoles)
+  const {
+    allRoles,
+    statistics,
+    createCustomRole,
+    updateCustomRole,
+    deleteCustomRole,
+    cloneRole,
+    canEditRole,
+    canDeleteRole,
+    countActivePermissions
+  } = useRoleManagement()
+
   const [newRoleModalOpen, setNewRoleModalOpen] = useState(false)
   const [editRoleModalOpen, setEditRoleModalOpen] = useState(false)
   const [permissionsModalOpen, setPermissionsModalOpen] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+  const [selectedRole, setSelectedRole] = useState<(ExtendedRole | (CustomRole & { id: string })) | null>(null)
 
-  // Calcular estatísticas
-  const totalRoles = roles.length
-  const customRoles = roles.filter(role => role.type === 'custom').length
-  const totalPermissions = mockPermissions.length
-  const totalUsers = roles.reduce((sum, role) => sum + role.userCount, 0)
-
-  const handleNewRole = (roleData: Partial<Role>) => {
-    const newRole: Role = {
-      ...roleData as Role,
-      id: `role_${Date.now()}`
-    }
-    setRoles([...roles, newRole])
+  const handleNewRole = (roleData: { name: string; description: string; permissions: RolePermissions }) => {
+    createCustomRole(roleData)
   }
 
-  const handleEditRole = (roleData: Partial<Role>) => {
-    if (!selectedRole) return
-    setRoles(roles.map(role => 
-      role.id === selectedRole.id 
-        ? { ...role, ...roleData }
-        : role
-    ))
+  const handleEditRole = (updates: Partial<CustomRole>) => {
+    if (!selectedRole || !('id' in selectedRole)) return
+    updateCustomRole(selectedRole.id, updates)
     setSelectedRole(null)
   }
 
-  const handleUpdatePermissions = (permissions: string[]) => {
-    if (!selectedRole) return
-    setRoles(roles.map(role => 
-      role.id === selectedRole.id 
-        ? { ...role, permissions, updatedAt: new Date().toISOString() }
-        : role
-    ))
+  const handleUpdatePermissions = (permissions: RolePermissions) => {
+    if (!selectedRole || !('id' in selectedRole)) return
+    updateCustomRole(selectedRole.id, { permissions })
     setSelectedRole(null)
   }
 
-  const handleDeleteRole = (roleId: string) => {
+  const handleDeleteRole = (role: ExtendedRole | (CustomRole & { id: string })) => {
+    if (!('id' in role)) return
     if (confirm('Tem certeza que deseja excluir esta função?')) {
-      setRoles(roles.filter(role => role.id !== roleId))
+      deleteCustomRole(role.id)
     }
   }
 
-  const openEditModal = (role: Role) => {
+  const handleCloneRole = (role: ExtendedRole | (CustomRole & { id: string })) => {
+    cloneRole(role)
+  }
+
+  const openEditModal = (role: ExtendedRole | (CustomRole & { id: string })) => {
+    if (!canEditRole(role)) return
     setSelectedRole(role)
     setEditRoleModalOpen(true)
   }
 
-  const openPermissionsModal = (role: Role) => {
+  const openPermissionsModal = (role: ExtendedRole | (CustomRole & { id: string })) => {
     setSelectedRole(role)
     setPermissionsModalOpen(true)
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
+  const getRoleColor = (role: ExtendedRole | (CustomRole & { id: string })) => {
+    if (role.type === 'system' && 'role' in role && role.role) {
+      return ROLE_COLORS[role.role] || '#6B7280'
+    }
+    return '#8B5CF6' // Cor padrão para roles customizadas
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gestão de Permissões</h1>
-          <p className="text-gray-600">Configure as funções e permissões do sistema</p>
+          <h1 className="text-2xl font-bold text-gray-800">Sistema de Gestão de Permissões</h1>
+          <p className="text-gray-600">Configure funções e permissões modulares do sistema educacional</p>
         </div>
         <button 
           onClick={() => setNewRoleModalOpen(true)}
-          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
+          className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200 flex items-center gap-2"
         >
+          <span className="material-symbols-outlined text-sm">add</span>
           Nova Função
         </button>
       </div>
 
-      {/* Role Statistics */}
+      {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Total de Funções</div>
-          <div className="text-2xl font-bold text-gray-800">{totalRoles}</div>
+          <div className="text-2xl font-bold text-gray-800">{statistics.totalRoles}</div>
           <div className="mt-4 flex items-center">
-            <span className="text-primary text-sm">Sistema</span>
+            <span className="text-primary text-sm">{statistics.systemRoles} Sistema + {statistics.customRoles} Personalizadas</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-sm font-medium text-gray-500 mb-1">Funções Personalizadas</div>
-          <div className="text-2xl font-bold text-gray-800">{customRoles}</div>
+          <div className="text-sm font-medium text-gray-500 mb-1">Funções Ativas</div>
+          <div className="text-2xl font-bold text-gray-800">{statistics.activeRoles}</div>
           <div className="mt-4 flex items-center">
-            <span className="text-accent-purple text-sm">Customizadas</span>
+            <span className="text-accent-green text-sm">Em uso no sistema</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-sm font-medium text-gray-500 mb-1">Permissões</div>
-          <div className="text-2xl font-bold text-gray-800">{totalPermissions}</div>
+          <div className="text-sm font-medium text-gray-500 mb-1">Usuários Totais</div>
+          <div className="text-2xl font-bold text-gray-800">{statistics.totalUsers.toLocaleString()}</div>
           <div className="mt-4 flex items-center">
-            <span className="text-accent-green text-sm">Ativas</span>
+            <span className="text-accent-blue text-sm">Distribuídos nas funções</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="text-sm font-medium text-gray-500 mb-1">Usuários Afetados</div>
-          <div className="text-2xl font-bold text-gray-800">{totalUsers.toLocaleString()}</div>
+          <div className="text-sm font-medium text-gray-500 mb-1">Grupos de Permissões</div>
+          <div className="text-2xl font-bold text-gray-800">{PERMISSION_GROUPS.length}</div>
           <div className="mt-4 flex items-center">
-            <span className="text-gray-500 text-sm">Total</span>
+            <span className="text-accent-purple text-sm">Categorias disponíveis</span>
           </div>
         </div>
       </div>
 
-      {/* Roles List */}
+      {/* Lista de Funções */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -408,7 +447,7 @@ export default function AdminRolesPage() {
                   Usuários
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Permissões
+                  Permissões Ativas
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Última Modificação
@@ -422,18 +461,24 @@ export default function AdminRolesPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {roles.map((role) => (
-                <tr key={role.id}>
+              {allRoles.map((role, index) => (
+                <tr key={`${role.type}-${('id' in role) ? role.id : index}`}>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-primary text-sm">
-                          {role.type === 'system' ? 'admin_panel_settings' : 'person'}
+                      <div 
+                        className="flex-shrink-0 h-8 w-8 rounded-md flex items-center justify-center"
+                        style={{ backgroundColor: `${getRoleColor(role)}20` }}
+                      >
+                        <span 
+                          className="material-symbols-outlined text-sm"
+                          style={{ color: getRoleColor(role) }}
+                        >
+                          {role.type === 'system' ? 'admin_panel_settings' : 'tune'}
                         </span>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{role.name}</div>
-                        <div className="text-sm text-gray-500">{role.description}</div>
+                        <div className="text-sm text-gray-500 max-w-xs truncate">{role.description}</div>
                       </div>
                     </div>
                   </td>
@@ -447,10 +492,10 @@ export default function AdminRolesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {role.userCount} usuários
+                    {role.userCount.toLocaleString()} usuários
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {role.permissions.length} permissões
+                    {countActivePermissions(role.permissions)} de {Object.keys(role.permissions).length}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(role.updatedAt)}
@@ -465,26 +510,43 @@ export default function AdminRolesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      onClick={() => openEditModal(role)}
-                      className="text-primary hover:text-primary-dark mr-3 transition-colors duration-200"
-                    >
-                      Editar
-                    </button>
-                    <button 
-                      onClick={() => openPermissionsModal(role)}
-                      className="text-accent-purple hover:text-accent-purple/80 mr-3 transition-colors duration-200"
-                    >
-                      Permissões
-                    </button>
-                    {role.type === 'custom' && (
+                    <div className="flex gap-2">
                       <button 
-                        onClick={() => handleDeleteRole(role.id)}
-                        className="text-error hover:text-error/80 transition-colors duration-200"
+                        onClick={() => openPermissionsModal(role)}
+                        className="text-accent-blue hover:text-accent-blue/80 transition-colors duration-200"
+                        title="Ver/Editar Permissões"
                       >
-                        Excluir
+                        <span className="material-symbols-outlined text-sm">security</span>
                       </button>
-                    )}
+                      
+                      <button 
+                        onClick={() => handleCloneRole(role)}
+                        className="text-accent-green hover:text-accent-green/80 transition-colors duration-200"
+                        title="Clonar Função"
+                      >
+                        <span className="material-symbols-outlined text-sm">content_copy</span>
+                      </button>
+
+                      {canEditRole(role) && (
+                        <button 
+                          onClick={() => openEditModal(role)}
+                          className="text-primary hover:text-primary-dark transition-colors duration-200"
+                          title="Editar Função"
+                        >
+                          <span className="material-symbols-outlined text-sm">edit</span>
+                        </button>
+                      )}
+
+                      {canDeleteRole(role) && (
+                        <button 
+                          onClick={() => handleDeleteRole(role)}
+                          className="text-error hover:text-error/80 transition-colors duration-200"
+                          title="Excluir Função"
+                        >
+                          <span className="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -493,58 +555,33 @@ export default function AdminRolesPage() {
         </div>
       </div>
 
-      {/* Permissions Matrix */}
+      {/* Matriz de Permissões por Categoria */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Matriz de Permissões</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Recurso
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Visualizar
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Criar
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Editar
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Excluir
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {mockResources.slice(0, 5).map((resource) => (
-                <tr key={resource.id}>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{resource.name}</div>
-                  </td>
-                  {['read', 'create', 'update', 'delete'].map((action) => {
-                    const permission = mockPermissions.find(p => 
-                      p.resource === resource.id && p.action === action
-                    )
-                    const hasPermission = permission && roles.some(role => 
-                      role.permissions.includes(permission.id) && role.status === 'active'
-                    )
-                    return (
-                      <td key={action} className="px-6 py-4 text-center">
-                        <input 
-                          type="checkbox" 
-                          className="h-4 w-4 text-primary"
-                          checked={!!hasPermission} 
-                          readOnly 
-                        />
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Visão Geral das Permissões por Categoria</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {PERMISSION_GROUPS.map(group => (
+            <div key={group.id} className="border rounded-lg p-4">
+              <h4 className="text-md font-semibold text-gray-700 mb-2">{group.name}</h4>
+              <p className="text-sm text-gray-600 mb-3">{group.description}</p>
+              <div className="text-sm text-gray-500">
+                {group.permissions.length} permissões disponíveis
+              </div>
+              <div className="mt-3">
+                <div className="flex flex-wrap gap-1">
+                  {group.permissions.slice(0, 3).map(permission => (
+                    <span key={permission.key} className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                      {permission.name}
+                    </span>
+                  ))}
+                  {group.permissions.length > 3 && (
+                    <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                      +{group.permissions.length - 3} mais
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
