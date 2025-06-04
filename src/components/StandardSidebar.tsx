@@ -58,7 +58,7 @@ const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boole
       {!isCollapsed && (
         <div className="overflow-hidden min-w-0 flex-1">
           <p className="text-xs font-semibold text-sidebar-text-active truncate leading-tight">{user?.name}</p>
-          <span className="text-[10px] text-gray-400 leading-tight">
+          <span className="text-[10px] text-sidebar-text leading-tight">
             {user?.role && ROLE_LABELS[user.role as UserRole]}
           </span>
         </div>

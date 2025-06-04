@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Book } from '@/constants/mockData';
 import { Annotation, Highlight, Bookmark, ViewerState } from './types';
@@ -258,258 +258,267 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     format: 'pdf'
   };
 
+  // Memoizar as opções do PDF para evitar recarregamentos desnecessários
+  const pdfOptions = useMemo(() => ({
+    cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+    cMapPacked: true,
+    verbosity: 0,
+  }), []);
+
   return (
     <div
       ref={containerRef}
       className={`flex flex-col h-screen ${
         isDarkMode ? 'dark' : ''
-      } bg-gray-50 dark:bg-gray-100`}
+      } bg-background-secondary`}
     >
-      {/* Barra de ferramentas superior */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-100 border-b border-gray-200 dark:border-gray-300 shadow-lg flex-shrink-0">
-        {/* Controles à esquerda - Botão Voltar Proeminente */}
+      {/* Header com controles */}
+      <div className="flex items-center justify-between px-4 py-3 bg-background-primary border-b border-border-DEFAULT shadow-lg flex-shrink-0">
         <div className="flex items-center space-x-4">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-              title="Voltar ao Portal"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-              <span className="font-medium">Voltar</span>
-            </button>
+          <h2 className="text-lg font-semibold text-text-primary truncate">{mockBook.title}</h2>
+          
+          {showSearch && (
+            <div className="text-sm text-text-secondary">
+              {searchResults.length > 0 && `${searchResults.length} resultados encontrados`}
+            </div>
           )}
-
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
-              <button
-                onClick={() => handlePageChange(1)}
-                disabled={viewerState.currentPage <= 1}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Primeira página"
-              >
-                <FiChevronsLeft className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={() => handlePageChange(viewerState.currentPage - (viewerState.isDualPage ? 2 : 1))}
-                disabled={viewerState.currentPage <= 1}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Página anterior"
-              >
-                <FiChevronLeft className="w-4 h-4" />
-              </button>
-              
-              <div className="flex items-center space-x-2 px-3">
-                <input
-                  type="number"
-                  value={viewerState.currentPage}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 1 && value <= (numPages || 1)) {
-                      handlePageChange(value);
-                    }
-                  }}
-                  className="w-16 px-2 py-1 text-center bg-white dark:bg-gray-100 rounded-lg border border-gray-300 dark:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  min={1}
-                  max={numPages || 1}
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-600">
-                  / {numPages || '?'}
-                </span>
-              </div>
-              
-              <button
-                onClick={() => handlePageChange(viewerState.currentPage + (viewerState.isDualPage ? 2 : 1))}
-                disabled={viewerState.currentPage >= (numPages || 1)}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Próxima página"
-              >
-                <FiChevronRight className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={() => handlePageChange(numPages || 1)}
-                disabled={viewerState.currentPage >= (numPages || 1)}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title="Última página"
-              >
-                <FiChevronsRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Informações do livro */}
-          <div className="hidden lg:flex items-center space-x-3 text-sm">
-            <div className="text-gray-600 dark:text-gray-700">
-              <span className="font-bold">{mockBook.title}</span>
-              <span className="text-gray-600 dark:text-gray-600 ml-2">• {mockBook.author}</span>
-            </div>
-          </div>
         </div>
 
-        {/* Controles centrais */}
+        {/* Controles de Navegação */}
+        <div className="flex items-center bg-background-tertiary rounded-xl p-1">
+          <button
+            onClick={() => handlePageChange(Math.max(1, viewerState.currentPage - 1))}
+            disabled={viewerState.currentPage <= 1}
+            className="p-2 rounded-lg hover:bg-background-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Página anterior"
+          >
+            <FiChevronLeft className="w-4 h-4 text-text-primary" />
+          </button>
+          
+          <button
+            onClick={() => handlePageChange(Math.min(numPages || 1, viewerState.currentPage + 1))}
+            disabled={viewerState.currentPage >= (numPages || 1)}
+            className="p-2 rounded-lg hover:bg-background-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Próxima página"
+          >
+            <FiChevronRight className="w-4 h-4 text-text-primary" />
+          </button>
+
+          <div className="flex items-center mx-2">
+            <input
+              type="number"
+              min={1}
+              max={numPages || 1}
+              value={viewerState.currentPage}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                if (!isNaN(value) && value >= 1 && value <= (numPages || 1)) {
+                  handlePageChange(value);
+                }
+              }}
+              className="w-16 px-2 py-1 text-center bg-background-primary rounded-lg border border-border-DEFAULT focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+            />
+            <span className="text-sm text-text-secondary">
+              / {numPages || '?'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => handlePageChange(1)}
+            disabled={viewerState.currentPage <= 1}
+            className="p-2 rounded-lg hover:bg-background-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Primeira página"
+          >
+            <FiChevronsLeft className="w-4 h-4 text-text-primary" />
+          </button>
+          
+          <button
+            onClick={() => handlePageChange(numPages || 1)}
+            disabled={viewerState.currentPage >= (numPages || 1)}
+            className="p-2 rounded-lg hover:bg-background-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Última página"
+          >
+            <FiChevronsRight className="w-4 h-4 text-text-primary" />
+          </button>
+        </div>
+
+        <div className="text-text-secondary">
+          <div className="font-medium text-text-primary">{mockBook.title}</div>
+          <span className="text-text-secondary ml-2">• {mockBook.author}</span>
+        </div>
+
+        {/* Controles de Zoom e Ferramentas */}
         <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
+          <div className="flex items-center space-x-1 bg-background-tertiary rounded-xl p-1">
             <button
               onClick={() => handleZoom('out')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
+              className="p-2 rounded-lg hover:bg-background-primary transition-colors"
               title="Diminuir zoom"
             >
-              <FiZoomOut className="w-4 h-4" />
+              <FiZoomOut className="w-4 h-4 text-text-primary" />
             </button>
-            <span className="px-3 text-sm font-medium min-w-[3rem] text-center">
-              {Math.round(viewerState.currentScale * 100)}%
-            </span>
+            
+            <span className="text-sm font-medium px-2 text-text-primary">{Math.round(viewerState.currentScale * 100)}%</span>
+            
             <button
               onClick={() => handleZoom('in')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
+              className="p-2 rounded-lg hover:bg-background-primary transition-colors"
               title="Aumentar zoom"
             >
-              <FiZoomIn className="w-4 h-4" />
-            </button>
-            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
-            <button
-              onClick={() => handleZoomChange(100)}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
-              title="Redefinir zoom"
-            >
-              <FiRotateCw className="w-4 h-4" />
+              <FiZoomIn className="w-4 h-4 text-text-primary" />
             </button>
           </div>
 
-          <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
-            <button
-              onClick={handleDualPageToggle}
-              className={`p-2 rounded-lg transition-colors ${
-                viewerState.isDualPage
-                  ? 'bg-blue-500 text-white'
-                  : 'hover:bg-white dark:hover:bg-gray-200'
-              }`}
-              title="Alternar visualização de página dupla"
-            >
-              <FiColumns className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+          <div className="w-px h-6 bg-border-DEFAULT mx-1" />
 
-        {/* Controles à direita */}
-        <div className="flex items-center space-x-2">
-          <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
+          <button
+            onClick={() => setShowSearch(!showSearch)}
+            className="p-2 rounded-lg hover:bg-background-primary transition-colors"
+            title="Buscar no texto"
+          >
+            <FiSearch className="w-4 h-4 text-text-primary" />
+          </button>
+
+          <div className="flex bg-background-tertiary rounded-xl p-1">
+            {(['fit-width', 'fit-page'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => {
+                  // Implement the logic to set the fit mode
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  viewerState.isDualPage === (mode === 'fit-page')
+                    ? 'bg-primary text-white'
+                    : 'hover:bg-background-primary text-text-primary'
+                }`}
+                title={mode === 'fit-width' ? 'Ajustar à largura' : 'Ajustar à página'}
+              >
+                {mode === 'fit-width' ? 'Largura' : 'Página'}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex bg-background-tertiary rounded-xl p-1">
+            {(['single', 'double'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewerState(prev => ({ ...prev, isDualPage: mode === 'double' }))}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  viewerState.isDualPage === (mode === 'double')
+                    ? 'bg-primary text-white'
+                    : 'hover:bg-background-primary text-text-primary'
+                }`}
+                title={mode === 'single' ? 'Página única' : 'Páginas duplas'}
+              >
+                {mode === 'single' ? 'Única' : 'Dupla'}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => {
+              const bookmark = viewerState.bookmarks.find(b => b.pageNumber === viewerState.currentPage);
+              if (bookmark) {
+                // Remove bookmark
+                setViewerState(prev => ({
+                  ...prev,
+                  bookmarks: prev.bookmarks.filter(b => b.id !== bookmark.id)
+                }));
+              } else {
+                setIsAddingBookmark(true);
+              }
+            }}
+            className={`p-2 rounded-lg transition-colors ${
+              viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage)
+                ? 'text-warning bg-warning-light'
+                : 'hover:bg-background-primary text-text-primary'
+            }`}
+            title={viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage) ? 'Remover marcador' : 'Adicionar marcador'}
+          >
+            <FiBookmark className="w-4 h-4" fill={viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage) ? 'currentColor' : 'none'} />
+          </button>
+
+          <div className="flex bg-background-tertiary rounded-xl p-1">
             <button
-              onClick={() => setShowSearch(!showSearch)}
-              className={`p-2 rounded-lg transition-colors ${
-                showSearch
-                  ? 'bg-blue-500 text-white'
-                  : 'hover:bg-white dark:hover:bg-gray-200'
-              }`}
-              title="Pesquisar"
+              onClick={() => {
+                // Implement the logic to show table of contents
+              }}
+              className="p-2 rounded-lg hover:bg-background-primary transition-colors"
+              title="Índice"
             >
-              <FiSearch className="w-4 h-4" />
+              {/* Placeholder for table of contents button */}
             </button>
             
             <button
               onClick={() => {
-                const bookmark = viewerState.bookmarks.find(b => b.pageNumber === viewerState.currentPage);
-                if (bookmark) {
-                  // Remove bookmark
-                  setViewerState(prev => ({
-                    ...prev,
-                    bookmarks: prev.bookmarks.filter(b => b.id !== bookmark.id)
-                  }));
-                } else {
-                  setIsAddingBookmark(true);
-                }
+                // Implement the logic to show notes
               }}
-              className={`p-2 rounded-lg transition-colors ${
-                viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage)
-                  ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
-                  : 'hover:bg-white dark:hover:bg-gray-200'
-              }`}
-              title="Alternar marcador"
+              className="p-2 rounded-lg hover:bg-background-primary transition-colors"
+              title="Anotações"
             >
-              <FiBookmark className="w-4 h-4" fill={viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage) ? 'currentColor' : 'none'} />
-            </button>
-          </div>
-          
-          <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
-            <button
-              onClick={onThemeToggle}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
-              title="Alternar modo escuro"
-            >
-              {isDarkMode ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
-            </button>
-            
-            <button
-              onClick={handleFullscreenToggle}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
-              title="Alternar tela cheia"
-            >
-              {viewerState.isFullscreen ? <FiMinimize className="w-4 h-4" /> : <FiMaximize className="w-4 h-4" />}
+              {/* Placeholder for notes button */}
             </button>
           </div>
         </div>
       </div>
 
       {/* Barra de progresso */}
-      <div className="h-1 bg-gray-200 dark:bg-gray-100 flex-shrink-0">
-        <div
-          className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300"
+      <div className="h-1 bg-border-light flex-shrink-0">
+        <div 
+          className="h-full bg-primary transition-all duration-300"
           style={{ width: `${readingProgress}%` }}
         />
       </div>
 
-      {/* Barra de pesquisa */}
+      {/* Barra de busca */}
       {showSearch && (
-        <div className="px-4 py-3 bg-white dark:bg-gray-100 border-b border-gray-200 dark:border-gray-300 flex-shrink-0">
-          <div className="flex items-center space-x-3 max-w-2xl mx-auto">
+        <div className="px-4 py-3 bg-background-primary border-b border-border-DEFAULT flex-shrink-0">
+          <div className="flex items-center space-x-3">
             <div className="relative flex-1">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary w-4 h-4" />
               <input
                 type="text"
+                placeholder="Buscar no livro..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Pesquisar no documento..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 bg-background-tertiary rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
+            
             <button
               onClick={handleSearch}
-              disabled={!searchQuery.trim() || isSearching}
-              className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={!searchQuery.trim()}
+              className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-dark disabled:opacity-50"
             >
-              {isSearching ? 'Pesquisando...' : 'Pesquisar'}
+              Buscar
             </button>
+            
             <button
               onClick={() => {
                 setShowSearch(false);
-                setSearchQuery('');
                 setSearchResults([]);
+                setSearchQuery('');
               }}
-              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-2 rounded-xl hover:bg-background-tertiary"
             >
-              <FiX className="w-4 h-4" />
+              <FiX className="w-4 h-4 text-text-primary" />
             </button>
           </div>
-          
-          {/* Resultados da pesquisa */}
+
           {searchResults.length > 0 && (
-            <div className="mt-3 bg-gray-50 dark:bg-gray-100/50 rounded-xl p-3 max-h-60 overflow-y-auto max-w-2xl mx-auto">
-              <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-700">Resultados da Pesquisa</h4>
+            <div className="mt-3 bg-background-tertiary rounded-xl p-3 max-h-60 overflow-y-auto max-w-2xl mx-auto">
+              <h4 className="text-sm font-medium mb-2 text-text-primary">Resultados da Pesquisa</h4>
               <div className="space-y-2">
-                {searchResults.map((result, i) => (
+                {searchResults.map((result, index) => (
                   <div
-                    key={i}
+                    key={index}
                     onClick={() => handlePageChange(result.page)}
-                    className="p-3 bg-white dark:bg-gray-600 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                    className="p-3 bg-background-primary rounded-lg cursor-pointer hover:bg-secondary-light transition-colors"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Página {result.page}</span>
-                      <button className="text-xs text-gray-500 hover:text-gray-700">Ir para página</button>
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-medium text-accent-blue">Página {result.page}</span>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-700 mt-1">{result.text}</p>
+                    <p className="text-sm text-text-secondary mt-1">{result.text}</p>
                   </div>
                 ))}
               </div>
@@ -599,11 +608,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             }}
             onLoadError={onDocumentLoadError}
             className="flex justify-center items-center h-full w-full"
-            options={{
-              cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
-              cMapPacked: true,
-              verbosity: 0,
-            }}
+            options={pdfOptions}
           >
             <div className={`flex ${viewerState.isDualPage ? 'space-x-6' : ''} justify-center items-center h-full w-full p-4`}>
               {getPagesToDisplay().map((pageNum) => (

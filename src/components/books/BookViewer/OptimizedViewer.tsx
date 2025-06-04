@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Book as EpubBook, Rendition } from 'epubjs';
 import { Book } from '@/constants/mockData';
@@ -120,6 +120,13 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
     width: 0,
     height: 0
   });
+
+  // Memoizar as opções do PDF para evitar recarregamentos desnecessários
+  const pdfOptions = useMemo(() => ({
+    cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+    cMapPacked: true,
+    verbosity: 0,
+  }), []);
 
   // Função para construir URL do arquivo - MELHORADA COM TRATAMENTO DE ERROS
   const getFileUrl = useCallback(() => {
@@ -674,11 +681,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
               handlePdfDocumentLoadError(new Error(errorMsg));
             }}
             className="flex justify-center items-center max-w-full max-h-full"
-            options={{
-              cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
-              cMapPacked: true,
-              verbosity: 0,
-            }}
+            options={pdfOptions}
           >
             <div className={`flex ${viewerState.isDualPage ? 'space-x-6' : ''} justify-center items-center`}>
               {getPagesToDisplay().map((pageNum) => (

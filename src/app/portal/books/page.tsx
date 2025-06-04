@@ -17,7 +17,7 @@ import { s3Service } from '../../../services/s3Service';
 import { useToast } from '../../../components/Toast';
 import SimpleCarousel from '../../../components/SimpleCarousel';
 import { carouselBookImages } from '../../../constants/mockData';
-import OptimizedViewer from '../../../components/books/BookViewer/OptimizedViewer';
+import KoodoViewer from '../../../components/books/BookViewer/KoodoViewer';
 
 interface Filters {
   search: string;
@@ -155,7 +155,7 @@ export default function BooksPage() {
 
   const handleBookOpen = useCallback((book: Book) => {
     try {
-      console.log('📖 Tentando abrir livro:', book);
+      console.log('📖 Abrindo livro com KoodoViewer:', book);
       
       // Verificações de segurança
       if (!book) {
@@ -176,7 +176,7 @@ export default function BooksPage() {
         return;
       }
       
-      console.log('✅ Livro válido, abrindo viewer...');
+      console.log('✅ Livro válido, abrindo KoodoViewer...');
       setSelectedBook(book);
       setIsViewerOpen(true);
     } catch (error) {
@@ -189,26 +189,27 @@ export default function BooksPage() {
   }, [showToast]);
 
   const handleCloseViewer = useCallback(() => {
+    console.log('📖 Fechando KoodoViewer');
     setIsViewerOpen(false);
     setSelectedBook(null);
   }, []);
 
   const handleAnnotationAdd = useCallback((annotation: any) => {
-    console.log('Anotação adicionada:', annotation);
+    console.log('📝 Anotação adicionada via KoodoViewer:', annotation);
     showToast({ type: 'success', message: 'Anotação adicionada com sucesso!' });
   }, [showToast]);
 
   const handleHighlightAdd = useCallback((highlight: any) => {
-    console.log('Destaque adicionado:', highlight);
+    console.log('🎨 Destaque adicionado via KoodoViewer:', highlight);
     showToast({ type: 'success', message: 'Destaque adicionado com sucesso!' });
   }, [showToast]);
 
   const handleBookmarkAdd = useCallback((bookmark: any) => {
-    console.log('Marcador adicionado:', bookmark);
+    console.log('🔖 Marcador adicionado via KoodoViewer:', bookmark);
     showToast({ type: 'success', message: 'Marcador adicionado com sucesso!' });
   }, [showToast]);
 
-  // Se o visualizador estiver aberto, mostrar apenas ele
+  // Se o visualizador estiver aberto, mostrar apenas o KoodoViewer (idêntico ao koodo-reader)
   if (isViewerOpen && selectedBook) {
     // Verificação adicional de segurança
     if (!selectedBook || !selectedBook.id) {
@@ -221,7 +222,7 @@ export default function BooksPage() {
 
     return (
       <div className="h-screen w-full overflow-hidden">
-        <OptimizedViewer
+        <KoodoViewer
           book={selectedBook}
           onBack={handleCloseViewer}
           onAnnotationAdd={handleAnnotationAdd}

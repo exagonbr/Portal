@@ -118,7 +118,7 @@ export function Toast({ id, type, title, message, duration = 5000, onClose }: To
           </div>
           <div className="ml-4 flex-shrink-0 flex">
             <button
-              className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+              className="inline-flex text-text-tertiary hover:text-text-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
               onClick={handleClose}
               aria-label="Fechar notificação"
             >

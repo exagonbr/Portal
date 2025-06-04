@@ -71,16 +71,17 @@ export default function EducationCycleModal({ isOpen, onClose, onSuccess, cycle 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-50 rounded-lg p-6 w-full max-w-md">
+      <div className="bg-background-primary rounded-lg p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-lg font-semibold text-text-primary">
             {cycle ? 'Editar Ciclo Educacional' : 'Novo Ciclo Educacional'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-600"
+            className="text-text-secondary hover:text-text-primary"
+            type="button"
           >
-            <X className="w-5 h-5" />
+            <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -90,24 +91,32 @@ export default function EducationCycleModal({ isOpen, onClose, onSuccess, cycle 
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Nome</label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-1">
+              Nome
+            </label>
             <input
               type="text"
+              id="name"
+              name="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
+              className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-secondary"
               required
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Nível de Ensino</label>
+          <div>
+            <label htmlFor="level" className="block text-sm font-medium text-text-primary mb-1">
+              Nível de Ensino
+            </label>
             <select
+              id="level"
+              name="level"
               value={formData.level}
               onChange={(e) => setFormData({ ...formData, level: e.target.value as EducationLevel })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
+              className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-secondary"
               required
             >
               {Object.entries(EDUCATION_LEVEL_LABELS).map(([value, label]) => (
@@ -118,67 +127,84 @@ export default function EducationCycleModal({ isOpen, onClose, onSuccess, cycle 
             </select>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Duração (anos)</label>
+          <div>
+            <label htmlFor="duration_years" className="block text-sm font-medium text-text-primary mb-1">
+              Duração (anos)
+            </label>
             <input
               type="number"
+              id="duration_years"
+              name="duration_years"
               value={formData.duration_years}
               onChange={(e) => setFormData({ ...formData, duration_years: parseInt(e.target.value) || 1 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
+              className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-secondary"
               min="1"
               max="10"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Idade Mínima</label>
+              <label htmlFor="min_age" className="block text-sm font-medium text-text-primary mb-1">
+                Idade Mínima
+              </label>
               <input
                 type="number"
+                id="min_age"
+                name="min_age"
                 value={formData.min_age || ''}
                 onChange={(e) => setFormData({ ...formData, min_age: e.target.value ? parseInt(e.target.value) : undefined })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
+                className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-secondary"
                 min="0"
                 max="100"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Idade Máxima</label>
+              <label htmlFor="max_age" className="block text-sm font-medium text-text-primary mb-1">
+                Idade Máxima
+              </label>
               <input
                 type="number"
+                id="max_age"
+                name="max_age"
                 value={formData.max_age || ''}
                 onChange={(e) => setFormData({ ...formData, max_age: e.target.value ? parseInt(e.target.value) : undefined })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
+                className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-secondary"
                 min="0"
                 max="100"
               />
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Descrição</label>
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-text-primary mb-1">
+              Descrição
+            </label>
             <textarea
+              id="description"
+              name="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
+              className="w-full px-3 py-2 border border-border-DEFAULT rounded-lg focus:ring-2 focus:ring-primary bg-background-secondary"
               rows={3}
             />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-100 dark:text-gray-700 dark:hover:bg-gray-200"
+              className="px-4 py-2 text-text-secondary bg-background-tertiary rounded-lg hover:bg-secondary-light"
+              disabled={loading}
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
             >
               {loading ? 'Salvando...' : 'Salvar'}
             </button>
