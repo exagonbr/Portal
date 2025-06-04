@@ -1,6 +1,6 @@
 // Entidade User refatorada para PostgreSQL
 export interface User {
-  id: number;
+  id: string;
   version?: number;
   email: string;
   password: string;

@@ -44,8 +44,8 @@ app.use(compression());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '1000mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1000mb' }));
 
 // Health check
 app.get('/health', (_, res) => {

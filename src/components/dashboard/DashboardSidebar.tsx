@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../../contexts/AuthContext'
 import { useState, useEffect, useCallback, memo } from 'react'
-import { UserRole } from '@/types/auth'
+import { UserRole } from '@/types/roles'
+import { UserRole as AuthUserRole } from '@/types/auth'
 
 interface NavItem {
   href: string
@@ -47,9 +48,9 @@ const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
 ));
 
 // Função utilitária para mapear roles para labels em português
-const getRoleLabel = (role: UserRole): string => {
-  const roleLabels: Record<UserRole, string> = {
-    'student': 'Aluno',
+const getRoleLabel = (role: AuthUserRole): string => {
+  const roleLabels: Record<string, string> = {
+    'student': 'Estudante',
     'teacher': 'Professor',
     'manager': 'Gestor',
     'institution_manager': 'Gestor Institucional',
@@ -223,9 +224,9 @@ export default function DashboardSidebar() {
       'student': '/dashboard/student',
       'teacher': '/dashboard/teacher',
       'manager': '/dashboard/manager',
-      'institution_manager': '/dashboard/manager',
+      'institution_manager': '/dashboard/institution-manager',
       'admin': '/dashboard/admin',
-      'system_admin': '/dashboard/admin',
+      'system_admin': '/dashboard/system-admin',
       'academic_coordinator': '/dashboard/coordinator',
       'guardian': '/dashboard/guardian',
     };
@@ -247,20 +248,114 @@ export default function DashboardSidebar() {
             href: dashboardRoute,
             icon: 'dashboard',
             label: 'Painel Principal'
-          },
-          // Mensagens - requer permissões específicas
-          ...(hasAnyPermission(['students.communicate', 'teachers.message']) 
-            ? [{
-                href: '/chat',
-                icon: 'chat',
-                label: 'Mensagens',
-                permissions: ['students.communicate', 'teachers.message']
-              }] 
-            : []
-          ),
+          }
         ]
       }
     ];
+
+    // Menu específico para administrador do sistema
+    if (user.role === 'system_admin' || user.role === 'admin') {
+      return [
+        ...commonItems,
+        {
+          section: 'Principal',
+          items: [
+            {
+              href: '/chat',
+              icon: 'chat',
+              label: 'Mensagens',
+              permissions: ['messages.send', 'messages.receive']
+            }
+          ]
+        },
+        {
+          section: 'Administração',
+          items: [
+            {
+              href: '/admin/users',
+              icon: 'manage_accounts',
+              label: 'Gestão de Usuários',
+              permissions: ['users.manage.all']
+            },
+            {
+              href: '/admin/roles',
+              icon: 'admin_panel_settings',
+              label: 'Gestão de Permissões',
+              permissions: ['roles.manage', 'permissions.manage']
+            },
+            {
+              href: '/admin/institutions',
+              icon: 'business',
+              label: 'Gestão de Instituições',
+              permissions: ['institutions.manage.all']
+            },
+            {
+              href: '/admin/units',
+              icon: 'business',
+              label: 'Gestão de Unidades',
+              permissions: ['units.manage.all']
+            }
+          ]
+        },
+        {
+          section: 'Gestão de Conteúdo',
+          items: [
+            {
+              href: '/admin/digital-library',
+              icon: 'library_books',
+              label: 'Acervo Digital',
+              permissions: ['content.manage', 'library.manage']
+            },
+            {
+              href: '/admin/files',
+              icon: 'manage_search',
+              label: 'Arquivos',
+              permissions: ['files.manage', 'content.manage']
+            }
+          ]
+        },
+        {
+          section: 'Relatórios',
+          items: [
+            {
+              href: '/admin/reports',
+              icon: 'analytics',
+              label: 'Portal de Relatórios',
+              permissions: ['reports.view', 'analytics.view']
+            }
+          ]
+        },
+        {
+          section: 'Monitoramento',
+          items: [
+            {
+              href: '/admin/system',
+              icon: 'settings',
+              label: 'Configurações do Sistema',
+              permissions: ['system.configure']
+            },
+            {
+              href: '/admin/analytics',
+              icon: 'monitoring',
+              label: 'Análise de Dados',
+              permissions: ['performance.view.all']
+            },
+            {
+              href: '/admin/logs',
+              icon: 'terminal',
+              label: 'Registros do Sistema',
+              permissions: ['logs.view.all']
+            },
+            {
+              href: '/admin/performance',
+              icon: 'speed',
+              label: 'Desempenho',
+              permissions: ['performance.view.all']
+            }
+          ]
+        }
+      ];
+    }
 
     // Mapeamento de itens de menu baseado em perfis e permissões
     const menuMappings: Record<string, NavSection[]> = {
@@ -273,23 +368,23 @@ export default function DashboardSidebar() {
               href: '/courses',
               icon: 'school',
               label: 'Meus Cursos',
-              permissions: ['materials.access']
+              permissions: ['courses.view', 'courses.participate']
             },
             {
               href: '/assignments',
               icon: 'assignment',
               label: 'Atividades',
-              permissions: ['assignments.submit']
+              permissions: ['assignments.submit', 'assignments.view']
             },
             {
               href: '/live',
               icon: 'video_camera_front',
               label: 'Aulas ao Vivo',
-              permissions: ['schedule.view.own']
+              permissions: ['courses.participate']
             },
             {
               href: '/lessons',
-              icon: 'school',
+              icon: 'menu_book',
               label: 'Aulas',
               permissions: ['materials.access']
             },
@@ -297,7 +392,30 @@ export default function DashboardSidebar() {
               href: '/forum/student/assignments',
               icon: 'forum',
               label: 'Fórum',
-              permissions: ['forum.access']
+              permissions: ['forum.participate']
+            },
+          ]
+        },
+        {
+          section: 'Meu Progresso',
+          items: [
+            {
+              href: '/student/grades',
+              icon: 'grade',
+              label: 'Minhas Notas',
+              permissions: ['grades.view', 'grades.own']
+            },
+            {
+              href: '/student/progress',
+              icon: 'trending_up',
+              label: 'Meu Progresso',
+              permissions: ['profile.view']
+            },
+            {
+              href: '/student/materials',
+              icon: 'download',
+              label: 'Materiais de Aula',
+              permissions: ['materials.download']
             },
           ]
         },
@@ -305,16 +423,16 @@ export default function DashboardSidebar() {
           section: 'Portais',
           items: [
             {
-              href: '/portal/books',
-              icon: 'auto_stories',
-              label: 'Portal de Literatura',
-              permissions: ['materials.access']
-            },
-            {
               href: '/portal/student',
               icon: 'person_outline',
-              label: 'Portal do Aluno',
-              permissions: ['student.portal.access']
+              label: 'Portal do Estudante',
+              permissions: ['profile.view']
+            },
+            {
+              href: '/messages',
+              icon: 'mail',
+              label: 'Mensagens',
+              permissions: ['messages.send', 'messages.receive']
             },
           ]
         }
@@ -329,25 +447,25 @@ export default function DashboardSidebar() {
               href: '/courses/manage',
               icon: 'school',
               label: 'Gestão de Cursos',
-              permissions: ['courses.manage']
+              permissions: ['classes.teach', 'classes.manage']
             },
             {
               href: '/assignments/manage',
               icon: 'assignment',
               label: 'Gestão de Atividades',
-              permissions: ['assignments.manage']
+              permissions: ['assignments.manage', 'assignments.create', 'assignments.evaluate']
             },
             {
               href: '/live/manage',
               icon: 'video_camera_front',
               label: 'Gestão de Aulas ao Vivo',
-              permissions: ['live.manage']
+              permissions: ['classes.schedule']
             },
             {
               href: '/lessons/manage',
               icon: 'menu_book',
               label: 'Gestão de Aulas',
-              permissions: ['lessons.manage']
+              permissions: ['materials.manage', 'materials.upload']
             },
           ]
         },
@@ -364,43 +482,49 @@ export default function DashboardSidebar() {
               href: '/teacher/grades',
               icon: 'grade',
               label: 'Avaliações',
-              permissions: ['grades.manage']
+              permissions: ['grades.manage', 'grades.input']
+            },
+            {
+              href: '/teacher/attendance',
+              icon: 'fact_check',
+              label: 'Frequência',
+              permissions: ['attendance.manage']
             },
             {
               href: '/reports/teacher',
               icon: 'analytics',
               label: 'Relatórios',
-              permissions: ['reports.view.own']
-            },
-            {
-              href: '/forum/teacher/announcements',
-              icon: 'forum',
-              label: 'Fórum',
-              permissions: ['forum.moderate']
+              permissions: ['reports.class', 'reports.performance']
             },
           ]
         },
         {
-          section: 'Portais',
+          section: 'Comunicação',
           items: [
             {
-              href: '/portal/videos',
-              icon: 'play_circle',
-              label: 'Portal de Vídeos',
-              permissions: ['videos.access']
+              href: '/messages',
+              icon: 'mail',
+              label: 'Mensagens',
+              permissions: ['messages.send', 'messages.receive']
             },
             {
-              href: '/portal/books',
-              icon: 'auto_stories',
-              label: 'Portal de Literatura',
-              permissions: ['books.access']
+              href: '/forum/teacher',
+              icon: 'forum',
+              label: 'Fórum',
+              permissions: ['forum.moderate']
+            },
+            {
+              href: '/teacher/guardians',
+              icon: 'supervisor_account',
+              label: 'Comunicação com Responsáveis',
+              permissions: ['students.contact', 'guardians.contact']
             },
           ]
         }
       ],
       
-      // Menu para gestores e gestores institucionais
-      'manager': [
+      // Menu para gestores institucionais
+      'institution_manager': [
         {
           section: 'Gestão Institucional',
           items: [
@@ -408,19 +532,19 @@ export default function DashboardSidebar() {
               href: '/institution/courses',
               icon: 'school',
               label: 'Gestão de Cursos',
-              permissions: ['courses.manage.institution']
+              permissions: ['courses.manage']
             },
             {
               href: '/institution/teachers',
               icon: 'groups',
               label: 'Gestão de Professores',
-              permissions: ['users.manage.institution']
+              permissions: ['teachers.manage']
             },
             {
               href: '/institution/students',
               icon: 'group',
               label: 'Gestão de Alunos',
-              permissions: ['users.manage.institution']
+              permissions: ['students.manage']
             },
             {
               href: '/institution/classes',
@@ -428,127 +552,71 @@ export default function DashboardSidebar() {
               label: 'Gestão de Turmas',
               permissions: ['classes.manage']
             },
+            {
+              href: '/institution/schools',
+              icon: 'business',
+              label: 'Gestão de Escolas',
+              permissions: ['schools.manage']
+            },
           ]
         },
         {
           section: 'Relatórios',
           items: [
+            {
+              href: '/reports/institutional',
+              icon: 'analytics',
+              label: 'Relatórios Institucionais',
+              permissions: ['reports.institutional']
+            },
             {
               href: '/reports/academic',
-              icon: 'analytics',
+              icon: 'school',
               label: 'Relatórios Acadêmicos',
-              permissions: ['analytics.view.institution']
+              permissions: ['reports.academic']
             },
             {
-              href: '/reports/performance',
-              icon: 'monitoring',
-              label: 'Desempenho',
-              permissions: ['analytics.view.institution']
+              href: '/reports/financial',
+              icon: 'payments',
+              label: 'Relatórios Financeiros',
+              permissions: ['reports.financial']
+            },
+          ]
+        },
+        {
+          section: 'Financeiro',
+          items: [
+            {
+              href: '/financial/overview',
+              icon: 'account_balance',
+              label: 'Visão Geral',
+              permissions: ['financial.view']
             },
             {
-              href: '/reports/attendance',
-              icon: 'fact_check',
-              label: 'Frequência',
-              permissions: ['attendance.view.institution']
+              href: '/financial/management',
+              icon: 'payments',
+              label: 'Gestão Financeira',
+              permissions: ['financial.manage']
             },
           ]
         }
       ],
       
-      // Menu para administradores
-      'admin': [
-        {
-          section: 'Administração',
-          items: [
-            {
-              href: '/admin/users',
-              icon: 'manage_accounts',
-              label: 'Gestão de Usuários',
-              permissions: ['users.manage']
-            },
-            {
-              href: '/admin/roles',
-              icon: 'admin_panel_settings',
-              label: 'Gestão de Permissões',
-              permissions: ['roles.manage']
-            },
-            {
-              href: '/admin/institutions',
-              icon: 'business',
-              label: 'Gestão de Instituições',
-              permissions: ['institutions.manage']
-            },
-            {
-              href: '/admin/units',
-              icon: 'business',
-              label: 'Gestão de Unidades',
-              permissions: ['units.manage']
-            },
-          ]
-        },
-        {
-          section: 'Gestão de Conteúdo',
-          items: [
-            {
-              href: '/admin/content/library',
-              icon: 'library_books',
-              label: 'Acervo Digital',
-              permissions: ['content.manage']
-            },
-            {
-              href: '/admin/content/search',
-              icon: 'manage_search',
-              label: 'Arquivos',
-              permissions: ['content.manage']
-            },
-          ]
-        },
-        {
-          section: 'Relatórios',
-          items: [
-            {
-              href: '/portal/reports',
-              icon: 'analytics',
-              label: 'Portal de Relatórios',
-              permissions: ['reports.access.all']
-            },
-          ]
-        },
-        {
-          section: 'Monitoramento',
-          items: [
-            {
-              href: '/admin/settings',
-              icon: 'settings',
-              label: 'Configurações do Sistema',
-              permissions: ['settings.manage']
-            },
-            {
-              href: '/admin/analytics',
-              icon: 'monitoring',
-              label: 'Análise de Dados',
-              permissions: ['analytics.view.all']
-            },
-            {
-              href: '/admin/logs',
-              icon: 'terminal',
-              label: 'Registros do Sistema',
-              permissions: ['logs.view']
-            },
-            {
-              href: '/admin/performance',
-              icon: 'speed',
-              label: 'Desempenho',
-              permissions: ['performance.view']
-            },
-          ]
-        }
-      ],
-      
-      // Menu para administradores de sistema
+      // Menu para administradores do sistema
       'system_admin': [
         {
-          section: 'Administração do Sistema',
+          section: 'Principal',
+          items: [
+            {
+              href: '/chat',
+              icon: 'chat',
+              label: 'Mensagens',
+              permissions: ['messages.send', 'messages.receive']
+            }
+          ]
+        },
+        {
+          section: 'Administração',
           items: [
             {
               href: '/admin/users',
@@ -560,72 +628,77 @@ export default function DashboardSidebar() {
               href: '/admin/roles',
               icon: 'admin_panel_settings',
               label: 'Gestão de Permissões',
-              permissions: ['roles.manage']
+              permissions: ['roles.manage', 'permissions.manage']
             },
             {
               href: '/admin/institutions',
               icon: 'business',
               label: 'Gestão de Instituições',
-              permissions: ['institutions.manage']
+              permissions: ['institutions.manage.all']
             },
             {
-              href: '/admin/system',
-              icon: 'settings_applications',
-              label: 'Configurações do Sistema',
-              permissions: ['system.manage']
+              href: '/admin/units',
+              icon: 'business',
+              label: 'Gestão de Unidades',
+              permissions: ['units.manage.all']
+            }
+          ]
+        },
+        {
+          section: 'Gestão de Conteúdo',
+          items: [
+            {
+              href: '/admin/digital-library',
+              icon: 'library_books',
+              label: 'Acervo Digital',
+              permissions: ['content.manage', 'library.manage']
             },
+            {
+              href: '/admin/files',
+              icon: 'manage_search',
+              label: 'Arquivos',
+              permissions: ['files.manage', 'content.manage']
+            }
+          ]
+        },
+        {
+          section: 'Relatórios',
+          items: [
+            {
+              href: '/admin/reports',
+              icon: 'analytics',
+              label: 'Portal de Relatórios',
+              permissions: ['reports.view', 'analytics.view']
+            }
           ]
         },
         {
           section: 'Monitoramento',
           items: [
             {
-              href: '/admin/monitoring',
-              icon: 'monitoring',
-              label: 'Monitoramento',
-              permissions: ['system.monitor']
+              href: '/admin/system',
+              icon: 'settings',
+              label: 'Configurações do Sistema',
+              permissions: ['system.configure']
             },
             {
               href: '/admin/analytics',
-              icon: 'analytics',
+              icon: 'monitoring',
               label: 'Análise de Dados',
-              permissions: ['analytics.view.system']
+              permissions: ['performance.view.all']
             },
             {
               href: '/admin/logs',
               icon: 'terminal',
-              label: 'Logs do Sistema',
+              label: 'Registros do Sistema',
               permissions: ['logs.view.all']
             },
             {
               href: '/admin/performance',
               icon: 'speed',
-              label: 'Performance',
+              label: 'Desempenho',
               permissions: ['performance.view.all']
-            },
-          ]
-        },
-        {
-          section: 'Segurança',
-          items: [
-            {
-              href: '/admin/security',
-              icon: 'security',
-              label: 'Segurança',
-              permissions: ['security.manage']
-            },
-            {
-              href: '/admin/audit',
-              icon: 'fact_check',
-              label: 'Auditoria',
-              permissions: ['audit.view']
-            },
-            {
-              href: '/admin/backup',
-              icon: 'backup',
-              label: 'Backup',
-              permissions: ['backup.manage']
-            },
+            }
           ]
         }
       ],
@@ -651,7 +724,7 @@ export default function DashboardSidebar() {
               href: '/coordinator/teachers',
               icon: 'groups',
               label: 'Corpo Docente',
-              permissions: ['teachers.monitor']
+              permissions: ['teachers.monitor', 'teachers.evaluate']
             },
             {
               href: '/coordinator/evaluations',
@@ -668,7 +741,7 @@ export default function DashboardSidebar() {
               href: '/coordinator/performance',
               icon: 'trending_up',
               label: 'Desempenho',
-              permissions: ['performance.view.academic']
+              permissions: ['performance.analyze']
             },
             {
               href: '/coordinator/planning',
@@ -680,30 +753,30 @@ export default function DashboardSidebar() {
               href: '/coordinator/meetings',
               icon: 'groups_2',
               label: 'Reuniões',
-              permissions: ['meetings.manage']
+              permissions: ['meetings.schedule', 'meetings.manage']
             },
           ]
         },
         {
-          section: 'Qualidade',
+          section: 'Comunicação',
           items: [
             {
-              href: '/coordinator/indicators',
-              icon: 'analytics',
-              label: 'Indicadores',
-              permissions: ['indicators.view']
+              href: '/coordinator/announcements',
+              icon: 'campaign',
+              label: 'Comunicados',
+              permissions: ['announcements.manage']
             },
             {
               href: '/coordinator/reports',
               icon: 'assessment',
               label: 'Relatórios',
-              permissions: ['reports.view.academic']
+              permissions: ['reports.academic', 'reports.performance']
             },
             {
-              href: '/coordinator/improvements',
-              icon: 'tips_and_updates',
-              label: 'Melhorias',
-              permissions: ['improvements.manage']
+              href: '/coordinator/indicators',
+              icon: 'analytics',
+              label: 'Indicadores',
+              permissions: ['indicators.view']
             },
           ]
         }
@@ -712,31 +785,31 @@ export default function DashboardSidebar() {
       // Menu para responsáveis/pais
       'guardian': [
         {
-          section: 'Acompanhamento',
+          section: 'Meus Filhos',
           items: [
             {
               href: '/guardian/children',
               icon: 'child_care',
               label: 'Meus Filhos',
-              permissions: ['children.view.info']
+              permissions: ['children.view', 'children.monitor']
             },
             {
               href: '/guardian/grades',
               icon: 'grade',
               label: 'Notas',
-              permissions: ['children.view.grades']
+              permissions: ['children.view.grades', 'grades.view']
             },
             {
               href: '/guardian/attendance',
               icon: 'fact_check',
               label: 'Frequência',
-              permissions: ['children.view.attendance']
+              permissions: ['children.view.attendance', 'attendance.view']
             },
             {
               href: '/guardian/activities',
               icon: 'assignment',
               label: 'Atividades',
-              permissions: ['children.view.activities']
+              permissions: ['children.view.activities', 'assignments.view']
             },
           ]
         },
@@ -747,19 +820,19 @@ export default function DashboardSidebar() {
               href: '/guardian/messages',
               icon: 'mail',
               label: 'Mensagens',
-              permissions: ['guardian.communicate']
+              permissions: ['messages.send', 'messages.receive']
             },
             {
               href: '/guardian/meetings',
               icon: 'video_call',
               label: 'Reuniões',
-              permissions: ['guardian.meetings.view']
+              permissions: ['meetings.view', 'meetings.schedule']
             },
             {
               href: '/guardian/announcements',
               icon: 'campaign',
               label: 'Comunicados',
-              permissions: ['guardian.announcements.view']
+              permissions: ['announcements.view', 'announcements.receive']
             },
           ]
         },
@@ -770,19 +843,19 @@ export default function DashboardSidebar() {
               href: '/guardian/payments',
               icon: 'payments',
               label: 'Pagamentos',
-              permissions: ['guardian.financial.view']
+              permissions: ['payments.view', 'payments.manage']
             },
             {
               href: '/guardian/invoices',
               icon: 'receipt',
               label: 'Boletos',
-              permissions: ['guardian.financial.view']
+              permissions: ['invoices.view', 'invoices.download']
             },
             {
               href: '/guardian/history',
               icon: 'history',
               label: 'Histórico',
-              permissions: ['guardian.financial.history']
+              permissions: ['payments.view']
             },
           ]
         }

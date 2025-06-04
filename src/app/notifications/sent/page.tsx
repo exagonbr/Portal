@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { notificationService } from '@/services/notificationService'
 import { Notification as SentNotification } from '@/types/notification'
 import { PaginatedResponseDto } from '@/types/api'
+import { canSendNotifications } from '@/utils/roleRedirect'
 
 export default function SentNotificationsPage() {
   const { user } = useAuth()
@@ -24,7 +25,7 @@ export default function SentNotificationsPage() {
 
   // Verificar permissões
   useEffect(() => {
-    if (!user || user.role === 'student') {
+    if (!user || !canSendNotifications(user.role)) {
       router.push('/notifications')
       return
     }

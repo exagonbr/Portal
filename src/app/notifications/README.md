@@ -6,11 +6,22 @@ A Central de Notificações é um sistema completo que permite aos usuários vis
 
 ## Sistema de Permissões
 
-### 📋 Hierarquia de Envio
-- **Admin**: Pode enviar para Managers e Teachers
-- **Manager**: Pode enviar para Teachers
-- **Teacher**: Pode enviar para Students
-- **Student**: Apenas recebe notificações
+### 📋 Hierarquia de Envio (Atualizada)
+**Roles que PODEM enviar notificações:**
+- **System Admin**: Pode enviar para todos os níveis
+- **Institution Manager/Gestor**: Pode enviar para coordenadores, professores, alunos e responsáveis
+- **Academic Coordinator/Coordenador**: Pode enviar para professores, alunos e responsáveis
+- **Teacher/Professor**: Pode enviar para alunos e responsáveis
+
+**Roles que NÃO podem enviar notificações:**
+- **Student/Aluno**: Apenas recebe notificações
+- **Guardian/Responsável**: Apenas recebe notificações
+
+### 🔐 Controle de Acesso
+- Verificação automática de permissões baseada na role do usuário
+- Interface adapta-se dinamicamente às permissões do usuário
+- Botões de envio e histórico aparecem apenas para roles autorizadas
+- Backend valida permissões em todas as rotas de notificação
 
 ## Funcionalidades Implementadas
 
@@ -40,13 +51,19 @@ A Central de Notificações é um sistema completo que permite aos usuários vis
 - Botões de navegação (Anterior/Próxima)
 - Contador de resultados
 
-### 📤 Envio de Notificações (Admin/Manager/Teacher)
+### 📤 Envio de Notificações (Apenas roles autorizadas)
 - **Formulário completo** para criação de notificações
-- **Seleção de destinatários** por função ou usuários específicos
+- **Seleção inteligente de destinatários** baseada na role do remetente
+- **Suporte a notificações push e email**
 - **Agendamento** de notificações para envio futuro
 - **Configuração de prioridade** (Alta, Média, Baixa)
-- **Validação de permissões** baseada na role do usuário
-- **Preview e confirmação** antes do envio
+- **Validação de permissões** em tempo real
+
+### 🔧 Funcionalidades Técnicas
+- **Verificação automática de permissões** usando `canSendNotifications()`
+- **Mapeamento inteligente de roles** para destinatários permitidos
+- **Validação no frontend e backend** para segurança
+- **Interface responsiva** que se adapta às permissões do usuário
 
 ### 📊 Histórico de Notificações Enviadas
 - **Lista de notificações enviadas** pelo usuário atual

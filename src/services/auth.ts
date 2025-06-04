@@ -34,35 +34,25 @@ export interface RegisterResponse {
 class AuthService {
   private user: User | null = null;
 
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(email: string, password: string): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await apiService.login(email, password);
       
-      if (response.success && response.data && typeof response.data === 'object') {
+      if (response.success && response.data) {
         const data = response.data as any;
-        if (data.token && data.user) {
-          const { token, user } = data;
-          
-          // Armazenar token
-          apiService.setAuthToken(token);
-          
-          // Armazenar usuário
-          this.user = user as User;
-          localStorage.setItem('user', JSON.stringify(user));
-          
-          const userEssentials = this.convertToUserEssentials(user as User);
-          
-          return {
-            success: true,
-            data: { token, user: userEssentials },
-            user: userEssentials
-          };
-        }
+        const { token, user } = data;
+        
+        // Armazenar token e dados do usuário
+        apiService.setAuthToken(token);
+        this.user = user as User;
+        localStorage.setItem('user_data', JSON.stringify(user));
+        
+        return { success: true };
       }
       
       return {
         success: false,
-        error: response.error || 'Erro no login'
+        error: response.error || 'Erro ao fazer login'
       };
     } catch (error) {
       return {
@@ -81,7 +71,7 @@ class AuthService {
       // Limpar dados locais
       this.user = null;
       apiService.removeAuthToken();
-      localStorage.removeItem('user');
+      localStorage.removeItem('user_data');
     }
   }
 
@@ -121,7 +111,7 @@ class AuthService {
     }
 
     // Verificar se há usuário no localStorage
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('user_data');
     if (storedUser) {
       try {
         this.user = JSON.parse(storedUser) as User;
@@ -136,7 +126,7 @@ class AuthService {
       const response = await apiService.getProfile();
       if (response.success && response.data) {
         this.user = response.data as User;
-        localStorage.setItem('user', JSON.stringify(this.user));
+        localStorage.setItem('user_data', JSON.stringify(this.user));
         return this.convertToUserEssentials(this.user);
       }
     } catch (error) {
@@ -168,7 +158,7 @@ class AuthService {
       
       if (response.success && response.data) {
         this.user = response.data as User;
-        localStorage.setItem('user', JSON.stringify(this.user));
+        localStorage.setItem('user_data', JSON.stringify(this.user));
         return { success: true };
       }
       

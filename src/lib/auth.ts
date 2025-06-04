@@ -3,6 +3,37 @@ import type { JWT } from 'next-auth/jwt';
 import type { Session } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 
+// Estendendo as tipagens do NextAuth
+declare module "next-auth" {
+  interface User {
+    id?: string;
+    role?: string;
+    permissions?: string[];
+    isAdmin?: boolean;
+  }
+  
+  interface Session {
+    user: {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role?: string;
+      permissions?: string[];
+      isAdmin?: boolean;
+    }
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    role?: string;
+    permissions?: string[];
+    isAdmin?: boolean;
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -18,9 +49,12 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }: { token: JWT; user: any }) {
       if (user) {
-        token.role = 'student'; // Default role for Google login
+        // Se for usuário novo, definir valores padrão
+        token.id = user.id;
+        token.role = user.role || 'student'; // Default role for Google login
+        token.isAdmin = user.isAdmin || false; // Default não é admin
         // Adicionar permissões padrão para estudantes
-        token.permissions = [
+        token.permissions = user.permissions || [
           'students.communicate',
           'schedule.view.own',
           'grades.view.own',
@@ -35,8 +69,10 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
-        (session.user as any).role = token.role;
-        (session.user as any).permissions = token.permissions;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.permissions = token.permissions;
+        session.user.isAdmin = token.isAdmin;
       }
       return session;
     },

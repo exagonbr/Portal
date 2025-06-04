@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { apiClient } from '@/services/apiClient'
 import { pushNotificationService } from '@/services/pushNotificationService'
+import { canSendNotifications, getNotifiableRoles, canNotifyRole } from '@/utils/roleRedirect'
 
 interface NotificationForm {
   title: string
@@ -58,7 +59,7 @@ export default function SendNotificationPage() {
 
   // Verificar permissões
   useEffect(() => {
-    if (!user || user.role === 'student') {
+    if (!user || !canSendNotifications(user.role)) {
       router.push('/notifications')
       return
     }
@@ -82,17 +83,11 @@ export default function SendNotificationPage() {
   useEffect(() => {
     const loadAvailableUsers = async () => {
       try {
-        // Buscar usuários do backend baseado na role do usuário atual
-        let roles = ''
-        if (user?.role === 'admin') {
-          roles = 'manager,teacher'
-        } else if (user?.role === 'manager') {
-          roles = 'teacher'
-        } else if (user?.role === 'teacher') {
-          roles = 'student'
-        }
+        // Buscar usuários do backend baseado nas roles que o usuário pode notificar
+        const notifiableRoles = getNotifiableRoles(user?.role);
+        const rolesParam = notifiableRoles.join(',');
 
-        const response = await apiClient.get(`/api/users?limit=100${roles ? `&roles=${roles}` : ''}`)
+        const response = await apiClient.get(`/api/users?limit=100${rolesParam ? `&roles=${rolesParam}` : ''}`)
 
         if (response.success && response.data && Array.isArray(response.data)) {
           setAvailableUsers(response.data)
@@ -101,7 +96,7 @@ export default function SendNotificationPage() {
         }
       } catch (error) {
         console.error('Error loading users:', error)
-        // Fallback para dados mock em caso de erro
+        // Fallback para dados mock em caso de erro - filtrar baseado nas permissões
         const mockUsers: User[] = [
           { id: '1', name: 'João Silva', email: 'joao@escola.com', role: 'manager' },
           { id: '2', name: 'Maria Santos', email: 'maria@escola.com', role: 'teacher' },
@@ -111,40 +106,46 @@ export default function SendNotificationPage() {
           { id: '6', name: 'Lucia Ferreira', email: 'lucia@escola.com', role: 'student' }
         ]
 
-        let filteredUsers: User[] = []
-        if (user?.role === 'admin') {
-          filteredUsers = mockUsers.filter(u => u.role === 'manager' || u.role === 'teacher')
-        } else if (user?.role === 'manager') {
-          filteredUsers = mockUsers.filter(u => u.role === 'teacher')
-        } else if (user?.role === 'teacher') {
-          filteredUsers = mockUsers.filter(u => u.role === 'student')
-        }
+        // Filtrar usuários baseado nas permissões do usuário atual
+        const filteredUsers = mockUsers.filter(mockUser => 
+          canNotifyRole(user?.role, mockUser.role)
+        );
 
         setAvailableUsers(filteredUsers)
       }
     }
 
-    if (user) {
+    if (user && canSendNotifications(user.role)) {
       loadAvailableUsers()
     }
   }, [user])
 
   const getAvailableRoles = () => {
-    if (user?.role === 'admin') {
-      return [
-        { value: 'manager', label: 'Gestores' },
-        { value: 'teacher', label: 'Professores' }
-      ]
-    } else if (user?.role === 'manager') {
-      return [
-        { value: 'teacher', label: 'Professores' }
-      ]
-    } else if (user?.role === 'teacher') {
-      return [
-        { value: 'student', label: 'Estudantes' }
-      ]
+    if (!user || !canSendNotifications(user.role)) {
+      return [];
     }
-    return []
+
+    const notifiableRoles = getNotifiableRoles(user.role);
+    
+    // Mapear roles para labels em português
+    const roleLabels: Record<string, string> = {
+      'institution_manager': 'Gestores de Instituição',
+      'gestor': 'Gestores',
+      'manager': 'Gestores',
+      'academic_coordinator': 'Coordenadores Acadêmicos',
+      'coordenador': 'Coordenadores',
+      'teacher': 'Professores',
+      'professor': 'Professores',
+      'student': 'Estudantes',
+      'aluno': 'Alunos',
+      'guardian': 'Responsáveis',
+      'responsável': 'Responsáveis'
+    };
+
+    return notifiableRoles.map(role => ({
+      value: role,
+      label: roleLabels[role] || role
+    }));
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -278,7 +279,7 @@ export default function SendNotificationPage() {
     )
   }
 
-  if (!user || user.role === 'student') {
+  if (!user || !canSendNotifications(user.role)) {
     return null
   }
 

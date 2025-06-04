@@ -20,6 +20,36 @@ import {
   ListResponse,
   PaginationParams
 } from '../types/api';
+import { apiService } from './api';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  institution?: string;
+  status: 'active' | 'inactive' | 'blocked';
+  lastAccess?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserFilters {
+  search?: string;
+  role?: string;
+  status?: string;
+  institution?: string;
+  sortBy?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface UserStats {
+  total: number;
+  active: number;
+  new: number;
+  blocked: number;
+}
 
 export class UserService {
   private readonly baseEndpoint = '/api/users';
@@ -27,27 +57,37 @@ export class UserService {
   /**
    * Lista todos os usuários com filtros e paginação
    */
-  async getUsers(filters?: UserFilterDto): Promise<ListResponse<UserResponseDto>> {
+  async getUsers(filters: UserFilters = {}): Promise<{ users: User[]; total: number }> {
     try {
-      // Gera chave de cache baseada nos filtros
-      const cacheKey = CacheKeys.USER_LIST(JSON.stringify(filters || {}));
+      const cacheKey = CacheKeys.USER_LIST(JSON.stringify(filters));
       
       return await withCache(cacheKey, async () => {
         const response = await withRetry(() =>
-          apiClient.get<UserResponseDto[]>(this.baseEndpoint, filters as Record<string, string | number | boolean>)
+          apiClient.get<ListResponse<UserResponseDto>>(`${this.baseEndpoint}`, filters as Record<string, string | number | boolean>)
         );
 
         if (!response.success || !response.data) {
-          throw new Error(response.message || 'Falha ao buscar usuários');
+          throw new Error(response.message || 'Falha ao listar usuários');
         }
 
-        return {
-          items: response.data,
-          pagination: response.pagination!
-        };
-      }, CacheTTL.MEDIUM);
+        // Converter UserResponseDto para User
+        const users = (response.data.items || []).map(item => ({
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          role: item.role?.name || '',
+          institution: item.institution_id,
+          status: 'active' as 'active' | 'inactive' | 'blocked',
+          lastAccess: undefined,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at
+        }));
+        const total = response.data.pagination?.total || users.length;
+
+        return { users, total };
+      }, CacheTTL.SHORT);
     } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
+      console.error('Erro ao listar usuários:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -100,18 +140,39 @@ export class UserService {
   /**
    * Cria novo usuário
    */
-  async createUser(userData: CreateUserDto): Promise<UserResponseDto> {
+  async createUser(userData: Partial<User>): Promise<User> {
     try {
-      const response = await apiClient.post<UserResponseDto>(this.baseEndpoint, userData);
+      // Converte de User para CreateUserDto
+      const createUserData: CreateUserDto = {
+        name: userData.name!,
+        email: userData.email!,
+        password: (userData as any).password || '',
+        role_id: (userData as any).role_id || userData.role!,
+        institution_id: userData.institution,
+        is_active: userData.status === 'active'
+      };
+
+      const response = await apiClient.post<UserResponseDto>(`${this.baseEndpoint}`, createUserData);
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha ao criar usuário');
       }
 
-      // Invalida cache relacionado a usuários
+      // Invalida o cache de usuários
       await invalidateUserCache();
 
-      return response.data;
+      // Converte de UserResponseDto para User
+      return {
+        id: response.data.id,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role?.name || '',
+        institution: response.data.institution_id,
+        status: 'active',
+        lastAccess: undefined,
+        createdAt: response.data.created_at,
+        updatedAt: response.data.updated_at
+      };
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
       throw new Error(handleApiError(error));
@@ -121,18 +182,39 @@ export class UserService {
   /**
    * Atualiza usuário
    */
-  async updateUser(id: string, userData: UpdateUserDto): Promise<UserResponseDto> {
+  async updateUser(id: string, userData: Partial<User>): Promise<User> {
     try {
-      const response = await apiClient.put<UserResponseDto>(`${this.baseEndpoint}/${id}`, userData);
+      // Converte de User para UpdateUserDto
+      const updateUserData: UpdateUserDto = {};
+      
+      if (userData.name !== undefined) updateUserData.name = userData.name;
+      if (userData.email !== undefined) updateUserData.email = userData.email;
+      if ((userData as any).password !== undefined) updateUserData.password = (userData as any).password;
+      if (userData.role !== undefined) updateUserData.role_id = (userData as any).role_id || userData.role;
+      if (userData.institution !== undefined) updateUserData.institution_id = userData.institution;
+      if (userData.status !== undefined) updateUserData.is_active = userData.status === 'active';
+
+      const response = await apiClient.put<UserResponseDto>(`${this.baseEndpoint}/${id}`, updateUserData);
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha ao atualizar usuário');
       }
 
-      // Invalida cache específico do usuário
+      // Invalida o cache do usuário
       await invalidateUserCache(id);
 
-      return response.data;
+      // Converte de UserResponseDto para User
+      return {
+        id: response.data.id,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role?.name || '',
+        institution: response.data.institution_id,
+        status: 'active',
+        lastAccess: undefined,
+        createdAt: response.data.created_at,
+        updatedAt: response.data.updated_at
+      };
     } catch (error) {
       console.error(`Erro ao atualizar usuário ${id}:`, error);
       throw new Error(handleApiError(error));
@@ -166,13 +248,13 @@ export class UserService {
    */
   async deleteUser(id: string): Promise<void> {
     try {
-      const response = await apiClient.delete<{ deleted: boolean }>(`${this.baseEndpoint}/${id}`);
-
+      const response = await apiClient.delete(`${this.baseEndpoint}/${id}`);
+      
       if (!response.success) {
         throw new Error(response.message || 'Falha ao remover usuário');
       }
 
-      // Invalida cache específico do usuário
+      // Invalida o cache do usuário
       await invalidateUserCache(id);
     } catch (error) {
       console.error(`Erro ao remover usuário ${id}:`, error);
@@ -352,35 +434,23 @@ export class UserService {
   /**
    * Obtém estatísticas de usuários
    */
-  async getUserStats(): Promise<{
-    total_users: number;
-    users_by_role: Record<string, number>;
-    users_by_institution: Record<string, number>;
-    recent_registrations: number;
-    active_users: number;
-  }> {
+  async getUserStats(): Promise<UserStats> {
     try {
       const cacheKey = CacheKeys.USER_STATS;
       
       return await withCache(cacheKey, async () => {
         const response = await withRetry(() =>
-          apiClient.get<{
-            total_users: number;
-            users_by_role: Record<string, number>;
-            users_by_institution: Record<string, number>;
-            recent_registrations: number;
-            active_users: number;
-          }>(`${this.baseEndpoint}/stats`)
+          apiClient.get<UserStats>(`${this.baseEndpoint}/stats`)
         );
 
         if (!response.success || !response.data) {
-          throw new Error(response.message || 'Falha ao buscar estatísticas');
+          throw new Error(response.message || 'Falha ao obter estatísticas de usuários');
         }
 
         return response.data;
-      }, CacheTTL.STATS);
+      }, CacheTTL.SHORT);
     } catch (error) {
-      console.error('Erro ao buscar estatísticas de usuários:', error);
+      console.error('Erro ao obter estatísticas de usuários:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -427,7 +497,97 @@ export class UserService {
    * Método list para compatibilidade com outros serviços
    */
   async list(filters?: UserFilterDto): Promise<ListResponse<UserResponseDto>> {
-    return this.getUsers(filters);
+    const { users, total } = await this.getUsers(filters as unknown as UserFilters);
+    
+    // Converter User para UserResponseDto
+    const items: UserResponseDto[] = users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: {
+        name: user.role,
+        permissions: []
+      },
+      institution_id: user.institution,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt
+    }));
+    
+    return {
+      items,
+      pagination: {
+        total,
+        page: 1,
+        limit: items.length,
+        totalPages: Math.ceil(total / items.length) || 1,
+        hasNext: false,
+        hasPrev: false
+      }
+    };
+  }
+
+  // Bloquear/Desbloquear usuário
+  async toggleUserStatus(id: string, status: 'active' | 'inactive' | 'blocked'): Promise<User> {
+    try {
+      const response = await apiClient.patch<UserResponseDto>(`${this.baseEndpoint}/${id}/status`, { 
+        status 
+      });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || `Falha ao alterar status do usuário para ${status}`);
+      }
+
+      // Invalida o cache do usuário
+      await invalidateUserCache(id);
+
+      // Converte de UserResponseDto para User
+      return {
+        id: response.data.id,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role?.name || '',
+        institution: response.data.institution_id,
+        status: status,
+        lastAccess: undefined,
+        createdAt: response.data.created_at,
+        updatedAt: response.data.updated_at
+      };
+    } catch (error) {
+      console.error(`Erro ao alterar status do usuário ${id} para ${status}:`, error);
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  // Atualizar permissões do usuário
+  async updateUserPermissions(id: string, permissions: string[]): Promise<User> {
+    try {
+      const response = await apiClient.patch<UserResponseDto>(`${this.baseEndpoint}/${id}/permissions`, { 
+        permissions 
+      });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Falha ao atualizar permissões do usuário');
+      }
+
+      // Invalida o cache do usuário
+      await invalidateUserCache(id);
+
+      // Converte de UserResponseDto para User
+      return {
+        id: response.data.id,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role?.name || '',
+        institution: response.data.institution_id,
+        status: 'active',
+        lastAccess: undefined,
+        createdAt: response.data.created_at,
+        updatedAt: response.data.updated_at
+      };
+    } catch (error) {
+      console.error(`Erro ao atualizar permissões do usuário ${id}:`, error);
+      throw new Error(handleApiError(error));
+    }
   }
 }
 
@@ -435,9 +595,12 @@ export class UserService {
 export const userService = new UserService();
 
 // Funções de conveniência para compatibilidade com código existente
-export const listUsers = (filters?: UserFilterDto) => userService.getUsers(filters);
-export const createUser = (userData: CreateUserDto) => userService.createUser(userData);
-export const updateUser = (id: string, userData: UpdateUserDto) => userService.updateUser(id, userData);
+export const listUsers = (filters?: UserFilterDto) => userService.getUsers({} as UserFilters).then(({ users }) => ({
+  items: users,
+  pagination: { total: users.length, page: 1, limit: users.length }
+}));
+export const createUser = (userData: Partial<User>) => userService.createUser(userData);
+export const updateUser = (id: string, userData: Partial<User>) => userService.updateUser(id, userData);
 export const deleteUser = (id: string) => userService.deleteUser(id);
 export const getUserById = (id: string) => userService.getUserById(id);
 export const getUserProfile = () => userService.getProfile();

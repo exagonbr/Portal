@@ -30,7 +30,8 @@ import {
   Lightbulb
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { classService } from '@/services/classService';
+// import { classService } from '@/services/classService'; // Potentially unused
+import { apiClient, ApiClientError } from '@/services/apiClient';
 import { Class } from '@/types/class';
 import { UserClass } from '@/types/userClass';
 import { SHIFT_LABELS } from '@/types/class';
@@ -113,211 +114,67 @@ function TeacherDashboardContent() {
   const [selectedView, setSelectedView] = useState<'overview' | 'students' | 'resources' | 'communication'>('overview');
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (user?.id) {
+      loadDashboardData(user.id);
+    } else if (!user && !loading) {
+        console.warn("Usuário não autenticado para carregar dashboard do professor.");
+        setLoading(false);
+    }
+  }, [user, loading]);
 
-  const loadDashboardData = async () => {
+  interface TeacherDashboardData {
+    myClasses: Class[];
+    stats: TeacherStats;
+    studentProgress: StudentProgress[];
+    upcomingClasses: UpcomingClass[];
+    recentActivities: RecentActivity[];
+    learningResources: LearningResource[];
+  }
+
+  const loadDashboardData = async (userId: string | number) => {
     try {
       setLoading(true);
       
-      // Carregar turmas do professor
-      // Por enquanto vamos simular os dados
-      const mockClasses: Class[] = [
-        {
-          id: '1',
-          name: '5º Ano A',
-          code: '5A-2025',
-          school_id: 'school1',
-          year: 2025,
-          shift: 'MORNING',
-          max_students: 30,
-          is_active: true,
-          created_at: new Date(),
-          updated_at: new Date()
-        },
-        {
-          id: '2',
-          name: '5º Ano B',
-          code: '5B-2025',
-          school_id: 'school1',
-          year: 2025,
-          shift: 'AFTERNOON',
-          max_students: 28,
-          is_active: true,
-          created_at: new Date(),
-          updated_at: new Date()
-        }
-      ];
-      
-      setMyClasses(mockClasses);
-      
-      // Estatísticas simuladas
-      setStats({
-        totalClasses: 2,
-        totalStudents: 58,
-        pendingAssignments: 12,
-        upcomingClasses: 3,
-        averageGrade: 7.8,
-        completionRate: 85,
-        attendanceRate: 92.5,
-        parentEngagement: 78
-      });
+      // TODO: Ajustar o endpoint da API.
+      // Exemplo com um endpoint único que retorna todos os dados:
+      const response = await apiClient.get<TeacherDashboardData>(`/api/teachers/${userId}/dashboard`);
 
-      // Progresso dos alunos
-      setStudentProgress([
-        {
-          id: '1',
-          name: 'Ana Silva',
-          class: '5º Ano A',
-          currentGrade: 8.5,
-          previousGrade: 7.8,
-          trend: 'up',
-          attendance: 95,
-          assignments: 100,
-          needsAttention: false,
-          strengths: ['Matemática', 'Ciências'],
-          challenges: ['Redação']
-        },
-        {
-          id: '2',
-          name: 'João Santos',
-          class: '5º Ano A',
-          currentGrade: 6.2,
-          previousGrade: 6.8,
-          trend: 'down',
-          attendance: 88,
-          assignments: 75,
-          needsAttention: true,
-          strengths: ['Artes', 'Educação Física'],
-          challenges: ['Matemática', 'Português']
-        },
-        {
-          id: '3',
-          name: 'Maria Oliveira',
-          class: '5º Ano B',
-          currentGrade: 9.2,
-          previousGrade: 9.0,
-          trend: 'stable',
-          attendance: 98,
-          assignments: 100,
-          needsAttention: false,
-          strengths: ['Todas as disciplinas'],
-          challenges: []
+      if (response.success && response.data) {
+        const data = response.data;
+        setMyClasses(data.myClasses || []);
+        setStats(data.stats || { totalClasses: 0, totalStudents: 0, pendingAssignments: 0, upcomingClasses: 0, averageGrade: 0, completionRate: 0, attendanceRate: 0, parentEngagement: 0 });
+        setStudentProgress(data.studentProgress || []);
+        setUpcomingClasses(data.upcomingClasses || []);
+        setRecentActivities(data.recentActivities || []);
+        setLearningResources(data.learningResources || []);
+        
+        if (data.myClasses && data.myClasses.length > 0 && !selectedClass) {
+          setSelectedClass(data.myClasses[0].id); // Seleciona a primeira turma por padrão
         }
-      ]);
 
-      // Próximas aulas
-      setUpcomingClasses([
-        {
-          id: '1',
-          className: '5º Ano A - Matemática',
-          time: '08:00',
-          room: 'Sala 201',
-          students: 28,
-          topic: 'Frações e Decimais',
-          materials: true
-        },
-        {
-          id: '2',
-          className: '5º Ano B - Português',
-          time: '10:00',
-          room: 'Sala 203',
-          students: 26,
-          topic: 'Produção Textual',
-          materials: true
-        },
-        {
-          id: '3',
-          className: '5º Ano A - Ciências',
-          time: '14:00',
-          room: 'Lab. Ciências',
-          students: 28,
-          topic: 'Sistema Solar',
-          materials: false
-        }
-      ]);
-
-      // Atividades recentes
-      setRecentActivities([
-        {
-          id: '1',
-          type: 'assignment',
-          title: 'Nova tarefa postada',
-          description: 'Exercícios de Matemática - Frações',
-          time: 'Há 2 horas',
-          status: 'completed'
-        },
-        {
-          id: '2',
-          type: 'grade',
-          title: 'Notas lançadas',
-          description: 'Prova de Português - 5º Ano B',
-          time: 'Há 5 horas',
-          status: 'completed'
-        },
-        {
-          id: '3',
-          type: 'message',
-          title: 'Nova mensagem',
-          description: 'Maria Silva - Dúvida sobre tarefa',
-          time: 'Há 1 dia',
-          status: 'pending',
-          priority: 'medium'
-        },
-        {
-          id: '4',
-          type: 'parent',
-          title: 'Reunião agendada',
-          description: 'Pais de João Santos - Desempenho escolar',
-          time: 'Há 2 dias',
-          status: 'pending',
-          priority: 'high'
-        },
-        {
-          id: '5',
-          type: 'behavior',
-          title: 'Registro comportamental',
-          description: 'Pedro Lima - Comportamento exemplar em aula',
-          time: 'Há 3 dias',
-          status: 'completed',
-          priority: 'low'
-        }
-      ]);
-
-      // Recursos de aprendizagem
-      setLearningResources([
-        {
-          id: '1',
-          title: 'Vídeo: Introdução às Frações',
-          type: 'video',
-          subject: 'Matemática',
-          duration: '15 min',
-          usage: 24
-        },
-        {
-          id: '2',
-          title: 'Exercícios Interativos - Sistema Solar',
-          type: 'interactive',
-          subject: 'Ciências',
-          duration: '30 min',
-          usage: 18
-        },
-        {
-          id: '3',
-          title: 'Modelo de Redação Narrativa',
-          type: 'document',
-          subject: 'Português',
-          duration: '10 min',
-          usage: 32
-        }
-      ]);
-
+      } else {
+        console.error('Falha ao buscar dados do dashboard do professor:', response.message);
+        // Adicionar estado de erro para UI, se necessário
+      }
     } catch (error) {
-      console.error('Erro ao carregar dashboard:', error);
+      console.error('Erro ao carregar dados do dashboard do professor:', error);
+      if (error instanceof ApiClientError) {
+        // Tratar erro da API
+      }
+      // Adicionar estado de erro para UI
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading && !user) { // Adicionado para cobrir o caso de user ainda não carregado
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Autenticando...</p>
+      </div>
+    );
+  }
+
 
   if (loading) {
     return (

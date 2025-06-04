@@ -1,69 +1,260 @@
-import { UserRole } from '@/types/roles';
+import { UserRole, ROLE_BASED_ROUTES, canAccessRoute as checkAccessRoute } from '@/types/roles';
 
 // Definir as permissões para cada papel
 export const rolePermissions: Record<UserRole, string[]> = {
   [UserRole.SYSTEM_ADMIN]: [
+    // Permissões do Sistema
     'system.manage',
-    'users.manage',
-    'institutions.manage',
+    'system.monitor',
+    'system.configure',
+    'system.backup',
+    'system.restore',
+    
+    // Gestão de Usuários
+    'users.manage.all',
+    'users.create',
+    'users.edit',
+    'users.delete',
+    'users.view.all',
+    
+    // Gestão de Instituições
+    'institutions.manage.all',
+    'institutions.create',
+    'institutions.edit',
+    'institutions.delete',
+    'institutions.view.all',
+    
+    // Gestão de Permissões
     'roles.manage',
+    'permissions.manage',
+    'permissions.view',
+    'permissions.assign',
+    'permissions.revoke',
+    
+    // Monitoramento e Segurança
     'monitoring.view',
     'security.manage',
-    'backup.manage',
     'audit.view',
+    'logs.view.all',
+    'performance.view.all',
+    
+    // Permissão Universal
     'all.permissions'
   ],
+  
   [UserRole.INSTITUTION_MANAGER]: [
+    // Gestão Institucional
     'institution.manage',
+    'institution.view',
+    'institution.edit',
+    
+    // Gestão de Escolas
     'schools.manage',
+    'schools.create',
+    'schools.edit',
+    'schools.delete',
+    'schools.view',
+    
+    // Gestão de Turmas
     'classes.manage',
+    'classes.create',
+    'classes.edit',
+    'classes.delete',
+    'classes.view',
+    
+    // Gestão de Professores
     'teachers.manage',
+    'teachers.create',
+    'teachers.edit',
+    'teachers.delete',
+    'teachers.view',
+    
+    // Gestão de Alunos
     'students.manage',
+    'students.create',
+    'students.edit',
+    'students.delete',
+    'students.view',
+    
+    // Gestão Acadêmica
     'courses.manage',
     'curriculum.manage',
+    'schedules.manage',
+    
+    // Relatórios e Financeiro
     'reports.institutional',
-    'financial.view'
+    'reports.academic',
+    'reports.financial',
+    'financial.view',
+    'financial.manage'
   ],
+  
   [UserRole.ACADEMIC_COORDINATOR]: [
+    // Gestão Acadêmica
     'cycles.manage',
     'curriculum.manage',
+    'courses.view',
+    'courses.evaluate',
+    
+    // Gestão de Professores
     'teachers.evaluate',
+    'teachers.monitor',
+    'teachers.schedule',
+    
+    // Gestão de Alunos
     'students.monitor',
+    'students.evaluate',
+    'students.performance',
+    
+    // Planejamento e Avaliação
     'performance.analyze',
     'planning.manage',
-    'meetings.schedule',
+    'evaluations.manage',
     'indicators.view',
-    'reports.academic'
+    
+    // Comunicação
+    'meetings.schedule',
+    'meetings.manage',
+    'announcements.manage',
+    
+    // Relatórios
+    'reports.academic',
+    'reports.performance',
+    'reports.attendance'
   ],
+  
   [UserRole.TEACHER]: [
+    // Gestão de Aulas
     'classes.teach',
+    'classes.manage',
+    'classes.schedule',
+    
+    // Gestão de Alunos
     'students.evaluate',
+    'students.view',
+    'students.contact',
+    
+    // Gestão de Atividades
     'assignments.manage',
+    'assignments.create',
+    'assignments.evaluate',
+    
+    // Gestão de Notas
     'grades.manage',
-    'attendance.record',
-    'materials.upload',
-    'messages.send',
-    'reports.class'
-  ],
-  [UserRole.STUDENT]: [
-    'courses.view',
-    'assignments.submit',
+    'grades.input',
     'grades.view',
-    'materials.access',
+    
+    // Gestão de Materiais
+    'materials.upload',
+    'materials.manage',
+    'materials.view',
+    
+    // Comunicação
     'messages.send',
-    'forum.participate',
-    'activities.participate'
+    'messages.receive',
+    'forum.moderate',
+    
+    // Relatórios
+    'reports.class',
+    'reports.performance',
+    'reports.attendance'
   ],
+  
+  [UserRole.STUDENT]: [
+    // Acesso aos Cursos
+    'courses.view',
+    'courses.enroll',
+    'courses.participate',
+    
+    // Atividades
+    'assignments.submit',
+    'assignments.view',
+    'assignments.evaluate',
+    
+    // Notas e Avaliações
+    'grades.view',
+    'grades.own',
+    
+    // Materiais
+    'materials.access',
+    'materials.download',
+    
+    // Comunicação
+    'messages.send',
+    'messages.receive',
+    'forum.participate',
+    
+    // Atividades Extras
+    'activities.participate',
+    'activities.view',
+    
+    // Perfil
+    'profile.view',
+    'profile.edit'
+  ],
+  
   [UserRole.GUARDIAN]: [
+    // Monitoramento de Dependentes
     'children.monitor',
+    'children.view',
+    'children.contact',
+    
+    // Acompanhamento Acadêmico
     'grades.view',
     'attendance.view',
     'activities.view',
+    'assignments.view',
+    
+    // Comunicação
     'messages.send',
+    'messages.receive',
     'meetings.schedule',
+    'meetings.view',
+    
+    // Financeiro
     'payments.manage',
-    'reports.student'
+    'payments.view',
+    'invoices.view',
+    'invoices.download',
+    
+    // Relatórios
+    'reports.student',
+    'reports.performance',
+    'reports.attendance',
+    
+    // Perfil
+    'profile.view',
+    'profile.edit'
   ]
+};
+
+// Mapeamento entre permissões e rotas permitidas
+const permissionRouteMap: Record<string, string[]> = {
+  // Permissões universais
+  'all.permissions': ['*'],
+  
+  // Permissões de admin
+  'system.manage': ['/dashboard/system-admin', '/system/*', '/admin/*'],
+  'system.monitor': ['/dashboard/system-admin', '/system/*'],
+  'system.configure': ['/dashboard/system-admin', '/system/settings/*'],
+  
+  // Permissões de gestão institucional
+  'institution.manage': ['/dashboard/institution-manager', '/institution/*'],
+  'schools.manage': ['/dashboard/institution-manager', '/schools/*'],
+  
+  // Permissões acadêmicas
+  'cycles.manage': ['/dashboard/coordinator', '/cycles/*'],
+  'curriculum.manage': ['/dashboard/coordinator', '/curriculum/*'],
+  
+  // Permissões de professores
+  'classes.teach': ['/dashboard/teacher', '/attendance/*', '/grades/*'],
+  
+  // Permissões de estudantes
+  'courses.view': ['/dashboard/student', '/my-courses/*'],
+  'grades.own': ['/dashboard/student', '/my-grades/*'],
+  
+  // Permissões de responsáveis
+  'children.monitor': ['/dashboard/guardian', '/children/*']
 };
 
 // Função para verificar se um papel tem uma permissão específica
@@ -80,45 +271,60 @@ export function hasPermission(role: UserRole, permission: string): boolean {
 
 // Função para verificar se um papel pode acessar uma rota
 export function canAccessRoute(role: UserRole, route: string): boolean {
-  const routePermissions: Record<string, string[]> = {
-    '/dashboard/system-admin': ['system.manage'],
-    '/dashboard/institution-manager': ['institution.manage'],
-    '/dashboard/coordinator': ['cycles.manage'],
-    '/dashboard/teacher': ['classes.teach'],
-    '/dashboard/student': ['courses.view'],
-    '/dashboard/guardian': ['children.monitor'],
-    '/admin': ['system.manage', 'institution.manage'],
-    '/institution': ['institution.manage', 'cycles.manage'],
-    '/coordinator': ['cycles.manage'],
-    '/teacher': ['classes.teach'],
-    '/guardian': ['children.monitor'],
-    '/forum': ['forum.participate'],
-    '/chat': ['messages.send']
-  };
-
-  const requiredPermissions = routePermissions[route] || [];
-  
-  // Se não há permissões requeridas, permite acesso
-  if (requiredPermissions.length === 0) {
+  // Primeiro, verificamos usando a função definida em types/roles.ts
+  if (checkAccessRoute(role, route)) {
     return true;
   }
   
-  // Verifica se o papel tem pelo menos uma das permissões requeridas
-  return requiredPermissions.some(permission => hasPermission(role, permission));
+  // Se a verificação do ROLE_BASED_ROUTES falhar, verificamos usando permissões
+  const permissions = rolePermissions[role] || [];
+  
+  // System Admin sempre tem acesso
+  if (role === UserRole.SYSTEM_ADMIN) {
+    return true;
+  }
+  
+  // Verifica permissões universais
+  if (permissions.includes('all.permissions')) {
+    return true;
+  }
+  
+  // Verifica permissões específicas
+  for (const permission of permissions) {
+    const allowedRoutes = permissionRouteMap[permission] || [];
+    
+    if (allowedRoutes.includes('*')) {
+      return true;
+    }
+    
+    for (const allowedRoute of allowedRoutes) {
+      // Verifica rota exata
+      if (allowedRoute === route) {
+        return true;
+      }
+      
+      // Verifica wildcard (ex: /system/*)
+      if (allowedRoute.endsWith('/*')) {
+        const prefix = allowedRoute.slice(0, -1); // Remove o * do final
+        if (route.startsWith(prefix)) {
+          return true;
+        }
+      }
+    }
+  }
+  
+  return false;
 }
 
 // Função para obter o dashboard padrão baseado no papel
 export function getDefaultDashboard(role: UserRole): string {
-  const dashboardRoutes: Record<UserRole, string> = {
-    [UserRole.SYSTEM_ADMIN]: '/dashboard/system-admin',
-    [UserRole.INSTITUTION_MANAGER]: '/dashboard/institution-manager',
-    [UserRole.ACADEMIC_COORDINATOR]: '/dashboard/coordinator',
-    [UserRole.TEACHER]: '/dashboard/teacher',
-    [UserRole.STUDENT]: '/dashboard/student',
-    [UserRole.GUARDIAN]: '/dashboard/guardian'
-  };
+  // Obter a rota do dashboard principal para cada papel a partir das rotas definidas
+  const dashboardRoute = ROLE_BASED_ROUTES.find(route => 
+    route.path.startsWith('/dashboard/') && 
+    route.roles.includes(role)
+  );
   
-  return dashboardRoutes[role] || '/dashboard';
+  return dashboardRoute?.path || '/dashboard';
 }
 
 // Função para obter o nome do papel em português

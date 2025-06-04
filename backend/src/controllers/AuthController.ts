@@ -83,7 +83,7 @@ export class AuthController {
         });
       }
 
-      const user = await AuthService.getUserById(userId);
+      const user = await AuthService.getUserById(userId.toString());
       
       if (!user) {
         return res.status(404).json({
@@ -161,7 +161,7 @@ export class AuthController {
         });
       }
 
-      const result = await AuthService.refreshToken(userId, sessionId);
+      const result = await AuthService.refreshToken(userId.toString(), sessionId);
 
       return res.json({
         success: true,
@@ -245,7 +245,7 @@ export class AuthController {
         });
       }
 
-      await AuthService.changePassword(userId, currentPassword, newPassword);
+      await AuthService.changePassword(userId.toString(), currentPassword, newPassword);
 
       return res.json({
         success: true,

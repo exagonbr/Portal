@@ -4,109 +4,149 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-:root {
-  /* Cores baseadas no design CRM da imagem de referência */
-  --primary: #1e40af; /* Navy blue principal */
-  --primary-dark: #1e3a8a; /* Navy blue escuro */
-  --primary-light: #3b82f6; /* Azul claro */
-  
-  --secondary: #06b6d4; /* Cyan como accent */
-  --secondary-light: #67e8f9; /* Cyan claro */
-  --secondary-dark: #0891b2; /* Cyan escuro */
-  
-  --accent-blue: #3b82f6; /* Azul accent */
-  --accent-cyan: #06b6d4; /* Cyan accent */
-  --accent-green: #10b981; /* Verde sucesso */
-  --accent-orange: #f59e0b; /* Laranja aviso */
-  --accent-purple: #8b5cf6; /* Roxo informação */
-  --accent-yellow: #eab308; /* Amarelo atenção */
-  
-  --success: #10b981; /* Verde sucesso */
-  --warning: #f59e0b; /* Amarelo aviso */
-  --error: #ef4444; /* Vermelho erro */
-  --info: #06b6d4; /* Cyan informação */
-  
-  /* Backgrounds estilo CRM */
-  --background-primary: #ffffff; /* Branco puro */
-  --background-secondary: #f8fafc; /* Cinza muito claro */
-  --background-tertiary: #f1f5f9; /* Cinza claro */
-  --background-card: #ffffff; /* Branco para cards */
-  --background-hover: #f1f5f9; /* Hover sutil */
-  
-  /* Textos estilo CRM */
-  --text-primary: #0f172a; /* Preto/cinza muito escuro */
-  --text-secondary: #475569; /* Cinza médio */
-  --text-tertiary: #64748b; /* Cinza claro */
-  --text-muted: #94a3b8; /* Cinza muito claro */
-  
-  /* Bordas estilo CRM */
-  --border: #e2e8f0; /* Cinza claro */
-  --border-light: #f1f5f9; /* Cinza muito claro */
-  --border-dark: #cbd5e1; /* Cinza médio */
-  
-  /* Sidebar estilo CRM navy blue */
-  --sidebar-bg: #1e3a8a; /* Navy blue principal */
-  --sidebar-bg-light: #1e40af; /* Navy blue claro */
-  --sidebar-hover: #2563eb; /* Azul hover */
-  --sidebar-active: #3b82f6; /* Azul ativo */
-  --sidebar-text: #cbd5e1; /* Texto claro */
-  --sidebar-text-active: #ffffff; /* Texto ativo branco */
-  --sidebar-border: #334155; /* Borda da sidebar */
-  
-  /* Gradientes CRM */
-  --gradient-primary: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  --gradient-secondary: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  --gradient-card: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --primary-light: 222.2 47.4% 21.2%;
+    --primary-dark: 222.2 47.4% 1.2%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary-light: 210 40% 98.1%;
+    --secondary-dark: 210 40% 86.1%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --border-light: 214.3 31.8% 95.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    /* Background colors */
+    --background-primary: 0 0% 100%;
+    --background-secondary: 210 40% 98%;
+    --background-card: 0 0% 100%;
+    --background-hover: 210 40% 96.1%;
+
+    /* Text colors */
+    --text-primary: 222.2 84% 4.9%;
+    --text-secondary: 215.4 16.3% 46.9%;
+    --text-tertiary: 215.4 16.3% 65.1%;
+    --text-muted: 215.4 16.3% 46.9%;
+
+    /* Sidebar colors */
+    --sidebar-bg: 222.2 47.4% 11.2%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-text: 210 40% 80%;
+    --sidebar-text-active: 210 40% 98%;
+    --sidebar-hover: 217.2 32.6% 17.5%;
+    --sidebar-active: 222.2 47.4% 21.2%;
+
+    /* Status colors */
+    --success: 142.1 76.2% 36.3%;
+    --warning: 47.9 95.8% 53.1%;
+    --error: 0 84.2% 60.2%;
+    --info: 221.2 83.2% 53.3%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-light)) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary-light)) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(var(--background-card)) 0%, hsl(var(--background-secondary)) 100%);
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-light: 210 40% 100%;
+    --primary-dark: 210 40% 88%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --secondary-light: 217.2 32.6% 27.5%;
+    --secondary-dark: 217.2 32.6% 7.5%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --border-light: 217.2 32.6% 27.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+
+    /* Background colors - dark theme */
+    --background-primary: 222.2 84% 4.9%;
+    --background-secondary: 217.2 32.6% 17.5%;
+    --background-card: 222.2 84% 4.9%;
+    --background-hover: 217.2 32.6% 27.5%;
+
+    /* Text colors - dark theme */
+    --text-primary: 210 40% 98%;
+    --text-secondary: 215 20.2% 65.1%;
+    --text-tertiary: 215 20.2% 45.1%;
+    --text-muted: 215 20.2% 65.1%;
+
+    /* Sidebar colors - dark theme */
+    --sidebar-bg: 222.2 84% 4.9%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-text: 215 20.2% 65.1%;
+    --sidebar-text-active: 210 40% 98%;
+    --sidebar-hover: 217.2 32.6% 27.5%;
+    --sidebar-active: 217.2 32.6% 37.5%;
+
+    /* Status colors - dark theme */
+    --success: 142.1 70.6% 45.3%;
+    --warning: 47.9 95.8% 53.1%;
+    --error: 0 62.8% 30.6%;
+    --info: 221.2 83.2% 53.3%;
+
+    /* Gradients - dark theme */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-light)) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--secondary-light)) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(var(--background-card)) 0%, hsl(var(--background-secondary)) 100%);
+  }
 }
 
-/* Dark mode colors seguindo o padrão CRM */
-[data-theme="dark"] {
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --primary-light: #60a5fa;
-  
-  --secondary: #22d3ee;
-  --secondary-light: #67e8f9;
-  --secondary-dark: #0891b2;
-  
-  --accent-blue: #60a5fa;
-  --accent-cyan: #22d3ee;
-  --accent-green: #34d399;
-  --accent-orange: #fbbf24;
-  --accent-purple: #a78bfa;
-  --accent-yellow: #fbbf24;
-  
-  --success: #34d399;
-  --warning: #fbbf24;
-  --error: #f87171;
-  --info: #22d3ee;
-  
-  --background-primary: #0f172a;
-  --background-secondary: #1e293b;
-  --background-tertiary: #334155;
-  --background-card: #1e293b;
-  --background-hover: #334155;
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --text-muted: #64748b;
-  
-  --border: #334155;
-  --border-light: #475569;
-  --border-dark: #1e293b;
-  
-  --sidebar-bg: #1e293b;
-  --sidebar-bg-light: #334155;
-  --sidebar-hover: #475569;
-  --sidebar-active: #3b82f6;
-  --sidebar-text: #cbd5e1;
-  --sidebar-text-active: #ffffff;
-  --sidebar-border: #475569;
-  
-  --gradient-primary: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  --gradient-secondary: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
-  --gradient-card: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 @layer base {

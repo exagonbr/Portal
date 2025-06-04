@@ -1,12 +1,14 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { apiClient, ApiClientError } from '@/services/apiClient' // Ajuste o caminho se necessário
 
 type AssignmentStatus = 'pending' | 'in_progress' | 'completed' | 'late'
 type PriorityLevel = 'high' | 'medium' | 'low'
 
 interface Assignment {
-  id: number
+  id: number | string // API pode retornar string ou number
   title: string
   description: string
   course: string
@@ -21,79 +23,8 @@ interface Assignment {
   priority: PriorityLevel
 }
 
-const MOCK_ASSIGNMENTS: Assignment[] = [
-  {
-    id: 1,
-    title: 'Resolução de Equações Diferenciais',
-    description: 'Resolver os exercícios propostos sobre equações diferenciais de primeira ordem',
-    course: 'Matemática Avançada',
-    dueDate: '2024-01-25',
-    status: 'pending',
-    type: 'Exercício',
-    points: 100,
-    timeEstimate: '2 horas',
-    attachments: 2,
-    submissions: 0,
-    priority: 'high'
-  },
-  {
-    id: 2,
-    title: 'Relatório de Experimento de Física',
-    description: 'Elaborar relatório detalhado sobre o experimento de pêndulo simples realizado em laboratório',
-    course: 'Física Fundamental',
-    dueDate: '2024-01-23',
-    status: 'in_progress',
-    type: 'Relatório',
-    points: 150,
-    timeEstimate: '3 horas',
-    attachments: 1,
-    submissions: 1,
-    priority: 'medium'
-  },
-  {
-    id: 3,
-    title: 'Análise de Compostos Orgânicos',
-    description: 'Identificar e classificar os compostos orgânicos apresentados nas imagens',
-    course: 'Química Orgânica',
-    dueDate: '2024-01-20',
-    status: 'completed',
-    type: 'Questionário',
-    points: 80,
-    timeEstimate: '1 hora',
-    attachments: 3,
-    submissions: 2,
-    grade: 90,
-    priority: 'low'
-  },
-  {
-    id: 4,
-    title: 'Microscopia de Células Vegetais',
-    description: 'Desenhar e identificar as estruturas celulares observadas no microscópio',
-    course: 'Biologia Celular',
-    dueDate: '2024-01-28',
-    status: 'pending',
-    type: 'Prática',
-    points: 120,
-    timeEstimate: '2.5 horas',
-    attachments: 0,
-    submissions: 0,
-    priority: 'medium'
-  },
-  {
-    id: 5,
-    title: 'Análise de Obra Modernista',
-    description: 'Analisar a obra "Abaporu" de Tarsila do Amaral e seu contexto histórico',
-    course: 'História da Arte',
-    dueDate: '2024-01-22',
-    status: 'in_progress',
-    type: 'Ensaio',
-    points: 100,
-    timeEstimate: '4 horas',
-    attachments: 1,
-    submissions: 1,
-    priority: 'high'
-  }
-]
+// MOCK_ASSIGNMENTS será removido ou usado como fallback/inicialização
+// const MOCK_ASSIGNMENTS: Assignment[] = [ ... ]
 
 const STATUS_COLORS: Record<AssignmentStatus, { bg: string; text: string; label: string }> = {
   pending: { bg: 'bg-accent-yellow/20', text: 'text-accent-yellow', label: 'Pendente' },
@@ -110,6 +41,81 @@ const PRIORITY_ICONS: Record<PriorityLevel, { icon: string; color: string }> = {
 
 export default function AssignmentsPage() {
   const { user } = useAuth()
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      if (!user) {
+        // Idealmente, redirecionar para login ou mostrar mensagem
+        setLoading(false)
+        setError("Usuário não autenticado.")
+        return
+      }
+      try {
+        setLoading(true)
+        // TODO: Ajustar o endpoint da API conforme necessário
+        const response = await apiClient.get<{ assignments: Assignment[] }>(`/api/users/${user.id}/assignments`)
+        
+        if (response.success && response.data) {
+          setAssignments(response.data.assignments || []) // Garante que seja um array
+        } else {
+          setError(response.message || 'Falha ao buscar atividades.')
+        }
+      } catch (err) {
+        if (err instanceof ApiClientError) {
+          setError(err.message)
+        } else {
+          setError('Ocorreu um erro desconhecido.')
+        }
+        console.error("Erro ao buscar atividades:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAssignments()
+  }, [user]) // Adiciona user como dependência
+
+  // Calcula estatísticas baseadas nos dados carregados
+  const totalAssignments = assignments.length
+  const pendingAssignments = assignments.filter(a => a.status === 'pending').length
+  const inProgressAssignments = assignments.filter(a => a.status === 'in_progress').length
+  const completedAssignments = assignments.filter(a => a.status === 'completed').length
+
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center h-screen">
+        <p className="text-xl text-gray-600">Carregando atividades...</p>
+        {/* Você pode adicionar um spinner aqui */}
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex flex-col justify-center items-center h-screen">
+        <p className="text-xl text-red-500">Erro: {error}</p>
+        <button
+          onClick={() => window.location.reload()} // Simples reload, idealmente uma função de retry mais robusta
+          className="mt-4 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
+        >
+          Tentar Novamente
+        </button>
+      </div>
+    )
+  }
+  
+  if (!user) {
+     return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center h-screen">
+        <p className="text-xl text-gray-600">Por favor, faça login para ver suas atividades.</p>
+      </div>
+    )
+  }
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -136,34 +142,35 @@ export default function AssignmentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Atividades</div>
-            <div className="text-2xl font-bold text-primary-dark">5</div>
+            <div className="text-2xl font-bold text-primary-dark">{totalAssignments}</div>
+            {/* Estatísticas dinâmicas podem ser mais complexas, mantendo simples por agora */}
             <div className="mt-4 flex items-center">
-              <span className="text-accent-green text-sm">↑ 2</span>
-              <span className="text-gray-500 text-sm ml-2">nesta semana</span>
+              {/* <span className="text-accent-green text-sm">↑ X</span> */}
+              {/* <span className="text-gray-500 text-sm ml-2">...</span> */}
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Pendentes</div>
-            <div className="text-2xl font-bold text-accent-yellow">2</div>
+            <div className="text-2xl font-bold text-accent-yellow">{pendingAssignments}</div>
             <div className="mt-4 flex items-center">
-              <span className="text-accent-yellow text-sm">!</span>
-              <span className="text-gray-500 text-sm ml-2">para os próximos 7 dias</span>
+              {/* <span className="text-accent-yellow text-sm">!</span> */}
+              {/* <span className="text-gray-500 text-sm ml-2">...</span> */}
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Em Andamento</div>
-            <div className="text-2xl font-bold text-primary">2</div>
+            <div className="text-2xl font-bold text-primary">{inProgressAssignments}</div>
             <div className="mt-4 flex items-center">
-              <span className="text-primary text-sm">↑ 1</span>
-              <span className="text-gray-500 text-sm ml-2">em andamento</span>
+              {/* <span className="text-primary text-sm">↑ Y</span> */}
+              {/* <span className="text-gray-500 text-sm ml-2">...</span> */}
             </div>
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Concluídas</div>
-            <div className="text-2xl font-bold text-accent-green">1</div>
+            <div className="text-2xl font-bold text-accent-green">{completedAssignments}</div>
             <div className="mt-4 flex items-center">
-              <span className="text-accent-green text-sm">↑ 1</span>
-              <span className="text-gray-500 text-sm ml-2">nesta semana</span>
+              {/* <span className="text-accent-green text-sm">↑ Z</span> */}
+              {/* <span className="text-gray-500 text-sm ml-2">...</span> */}
             </div>
           </div>
         </div>
@@ -201,33 +208,39 @@ export default function AssignmentsPage() {
       {/* Status Filters */}
       <div className="flex space-x-2 mb-6">
         <button className="px-4 py-2 text-sm rounded-lg bg-primary/10 text-primary font-medium">
-          Todas (5)
+          Todas ({totalAssignments})
         </button>
         <button className="px-4 py-2 text-sm rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors duration-200">
-          Pendentes (2)
+          Pendentes ({pendingAssignments})
         </button>
         <button className="px-4 py-2 text-sm rounded-lg text-primary hover:bg-primary/10 transition-colors duration-200">
-          Em Andamento (2)
+          Em Andamento ({inProgressAssignments})
         </button>
         <button className="px-4 py-2 text-sm rounded-lg text-accent-green hover:bg-accent-green/10 transition-colors duration-200">
-          Concluídas (1)
+          Concluídas ({completedAssignments})
         </button>
       </div>
 
       {/* Assignments List */}
       <div className="bg-white rounded-lg shadow-md">
         <div className="p-6 space-y-6">
-          {MOCK_ASSIGNMENTS.map((assignment) => (
-            <div 
-              key={assignment.id} 
+          {assignments.length === 0 && !loading && (
+            <p className="text-center text-gray-500">Nenhuma atividade encontrada.</p>
+          )}
+          {assignments.map((assignment) => (
+            <div
+              key={assignment.id}
               className="border-b border-gray-200 pb-6 last:border-0 last:pb-0"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center mb-2">
-                    <span className={`material-icons mr-2 ${PRIORITY_ICONS[assignment.priority].color}`}>
-                      {PRIORITY_ICONS[assignment.priority].icon}
-                    </span>
+                    {/* Verifica se PRIORITY_ICONS[assignment.priority] existe antes de acessar icon e color */}
+                    {PRIORITY_ICONS[assignment.priority] && (
+                       <span className={`material-icons mr-2 ${PRIORITY_ICONS[assignment.priority].color}`}>
+                         {PRIORITY_ICONS[assignment.priority].icon}
+                       </span>
+                    )}
                     <h3 className="text-lg font-semibold text-primary-dark">{assignment.title}</h3>
                   </div>
                   <p className="text-gray-600 mb-4">{assignment.description}</p>
@@ -251,9 +264,12 @@ export default function AssignmentsPage() {
                   </div>
                 </div>
                 <div className="ml-6 flex flex-col items-end space-y-4">
-                  <span className={`px-3 py-1 ${STATUS_COLORS[assignment.status].bg} ${STATUS_COLORS[assignment.status].text} rounded-full text-sm`}>
-                    {STATUS_COLORS[assignment.status].label}
-                  </span>
+                  {/* Verifica se STATUS_COLORS[assignment.status] existe */}
+                  {STATUS_COLORS[assignment.status] && (
+                    <span className={`px-3 py-1 ${STATUS_COLORS[assignment.status].bg} ${STATUS_COLORS[assignment.status].text} rounded-full text-sm`}>
+                      {STATUS_COLORS[assignment.status].label}
+                    </span>
+                  )}
                   <div className="flex items-center space-x-2">
                     {assignment.status === 'completed' ? (
                       <div className="text-center">

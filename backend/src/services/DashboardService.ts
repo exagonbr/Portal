@@ -98,7 +98,7 @@ export class DashboardService {
   /**
    * Obtém dashboard personalizado para um usuário
    */
-  static async getUserDashboard(userId: number): Promise<UserDashboard> {
+  static async getUserDashboard(userId: string): Promise<UserDashboard> {
     try {
       // Busca dados do usuário
       const user = await UserRepository.findById(userId);
@@ -198,7 +198,7 @@ export class DashboardService {
   /**
    * Obtém dados de atividade do usuário
    */
-  private static async getUserActivity(userId: number) {
+  private static async getUserActivity(userId: string) {
     // Sessões recentes do usuário
     const recentSessions = await SessionService.getUserSessions(userId.toString());
     

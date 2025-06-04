@@ -69,7 +69,12 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.post('/send', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/send', validateJWT, requireRole([
+  'SYSTEM_ADMIN',
+  'INSTITUTION_MANAGER', 
+  'ACADEMIC_COORDINATOR',
+  'TEACHER'
+]), async (req, res) => {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
@@ -187,7 +192,10 @@ router.post('/send', validateJWT, requireRole(['admin', 'teacher']), async (req,
  *       401:
  *         description: Unauthorized
  */
-router.post('/email/test', validateJWT, requireRole(['admin']), async (req, res) => {
+router.post('/email/test', validateJWT, requireRole([
+  'SYSTEM_ADMIN',
+  'INSTITUTION_MANAGER'
+]), async (req, res) => {
   try {
     const { to } = req.body;
 
@@ -258,7 +266,10 @@ router.post('/email/test', validateJWT, requireRole(['admin']), async (req, res)
  *       401:
  *         description: Unauthorized
  */
-router.get('/email/verify', validateJWT, requireRole(['admin']), async (req, res) => {
+router.get('/email/verify', validateJWT, requireRole([
+  'SYSTEM_ADMIN',
+  'INSTITUTION_MANAGER'
+]), async (req, res) => {
   try {
     const status = emailService.getStatus();
     const isConnected = await emailService.verifyConnection();

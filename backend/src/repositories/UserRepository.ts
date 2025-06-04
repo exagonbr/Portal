@@ -3,9 +3,24 @@ import bcrypt from 'bcryptjs';
 import { User, CreateUserData, UpdateUserData, UserWithRelations } from '../entities/User';
 
 export class UserRepository {
+  static getUserWithRoleAndInstitution(id: string) {
+    throw new Error('Method not implemented.');
+  }
+  getUserCourses(userId: string) {
+    throw new Error('Method not implemented.');
+  }
+  updateUser(userId: string, arg1: { password: string; }) {
+    throw new Error('Method not implemented.');
+  }
+  static updateLastLogin(userId: string) {
+    throw new Error('Method not implemented.');
+  }
+  static getUserStatistics(institutionFilter: string | undefined) {
+    throw new Error('Method not implemented.');
+  }
   private static readonly TABLE_NAME = 'users';
 
-  static async findById(id: number): Promise<UserWithRelations | null> {
+  static async findById(id: string): Promise<UserWithRelations | null> {
     try {
       const user = await db(this.TABLE_NAME)
         .leftJoin('roles', 'users.role_id', 'roles.id')
@@ -79,7 +94,7 @@ export class UserRepository {
     }
   }
 
-  static async update(id: number, userData: UpdateUserData): Promise<User | null> {
+  static async update(id: string, userData: UpdateUserData): Promise<User | null> {
     try {
       // Hash da senha se fornecida
       if (userData.password) {
@@ -146,7 +161,7 @@ export class UserRepository {
     }
   }
 
-  static async findByInstitution(institutionId: number): Promise<UserWithRelations[]> {
+  static async findByInstitution(institutionId: string): Promise<UserWithRelations[]> {
     try {
       const users = await db(this.TABLE_NAME)
         .leftJoin('roles', 'users.role_id', 'roles.id')
@@ -188,7 +203,7 @@ export class UserRepository {
     }
   }
 
-  private static mapUserWithRelations(row: any): UserWithRelations {
+  static mapUserWithRelations(row: any): UserWithRelations {
     const user: UserWithRelations = {
       id: row.id,
       version: row.version,

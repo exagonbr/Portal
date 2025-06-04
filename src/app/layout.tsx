@@ -6,6 +6,7 @@ import { PushNotificationInitializer } from '@/components/PushNotificationInitia
 import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
 import GlobalSetup from '@/components/GlobalSetup';
+import { Toaster } from '@/components/ui/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -68,6 +69,7 @@ export default function RootLayout({
           <PWARegistration />
           <PushNotificationInitializer />
         </AppProviders>
+        <Toaster />
       </body>
     </html>
   );

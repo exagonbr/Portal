@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Sistema de filas
+model QueueJob {
+  id          String    @id @default(uuid())
+  type        String
+  data        String
+  priority    Int       @default(0)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  timeout     Int?      @default(30000)
+  delay       DateTime?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  processedAt DateTime? @map("processed_at")
+  completedAt DateTime? @map("completed_at")
+  failedAt    DateTime? @map("failed_at")
+  error       String?
+  status      String    @default("pending")
+  createdBy   String?   @map("created_by")
+
+  @@map("queue_jobs")
+}
+
+// Configurações do sistema
+model SystemConfig {
+  key   String @id
+  value String
+
+  @@map("system_config")
+}
+
+// Perfis de usuário
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  users       User[]
+
+  @@map("roles")
+}
+
+// Usuários do sistema
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String
+  roleId    String   @map("role_id")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@map("users")
+} 

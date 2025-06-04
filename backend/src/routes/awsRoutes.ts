@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Knex } from 'knex';
+import type { Knex } from 'knex';
 import { AwsSettingsController } from '../controllers/AwsSettingsController';
 import { validateJWT, requireRole } from '../middleware/auth';
 
@@ -9,7 +9,7 @@ export function createAwsRoutes(db: Knex): Router {
 
   // Aplicar autenticação e autorização para todas as rotas
   router.use(validateJWT);
-  router.use(requireRole(['admin'])); // Apenas administradores podem acessar configurações AWS
+  router.use(requireRole(['SYSTEM_ADMIN'])); // Apenas administradores do sistema podem acessar configurações AWS
 
   // Configurações AWS
   router.get('/settings', (req, res) => awsController.getActiveSettings(req, res));

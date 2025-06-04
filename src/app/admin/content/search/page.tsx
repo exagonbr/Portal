@@ -1,10 +1,12 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useState, useRef, useEffect, useMemo } from 'react'
-import { FileService } from '@/services/fileService'
-import { BucketService } from '@/services/bucketService'
+import { useState, useRef, useEffect, useMemo, useCallback, FormEvent } from 'react' // Added useCallback, FormEvent
+// import { FileService } from '@/services/fileService' // To be replaced
+// import { BucketService } from '@/services/bucketService' // To be replaced
+import { apiClient, ApiClientError } from '@/services/apiClient' // Added
 import { S3FileInfo } from '@/types/files'
+import { PaginatedResponseDto } from '@/types/api'; // Assuming file listings might be paginated
 
 const CONTENT_TYPES = ['Todos', 'PDF', 'DOCX', 'PPTX', 'EPUB', 'ZIP', 'MP4', 'MP3']
 const SORT_OPTIONS = [
@@ -106,179 +108,165 @@ export default function AdminContentSearchPage() {
     setCurrentPage(1)
   }, [searchTerm, contentType, sortBy, activeTab, itemsPerPage])
 
-  const loadBuckets = async () => {
-    setBucketsLoading(true)
-    setError(null)
+  const loadBuckets = useCallback(async () => {
+    setBucketsLoading(true);
+    setError(null);
     try {
-      const buckets = await BucketService.getConfiguredBuckets()
-      setAvailableBuckets(buckets)
-      
-      // Definir primeira aba como ativa se não houver nenhuma
-      if (buckets.length > 0 && !activeTab) {
-        setActiveTab(buckets[0].category)
-      }
-      
-      // Inicializar estado de contents para todos os buckets
-      const initialContents: Record<string, S3FileInfo[]> = {}
-      buckets.forEach(bucket => {
-        initialContents[bucket.category] = []
-      })
-      setContents(initialContents)
-      
-    } catch (err) {
-      console.error('Erro ao carregar buckets:', err)
-      setError('Erro ao carregar buckets. Tente novamente.')
-    } finally {
-      setBucketsLoading(false)
-    }
-  }
-
-  const loadFiles = async () => {
-    if (!activeTab) return
-    
-    setLoading(true)
-    setProgress({ current: 0, total: 100, isLoading: true })
-    setError(null)
-    
-    try {
-      // Simular progresso de carregamento
-      const updateProgress = (current: number) => {
-        setProgress(prev => ({ ...prev, current }))
-      }
-
-      updateProgress(20)
-      
-      // Buscar bucket info para a aba ativa
-      const activeBucket = availableBuckets.find(bucket => bucket.category === activeTab)
-      if (!activeBucket) {
-        throw new Error(`Bucket não encontrado para a categoria: ${activeTab}`)
-      }
-      
-      console.log(`Carregando arquivos do bucket: ${activeBucket.name} (categoria: ${activeTab})`)
-      
-      // Buscar TODOS os arquivos do bucket específico
-      const allBucketFiles = await FileService.getAllBucketFiles(activeTab)
-      updateProgress(60)
-      
-      // Verificar referências no banco de dados para esta categoria específica
-      const filesWithReferences = await FileService.checkDatabaseReferences(activeTab as 'literario' | 'professor' | 'aluno')
-      updateProgress(80)
-      
-      // Combinar arquivos do bucket com informações de referência
-      const combinedFiles = allBucketFiles.map((bucketFile: S3FileInfo) => {
-        const dbReference = filesWithReferences.find(dbFile => dbFile.name === bucketFile.name)
-        return {
-          ...bucketFile,
-          hasDbReference: !!dbReference,
-          dbRecord: dbReference?.dbRecord || null,
-          bucket: activeBucket.name, // Garantir que o bucket está correto
-          category: activeTab // Adicionar categoria para facilitar filtragem
+      // TODO: Adjust API endpoint for buckets
+      const response = await apiClient.get<BucketInfo[]>('/api/admin/content/buckets');
+      if (response.success && response.data) {
+        setAvailableBuckets(response.data);
+        if (response.data.length > 0 && !activeTab) {
+          setActiveTab(response.data[0].category);
         }
-      })
-      
-      updateProgress(100)
-      
-      console.log(`Carregados ${combinedFiles.length} arquivos para a categoria ${activeTab}`)
-      
-      setContents(prev => ({
-        ...prev,
-        [activeTab]: combinedFiles
-      }))
+        const initialContents: Record<string, S3FileInfo[]> = {};
+        response.data.forEach(bucket => {
+          initialContents[bucket.category] = [];
+        });
+        setContents(initialContents);
+      } else {
+        setError(response.message || 'Erro ao carregar buckets.');
+      }
     } catch (err) {
-      console.error('Erro ao carregar arquivos:', err)
-      setError(`Erro ao carregar arquivos da categoria ${activeTab}. Tente novamente.`)
+      console.error('Erro ao carregar buckets:', err);
+      setError(err instanceof ApiClientError ? err.message : 'Erro ao carregar buckets. Tente novamente.');
     } finally {
-      setLoading(false)
-      setProgress({ current: 0, total: 0, isLoading: false })
+      setBucketsLoading(false);
     }
-  }
+  }, [activeTab]); // Removed activeTab from deps as it's set inside
 
-  const loadAllFiles = async () => {
-    setLoading(true)
-    setProgress({ current: 0, total: availableBuckets.length, isLoading: true })
-    setError(null)
+  const loadFiles = useCallback(async () => {
+    if (!activeTab) return;
+    
+    setLoading(true);
+    setProgress({ current: 0, total: 100, isLoading: true });
+    setError(null);
     
     try {
-      const allFiles: Record<string, S3FileInfo[]> = {}
+      const updateProgress = (current: number) => setProgress(prev => ({ ...prev, current }));
+      updateProgress(20);
+
+      const activeBucket = availableBuckets.find(bucket => bucket.category === activeTab);
+      if (!activeBucket) throw new Error(`Bucket não encontrado para a categoria: ${activeTab}`);
       
-      for (let i = 0; i < availableBuckets.length; i++) {
-        const bucket = availableBuckets[i]
-        setProgress(prev => ({ ...prev, current: i + 1 }))
-        
-        console.log(`Carregando bucket ${i + 1}/${availableBuckets.length}: ${bucket.name} (${bucket.category})`)
-        
+      console.log(`Carregando arquivos do bucket: ${activeBucket.name} (categoria: ${activeTab})`);
+      
+      // TODO: Adjust API endpoint for files by category and for references
+      // Option 1: Backend combines this logic
+      // const response = await apiClient.get<S3FileInfo[]>(`/api/admin/content/files-detailed/${activeTab}`);
+      // if (response.success) setContents(prev => ({ ...prev, [activeTab]: response.data || [] }));
+      // else setError(response.message);
+
+      // Option 2: Separate calls (closer to original logic, but backend should ideally handle joins)
+      const filesResponse = await apiClient.get<S3FileInfo[]>(`/api/admin/content/files/${activeTab}/list`); // Endpoint for raw S3 list
+      updateProgress(60);
+      const referencesResponse = await apiClient.get<S3FileInfo[]>(`/api/admin/content/files/${activeTab}/references`); // Endpoint for DB references
+      updateProgress(80);
+
+      if (filesResponse.success && referencesResponse.success) {
+        const allBucketFiles = filesResponse.data || [];
+        const filesWithReferences = referencesResponse.data || [];
+        const combinedFiles = allBucketFiles.map((bucketFile: S3FileInfo) => {
+          const dbReference = filesWithReferences.find(dbFile => dbFile.name === bucketFile.name);
+          return {
+            ...bucketFile,
+            hasDbReference: !!dbReference,
+            dbRecord: dbReference?.dbRecord || null,
+            bucket: activeBucket.name,
+            category: activeTab,
+          };
+        });
+        setContents(prev => ({ ...prev, [activeTab]: combinedFiles }));
+      } else {
+        setError(filesResponse.message || referencesResponse.message || `Erro ao carregar arquivos da categoria ${activeTab}.`);
+      }
+      updateProgress(100);
+      
+    } catch (err) {
+      console.error('Erro ao carregar arquivos:', err);
+      setError(err instanceof ApiClientError ? err.message : `Erro ao carregar arquivos da categoria ${activeTab}. Tente novamente.`);
+    } finally {
+      setLoading(false);
+      setProgress({ current: 0, total: 0, isLoading: false });
+    }
+  }, [activeTab, availableBuckets]);
+
+  const loadAllFiles = useCallback(async () => {
+    setLoading(true);
+    setProgress({ current: 0, total: availableBuckets.length, isLoading: true });
+    setError(null);
+    try {
+      const allFilesPromises = availableBuckets.map(async (bucket, index) => {
+        setProgress(prev => ({ ...prev, current: index + 1 }));
+        console.log(`Carregando bucket ${index + 1}/${availableBuckets.length}: ${bucket.name} (${bucket.category})`);
         try {
-          // Carregar arquivos do bucket específico
-          const allBucketFiles = await FileService.getAllBucketFiles(bucket.category)
+          // TODO: Adjust API endpoints
+          const filesResponse = await apiClient.get<S3FileInfo[]>(`/api/admin/content/files/${bucket.category}/list`);
+          const referencesResponse = await apiClient.get<S3FileInfo[]>(`/api/admin/content/files/${bucket.category}/references`);
           
-          // Verificar referências no banco para esta categoria
-          const filesWithReferences = await FileService.checkDatabaseReferences(bucket.category as 'literario' | 'professor' | 'aluno')
-          
-          // Combinar dados
-          const combinedFiles = allBucketFiles.map((bucketFile: S3FileInfo) => {
-            const dbReference = filesWithReferences.find(dbFile => dbFile.name === bucketFile.name)
-            return {
-              ...bucketFile,
-              hasDbReference: !!dbReference,
-              dbRecord: dbReference?.dbRecord || null,
-              bucket: bucket.name,
-              category: bucket.category
-            }
-          })
-          
-          allFiles[bucket.category] = combinedFiles
-          console.log(`✓ Carregados ${combinedFiles.length} arquivos para ${bucket.category}`)
-          
+          if (filesResponse.success && referencesResponse.success) {
+            const allBucketFiles = filesResponse.data || [];
+            const filesWithReferencesData = referencesResponse.data || [];
+            const combined = allBucketFiles.map((bucketFile: S3FileInfo) => {
+              const dbRef = filesWithReferencesData.find(dbFile => dbFile.name === bucketFile.name);
+              return { ...bucketFile, hasDbReference: !!dbRef, dbRecord: dbRef?.dbRecord || null, bucket: bucket.name, category: bucket.category };
+            });
+            return { [bucket.category]: combined };
+          }
+          throw new Error(filesResponse.message || referencesResponse.message || `Erro no bucket ${bucket.category}`);
         } catch (bucketError) {
-          console.error(`Erro ao carregar bucket ${bucket.category}:`, bucketError)
-          allFiles[bucket.category] = [] // Adicionar array vazio em caso de erro
+          console.error(`Erro ao carregar bucket ${bucket.category}:`, bucketError);
+          return { [bucket.category]: [] };
         }
-      }
+      });
       
-      setContents(allFiles)
-      console.log('✅ Todos os buckets carregados com sucesso')
+      const results = await Promise.all(allFilesPromises);
+      const newContents = results.reduce((acc, current) => ({ ...acc, ...current }), {});
+      setContents(newContents);
+      console.log('✅ Todos os buckets carregados.');
       
     } catch (err) {
-      console.error('Erro ao carregar todos os arquivos:', err)
-      setError('Erro ao carregar arquivos de alguns buckets. Tente novamente.')
+      console.error('Erro ao carregar todos os arquivos:', err);
+      setError(err instanceof ApiClientError ? err.message : 'Erro ao carregar arquivos de alguns buckets.');
     } finally {
-      setLoading(false)
-      setProgress({ current: 0, total: 0, isLoading: false })
+      setLoading(false);
+      setProgress({ current: 0, total: 0, isLoading: false });
     }
-  }
+  }, [availableBuckets]);
 
-  const addNewBucket = async () => {
+  const addNewBucket = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!newBucketName || !newBucketLabel || !newBucketCategory) {
-      setError('Nome, label e categoria são obrigatórios')
-      return
+      setError('Nome, label e categoria são obrigatórios');
+      return;
     }
-
     try {
-      setLoading(true)
-      await BucketService.addBucket({
+      setLoading(true); // Or a specific loading state for this action
+      // TODO: Adjust API endpoint for adding bucket
+      const response = await apiClient.post('/api/admin/content/buckets', {
         name: newBucketName,
         label: newBucketLabel,
         category: newBucketCategory,
-        description: newBucketDescription
-      })
-      
-      // Recarregar buckets
-      await loadBuckets()
-      
-      // Limpar form
-      setNewBucketName('')
-      setNewBucketLabel('')
-      setNewBucketCategory('')
-      setNewBucketDescription('')
-      setShowBucketModal(false)
-      
+        description: newBucketDescription,
+      });
+
+      if (response.success) {
+        await loadBuckets();
+        setNewBucketName('');
+        setNewBucketLabel('');
+        setNewBucketCategory('');
+        setNewBucketDescription('');
+        setShowBucketModal(false);
+      } else {
+        setError(response.message || 'Erro ao adicionar bucket.');
+      }
     } catch (err) {
-      console.error('Erro ao adicionar bucket:', err)
-      setError('Erro ao adicionar bucket. Verifique se o bucket existe na AWS.')
+      console.error('Erro ao adicionar bucket:', err);
+      setError(err instanceof ApiClientError ? err.message : 'Erro ao adicionar bucket. Verifique se o bucket existe na AWS.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Função para filtrar e ordenar conteúdo com paginação
   const getFilteredContent = useMemo(() => {
@@ -339,107 +327,130 @@ export default function AdminContentSearchPage() {
     fileInputRef.current?.click()
   }
 
-  const handleFileReplace = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const handleFileReplace = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file && selectedItem) {
       try {
-        setLoading(true)
-        await FileService.replaceFile(selectedItem.dbRecord?.id || selectedItem.id, file)
-        await loadFiles() // Recarregar dados
-        setSelectedItem(null)
-      } catch (error) {
-        console.error('Erro ao substituir arquivo:', error)
-        setError('Erro ao substituir arquivo')
+        setLoading(true);
+        setError(null);
+        const fileId = selectedItem.dbRecord?.id || selectedItem.id; // Prefer DB record ID if available
+        // TODO: Adjust API endpoint for replacing file. This often involves FormData.
+        const formData = new FormData();
+        formData.append('file', file);
+        // Add other necessary identifiers if backend needs them, e.g., original file name, bucket
+        formData.append('originalName', selectedItem.name);
+        formData.append('bucketName', selectedItem.bucket);
+
+
+        await apiClient.post(`/api/admin/content/files/${fileId}/replace`, formData);
+        await loadFiles();
+        setSelectedItem(null);
+        if(fileInputRef.current) fileInputRef.current.value = ""; // Reset file input
+      } catch (err) {
+        console.error('Erro ao substituir arquivo:', err);
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao substituir arquivo');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  }, [selectedItem, loadFiles]);
 
-  const handleRename = async () => {
+  const handleRename = useCallback(async () => {
     if (selectedItem && newName) {
       try {
-        setLoading(true)
-        await FileService.renameFile(selectedItem.dbRecord?.id || selectedItem.id, newName)
-        await loadFiles()
-        setShowRenameModal(false)
-        setNewName('')
-        setSelectedItem(null)
-      } catch (error) {
-        console.error('Erro ao renomear arquivo:', error)
-        setError('Erro ao renomear arquivo')
+        setLoading(true);
+        setError(null);
+        const fileId = selectedItem.dbRecord?.id || selectedItem.id;
+        // TODO: Adjust API endpoint for renaming
+        await apiClient.put(`/api/admin/content/files/${fileId}/rename`, { newName, bucketName: selectedItem.bucket, originalName: selectedItem.name });
+        await loadFiles();
+        setShowRenameModal(false);
+        setNewName('');
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Erro ao renomear arquivo:', err);
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao renomear arquivo');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  }, [selectedItem, newName, loadFiles]);
 
-  const handleMove = async () => {
+  const handleMove = useCallback(async () => {
     if (selectedItem && targetBucket) {
       try {
-        setLoading(true)
-        await FileService.moveFile({
-          fileId: selectedItem.dbRecord?.id || selectedItem.id,
+        setLoading(true);
+        setError(null);
+        const fileId = selectedItem.dbRecord?.id || selectedItem.id;
+        // TODO: Adjust API endpoint for moving/copying
+        await apiClient.post(`/api/admin/content/files/${fileId}/move`, {
           sourceBucket: selectedItem.bucket,
           targetBucket: targetBucket,
-          action: moveAction
-        })
-        await loadFiles()
-        setShowMoveModal(false)
-        setTargetBucket('')
-        setSelectedItem(null)
-      } catch (error) {
-        console.error('Erro ao mover arquivo:', error)
-        setError('Erro ao mover arquivo')
+          fileName: selectedItem.name, // Send filename
+          action: moveAction,
+        });
+        await loadFiles(); // This might need to reload all buckets or specific ones
+        setShowMoveModal(false);
+        setTargetBucket('');
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Erro ao mover/copiar arquivo:', err);
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao mover/copiar arquivo');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  }, [selectedItem, targetBucket, moveAction, loadFiles]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (selectedItem) {
       try {
-        setLoading(true)
-        await FileService.deleteFile(selectedItem.dbRecord?.id || selectedItem.id)
-        await loadFiles()
-        setShowDeleteModal(false)
-        setSelectedItem(null)
-      } catch (error) {
-        console.error('Erro ao deletar arquivo:', error)
-        setError('Erro ao deletar arquivo')
+        setLoading(true);
+        setError(null);
+        const fileId = selectedItem.dbRecord?.id || selectedItem.id;
+         // TODO: Adjust API endpoint for deleting
+        await apiClient.delete(`/api/admin/content/files/${fileId}`, { bucketName: selectedItem.bucket, fileName: selectedItem.name });
+        await loadFiles();
+        setShowDeleteModal(false);
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Erro ao deletar arquivo:', err);
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao deletar arquivo');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  }, [selectedItem, loadFiles]);
 
-  const handleCreateReference = async () => {
+  const handleCreateReference = useCallback(async () => {
     if (selectedItem) {
       try {
-        setLoading(true)
-        await FileService.createDatabaseReference(
-          selectedItem.name, 
-          activeTab, 
-          {
-            name: selectedItem.name,
-            description: refDescription,
-            tags: refTags.split(',').map(tag => tag.trim()).filter(tag => tag)
-          }
-        )
-        await loadFiles()
-        setShowCreateRefModal(false)
-        setRefDescription('')
-        setRefTags('')
-        setSelectedItem(null)
-      } catch (error) {
-        console.error('Erro ao criar referência:', error)
-        setError('Erro ao criar referência no banco')
+        setLoading(true);
+        setError(null);
+        // TODO: Adjust API endpoint for creating DB reference
+        await apiClient.post(`/api/admin/content/files/references`, {
+          fileName: selectedItem.name,
+          bucketCategory: activeTab, // or selectedItem.category
+          bucketName: selectedItem.bucket,
+          fileUrl: selectedItem.url,
+          fileType: selectedItem.type,
+          fileSize: selectedItem.size,
+          description: refDescription,
+          tags: refTags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        });
+        await loadFiles();
+        setShowCreateRefModal(false);
+        setRefDescription('');
+        setRefTags('');
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Erro ao criar referência:', err);
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao criar referência no banco');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  }, [selectedItem, activeTab, refDescription, refTags, loadFiles]);
 
   const openRenameModal = (item: S3FileInfo) => {
     setSelectedItem(item)
@@ -464,56 +475,63 @@ export default function AdminContentSearchPage() {
   }
 
   // Funções para vincular a coleção e adicionar à biblioteca
-  const handleLinkToCollection = async () => {
+  const handleLinkToCollection = useCallback(async () => {
     if (selectedItem && selectedCollection) {
       try {
-        setLoading(true)
-        await FileService.linkToCollection(selectedItem.id, selectedCollection)
-        await loadFiles()
-        setShowLinkCollectionModal(false)
-        setSelectedCollection('')
-        setSelectedItem(null)
-      } catch (error) {
-        console.error('Erro ao vincular à coleção:', error)
-        setError('Erro ao vincular arquivo à coleção')
+        setLoading(true);
+        setError(null);
+        const fileId = selectedItem.dbRecord?.id || selectedItem.id;
+        // TODO: Adjust API endpoint for linking to collection
+        await apiClient.post(`/api/admin/content/files/${fileId}/link-collection`, { collectionId: selectedCollection });
+        await loadFiles();
+        setShowLinkCollectionModal(false);
+        setSelectedCollection('');
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Erro ao vincular à coleção:', err);
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao vincular arquivo à coleção');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  }, [selectedItem, selectedCollection, loadFiles]);
 
-  const handleAddToLibrary = async () => {
+  const handleAddToLibrary = useCallback(async () => {
     if (selectedItem && libraryCategory && bookTitle.trim()) {
       try {
-        setLoading(true)
-        // Adicionar especificamente ao portal de livros (books)
-        await FileService.addToBookLibrary(selectedItem.id, {
+        setLoading(true);
+        setError(null);
+        const fileId = selectedItem.dbRecord?.id || selectedItem.id;
+        // TODO: Adjust API endpoint for adding to book library
+        await apiClient.post(`/api/admin/content/files/${fileId}/add-to-library`, {
           title: bookTitle.trim(),
           author: bookAuthor.trim() || 'Autor não informado',
           publisher: bookPublisher.trim() || 'Editora não informada',
           format: selectedItem.type,
-          category: libraryCategory,
-          thumbnail: `/api/content/files/${selectedItem.id}/thumbnail`,
+          category: libraryCategory, // This is the library category (literario, professor, etc.)
+          // thumbnail: `/api/content/files/${fileId}/thumbnail`, // Backend might generate this
           fileUrl: selectedItem.url,
           fileSize: selectedItem.size,
-          description: bookDescription.trim() || 'Descrição não disponível'
-        })
-        await loadFiles()
-        setShowAddLibraryModal(false)
-        setLibraryCategory('')
-        setBookTitle('')
-        setBookAuthor('')
-        setBookPublisher('')
-        setBookDescription('')
-        setSelectedItem(null)
-      } catch (error) {
-        console.error('Erro ao adicionar à biblioteca de livros:', error)
-        setError('Erro ao adicionar arquivo à biblioteca de livros')
+          description: bookDescription.trim() || 'Descrição não disponível',
+          bucketName: selectedItem.bucket,
+          fileName: selectedItem.name
+        });
+        await loadFiles();
+        setShowAddLibraryModal(false);
+        setLibraryCategory('');
+        setBookTitle('');
+        setBookAuthor('');
+        setBookPublisher('');
+        setBookDescription('');
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Erro ao adicionar à biblioteca de livros:', err);
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao adicionar arquivo à biblioteca de livros');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  }, [selectedItem, libraryCategory, bookTitle, bookAuthor, bookPublisher, bookDescription, loadFiles]);
 
   const openLinkCollectionModal = (item: S3FileInfo) => {
     setSelectedItem(item)
@@ -530,22 +548,25 @@ export default function AdminContentSearchPage() {
   }
 
   // Função para desvincular arquivo do conteúdo
-  const handleUnlinkFromContent = async () => {
+  const handleUnlinkFromContent = useCallback(async () => {
     if (selectedItem) {
       try {
-        setLoading(true)
-        await FileService.unlinkFromContent(selectedItem.id)
-        await loadFiles()
-        setShowUnlinkModal(false)
-        setSelectedItem(null)
-      } catch (error) {
-        console.error('Erro ao desvincular arquivo:', error)
-        setError('Erro ao desvincular arquivo')
+        setLoading(true);
+        setError(null);
+        const fileId = selectedItem.dbRecord?.id || selectedItem.id; // Prefer DB record ID
+         // TODO: Adjust API endpoint for unlinking
+        await apiClient.post(`/api/admin/content/files/${fileId}/unlink`);
+        await loadFiles();
+        setShowUnlinkModal(false);
+        setSelectedItem(null);
+      } catch (err) {
+        console.error('Erro ao desvincular arquivo:', err);
+        setError(err instanceof ApiClientError ? err.message : 'Erro ao desvincular arquivo');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  }, [selectedItem, loadFiles]);
 
   const openUnlinkModal = (item: S3FileInfo) => {
     setSelectedItem(item)

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { API_ENDPOINTS } from '@/constants/apiEndpoints';
 
 interface ApiResponse<T = any> {
@@ -7,11 +8,39 @@ interface ApiResponse<T = any> {
   error?: string;
 }
 
-class ApiService {
-  private baseURL: string;
+// Corrigir a URL base para não incluir /api no final
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Criar instância do Axios para uso interno
+const axiosInstance = axios.create({
+  baseURL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+class ApiService {
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    // Não precisamos mais da baseURL pois os endpoints já vêm completos
   }
 
   private async request<T>(
@@ -29,10 +58,7 @@ class ApiService {
         defaultHeaders.Authorization = `Bearer ${token}`;
       }
 
-      // Construir URL completa se for relativa
-      const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
-
-      const response = await fetch(fullUrl, {
+      const response = await fetch(url, {
         ...options,
         headers: {
           ...defaultHeaders,
@@ -64,20 +90,20 @@ class ApiService {
 
   public getAuthToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken');
+      return localStorage.getItem('auth_token');
     }
     return null;
   }
 
   public setAuthToken(token: string): void {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('auth_token', token);
     }
   }
 
   public removeAuthToken(): void {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('auth_token');
     }
   }
 
@@ -338,5 +364,7 @@ class ApiService {
   }
 }
 
-export const apiService = new ApiService();
-export default apiService;
+// Criar e exportar instância da classe ApiService
+const apiServiceInstance = new ApiService();
+export { apiServiceInstance as apiService };
+export default apiServiceInstance;

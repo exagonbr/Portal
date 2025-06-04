@@ -2,6 +2,7 @@ import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger';
 import { createAwsRoutes } from './awsRoutes';
+import { createAwsAdminRoutes } from './awsAdminRoutes';
 import db from '../config/database';
 
 // API Routes
@@ -26,6 +27,9 @@ import contentCollectionsRouter from './content-collections';
 import authRouter from './auth';
 import sessionsRouter from './sessions';
 import dashboardRouter from './dashboard';
+import cacheRouter from './cache';
+import adminRouter from './adminRoutes';
+import queueRouter from './queue';
 
 const router = express.Router();
 
@@ -107,5 +111,9 @@ router.use('/auth', authRouter);
 router.use('/sessions', sessionsRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/aws', createAwsRoutes(db));
+router.use('/admin/aws', createAwsAdminRoutes(db));
+router.use('/admin', adminRouter);
+router.use('/cache', cacheRouter);
+router.use('/queue', queueRouter);
 
 export default router;

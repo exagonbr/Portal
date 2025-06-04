@@ -240,7 +240,7 @@ router.delete('/threads/:id', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to pin threads
  */
-router.post('/threads/:id/pin', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/threads/:id/pin', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -278,7 +278,7 @@ router.post('/threads/:id/pin', validateJWT, requireRole(['admin', 'teacher']), 
  *       403:
  *         description: Not authorized to lock threads
  */
-router.post('/threads/:id/lock', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/threads/:id/lock', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

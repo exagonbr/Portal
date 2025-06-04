@@ -60,7 +60,7 @@ const router = express.Router();
  */
 router.get('/system', 
   validateJWTAndSession, 
-  requireRole(['admin', 'SYSTEM_ADMIN']), 
+  requireRole(['SYSTEM_ADMIN']), 
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       const dashboardData = await DashboardService.getSystemDashboard();
@@ -122,7 +122,7 @@ router.get('/system',
  */
 router.get('/user', validateJWTAndSession, async (req: AuthenticatedRequest, res: express.Response) => {
   try {
-    const userId = parseInt(req.user!.userId, 10);
+    const userId = req.user!.userId;
     const dashboardData = await DashboardService.getUserDashboard(userId);
 
     return res.json({
@@ -175,7 +175,7 @@ router.get('/user', validateJWTAndSession, async (req: AuthenticatedRequest, res
  */
 router.get('/metrics/realtime', 
   validateJWTAndSession, 
-  requireRole(['admin', 'SYSTEM_ADMIN']), 
+  requireRole(['SYSTEM_ADMIN']), 
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       const metrics = await DashboardService.getRealTimeMetrics();
@@ -255,7 +255,7 @@ router.get('/metrics/realtime',
  */
 router.get('/analytics', 
   validateJWTAndSession, 
-  requireRole(['admin', 'SYSTEM_ADMIN']),
+  requireRole(['SYSTEM_ADMIN']),
   [
     query('type').isIn(['users', 'sessions', 'activity']).withMessage('Tipo deve ser users, sessions ou activity'),
     query('period').optional().isIn(['day', 'week', 'month']).withMessage('Período deve ser day, week ou month')
@@ -349,7 +349,7 @@ router.get('/summary', validateJWTAndSession, async (req: AuthenticatedRequest, 
     }
 
     // Adiciona dados personalizados para o usuário
-    const userDashboard = await DashboardService.getUserDashboard(parseInt(userId, 10));
+    const userDashboard = await DashboardService.getUserDashboard(userId);
     summary.personalStats = userDashboard.user.stats;
 
     return res.json({
@@ -494,7 +494,7 @@ router.get('/notifications', validateJWTAndSession, async (req: AuthenticatedReq
  */
 router.get('/health', 
   validateJWTAndSession, 
-  requireRole(['admin', 'SYSTEM_ADMIN']), 
+  requireRole(['SYSTEM_ADMIN']), 
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       // Verifica saúde dos componentes
@@ -1192,7 +1192,7 @@ router.get('/guardian', validateJWTAndSession, requireRole(['GUARDIAN', 'guardia
  */
 router.get('/system-admin', 
   validateJWTAndSession, 
-  requireRole(['admin', 'SYSTEM_ADMIN']), 
+  requireRole(['SYSTEM_ADMIN']), 
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       // System health metrics (uptime, load, queue status)
@@ -1316,7 +1316,7 @@ router.get('/system-admin',
  */
 router.get('/institution-manager', 
   validateJWTAndSession, 
-  requireRole(['INSTITUTION_MANAGER', 'admin']), 
+  requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), 
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       const institutionId = req.user?.institutionId;
@@ -1488,7 +1488,7 @@ router.get('/institution-manager',
  */
 router.get('/coordinator', 
   validateJWTAndSession, 
-  requireRole(['ACADEMIC_COORDINATOR', 'admin']), 
+  requireRole(['SYSTEM_ADMIN', 'ACADEMIC_COORDINATOR']), 
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       const institutionId = req.user?.institutionId;

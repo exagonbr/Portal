@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from '@/hooks/useForm';
 import { toast } from '@/components/Toast';
+import { unifiedApi, handleApiError } from '@/services/unifiedApiClient';
 
 interface LoginFormData {
   email: string;
@@ -53,77 +54,36 @@ export function LoginForm() {
       console.log('🔐 Iniciando login via formulário para:', formValues.email);
       
       if (loginFn) {
-        // Usar a função direta do contexto
+        // Usar a função direta do contexto se disponível
         await loginFn(formValues.email, formValues.password);
         toast.success('Login realizado com sucesso!');
       } else {
-        // Fallback para o caso do hook falhar
-        console.warn('⚠️ Usando método de login alternativo via API direta');
+        // Usar o cliente unificado como fallback
+        console.warn('⚠️ Usando cliente API unificado para login');
         
-        // Implementar chamada direta à API
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: formValues.email,
-            password: formValues.password,
-          }),
-        });
+        const response = await unifiedApi.login(formValues.email, formValues.password);
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Falha na autenticação');
-        }
-        
-        const data = await response.json();
-        
-        if (data.token) {
-          // Salvar token e dados do usuário no localStorage
-          localStorage.setItem('auth_token', data.token);
-          if (data.user) {
-            localStorage.setItem('user_data', JSON.stringify(data.user));
-          }
-          if (data.refresh_token) {
-            localStorage.setItem('refresh_token', data.refresh_token);
-            
-            // Salvar também como cookie para redundância
-            const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + 30); // Expira em 30 dias
-            document.cookie = `refresh_token=${data.refresh_token}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
-          }
-          if (data.expires_at) {
-            localStorage.setItem('auth_expires_at', data.expires_at);
+        if (response.success) {
+          toast.success('Login realizado com sucesso!');
+          
+          // Verificar se o token foi salvo corretamente
+          const savedToken = unifiedApi.getAuthToken();
+          if (savedToken) {
+            console.log('✅ Token salvo e verificado');
+          } else {
+            console.warn('⚠️ Token não foi salvo corretamente');
           }
           
-          toast.success('Login realizado com sucesso!');
           router.push('/dashboard');
         } else {
-          throw new Error('Resposta inválida do servidor');
+          throw new Error(response.message || 'Falha na autenticação');
         }
       }
     } catch (error: any) {
       console.error('❌ Erro durante o login:', error);
       
-      // Tratamento específico para erros conhecidos
-      let errorMessage = 'Email ou senha incorretos. Por favor, tente novamente.';
-      
-      if (error.message) {
-        if (error.message.includes('Falha ao atualizar token') || 
-            error.message.includes('Failed to refresh token') ||
-            error.message.includes('Sessão expirada')) {
-          errorMessage = 'Sua sessão expirou. Por favor, faça login novamente.';
-        } else if (error.message.includes('Email ou senha incorretos')) {
-          errorMessage = 'Email ou senha incorretos. Por favor, verifique suas credenciais.';
-        } else if (error.message.includes('Usuário não encontrado')) {
-          errorMessage = 'Usuário não encontrado. Verifique se o email está correto.';
-        } else if (error.message.includes('rede') || error.message.includes('network')) {
-          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
+      // Usar handleApiError para tratamento consistente
+      const errorMessage = handleApiError(error);
       
       setSubmitError(errorMessage);
       toast.error(errorMessage);

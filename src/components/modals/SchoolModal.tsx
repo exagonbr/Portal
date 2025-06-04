@@ -9,9 +9,10 @@ import { InstitutionDto } from '@/types/api';
 interface SchoolModalProps {
   school?: School | null;
   onClose: () => void;
+  onSave: (data: any) => Promise<void>;
 }
 
-export default function SchoolModal({ school, onClose }: SchoolModalProps) {
+export default function SchoolModal({ school, onClose, onSave }: SchoolModalProps) {
   const [loading, setLoading] = useState(false);
   const [institutions, setInstitutions] = useState<InstitutionDto[]>([]);
   const [formData, setFormData] = useState<CreateSchoolData>({

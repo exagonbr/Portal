@@ -17,12 +17,13 @@ import {
   Bell
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { institutionService } from '@/services/institutionService';
-import { schoolService } from '@/services/schoolService';
-import { classService } from '@/services/classService';
+import { apiClient, ApiClientError } from '@/services/apiClient'; // Added
+// import { institutionService } from '@/services/institutionService'; // To be replaced
+// import { schoolService } from '@/services/schoolService'; // To be replaced
+// import { classService } from '@/services/classService'; // To be replaced
 import { School as SchoolType } from '@/types/school';
 import { Class } from '@/types/class';
-import { InstitutionDto, InstitutionResponseDto } from '@/types/api';
+import { InstitutionDto, InstitutionResponseDto, PaginatedResponseDto } from '@/types/api'; // Corrected to PaginatedResponseDto
 
 // Modal de CRUD de Instituições
 import InstitutionModal from '@/components/modals/InstitutionModal';
@@ -76,16 +77,22 @@ export default function AdminDashboard() {
       setLoading(true);
       
       // Carregar instituições
-      const institutionsResponse = await institutionService.list({ limit: 5 });
-      setRecentInstitutions(institutionsResponse.items || []);
+      // TODO: Adjust API endpoint and response structure as needed
+      const institutionsApiResponse = await apiClient.get<PaginatedResponse<InstitutionDto>>('/api/institutions', { limit: 5 });
+      const institutionsData = institutionsApiResponse.data;
+      setRecentInstitutions(institutionsData?.items || []);
       
       // Carregar escolas recentes
-      const schoolsResponse = await schoolService.list({ limit: 5 });
-      setRecentSchools(schoolsResponse.items || []);
+      // TODO: Adjust API endpoint and response structure as needed
+      const schoolsApiResponse = await apiClient.get<PaginatedResponse<SchoolType>>('/api/schools', { limit: 5 });
+      const schoolsData = schoolsApiResponse.data;
+      setRecentSchools(schoolsData?.items || []);
       
       // Carregar turmas recentes
-      const classesResponse = await classService.list({ limit: 5 });
-      setRecentClasses(classesResponse.items || []);
+      // TODO: Adjust API endpoint and response structure as needed
+      const classesApiResponse = await apiClient.get<PaginatedResponse<Class>>('/api/classes', { limit: 5 });
+      const classesData = classesApiResponse.data;
+      setRecentClasses(classesData?.items || []);
 
       // Calcular estatísticas
       let totalStudents = 0;
@@ -93,29 +100,44 @@ export default function AdminDashboard() {
       let activeClasses = 0;
 
       // Para cada escola, buscar estatísticas
-      for (const school of schoolsResponse.items || []) {
+      // TODO: Adjust API endpoint for school stats and response structure as needed
+      // This might be better handled by a dedicated dashboard stats API endpoint if performance is a concern
+      for (const school of schoolsData?.items || []) {
         try {
-          const stats = await schoolService.getStats(school.id);
-          totalStudents += stats.totalStudents;
-          totalTeachers += stats.totalTeachers;
-          activeClasses += stats.activeClasses;
+          const schoolStatsResponse = await apiClient.get<{ totalStudents: number; totalTeachers: number; activeClasses: number }>(`/api/schools/${school.id}/stats`);
+          if (schoolStatsResponse.success && schoolStatsResponse.data) {
+            totalStudents += schoolStatsResponse.data.totalStudents;
+            totalTeachers += schoolStatsResponse.data.totalTeachers;
+            activeClasses += schoolStatsResponse.data.activeClasses;
+          }
         } catch (error) {
-          console.error('Erro ao buscar stats da escola:', error);
+          console.error(`Erro ao buscar stats da escola ${school.id}:`, error);
         }
       }
+      
+      // TODO: Fetch monthlyGrowth and satisfactionRate from an API if they are not mock data
+      // For now, keeping them as mock or assuming they might come from a general stats endpoint
+      const generalStatsResponse = await apiClient.get<{ monthlyGrowth?: number; satisfactionRate?: number; /* other global stats */ }>(`/api/admin/dashboard/stats`);
+      const generalStatsData = generalStatsResponse.data || {};
+
 
       setStats({
-        totalInstitutions: institutionsResponse.pagination?.total || 0,
-        totalSchools: schoolsResponse.pagination?.total || 0,
-        totalClasses: classesResponse.pagination?.total || 0,
+        totalInstitutions: institutionsData?.pagination?.total || 0,
+        totalSchools: schoolsData?.pagination?.total || 0,
+        totalClasses: classesData?.pagination?.total || 0,
         totalStudents,
         totalTeachers,
         activeClasses,
-        monthlyGrowth: 12.5, // Mock - implementar cálculo real
-        satisfactionRate: 87.3 // Mock - implementar pesquisa real
+        monthlyGrowth: generalStatsData.monthlyGrowth || 12.5, // Fallback to mock
+        satisfactionRate: generalStatsData.satisfactionRate || 87.3 // Fallback to mock
       });
+
     } catch (error) {
-      console.error('Erro ao carregar dashboard:', error);
+      console.error('Erro ao carregar dashboard do admin:', error);
+      if (error instanceof ApiClientError) {
+        // Handle specific API client errors
+      }
+      // Set an error state to display in UI if needed
     } finally {
       setLoading(false);
     }

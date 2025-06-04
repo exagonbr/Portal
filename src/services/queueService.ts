@@ -96,7 +96,7 @@ export class QueueService {
   }
 
   /**
-   * Processa jobs pendentes
+   * Processa jobs pendentes da fila
    */
   async processJobs(): Promise<void> {
     if (this.isProcessing) return;
@@ -108,13 +108,14 @@ export class QueueService {
 
       if (response.success && response.data && response.data.length > 0) {
         const jobs = response.data;
+        console.log(`✅ QueueService: ${jobs.length} jobs encontrados para processamento`);
         
         // Processa jobs em paralelo (limitado)
         const promises = jobs.slice(0, 3).map(job => this.processJob(job));
         await Promise.allSettled(promises);
       }
     } catch (error) {
-      console.error('Erro ao processar jobs:', error);
+      console.error('❌ QueueService: Erro ao processar jobs:', error);
     } finally {
       this.isProcessing = false;
     }

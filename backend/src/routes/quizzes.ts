@@ -122,7 +122,7 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -173,7 +173,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res
  *       404:
  *         description: Quiz not found
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.put('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -198,7 +198,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, r
  *       404:
  *         description: Quiz not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.delete('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -260,7 +260,7 @@ router.get('/:id/questions', validateJWT, async (req, res) => {
  *       404:
  *         description: Quiz not found
  */
-router.post('/:id/attempts', validateJWT, requireRole(['student']), async (req, res) => {
+router.post('/:id/attempts', validateJWT, requireRole(['STUDENT']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -309,7 +309,7 @@ router.post('/:id/attempts', validateJWT, requireRole(['student']), async (req, 
  *       404:
  *         description: Quiz or attempt not found
  */
-router.post('/:id/attempts/:attemptId/submit', validateJWT, requireRole(['student']), async (req, res) => {
+router.post('/:id/attempts/:attemptId/submit', validateJWT, requireRole(['STUDENT']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

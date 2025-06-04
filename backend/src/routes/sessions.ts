@@ -578,7 +578,7 @@ router.delete('/destroy/:sessionId', validateJWTAndSession, async (req: Authenti
  */
 router.get('/stats', 
   validateJWTAndSession, 
-  requireRole(['admin', 'SYSTEM_ADMIN']), 
+  requireRole(['SYSTEM_ADMIN']), 
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       const stats = await SessionService.getSessionStats();

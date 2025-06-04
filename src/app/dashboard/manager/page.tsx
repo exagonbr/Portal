@@ -22,8 +22,9 @@ import {
   Activity
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { schoolService } from '@/services/schoolService';
-import { classService } from '@/services/classService';
+// import { schoolService } from '@/services/schoolService'; // To be replaced
+// import { classService } from '@/services/classService'; // To be replaced
+import { apiClient, ApiClientError } from '@/services/apiClient'; // Added
 import { School as SchoolType } from '@/types/school';
 import { Class } from '@/types/class';
 import { SHIFT_LABELS } from '@/types/class';
@@ -88,138 +89,67 @@ export default function ManagerDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (user?.id) {
+      loadDashboardData(user.id, selectedPeriod);
+    } else if (!user && !loading) {
+        console.warn("Usuário não autenticado para carregar dashboard do gestor.");
+        setLoading(false);
+    }
+  }, [user, loading, selectedPeriod]); // Added user and loading
 
-  const loadDashboardData = async () => {
+  interface ManagerDashboardData {
+    school: SchoolType | null;
+    stats: ManagerStats;
+    teacherPerformance: TeacherPerformance[];
+    classPerformance: ClassPerformance[];
+    alerts: Alert[];
+  }
+
+  const loadDashboardData = async (userId: string | number, periodFilter: string) => {
     try {
       setLoading(true);
       
-      // Carregar dados da escola
-      // Por enquanto vamos simular os dados
-      const mockSchool: SchoolType = {
-        id: 'school1',
-        name: 'Escola Municipal São Paulo',
-        code: 'EMSP001',
-        institution_id: 'inst1',
-        address: 'Rua das Flores, 123',
-        city: 'São Paulo',
-        state: 'SP',
-        zip_code: '01234-567',
-        phone: '(11) 1234-5678',
-        email: 'contato@emsp.edu.br',
-        is_active: true,
-        created_at: new Date(),
-        updated_at: new Date()
-      };
-      
-      setSchool(mockSchool);
-      
-      // Estatísticas simuladas
-      setStats({
-        totalStudents: 450,
-        totalTeachers: 28,
-        totalClasses: 18,
-        activeClasses: 16,
-        averageAttendance: 92.5,
-        averageGrade: 7.8,
-        monthlyRevenue: 125000,
-        pendingPayments: 8500
-      });
+      // TODO: Ajustar o endpoint da API e parâmetros de filtro.
+      // O backend precisará determinar a escola associada ao managerId (userId).
+      const params: Record<string, string> = { period: periodFilter };
 
-      // Desempenho dos professores
-      setTeacherPerformance([
-        {
-          id: '1',
-          name: 'Ana Santos',
-          classes: 3,
-          students: 75,
-          averageGrade: 8.5,
-          attendance: 95
-        },
-        {
-          id: '2',
-          name: 'Carlos Oliveira',
-          classes: 2,
-          students: 52,
-          averageGrade: 7.8,
-          attendance: 93
-        },
-        {
-          id: '3',
-          name: 'Beatriz Lima',
-          classes: 3,
-          students: 78,
-          averageGrade: 8.2,
-          attendance: 94
-        }
-      ]);
+      const response = await apiClient.get<ManagerDashboardData>(
+        `/api/managers/${userId}/dashboard`, // Ou /api/schools/{schoolId}/manager-dashboard se schoolId for conhecido
+        params
+      );
 
-      // Desempenho das turmas
-      setClassPerformance([
-        {
-          id: '1',
-          name: '5º Ano A',
-          teacher: 'Ana Santos',
-          students: 28,
-          averageGrade: 8.5,
-          attendance: 95,
-          status: 'excellent'
-        },
-        {
-          id: '2',
-          name: '4º Ano B',
-          teacher: 'Carlos Oliveira',
-          students: 26,
-          averageGrade: 7.2,
-          attendance: 88,
-          status: 'attention'
-        },
-        {
-          id: '3',
-          name: '3º Ano A',
-          teacher: 'Beatriz Lima',
-          students: 25,
-          averageGrade: 8.0,
-          attendance: 92,
-          status: 'good'
-        }
-      ]);
-
-      // Alertas
-      setAlerts([
-        {
-          id: '1',
-          type: 'warning',
-          title: 'Baixa frequência',
-          description: '4º Ano B está com frequência abaixo de 90%',
-          date: '2025-01-28',
-          priority: 'high'
-        },
-        {
-          id: '2',
-          type: 'info',
-          title: 'Reunião de pais',
-          description: 'Reunião bimestral agendada para 05/02',
-          date: '2025-01-27',
-          priority: 'medium'
-        },
-        {
-          id: '3',
-          type: 'success',
-          title: 'Meta atingida',
-          description: 'Frequência geral acima de 92% este mês',
-          date: '2025-01-26',
-          priority: 'low'
-        }
-      ]);
-
+      if (response.success && response.data) {
+        const data = response.data;
+        setSchool(data.school || null);
+        setStats(data.stats || { totalStudents: 0, totalTeachers: 0, totalClasses: 0, activeClasses: 0, averageAttendance: 0, averageGrade: 0, monthlyRevenue: 0, pendingPayments: 0 });
+        setTeacherPerformance(data.teacherPerformance || []);
+        setClassPerformance(data.classPerformance || []);
+        // Assuming alert dates are strings from API, if they need to be Date objects, convert them here.
+        // For now, matching mock data which uses string for alert.date
+        setAlerts(data.alerts || []);
+      } else {
+        console.error('Falha ao buscar dados do dashboard do gestor:', response.message);
+        // Adicionar estado de erro para UI, se necessário
+      }
     } catch (error) {
-      console.error('Erro ao carregar dashboard:', error);
+      console.error('Erro ao carregar dados do dashboard do gestor:', error);
+      if (error instanceof ApiClientError) {
+        // Tratar erro da API
+      }
+      // Adicionar estado de erro para UI
     } finally {
       setLoading(false);
     }
   };
+
+  // Adicionado para cobrir o caso de user ainda não carregado
+  if (loading && !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Autenticando...</p>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: ClassPerformance['status']) => {
     switch (status) {

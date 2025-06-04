@@ -9,79 +9,86 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Cores principais baseadas nas variáveis CSS do globals.css
+        border: {
+          DEFAULT: 'hsl(var(--border))',
+          light: 'hsl(var(--border-light))',
+        },
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: {
+          DEFAULT: 'hsl(var(--background))',
+          primary: 'hsl(var(--background-primary))',
+          secondary: 'hsl(var(--background-secondary))',
+          card: 'hsl(var(--background-card))',
+          hover: 'hsl(var(--background-hover))',
+        },
+        foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: 'var(--primary)',
-          dark: 'var(--primary-dark)',
-          light: 'var(--primary-light)'
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+          light: 'hsl(var(--primary-light))',
+          dark: 'hsl(var(--primary-dark))',
         },
         secondary: {
-          DEFAULT: 'var(--secondary)',
-          dark: 'var(--secondary-dark)',
-          light: 'var(--secondary-light)'
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+          light: 'hsl(var(--secondary-light))',
+          dark: 'hsl(var(--secondary-dark))',
         },
-        // Cores de destaque
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
         accent: {
-          blue: 'var(--accent-blue)',
-          cyan: 'var(--accent-cyan)',
-          green: 'var(--accent-green)',
-          orange: 'var(--accent-orange)',
-          purple: 'var(--accent-purple)',
-          yellow: 'var(--accent-yellow)'
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
         },
-        // Cores de status
-        success: 'var(--success)',
-        warning: 'var(--warning)',
-        error: 'var(--error)',
-        info: 'var(--info)',
-        // Backgrounds
-        background: {
-          primary: 'var(--background-primary)',
-          secondary: 'var(--background-secondary)',
-          tertiary: 'var(--background-tertiary)',
-          card: 'var(--background-card)',
-          hover: 'var(--background-hover)'
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
         },
-        // Textos
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
         text: {
-          primary: 'var(--text-primary)',
-          secondary: 'var(--text-secondary)',
-          tertiary: 'var(--text-tertiary)',
-          muted: 'var(--text-muted)'
+          primary: 'hsl(var(--text-primary))',
+          secondary: 'hsl(var(--text-secondary))',
+          tertiary: 'hsl(var(--text-tertiary))',
+          muted: 'hsl(var(--text-muted))',
         },
-        // Bordas
-        border: {
-          DEFAULT: 'var(--border)',
-          light: 'var(--border-light)',
-          dark: 'var(--border-dark)'
-        },
-        // Sidebar
         sidebar: {
-          bg: 'var(--sidebar-bg)',
-          'bg-light': 'var(--sidebar-bg-light)',
-          hover: 'var(--sidebar-hover)',
-          active: 'var(--sidebar-active)',
-          text: 'var(--sidebar-text)',
-          'text-active': 'var(--sidebar-text-active)',
-          border: 'var(--sidebar-border)'
-        }
+          bg: 'hsl(var(--sidebar-bg))',
+          border: 'hsl(var(--sidebar-border))',
+          text: 'hsl(var(--sidebar-text))',
+          'text-active': 'hsl(var(--sidebar-text-active))',
+          hover: 'hsl(var(--sidebar-hover))',
+          active: 'hsl(var(--sidebar-active))',
+        },
+        success: 'hsl(var(--success))',
+        warning: 'hsl(var(--warning))',
+        error: 'hsl(var(--error))',
+        info: 'hsl(var(--info))',
       },
       // Configuração para ring colors
       ringColor: {
-        primary: 'var(--primary)',
-        secondary: 'var(--secondary)',
-        success: 'var(--success)',
-        warning: 'var(--warning)',
-        error: 'var(--error)',
-        info: 'var(--info)',
+        primary: 'hsl(var(--primary))',
+        secondary: 'hsl(var(--secondary))',
+        error: 'hsl(var(--error))',
+        success: 'hsl(var(--success))',
+        warning: 'hsl(var(--warning))',
+        info: 'hsl(var(--info))',
       },
       // Configuração para border colors
       borderColor: {
-        primary: 'var(--primary)',
-        secondary: 'var(--secondary)',
-        light: 'var(--border-light)',
-        dark: 'var(--border-dark)',
-        DEFAULT: 'var(--border)',
+        DEFAULT: 'hsl(var(--border))',
+        light: 'hsl(var(--border-light))',
+        primary: 'hsl(var(--primary))',
+        secondary: 'hsl(var(--secondary))',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',

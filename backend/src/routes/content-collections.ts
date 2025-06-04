@@ -118,7 +118,7 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -172,7 +172,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res
  *       403:
  *         description: Not authorized to edit this collection
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.put('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -199,7 +199,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, r
  *       403:
  *         description: Not authorized to delete this collection
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.delete('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -285,7 +285,7 @@ router.get('/:id/modules', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to modify this collection
  */
-router.post('/:id/modules', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/:id/modules', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -335,7 +335,7 @@ router.post('/:id/modules', validateJWT, requireRole(['admin', 'teacher']), asyn
  *       403:
  *         description: Not authorized to modify this module
  */
-router.put('/modules/:moduleId', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.put('/modules/:moduleId', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -362,7 +362,7 @@ router.put('/modules/:moduleId', validateJWT, requireRole(['admin', 'teacher']),
  *       403:
  *         description: Not authorized to delete this module
  */
-router.delete('/modules/:moduleId', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.delete('/modules/:moduleId', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

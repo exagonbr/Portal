@@ -1,42 +1,18 @@
 'use client'
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext'
 import { mockStudents, mockTeachers, mockCourses } from '@/constants/mockData';
-import InstitutionEditModal from '@/components/InstitutionEditModal';
-import InstitutionAddModal from '@/components/InstitutionAddModal';
-
-// Types
-interface Unit {
-  id: string;
-  name: string;
-}
-
-interface InstitutionDisplayData {
-  id: string;
-  name: string;
-  location: string;
-  status: 'Ativa' | 'Inativa' | 'Pendente';
-  imageUrl?: string;
-  studentCount: number;
-  teacherCount: number;
-  courseCount: number;
-  unitCount: number;
-  type: 'Universidade' | 'Escola' | 'Centro de Treinamento' | 'Instituto';
-  address?: string;
-  units?: Unit[];
-}
-
-interface FilterState {
-  searchTerm: string;
-  type: string;
-  status: string;
-  sortBy: string;
-}
+import { InstitutionEditModal } from './components/InstitutionEditModal';
+import { InstitutionAddModal } from './components/InstitutionAddModal';
+import { InstitutionService } from '@/services/institutionService';
+import { InstitutionResponseDto } from '@/types/api';
+import { InstitutionType, INSTITUTION_TYPE_LABELS, INSTITUTION_TYPE_COLORS } from '@/types/institution';
+import { InstitutionDisplayData, FilterState } from './types';
 
 // Constants
 const ITEMS_PER_PAGE = 6;
-const INSTITUTION_TYPES: InstitutionDisplayData['type'][] = ['Universidade', 'Escola', 'Centro de Treinamento', 'Instituto'];
+const INSTITUTION_TYPES: InstitutionType[] = ['PUBLIC', 'PRIVATE', 'MIXED'];
 const INSTITUTION_STATUSES: InstitutionDisplayData['status'][] = ['Ativa', 'Inativa', 'Pendente'];
 const LOCATIONS = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 'Porto Alegre, RS', 'Curitiba, PR'];
 
@@ -69,13 +45,6 @@ const InstitutionCard: React.FC<{
     'Pendente': 'bg-accent-yellow/20 text-accent-yellow'
   };
 
-  const typeColors = {
-    'Universidade': 'text-accent-purple',
-    'Escola': 'text-primary',
-    'Centro de Treinamento': 'text-accent-blue',
-    'Instituto': 'text-gray-600'
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
@@ -95,7 +64,9 @@ const InstitutionCard: React.FC<{
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-800">{institution.name}</h3>
           <p className="text-sm text-gray-600">
-            {institution.location} • <span className={`font-medium ${typeColors[institution.type]}`}>{institution.type}</span>
+            {institution.location} • <span className={`font-medium`} style={{ color: INSTITUTION_TYPE_COLORS[institution.type] }}>
+              {INSTITUTION_TYPE_LABELS[institution.type]}
+            </span>
           </p>
         </div>
         
@@ -132,12 +103,16 @@ const InstitutionCard: React.FC<{
 
 export default function AdminInstitutionsPage() {
   const { user } = useAuth();
+  const institutionService = new InstitutionService();
   
   // State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedInstitution, setSelectedInstitution] = useState<InstitutionDisplayData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalItems, setTotalItems] = useState(0);
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: '',
     type: '',
@@ -145,105 +120,70 @@ export default function AdminInstitutionsPage() {
     sortBy: 'name'
   });
 
-  // Memoized data
-  const institutionsData = useMemo(() => {
-    const institutionsMap = new Map<string, {
-      id: string;
-      name: string;
-      courses: Set<string>;
-      students: Set<string>;
-      teachers: Set<string>;
-      type: InstitutionDisplayData['type'];
-    }>();
+  // Fetch institutions
+  const fetchInstitutions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await institutionService.getInstitutions({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        sortBy: filters.sortBy,
+        sortOrder: 'asc',
+        filters: {
+          search: filters.searchTerm,
+          type: filters.type || undefined,
+          active: filters.status === 'Ativa' ? true : filters.status === 'Inativa' ? false : undefined
+        }
+      });
 
-    mockCourses.forEach(course => {
-      const instId = course.institution.id;
-      if (!institutionsMap.has(instId)) {
-        institutionsMap.set(instId, {
-          id: instId,
-          name: course.institution.name,
-          courses: new Set(),
-          students: new Set(),
-          teachers: new Set(),
-          type: (course.institution.type as InstitutionDisplayData['type']) || 'Escola',
-        });
-      }
-      const instData = institutionsMap.get(instId)!;
-      instData.courses.add(course.id);
-      course.students.forEach(studentId => instData.students.add(studentId));
-      course.teachers.forEach(teacherId => instData.teachers.add(teacherId));
-    });
+      // Buscar estatísticas para cada instituição
+      const institutionsWithStats = await Promise.all(
+        response.items.map(async (inst) => {
+          try {
+            const stats = await institutionService.getInstitutionStats(inst.id);
+            return {
+              ...inst,
+              stats: stats
+            };
+          } catch (error) {
+            console.error(`Erro ao buscar estatísticas da instituição ${inst.id}:`, error);
+            return inst;
+          }
+        })
+      );
 
-    return Array.from(institutionsMap.values()).map(inst => {
-      const randomStatus = Math.random();
-      const status: InstitutionDisplayData['status'] =
-        randomStatus > 0.8 ? 'Inativa' :
-        randomStatus > 0.7 ? 'Pendente' : 'Ativa';
-      
-      const unitCount = Math.floor(Math.random() * 5) + 1;
-      
-      return {
-        id: inst.id,
-        name: inst.name,
-        location: LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)],
-        status,
-        imageUrl: `https://picsum.photos/seed/${inst.id}/600/300`,
-        studentCount: inst.students.size,
-        teacherCount: inst.teachers.size,
-        courseCount: inst.courses.size,
-        unitCount,
-        type: inst.type,
-        address: `Rua Exemplo, ${Math.floor(Math.random() * 1000)}, Bairro Centro`,
-        units: Array.from({ length: unitCount }, (_, i) => ({
-          id: `unit-${inst.id}-${i + 1}`,
-          name: i === 0 ? `${inst.name} - Campus Principal` : `${inst.name} - Unidade ${i}`
-        }))
-      };
-    });
-  }, []);
+      setInstitutions(institutionsWithStats);
+      setTotalItems(response.total);
+    } catch (error) {
+      console.error('Erro ao buscar instituições:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, filters]);
+
+  // Fetch on mount and when filters change
+  useEffect(() => {
+    fetchInstitutions();
+  }, [fetchInstitutions]);
 
   // Filtered and sorted data
   const filteredInstitutions = useMemo(() => {
-    let result = [...institutionsData];
-    
-    // Apply search filter
-    if (filters.searchTerm) {
-      const searchLower = filters.searchTerm.toLowerCase();
-      result = result.filter(inst =>
-        inst.name.toLowerCase().includes(searchLower) ||
-        inst.location.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    // Apply type filter
-    if (filters.type) {
-      result = result.filter(inst => inst.type === filters.type);
-    }
-    
-    // Apply status filter
-    if (filters.status) {
-      result = result.filter(inst => inst.status === filters.status);
-    }
-    
-    // Apply sorting
-    result.sort((a, b) => {
-      switch (filters.sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'students':
-          return b.studentCount - a.studentCount;
-        case 'date':
-          // Mock date sorting - in real app would use actual dates
-          return a.id.localeCompare(b.id);
-        default:
-          return 0;
-      }
-    });
-    
-    return result;
-  }, [institutionsData, filters]);
+    return institutions.map(inst => ({
+      id: inst.id,
+      name: inst.name,
+      location: inst.address || 'Localização não informada',
+      status: (inst.active ? 'Ativa' : 'Inativa') as InstitutionDisplayData['status'],
+      imageUrl: `https://picsum.photos/seed/${inst.id}/600/300`,
+      studentCount: inst.stats?.totalStudents || 0,
+      teacherCount: inst.stats?.totalTeachers || 0,
+      courseCount: inst.stats?.totalCourses || 0,
+      unitCount: inst.stats?.totalClasses || 0,
+      type: inst.type || 'PUBLIC' as InstitutionType,
+      address: inst.address
+    }));
+  }, [institutions]);
 
-  const totalPages = Math.ceil(filteredInstitutions.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   
   const paginatedInstitutions = useMemo(
     () => filteredInstitutions.slice(
@@ -255,11 +195,11 @@ export default function AdminInstitutionsPage() {
 
   // Statistics
   const statistics = useMemo(() => ({
-    total: institutionsData.length,
-    students: mockStudents.length,
-    teachers: mockTeachers.length,
-    courses: mockCourses.length
-  }), [institutionsData]);
+    total: institutions.length,
+    students: institutions.reduce((sum, inst) => sum + (inst.stats?.totalStudents || 0), 0),
+    teachers: institutions.reduce((sum, inst) => sum + (inst.stats?.totalTeachers || 0), 0),
+    courses: institutions.reduce((sum, inst) => sum + (inst.stats?.totalCourses || 0), 0)
+  }), [institutions]);
 
   // Handlers
   const handleFilterChange = useCallback((key: keyof FilterState, value: string) => {
@@ -294,6 +234,56 @@ export default function AdminInstitutionsPage() {
   const handleCloseAddModal = useCallback(() => {
     setIsAddModalOpen(false);
   }, []);
+
+  const handleAddInstitution = useCallback(async (data: any) => {
+    try {
+      await institutionService.createInstitution(data);
+      handleCloseAddModal();
+      fetchInstitutions();
+      // TODO: Adicionar toast de sucesso
+    } catch (error) {
+      console.error('Erro ao criar instituição:', error);
+      // TODO: Adicionar toast de erro
+    }
+  }, [fetchInstitutions]);
+
+  const handleEditInstitution = useCallback(async (id: string, data: any) => {
+    try {
+      await institutionService.updateInstitution(id, data);
+      handleCloseEditModal();
+      fetchInstitutions();
+      // TODO: Adicionar toast de sucesso
+    } catch (error) {
+      console.error('Erro ao atualizar instituição:', error);
+      // TODO: Adicionar toast de erro
+    }
+  }, [fetchInstitutions]);
+
+  const handleDeleteInstitution = useCallback(async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta instituição?')) {
+      return;
+    }
+
+    try {
+      await institutionService.deleteInstitution(id);
+      fetchInstitutions();
+      // TODO: Adicionar toast de sucesso
+    } catch (error) {
+      console.error('Erro ao excluir instituição:', error);
+      // TODO: Adicionar toast de erro
+    }
+  }, [fetchInstitutions]);
+
+  const handleToggleStatus = useCallback(async (id: string, currentStatus: boolean) => {
+    try {
+      await institutionService.toggleInstitutionStatus(id, !currentStatus);
+      fetchInstitutions();
+      // TODO: Adicionar toast de sucesso
+    } catch (error) {
+      console.error('Erro ao alterar status da instituição:', error);
+      // TODO: Adicionar toast de erro
+    }
+  }, [fetchInstitutions]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -363,7 +353,7 @@ export default function AdminInstitutionsPage() {
             >
               <option value="">Todos os Tipos</option>
               {INSTITUTION_TYPES.map(type => (
-                <option key={type} value={type}>{type}</option>
+                <option key={type} value={type}>{INSTITUTION_TYPE_LABELS[type]}</option>
               ))}
             </select>
             <select
@@ -397,7 +387,12 @@ export default function AdminInstitutionsPage() {
 
         {/* Institutions Grid */}
         <main>
-          {paginatedInstitutions.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-gray-600">Carregando instituições...</p>
+            </div>
+          ) : paginatedInstitutions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
               {paginatedInstitutions.map((institution) => (
                 <InstitutionCard
@@ -552,11 +547,15 @@ export default function AdminInstitutionsPage() {
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         institution={selectedInstitution}
+        onSave={handleEditInstitution}
+        onDelete={handleDeleteInstitution}
+        onToggleStatus={handleToggleStatus}
       />
       
       <InstitutionAddModal
         isOpen={isAddModalOpen}
         onClose={handleCloseAddModal}
+        onSave={handleAddInstitution}
       />
     </>
   );

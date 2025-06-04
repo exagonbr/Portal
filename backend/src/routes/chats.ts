@@ -105,7 +105,7 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -271,7 +271,7 @@ router.post('/:id/messages/:messageId/read', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to modify this chat
  */
-router.post('/:id/participants', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/:id/participants', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

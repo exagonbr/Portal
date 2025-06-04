@@ -233,7 +233,7 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   try {
     const {
       title,
@@ -369,7 +369,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res
  *       404:
  *         description: Video not found
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.put('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   try {
     const { id } = req.params;
     const userInstitutionId = req.user?.institutionId;
@@ -476,7 +476,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, r
  *       404:
  *         description: Video not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.delete('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR']), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -556,7 +556,7 @@ router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req
  *       400:
  *         description: Invalid file
  */
-router.post('/upload', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/upload', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), async (req, res) => {
   // Upload implementation would go here
   return res.status(501).json({
     success: false,

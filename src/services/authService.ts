@@ -19,8 +19,101 @@ export interface RegisterResponse {
   message?: string;
 }
 
+/**
+ * Serviço responsável pela autenticação do usuário
+ */
 export class AuthService {
   private readonly baseEndpoint = '/api/auth';
+  private roleCache: Map<string, string> = new Map(); // Cache role name -> role ID
+
+  /**
+   * Busca o mapeamento real de roles da API
+   */
+  private async getRoleMapping(): Promise<Record<string, string>> {
+    try {
+      // Se já temos cache, retorna
+      if (this.roleCache.size > 0) {
+        return Object.fromEntries(this.roleCache);
+      }
+
+      console.log('🔍 AuthService: Buscando roles da API...');
+      
+      // Busca roles da API
+      const response = await apiClient.get<{roles: Array<{id: string, name: string}>}>('/api/roles');
+      
+      if (!response.success || !response.data?.roles) {
+        console.warn('⚠️ AuthService: Falha ao buscar roles, usando fallback');
+        return this.getFallbackRoleMapping();
+      }
+
+      // Cria mapeamento name -> id
+      const mapping: Record<string, string> = {};
+      response.data.roles.forEach(role => {
+        const normalizedName = this.normalizeRoleName(role.name);
+        mapping[normalizedName] = role.id;
+        this.roleCache.set(normalizedName, role.id);
+      });
+
+      console.log('✅ AuthService: Mapeamento de roles carregado:', mapping);
+      return mapping;
+    } catch (error) {
+      console.error('❌ AuthService: Erro ao buscar roles da API:', error);
+      return this.getFallbackRoleMapping();
+    }
+  }
+
+  /**
+   * Normaliza nome da role para mapeamento consistente
+   */
+  private normalizeRoleName(roleName: string): string {
+    const nameMap: Record<string, string> = {
+      'STUDENT': 'student',
+      'TEACHER': 'teacher',
+      'SYSTEM_ADMIN': 'system_admin',
+      'ADMIN': 'admin',
+      'INSTITUTION_MANAGER': 'institution_manager',
+      'MANAGER': 'manager',
+      'ACADEMIC_COORDINATOR': 'academic_coordinator',
+      'COORDINATOR': 'academic_coordinator',
+      'GUARDIAN': 'guardian',
+      'RESPONSAVEL': 'guardian'
+    };
+
+    const upperName = roleName.toUpperCase();
+    return nameMap[upperName] || roleName.toLowerCase();
+  }
+
+  /**
+   * Mapeamento de fallback caso a API não esteja disponível
+   */
+  private getFallbackRoleMapping(): Record<string, string> {
+    console.warn('⚠️ AuthService: Usando mapeamento de fallback para roles');
+    return {
+      'student': 'fallback-student-id',
+      'teacher': 'fallback-teacher-id',
+      'admin': 'fallback-admin-id',
+      'manager': 'fallback-manager-id',
+      'system_admin': 'fallback-system-admin-id',
+      'institution_manager': 'fallback-institution-manager-id',
+      'academic_coordinator': 'fallback-coordinator-id',
+      'guardian': 'fallback-guardian-id'
+    };
+  }
+
+  /**
+   * Obtém role_id para uma role específica
+   */
+  public async getRoleId(roleName: UserRole): Promise<string> {
+    const mapping = await this.getRoleMapping();
+    const roleId = mapping[roleName];
+    
+    if (!roleId) {
+      console.warn(`⚠️ AuthService: Role '${roleName}' não encontrada no mapeamento`);
+      return `unknown-${roleName}-id`;
+    }
+    
+    return roleId;
+  }
 
   /**
    * Realiza login no sistema
@@ -57,12 +150,19 @@ export class AuthService {
       // Converte UserResponseDto para User (compatibilidade)
       const compatibleUser = this.convertToCompatibleUser(responseData.user);
       console.log(`✅ AuthService: Usuário convertido com role: "${compatibleUser.role}"`);
+      
+      // Log das permissões recebidas
+      if (compatibleUser.permissions && compatibleUser.permissions.length > 0) {
+        console.log(`✅ AuthService: Permissões recebidas: ${compatibleUser.permissions.join(', ')}`);
+      } else {
+        console.warn('⚠️ AuthService: Nenhuma permissão recebida do backend');
+      }
 
       return {
         success: true,
         user: compatibleUser
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ AuthService: Erro no login:', error);
       
       if (error instanceof ApiClientError) {
@@ -172,14 +272,16 @@ export class AuthService {
   async getCurrentUser(): Promise<User | null> {
     try {
       // Verifica se há token válido
-      if (!this.isAuthenticated()) {
+      const token = this.getStoredToken();
+      if (!token) {
+        console.warn('❌ AuthService: Token não encontrado');
         return null;
       }
 
-      const response = await apiClient.get<UserWithRoleDto>('/users/me');
+      const response = await apiClient.get<UserWithRoleDto>('/api/auth/me');
 
       if (!response.success || !response.data) {
-        // Token pode estar expirado, limpa dados
+        console.error('❌ AuthService: Resposta inválida do servidor');
         this.clearAuthData();
         return null;
       }
@@ -188,13 +290,15 @@ export class AuthService {
       
       // Atualiza dados do usuário no storage
       this.saveUserData(user);
+      console.log('✅ AuthService: Dados do usuário atualizados com sucesso');
 
       return user;
     } catch (error) {
-      console.error('Erro ao buscar usuário atual:', error);
+      console.error('❌ AuthService: Erro ao buscar usuário atual:', error);
       
       // Se for erro de autenticação, limpa dados
       if (isAuthError(error)) {
+        console.warn('❌ AuthService: Erro de autenticação, limpando dados');
         this.clearAuthData();
       }
 
@@ -241,16 +345,103 @@ export class AuthService {
   }
 
   /**
+   * Obtém as permissões do usuário a partir do payload do token
+   */
+  private getPermissionsFromToken(token: string): string[] {
+    try {
+      // Decodifica o token JWT (sem verificar a assinatura)
+      const payloadBase64 = token.split('.')[1];
+      const payload = JSON.parse(atob(payloadBase64));
+      
+      // Extrai permissões do payload
+      const permissions = payload.permissions || [];
+      
+      console.log(`🔐 AuthService: Permissões extraídas do token: ${permissions.join(', ')}`);
+      return permissions;
+    } catch (error) {
+      console.error('❌ AuthService: Erro ao extrair permissões do token:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Converte dados do usuário da API para o formato interno
+   */
+  private convertToCompatibleUser(userDto: UserResponseDto): User {
+    // Extrai informações de role
+    const roleName = userDto.role?.name || 'student'; // Fallback para student
+    const permissions = userDto.role?.permissions || [];
+    
+    // Mapeamento de roles em português para inglês
+    const roleMapping: Record<string, UserRole> = {
+      'aluno': 'student',
+      'professor': 'teacher',
+      'administrador': 'system_admin',
+      'gestor': 'institution_manager',
+      'coordenador': 'academic_coordinator',
+      'responsável': 'guardian'
+    };
+
+    // Determina a role (normalizada)
+    const normalizedRole = (roleMapping[roleName.toLowerCase()] || 
+                           roleName.toLowerCase()) as UserRole;
+
+    // Cria o objeto de usuário compatível
+    const user: User = {
+      id: userDto.id,
+      name: userDto.name,
+      email: userDto.email,
+      role: normalizedRole,
+      permissions: permissions,
+      institution_id: userDto.institution_id
+    };
+
+    return user;
+  }
+
+  /**
    * Salva dados de autenticação
    */
-  private saveAuthData(token: string, refreshToken: string, user: UserResponseDto, expiresAt: string): void {
-    if (typeof window === 'undefined') return;
+  private saveAuthData(
+    token: string, 
+    sessionId: string, 
+    user: UserResponseDto,
+    expiresAt: string
+  ): void {
+    // Salva token nos cookies
+    this.setCookie('auth_token', token, 1); // 1 dia
+    
+    // Salva ID de sessão
+    this.setCookie('session_id', sessionId, 1);
+    
+    // Extrai permissões do token
+    const permissions = this.getPermissionsFromToken(token);
+    
+    // Converte dados do usuário
+    const userData = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role?.name || 'unknown',
+      permissions: permissions.length > 0 ? permissions : user.role?.permissions || []
+    };
+    
+    // Salva dados do usuário em cookie para acesso pelo middleware
+    this.setCookie('user_data', JSON.stringify(userData), 1);
+    
+    // Salva dados no localStorage para persistência
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('session_id', sessionId);
+    localStorage.setItem('user_data', JSON.stringify(userData));
+    localStorage.setItem('expires_at', expiresAt);
+  }
 
-    // Salva tokens
-    apiClient.setAuthToken(token, refreshToken, expiresAt);
-
-    // Salva dados do usuário
-    this.saveUserData(this.convertToCompatibleUser(user));
+  /**
+   * Define um cookie
+   */
+  private setCookie(name: string, value: string, days: number): void {
+    const maxAge = days * 24 * 60 * 60;
+    document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAge};SameSite=Lax`;
   }
 
   /**
@@ -278,26 +469,13 @@ export class AuthService {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('auth_token');
   }
-
-  /**
-   * Converte UserResponseDto para User
-   */
-  private convertToCompatibleUser(apiUser: UserResponseDto): User {
-    return {
-      id: apiUser.id,
-      name: apiUser.name,
-      email: apiUser.email,
-      role: apiUser.role?.name?.toLowerCase() as UserRole || 'student',
-      permissions: apiUser.role?.permissions || [],
-      institutionId: apiUser.institution_id,
-      createdAt: apiUser.created_at,
-      updatedAt: apiUser.updated_at
-    };
-  }
 }
 
 // Instância do serviço
 const authService = new AuthService();
+
+// Exporta a instância
+export { authService };
 
 // Exporta funções do serviço
 export const login = (email: string, password: string) => authService.login(email, password);
@@ -312,7 +490,11 @@ export const listUsers = async (): Promise<User[]> => {
   try {
     const { userService } = await import('./userService');
     const result = await userService.getUsers();
-    return result.items.map(user => authService['convertToCompatibleUser'](user));
+    return result.users.map((user: any) => authService['convertToCompatibleUser']({
+      ...user,
+      created_at: user.created_at || new Date().toISOString(),
+      updated_at: user.updated_at || new Date().toISOString()
+    }));
   } catch (error) {
     console.error('Erro ao listar usuários:', error);
     return [];
@@ -323,23 +505,15 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
   try {
     const { userService } = await import('./userService');
     
-    // Mapear role para role_id - seria melhor buscar roles reais da API
-    const roleMapping: Record<UserRole, string> = {
-      'student': 'student-role-id',
-      'teacher': 'teacher-role-id', 
-      'admin': 'admin-role-id',
-      'manager': 'manager-role-id',
-      'system_admin': 'system-admin-role-id',
-      'institution_manager': 'institution-manager-role-id',
-      'academic_coordinator': 'academic-coordinator-role-id',
-      'guardian': 'guardian-role-id'
-    };
+    // Busca role_id real da API
+    const roleId = userData.role ? await authService.getRoleId(userData.role) : 
+                                   await authService.getRoleId('student'); // fallback
 
     const createData = {
       email: userData.email,
       password: 'temp123', // Senha temporária
       name: userData.name,
-      role_id: (userData.role && roleMapping[userData.role as UserRole]) || roleMapping['student'],
+      role_id: roleId,
       institution_id: userData.institution_id,
       endereco: userData.endereco,
       telefone: userData.telefone,
@@ -348,7 +522,12 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
     };
     
     const result = await userService.createUser(createData);
-    return authService['convertToCompatibleUser'](result);
+    return authService['convertToCompatibleUser']({
+      ...result,
+      role: { name: result.role, permissions: [] },
+      created_at: result.createdAt || new Date().toISOString(),
+      updated_at: result.updatedAt || new Date().toISOString()
+    });
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
     throw error;
@@ -359,20 +538,10 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
   try {
     const { userService } = await import('./userService');
     
-    // Mapear role para role_id se fornecido
+    // Busca role_id real da API se fornecido
     let role_id: string | undefined;
     if (userData.role) {
-      const roleMapping: Record<UserRole, string> = {
-        'student': 'student-role-id',
-        'teacher': 'teacher-role-id', 
-        'admin': 'admin-role-id',
-        'manager': 'manager-role-id',
-        'system_admin': 'system-admin-role-id',
-        'institution_manager': 'institution-manager-role-id',
-        'academic_coordinator': 'academic-coordinator-role-id',
-        'guardian': 'guardian-role-id'
-      };
-      role_id = roleMapping[userData.role];
+      role_id = await authService.getRoleId(userData.role);
     }
 
     const updateData = {
@@ -387,7 +556,12 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
     };
     
     const result = await userService.updateUser(id, updateData);
-    return result ? authService['convertToCompatibleUser'](result) : null;
+    return result ? authService['convertToCompatibleUser']({
+      ...result,
+      role: { name: result.role, permissions: [] },
+      created_at: result.createdAt || new Date().toISOString(),
+      updated_at: result.updatedAt || new Date().toISOString()
+    }) : null;
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);
     return null;

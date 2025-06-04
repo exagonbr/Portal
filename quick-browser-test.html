@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Rápido - Cliente API Unificado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste Rápido - Cliente API Unificado</h1>
+        
+        <div id="status" class="status info">
+            Pronto para testar. Faça login para verificar se o header Authorization está sendo incluído.
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" value="admin@portal.com">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" value="admin123">
+        </div>
+
+        <button onclick="testarLogin()" id="loginBtn">🔐 Fazer Login</button>
+        <button onclick="testarRequisicaoAutenticada()" id="authReqBtn" disabled>🔑 Testar Requisição Autenticada</button>
+        <button onclick="verificarToken()" id="tokenBtn" disabled>🔍 Verificar Token</button>
+        <button onclick="limparLog()" id="clearBtn">🧹 Limpar Log</button>
+
+        <div id="log" class="log">Aguardando ações...\n</div>
+    </div>
+
+    <script>
+        // Simulação do UnifiedApiClient para o browser
+        class BrowserUnifiedApiClient {
+            constructor() {
+                this.CONFIG = {
+                    API_BASE_URL: 'http://localhost:3001',
+                    STORAGE_KEYS: {
+                        AUTH_TOKEN: 'auth_token',
+                        REFRESH_TOKEN: 'refresh_token',
+                        USER_DATA: 'user_data',
+                        SESSION_ID: 'session_id',
+                        EXPIRES_AT: 'auth_expires_at'
+                    }
+                };
+            }
+
+            log(message) {
+                const logElement = document.getElementById('log');
+                const timestamp = new Date().toLocaleTimeString();
+                logElement.textContent += `[${timestamp}] ${message}\n`;
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+
+            getAuthToken() {
+                try {
+                    const token = localStorage.getItem(this.CONFIG.STORAGE_KEYS.AUTH_TOKEN);
+                    if (token) {
+                        this.log('🔑 Token encontrado no localStorage');
+                        return token;
+                    }
+                } catch (error) {
+                    this.log(`⚠️ Erro ao acessar localStorage: ${error.message}`);
+                }
+                
+                this.log('❌ Token não encontrado');
+                return null;
+            }
+
+            setAuthToken(token, refreshToken, expiresAt) {
+                try {
+                    localStorage.setItem(this.CONFIG.STORAGE_KEYS.AUTH_TOKEN, token);
+                    
+                    if (refreshToken) {
+                        localStorage.setItem(this.CONFIG.STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+                    }
+                    
+                    if (expiresAt) {
+                        localStorage.setItem(this.CONFIG.STORAGE_KEYS.EXPIRES_AT, expiresAt);
+                    }
+
+                    this.log('✅ Token salvo no localStorage');
+                } catch (error) {
+                    this.log(`❌ Erro ao salvar token: ${error.message}`);
+                }
+            }
+
+            prepareHeaders(customHeaders = {}, includeAuth = true) {
+                const headers = { 'Content-Type': 'application/json', ...customHeaders };
+
+                if (includeAuth) {
+                    const token = this.getAuthToken();
+                    if (token) {
+                        headers.Authorization = `Bearer ${token}`;
+                        this.log('🔑 Header Authorization incluído');
+                    } else {
+                        this.log('⚠️ Token não disponível para Authorization header');
+                    }
+                }
+
+                return headers;
+            }
+
+            async login(email, password) {
+                this.log(`🔐 Fazendo login para: ${email}`);
+                
+                try {
+                    const response = await fetch(`${this.CONFIG.API_BASE_URL}/api/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    this.log(`📊 Status do login: ${response.status}`);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.token) {
+                        const { token, refreshToken, refresh_token, expires_at, user } = data;
+                        
+                        // Salvar dados de autenticação
+                        this.setAuthToken(token, refreshToken || refresh_token, expires_at);
+                        
+                        if (user) {
+                            localStorage.setItem(this.CONFIG.STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+                        }
+
+                        this.log('✅ Login bem-sucedido e dados salvos');
+                        return { success: true, data };
+                    } else {
+                        throw new Error('Token não retornado');
+                    }
+                } catch (error) {
+                    this.log(`❌ Erro no login: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            async makeAuthenticatedRequest(endpoint, method = 'GET', body = null) {
+                const url = `${this.CONFIG.API_BASE_URL}/${endpoint.startsWith('/') ? endpoint.slice(1) : endpoint}`;
+                const headers = this.prepareHeaders();
+
+                this.log(`🌐 ${method} ${url}`);
+                this.log(`📨 Headers: ${JSON.stringify(headers, null, 2)}`);
+
+                try {
+                    const response = await fetch(url, {
+                        method,
+                        headers,
+                        body: body ? JSON.stringify(body) : undefined
+                    });
+
+                    this.log(`📊 Status: ${response.status}`);
+
+                    const data = await response.json();
+                    return { status: response.status, data };
+                } catch (error) {
+                    this.log(`❌ Erro na requisição: ${error.message}`);
+                    throw error;
+                }
+            }
+        }
+
+        // Instância global do cliente
+        const unifiedApi = new BrowserUnifiedApiClient();
+
+        // Funções de teste
+        async function testarLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('status');
+            const loginBtn = document.getElementById('loginBtn');
+            const authReqBtn = document.getElementById('authReqBtn');
+            const tokenBtn = document.getElementById('tokenBtn');
+
+            if (!email || !password) {
+                alert('Por favor, preencha email e senha');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            statusDiv.className = 'status info';
+            statusDiv.textContent = 'Fazendo login...';
+
+            try {
+                await unifiedApi.login(email, password);
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ Login realizado com sucesso! Agora você pode testar requisições autenticadas.';
+                
+                authReqBtn.disabled = false;
+                tokenBtn.disabled = false;
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Falha no login: ${error.message}`;
+            } finally {
+                loginBtn.disabled = false;
+            }
+        }
+
+        async function testarRequisicaoAutenticada() {
+            const statusDiv = document.getElementById('status');
+            const authReqBtn = document.getElementById('authReqBtn');
+
+            authReqBtn.disabled = true;
+            statusDiv.className = 'status info';
+            statusDiv.textContent = 'Fazendo requisição autenticada...';
+
+            try {
+                const result = await unifiedApi.makeAuthenticatedRequest('/api/users?search=professor%40sabercon');
+                
+                if (result.status === 200) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `✅ Requisição autenticada funcionou! Usuários encontrados: ${result.data.data?.items?.length || 0}`;
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `❌ Requisição falhou com status ${result.status}`;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Erro na requisição: ${error.message}`;
+            } finally {
+                authReqBtn.disabled = false;
+            }
+        }
+
+        function verificarToken() {
+            const token = unifiedApi.getAuthToken();
+            
+            if (token) {
+                try {
+                    const tokenParts = token.split('.');
+                    if (tokenParts.length === 3) {
+                        const payload = JSON.parse(atob(tokenParts[1]));
+                        unifiedApi.log(`🔑 Payload do token:`);
+                        unifiedApi.log(`   - Email: ${payload.email}`);
+                        unifiedApi.log(`   - Role: ${payload.role}`);
+                        unifiedApi.log(`   - Permissões: ${payload.permissions?.length || 0}`);
+                        unifiedApi.log(`   - Expira em: ${new Date(payload.exp * 1000).toLocaleString()}`);
+                        
+                        const isExpired = payload.exp * 1000 < Date.now();
+                        unifiedApi.log(`   - Status: ${isExpired ? '❌ EXPIRADO' : '✅ VÁLIDO'}`);
+                    }
+                } catch (error) {
+                    unifiedApi.log(`❌ Erro ao decodificar token: ${error.message}`);
+                }
+            }
+        }
+
+        function limparLog() {
+            document.getElementById('log').textContent = 'Log limpo...\n';
+        }
+
+        // Verificar estado inicial
+        window.onload = function() {
+            const token = unifiedApi.getAuthToken();
+            if (token) {
+                document.getElementById('authReqBtn').disabled = false;
+                document.getElementById('tokenBtn').disabled = false;
+                document.getElementById('status').textContent = '✅ Token encontrado. Você já está logado!';
+                document.getElementById('status').className = 'status success';
+            }
+        };
+    </script>
+</body>
+</html> 

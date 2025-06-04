@@ -245,19 +245,23 @@ router.post(
  */
 router.get('/me', validateJWT, async (req: express.Request, res: express.Response) => {
   try {
-    const userId = parseInt((req as any).user?.userId);
+    console.log('🔍 AuthRoute: Processando requisição GET /me');
+    const userId = req.user?.userId;
     const sessionId = (req as any).sessionId;
     
-    if (!userId || isNaN(userId)) {
+    if (!userId) {
+      console.warn('❌ AuthRoute: userId não encontrado no token');
       return res.status(401).json({
         success: false,
         message: 'Sessão inválida. Por favor, faça login novamente.'
       });
     }
 
+    console.log('🔍 AuthRoute: Buscando usuário:', userId);
     const user = await AuthService.getUserById(userId);
     
     if (!user) {
+      console.warn('❌ AuthRoute: Usuário não encontrado:', userId);
       return res.status(404).json({
         success: false,
         message: 'Usuário não encontrado. Por favor, faça login novamente.'
@@ -265,11 +269,13 @@ router.get('/me', validateJWT, async (req: express.Request, res: express.Respons
     }
 
     if (sessionId) {
+      console.log('✅ AuthRoute: Atualizando atividade da sessão:', sessionId);
       await AuthService.updateSessionActivity(sessionId);
     }
 
     const { password, ...userWithoutPassword } = user;
 
+    console.log('✅ AuthRoute: Retornando dados do usuário:', userWithoutPassword.email);
     return res.json({
       success: true,
       message: 'Perfil carregado com sucesso!',
@@ -278,7 +284,7 @@ router.get('/me', validateJWT, async (req: express.Request, res: express.Respons
       }
     });
   } catch (error: any) {
-    console.error('Erro ao buscar perfil:', error);
+    console.error('❌ AuthRoute: Erro ao buscar perfil:', error);
     return res.status(500).json({
       success: false,
       message: 'Não foi possível carregar seu perfil. Por favor, tente novamente mais tarde.',
@@ -352,7 +358,7 @@ router.post('/logout', validateJWT, async (req: express.Request, res: express.Re
  */
 router.post('/refresh', validateJWT, async (req: express.Request, res: express.Response) => {
   try {
-    const userId = parseInt((req as any).user?.userId);
+    const userId = (req as any).user?.userId;
     const sessionId = (req as any).sessionId;
 
     if (!userId || isNaN(userId)) {
@@ -428,10 +434,10 @@ router.post(
         });
       }
 
-      const userId = parseInt((req as any).user?.userId);
+      const userId =(req as any).user?.userId;
       const { currentPassword, newPassword } = req.body;
 
-      if (!userId || isNaN(userId)) {
+      if (!userId) {
         return res.status(401).json({
           success: false,
           message: 'Usuário não autenticado'
@@ -553,6 +559,83 @@ router.post('/logout-all', validateJWT, async (req: express.Request, res: expres
       success: false,
       message: 'Erro ao encerrar todas as sessões',
       error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   get:
+ *     tags:
+ *       - Authentication
+ *     summary: Get user profile
+ *     description: Returns the profile of the authenticated user
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/profile', validateJWT, async (req: express.Request, res: express.Response) => {
+  try {
+    console.log('🔍 AuthRoute: Processando requisição GET /profile');
+    const userId = req.user?.userId;
+    const sessionId = (req as any).sessionId;
+    
+    if (!userId) {
+      console.warn('❌ AuthRoute: userId não encontrado no token');
+      return res.status(401).json({
+        success: false,
+        message: 'Sessão inválida. Por favor, faça login novamente.'
+      });
+    }
+
+    console.log('🔍 AuthRoute: Buscando usuário:', userId);
+    const user = await AuthService.getUserById(userId);
+    
+    if (!user) {
+      console.warn('❌ AuthRoute: Usuário não encontrado:', userId);
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado. Por favor, faça login novamente.'
+      });
+    }
+
+    if (sessionId) {
+      console.log('✅ AuthRoute: Atualizando atividade da sessão:', sessionId);
+      await AuthService.updateSessionActivity(sessionId);
+    }
+
+    const { password, ...userWithoutPassword } = user;
+
+    console.log('✅ AuthRoute: Retornando dados do usuário:', userWithoutPassword.email);
+    return res.json({
+      success: true,
+      message: 'Perfil carregado com sucesso!',
+      data: {
+        user: userWithoutPassword
+      }
+    });
+  } catch (error: any) {
+    console.error('❌ AuthRoute: Erro ao buscar perfil:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Não foi possível carregar seu perfil. Por favor, tente novamente mais tarde.',
     });
   }
 });

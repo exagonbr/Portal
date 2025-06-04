@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
+import { apiClient, ApiClientError } from '@/services/apiClient'; // Added
 
 interface InstitutionStats {
   totalSchools: number;
@@ -88,105 +89,68 @@ export default function InstitutionManagerDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
   useEffect(() => {
-    loadDashboardData();
-  }, [selectedPeriod]);
+    if (user?.id) {
+      loadDashboardData(user.id, selectedPeriod);
+    } else if (!user && !loading) {
+        console.warn("Usuário não autenticado para carregar dashboard do gestor institucional.");
+        setLoading(false);
+    }
+  }, [user, loading, selectedPeriod]); // Added user and loading
 
-  const loadDashboardData = async () => {
+  interface InstitutionManagerDashboardData {
+    stats: InstitutionStats;
+    schools: SchoolOverview[];
+    performanceData: PerformanceMetric[];
+    announcements: Announcement[];
+  }
+
+  const loadDashboardData = async (userId: string | number, periodFilter: string) => {
     try {
       setLoading(true);
       
-      // Dados simulados
-      setStats({
-        totalSchools: 12,
-        activeSchools: 11,
-        totalStudents: 4567,
-        totalTeachers: 234,
-        totalClasses: 156,
-        averagePerformance: 78.5,
-        attendanceRate: 92.3,
-        graduationRate: 87.2,
-        budget: 2500000,
-        expenses: 1850000
-      });
+      // TODO: Ajustar o endpoint da API e parâmetros de filtro.
+      const params: Record<string, string> = { period: periodFilter };
 
-      setSchools([
-        {
-          id: '1',
-          name: 'Escola Central Alpha',
-          type: 'Ensino Médio',
-          students: 1234,
-          teachers: 56,
-          classes: 42,
-          performance: 85.2,
-          status: 'excellent'
-        },
-        {
-          id: '2',
-          name: 'Colégio Beta',
-          type: 'Fundamental II',
-          students: 890,
-          teachers: 45,
-          classes: 35,
-          performance: 76.8,
-          status: 'good'
-        },
-        {
-          id: '3',
-          name: 'Instituto Gamma',
-          type: 'Técnico',
-          students: 567,
-          teachers: 34,
-          classes: 28,
-          performance: 68.5,
-          status: 'attention'
-        },
-        {
-          id: '4',
-          name: 'Escola Delta',
-          type: 'Fundamental I',
-          students: 456,
-          teachers: 28,
-          classes: 24,
-          performance: 82.1,
-          status: 'good'
-        }
-      ]);
+      const response = await apiClient.get<InstitutionManagerDashboardData>(
+        `/api/institution-managers/${userId}/dashboard`,
+        params
+      );
 
-      setPerformanceData([
-        { month: 'Jan', students: 4200, performance: 75, attendance: 90 },
-        { month: 'Fev', students: 4350, performance: 76, attendance: 91 },
-        { month: 'Mar', students: 4400, performance: 77, attendance: 92 },
-        { month: 'Abr', students: 4450, performance: 78, attendance: 92 },
-        { month: 'Mai', students: 4500, performance: 78.5, attendance: 92.3 }
-      ]);
+      if (response.success && response.data) {
+        const data = response.data;
+        setStats(data.stats || { totalSchools: 0, activeSchools: 0, totalStudents: 0, totalTeachers: 0, totalClasses: 0, averagePerformance: 0, attendanceRate: 0, graduationRate: 0, budget: 0, expenses: 0 });
+        setSchools(data.schools || []);
+        setPerformanceData(data.performanceData || []);
+        // Convert date strings to Date objects for announcements if necessary
+        const announcementsWithDateObjects = (data.announcements || []).map(ann => ({
+          ...ann,
+          date: new Date(ann.date)
+        }));
+        setAnnouncements(announcementsWithDateObjects);
 
-      setAnnouncements([
-        {
-          id: '1',
-          title: 'Reunião de Diretores',
-          content: 'Reunião mensal de alinhamento estratégico',
-          priority: 'high',
-          date: new Date(Date.now() + 86400000),
-          author: 'Sistema',
-          targetAudience: ['directors', 'coordinators']
-        },
-        {
-          id: '2',
-          title: 'Novo Protocolo de Segurança',
-          content: 'Implementação de novas medidas de segurança nas escolas',
-          priority: 'medium',
-          date: new Date(),
-          author: 'Coordenação Geral',
-          targetAudience: ['all']
-        }
-      ]);
-
+      } else {
+        console.error('Falha ao buscar dados do dashboard do gestor institucional:', response.message);
+        // Adicionar estado de erro para UI, se necessário
+      }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro ao carregar dados do dashboard do gestor institucional:', error);
+      if (error instanceof ApiClientError) {
+        // Tratar erro da API
+      }
+      // Adicionar estado de erro para UI
     } finally {
       setLoading(false);
     }
   };
+
+  // Adicionado para cobrir o caso de user ainda não carregado
+  if (loading && !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Autenticando...</p>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: SchoolOverview['status']) => {
     switch (status) {

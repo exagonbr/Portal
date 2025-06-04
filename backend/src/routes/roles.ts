@@ -38,7 +38,7 @@ const router = express.Router();
  *       403:
  *         description: Forbidden
  */
-router.get('/', validateJWT, requireRole(['admin', 'manager']), async (req, res) => {
+router.get('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -67,7 +67,7 @@ router.get('/', validateJWT, requireRole(['admin', 'manager']), async (req, res)
  *       404:
  *         description: Role not found
  */
-router.get('/:id', validateJWT, requireRole(['admin', 'manager']), async (req, res) => {
+router.get('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -117,7 +117,7 @@ router.get('/:id', validateJWT, requireRole(['admin', 'manager']), async (req, r
  *       409:
  *         description: Role name already exists
  */
-router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
+router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -165,7 +165,7 @@ router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
  *       404:
  *         description: Role not found
  */
-router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
+router.put('/:id', validateJWT, requireRole(['SYSTEM_ADMIN']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -192,7 +192,7 @@ router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
  *       400:
  *         description: Cannot delete system role or role with users
  */
-router.delete('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
+router.delete('/:id', validateJWT, requireRole(['SYSTEM_ADMIN']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -223,7 +223,7 @@ router.delete('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
  *       404:
  *         description: Role not found
  */
-router.get('/:id/permissions', validateJWT, requireRole(['admin', 'manager']), async (req, res) => {
+router.get('/:id/permissions', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

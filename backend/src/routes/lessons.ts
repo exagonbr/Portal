@@ -103,7 +103,7 @@ router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -146,7 +146,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), requireInstitut
  *       404:
  *         description: Lesson not found
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.put('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -171,7 +171,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstit
  *       404:
  *         description: Lesson not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.delete('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -260,7 +260,7 @@ router.post('/:id/progress', validateJWT, requireInstitution, async (req, res) =
  *       400:
  *         description: Invalid input
  */
-router.post('/reorder', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.post('/reorder', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR', 'TEACHER']), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 

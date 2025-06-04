@@ -1,3 +1,5 @@
+import { InstitutionType } from './institution';
+
 // Tipos de resposta da API que correspondem aos DTOs do backend
 export interface ApiResponse<T> {
   success: boolean;
@@ -153,12 +155,21 @@ export interface InstitutionDto {
   email?: string;
   created_at: string;
   updated_at: string;
+  type: string;
+  is_active: boolean;
 }
 
 export interface InstitutionResponseDto extends InstitutionDto {
-  active?: boolean;
-  users_count?: number;
-  courses_count?: number;
+  active: boolean;
+  users_count: number;
+  courses_count: number;
+  stats?: {
+    totalStudents: number;
+    totalTeachers: number;
+    totalCourses: number;
+    totalClasses: number;
+  };
+  type: InstitutionType;
 }
 
 export interface CreateInstitutionDto {

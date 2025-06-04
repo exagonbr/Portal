@@ -11,8 +11,8 @@ export interface AwsSettings {
 }
 
 const defaultSettings: AwsSettings = {
-  accessKeyId: '',
-  secretAccessKey: '',
+  accessKeyId: 'AKIAYKBH43KYB2DJUQJL',
+  secretAccessKey: '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',
   region: 'sa-east-1',
   s3BucketName: '',
   cloudWatchNamespace: 'Portal/Metrics',

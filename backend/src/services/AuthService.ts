@@ -12,6 +12,7 @@ const JWT_EXPIRES_IN = '24h';
 
 // Redis session service import
 import Redis from 'ioredis';
+import { isEmpty } from 'lodash';
 
 interface ClientInfo {
   ipAddress: string;
@@ -289,7 +290,7 @@ export class AuthService {
     }
   }
 
-  static async refreshToken(userId: number, sessionId?: string): Promise<{ token: string; expires_at: string }> {
+  static async refreshToken(userId: string, sessionId?: string): Promise<{ token: string; expires_at: string }> {
     const user = await UserRepository.findById(userId);
     
     if (!user) {
@@ -334,8 +335,16 @@ export class AuthService {
     }
   }
 
-  static async getUserById(userId: number): Promise<UserWithRelations | null> {
-    return UserRepository.findById(userId);
+  static async getUserById(userId: string): Promise<UserWithRelations | null> {
+    const numericUserId = userId
+    
+    if (isEmpty(numericUserId)) {
+      console.error('❌ AuthService: ID de usuário inválido:', userId);
+      return null;
+    }
+    
+    console.log('🔍 AuthService: Buscando usuário:', numericUserId);
+    return UserRepository.findById(numericUserId);
   }
 
   static async validateToken(token: string): Promise<AuthTokenPayload> {
@@ -347,7 +356,7 @@ export class AuthService {
     }
   }
 
-  static async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
+  static async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
     const user = await UserRepository.findById(userId);
     
     if (!user) {

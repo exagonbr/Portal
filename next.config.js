@@ -138,6 +138,13 @@ const nextConfig = {
     CUSTOM_KEY: 'my-value',
   },
   webpack: (config, { isServer }) => {
+    // Adiciona suporte para arquivos .mjs
+    config.module.rules.push({
+      test: /\.mjs$/,
+      include: /node_modules/,
+      type: 'javascript/auto'
+    });
+
     config.module.rules.push({
       test: /\.(pdf)$/i,
       type: 'asset/resource',

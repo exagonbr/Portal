@@ -13,6 +13,7 @@ export interface InstitutionFilters {
   search?: string;
   city?: string;
   state?: string;
+  type?: string;
 }
 
 export interface InstitutionListOptions {
@@ -252,23 +253,21 @@ export class InstitutionService {
   }
 
   /**
-   * Busca estatísticas das instituições
+   * Busca estatísticas de uma instituição específica
    */
-  async getInstitutionStats(): Promise<{
-    total: number;
-    active: number;
-    inactive: number;
-    usersCount: Record<string, number>;
-    coursesCount: Record<string, number>;
+  async getInstitutionStats(id: string): Promise<{
+    totalStudents: number;
+    totalTeachers: number;
+    totalCourses: number;
+    totalClasses: number;
   }> {
     try {
       const response = await apiClient.get<{
-        total: number;
-        active: number;
-        inactive: number;
-        usersCount: Record<string, number>;
-        coursesCount: Record<string, number>;
-      }>(`${this.baseEndpoint}/stats`);
+        totalStudents: number;
+        totalTeachers: number;
+        totalCourses: number;
+        totalClasses: number;
+      }>(`${this.baseEndpoint}/${id}/stats`);
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha ao buscar estatísticas');
@@ -276,7 +275,7 @@ export class InstitutionService {
 
       return response.data;
     } catch (error) {
-      console.error('Erro ao buscar estatísticas das instituições:', error);
+      console.error('Erro ao buscar estatísticas da instituição:', error);
       throw new Error(handleApiError(error));
     }
   }

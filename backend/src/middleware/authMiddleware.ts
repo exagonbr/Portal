@@ -1,8 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { AuthService } from '../services/AuthService';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
 
 export const authenticateToken = async (
   req: Request,
@@ -61,7 +58,7 @@ export const authorizePermissions = (...requiredPermissions: string[]) => {
     }
 
     try {
-      const user = await AuthService.getUserById(parseInt(req.user.userId, 10));
+      const user = await AuthService.getUserById(req.user.userId);
       
       if (!user || !user.role) {
         return res.status(403).json({

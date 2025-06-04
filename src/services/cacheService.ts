@@ -240,7 +240,9 @@ export class CacheService {
 
   private async deleteFromRedis(key: string): Promise<void> {
     try {
-      await apiClient.post('/cache/delete', { key });
+      // Como o método DELETE não aceita body, precisamos passar como query param
+      const endpoint = `/cache/delete?key=${encodeURIComponent(key)}`;
+      await apiClient.delete(endpoint);
     } catch (error) {
       console.debug('Redis delete failed:', error);
       throw error;

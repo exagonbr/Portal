@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
+import { apiClient, ApiClientError } from '@/services/apiClient'; // Added
 
 interface Student {
   id: string;
@@ -131,200 +132,77 @@ export default function GuardianDashboard() {
   const [selectedView, setSelectedView] = useState<'overview' | 'academic' | 'communication' | 'financial'>('overview');
 
   useEffect(() => {
-    loadDashboardData();
-  }, [selectedStudent]);
+    if (user?.id) {
+      loadDashboardData(user.id, selectedStudent);
+    } else if (!user && !loading) {
+        console.warn("Usuário não autenticado para carregar dashboard do responsável.");
+        setLoading(false);
+    }
+  }, [user, loading, selectedStudent]); // Added user and loading
 
-  const loadDashboardData = async () => {
+  interface GuardianDashboardData {
+    students: Student[];
+    stats: GuardianStats;
+    performances: StudentPerformance[];
+    events: AcademicEvent[];
+    messages: TeacherMessage[];
+    behaviorReports: BehaviorReport[];
+    financialInfo: FinancialInfo[];
+  }
+
+  const loadDashboardData = async (userId: string | number, studentFilter: string) => {
     try {
       setLoading(true);
       
-      // Dados simulados dos filhos
-      const mockStudents: Student[] = [
-        {
-          id: '1',
-          name: 'João Silva',
-          class: '5º Ano A',
-          age: 11
-        },
-        {
-          id: '2',
-          name: 'Maria Silva',
-          class: '3º Ano B',
-          age: 9
+      // TODO: Ajustar o endpoint da API e parâmetros de filtro.
+      const params: Record<string, string> = {};
+      if (studentFilter !== 'all') params.studentId = studentFilter;
+
+      const response = await apiClient.get<GuardianDashboardData>(
+        `/api/guardians/${userId}/dashboard`,
+        params
+      );
+
+      if (response.success && response.data) {
+        const data = response.data;
+        setStudents(data.students || []);
+        setStats(data.stats || { totalStudents: 0, averageGrade: 0, averageAttendance: 0, pendingTasks: 0, upcomingMeetings: 0, unreadMessages: 0 });
+        
+        // Convert date strings to Date objects
+        setPerformances((data.performances || []).map(p => ({ ...p, lastUpdate: new Date(p.lastUpdate) })));
+        setEvents((data.events || []).map(e => ({ ...e, date: new Date(e.date) })));
+        setMessages((data.messages || []).map(m => ({ ...m, date: new Date(m.date) })));
+        setBehaviorReports((data.behaviorReports || []).map(b => ({ ...b, date: new Date(b.date) })));
+        setFinancialInfo((data.financialInfo || []).map(f => ({ ...f, dueDate: new Date(f.dueDate) })));
+
+        // Se nenhum estudante estiver selecionado e houver estudantes, seleciona o primeiro
+        if (selectedStudent === 'all' && data.students && data.students.length > 0) {
+          // setSelectedStudent(data.students[0].id); // Comentado para evitar loop, o filtro já considera 'all'
         }
-      ];
-      setStudents(mockStudents);
 
-      // Estatísticas gerais
-      setStats({
-        totalStudents: 2,
-        averageGrade: 8.2,
-        averageAttendance: 94.5,
-        pendingTasks: 5,
-        upcomingMeetings: 2,
-        unreadMessages: 3
-      });
-
-      // Desempenho dos alunos
-      setPerformances([
-        {
-          studentId: '1',
-          studentName: 'João Silva',
-          currentGrade: 8.5,
-          previousGrade: 8.2,
-          trend: 'up',
-          attendance: 95,
-          behavior: 'good',
-          pendingTasks: 3,
-          completedTasks: 24,
-          strengths: ['Matemática', 'Ciências'],
-          challenges: ['Redação'],
-          lastUpdate: new Date()
-        },
-        {
-          studentId: '2',
-          studentName: 'Maria Silva',
-          currentGrade: 7.8,
-          previousGrade: 8.0,
-          trend: 'down',
-          attendance: 94,
-          behavior: 'excellent',
-          pendingTasks: 2,
-          completedTasks: 28,
-          strengths: ['Português', 'Artes'],
-          challenges: ['Matemática'],
-          lastUpdate: new Date()
-        }
-      ]);
-
-      // Eventos acadêmicos
-      setEvents([
-        {
-          id: '1',
-          type: 'meeting',
-          title: 'Reunião de Pais - 5º Ano',
-          description: 'Discussão sobre o progresso do bimestre',
-          date: new Date(Date.now() + 86400000 * 3),
-          time: '19:00',
-          studentId: '1',
-          studentName: 'João Silva',
-          location: 'Sala 201',
-          isImportant: true
-        },
-        {
-          id: '2',
-          type: 'exam',
-          title: 'Prova de Matemática',
-          description: 'Avaliação mensal',
-          date: new Date(Date.now() + 86400000 * 5),
-          time: '08:00',
-          studentId: '1',
-          studentName: 'João Silva',
-          isImportant: true
-        },
-        {
-          id: '3',
-          type: 'event',
-          title: 'Feira de Ciências',
-          description: 'Apresentação dos projetos',
-          date: new Date(Date.now() + 86400000 * 10),
-          time: '14:00',
-          location: 'Quadra Esportiva',
-          isImportant: false
-        }
-      ]);
-
-      // Mensagens dos professores
-      setMessages([
-        {
-          id: '1',
-          from: 'Prof. Ana Silva',
-          subject: 'Desempenho em Matemática',
-          preview: 'Gostaria de conversar sobre o progresso do João...',
-          date: new Date(),
-          isRead: false,
-          priority: 'high',
-          studentId: '1',
-          studentName: 'João Silva'
-        },
-        {
-          id: '2',
-          from: 'Prof. Carlos Santos',
-          subject: 'Participação exemplar',
-          preview: 'Maria tem se destacado nas aulas de Português...',
-          date: new Date(Date.now() - 86400000),
-          isRead: false,
-          priority: 'medium',
-          studentId: '2',
-          studentName: 'Maria Silva'
-        },
-        {
-          id: '3',
-          from: 'Coordenação',
-          subject: 'Calendário de Provas',
-          preview: 'Segue o calendário atualizado das avaliações...',
-          date: new Date(Date.now() - 86400000 * 2),
-          isRead: true,
-          priority: 'low',
-          studentId: '1',
-          studentName: 'João Silva'
-        }
-      ]);
-
-      // Relatórios comportamentais
-      setBehaviorReports([
-        {
-          id: '1',
-          studentId: '2',
-          studentName: 'Maria Silva',
-          type: 'positive',
-          title: 'Liderança em trabalho em grupo',
-          description: 'Maria demonstrou excelente liderança no projeto de ciências',
-          date: new Date(Date.now() - 86400000),
-          reportedBy: 'Prof. Ana Silva'
-        },
-        {
-          id: '2',
-          studentId: '1',
-          studentName: 'João Silva',
-          type: 'neutral',
-          title: 'Atenção nas aulas',
-          description: 'João tem demonstrado distração em algumas aulas',
-          date: new Date(Date.now() - 86400000 * 3),
-          reportedBy: 'Prof. Carlos Santos'
-        }
-      ]);
-
-      // Informações financeiras
-      setFinancialInfo([
-        {
-          studentId: '1',
-          studentName: 'João Silva',
-          monthlyFee: 850.00,
-          status: 'paid',
-          dueDate: new Date(Date.now() + 86400000 * 5)
-        },
-        {
-          studentId: '2',
-          studentName: 'Maria Silva',
-          monthlyFee: 850.00,
-          status: 'pending',
-          dueDate: new Date(Date.now() + 86400000 * 5),
-          additionalCharges: [
-            {
-              description: 'Material didático',
-              amount: 120.00
-            }
-          ]
-        }
-      ]);
-
+      } else {
+        console.error('Falha ao buscar dados do dashboard do responsável:', response.message);
+        // Adicionar estado de erro para UI, se necessário
+      }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro ao carregar dados do dashboard do responsável:', error);
+      if (error instanceof ApiClientError) {
+        // Tratar erro da API
+      }
+      // Adicionar estado de erro para UI
     } finally {
       setLoading(false);
     }
   };
+
+  // Adicionado para cobrir o caso de user ainda não carregado
+  if (loading && !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Autenticando...</p>
+      </div>
+    );
+  }
 
   const getBehaviorColor = (behavior: StudentPerformance['behavior']) => {
     switch (behavior) {

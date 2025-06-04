@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
+import { apiClient, ApiClientError } from '@/services/apiClient'; // Added
 
 interface CoordinatorStats {
   totalCycles: number;
@@ -99,157 +100,66 @@ export default function CoordinatorDashboard() {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
 
   useEffect(() => {
-    loadDashboardData();
-  }, [selectedCycle, selectedDepartment]);
+    if (user?.id) {
+      loadDashboardData(user.id, selectedCycle, selectedDepartment);
+    } else if (!user && !loading) {
+        console.warn("Usuário não autenticado para carregar dashboard do coordenador.");
+        setLoading(false);
+    }
+  }, [user, loading, selectedCycle, selectedDepartment]); // Added user and loading
 
-  const loadDashboardData = async () => {
+  interface CoordinatorDashboardData {
+    stats: CoordinatorStats;
+    cycles: EducationCycleOverview[];
+    teachers: TeacherPerformance[];
+    curriculum: CurriculumItem[];
+    alerts: AcademicAlert[];
+  }
+
+  const loadDashboardData = async (userId: string | number, cycleFilter: string, departmentFilter: string) => {
     try {
       setLoading(true);
       
-      // Dados simulados
-      setStats({
-        totalCycles: 6,
-        activeCycles: 5,
-        totalTeachers: 45,
-        totalStudents: 1234,
-        averagePerformance: 76.8,
-        curriculumCompletion: 82.5,
-        teacherSatisfaction: 88.2,
-        studentProgress: 79.3
-      });
+      // TODO: Ajustar o endpoint da API e parâmetros de filtro.
+      const params: Record<string, string> = {};
+      if (cycleFilter !== 'all') params.cycle = cycleFilter;
+      if (departmentFilter !== 'all') params.department = departmentFilter;
 
-      setCycles([
-        {
-          id: '1',
-          name: 'Ensino Fundamental I',
-          level: '1º ao 5º ano',
-          students: 456,
-          teachers: 18,
-          performance: 82.3,
-          completion: 85,
-          status: 'on-track'
-        },
-        {
-          id: '2',
-          name: 'Ensino Fundamental II',
-          level: '6º ao 9º ano',
-          students: 523,
-          teachers: 22,
-          performance: 75.6,
-          completion: 78,
-          status: 'delayed'
-        },
-        {
-          id: '3',
-          name: 'Ensino Médio',
-          level: '1º ao 3º ano',
-          students: 255,
-          teachers: 15,
-          performance: 71.2,
-          completion: 82,
-          status: 'at-risk'
-        }
-      ]);
+      const response = await apiClient.get<CoordinatorDashboardData>(
+        `/api/coordinators/${userId}/dashboard`,
+        params
+      );
 
-      setTeachers([
-        {
-          id: '1',
-          name: 'Prof. Ana Silva',
-          subject: 'Matemática',
-          classes: 5,
-          students: 125,
-          averageGrade: 8.2,
-          satisfaction: 92,
-          attendance: 98
-        },
-        {
-          id: '2',
-          name: 'Prof. Carlos Santos',
-          subject: 'Português',
-          classes: 4,
-          students: 98,
-          averageGrade: 7.8,
-          satisfaction: 88,
-          attendance: 95
-        },
-        {
-          id: '3',
-          name: 'Prof. Maria Oliveira',
-          subject: 'Ciências',
-          classes: 6,
-          students: 145,
-          averageGrade: 7.5,
-          satisfaction: 85,
-          attendance: 93
-        }
-      ]);
-
-      setCurriculum([
-        {
-          id: '1',
-          subject: 'Matemática',
-          cycle: 'Fundamental I',
-          completion: 92,
-          lastUpdate: new Date(Date.now() - 86400000),
-          responsible: 'Ana Silva',
-          status: 'approved'
-        },
-        {
-          id: '2',
-          subject: 'Português',
-          cycle: 'Fundamental II',
-          completion: 78,
-          lastUpdate: new Date(Date.now() - 172800000),
-          responsible: 'Carlos Santos',
-          status: 'pending'
-        },
-        {
-          id: '3',
-          subject: 'História',
-          cycle: 'Ensino Médio',
-          completion: 65,
-          lastUpdate: new Date(Date.now() - 259200000),
-          responsible: 'João Pereira',
-          status: 'revision'
-        }
-      ]);
-
-      setAlerts([
-        {
-          id: '1',
-          type: 'performance',
-          title: 'Queda no desempenho - Ensino Médio',
-          description: 'Média geral caiu 5% no último mês',
-          severity: 'high',
-          date: new Date(),
-          actionRequired: true
-        },
-        {
-          id: '2',
-          type: 'teacher',
-          title: 'Necessidade de substituição',
-          description: 'Prof. de Física ausente há 3 dias',
-          severity: 'medium',
-          date: new Date(Date.now() - 86400000),
-          actionRequired: true
-        },
-        {
-          id: '3',
-          type: 'curriculum',
-          title: 'Atualização curricular pendente',
-          description: 'Novo conteúdo de Biologia aguardando aprovação',
-          severity: 'low',
-          date: new Date(Date.now() - 172800000),
-          actionRequired: false
-        }
-      ]);
-
+      if (response.success && response.data) {
+        const data = response.data;
+        setStats(data.stats || { totalCycles: 0, activeCycles: 0, totalTeachers: 0, totalStudents: 0, averagePerformance: 0, curriculumCompletion: 0, teacherSatisfaction: 0, studentProgress: 0 });
+        setCycles(data.cycles || []);
+        setTeachers(data.teachers || []);
+        setCurriculum(data.curriculum || []);
+        setAlerts(data.alerts || []);
+      } else {
+        console.error('Falha ao buscar dados do dashboard do coordenador:', response.message);
+        // Adicionar estado de erro para UI, se necessário
+      }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro ao carregar dados do dashboard do coordenador:', error);
+      if (error instanceof ApiClientError) {
+        // Tratar erro da API
+      }
+      // Adicionar estado de erro para UI
     } finally {
       setLoading(false);
     }
   };
+  
+  // Adicionado para cobrir o caso de user ainda não carregado
+  if (loading && !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Autenticando...</p>
+      </div>
+    );
+  }
 
   const getStatusColor = (status: EducationCycleOverview['status']) => {
     switch (status) {

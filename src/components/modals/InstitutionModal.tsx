@@ -13,9 +13,10 @@ import { institutionService } from '@/services/institutionService';
 interface InstitutionModalProps {
   institution?: InstitutionDto | null;
   onClose: () => void;
+  onSave: (data: any) => Promise<void>;
 }
 
-export default function InstitutionModal({ institution, onClose }: InstitutionModalProps) {
+export default function InstitutionModal({ institution, onClose, onSave }: InstitutionModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CreateInstitutionDtoFromInstitution>({
     name: '',

@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { UserRole } from './types/roles';
-import { getDashboardPath, isValidRole, convertBackendRole } from './utils/roleRedirect';
+import { getDashboardPath, isValidRole, convertBackendRole, getDashboardByPermissions, hasPermissionForRoute } from './utils/roleRedirect';
 
 // Configuration constants
 const CONFIG = {
   BASE_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
-  BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:3001/api',
+  BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:3001',
   API_VERSION: process.env.API_VERSION || 'v1',
   COOKIES: {
     AUTH_TOKEN: 'auth_token',
     REFRESH_TOKEN: 'refresh_token',
     SESSION_ID: 'session_id',
     USER_DATA: 'user_data'
-  }
+  },
+  // Controle de loops de redirecionamento
+  MAX_REDIRECTS: 3,
+  REDIRECT_COOLDOWN: 5000 // 5 segundos
 } as const;
 
 // Route definitions
@@ -51,12 +54,58 @@ const ROUTES = {
   ROLE_SPECIFIC: {
     [UserRole.STUDENT]: ['/dashboard/student'],
     [UserRole.TEACHER]: ['/dashboard/teacher'],
-    [UserRole.SYSTEM_ADMIN]: ['/dashboard/admin'],
+    [UserRole.SYSTEM_ADMIN]: ['/dashboard/system-admin'],
     [UserRole.INSTITUTION_MANAGER]: ['/dashboard/institution-manager'],
     [UserRole.ACADEMIC_COORDINATOR]: ['/dashboard/coordinator'],
     [UserRole.GUARDIAN]: ['/dashboard/guardian']
   }
 } as const;
+
+// Controle de redirecionamentos para evitar loops
+class RedirectController {
+  private static redirectHistory = new Map<string, { count: number; lastRedirect: number }>();
+  
+  static canRedirect(sessionId: string | undefined, targetUrl: string): boolean {
+    if (!sessionId) return true; // Se não há sessão, permite redirecionamento
+    
+    const key = `${sessionId}:${targetUrl}`;
+    const history = this.redirectHistory.get(key);
+    const now = Date.now();
+    
+    if (!history) {
+      this.redirectHistory.set(key, { count: 1, lastRedirect: now });
+      return true;
+    }
+    
+    // Se passou o tempo de cooldown, reseta o contador
+    if (now - history.lastRedirect > CONFIG.MAX_REDIRECTS) {
+      history.count = 1;
+      history.lastRedirect = now;
+      return true;
+    }
+    
+    // Se excedeu o máximo de redirecionamentos
+    if (history.count >= CONFIG.MAX_REDIRECTS) {
+      console.warn(`🔄 RedirectController: Bloqueando redirecionamento - máximo atingido para ${targetUrl}`);
+      return false;
+    }
+    
+    history.count++;
+    history.lastRedirect = now;
+    return true;
+  }
+  
+  static cleanup(): void {
+    const now = Date.now();
+    // Usar Array.from() para compatibilidade com TypeScript
+    const entries = Array.from(this.redirectHistory.entries());
+    for (const [key, history] of entries) {
+      if (now - history.lastRedirect > CONFIG.REDIRECT_COOLDOWN * 2) {
+        this.redirectHistory.delete(key);
+      }
+    }
+  }
+}
 
 // Utility functions
 class MiddlewareUtils {
@@ -70,19 +119,63 @@ class MiddlewareUtils {
     response.cookies.delete(CONFIG.COOKIES.USER_DATA);
   }
 
-  static createRedirectResponse(url: string, request: NextRequest): NextResponse {
+  static createRedirectResponse(url: string, request: NextRequest, sessionId?: string): NextResponse {
+    // Verifica se pode fazer o redirecionamento
+    if (!RedirectController.canRedirect(sessionId, url)) {
+      console.warn(`🚫 Middleware: Redirecionamento bloqueado para ${url} - possível loop`);
+      return NextResponse.next(); // Se não pode redirecionar, continua na página atual
+    }
+    
+    console.log(`🔄 Middleware: Redirecionando para: ${url}`);
     return NextResponse.redirect(new URL(url, request.url));
   }
 
-  static createRedirectWithClearCookies(url: string, request: NextRequest): NextResponse {
-    const response = this.createRedirectResponse(url, request);
+  static createRedirectWithClearCookies(url: string, request: NextRequest, sessionId?: string): NextResponse {
+    const response = this.createRedirectResponse(url, request, sessionId);
     this.clearAuthCookies(response);
     return response;
   }
 
-  static parseUserData(userDataCookie: string): { role: string; name: string } | null {
+  static parseUserData(userDataCookie: string): { role: string; name: string; id: string; permissions: string[] } | null {
     try {
-      return JSON.parse(decodeURIComponent(userDataCookie));
+      const decodedData = JSON.parse(decodeURIComponent(userDataCookie));
+      
+      // Validar estrutura mínima necessária
+      if (!decodedData || typeof decodedData !== 'object') {
+        console.error('Middleware: Dados de usuário inválidos (não é um objeto)');
+        return null;
+      }
+      
+      // Extrair role, garantindo que exista
+      const role = decodedData.role;
+      if (!role) {
+        console.error('Middleware: Dados de usuário sem role definida');
+        return null;
+      }
+      
+      // Extrair nome e ID, usando fallbacks se não existirem
+      const name = decodedData.name || 'Usuário';
+      const id = decodedData.id || '0';
+      
+      // Extrair permissões, garantindo que seja um array
+      let permissions: string[] = [];
+      
+      if (Array.isArray(decodedData.permissions)) {
+        permissions = decodedData.permissions;
+      } else if (decodedData.role && decodedData.role.permissions && Array.isArray(decodedData.role.permissions)) {
+        // Formato alternativo onde as permissões estão dentro do objeto role
+        permissions = decodedData.role.permissions;
+      }
+      
+      console.log(`🔍 parseUserData: Processou dados de usuário ${name} (${role}) com ${permissions.length} permissões`);
+      
+      // Retorna objeto com estrutura consistente
+      return {
+        role,
+        name,
+        id,
+        permissions
+      };
     } catch (error) {
       console.error('Middleware: Erro ao analisar dados do usuário:', error);
       return null;
@@ -116,6 +209,28 @@ class SessionValidator {
 
       if (response.ok) {
         const data = await response.json();
+        
+        // Formatar objeto de usuário para incluir permissões de forma consistente
+        if (data.valid && data.user) {
+          // Extrair role e permissões do objeto do usuário
+          // O backend pode enviar em diferentes formatos dependendo do endpoint
+          const role = data.user.role?.name || data.user.role || 'unknown';
+          const permissions = data.user.role?.permissions || data.user.permissions || [];
+          
+          console.log(`✅ SessionValidator: Token válido para usuário com role: ${role}`);
+          console.log(`✅ SessionValidator: Permissões: ${permissions.join(', ')}`);
+          
+          // Retornar objeto de usuário com estrutura consistente
+          return {
+            valid: true,
+            user: {
+              ...data.user,
+              role: role,
+              permissions: permissions
+            }
+          };
+        }
+        
         return { valid: data.valid, user: data.user };
       }
       return { valid: false };
@@ -164,15 +279,31 @@ class RoleAccessControl {
     return true;
   }
 
-  static hasAccessToPath(userRole: string, pathname: string): boolean {
+  static hasAccessToPath(userRole: string, userPermissions: string[] = [], pathname: string): boolean {
     if (!userRole) {
-      console.warn('Middleware: Sem role definida, permitindo acesso');
-      return true; // Se não tem role, permite acesso
+      console.warn('Middleware: Sem role definida, negando acesso');
+      return false; // Se não tem role, nega acesso (mais seguro)
     }
     
     // Converte role do backend para formato do frontend
     const normalizedRole = convertBackendRole(userRole);
     console.log(`🔍 Middleware: Verificando acesso com role: ${userRole} → ${normalizedRole}`);
+    
+    // Primeiro verifica por permissões (novo método)
+    if (userPermissions && userPermissions.length > 0) {
+      // Log de todas as permissões para facilitar debug
+      console.log(`🔑 Middleware: Verificando ${userPermissions.length} permissões: ${userPermissions.join(', ')}`);
+      
+      const hasPermission = hasPermissionForRoute(userPermissions, pathname);
+      if (hasPermission) {
+        console.log(`✅ Middleware: Acesso permitido por permissão para: ${pathname}`);
+        return true;
+      } else {
+        console.log(`⚠️ Middleware: Permissões insuficientes para: ${pathname}`);
+      }
+    } else {
+      console.log(`⚠️ Middleware: Nenhuma permissão definida para o usuário`);
+    }
     
     // Verifica se é um caminho de dashboard específico
     const isDashboardPath = pathname.startsWith('/dashboard/');
@@ -217,7 +348,7 @@ class RoleAccessControl {
     return false; // Nega acesso a dashboards de outras roles
   }
 
-  static getCorrectDashboardForRole(userRole: string | undefined): string | null {
+  static getCorrectDashboardForRole(userRole: string | undefined, userPermissions: string[] = []): string | null {
     if (!userRole) {
       console.warn('Middleware: Role não definida para redirecionamento');
       return null;
@@ -225,16 +356,31 @@ class RoleAccessControl {
     
     // Converte role do backend para formato do frontend
     const normalizedRole = convertBackendRole(userRole);
-    const dashboard = getDashboardPath(normalizedRole);
     
-    console.log(`Middleware: Dashboard para role ${userRole} (${normalizedRole}): ${dashboard}`);
-    return dashboard;
+    // Prioridade 1: Dashboard baseado na role normalizada
+    const roleDashboard = getDashboardPath(normalizedRole);
+    
+    // Prioridade 2: Dashboard baseado em permissões (só se não encontrou por role)
+    if (userPermissions && userPermissions.length > 0 && !roleDashboard) {
+      console.log(`🔍 Middleware: Verificando dashboard por permissões: ${userPermissions.join(', ')}`);
+      const permissionBasedDashboard = getDashboardByPermissions(userRole, userPermissions);
+      console.log(`Middleware: Dashboard baseado em permissões: ${permissionBasedDashboard}`);
+      return permissionBasedDashboard;
+    }
+    
+    console.log(`Middleware: Dashboard para role ${userRole} (${normalizedRole}): ${roleDashboard}`);
+    return roleDashboard;
   }
 }
 
 // Main middleware function
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  
+  // Cleanup do controlador de redirecionamentos periodicamente
+  if (Math.random() < 0.01) { // 1% de chance a cada request
+    RedirectController.cleanup();
+  }
   
   console.log(`🔍 Middleware: Processando ${pathname}`);
   
@@ -263,12 +409,18 @@ export async function middleware(request: NextRequest) {
         if (userData && userData.role) {
           console.log(`🔄 Middleware: Usuário já autenticado tentando acessar ${pathname}, redirecionando para dashboard`);
           
-          const normalizedRole = convertBackendRole(userData.role);
-          const dashboardPath = getDashboardPath(normalizedRole);
+          // Utilizando dashboard baseado prioritariamente na role
+          const dashboardPath = RoleAccessControl.getCorrectDashboardForRole(
+            userData.role, 
+            userData.permissions || []
+          );
           
-          if (dashboardPath) {
+          if (dashboardPath && dashboardPath !== '/dashboard') {
             console.log(`✅ Middleware: Redirecionando usuário autenticado para: ${dashboardPath}`);
-            return MiddlewareUtils.createRedirectResponse(dashboardPath, request);
+            return MiddlewareUtils.createRedirectResponse(dashboardPath, request, sessionId);
+          } else {
+            // Fallback para dashboard genérico se não conseguiu determinar específico
+            return MiddlewareUtils.createRedirectResponse('/dashboard', request, sessionId);
           }
         }
       } catch (error) {
@@ -284,18 +436,27 @@ export async function middleware(request: NextRequest) {
     
     if (!authResult.authenticated) {
       console.log(`❌ Middleware: Usuário não autenticado tentando acessar ${pathname}`);
-      return MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
+      return MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request, sessionId);
     }
 
     // Atualizar dados do usuário se necessário
-    if (authResult.user && !userDataCookie) {
-      console.log(`🔄 Middleware: Atualizando dados do usuário ${authResult.user.name}`);
+    if (authResult.user) {
+      console.log(`🔄 Middleware: Processando dados de usuário autenticado`);
       const response = NextResponse.next();
+      
+      // Extrai informações relevantes do objeto de usuário
       const userData = {
+        id: authResult.user.id,
+        name: authResult.user.name || 'Usuário',
+        email: authResult.user.email,
         role: authResult.user.role,
-        name: authResult.user.name,
-        id: authResult.user.id
+        permissions: authResult.user.permissions || []
       };
+      
+      console.log(`✅ Middleware: Atualizando dados do usuário ${userData.name}`);
+      console.log(`🔑 Middleware: Role: ${userData.role}, Permissões: ${userData.permissions.length}`);
+      
+      // Atualiza o cookie de dados do usuário
       response.cookies.set(CONFIG.COOKIES.USER_DATA, JSON.stringify(userData), { path: '/' });
       MiddlewareUtils.addSessionHeaders(response, sessionId, pathname);
       return response;
@@ -309,12 +470,15 @@ export async function middleware(request: NextRequest) {
         if (userData && userData.role) {
           console.log(`🔄 Middleware: Redirecionando usuário de /dashboard para dashboard específico`);
           
-          const normalizedRole = convertBackendRole(userData.role);
-          const dashboardPath = getDashboardPath(normalizedRole);
+          // Utilizando dashboard baseado prioritariamente na role
+          const dashboardPath = RoleAccessControl.getCorrectDashboardForRole(
+            userData.role,
+            userData.permissions || []
+          );
           
           if (dashboardPath && dashboardPath !== '/dashboard') {
             console.log(`✅ Middleware: Redirecionando para dashboard específico: ${dashboardPath}`);
-            return MiddlewareUtils.createRedirectResponse(dashboardPath, request);
+            return MiddlewareUtils.createRedirectResponse(dashboardPath, request, sessionId);
           }
         }
       } catch (error) {
@@ -329,23 +493,30 @@ export async function middleware(request: NextRequest) {
         
         if (!userData || !userData.role) {
           console.error('❌ Middleware: Dados de usuário inválidos para verificação de acesso');
-          return MiddlewareUtils.createRedirectWithClearCookies('/login?error=invalid_user_data', request);
+          return MiddlewareUtils.createRedirectWithClearCookies('/login?error=invalid_user_data', request, sessionId);
         }
         
-        const hasAccess = RoleAccessControl.hasAccessToPath(userData.role, pathname);
+        const hasAccess = RoleAccessControl.hasAccessToPath(
+          userData.role, 
+          userData.permissions || [],
+          pathname
+        );
         
         if (!hasAccess) {
           console.log(`❌ Middleware: Acesso negado para ${pathname}`);
           
-          // Redirecionar para o dashboard correto
-          const normalizedRole = convertBackendRole(userData.role);
-          const correctDashboard = getDashboardPath(normalizedRole);
+          // Redirecionar para o dashboard correto com base na role principal
+          const correctDashboard = RoleAccessControl.getCorrectDashboardForRole(
+            userData.role,
+            userData.permissions || []
+          );
           
-          if (correctDashboard) {
+          if (correctDashboard && correctDashboard !== pathname) {
             console.log(`🔄 Middleware: Redirecionando para dashboard correto: ${correctDashboard}`);
-            return MiddlewareUtils.createRedirectResponse(correctDashboard, request);
+            return MiddlewareUtils.createRedirectResponse(correctDashboard, request, sessionId);
           } else {
-            return MiddlewareUtils.createRedirectResponse('/dashboard', request);
+            // Se não conseguiu determinar dashboard correto, vai para genérico
+            return MiddlewareUtils.createRedirectResponse('/dashboard', request, sessionId);
           }
         }
       } catch (error) {

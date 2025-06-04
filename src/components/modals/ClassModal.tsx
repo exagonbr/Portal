@@ -9,9 +9,10 @@ import { School } from '@/types/school';
 interface ClassModalProps {
   classItem?: Class | null;
   onClose: () => void;
+  onSave: (data: any) => Promise<void>;
 }
 
-export default function ClassModal({ classItem, onClose }: ClassModalProps) {
+export default function ClassModal({ classItem, onClose, onSave }: ClassModalProps) {
   const [loading, setLoading] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
   const [formData, setFormData] = useState<CreateClassData>({

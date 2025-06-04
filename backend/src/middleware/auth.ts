@@ -9,8 +9,11 @@ export const validateJWT = async (
 ): Promise<express.Response | void> => {
   try {
     const authHeader = req.headers.authorization;
+    console.log('🔍 ValidateJWT: Verificando token para:', req.method, req.path);
+    console.log('📨 Headers recebidos:', req.headers);
 
     if (!authHeader) {
+      console.warn('❌ ValidateJWT: Header Authorization não encontrado');
       return res.status(401).json({
         success: false,
         message: 'Acesso não autorizado. Por favor, faça login para continuar.'
@@ -20,6 +23,7 @@ export const validateJWT = async (
     const token = authHeader.split(' ')[1];
 
     if (!token) {
+      console.warn('❌ ValidateJWT: Token não encontrado no header Authorization');
       return res.status(401).json({
         success: false,
         message: 'Token de acesso inválido. Por favor, faça login novamente.'
@@ -27,13 +31,23 @@ export const validateJWT = async (
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AuthTokenPayload;
+      if (!process.env.JWT_SECRET) {
+        console.error('❌ ValidateJWT: JWT_SECRET não configurado!');
+        return res.status(500).json({
+          success: false,
+          message: 'Erro de configuração do servidor.'
+        });
+      }
+
+      console.log('🔐 ValidateJWT: Verificando token:', token.substring(0, 10) + '...');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET) as AuthTokenPayload;
       
       // Verifica se é uma sessão de fallback (criada quando Redis não está disponível)
       if (decoded.sessionId && decoded.sessionId.startsWith('fallback-')) {
-        console.log('⚠️ Usando sessão de fallback (Redis não disponível):', decoded.sessionId);
+        console.log('⚠️ ValidateJWT: Usando sessão de fallback:', decoded.sessionId);
       }
       
+      console.log('✅ ValidateJWT: Token válido para usuário:', decoded.email);
       req.user = decoded;
       
       // Armazena o sessionId para uso em outras partes da aplicação
@@ -44,24 +58,29 @@ export const validateJWT = async (
       return next();
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
+        console.error('❌ ValidateJWT: Token inválido:', error.message);
         return res.status(401).json({
           success: false,
-          message: 'Sessão inválida. Por favor, faça login novamente.'
+          message: 'Sessão inválida. Por favor, faça login novamente.',
+          error: error.message
         });
       }
       if (error instanceof jwt.TokenExpiredError) {
+        console.error('❌ ValidateJWT: Token expirado');
         return res.status(401).json({
           success: false,
-          message: 'Sua sessão expirou. Por favor, faça login novamente.'
+          message: 'Sua sessão expirou. Por favor, faça login novamente.',
+          error: 'Token expired'
         });
       }
       throw error;
     }
   } catch (error) {
-    console.error('Erro na autenticação:', error);
+    console.error('❌ ValidateJWT: Erro inesperado:', error);
     return res.status(401).json({
       success: false,
-      message: 'Não foi possível autenticar sua sessão. Por favor, faça login novamente.'
+      message: 'Não foi possível autenticar sua sessão. Por favor, faça login novamente.',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 };

@@ -1,51 +1,103 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { apiClient, ApiClientError } from '@/services/apiClient'
+import { PaginatedResponseDto } from '@/types/api' // Assuming logs might be paginated
 
-const MOCK_AUDIT_LOGS = [
-  {
-    id: 1,
-    timestamp: '2024-03-20 14:30:15',
-    user: 'admin@escola.com',
-    action: 'USER_LOGIN',
-    resource: 'Sistema',
-    details: 'Login realizado com sucesso',
-    ip: '192.168.1.100',
-    severity: 'info'
-  },
-  {
-    id: 2,
-    timestamp: '2024-03-20 14:25:30',
-    user: 'coord@escola.com',
-    action: 'STUDENT_GRADE_UPDATE',
-    resource: 'Notas - Ana Silva',
-    details: 'Nota de matemática alterada de 8.0 para 8.5',
-    ip: '192.168.1.50',
-    severity: 'warning'
-  },
-  {
-    id: 3,
-    timestamp: '2024-03-20 14:20:45',
-    user: 'teacher@escola.com',
-    action: 'ASSIGNMENT_CREATE',
-    resource: 'Atividades',
-    details: 'Nova atividade criada: Trabalho de História',
-    ip: '192.168.1.75',
-    severity: 'info'
-  }
-]
+interface AuditLog {
+  id: number | string;
+  timestamp: string; // Or Date, if conversion is handled
+  user: string;
+  action: string;
+  resource: string;
+  details: string;
+  ip: string;
+  severity: 'info' | 'warning' | 'error' | string; // Allow string for flexibility from API
+}
+
+// MOCK_AUDIT_LOGS will be replaced by API data
+// const MOCK_AUDIT_LOGS = [ ... ]
 
 export default function AdminAuditPage() {
   const { user } = useAuth()
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedAction, setSelectedAction] = useState('all')
   const [selectedSeverity, setSelectedSeverity] = useState('all')
+  // Add pagination state if needed, e.g., currentPage, totalPages
 
-  const filteredLogs = MOCK_AUDIT_LOGS.filter(log => {
-    const matchesAction = selectedAction === 'all' || log.action.includes(selectedAction)
-    const matchesSeverity = selectedSeverity === 'all' || log.severity === selectedSeverity
-    return matchesAction && matchesSeverity
-  })
+  const fetchAuditLogs = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const params: Record<string, string> = {}
+      if (selectedAction !== 'all') {
+        params.action = selectedAction
+      }
+      if (selectedSeverity !== 'all') {
+        params.severity = selectedSeverity
+      }
+      // Add pagination params if implementing: params.page = currentPage; params.limit = logsPerPage;
+
+      // TODO: Adjust API endpoint as necessary
+      const response = await apiClient.get<PaginatedResponseDto<AuditLog>>('/api/admin/audit-logs', params)
+      
+      if (response.success && response.data) {
+        setAuditLogs(response.data.items || [])
+        // Set pagination state if applicable: setTotalPages(response.data.pagination.totalPages);
+      } else {
+        setError(response.message || 'Falha ao buscar logs de auditoria.')
+      }
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError(err.message)
+      } else {
+        setError('Ocorreu um erro desconhecido ao buscar logs.')
+      }
+      console.error("Erro ao buscar logs de auditoria:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedAction, selectedSeverity /*, currentPage */]) // Add currentPage if paginating
+
+  useEffect(() => {
+    fetchAuditLogs()
+  }, [fetchAuditLogs])
+  
+  // The filtering logic is now handled by the backend via query parameters.
+  // If client-side filtering is still desired on top of backend filtering (e.g. for quick text search not sent to backend):
+  // const filteredLogs = auditLogs.filter(log => { ... });
+  // For now, we assume backend handles all filtering based on selectedAction and selectedSeverity.
+  const filteredLogs = auditLogs;
+
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center h-screen">
+        <p className="text-xl text-gray-600">Carregando logs de auditoria...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold text-primary mb-2">Auditoria</h1>
+           <p className="text-xl text-red-500">Erro: {error}</p>
+            <button
+              onClick={fetchAuditLogs}
+              className="mt-4 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
+            >
+              Tentar Novamente
+            </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -21,8 +21,13 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   const pathname = usePathname()
 
+  // Verificar se a rota existe
+  if (!pathname) {
+    return <div className="h-full w-full">{children}</div>
+  }
+
   // Don't use dashboard layout for public routes
-  if (pathname && publicRoutes.includes(pathname)) {
+  if (publicRoutes.includes(pathname)) {
     return <div className="h-full w-full">{children}</div>
   }
 

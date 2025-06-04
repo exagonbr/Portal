@@ -30,7 +30,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { classService } from '@/services/classService';
+// import { classService } from '@/services/classService'; // Potentially unused if API client handles all
+import { apiClient, ApiClientError } from '@/services/apiClient';
 import { Class } from '@/types/class';
 import { SHIFT_LABELS } from '@/types/class';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
@@ -140,227 +141,57 @@ function StudentDashboardContent() {
   const [selectedView, setSelectedView] = useState<'overview' | 'learning' | 'social' | 'achievements'>('overview');
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (user?.id) { // Garante que user.id esteja disponível
+      loadDashboardData(user.id);
+    } else if (!user && !loading) { // Se não há usuário e não está carregando auth, redireciona ou mostra erro
+        // Idealmente, o RoleProtectedRoute já lidaria com isso, mas como fallback:
+        // router.push('/login?error=session_expired_dashboard');
+        console.warn("Usuário não autenticado para carregar dashboard do estudante.");
+        setLoading(false); // Para de mostrar o loader principal da página
+    }
+  }, [user, loading]); // Adiciona loading como dependência
 
-  const loadDashboardData = async () => {
+  interface DashboardData {
+    myClass: Class | null;
+    stats: StudentStats;
+    assignments: Assignment[];
+    recentGrades: Grade[];
+    studyMaterials: StudyMaterial[];
+    announcements: Announcement[];
+    achievements: Achievement[];
+    learningPaths: LearningPath[];
+    studyGroups: StudyGroup[];
+  }
+
+  const loadDashboardData = async (userId: string | number) => {
     try {
       setLoading(true);
       
-      // Carregar turma do aluno
-      // Por enquanto vamos simular os dados
-      const mockClass: Class = {
-        id: '1',
-        name: '5º Ano A',
-        code: '5A-2025',
-        school_id: 'school1',
-        year: 2025,
-        shift: 'MORNING',
-        max_students: 30,
-        is_active: true,
-        created_at: new Date(),
-        updated_at: new Date()
-      };
-      
-      setMyClass(mockClass);
-      
-      // Estatísticas simuladas
-      setStats({
-        averageGrade: 8.5,
-        completedTasks: 24,
-        pendingTasks: 3,
-        attendance: 95,
-        ranking: 5,
-        totalStudents: 28,
-        xpPoints: 2450,
-        level: 12,
-        streakDays: 7,
-        badges: 8
-      });
+      // TODO: Ajustar o endpoint da API. Pode ser um único endpoint ou múltiplos.
+      // Exemplo com um endpoint único que retorna todos os dados:
+      const response = await apiClient.get<DashboardData>(`/api/students/${userId}/dashboard`);
 
-      // Tarefas
-      setAssignments([
-        {
-          id: '1',
-          title: 'Exercícios de Matemática - Frações',
-          subject: 'Matemática',
-          dueDate: '2025-02-05',
-          status: 'pending'
-        },
-        {
-          id: '2',
-          title: 'Redação sobre Meio Ambiente',
-          subject: 'Português',
-          dueDate: '2025-02-03',
-          status: 'submitted'
-        },
-        {
-          id: '3',
-          title: 'Pesquisa sobre Sistema Solar',
-          subject: 'Ciências',
-          dueDate: '2025-02-01',
-          status: 'graded',
-          grade: 9.0
-        }
-      ]);
-
-      // Notas recentes
-      setRecentGrades([
-        {
-          id: '1',
-          subject: 'Matemática',
-          assessment: 'Prova Mensal',
-          grade: 8.5,
-          maxGrade: 10,
-          date: '2025-01-25'
-        },
-        {
-          id: '2',
-          subject: 'Português',
-          assessment: 'Trabalho em Grupo',
-          grade: 9.0,
-          maxGrade: 10,
-          date: '2025-01-23'
-        },
-        {
-          id: '3',
-          subject: 'História',
-          assessment: 'Apresentação',
-          grade: 8.0,
-          maxGrade: 10,
-          date: '2025-01-20'
-        }
-      ]);
-
-      // Materiais de estudo
-      setStudyMaterials([
-        {
-          id: '1',
-          title: 'Apostila de Matemática - Cap. 5',
-          subject: 'Matemática',
-          type: 'pdf',
-          uploadDate: '2025-01-28'
-        },
-        {
-          id: '2',
-          title: 'Vídeo Aula - Verbos',
-          subject: 'Português',
-          type: 'video',
-          uploadDate: '2025-01-27'
-        },
-        {
-          id: '3',
-          title: 'Exercícios Complementares',
-          subject: 'Ciências',
-          type: 'document',
-          uploadDate: '2025-01-26'
-        }
-      ]);
-
-      // Comunicados
-      setAnnouncements([
-        {
-          id: '1',
-          title: 'Reunião de Pais',
-          content: 'Convidamos todos os pais para a reunião bimestral',
-          author: 'Coordenação',
-          date: '2025-01-28',
-          priority: 'high'
-        },
-        {
-          id: '2',
-          title: 'Excursão ao Museu',
-          content: 'Próxima sexta-feira visitaremos o Museu de Ciências',
-          author: 'Prof. Ana',
-          date: '2025-01-27',
-          priority: 'medium'
-        }
-      ]);
-
-      // Conquistas
-      setAchievements([
-        {
-          id: '1',
-          title: 'Estudante Dedicado',
-          description: 'Complete 10 tarefas consecutivas',
-          icon: 'star',
-          progress: 8,
-          total: 10,
-          unlocked: false,
-          xpReward: 100
-        },
-        {
-          id: '2',
-          title: 'Mestre da Matemática',
-          description: 'Obtenha média 9+ em Matemática',
-          icon: 'calculator',
-          progress: 1,
-          total: 1,
-          unlocked: true,
-          xpReward: 200
-        },
-        {
-          id: '3',
-          title: 'Colaborador',
-          description: 'Participe de 5 grupos de estudo',
-          icon: 'users',
-          progress: 3,
-          total: 5,
-          unlocked: false,
-          xpReward: 150
-        }
-      ]);
-
-      // Trilhas de aprendizagem
-      setLearningPaths([
-        {
-          id: '1',
-          subject: 'Matemática',
-          currentTopic: 'Frações',
-          progress: 65,
-          nextTopic: 'Decimais',
-          estimatedTime: '2h'
-        },
-        {
-          id: '2',
-          subject: 'Português',
-          currentTopic: 'Verbos',
-          progress: 80,
-          nextTopic: 'Concordância',
-          estimatedTime: '1h30'
-        },
-        {
-          id: '3',
-          subject: 'Ciências',
-          currentTopic: 'Sistema Solar',
-          progress: 45,
-          nextTopic: 'Planetas',
-          estimatedTime: '3h'
-        }
-      ]);
-
-      // Grupos de estudo
-      setStudyGroups([
-        {
-          id: '1',
-          name: 'Matemática Avançada',
-          subject: 'Matemática',
-          members: 8,
-          nextMeeting: '2025-02-01 15:00',
-          isActive: true
-        },
-        {
-          id: '2',
-          name: 'Clube de Leitura',
-          subject: 'Português',
-          members: 12,
-          nextMeeting: '2025-02-03 14:00',
-          isActive: true
-        }
-      ]);
-
+      if (response.success && response.data) {
+        const data = response.data;
+        setMyClass(data.myClass || null); // Garante que seja null se não vier
+        setStats(data.stats || { averageGrade: 0, completedTasks: 0, pendingTasks: 0, attendance: 0, ranking: 0, totalStudents: 0, xpPoints: 0, level: 0, streakDays: 0, badges: 0 });
+        setAssignments(data.assignments || []);
+        setRecentGrades(data.recentGrades || []);
+        setStudyMaterials(data.studyMaterials || []);
+        setAnnouncements(data.announcements || []);
+        setAchievements(data.achievements || []);
+        setLearningPaths(data.learningPaths || []);
+        setStudyGroups(data.studyGroups || []);
+      } else {
+        console.error('Falha ao buscar dados do dashboard:', response.message);
+        // Definir um estado de erro para exibir na UI, se necessário
+      }
     } catch (error) {
-      console.error('Erro ao carregar dashboard:', error);
+      console.error('Erro ao carregar dados do dashboard:', error);
+      if (error instanceof ApiClientError) {
+        // Tratar erro da API especificamente
+      }
+      // Definir um estado de erro para exibir na UI
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import NotificationSettings from '@/components/notifications/NotificationSettings'
 import { useNotifications, type NotificationFilters, type Notification } from '@/hooks/useNotifications'
+import { canAccessAdvancedNotifications } from '@/utils/roleRedirect'
 
 export default function NotificationsPage() {
   const { user } = useAuth()
@@ -239,7 +240,8 @@ export default function NotificationsPage() {
               </button>
             )}
 
-            {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'teacher' || user?.role === 'institution_manager' || user?.role === 'academic_coordinator') && (
+            {/* Botões de funcionalidades avançadas (envio, histórico) */}
+            {canAccessAdvancedNotifications(user?.role) && (
               <>
                 <button
                   onClick={() => router.push('/notifications/sent')}
