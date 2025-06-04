@@ -14,12 +14,14 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
 
   useEffect(() => {
     setMounted(true);
+    // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, []);
 
+  // Handle escape key to close player
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -31,6 +33,7 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
+  // Handle click outside to close
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -43,22 +46,22 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-text-primary/80 backdrop-blur-md p-4 sm:p-8" // Adjusted padding for smaller screens
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-md p-8"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="video-title" // Assuming video title might be added later
+      aria-labelledby="video-title"
     >
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white hover:text-secondary-light z-[100000]
+        className="absolute top-6 right-6 text-white hover:text-gray-300 z-[100000]
                  transition-all duration-200 transform hover:scale-110 focus:outline-none
-                 focus:ring-2 focus:ring-white rounded-full p-2 bg-black/30 hover:bg-black/50"
+                 focus:ring-2 focus:ring-white rounded-full p-2"
         aria-label="Close video player"
       >
         <svg
-          className="w-6 h-6 sm:w-8 sm:h-8"
+          className="w-8 h-8"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -74,17 +77,17 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
       </button>
 
       {/* Main container with video and side menu */}
-      <div className="flex flex-col lg:flex-row gap-4 w-full max-w-7xl h-[90vh] lg:h-[80vh]"> {/* Adjusted height for responsiveness */}
+      <div className="flex gap-4 w-full max-w-7xl h-[80vh]">
         {/* Video container with loading state */}
-        <div className="relative flex-1 bg-black rounded-xl overflow-hidden shadow-2xl border border-border-dark/50">
+        <div className="relative flex-1 bg-black rounded-xl overflow-hidden shadow-2xl">
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-light"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
             </div>
           )}
           <iframe
             id="video-player"
-            title="Video player" // It's good practice to have a more descriptive title if possible
+            title="Video player"
             src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -93,25 +96,25 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
           />
         </div>
 
-        {/* Side menu - consider making this collapsible on smaller screens or optional */}
-        <div className="w-full lg:w-80 bg-background-secondary rounded-xl shadow-2xl overflow-hidden flex flex-col border border-border-DEFAULT">
-          <div className="p-4 sm:p-6 border-b border-border-light">
-            <h2 id="video-title" className="text-lg sm:text-xl font-bold text-text-primary">Opções do Vídeo</h2>
+        {/* Side menu */}
+        <div className="w-80 bg-gray-900 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+          <div className="p-6 border-b border-gray-800">
+            <h2 className="text-xl font-bold text-white">Opções do Vídeo</h2>
           </div>
-
+          
           <div className="flex-1 overflow-y-auto">
-            {/* Example items - replace with actual functionality */}
-            <div className="p-4 sm:p-6 border-b border-border-light hover:bg-background-tertiary transition-colors cursor-pointer">
+            {/* Avaliação */}
+            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-md sm:text-lg font-semibold text-text-primary mb-1">Avaliação</h3>
-                  <p className="text-xs sm:text-sm text-text-tertiary">Avalie este conteúdo</p>
+                  <h3 className="text-lg font-semibold text-white mb-1">Avaliação</h3>
+                  <p className="text-sm text-gray-400">Avalie este conteúdo</p>
                 </div>
                 <div className="flex items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <svg
                       key={star}
-                      className="w-4 h-4 sm:w-5 sm:h-5 text-accent-yellow-DEFAULT hover:text-accent-yellow-dark transition-transform cursor-pointer"
+                      className="w-5 h-5 text-yellow-400 hover:scale-110 transition-transform cursor-pointer"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -122,18 +125,68 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
               </div>
             </div>
 
-            <div className="p-4 sm:p-6 border-b border-border-light hover:bg-background-tertiary transition-colors cursor-pointer">
+            {/* Última Nota */}
+            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-md sm:text-lg font-semibold text-text-primary mb-1">Anotações</h3>
-                  <p className="text-xs sm:text-sm text-text-tertiary">Fazer anotações</p>
+                  <h3 className="text-lg font-semibold text-white mb-1">Última Nota</h3>
+                  <p className="text-sm text-gray-400">Sua última avaliação</p>
                 </div>
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-2xl font-bold text-green-400">8.5</div>
+              </div>
+            </div>
+
+            {/* Anotações */}
+            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">Anotações</h3>
+                  <p className="text-sm text-gray-400">Fazer anotações</p>
+                </div>
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
             </div>
-             {/* Add more options as needed */}
+
+            {/* Material Complementar */}
+            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">Material Complementar</h3>
+                  <p className="text-sm text-gray-400">Baixar PDFs e recursos</p>
+                </div>
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Discussão */}
+            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">Discussão</h3>
+                  <p className="text-sm text-gray-400">Participar do fórum</p>
+                </div>
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Certificado */}
+            <div className="p-6 hover:bg-gray-800 transition-colors cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">Certificado</h3>
+                  <p className="text-sm text-gray-400">Baixar certificado</p>
+                </div>
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>

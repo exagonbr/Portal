@@ -204,42 +204,94 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
       // Aguardar o livro estar pronto
       await newBook.ready;
       
-      // Carregar metadados
-      const meta = await newBook.loaded.metadata;
-      setBookMetadata(meta);
+      // Carregar metadados com timeout de segurança
+      try {
+        const meta = await Promise.race([
+          newBook.loaded.metadata,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout ao carregar metadados')), 10000)
+          )
+        ]);
+        setBookMetadata(meta);
+      } catch (metaError) {
+        console.warn('Erro ao carregar metadados:', metaError);
+        // Continuar sem os metadados
+      }
       
       // Renderizar o livro com dimensões fit-to-screen
       const newRendition = newBook.renderTo(viewerRef.current, {
         width: dimensions.width,
         height: dimensions.height,
         spread: viewerState.isDualPage ? 'auto' : 'none',
-        flow: 'paginated'
+        flow: 'paginated',
+        allowScriptedContent: false // Desabilitar scripts para evitar problemas
       });
       
       setRendition(newRendition);
 
-      // Exibir a primeira página
-      await newRendition.display();
+      // Aguardar que o rendition esteja completamente carregado
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout ao renderizar EPUB'));
+        }, 15000);
 
-      // Gerar localizações para paginação
-      await newBook.locations.generate(1024);
-      const total = newBook.locations.length();
-      setTotalPages(total);
+        newRendition.on('rendered', () => {
+          clearTimeout(timeout);
+          resolve(true);
+        });
 
-      // Configurar listeners de eventos
+        // Fallback - se não houver evento rendered, usar display
+        newRendition.display().then(() => {
+          clearTimeout(timeout);
+          resolve(true);
+        }).catch(reject);
+      });
+
+      // Gerar localizações para paginação com timeout
+      try {
+        await Promise.race([
+          newBook.locations.generate(1024),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout ao gerar localizações')), 15000)
+          )
+        ]);
+        const total = newBook.locations.length();
+        setTotalPages(total);
+      } catch (locationError) {
+        console.warn('Erro ao gerar localizações:', locationError);
+        // Usar um número estimado de páginas
+        setTotalPages(100);
+      }
+
+      // Configurar listeners de eventos com verificações de segurança
       newRendition.on('relocated', (location: any) => {
-        const currentLocation = newBook.locations.locationFromCfi(location.start.cfi);
-        if (typeof currentLocation === 'number') {
-          setViewerState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
+        if (location && location.start && location.start.cfi && newBook.locations) {
+          const currentLocation = newBook.locations.locationFromCfi(location.start.cfi);
+          if (typeof currentLocation === 'number') {
+            setViewerState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
+          }
         }
       });
 
-      // Manipular seleção de texto para destaques
+      // Manipular seleção de texto para destaques com verificações de segurança
       newRendition.on('selected', (cfiRange: string, contents: any) => {
-        const text = contents.window.getSelection().toString();
-        if (text) {
-          handleTextSelection(cfiRange, text);
+        try {
+          if (contents && contents.window && contents.window.getSelection) {
+            const selection = contents.window.getSelection();
+            const text = selection ? selection.toString() : null;
+            if (text) {
+              handleTextSelection(cfiRange, text);
+            }
+          }
+        } catch (selectionError) {
+          console.warn('Erro ao processar seleção de texto:', selectionError);
         }
+      });
+
+      // Adicionar listener para erros de rendering
+      newRendition.on('error', (error: any) => {
+        console.warn('Erro de renderização EPUB:', error);
+        // Não parar a execução, apenas registrar o erro
       });
 
       setLoading(false);

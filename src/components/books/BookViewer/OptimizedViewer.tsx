@@ -95,7 +95,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
   });
   
   // Estados específicos para PDF
-  const [numPages, setNumPages] = useState<number | null>(null);
+  const [totalPages, setTotalPages] = useState<number | null>(null);
   const [pdfDocument, setPdfDocument] = useState<any>(null);
   
   // Estados específicos para EPUB
@@ -211,7 +211,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
-    if (newPage < 1 || newPage > (numPages || 1)) return;
+    if (newPage < 1 || newPage > (totalPages || 1)) return;
     
     if (book.format === 'pdf') {
       setViewerState(prev => ({ ...prev, currentPage: newPage }));
@@ -224,7 +224,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
       const cfi = epubBook.locations.cfiFromLocation(newPage - 1);
       rendition.display(cfi);
     }
-  }, [numPages, book.format, epubBook, rendition]);
+  }, [totalPages, book.format, epubBook, rendition]);
 
   const handleBookmarkAdd = useCallback((title: string) => {
     const newBookmark: Bookmark = {
@@ -256,8 +256,8 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
     // Simular atraso de pesquisa
     setTimeout(() => {
       // Resultados de pesquisa simulados - em uma implementação real, isso pesquisaria o documento atual
-      const results = Array.from({ length: Math.min(5, numPages || 0) }, (_, i) => {
-        const randomPage = Math.floor(Math.random() * (numPages || 10)) + 1;
+      const results = Array.from({ length: Math.min(5, totalPages || 0) }, (_, i) => {
+        const randomPage = Math.floor(Math.random() * (totalPages || 10)) + 1;
         return {
           page: randomPage,
           text: `...${searchQuery} encontrado no contexto da página ${randomPage}...`
@@ -267,7 +267,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
       setSearchResults(results);
       setIsSearching(false);
     }, 500);
-  }, [searchQuery, numPages]);
+  }, [searchQuery, totalPages]);
 
   // Inicialização do PDF - MELHORADA COM LOGGING E TRATAMENTO DE ERROS
   const initializePDF = useCallback(async (fileUrl: string) => {
@@ -344,9 +344,20 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
       
       console.log('📚 EPUB pronto, carregando metadados...');
       
-      // Carregar metadados
-      const meta = await newBook.loaded.metadata;
-      setBookMetadata(meta);
+      // Carregar metadados com timeout de segurança
+      try {
+        const meta = await Promise.race([
+          newBook.loaded.metadata,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout ao carregar metadados')), 10000)
+          )
+        ]);
+        setBookMetadata(meta);
+        console.log('📖 Metadados carregados:', meta);
+      } catch (metaError) {
+        console.warn('⚠️ Erro ao carregar metadados:', metaError);
+        // Continuar sem os metadados
+      }
       
       // Verificar se contentRef existe
       if (!contentRef.current) {
@@ -360,90 +371,106 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
         width: '100%',
         height: '100%',
         spread: viewerState.isDualPage ? 'auto' : 'none',
-        flow: 'paginated'
+        flow: 'paginated',
+        allowScriptedContent: false // Desabilitar scripts para evitar problemas de segurança
       });
-      
+
       if (!newRendition) {
-        throw new Error('Falha ao criar renderização EPUB');
+        throw new Error('Falha ao criar rendition do EPUB');
       }
-      
+
       setRendition(newRendition);
+      console.log('🎭 Rendition criado com sucesso');
 
-      // Exibir primeira página
-      await newRendition.display();
+      // Aguardar que o rendition esteja completamente carregado
+      console.log('⏳ Aguardando renderização completa...');
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout ao renderizar EPUB'));
+        }, 15000);
 
-      console.log('📄 Gerando localizações para paginação...');
-      
-      // Gerar localizações para paginação
-      await newBook.locations.generate(1024);
-      const total = newBook.locations.length();
-      setNumPages(total);
+        newRendition.on('rendered', () => {
+          console.log('✅ EPUB renderizado com sucesso');
+          clearTimeout(timeout);
+          resolve(true);
+        });
 
-      // Configurar listeners com verificações de segurança
+        // Fallback - se não houver evento rendered, usar display
+        newRendition.display().then(() => {
+          console.log('✅ EPUB exibido com sucesso via display()');
+          clearTimeout(timeout);
+          resolve(true);
+        }).catch(reject);
+      });
+
+      // Gerar localizações para navegação com timeout
+      console.log('📍 Gerando localizações para navegação...');
+      try {
+        await Promise.race([
+          newBook.locations.generate(1024),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout ao gerar localizações')), 15000)
+          )
+        ]);
+        
+        const totalPages = newBook.locations.length();
+        setTotalPages(totalPages);
+        console.log('📄 Total de páginas:', totalPages);
+      } catch (locationError) {
+        console.warn('⚠️ Erro ao gerar localizações:', locationError);
+        // Usar um número estimado de páginas
+        setTotalPages(100);
+      }
+
+      // Configurar listeners de eventos com verificações de segurança
       newRendition.on('relocated', (location: any) => {
-        try {
-          if (location && location.start && location.start.cfi) {
-            const currentLocation = newBook.locations.locationFromCfi(location.start.cfi);
-            if (typeof currentLocation === 'number' && currentLocation >= 0) {
-              setViewerState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
-            }
+        if (location && location.start && location.start.cfi && newBook.locations) {
+          const currentLocation = newBook.locations.locationFromCfi(location.start.cfi);
+          if (typeof currentLocation === 'number') {
+            setViewerState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
+            console.log('📖 Página atual:', currentLocation + 1);
           }
-        } catch (error) {
-          console.warn('Erro ao processar relocação EPUB:', error);
         }
       });
 
-      // Handler para seleção de texto com verificações de segurança
+      // Manipular seleção de texto com verificações de segurança
       newRendition.on('selected', (cfiRange: string, contents: any) => {
         try {
-          if (cfiRange && contents && contents.window) {
-            const text = contents.window.getSelection()?.toString();
-            if (text && text.trim()) {
-              const highlight: Omit<Highlight, 'id' | 'createdAt'> = {
-                pageNumber: viewerState.currentPage,
-                content: text,
-                color: '#ffeb3b',
-                position: { x: 0, y: 0, width: 0, height: 0 }
-              };
-              
-              const newHighlight: Highlight = {
-                ...highlight,
-                id: uuidv4(),
-                createdAt: new Date().toISOString()
-              };
-              
-              setViewerState(prev => ({
-                ...prev,
-                highlights: [...prev.highlights, newHighlight]
-              }));
-              
-              onHighlightAdd?.(newHighlight);
-
-              // Adicionar destaque ao renderizador EPUB
-              newRendition.annotations.highlight(cfiRange, {}, (e: MouseEvent) => {
-                console.log('Destaque clicado:', text);
-              }, '', { fill: '#ffeb3b', 'fill-opacity': '0.3' });
+          if (contents && contents.window && contents.window.getSelection) {
+            const selection = contents.window.getSelection();
+            const text = selection ? selection.toString() : null;
+            if (text && text.trim().length > 0) {
+              console.log('✏️ Texto selecionado:', text.substring(0, 50) + '...');
+              // Aqui você pode adicionar lógica para destaques/anotações
             }
           }
-        } catch (error) {
-          console.warn('Erro ao processar seleção EPUB:', error);
+        } catch (selectionError) {
+          console.warn('⚠️ Erro ao processar seleção de texto:', selectionError);
         }
       });
 
-      console.log('✅ EPUB carregado com sucesso!');
+      // Adicionar listener para erros de rendering
+      newRendition.on('error', (error: any) => {
+        console.warn('⚠️ Erro de renderização EPUB:', error);
+        // Não parar a execução, apenas registrar o erro
+      });
+
+      console.log('🎉 EPUB inicializado com sucesso!');
       setLoading(false);
+
     } catch (error) {
-      console.error('💥 Erro ao inicializar EPUB:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      throw new Error(`Falha ao carregar EPUB: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao carregar EPUB';
+      console.error('💥 Erro ao inicializar EPUB:', errorMessage);
+      setError(errorMessage);
+      setLoading(false);
     }
-  }, [viewerState.isDualPage, viewerState.currentPage, onHighlightAdd]);
+  }, [viewerState.isDualPage]);
 
   // Manipuladores de eventos para PDF com verificações de segurança
   const handlePdfDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     try {
       if (typeof numPages === 'number' && numPages > 0) {
-        setNumPages(numPages);
+        setTotalPages(numPages);
         setLoading(false);
         console.log('✅ PDF carregado com sucesso!', numPages, 'páginas');
       } else {
@@ -574,7 +601,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
     const secondPage = firstPage + 1;
 
     // Não mostrar uma página inexistente
-    if (secondPage > (numPages || 0)) {
+    if (secondPage > (totalPages || 0)) {
       return [firstPage];
     }
 
@@ -582,7 +609,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
   };
 
   // Calcular progresso de leitura
-  const readingProgress = numPages ? (viewerState.currentPage / numPages) * 100 : 0;
+  const readingProgress = totalPages ? (viewerState.currentPage / totalPages) * 100 : 0;
 
   // Renderizar o conteúdo do livro com base no formato
   const renderBookContent = () => {
@@ -714,7 +741,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
 
           {/* Indicador de página para EPUB */}
           <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1.5 rounded-lg text-sm font-medium backdrop-blur-sm z-20">
-            Página {viewerState.currentPage} / {numPages || '?'}
+            Página {viewerState.currentPage} / {totalPages || '?'}
           </div>
         </div>
       );
@@ -781,22 +808,22 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                     value={viewerState.currentPage}
                     onChange={(e) => {
                       const value = parseInt(e.target.value);
-                      if (!isNaN(value) && value >= 1 && value <= (numPages || 1)) {
+                      if (!isNaN(value) && value >= 1 && value <= (totalPages || 1)) {
                         handlePageChange(value);
                       }
                     }}
                     className="w-16 px-2 py-1 text-center bg-white dark:bg-gray-100 rounded-lg border border-gray-300 dark:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-700 dark:text-gray-700"
                     min={1}
-                    max={numPages || 1}
+                    max={totalPages || 1}
                   />
                   <span className="text-sm text-gray-600 dark:text-gray-600">
-                    / {numPages || '?'}
+                    / {totalPages || '?'}
                   </span>
                 </div>
                 
                 <button
                   onClick={() => handlePageChange(viewerState.currentPage + (viewerState.isDualPage ? 2 : 1))}
-                  disabled={viewerState.currentPage >= (numPages || 1)}
+                  disabled={viewerState.currentPage >= (totalPages || 1)}
                   className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-700"
                   title="Próxima página"
                 >
@@ -804,8 +831,8 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                 </button>
                 
                 <button
-                  onClick={() => handlePageChange(numPages || 1)}
-                  disabled={viewerState.currentPage >= (numPages || 1)}
+                  onClick={() => handlePageChange(totalPages || 1)}
+                  disabled={viewerState.currentPage >= (totalPages || 1)}
                   className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-700"
                   title="Última página"
                 >
