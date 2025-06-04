@@ -716,7 +716,7 @@ export default function DashboardSidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-3 left-3 z-50 bg-sidebar-bg rounded-lg p-2.5 text-sidebar-text hover:bg-sidebar-hover transition-colors shadow-lg border border-white/10"
+        className="md:hidden fixed top-3 left-3 z-[9998] bg-sidebar-bg rounded-lg p-2.5 text-sidebar-text hover:bg-sidebar-hover transition-colors shadow-lg border border-white/10"
         aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
         aria-expanded={isMobileOpen}
         aria-controls="sidebar-menu"
@@ -729,7 +729,7 @@ export default function DashboardSidebar() {
       {/* Backdrop for mobile */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden sidebar-mobile-backdrop"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[9997] md:hidden sidebar-mobile-backdrop"
           onClick={closeMobileSidebar}
           aria-hidden="true"
         />
@@ -738,7 +738,7 @@ export default function DashboardSidebar() {
       {/* Main Sidebar Container */}
       <div
         id="sidebar-menu"
-        className={`fixed md:sticky top-0 h-screen transition-all duration-300 ease-in-out z-40 overflow-hidden
+        className={`fixed md:sticky top-0 h-screen transition-all duration-300 ease-in-out z-[9996] overflow-hidden
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
         style={{ width: isCollapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH }}
         role="navigation"
@@ -751,7 +751,7 @@ export default function DashboardSidebar() {
             {/* Desktop Toggle Button */}
             <button
               onClick={toggleSidebar}
-              className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 bg-sidebar-bg rounded-full p-1 hover:bg-sidebar-hover transition-colors z-50 items-center justify-center border border-white/10"
+              className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 bg-sidebar-bg rounded-full p-1 hover:bg-sidebar-hover transition-colors z-[9995] items-center justify-center border border-white/10"
               aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
             >
               <span className="material-symbols-outlined text-sidebar-text-active text-[16px]" aria-hidden="true">

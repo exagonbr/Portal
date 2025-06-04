@@ -147,6 +147,10 @@ const sortOptions = [
 ];
 
 export default function BooksPage() {
+  // Debug logs para rastrear problemas de importação
+  console.log('📊 BooksPage iniciando...');
+  console.log('📊 KoodoViewer carregado:', !!KoodoViewer, typeof KoodoViewer);
+
   // Estado de roteamento (copiado do koodo-reader)
   const [currentRoute, setCurrentRoute] = useState<RouteState>({ type: 'home' });
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -176,6 +180,25 @@ export default function BooksPage() {
     }, 100);
 
     return () => clearTimeout(timer);
+  }, []);
+
+  // Modo de recuperação para desenvolvimento
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+          console.log('🔄 Recarregamento forçado do viewer...');
+          setIsViewerReady(false);
+          setIsViewerOpen(false);
+          setTimeout(() => {
+            setIsViewerReady(true);
+          }, 500);
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
   }, []);
 
   // Sistema de navegação (copiado do koodo-reader)
@@ -426,8 +449,21 @@ export default function BooksPage() {
 
   // Se o visualizador estiver aberto, mostrar apenas o KoodoViewer
   if (isViewerOpen && selectedBook) {
+    // Aguardar componente estar pronto
+    if (!isViewerReady) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-gray-900">
+          <div className="text-center">
+            <div className="animate-pulse rounded-full h-16 w-16 bg-blue-500 mx-auto mb-4"></div>
+            <p className="text-white text-lg">Preparando visualizador...</p>
+          </div>
+        </div>
+      );
+    }
+
     // Verificar se o KoodoViewer foi carregado corretamente
     if (!KoodoViewer) {
+      console.error('❌ KoodoViewer não foi carregado corretamente');
       return (
         <div className="flex items-center justify-center h-screen bg-gray-900">
           <div className="text-center">
@@ -435,16 +471,26 @@ export default function BooksPage() {
               <ExclamationTriangleIcon className="w-16 h-16 mx-auto" />
             </div>
             <p className="text-white text-lg mb-4">Erro ao carregar o visualizador</p>
-            <button
-              onClick={handleCloseViewer}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Voltar à Biblioteca
-            </button>
+            <div className="space-x-4">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                🔄 Recarregar Página
+              </button>
+              <button
+                onClick={handleCloseViewer}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Voltar à Biblioteca
+              </button>
+            </div>
           </div>
         </div>
       );
     }
+
+    console.log('📖 Renderizando KoodoViewer para livro:', selectedBook.title);
 
     try {
       return (

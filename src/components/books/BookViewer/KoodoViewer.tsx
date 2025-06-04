@@ -108,9 +108,18 @@ class KoodoUtils {
         width: 100%;
         height: 100%;
         min-height: 500px;
+        min-width: 300px;
         background: white;
         border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+        margin: 0 auto;
+        /* Proteções específicas para EPUB.js */
+        contain: layout style;
+        will-change: auto;
+        transform: translateZ(0);
       }
       
       .koodo-controls {
@@ -558,12 +567,131 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
     console.log(`📊 [${timestamp}] EPUB ${stage}:`, details || '');
   }, []);
 
+  // Função para verificar se o DOM está completamente pronto
+  const isDOMReady = useCallback(async (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const checkDOM = () => {
+        // Verificar se document está disponível
+        if (typeof document === 'undefined') {
+          setTimeout(checkDOM, 100);
+          return;
+        }
+
+        // Verificar se o elemento page-area existe e está visível
+        const pageArea = document.getElementById('page-area');
+        if (!pageArea) {
+          setTimeout(checkDOM, 100);
+          return;
+        }
+
+        // Verificar se o elemento tem dimensões válidas
+        const rect = pageArea.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+          setTimeout(checkDOM, 100);
+          return;
+        }
+
+        // Verificar se getComputedStyle está disponível
+        if (!window.getComputedStyle) {
+          setTimeout(checkDOM, 100);
+          return;
+        }
+
+        // Testar getComputedStyle no elemento
+        try {
+          const computedStyle = window.getComputedStyle(pageArea);
+          if (!computedStyle) {
+            setTimeout(checkDOM, 100);
+            return;
+          }
+        } catch (error) {
+          console.warn('⚠️ getComputedStyle não disponível ainda:', error);
+          setTimeout(checkDOM, 100);
+          return;
+        }
+
+        console.log('✅ DOM completamente pronto para EPUB.js');
+        resolve(true);
+      };
+
+      checkDOM();
+    });
+  }, []);
+
+  // Função para aguardar elemento estar estável
+  const waitForElementStability = useCallback(async (elementId: string, timeout = 5000): Promise<HTMLElement> => {
+    return new Promise((resolve, reject) => {
+      const startTime = Date.now();
+      let lastRect: DOMRect | null = null;
+      let stableCount = 0;
+      const requiredStableChecks = 3;
+
+      const checkStability = () => {
+        const element = document.getElementById(elementId);
+        
+        if (!element) {
+          if (Date.now() - startTime > timeout) {
+            reject(new Error(`Elemento ${elementId} não encontrado após ${timeout}ms`));
+            return;
+          }
+          setTimeout(checkStability, 100);
+          return;
+        }
+
+        const rect = element.getBoundingClientRect();
+        
+        // Verificar se as dimensões são válidas
+        if (rect.width === 0 || rect.height === 0) {
+          if (Date.now() - startTime > timeout) {
+            reject(new Error(`Elemento ${elementId} sem dimensões válidas após ${timeout}ms`));
+            return;
+          }
+          setTimeout(checkStability, 100);
+          return;
+        }
+
+        // Verificar estabilidade das dimensões
+        if (lastRect && 
+            Math.abs(rect.width - lastRect.width) < 1 && 
+            Math.abs(rect.height - lastRect.height) < 1) {
+          stableCount++;
+        } else {
+          stableCount = 0;
+        }
+
+        lastRect = rect;
+
+        if (stableCount >= requiredStableChecks) {
+          console.log(`✅ Elemento ${elementId} estável:`, {
+            width: rect.width,
+            height: rect.height,
+            checks: stableCount
+          });
+          resolve(element);
+        } else {
+          if (Date.now() - startTime > timeout) {
+            reject(new Error(`Elemento ${elementId} não estabilizou após ${timeout}ms`));
+            return;
+          }
+          setTimeout(checkStability, 100);
+        }
+      };
+
+      checkStability();
+    });
+  }, []);
+
   // Sistema de retry inteligente para EPUB.js
   const retryWithDifferentStrategy = useCallback(async (fileUrl: string, buffer: ArrayBuffer, pageAreaElement: HTMLElement, attempt = 1): Promise<EpubBook> => {
     const maxAttempts = 3;
     
     console.log(`🔄 Tentativa ${attempt}/${maxAttempts} de inicialização EPUB`);
     logEpubState('RETRY_ATTEMPT', { attempt, maxAttempts });
+    
+    // Aguardar DOM estar completamente estável antes de cada tentativa
+    console.log('⏳ Aguardando DOM estar completamente estável...');
+    await isDOMReady();
+    await waitForElementStability('page-area', 10000);
     
     const strategies = [
       // Estratégia 1: Blob URL (mais compatível)
@@ -637,7 +765,75 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
         throw new Error(`Todas as ${maxAttempts} estratégias falharam. Último erro: ${error instanceof Error ? error.message : error}`);
       }
     }
-  }, [createEpubBlob, logEpubState]);
+  }, [createEpubBlob, logEpubState, isDOMReady, waitForElementStability]);
+
+  // Função para garantir que o elemento page-area existe e está pronto
+  const ensurePageAreaElement = useCallback(async (): Promise<HTMLElement> => {
+    return new Promise((resolve, reject) => {
+      const maxAttempts = 50; // 5 segundos
+      let attempts = 0;
+
+      const checkElement = () => {
+        attempts++;
+        
+        let pageArea = document.getElementById('page-area');
+        
+        // Se não existe, tentar criar
+        if (!pageArea) {
+          console.log('🔧 Elemento page-area não encontrado, criando...');
+          
+          const container = document.querySelector('.koodo-content');
+          if (container) {
+            pageArea = document.createElement('div');
+            pageArea.id = 'page-area';
+            pageArea.style.cssText = `
+              width: 90%;
+              height: 90%;
+              max-width: 800px;
+              max-height: 90vh;
+              min-width: 300px;
+              min-height: 400px;
+              margin: 0 auto;
+              background-color: white;
+              border-radius: 8px;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+              position: relative;
+              overflow: hidden;
+              box-sizing: border-box;
+              contain: layout style;
+              will-change: auto;
+              transform: translateZ(0);
+            `;
+            container.appendChild(pageArea);
+            console.log('✅ Elemento page-area criado dinamicamente');
+          }
+        }
+
+        if (pageArea) {
+          // Verificar se tem dimensões válidas
+          const rect = pageArea.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            console.log('✅ Elemento page-area válido:', {
+              width: rect.width,
+              height: rect.height,
+              attempts
+            });
+            resolve(pageArea);
+            return;
+          }
+        }
+
+        if (attempts >= maxAttempts) {
+          reject(new Error(`Elemento page-area não pôde ser criado após ${maxAttempts} tentativas`));
+          return;
+        }
+
+        setTimeout(checkElement, 100);
+      };
+
+      checkElement();
+    });
+  }, []);
 
   // Inicialização do EPUB com ArrayBuffer ROBUSTA
   const initializeEPUB = useCallback(async (fileUrl: string) => {
@@ -646,7 +842,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       return;
     }
 
-    console.log('🔄 Inicializando EPUB com validação robusta:', fileUrl);
+    console.log('🔄 Inicializando EPUB com validação DOM robusta:', fileUrl);
     setIsInitializing(true);
     setState(prev => ({ ...prev, loading: true, error: null }));
     logEpubState('INICIANDO', { fileUrl });
@@ -655,32 +851,64 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
     let buffer: ArrayBuffer | null = null;
 
     try {
-      // Buscar elemento page-area
-      pageAreaElement = document.getElementById('page-area');
-      if (!pageAreaElement) {
-        throw new Error('Elemento page-area não encontrado no DOM');
-      }
-      logEpubState('DOM_READY', { pageAreaFound: true });
+      // ETAPA 1: VERIFICAR DOM BÁSICO
+      console.log('🔍 Verificando disponibilidade do DOM...');
+      await isDOMReady();
+      logEpubState('DOM_BASIC_READY');
 
-      // CLEANUP COMPLETO
+      // ETAPA 2: AGUARDAR ELEMENTO ESTAR ESTÁVEL
+      console.log('⏳ Aguardando elemento page-area estar estável...');
+      pageAreaElement = await waitForElementStability('page-area', 15000);
+      logEpubState('DOM_ELEMENT_STABLE', { 
+        width: pageAreaElement.getBoundingClientRect().width,
+        height: pageAreaElement.getBoundingClientRect().height 
+      });
+
+      // ETAPA 3: VERIFICAÇÕES ADICIONAIS DE SEGURANÇA
+      console.log('🔒 Executando verificações finais de segurança...');
+      
+      // Verificar se o elemento ainda está no DOM
+      if (!document.contains(pageAreaElement)) {
+        throw new Error('Elemento page-area removido do DOM durante inicialização');
+      }
+
+      // Verificar se window.getComputedStyle está funcionando
+      try {
+        const testStyle = window.getComputedStyle(pageAreaElement);
+        if (!testStyle) {
+          throw new Error('getComputedStyle retornou null');
+        }
+        console.log('✅ getComputedStyle funcionando corretamente');
+      } catch (styleError) {
+        throw new Error(`getComputedStyle não disponível: ${styleError}`);
+      }
+
+      // Verificar se o elemento é visível
+      const rect = pageAreaElement.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        throw new Error('Elemento page-area não tem dimensões válidas');
+      }
+
+      logEpubState('SAFETY_CHECKS_PASSED');
+
+      // ETAPA 4: CLEANUP SEGURO
       await performCleanup();
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       logEpubState('CLEANUP_COMPLETE');
 
-      // CARREGAR E VALIDAR ARQUIVO
+      // ETAPA 5: CARREGAR E VALIDAR ARQUIVO
       try {
         buffer = await loadFileAsBuffer(fileUrl);
         logEpubState('BUFFER_LOADED', { size: buffer.byteLength });
         
-        // VALIDAR BUFFER
         if (!validateEpubBuffer(buffer)) {
           throw new Error('Buffer EPUB inválido ou corrompido');
         }
         logEpubState('BUFFER_VALIDATED');
 
-        console.log('📚 Buffer EPUB validado, usando sistema de retry...');
+        console.log('📚 Buffer EPUB validado, usando sistema de retry estável...');
 
-        // USAR SISTEMA DE RETRY INTELIGENTE
+        // ETAPA 6: USAR SISTEMA DE RETRY COM DOM ESTÁVEL
         const readyBook = await retryWithDifferentStrategy(fileUrl, buffer, pageAreaElement);
         console.log('✅ EPUB carregado com sucesso via retry system');
         logEpubState('BOOK_READY', { hasSpine: !!readyBook.spine });
@@ -688,7 +916,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
         setEpubBook(readyBook);
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Calcular dimensões
+        // ETAPA 7: CRIAR RENDITION COM VERIFICAÇÕES EXTRAS
         const dimensions = KoodoUtils.getPageWidth(
           state.readerMode,
           state.scale,
@@ -697,9 +925,13 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
           false
         );
 
-        console.log('🎨 Criando rendition...');
+        console.log('🎨 Criando rendition com DOM estável...');
 
-        // Criar rendition
+        // Verificar novamente se o elemento ainda é válido
+        if (!document.contains(pageAreaElement)) {
+          throw new Error('Elemento page-area foi removido durante o processo');
+        }
+
         const newRendition = readyBook.renderTo(pageAreaElement, {
           width: dimensions.pageWidth,
           height: "100%",
@@ -713,15 +945,15 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
           throw new Error('Falha ao criar rendition');
         }
 
-        console.log('✅ Rendition criado');
+        console.log('✅ Rendition criado com DOM estável');
         logEpubState('RENDITION_CREATED');
 
-        // Display
-        console.log('🎨 Fazendo display inicial...');
+        // ETAPA 8: DISPLAY COM PROTEÇÃO DOM
+        console.log('🎨 Fazendo display com proteção DOM...');
         
         const displayPromise = Promise.race([
           newRendition.display().then(() => {
-            console.log('✅ Display completado!');
+            console.log('✅ Display completado com DOM estável!');
             logEpubState('DISPLAY_COMPLETE');
           }),
           new Promise<never>((_, reject) => 
@@ -733,7 +965,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
         setRendition(newRendition);
         logEpubState('RENDITION_SET');
 
-        // Event listeners
+        // Event listeners com proteção DOM
         newRendition.on('relocated', (location: any) => {
           if (location && location.start && location.start.cfi && readyBook.locations) {
             try {
@@ -751,7 +983,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
         });
 
         newRendition.on('rendered', () => {
-          console.log('🎨 EPUB renderizado');
+          console.log('🎨 EPUB renderizado com DOM estável');
           try {
             handleLocation();
             setState(prev => ({ ...prev, loading: false }));
@@ -761,7 +993,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
               pageArea.style.display = 'block';
             }
             
-            console.log('✅ EPUB inicializado com sucesso!');
+            console.log('✅ EPUB inicializado com sucesso e DOM estável!');
           } catch (error) {
             console.error('❌ Erro no rendered handler:', error);
           }
@@ -819,7 +1051,11 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       let errorMessage = 'Falha ao carregar EPUB';
       
       if (error instanceof Error) {
-        if (error.message.includes('resources')) {
+        if (error.message.includes('getComputedStyle')) {
+          errorMessage = 'Erro de renderização. Tente recarregar a página.';
+        } else if (error.message.includes('DOM') || error.message.includes('elemento')) {
+          errorMessage = 'Erro de interface. Recarregue a página e tente novamente.';
+        } else if (error.message.includes('resources')) {
           errorMessage = 'Arquivo EPUB corrompido ou incompatível. Tente um arquivo diferente.';
         } else if (error.message.includes('Timeout')) {
           errorMessage = 'Arquivo muito grande ou conexão lenta. Tente novamente.';
@@ -839,7 +1075,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       setIsInitializing(false);
       logEpubState('FINALIZANDO', { success: !state.error });
     }
-  }, [state.readerMode, state.scale, handleLocation, performCleanup, isInitializing, loadFileAsBuffer, validateEpubBuffer, createEpubBlob, retryWithDifferentStrategy, logEpubState]);
+  }, [state.readerMode, state.scale, handleLocation, performCleanup, isInitializing, loadFileAsBuffer, validateEpubBuffer, createEpubBlob, retryWithDifferentStrategy, logEpubState, isDOMReady, waitForElementStability]);
 
   // Inicialização do PDF com ArrayBuffer
   const initializePDF = useCallback(async (fileUrl: string) => {
@@ -897,7 +1133,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
     }
   }, [state.isDarkMode, rendition]);
 
-  // Inicialização principal (copiado do koodo-reader)
+  // Inicialização principal melhorada (copiado do koodo-reader)
   useEffect(() => {
     if (!book || !book.id) return;
 
@@ -908,8 +1144,14 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
           throw new Error('URL do arquivo não pode ser determinada');
         }
 
-        // Aguardar um pouco para garantir que o DOM esteja pronto
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Aguardar mais tempo para garantir que o componente esteja completamente montado
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Garantir que o elemento page-area existe para EPUB
+        if (book.format === 'epub') {
+          console.log('🔧 Garantindo elemento page-area para EPUB...');
+          await ensurePageAreaElement();
+        }
 
         if (book.format === 'epub') {
           await initializeEPUB(fileUrl);
@@ -927,7 +1169,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
     };
 
     initializeBook();
-  }, [book?.id, book?.format, getFileUrl, initializeEPUB, initializePDF]);
+  }, [book?.id, book?.format, getFileUrl, initializeEPUB, initializePDF, ensurePageAreaElement]);
 
   // Salvar localização quando muda (copiado do koodo-reader)
   useEffect(() => {
@@ -1213,7 +1455,20 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
               height: '90%',
               maxWidth: '800px',
               maxHeight: '90vh',
-              display: state.loading ? 'none' : 'block'
+              minWidth: '300px',
+              minHeight: '400px',
+              margin: '0 auto',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+              position: 'relative',
+              display: state.loading ? 'none' : 'block',
+              overflow: 'hidden',
+              // Proteções para getComputedStyle
+              boxSizing: 'border-box',
+              visibility: state.loading ? 'hidden' : 'visible',
+              opacity: state.loading ? 0 : 1,
+              transition: 'opacity 0.3s ease'
             }}
           />
         )}
