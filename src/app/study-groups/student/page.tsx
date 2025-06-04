@@ -364,7 +364,7 @@ export default function StudyGroupsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Grupos de Estudo</h1>
+              <h1 className="text-3xl font-bold text-gray-700">Grupos de Estudo</h1>
               <p className="text-gray-600 mt-2">
                 Conecte-se com outros estudantes e aprenda em grupo
               </p>

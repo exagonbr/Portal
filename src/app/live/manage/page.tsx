@@ -6,10 +6,10 @@ export default function ManageLiveClassesPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gerenciar Aulas ao Vivo</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Gerenciar Aulas ao Vivo</h1>
           <p className="text-gray-600">Agende e gerencie suas aulas ao vivo</p>
         </div>
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
@@ -71,7 +71,7 @@ export default function ManageLiveClassesPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               <tr>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">Matemática Básica</div>
+                  <div className="text-sm font-medium text-gray-700">Matemática Básica</div>
                   <div className="text-sm text-gray-500">Capítulo 3 - Álgebra</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

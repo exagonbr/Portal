@@ -24,7 +24,7 @@ interface BookListProps {
 export default function BookList({ books, title, emptyMessage }: BookListProps) {
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">{title}</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-600">{title}</h1>
       {books.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-gray-500">{emptyMessage}</p>

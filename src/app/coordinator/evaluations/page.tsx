@@ -100,7 +100,7 @@ export default function CoordinatorEvaluationsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Gestão de Avaliações</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Gestão de Avaliações</h1>
             <p className="text-gray-600">Monitore e gerencie as avaliações da instituição</p>
           </div>
           <button 
@@ -116,7 +116,7 @@ export default function CoordinatorEvaluationsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Avaliações</div>
-            <div className="text-2xl font-bold text-gray-800">{MOCK_EVALUATIONS.length}</div>
+            <div className="text-2xl font-bold text-gray-600">{MOCK_EVALUATIONS.length}</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 3</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -124,7 +124,7 @@ export default function CoordinatorEvaluationsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Finalizadas</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {MOCK_EVALUATIONS.filter(e => e.status === 'Finalizada').length}
             </div>
             <div className="mt-4 flex items-center">
@@ -134,7 +134,7 @@ export default function CoordinatorEvaluationsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Média Geral</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {(MOCK_EVALUATIONS.filter(e => e.status === 'Finalizada')
                 .reduce((acc, e) => acc + e.averageScore, 0) / 
                 MOCK_EVALUATIONS.filter(e => e.status === 'Finalizada').length).toFixed(1)}
@@ -146,7 +146,7 @@ export default function CoordinatorEvaluationsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Participação</div>
-            <div className="text-2xl font-bold text-gray-800">92%</div>
+            <div className="text-2xl font-bold text-gray-600">92%</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 3%</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -225,7 +225,7 @@ export default function CoordinatorEvaluationsPage() {
               <div key={evaluation.id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{evaluation.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-600">{evaluation.title}</h3>
                     <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                       <span>{evaluation.subject} • {evaluation.grade}</span>
                       <span>Por: {evaluation.teacher}</span>
@@ -258,7 +258,7 @@ export default function CoordinatorEvaluationsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                   <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-semibold text-gray-800">{evaluation.totalQuestions}</div>
+                    <div className="text-lg font-semibold text-gray-600">{evaluation.totalQuestions}</div>
                     <div className="text-sm text-gray-600">Questões</div>
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded-lg">
@@ -283,7 +283,7 @@ export default function CoordinatorEvaluationsPage() {
                   <div className="mb-4">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-600">Taxa de Participação</span>
-                      <span className="text-gray-800">
+                      <span className="text-gray-600">
                         {Math.round((evaluation.studentsCompleted / evaluation.totalStudents) * 100)}%
                       </span>
                     </div>
@@ -321,7 +321,7 @@ export default function CoordinatorEvaluationsPage() {
       {selectedTab === 'performance' && (
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Desempenho por Disciplina</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-4">Desempenho por Disciplina</h3>
             <div className="space-y-4">
               {PERFORMANCE_DATA.map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -330,7 +330,7 @@ export default function CoordinatorEvaluationsPage() {
                       <span className="material-symbols-outlined text-blue-600">school</span>
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-800">{item.subject}</h4>
+                      <h4 className="font-medium text-gray-600">{item.subject}</h4>
                       <p className="text-sm text-gray-600">Média: {item.average.toFixed(1)}</p>
                     </div>
                   </div>

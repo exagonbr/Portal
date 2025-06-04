@@ -262,7 +262,7 @@ export default function CoordinatorImprovementsPage() {
                     ? 'bg-yellow-100 text-yellow-800'
                     : improvement.status === 'Cancelado'
                     ? 'bg-red-100 text-red-800'
-                    : 'bg-gray-100 text-gray-800'
+                    : 'bg-gray-100 text-gray-600'
                 }`}>
                   {improvement.status}
                 </span>
@@ -440,7 +440,7 @@ export default function CoordinatorImprovementsPage() {
                       }`}>
                         {task.completed ? 'check_circle' : 'radio_button_unchecked'}
                       </span>
-                      <span className={`flex-1 ${task.completed ? 'text-gray-600 line-through' : 'text-gray-800'}`}>
+                      <span className={`flex-1 ${task.completed ? 'text-gray-600 line-through' : 'text-gray-600'}`}>
                         {task.name}
                       </span>
                       {!task.completed && (

@@ -38,7 +38,7 @@ export function UserTable({ users, onDeleteUser, loading }: UserTableProps) {
       case 'teacher':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-yellow-100 text-gray-800';
+        return 'bg-yellow-100 text-gray-600';
     }
   };
 
@@ -73,7 +73,7 @@ export function UserTable({ users, onDeleteUser, loading }: UserTableProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-lg font-semibold text-gray-900">Lista de Usuários</h2>
+        <h2 className="text-lg font-semibold text-gray-700">Lista de Usuários</h2>
         <input
           type="text"
           placeholder="Buscar usuários..."
@@ -121,7 +121,7 @@ export function UserTable({ users, onDeleteUser, loading }: UserTableProps) {
               currentUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                    <div className="text-sm font-medium text-gray-700">{user.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">{user.email}</div>
@@ -175,7 +175,7 @@ export function UserTable({ users, onDeleteUser, loading }: UserTableProps) {
       {deleteUserId && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900">Confirmar Exclusão</h3>
+            <h3 className="text-lg font-semibold mb-4 text-gray-700">Confirmar Exclusão</h3>
             <p className="mb-6 text-gray-700">Tem certeza que deseja excluir este usuário?</p>
             <div className="flex justify-end gap-4">
               <button

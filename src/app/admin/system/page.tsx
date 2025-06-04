@@ -51,7 +51,7 @@ export default function AdminSystemPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Sistema</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Sistema</h1>
             <p className="text-gray-600">Monitoramento e configuração do sistema</p>
           </div>
           <div className="flex space-x-4">
@@ -76,13 +76,13 @@ export default function AdminSystemPage() {
               <div className="text-sm font-medium text-gray-500">Status do Sistema</div>
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
             </div>
-            <div className="text-2xl font-bold text-gray-800">Online</div>
+            <div className="text-2xl font-bold text-gray-600">Online</div>
             <div className="text-sm text-gray-600 mt-1">Uptime: {SYSTEM_INFO.uptime}</div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">CPU</div>
-            <div className="text-2xl font-bold text-gray-800">{SYSTEM_INFO.server.cpu}%</div>
+            <div className="text-2xl font-bold text-gray-600">{SYSTEM_INFO.server.cpu}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div 
                 className="bg-blue-500 h-2 rounded-full" 
@@ -93,7 +93,7 @@ export default function AdminSystemPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Memória</div>
-            <div className="text-2xl font-bold text-gray-800">{SYSTEM_INFO.server.memory}%</div>
+            <div className="text-2xl font-bold text-gray-600">{SYSTEM_INFO.server.memory}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div 
                 className="bg-yellow-500 h-2 rounded-full" 
@@ -104,7 +104,7 @@ export default function AdminSystemPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Disco</div>
-            <div className="text-2xl font-bold text-gray-800">{SYSTEM_INFO.server.disk}%</div>
+            <div className="text-2xl font-bold text-gray-600">{SYSTEM_INFO.server.disk}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div 
                 className="bg-green-500 h-2 rounded-full" 
@@ -157,7 +157,7 @@ export default function AdminSystemPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* System Information */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Informações do Sistema</h3>
+              <h3 className="text-lg font-semibold text-gray-600 mb-4">Informações do Sistema</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Versão:</span>
@@ -180,7 +180,7 @@ export default function AdminSystemPage() {
 
             {/* Database Information */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Base de Dados</h3>
+              <h3 className="text-lg font-semibold text-gray-600 mb-4">Base de Dados</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tipo:</span>
@@ -222,7 +222,7 @@ export default function AdminSystemPage() {
                 {SYSTEM_INFO.services.map((service, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-4 px-6">
-                      <div className="font-medium text-gray-800">{service.name}</div>
+                      <div className="font-medium text-gray-600">{service.name}</div>
                     </td>
                     <td className="py-4 px-6">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -262,7 +262,7 @@ export default function AdminSystemPage() {
       {/* Activities Tab */}
       {selectedTab === 'activities' && (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Atividades Recentes</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Atividades Recentes</h3>
           <div className="space-y-4">
             {RECENT_ACTIVITIES.map((activity) => (
               <div key={activity.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
@@ -283,7 +283,7 @@ export default function AdminSystemPage() {
                   </span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-gray-800">{activity.message}</p>
+                  <p className="text-gray-600">{activity.message}</p>
                   <p className="text-sm text-gray-500 mt-1">{activity.timestamp}</p>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${

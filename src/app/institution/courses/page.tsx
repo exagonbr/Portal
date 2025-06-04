@@ -6,10 +6,10 @@ export default function InstitutionCoursesPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gestão de Cursos</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Gestão de Cursos</h1>
           <p className="text-gray-600">Gerencie todos os cursos da instituição</p>
         </div>
         <div className="space-x-4">
@@ -26,22 +26,22 @@ export default function InstitutionCoursesPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Total de Cursos</div>
-          <div className="text-2xl font-bold text-gray-800">48</div>
+          <div className="text-2xl font-bold text-gray-600">48</div>
           <div className="text-xs text-green-600 mt-2">↑ 12% este mês</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Alunos Matriculados</div>
-          <div className="text-2xl font-bold text-gray-800">1,234</div>
+          <div className="text-2xl font-bold text-gray-600">1,234</div>
           <div className="text-xs text-green-600 mt-2">↑ 8% este mês</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Professores Ativos</div>
-          <div className="text-2xl font-bold text-gray-800">32</div>
+          <div className="text-2xl font-bold text-gray-600">32</div>
           <div className="text-xs text-blue-600 mt-2">= Estável</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Conclusão</div>
-          <div className="text-2xl font-bold text-gray-800">76%</div>
+          <div className="text-2xl font-bold text-gray-600">76%</div>
           <div className="text-xs text-green-600 mt-2">↑ 5% este mês</div>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function InstitutionCoursesPage() {
                       <span className="material-icons text-blue-600">school</span>
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">Matemática Avançada</div>
+                      <div className="text-sm font-medium text-gray-700">Matemática Avançada</div>
                       <div className="text-sm text-gray-500">Código: MAT101</div>
                     </div>
                   </div>
@@ -117,7 +117,7 @@ export default function InstitutionCoursesPage() {
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-gray-200"></div>
                     <div className="ml-3">
-                      <div className="text-sm font-medium text-gray-900">João Silva</div>
+                      <div className="text-sm font-medium text-gray-700">João Silva</div>
                       <div className="text-sm text-gray-500">joao@email.com</div>
                     </div>
                   </div>

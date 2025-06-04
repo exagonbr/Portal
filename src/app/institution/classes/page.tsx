@@ -148,7 +148,7 @@ export default function ClassesManagement() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary text-gray-800 mb-2">
+        <h1 className="text-3xl font-bold text-primary text-gray-600 mb-2">
           Gestão de Turmas
         </h1>
         <p className="text-gray-600 text-gray-400">
@@ -249,7 +249,7 @@ export default function ClassesManagement() {
               resetForm();
               setShowModal(true);
             }}
-            className="px-4 py-2 bg-primary text-gray-800 rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-primary text-gray-600 rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             Nova Turma
@@ -266,7 +266,7 @@ export default function ClassesManagement() {
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-primary text-gray-800">
+                <h3 className="text-lg font-semibold text-primary text-gray-600">
                   {classItem.name}
                 </h3>
                 <p className="text-sm text-gray-500">Código: {classItem.code}</p>
@@ -449,7 +449,7 @@ export default function ClassesManagement() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-primary text-gray-800 rounded-lg hover:bg-primary-dark transition-colors"
+                    className="px-4 py-2 bg-primary text-gray-600 rounded-lg hover:bg-primary-dark transition-colors"
                   >
                     {editingClass ? 'Salvar' : 'Criar'}
                   </button>

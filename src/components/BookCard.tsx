@@ -144,23 +144,23 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
           <div className="flex-1 min-w-0 flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-bold text-gray-900 line-clamp-2 pr-4 hover:text-blue-600 transition-colors">{title}</h3>
+                <h3 className="text-lg font-bold text-gray-700 line-clamp-2 pr-4 hover:text-blue-600 transition-colors">{title}</h3>
                 <div className="flex gap-2 -mt-1">
                   <StatusIcons />
                 </div>
               </div>
               <div className="text-sm text-gray-600 space-y-1">
                 <p className="flex items-center">
-                  <span className="font-semibold text-gray-800 mr-2">👤 Autor:</span>
+                  <span className="font-semibold text-gray-600 mr-2">👤 Autor:</span>
                   <span className="truncate">{author}</span>
                 </p>
                 <p className="flex items-center">
-                  <span className="font-semibold text-gray-800 mr-2">🏢 Editora:</span>
+                  <span className="font-semibold text-gray-600 mr-2">🏢 Editora:</span>
                   <span className="truncate">{publisher}</span>
                 </p>
                 {pageCount && (
                   <p className="flex items-center">
-                    <span className="font-semibold text-gray-800 mr-2">📖 Páginas:</span>
+                    <span className="font-semibold text-gray-600 mr-2">📖 Páginas:</span>
                     <span>{pageCount}</span>
                   </p>
                 )}
@@ -277,7 +277,7 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
             <div className="absolute right-0 top-0 flex gap-2">
               <StatusIcons />
             </div>
-            <h3 className="text-base lg:text-lg font-bold text-gray-900 line-clamp-2 hover:text-blue-600 transition-colors pr-20">
+            <h3 className="text-base lg:text-lg font-bold text-gray-700 line-clamp-2 hover:text-blue-600 transition-colors pr-20">
               {title}
             </h3>
           </div>
@@ -285,16 +285,16 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
           <div className="flex-1 overflow-hidden mt-1">
             <div className="text-sm text-gray-600 space-y-2">
               <p className="flex items-center">
-                <span className="font-semibold text-gray-800 mr-2">👤</span>
+                <span className="font-semibold text-gray-600 mr-2">👤</span>
                 <span className="truncate">{author || 'Autor desconhecido'}</span>
               </p>
               <p className="flex items-center">
-                <span className="font-semibold text-gray-800 mr-2">🏢</span>
+                <span className="font-semibold text-gray-600 mr-2">🏢</span>
                 <span className="truncate">{publisher}</span>
               </p>
               {pageCount && (
                 <p className="flex items-center">
-                  <span className="font-semibold text-gray-800 mr-2">📖</span>
+                  <span className="font-semibold text-gray-600 mr-2">📖</span>
                   <span>{pageCount} páginas</span>
                 </p>
               )}

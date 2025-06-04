@@ -29,7 +29,7 @@ const SessionsAdminPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Acesso Negado</h1>
+          <h1 className="text-2xl font-bold text-gray-600 mb-4">Acesso Negado</h1>
           <p className="text-gray-600">Você não tem permissão para acessar esta página.</p>
         </div>
       </div>
@@ -40,7 +40,7 @@ const SessionsAdminPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-gray-600 mb-2">
             Administração de Sessões
           </h1>
           <p className="text-gray-600">
@@ -73,7 +73,7 @@ const SessionsAdminPage: React.FC = () => {
 
         {/* Comandos Redis úteis */}
         <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          <h3 className="text-lg font-semibold text-gray-600 mb-3">
             🔧 Comandos Redis Úteis
           </h3>
           <div className="text-sm text-gray-700 space-y-2 font-mono">

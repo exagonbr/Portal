@@ -229,4 +229,81 @@ router.get('/me', validateJWT, async (req: express.Request, res: express.Respons
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Logout user
+ *     description: Invalidates the current user session and token
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Logout realizado com sucesso"
+ *       401:
+ *         description: Not authenticated
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/logout', validateJWT, async (req: express.Request, res: express.Response) => {
+  try {
+    // Importação dinâmica do SessionService para evitar problemas de dependência circular
+    let SessionService;
+    try {
+      const sessionModule = await import('../services/SessionService');
+      SessionService = sessionModule.SessionService;
+    } catch (importError) {
+      // Se o SessionService não estiver disponível, apenas retorna sucesso
+      console.log('SessionService não disponível, fazendo logout simples');
+    }
+
+    if (SessionService) {
+      // Adiciona token à blacklist se SessionService estiver disponível
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+          await SessionService.blacklistToken(token);
+        } catch (blacklistError) {
+          console.log('Erro ao adicionar token à blacklist:', blacklistError);
+        }
+      }
+
+      // Destrói sessão se sessionId estiver disponível
+      const sessionId = (req as any).sessionId || (req.user as any)?.sessionId;
+      if (sessionId) {
+        try {
+          await SessionService.destroySession(sessionId);
+        } catch (sessionError) {
+          console.log('Erro ao destruir sessão:', sessionError);
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: 'Logout realizado com sucesso',
+    });
+  } catch (error) {
+    console.error('Erro no logout:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro ao fazer logout',
+    });
+  }
+});
+
 export default router;

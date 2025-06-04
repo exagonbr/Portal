@@ -591,7 +591,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-6"></div>
-            <p className="text-gray-600 dark:text-gray-400 text-lg">Carregando {book.format?.toUpperCase()}...</p>
+            <p className="text-gray-600 dark:text-gray-600 text-lg">Carregando {book.format?.toUpperCase()}...</p>
             <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Por favor, aguarde</p>
           </div>
         </div>
@@ -607,7 +607,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">{error}</p>
+            <p className="text-gray-600 dark:text-gray-600 mb-6 text-lg">{error}</p>
             <button
               onClick={() => {
                 setError(null);
@@ -657,7 +657,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
               {getPagesToDisplay().map((pageNum) => (
                 <div 
                   key={pageNum} 
-                  className="relative bg-white dark:bg-gray-800 shadow-2xl rounded-xl overflow-hidden"
+                  className="relative bg-white dark:bg-gray-100 shadow-2xl rounded-xl overflow-hidden"
                   style={{ 
                     transform: `scale(${viewerState.currentScale})`,
                     transformOrigin: 'center',
@@ -678,7 +678,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                       console.error(`❌ Erro ao carregar página ${pageNum}:`, error);
                     }}
                     loading={
-                      <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-xl" style={{ width: contentDimensions.width, height: contentDimensions.height }}>
+                      <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-100 rounded-xl" style={{ width: contentDimensions.width, height: contentDimensions.height }}>
                         <div className="animate-pulse text-center">
                           <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-3/4 mb-4 mx-auto"></div>
                           <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mx-auto"></div>
@@ -701,7 +701,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
 
     if (book.format === 'epub') {
       return (
-        <div className="w-full h-full relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden m-4 shadow-lg">
+        <div className="w-full h-full relative bg-white dark:bg-gray-100 rounded-xl overflow-hidden m-4 shadow-lg">
           {/* O conteúdo EPUB será renderizado aqui pelo useEffect */}
           
           {/* Overlay de informações para EPUB */}
@@ -726,7 +726,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
           <div className="text-gray-400 mb-4">
             <BookOpenIcon className="w-20 h-20 mx-auto" />
           </div>
-          <p className="text-gray-500 dark:text-gray-400 mb-2 text-lg">Formato não suportado: {book.format}</p>
+          <p className="text-gray-500 dark:text-gray-600 mb-2 text-lg">Formato não suportado: {book.format}</p>
           <p className="text-sm text-gray-400">Suportamos apenas arquivos PDF e EPUB</p>
         </div>
       </div>
@@ -739,7 +739,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
       className={`h-screen w-full flex flex-col ${viewerState.isFullscreen ? 'fixed inset-0 z-50' : ''} ${isDarkMode ? 'dark' : ''} bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800`}
     >
       {/* Barra de ferramentas superior - SEMPRE VISÍVEL */}
-      <div className="flex-shrink-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 shadow-lg z-30">
+      <div className="flex-shrink-0 bg-white/95 dark:bg-gray-100/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 shadow-lg z-30">
         <div className="flex items-center justify-between px-4 py-3">
           {/* Controles à esquerda - Botão Voltar Proeminente */}
           <div className="flex items-center space-x-4">
@@ -756,11 +756,11 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
 
             {/* Controles de Navegação */}
             <div className="flex items-center space-x-2">
-              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+              <div className="flex items-center bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
                 <button
                   onClick={() => handlePageChange(1)}
                   disabled={viewerState.currentPage <= 1}
-                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-300"
+                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-700"
                   title="Primeira página"
                 >
                   <FiChevronsLeft className="w-4 h-4" />
@@ -769,7 +769,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                 <button
                   onClick={() => handlePageChange(viewerState.currentPage - (viewerState.isDualPage ? 2 : 1))}
                   disabled={viewerState.currentPage <= 1}
-                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-300"
+                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-700"
                   title="Página anterior"
                 >
                   <FiChevronLeft className="w-4 h-4" />
@@ -785,11 +785,11 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                         handlePageChange(value);
                       }
                     }}
-                    className="w-16 px-2 py-1 text-center bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 dark:text-gray-100"
+                    className="w-16 px-2 py-1 text-center bg-white dark:bg-gray-100 rounded-lg border border-gray-300 dark:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-700 dark:text-gray-700"
                     min={1}
                     max={numPages || 1}
                   />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-gray-600 dark:text-gray-600">
                     / {numPages || '?'}
                   </span>
                 </div>
@@ -797,7 +797,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                 <button
                   onClick={() => handlePageChange(viewerState.currentPage + (viewerState.isDualPage ? 2 : 1))}
                   disabled={viewerState.currentPage >= (numPages || 1)}
-                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-300"
+                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-700"
                   title="Próxima página"
                 >
                   <FiChevronRight className="w-4 h-4" />
@@ -806,7 +806,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                 <button
                   onClick={() => handlePageChange(numPages || 1)}
                   disabled={viewerState.currentPage >= (numPages || 1)}
-                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-300"
+                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-gray-700 dark:text-gray-700"
                   title="Última página"
                 >
                   <FiChevronsRight className="w-4 h-4" />
@@ -816,29 +816,29 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
 
             {/* Informações do livro */}
             <div className="hidden lg:flex items-center space-x-3 text-sm">
-              <div className="text-gray-800 dark:text-gray-200">
+              <div className="text-gray-600 dark:text-gray-700">
                 <span className="font-bold">{book.title}</span>
-                <span className="text-gray-600 dark:text-gray-400 ml-2">• {book.author}</span>
+                <span className="text-gray-600 dark:text-gray-600 ml-2">• {book.author}</span>
               </div>
             </div>
           </div>
 
           {/* Controles centrais */}
           <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
               <button
                 onClick={() => handleZoom('out')}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-300"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors text-gray-700 dark:text-gray-700"
                 title="Diminuir zoom"
               >
                 <FiZoomOut className="w-4 h-4" />
               </button>
-              <span className="px-3 text-sm font-medium min-w-[3rem] text-center text-gray-700 dark:text-gray-300">
+              <span className="px-3 text-sm font-medium min-w-[3rem] text-center text-gray-700 dark:text-gray-700">
                 {Math.round(viewerState.currentScale * 100)}%
               </span>
               <button
                 onClick={() => handleZoom('in')}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-300"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors text-gray-700 dark:text-gray-700"
                 title="Aumentar zoom"
               >
                 <FiZoomIn className="w-4 h-4" />
@@ -846,20 +846,20 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
               <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
               <button
                 onClick={() => handleZoomChange(100)}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-300"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors text-gray-700 dark:text-gray-700"
                 title="Redefinir zoom"
               >
                 <FiRotateCw className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+            <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
               <button
                 onClick={handleDualPageToggle}
                 className={`p-2 rounded-lg transition-colors ${
                   viewerState.isDualPage
                     ? 'bg-blue-500 text-white'
-                    : 'hover:bg-white dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                    : 'hover:bg-white dark:hover:bg-gray-200 text-gray-700 dark:text-gray-700'
                 }`}
                 title="Alternar visualização de página dupla"
               >
@@ -870,13 +870,13 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
 
           {/* Controles à direita */}
           <div className="flex items-center space-x-2">
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+            <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
               <button
                 onClick={() => setShowSearch(!showSearch)}
                 className={`p-2 rounded-lg transition-colors ${
                   showSearch
                     ? 'bg-blue-500 text-white'
-                    : 'hover:bg-white dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                    : 'hover:bg-white dark:hover:bg-gray-200 text-gray-700 dark:text-gray-700'
                 }`}
                 title="Pesquisar"
               >
@@ -899,7 +899,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                 className={`p-2 rounded-lg transition-colors ${
                   viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage)
                     ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
-                    : 'hover:bg-white dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                    : 'hover:bg-white dark:hover:bg-gray-200 text-gray-700 dark:text-gray-700'
                 }`}
                 title="Alternar marcador"
               >
@@ -907,10 +907,10 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
               </button>
             </div>
             
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+            <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
               <button
                 onClick={handleThemeToggle}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-300"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors text-gray-700 dark:text-gray-700"
                 title="Alternar modo escuro"
               >
                 {isDarkMode ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
@@ -918,7 +918,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
               
               <button
                 onClick={handleFullscreenToggle}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-300"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors text-gray-700 dark:text-gray-700"
                 title="Alternar tela cheia"
               >
                 {viewerState.isFullscreen ? <FiMinimize className="w-4 h-4" /> : <FiMaximize className="w-4 h-4" />}
@@ -928,7 +928,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
         </div>
 
         {/* Barra de progresso */}
-        <div className="h-1 bg-gray-200 dark:bg-gray-700">
+        <div className="h-1 bg-gray-200 dark:bg-gray-100">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300"
             style={{ width: `${readingProgress}%` }}
@@ -938,7 +938,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
 
       {/* Barra de pesquisa - QUANDO ATIVA */}
       {showSearch && (
-        <div className="flex-shrink-0 px-4 py-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 z-20">
+        <div className="flex-shrink-0 px-4 py-3 bg-white/95 dark:bg-gray-100/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 z-20">
           <div className="flex items-center space-x-3 max-w-2xl mx-auto">
             <div className="relative flex-1">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -948,7 +948,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Pesquisar no documento..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-gray-700 placeholder-gray-500 dark:placeholder-gray-600"
               />
             </div>
             <button
@@ -964,7 +964,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                 setSearchQuery('');
                 setSearchResults([]);
               }}
-              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-700"
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -972,8 +972,8 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
           
           {/* Resultados da pesquisa */}
           {searchResults.length > 0 && (
-            <div className="mt-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 max-h-60 overflow-y-auto max-w-2xl mx-auto">
-              <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Resultados da Pesquisa</h4>
+            <div className="mt-3 bg-gray-50 dark:bg-gray-100/50 rounded-xl p-3 max-h-60 overflow-y-auto max-w-2xl mx-auto">
+              <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-700">Resultados da Pesquisa</h4>
               <div className="space-y-2">
                 {searchResults.map((result, i) => (
                   <div
@@ -983,9 +983,9 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Página {result.page}</span>
-                      <button className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">Ir para página</button>
+                      <button className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-600">Ir para página</button>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{result.text}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-700 mt-1">{result.text}</p>
                   </div>
                 ))}
               </div>
@@ -997,14 +997,14 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
       {/* Modal para adicionar marcador */}
       {isAddingBookmark && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-96 max-w-full mx-4 shadow-2xl">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Adicionar Marcador</h3>
+          <div className="bg-white dark:bg-gray-100 rounded-2xl p-6 w-96 max-w-full mx-4 shadow-2xl">
+            <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-700">Adicionar Marcador</h3>
             <input
               type="text"
               value={newBookmarkTitle}
               onChange={(e) => setNewBookmarkTitle(e.target.value)}
               placeholder="Título do marcador..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-100 text-gray-700 dark:text-gray-700 placeholder-gray-500 dark:placeholder-gray-600"
               autoFocus
             />
             <div className="flex justify-end space-x-3 mt-6">
@@ -1013,7 +1013,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
                   setIsAddingBookmark(false);
                   setNewBookmarkTitle('');
                 }}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                className="px-4 py-2 text-gray-600 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
                 Cancelar
               </button>
@@ -1032,7 +1032,7 @@ const OptimizedViewer: React.FC<OptimizedViewerProps> = ({
       {/* Área de conteúdo principal - FIT TO SCREEN COM Z-INDEX CORRETO */}
       <div 
         ref={contentRef}
-        className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 relative z-10"
+        className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-200 relative z-10"
       >
         {renderBookContent()}
       </div>

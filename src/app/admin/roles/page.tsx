@@ -61,7 +61,7 @@ function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-10 mx-auto p-6 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
         <div className="mt-3">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">Nova Função Personalizada</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-700 mb-6">Nova Função Personalizada</h3>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
@@ -94,7 +94,7 @@ function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
 
             {/* Permissões */}
             <div className="mb-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">Permissões</h4>
+              <h4 className="text-md font-semibold text-gray-600 mb-4">Permissões</h4>
               <div className="max-h-96 overflow-y-auto border rounded-md p-4">
                 {PERMISSION_GROUPS.map(group => (
                   <div key={group.id} className="mb-6">
@@ -112,7 +112,7 @@ function NewRoleModal({ isOpen, onClose, onSave }: NewRoleModalProps) {
                             className="mt-1 h-4 w-4 text-primary focus:ring-accent-blue border-gray-300 rounded"
                           />
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-gray-700">
                               {permission.name}
                             </div>
                             <div className="text-xs text-gray-500">
@@ -172,7 +172,7 @@ function EditRoleModal({ isOpen, onClose, role, onSave }: EditRoleModalProps) {
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="mt-3">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Editar Função</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-700 mb-4">Editar Função</h3>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -247,7 +247,7 @@ function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalPro
       <div className="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
+            <h3 className="text-lg leading-6 font-medium text-gray-700">
               Gerenciar Permissões - {role.name}
             </h3>
             {isSystemRole && (
@@ -261,7 +261,7 @@ function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalPro
             {PERMISSION_GROUPS.map(group => (
               <div key={group.id} className="mb-6">
                 <div className="flex items-center justify-between mb-3 border-b pb-2">
-                  <h4 className="text-md font-semibold text-gray-800">{group.name}</h4>
+                  <h4 className="text-md font-semibold text-gray-600">{group.name}</h4>
                   <span className="text-xs text-gray-500">{group.description}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -275,7 +275,7 @@ function PermissionsModal({ isOpen, onClose, role, onSave }: PermissionsModalPro
                         className="mt-1 h-4 w-4 text-primary focus:ring-accent-blue border-gray-300 rounded disabled:opacity-50"
                       />
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-700">
                           {permission.name}
                         </div>
                         <div className="text-xs text-gray-500">
@@ -384,10 +384,10 @@ export default function AdminRolesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Sistema de Gestão de Permissões</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Sistema de Gestão de Permissões</h1>
           <p className="text-gray-600">Configure funções e permissões modulares do sistema educacional</p>
         </div>
         <button 
@@ -403,28 +403,28 @@ export default function AdminRolesPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Total de Funções</div>
-          <div className="text-2xl font-bold text-gray-800">{statistics.totalRoles}</div>
+          <div className="text-2xl font-bold text-gray-600">{statistics.totalRoles}</div>
           <div className="mt-4 flex items-center">
             <span className="text-primary text-sm">{statistics.systemRoles} Sistema + {statistics.customRoles} Personalizadas</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Funções Ativas</div>
-          <div className="text-2xl font-bold text-gray-800">{statistics.activeRoles}</div>
+          <div className="text-2xl font-bold text-gray-600">{statistics.activeRoles}</div>
           <div className="mt-4 flex items-center">
             <span className="text-accent-green text-sm">Em uso no sistema</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Usuários Totais</div>
-          <div className="text-2xl font-bold text-gray-800">{statistics.totalUsers.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-gray-600">{statistics.totalUsers.toLocaleString()}</div>
           <div className="mt-4 flex items-center">
             <span className="text-accent-blue text-sm">Distribuídos nas funções</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Grupos de Permissões</div>
-          <div className="text-2xl font-bold text-gray-800">{PERMISSION_GROUPS.length}</div>
+          <div className="text-2xl font-bold text-gray-600">{PERMISSION_GROUPS.length}</div>
           <div className="mt-4 flex items-center">
             <span className="text-accent-purple text-sm">Categorias disponíveis</span>
           </div>
@@ -477,7 +477,7 @@ export default function AdminRolesPage() {
                         </span>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{role.name}</div>
+                        <div className="text-sm font-medium text-gray-700">{role.name}</div>
                         <div className="text-sm text-gray-500 max-w-xs truncate">{role.description}</div>
                       </div>
                     </div>
@@ -557,7 +557,7 @@ export default function AdminRolesPage() {
 
       {/* Matriz de Permissões por Categoria */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Visão Geral das Permissões por Categoria</h3>
+        <h3 className="text-lg font-semibold text-gray-600 mb-4">Visão Geral das Permissões por Categoria</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {PERMISSION_GROUPS.map(group => (
             <div key={group.id} className="border rounded-lg p-4">

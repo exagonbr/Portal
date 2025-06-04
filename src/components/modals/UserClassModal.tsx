@@ -126,14 +126,14 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-50 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">
             Gerenciar Usuários da Turma
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-600 dark:hover:text-gray-600"
           >
             <X className="w-5 h-5" />
           </button>
@@ -183,7 +183,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                         loadEnrolledUsers(e.target.value);
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
                     required
                   >
                     <option value="">Selecione uma turma</option>
@@ -205,7 +205,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Buscar por nome ou email..."
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
                   />
                 </div>
               </div>
@@ -218,8 +218,8 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                     availableUsers.map((user) => (
                       <div
                         key={user.id}
-                        className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-300 cursor-pointer ${
-                          formData.user_id === user.id ? 'bg-blue-50 dark:bg-blue-900' : ''
+                        className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-100 cursor-pointer ${
+                          formData.user_id === user.id ? 'bg-blue-50 dark:bg-blue-100' : ''
                         }`}
                         onClick={() => setFormData({ ...formData, user_id: user.id })}
                       >
@@ -237,7 +237,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserClassRole })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
                     required
                   >
                     {Object.entries(USER_CLASS_ROLE_LABELS).map(([value, label]) => (
@@ -254,7 +254,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                     type="date"
                     value={enrollmentDateStr}
                     onChange={(e) => setEnrollmentDateStr(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-300 dark:border-gray-600"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-100 dark:border-gray-400"
                     required
                   />
                 </div>
@@ -280,7 +280,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                   {enrolledUsers.map((userClass) => (
                     <div
                       key={userClass.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-300 rounded-lg"
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-100 rounded-lg"
                     >
                       <div>
                         <p className="font-medium">{userClass.user_name || 'Usuário não encontrado'}</p>
@@ -310,7 +310,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-300 dark:text-gray-300 dark:hover:bg-gray-600"
+            className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-100 dark:text-gray-700 dark:hover:bg-gray-200"
           >
             Fechar
           </button>

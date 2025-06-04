@@ -124,7 +124,7 @@ export default function CoordinatorMeetingsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Gestão de Reuniões</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Gestão de Reuniões</h1>
             <p className="text-gray-600">Organize e acompanhe as reuniões pedagógicas</p>
           </div>
           <button 
@@ -140,7 +140,7 @@ export default function CoordinatorMeetingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Reuniões</div>
-            <div className="text-2xl font-bold text-gray-800">{MOCK_MEETINGS.length}</div>
+            <div className="text-2xl font-bold text-gray-600">{MOCK_MEETINGS.length}</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 2</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -148,7 +148,7 @@ export default function CoordinatorMeetingsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Próximas</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {MOCK_MEETINGS.filter(m => new Date(m.date) >= new Date()).length}
             </div>
             <div className="mt-4 flex items-center">
@@ -158,7 +158,7 @@ export default function CoordinatorMeetingsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Confirmadas</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {MOCK_MEETINGS.filter(m => m.status === 'Confirmada').length}
             </div>
             <div className="mt-4 flex items-center">
@@ -168,7 +168,7 @@ export default function CoordinatorMeetingsPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Participação</div>
-            <div className="text-2xl font-bold text-gray-800">94%</div>
+            <div className="text-2xl font-bold text-gray-600">94%</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 3%</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -244,7 +244,7 @@ export default function CoordinatorMeetingsPage() {
           <div key={meeting.id} className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">{meeting.title}</h3>
+                <h3 className="text-lg font-semibold text-gray-600">{meeting.title}</h3>
                 <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                   <span>{new Date(meeting.date).toLocaleDateString('pt-BR')} às {meeting.time}</span>
                   <span>•</span>
@@ -273,7 +273,7 @@ export default function CoordinatorMeetingsPage() {
                     : meeting.status === 'Em andamento'
                     ? 'bg-purple-100 text-purple-800'
                     : meeting.status === 'Concluída'
-                    ? 'bg-gray-100 text-gray-800'
+                    ? 'bg-gray-100 text-gray-600'
                     : meeting.status === 'Cancelada'
                     ? 'bg-red-100 text-red-800'
                     : 'bg-yellow-100 text-yellow-800'
@@ -289,7 +289,7 @@ export default function CoordinatorMeetingsPage() {
                     ? 'bg-orange-100 text-orange-800'
                     : meeting.type === 'Planejamento'
                     ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-800'
+                    : 'bg-gray-100 text-gray-600'
                 }`}>
                   {meeting.type}
                 </span>
@@ -368,7 +368,7 @@ export default function CoordinatorMeetingsPage() {
             
             <div className="space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-gray-800">{selectedMeeting.title}</h4>
+                <h4 className="text-lg font-semibold text-gray-600">{selectedMeeting.title}</h4>
                 <p className="text-gray-600">{selectedMeeting.type}</p>
               </div>
 

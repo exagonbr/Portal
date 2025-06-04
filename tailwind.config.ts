@@ -81,10 +81,10 @@ const config: Config = {
         },
         // Textos com bom contraste sobre fundos claros.
         text: {
-          primary: '#1A202C',   // Cinza bem escuro, quase preto (Tailwind gray-900)
-          secondary: '#2D3748', // Cinza escuro (Tailwind gray-800)
-          tertiary: '#4A5568',  // Cinza médio (Tailwind gray-700)
-          disabled: '#A0AEC0'  // Cinza para texto desabilitado (secondary.DEFAULT)
+          primary: '#374151',   // Cinza médio (Tailwind gray-700) - mais claro que o anterior
+          secondary: '#6B7280', // Cinza médio-claro (Tailwind gray-500) - mais claro
+          tertiary: '#9CA3AF',  // Cinza claro (Tailwind gray-400) - mais claro
+          disabled: '#D1D5DB'  // Cinza muito claro para texto desabilitado (Tailwind gray-300)
         },
         // Bordas suaves e claras.
         border: {

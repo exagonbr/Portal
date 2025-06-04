@@ -148,7 +148,7 @@ export default function VirtualClassroom({
       {/* Virtual Classroom Container */}
       <div
         id={containerId}
-        className="flex-1 w-full bg-gray-900"
+        className="flex-1 w-full bg-gray-200"
         style={{ minHeight: '600px' }}
       />
     </div>

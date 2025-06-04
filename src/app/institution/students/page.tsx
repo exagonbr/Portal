@@ -6,10 +6,10 @@ export default function InstitutionStudentsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gestão de Alunos</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Gestão de Alunos</h1>
           <p className="text-gray-600">Gerencie todos os alunos da instituição</p>
         </div>
         <div className="space-x-4">
@@ -26,22 +26,22 @@ export default function InstitutionStudentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Total de Alunos</div>
-          <div className="text-2xl font-bold text-gray-800">1,234</div>
+          <div className="text-2xl font-bold text-gray-600">1,234</div>
           <div className="text-xs text-green-600 mt-2">↑ 56 este mês</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Média de Notas</div>
-          <div className="text-2xl font-bold text-gray-800">7.8</div>
+          <div className="text-2xl font-bold text-gray-600">7.8</div>
           <div className="text-xs text-green-600 mt-2">↑ 0.3 este mês</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Presença</div>
-          <div className="text-2xl font-bold text-gray-800">92%</div>
+          <div className="text-2xl font-bold text-gray-600">92%</div>
           <div className="text-xs text-blue-600 mt-2">= Estável</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Cursos Ativos</div>
-          <div className="text-2xl font-bold text-gray-800">48</div>
+          <div className="text-2xl font-bold text-gray-600">48</div>
           <div className="text-xs text-green-600 mt-2">↑ 3 este mês</div>
         </div>
       </div>
@@ -106,7 +106,7 @@ export default function InstitutionStudentsPage() {
                   <div className="flex items-center">
                     <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">Maria Santos</div>
+                      <div className="text-sm font-medium text-gray-700">Maria Santos</div>
                       <div className="text-sm text-gray-500">maria@email.com</div>
                     </div>
                   </div>
@@ -118,11 +118,11 @@ export default function InstitutionStudentsPage() {
                   Turma A
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 font-medium">8.5</div>
+                  <div className="text-sm text-gray-700 font-medium">8.5</div>
                   <div className="text-sm text-green-600">↑ 0.3</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">95%</div>
+                  <div className="text-sm text-gray-700">95%</div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div className="bg-green-600 h-2 rounded-full" style={{ width: '95%' }}></div>
                   </div>

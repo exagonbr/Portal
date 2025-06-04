@@ -63,7 +63,7 @@ export default function InstitutionCalendarPage() {
       case 'holiday':
         return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-600'
     }
   }
 
@@ -92,7 +92,7 @@ export default function InstitutionCalendarPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Calendário Escolar</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Calendário Escolar</h1>
             <p className="text-gray-600">Gestão do calendário acadêmico e eventos</p>
           </div>
           <button 
@@ -128,7 +128,7 @@ export default function InstitutionCalendarPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Eventos este Mês</div>
-            <div className="text-2xl font-bold text-gray-800">{filteredEvents.length}</div>
+            <div className="text-2xl font-bold text-gray-600">{filteredEvents.length}</div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -155,7 +155,7 @@ export default function InstitutionCalendarPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="text-lg font-semibold text-gray-600 mb-4">
           Eventos - {months[selectedMonth]} {selectedYear}
         </h3>
         
@@ -164,7 +164,7 @@ export default function InstitutionCalendarPage() {
             {filteredEvents.map((event) => (
               <div key={event.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-lg font-semibold text-gray-800">{event.title}</h4>
+                  <h4 className="text-lg font-semibold text-gray-600">{event.title}</h4>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.type)}`}>
                     {getEventTypeText(event.type)}
                   </span>

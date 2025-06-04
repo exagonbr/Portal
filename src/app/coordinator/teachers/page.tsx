@@ -91,7 +91,7 @@ export default function CoordinatorTeachersPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Gestão do Corpo Docente</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Gestão do Corpo Docente</h1>
             <p className="text-gray-600">Monitore e gerencie o desempenho dos professores</p>
           </div>
           <button 
@@ -107,7 +107,7 @@ export default function CoordinatorTeachersPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Professores</div>
-            <div className="text-2xl font-bold text-gray-800">{MOCK_TEACHERS.length}</div>
+            <div className="text-2xl font-bold text-gray-600">{MOCK_TEACHERS.length}</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 2</span>
               <span className="text-gray-500 text-sm ml-2">este semestre</span>
@@ -115,7 +115,7 @@ export default function CoordinatorTeachersPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Professores Ativos</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {MOCK_TEACHERS.filter(t => t.status === 'Ativo').length}
             </div>
             <div className="mt-4 flex items-center">
@@ -125,7 +125,7 @@ export default function CoordinatorTeachersPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Avaliação Média</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {(MOCK_TEACHERS.reduce((acc, t) => acc + t.performance, 0) / MOCK_TEACHERS.length).toFixed(1)}
             </div>
             <div className="mt-4 flex items-center">
@@ -135,7 +135,7 @@ export default function CoordinatorTeachersPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Alunos</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {MOCK_TEACHERS.reduce((acc, t) => acc + t.totalStudents, 0)}
             </div>
             <div className="mt-4 flex items-center">
@@ -191,7 +191,7 @@ export default function CoordinatorTeachersPage() {
                   <span className="material-symbols-outlined text-blue-600">person</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">{teacher.name}</h3>
+                  <h3 className="font-semibold text-gray-600">{teacher.name}</h3>
                   <p className="text-sm text-gray-600">{teacher.email}</p>
                 </div>
               </div>

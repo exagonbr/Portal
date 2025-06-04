@@ -568,7 +568,7 @@ export default function AdminContentSearchPage() {
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Gerenciamento de Conteúdo</h1>
+          <h1 className="text-3xl font-bold text-gray-600 mb-2">Gerenciamento de Conteúdo</h1>
           <p className="text-gray-600">Gerencie arquivos nos buckets S3 da AWS e suas referências no banco de dados</p>
         </div>
         <div className="flex space-x-2">
@@ -647,7 +647,7 @@ export default function AdminContentSearchPage() {
       {/* Filtros Globais */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">Filtros</h2>
+          <h2 className="text-lg font-semibold text-gray-600">Filtros</h2>
           <button
             onClick={loadFiles}
             disabled={loading}
@@ -832,7 +832,7 @@ export default function AdminContentSearchPage() {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 flex items-center">
+                        <div className="text-sm font-medium text-gray-700 flex items-center">
                           {item.name}
                           {!item.hasDbReference && (
                             <span className="ml-2 material-symbols-outlined text-red-500 text-sm" title="Sem referência no banco">
@@ -849,10 +849,10 @@ export default function AdminContentSearchPage() {
                       {item.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {item.size}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {new Date(item.lastModified).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -1100,7 +1100,7 @@ export default function AdminContentSearchPage() {
         ) : getFilteredContent.length === 0 ? (
           <div className="text-center py-12">
             <span className="material-symbols-outlined text-gray-400 text-6xl mb-4">folder_open</span>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum arquivo encontrado</h3>
+            <h3 className="text-lg font-medium text-gray-700 mb-2">Nenhum arquivo encontrado</h3>
             <p className="text-gray-500">
               {activeTab ? 'Tente ajustar os filtros ou adicione novos arquivos.' : 'Selecione uma aba para ver os arquivos.'}
             </p>
@@ -1121,7 +1121,7 @@ export default function AdminContentSearchPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Adicionar Novo Bucket</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-4">Adicionar Novo Bucket</h3>
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Bucket</label>
@@ -1240,26 +1240,26 @@ export default function AdminContentSearchPage() {
                 
                 {/* File Info Card */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-                  <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <h4 className="font-bold text-gray-600 mb-4 flex items-center">
                     <span className="material-symbols-outlined mr-2">folder</span>
                     Informações do Arquivo
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600 font-medium">Nome:</span>
-                      <p className="text-gray-800 font-semibold truncate">{selectedItem.name}</p>
+                      <p className="text-gray-600 font-semibold truncate">{selectedItem.name}</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Tipo:</span>
-                      <p className="text-gray-800 font-semibold">{selectedItem.type}</p>
+                      <p className="text-gray-600 font-semibold">{selectedItem.type}</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Tamanho:</span>
-                      <p className="text-gray-800 font-semibold">{selectedItem.size}</p>
+                      <p className="text-gray-600 font-semibold">{selectedItem.size}</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Bucket:</span>
-                      <p className="text-gray-800 font-semibold">{selectedItem.bucket}</p>
+                      <p className="text-gray-600 font-semibold">{selectedItem.bucket}</p>
                     </div>
                   </div>
                 </div>
@@ -1394,7 +1394,7 @@ export default function AdminContentSearchPage() {
                 
                 {/* Current File Info Card */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-                  <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <h4 className="font-bold text-gray-600 mb-4 flex items-center">
                     <span className="material-symbols-outlined mr-2">info</span>
                     Informações Atuais
                   </h4>
@@ -1411,7 +1411,7 @@ export default function AdminContentSearchPage() {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h5 className="font-semibold text-gray-800">{selectedItem.name}</h5>
+                      <h5 className="font-semibold text-gray-600">{selectedItem.name}</h5>
                       <p className="text-gray-600 text-sm">{selectedItem.type} • {selectedItem.size}</p>
                       <p className="text-gray-500 text-xs">Bucket: {selectedItem.bucket}</p>
                     </div>
@@ -1446,14 +1446,14 @@ export default function AdminContentSearchPage() {
                       <span className="material-symbols-outlined text-gray-400">arrow_forward</span>
                       <div>
                         <p className="text-sm text-gray-600">Nome anterior:</p>
-                        <p className="font-medium text-gray-800">{selectedItem.name}</p>
+                        <p className="font-medium text-gray-600">{selectedItem.name}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3 mt-4">
                       <span className="material-symbols-outlined text-green-600">check</span>
                       <div>
                         <p className="text-sm text-gray-600">Novo nome:</p>
-                        <p className="font-medium text-gray-800">{newName || 'Digite o novo nome...'}</p>
+                        <p className="font-medium text-gray-600">{newName || 'Digite o novo nome...'}</p>
                       </div>
                     </div>
                   </div>
@@ -1513,7 +1513,7 @@ export default function AdminContentSearchPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Mover/Copiar Arquivo</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-4">Mover/Copiar Arquivo</h3>
               
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Ação</label>
@@ -1587,7 +1587,7 @@ export default function AdminContentSearchPage() {
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                 <span className="material-symbols-outlined text-red-600">warning</span>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Confirmar Exclusão</h3>
+              <h3 className="text-lg font-medium text-gray-700 text-center mb-2">Confirmar Exclusão</h3>
               <p className="text-sm text-gray-500 text-center mb-4">
                 Tem certeza que deseja deletar o arquivo <strong>{selectedItem?.name}</strong>? 
                 Esta ação não pode ser desfeita.
@@ -1620,7 +1620,7 @@ export default function AdminContentSearchPage() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Vincular à Coleção</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-4">Vincular à Coleção</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Arquivo: <strong>{selectedItem.name}</strong>
               </p>
@@ -1711,7 +1711,7 @@ export default function AdminContentSearchPage() {
                 
                 {/* File Preview Card */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-                  <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <h4 className="font-bold text-gray-600 mb-4 flex items-center">
                     <span className="material-symbols-outlined mr-2">preview</span>
                     Preview do Arquivo
                   </h4>
@@ -1728,7 +1728,7 @@ export default function AdminContentSearchPage() {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <h5 className="font-semibold text-gray-800 truncate">{selectedItem.name}</h5>
+                      <h5 className="font-semibold text-gray-600 truncate">{selectedItem.name}</h5>
                       <p className="text-gray-600 text-sm">{selectedItem.type} • {selectedItem.size}</p>
                     </div>
                   </div>
@@ -1848,7 +1848,7 @@ export default function AdminContentSearchPage() {
                           className="sr-only"
                         />
                         <div className="flex-1">
-                          <div className="font-semibold text-gray-800 text-sm">{category.label}</div>
+                          <div className="font-semibold text-gray-600 text-sm">{category.label}</div>
                           <div className="text-gray-600 text-xs">{category.desc}</div>
                         </div>
                         {libraryCategory === category.value && (
@@ -1910,7 +1910,7 @@ export default function AdminContentSearchPage() {
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 mb-4">
                 <span className="material-symbols-outlined text-orange-600">link_off</span>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Desvincular Arquivo</h3>
+              <h3 className="text-lg font-medium text-gray-700 text-center mb-2">Desvincular Arquivo</h3>
               <p className="text-sm text-gray-500 text-center mb-4">
                 Tem certeza que deseja desvincular o arquivo <strong>{selectedItem?.name}</strong> do conteúdo? 
                 O arquivo permanecerá no bucket S3, mas será removido da biblioteca/coleção.

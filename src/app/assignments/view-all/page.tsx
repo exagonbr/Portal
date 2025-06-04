@@ -246,7 +246,7 @@ export default function ViewAllAssignmentsPage() {
           </Link>
         </div>
         
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-gray-700 mb-2 flex items-center gap-3">
           <FileText className="w-8 h-8 text-primary" />
           Todas as Minhas Tarefas
         </h1>
@@ -309,7 +309,7 @@ export default function ViewAllAssignmentsPage() {
         {filteredAssignments.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma tarefa encontrada</h3>
+            <h3 className="text-lg font-medium text-gray-700 mb-2">Nenhuma tarefa encontrada</h3>
             <p className="text-gray-500">
               {searchTerm || statusFilter !== 'all' || subjectFilter !== 'all'
                 ? 'Tente ajustar os filtros para encontrar suas tarefas.'
@@ -331,7 +331,7 @@ export default function ViewAllAssignmentsPage() {
                     <span className="text-sm text-gray-500">•</span>
                     <span className="text-sm text-gray-500">Peso: {assignment.weight}%</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{assignment.title}</h3>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">{assignment.title}</h3>
                   <p className="text-gray-600 mb-3">{assignment.description}</p>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">

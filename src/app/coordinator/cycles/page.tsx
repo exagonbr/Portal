@@ -110,7 +110,7 @@ export default function CoordinatorCyclesPage() {
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                   cycle.status === 'Ativo'
                     ? 'bg-accent-green/20 text-accent-green'
-                    : 'bg-gray-100 text-gray-800'
+                    : 'bg-gray-100 text-gray-600'
                 }`}>
                   {cycle.status}
                 </span>

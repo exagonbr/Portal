@@ -146,10 +146,10 @@ export default function HierarchicalDashboard() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 mb-2">
           Dashboard Hierárquico
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600 dark:text-gray-600">
           Visão completa da estrutura educacional
         </p>
       </div>
@@ -197,7 +197,7 @@ export default function HierarchicalDashboard() {
       {/* Navegação Hierárquica */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Lista de Instituições */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <Building2 className="w-5 h-5 mr-2 text-purple-500" />
             Instituições
@@ -229,7 +229,7 @@ export default function HierarchicalDashboard() {
         </div>
 
         {/* Lista de Escolas */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <School className="w-5 h-5 mr-2 text-blue-500" />
             Escolas
@@ -271,7 +271,7 @@ export default function HierarchicalDashboard() {
         </div>
 
         {/* Detalhes da Escola e Turmas */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2 text-green-500" />
             Detalhes da Escola
@@ -346,16 +346,16 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, color }: StatCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
           <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <p className="text-2xl font-bold text-gray-700 dark:text-gray-800">
         {value.toLocaleString('pt-BR')}
       </p>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>
     </div>
   );
 }

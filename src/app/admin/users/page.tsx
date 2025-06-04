@@ -9,7 +9,7 @@ export default function AdminUsersPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Gestão de Usuários</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Gestão de Usuários</h1>
             <p className="text-gray-600">Gerencie todos os usuários do sistema</p>
           </div>
           <div className="space-x-4">
@@ -32,7 +32,7 @@ export default function AdminUsersPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Usuários</div>
-            <div className="text-2xl font-bold text-gray-800">1,543</div>
+            <div className="text-2xl font-bold text-gray-600">1,543</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 23</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -40,7 +40,7 @@ export default function AdminUsersPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Usuários Ativos</div>
-            <div className="text-2xl font-bold text-gray-800">1,248</div>
+            <div className="text-2xl font-bold text-gray-600">1,248</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">89%</span>
               <span className="text-gray-500 text-sm ml-2">taxa de atividade</span>
@@ -48,7 +48,7 @@ export default function AdminUsersPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Novos Usuários</div>
-            <div className="text-2xl font-bold text-gray-800">127</div>
+            <div className="text-2xl font-bold text-gray-600">127</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 12%</span>
               <span className="text-gray-500 text-sm ml-2">vs. mês anterior</span>
@@ -130,7 +130,7 @@ export default function AdminUsersPage() {
                   <div className="flex items-center">
                     <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">João Silva</div>
+                      <div className="text-sm font-medium text-gray-700">João Silva</div>
                       <div className="text-sm text-gray-500">joao@email.com</div>
                     </div>
                   </div>

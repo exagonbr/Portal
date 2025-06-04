@@ -6,10 +6,10 @@ export default function AdminLogsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Logs do Sistema</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Logs do Sistema</h1>
           <p className="text-gray-600">Visualize e analise os logs do sistema</p>
         </div>
         <div className="space-x-4">
@@ -59,7 +59,7 @@ export default function AdminLogsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Total de Logs</div>
-          <div className="text-2xl font-bold text-gray-800">12,458</div>
+          <div className="text-2xl font-bold text-gray-600">12,458</div>
           <div className="mt-4 flex items-center">
             <span className="text-accent-green text-sm">↑ 234</span>
             <span className="text-gray-500 text-sm ml-2">hoje</span>
@@ -83,7 +83,7 @@ export default function AdminLogsPage() {
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Tamanho dos Logs</div>
-          <div className="text-2xl font-bold text-gray-800">2.4GB</div>
+          <div className="text-2xl font-bold text-gray-600">2.4GB</div>
           <div className="mt-4 flex items-center">
             <span className="text-accent-blue text-sm">+156MB</span>
             <span className="text-gray-500 text-sm ml-2">hoje</span>
@@ -133,7 +133,7 @@ export default function AdminLogsPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   Authentication
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900">
+                <td className="px-6 py-4 text-sm text-gray-700">
                   Failed login attempt: Invalid credentials
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -159,7 +159,7 @@ export default function AdminLogsPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   System
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-900">
+                <td className="px-6 py-4 text-sm text-gray-700">
                   System backup completed successfully
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -224,9 +224,9 @@ export default function AdminLogsPage() {
       <div className="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
         <div className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
           <div className="mt-3">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Detalhes do Log</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-700 mb-4">Detalhes do Log</h3>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <pre className="text-sm text-gray-800 whitespace-pre-wrap">
+              <pre className="text-sm text-gray-600 whitespace-pre-wrap">
                 {JSON.stringify({
                   timestamp: '2024-01-15 14:23:45',
                   level: 'ERROR',

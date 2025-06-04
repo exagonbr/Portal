@@ -279,7 +279,7 @@ export default function VideosPage() {
                 </div>
               </div>
               <div className="ml-4 flex-grow">
-                <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{video.title}</h3>
+                <h3 className="text-sm font-medium text-gray-700 line-clamp-2">{video.title}</h3>
                 <div className="flex items-center mt-2 text-xs text-gray-500">
                   {video.progress !== undefined && (
                     <span className="flex items-center">
@@ -365,7 +365,7 @@ export default function VideosPage() {
                   >
                     <div className="p-4 border-b border-gray-200">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-medium text-gray-900">Filtros</h3>
+                        <h3 className="text-lg font-medium text-gray-700">Filtros</h3>
                         <button
                           className="text-gray-400 hover:text-gray-500"
                           onClick={resetFilters}
@@ -377,13 +377,13 @@ export default function VideosPage() {
 
                     {/* Categories */}
                     <div className="p-4 border-b border-gray-200">
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Status</h4>
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Status</h4>
                       <div className="flex flex-wrap gap-2">
                         <button
                           className={`px-3 py-1.5 rounded-full text-xs font-medium ${
                             filters.category === 'all'
                               ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                           onClick={() => handleCategoryChange('all')}
                         >
@@ -393,7 +393,7 @@ export default function VideosPage() {
                           className={`px-3 py-1.5 rounded-full text-xs font-medium ${
                             filters.category === 'inProgress'
                               ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                           onClick={() => handleCategoryChange('inProgress')}
                         >
@@ -406,7 +406,7 @@ export default function VideosPage() {
                           className={`px-3 py-1.5 rounded-full text-xs font-medium ${
                             filters.category === 'notStarted'
                               ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                           onClick={() => handleCategoryChange('notStarted')}
                         >
@@ -419,7 +419,7 @@ export default function VideosPage() {
                           className={`px-3 py-1.5 rounded-full text-xs font-medium ${
                             filters.category === 'completed'
                               ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                           onClick={() => handleCategoryChange('completed')}
                         >
@@ -434,7 +434,7 @@ export default function VideosPage() {
                     {/* Duration Range */}
                     <div className="p-4 border-b border-gray-200">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium text-gray-900">Duração</h4>
+                        <h4 className="text-sm font-medium text-gray-700">Duração</h4>
                         <span className="text-xs text-gray-500">
                           {formatDuration(filters.durationRange[0])} - {formatDuration(filters.durationRange[1])}
                         </span>
@@ -457,7 +457,7 @@ export default function VideosPage() {
 
                     {/* Subjects */}
                     <div className="p-4 max-h-60 overflow-y-auto">
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Disciplinas</h4>
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Disciplinas</h4>
                       <div className="space-y-2">
                         {allSubjects.map(subject => (
                           <div key={subject} className="flex items-center">
@@ -556,7 +556,7 @@ export default function VideosPage() {
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Continue Assistindo</h2>
+                <h2 className="text-2xl font-bold text-gray-700">Continue Assistindo</h2>
                 <p className="text-sm text-gray-600 mt-1">Retome de onde parou</p>
               </div>
               <button
@@ -591,7 +591,7 @@ export default function VideosPage() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Mais Populares</h2>
+              <h2 className="text-2xl font-bold text-gray-700">Mais Populares</h2>
               <p className="text-sm text-gray-600 mt-1">Os conteúdos mais assistidos da biblioteca</p>
             </div>
             <button
@@ -628,7 +628,7 @@ export default function VideosPage() {
           <section className="mt-8 pt-8 border-t border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-700">
                   {filters.searchQuery
                     ? `Resultados para "${filters.searchQuery}"`
                     : filters.category !== 'all'
@@ -664,7 +664,7 @@ export default function VideosPage() {
                 <div className="bg-gray-100 rounded-full p-4 mb-4">
                   <XMarkSolidIcon className="h-8 w-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhum vídeo encontrado</h3>
+                <h3 className="text-lg font-medium text-gray-700 mb-1">Nenhum vídeo encontrado</h3>
                 <p className="text-gray-500 max-w-md">
                   Não encontramos vídeos que correspondam aos seus filtros. Tente ajustar os critérios de busca.
                 </p>

@@ -10,7 +10,7 @@ export default function FavoritesPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Meus Livros Favoritos</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-600">Meus Livros Favoritos</h1>
       
       {books.length === 0 ? (
         <div className="text-center py-10">

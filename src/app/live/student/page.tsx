@@ -188,7 +188,7 @@ export default function StudentLiveClassPage() {
 
   if (isInClass && selectedClass) {
     return (
-      <div className="h-screen bg-gray-900 flex flex-col">
+      <div className="h-screen bg-gray-200 flex flex-col">
         {/* Header da Aula */}
         <div className="bg-gray-800 text-white p-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -315,7 +315,7 @@ export default function StudentLiveClassPage() {
           </Link>
         </div>
         
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-gray-700 mb-2 flex items-center gap-3">
           <Video className="w-8 h-8 text-primary" />
           Aulas ao Vivo
         </h1>
@@ -330,7 +330,7 @@ export default function StudentLiveClassPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Aulas Hoje</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-700">
                 {liveClasses.filter(c => new Date(c.startTime).toDateString() === new Date().toDateString()).length}
               </p>
             </div>
@@ -366,7 +366,7 @@ export default function StudentLiveClassPage() {
         {liveClasses.length === 0 ? (
           <div className="text-center py-12">
             <Video className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma aula agendada</h3>
+            <h3 className="text-lg font-medium text-gray-700 mb-2">Nenhuma aula agendada</h3>
             <p className="text-gray-500">
               Não há aulas ao vivo programadas no momento.
             </p>
@@ -382,7 +382,7 @@ export default function StudentLiveClassPage() {
                     </span>
                     <span className="text-sm font-medium text-primary">{classItem.subject}</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{classItem.title}</h3>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">{classItem.title}</h3>
                   <p className="text-gray-600 mb-3">{classItem.description}</p>
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">

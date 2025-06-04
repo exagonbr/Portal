@@ -10,7 +10,7 @@ export default function DebugAuth() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        <h1 className="text-3xl font-bold text-gray-700 mb-8">
           Debug de Autenticação
         </h1>
         
@@ -57,7 +57,7 @@ export default function DebugAuth() {
                     userData.role === 'teacher' ? 'bg-blue-100 text-blue-800' :
                     userData.role === 'student' ? 'bg-green-100 text-green-800' :
                     userData.role === 'manager' ? 'bg-purple-100 text-purple-800' :
-                    'bg-gray-100 text-gray-800'
+                    'bg-gray-100 text-gray-600'
                   }`}>
                     {userData.role}
                   </div>
@@ -80,7 +80,7 @@ export default function DebugAuth() {
 
         {/* Links de Teste */}
         <div className="mt-6 bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Links de Teste</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">Links de Teste</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <a href="/login" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-center">
               Login
@@ -99,7 +99,7 @@ export default function DebugAuth() {
 
         {/* Status do LocalStorage */}
         <div className="mt-6 bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Status do LocalStorage</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">Status do LocalStorage</h3>
           <div className="space-y-2 text-sm">
             <div>
               <span className="font-medium">auth_token:</span>

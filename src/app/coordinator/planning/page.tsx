@@ -108,7 +108,7 @@ export default function CoordinatorPlanningPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Planejamento Acadêmico</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Planejamento Acadêmico</h1>
             <p className="text-gray-600">Gerencie o planejamento pedagógico da instituição</p>
           </div>
           <button 
@@ -124,7 +124,7 @@ export default function CoordinatorPlanningPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Planos</div>
-            <div className="text-2xl font-bold text-gray-800">{MOCK_PLANNING_DATA.length}</div>
+            <div className="text-2xl font-bold text-gray-600">{MOCK_PLANNING_DATA.length}</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 1</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -132,7 +132,7 @@ export default function CoordinatorPlanningPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Em Andamento</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {MOCK_PLANNING_DATA.filter(p => p.status === 'Em andamento').length}
             </div>
             <div className="mt-4 flex items-center">
@@ -142,7 +142,7 @@ export default function CoordinatorPlanningPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Concluídos</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {MOCK_PLANNING_DATA.filter(p => p.status === 'Concluído').length}
             </div>
             <div className="mt-4 flex items-center">
@@ -152,7 +152,7 @@ export default function CoordinatorPlanningPage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Progresso Médio</div>
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-600">
               {Math.round(MOCK_PLANNING_DATA.reduce((acc, p) => acc + p.progress, 0) / MOCK_PLANNING_DATA.length)}%
             </div>
             <div className="mt-4 flex items-center">
@@ -224,7 +224,7 @@ export default function CoordinatorPlanningPage() {
               <div key={plan.id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{plan.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-600">{plan.title}</h3>
                     <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                       <span>{plan.cycle}</span>
                       <span>•</span>
@@ -325,7 +325,7 @@ export default function CoordinatorPlanningPage() {
       {selectedTab === 'calendar' && (
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Próximos Eventos</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-4">Próximos Eventos</h3>
             <div className="space-y-4">
               {CALENDAR_EVENTS.map((event) => (
                 <div key={event.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -337,7 +337,7 @@ export default function CoordinatorPlanningPage() {
                       </span>
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-800">{event.title}</h4>
+                      <h4 className="font-medium text-gray-600">{event.title}</h4>
                       <p className="text-sm text-gray-600">
                         {new Date(event.date).toLocaleDateString('pt-BR')} às {event.time}
                       </p>
@@ -390,7 +390,7 @@ export default function CoordinatorPlanningPage() {
             
             <div className="space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-gray-800">{selectedPlan.title}</h4>
+                <h4 className="text-lg font-semibold text-gray-600">{selectedPlan.title}</h4>
                 <p className="text-gray-600">{selectedPlan.cycle}</p>
               </div>
 

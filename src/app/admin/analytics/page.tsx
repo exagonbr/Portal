@@ -81,7 +81,7 @@ export default function AdminAnalyticsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Analytics do Sistema</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Analytics do Sistema</h1>
             <p className="text-gray-600">Monitoramento e estatísticas em tempo real</p>
           </div>
         </div>
@@ -101,10 +101,10 @@ export default function AdminAnalyticsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Analytics do Sistema</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Analytics do Sistema</h1>
           <p className="text-gray-600">
             Monitoramento e estatísticas em tempo real | Última atualização: {lastUpdate.toLocaleTimeString()}
           </p>
@@ -184,7 +184,7 @@ export default function AdminAnalyticsPage() {
           <>
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="text-sm font-medium text-gray-500 mb-1">Usuários Online</div>
-              <div className="text-2xl font-bold text-gray-800">{analytics.activeUsers.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-gray-600">{analytics.activeUsers.toLocaleString()}</div>
               <div className="mt-4 flex items-center">
                 <span className={`${getTrendColor(analytics.activeUsers, 1200)} text-sm`}>
                   {getTrendIcon(analytics.activeUsers, 1200)} {Math.abs(((analytics.activeUsers - 1200) / 1200) * 100).toFixed(1)}%
@@ -194,7 +194,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="text-sm font-medium text-gray-500 mb-1">Aulas em Andamento</div>
-              <div className="text-2xl font-bold text-gray-800">{analytics.activeClasses}</div>
+              <div className="text-2xl font-bold text-gray-600">{analytics.activeClasses}</div>
               <div className="mt-4 flex items-center">
                 <span className={`${getTrendColor(analytics.activeClasses, 40)} text-sm`}>
                   {getTrendIcon(analytics.activeClasses, 40)} {Math.abs(((analytics.activeClasses - 40) / 40) * 100).toFixed(1)}%
@@ -204,7 +204,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="text-sm font-medium text-gray-500 mb-1">Carga do Sistema</div>
-              <div className="text-2xl font-bold text-gray-800">{analytics.systemLoad}%</div>
+              <div className="text-2xl font-bold text-gray-600">{analytics.systemLoad}%</div>
               <div className="mt-4 flex items-center">
                 <span className={`${getTrendColor(analytics.systemLoad, 60)} text-sm`}>
                   {getTrendIcon(analytics.systemLoad, 60)} {Math.abs(((analytics.systemLoad - 60) / 60) * 100).toFixed(1)}%
@@ -214,7 +214,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="text-sm font-medium text-gray-500 mb-1">Tempo de Resposta</div>
-              <div className="text-2xl font-bold text-gray-800">{analytics.responseTime}ms</div>
+              <div className="text-2xl font-bold text-gray-600">{analytics.responseTime}ms</div>
               <div className="mt-4 flex items-center">
                 <span className={`${getTrendColor(analytics.responseTime, 250)} text-sm`}>
                   {getTrendIcon(analytics.responseTime, 250)} {Math.abs(analytics.responseTime - 250)}ms
@@ -229,7 +229,7 @@ export default function AdminAnalyticsPage() {
       {/* Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Métricas de Performance AWS</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Métricas de Performance AWS</h3>
           {isLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 4 }).map((_, index) => (
@@ -244,7 +244,7 @@ export default function AdminAnalyticsPage() {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">CPU</span>
-                  <span className="text-gray-800">{analytics.cpuUsage}%</span>
+                  <span className="text-gray-600">{analytics.cpuUsage}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className={getPerformanceColor(analytics.cpuUsage, { warning: 70, critical: 90 })} style={{ width: `${analytics.cpuUsage}%` }}></div>
@@ -253,7 +253,7 @@ export default function AdminAnalyticsPage() {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">Memória</span>
-                  <span className="text-gray-800">{analytics.memoryUsage}%</span>
+                  <span className="text-gray-600">{analytics.memoryUsage}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className={getPerformanceColor(analytics.memoryUsage, { warning: 75, critical: 90 })} style={{ width: `${analytics.memoryUsage}%` }}></div>
@@ -262,7 +262,7 @@ export default function AdminAnalyticsPage() {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">Disco</span>
-                  <span className="text-gray-800">{analytics.diskUsage}%</span>
+                  <span className="text-gray-600">{analytics.diskUsage}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className={getPerformanceColor(analytics.diskUsage, { warning: 80, critical: 95 })} style={{ width: `${analytics.diskUsage}%` }}></div>
@@ -271,7 +271,7 @@ export default function AdminAnalyticsPage() {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">Rede</span>
-                  <span className="text-gray-800">{analytics.networkUsage}%</span>
+                  <span className="text-gray-600">{analytics.networkUsage}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className={getPerformanceColor(analytics.networkUsage, { warning: 80, critical: 95 })} style={{ width: `${analytics.networkUsage}%` }}></div>
@@ -282,7 +282,7 @@ export default function AdminAnalyticsPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">S3 Storage Analytics</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">S3 Storage Analytics</h3>
           {isLoading ? (
             <div className="space-y-4">
               <div className="animate-pulse">
@@ -330,7 +330,7 @@ export default function AdminAnalyticsPage() {
       {/* Usage Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Uso do Sistema</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Uso do Sistema</h3>
           <div className="h-80 bg-gray-50 rounded-lg">
             <div className="w-full h-full flex items-center justify-center text-gray-400">
               <div className="text-center">
@@ -342,7 +342,7 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribuição de Recursos</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Distribuição de Recursos</h3>
           <div className="h-80 bg-gray-50 rounded-lg">
             <div className="w-full h-full flex items-center justify-center text-gray-400">
               <div className="text-center">
@@ -358,7 +358,7 @@ export default function AdminAnalyticsPage() {
       {/* Active Sessions */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Sessões Ativas</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Sessões Ativas</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -390,7 +390,7 @@ export default function AdminAnalyticsPage() {
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-gray-200"></div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">João Silva</div>
+                      <div className="text-sm font-medium text-gray-700">João Silva</div>
                       <div className="text-sm text-gray-500">Professor</div>
                     </div>
                   </div>

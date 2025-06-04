@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import DashboardLayout from './DashboardLayout'
+import StandardLayout from '@/components/StandardLayout'
 
 export default function AuthenticatedDashboardLayout({
   children,
@@ -21,8 +21,11 @@ export default function AuthenticatedDashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading-spinner"></div>
+      <div className="flex justify-center items-center min-h-screen bg-slate-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+          <p className="mt-4 text-slate-600 font-medium">Carregando...</p>
+        </div>
       </div>
     )
   }
@@ -31,5 +34,12 @@ export default function AuthenticatedDashboardLayout({
     return null // Will redirect in useEffect
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>
+  return (
+    <StandardLayout
+      title="Dashboard"
+      subtitle="Bem-vindo ao Portal Educacional"
+    >
+      {children}
+    </StandardLayout>
+  )
 }

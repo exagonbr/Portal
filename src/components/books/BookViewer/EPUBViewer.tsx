@@ -425,10 +425,10 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
       ref={containerRef}
       className={`h-screen w-full flex flex-col overflow-hidden ${
         viewerState.isFullscreen ? 'fixed inset-0 z-50' : ''
-      } ${isDarkMode ? 'dark' : ''} bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/10`}
+      } ${isDarkMode ? 'dark' : ''} bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-100 dark:via-blue-100/10 dark:to-purple-100/10`}
+      style={{ height: '100vh' }}
     >
-      {/* Barra de ferramentas superior moderna */}
-      <div className="flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg flex-shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-gray-100/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-300/50 shadow-lg flex-shrink-0">
         {/* Controles à esquerda - Botão Voltar Proeminente */}
         <div className="flex items-center space-x-4">
           {onBack && (
@@ -443,23 +443,23 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
           )}
 
           <div className="flex items-center space-x-3">
-            <div className="flex items-center bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+            <div className="flex items-center bg-gray-100/80 dark:bg-gray-200/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
               <button
                 onClick={() => handlePageChange(1)}
                 disabled={viewerState.currentPage <= 1}
-                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 title="Primeira página"
               >
-                <FiChevronsLeft className="w-4 h-4" />
+                <FiChevronsLeft className="w-4 h-4 text-gray-700" />
               </button>
               
               <button
                 onClick={() => handlePageChange(viewerState.currentPage - (viewerState.isDualPage ? 2 : 1))}
                 disabled={viewerState.currentPage <= 1}
-                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 title="Página anterior"
               >
-                <FiChevronLeft className="w-4 h-4" />
+                <FiChevronLeft className="w-4 h-4 text-gray-700" />
               </button>
               
               <div className="flex items-center space-x-2 px-4">
@@ -472,11 +472,11 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
                       handlePageChange(value);
                     }
                   }}
-                  className="w-16 px-2 py-1 text-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-300/50 dark:border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-16 px-2 py-1 text-center bg-white/80 dark:bg-gray-100/80 backdrop-blur-sm rounded-lg border border-gray-300/50 dark:border-gray-400/50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   min={1}
                   max={totalPages}
                 />
-                <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                <span className="text-sm text-gray-600 dark:text-gray-700 font-medium">
                   / {totalPages || '—'}
                 </span>
               </div>
@@ -484,90 +484,88 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
               <button
                 onClick={() => handlePageChange(viewerState.currentPage + (viewerState.isDualPage ? 2 : 1))}
                 disabled={viewerState.currentPage >= totalPages}
-                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 title="Próxima página"
               >
-                <FiChevronRight className="w-4 h-4" />
+                <FiChevronRight className="w-4 h-4 text-gray-700" />
               </button>
               
               <button
                 onClick={() => handlePageChange(totalPages)}
                 disabled={viewerState.currentPage >= totalPages}
-                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 title="Última página"
               >
-                <FiChevronsRight className="w-4 h-4" />
+                <FiChevronsRight className="w-4 h-4 text-gray-700" />
               </button>
             </div>
           </div>
 
           {/* Informações do livro */}
-          <div className="hidden lg:flex items-center space-x-4 text-sm">
-            <div className="text-gray-800 dark:text-gray-200">
-              <span className="font-bold text-blue-700 dark:text-blue-300">{mockBook.title}</span>
-              <span className="text-gray-600 dark:text-gray-400 ml-3">• {mockBook.author}</span>
-            </div>
+          <div className="text-gray-600 dark:text-gray-700">
+            <span className="font-bold text-blue-700 dark:text-blue-600">{mockBook.title}</span>
+            <span className="text-gray-600 dark:text-gray-700 ml-3">• {mockBook.author}</span>
           </div>
         </div>
 
         {/* Controles centrais */}
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+          <div className="flex items-center space-x-1 bg-gray-100/80 dark:bg-gray-200/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
             <button
               onClick={() => handleZoom('out')}
-              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 transition-all duration-200"
               title="Diminuir zoom"
             >
-              <FiZoomOut className="w-4 h-4" />
+              <FiZoomOut className="w-4 h-4 text-gray-700" />
             </button>
-            <span className="px-4 text-sm font-semibold min-w-[3.5rem] text-center text-blue-600 dark:text-blue-400">
+            <span className="px-4 text-sm font-semibold min-w-[3.5rem] text-center text-blue-600 dark:text-blue-600">
               {Math.round(viewerState.currentScale * 100)}%
             </span>
             <button
               onClick={() => handleZoom('in')}
-              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 transition-all duration-200"
               title="Aumentar zoom"
             >
-              <FiZoomIn className="w-4 h-4" />
+              <FiZoomIn className="w-4 h-4 text-gray-700" />
             </button>
-            <div className="w-px h-6 bg-gray-300/50 dark:bg-gray-600/50 mx-1" />
+            <div className="w-px h-6 bg-gray-300/50 dark:bg-gray-400/50 mx-1" />
             <button
               onClick={() => handleZoomChange(100)}
-              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 transition-all duration-200"
               title="Redefinir zoom"
             >
-              <FiRotateCw className="w-4 h-4" />
+              <FiRotateCw className="w-4 h-4 text-gray-700" />
             </button>
           </div>
 
-          <div className="flex bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+          <div className="flex bg-gray-100/80 dark:bg-gray-200/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
             <button
               onClick={handleDualPageToggle}
               className={`p-2 rounded-lg transition-all duration-200 ${
                 viewerState.isDualPage
                   ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
-                  : 'hover:bg-white/80 dark:hover:bg-gray-600/80'
+                  : 'hover:bg-white/80 dark:hover:bg-gray-100/80'
               }`}
               title="Alternar visualização de página dupla"
             >
-              <FiColumns className="w-4 h-4" />
+              <FiColumns className="w-4 h-4 text-gray-700" />
             </button>
           </div>
         </div>
 
         {/* Controles à direita */}
         <div className="flex items-center space-x-3">
-          <div className="flex bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+          <div className="flex bg-gray-100/80 dark:bg-gray-200/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
             <button
               onClick={() => setShowSearch(!showSearch)}
               className={`p-2 rounded-lg transition-all duration-200 ${
                 showSearch
                   ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md'
-                  : 'hover:bg-white/80 dark:hover:bg-gray-600/80'
+                  : 'hover:bg-white/80 dark:hover:bg-gray-100/80'
               }`}
               title="Pesquisar"
             >
-              <FiSearch className="w-4 h-4" />
+              <FiSearch className="w-4 h-4 text-gray-700" />
             </button>
             
             <button
@@ -584,37 +582,37 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
               }}
               className={`p-2 rounded-lg transition-all duration-200 ${
                 viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage)
-                  ? 'text-yellow-500 bg-yellow-50/80 dark:bg-yellow-900/30'
-                  : 'hover:bg-white/80 dark:hover:bg-gray-600/80'
+                  ? 'text-yellow-500 bg-yellow-50/80 dark:bg-yellow-100/30'
+                  : 'hover:bg-white/80 dark:hover:bg-gray-100/80'
               }`}
               title="Alternar marcador"
             >
-              <FiBookmark className="w-4 h-4" fill={viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage) ? 'currentColor' : 'none'} />
+              <FiBookmark className="w-4 h-4 text-gray-700" fill={viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage) ? 'currentColor' : 'none'} />
             </button>
           </div>
           
-          <div className="flex bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
+          <div className="flex bg-gray-100/80 dark:bg-gray-200/80 backdrop-blur-sm rounded-xl p-1 shadow-md">
             <button
               onClick={handleThemeToggle}
-              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 transition-all duration-200"
               title="Alternar modo escuro"
             >
-              {isDarkMode ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
+              {isDarkMode ? <FiSun className="w-4 h-4 text-gray-700" /> : <FiMoon className="w-4 h-4 text-gray-700" />}
             </button>
             
             <button
               onClick={handleFullscreenToggle}
-              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-600/80 transition-all duration-200"
+              className="p-2 rounded-lg hover:bg-white/80 dark:hover:bg-gray-100/80 transition-all duration-200"
               title="Alternar tela cheia"
             >
-              {viewerState.isFullscreen ? <FiMinimize className="w-4 h-4" /> : <FiMaximize className="w-4 h-4" />}
+              {viewerState.isFullscreen ? <FiMinimize className="w-4 h-4 text-gray-700" /> : <FiMaximize className="w-4 h-4 text-gray-700" />}
             </button>
           </div>
         </div>
       </div>
 
       {/* Barra de progresso com gradiente */}
-      <div className="h-1 bg-gray-200/50 dark:bg-gray-700/50 flex-shrink-0">
+      <div className="h-1 bg-gray-200/50 dark:bg-gray-300/50 flex-shrink-0">
         <div
           className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-500 ease-out"
           style={{ width: `${readingProgress}%` }}
@@ -623,7 +621,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
 
       {/* Barra de pesquisa */}
       {showSearch && (
-        <div className="px-6 py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 flex-shrink-0">
+        <div className="px-6 py-4 bg-white/80 dark:bg-gray-100/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-300/50 flex-shrink-0">
           <div className="flex items-center space-x-4 max-w-3xl mx-auto">
             <div className="relative flex-1">
               <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -633,7 +631,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Pesquisar no documento EPUB..."
-                className="w-full pl-12 pr-4 py-3 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-300/50 dark:border-gray-600/50"
+                className="w-full pl-12 pr-4 py-3 bg-gray-100/80 dark:bg-gray-100/80 backdrop-blur-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-300/50 dark:border-gray-400/50"
                 autoFocus
               />
             </div>
@@ -650,7 +648,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
                 setSearchQuery('');
                 setSearchResults([]);
               }}
-              className="p-3 rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-200"
+              className="p-3 rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-100/80 transition-all duration-200"
             >
               <FiX className="w-5 h-5" />
             </button>
@@ -658,20 +656,20 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
           
           {/* Resultados da pesquisa */}
           {searchResults.length > 0 && (
-            <div className="mt-4 bg-gray-50/80 dark:bg-gray-700/50 backdrop-blur-sm rounded-xl p-4 max-h-64 overflow-y-auto max-w-3xl mx-auto shadow-lg">
-              <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Resultados da Pesquisa</h4>
+            <div className="mt-4 bg-gray-50/80 dark:bg-gray-100/50 backdrop-blur-sm rounded-xl p-4 max-h-64 overflow-y-auto max-w-3xl mx-auto shadow-lg">
+              <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-700">Resultados da Pesquisa</h4>
               <div className="space-y-2">
                 {searchResults.map((result, i) => (
                   <div
                     key={i}
                     onClick={() => handlePageChange(result.page)}
-                    className="p-4 bg-white/80 dark:bg-gray-600/80 backdrop-blur-sm rounded-lg cursor-pointer hover:bg-blue-50/80 dark:hover:bg-blue-900/30 transition-all duration-200 border border-gray-200/50 dark:border-gray-600/50"
+                    className="p-4 bg-white/80 dark:bg-gray-600/80 backdrop-blur-sm rounded-lg cursor-pointer hover:bg-blue-50/80 dark:hover:bg-blue-900/30 transition-all duration-200 border border-gray-200/50 dark:border-gray-400/50"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">Página {result.page}</span>
                       <button className="text-xs text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Ir para página</button>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{result.text}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-700">{result.text}</p>
                   </div>
                 ))}
               </div>
@@ -683,14 +681,14 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
       {/* Modal para adicionar marcador */}
       {isAddingBookmark && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-8 w-96 max-w-full mx-4 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
-            <h3 className="text-xl font-bold mb-6 text-gray-800 dark:text-gray-200">Adicionar Marcador</h3>
+          <div className="bg-white/95 dark:bg-gray-100/95 backdrop-blur-sm rounded-2xl p-8 w-96 max-w-full mx-4 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+            <h3 className="text-xl font-bold mb-6 text-gray-600 dark:text-gray-700">Adicionar Marcador</h3>
             <input
               type="text"
               value={newBookmarkTitle}
               onChange={(e) => setNewBookmarkTitle(e.target.value)}
               placeholder="Título do marcador..."
-              className="w-full px-4 py-3 border border-gray-300/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm"
+              className="w-full px-4 py-3 border border-gray-300/50 dark:border-gray-400/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 dark:bg-gray-100/80 backdrop-blur-sm"
               autoFocus
             />
             <div className="flex justify-end space-x-3 mt-8">
@@ -699,7 +697,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
                   setIsAddingBookmark(false);
                   setNewBookmarkTitle('');
                 }}
-                className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100/80 dark:hover:bg-gray-700/80 rounded-xl transition-all duration-200 font-medium"
+                className="px-6 py-3 text-gray-600 dark:text-gray-600 hover:bg-gray-100/80 dark:hover:bg-gray-700/80 rounded-xl transition-all duration-200 font-medium"
               >
                 Cancelar
               </button>
@@ -724,21 +722,21 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
                 <div className="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
                 <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-xl font-semibold mb-2">Carregando EPUB...</p>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">Preparando visualização</p>
+              <p className="text-gray-700 dark:text-gray-700 text-xl font-semibold mb-2">Carregando EPUB...</p>
+              <p className="text-gray-500 dark:text-gray-600 text-sm">Preparando visualização</p>
             </div>
           </div>
         )}
 
         {error && (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center max-w-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
+            <div className="text-center max-w-md bg-white/80 dark:bg-gray-100/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-200/50 dark:border-gray-700/50">
               <div className="text-red-500 mb-6">
                 <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 mb-6 text-lg font-semibold">{error}</p>
+              <p className="text-gray-700 dark:text-gray-700 mb-6 text-lg font-semibold">{error}</p>
               <button
                 onClick={initializeEPUB}
                 className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg"
@@ -751,10 +749,10 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
 
         {!loading && !error && (
           <div className="h-full flex items-center justify-center">
-            <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50">
+            <div className="relative bg-white dark:bg-gray-100 rounded-xl shadow-2xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50">
               <div
                 ref={viewerRef}
-                className="bg-white dark:bg-gray-800"
+                className="bg-white dark:bg-gray-100"
                 style={{ 
                   width: `${dimensions.width}px`, 
                   height: `${dimensions.height}px`,
@@ -789,7 +787,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
                       <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Anotação</span>
                       <span className="text-xs text-gray-500">{new Date(annotation.createdAt).toLocaleTimeString()}</span>
                     </div>
-                    <p className="text-sm text-gray-800 dark:text-gray-200">{annotation.content}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-700">{annotation.content}</p>
                     <button
                       onClick={() => {
                         setViewerState(prev => ({

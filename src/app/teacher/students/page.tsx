@@ -252,7 +252,7 @@ export default function TeacherStudentsPage() {
               </div>
 
               <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                <button className="text-gray-600 hover:text-gray-800">
+                <button className="text-gray-600 hover:text-gray-600">
 <span className="material-icons">mais_vert</span>
                 </button>
                 <div className="flex space-x-2">

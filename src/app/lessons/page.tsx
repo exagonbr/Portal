@@ -310,7 +310,7 @@ export default function LessonsPage() {
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center mb-2">
-                      <h3 className="text-base-responsive font-semibold text-gray-900">{lesson.title}</h3>
+                      <h3 className="text-base-responsive font-semibold text-gray-700">{lesson.title}</h3>
                       {lesson.status === 'completed' && (
                         <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 ml-2" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />

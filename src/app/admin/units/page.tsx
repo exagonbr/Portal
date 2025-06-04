@@ -82,7 +82,7 @@ const StatCard: React.FC<{
 }> = ({ title, value, trend, color = 'green' }) => (
   <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
     <div className="text-sm font-medium text-gray-500 mb-1">{title}</div>
-    <div className="text-2xl font-bold text-gray-800">{value}</div>
+    <div className="text-2xl font-bold text-gray-600">{value}</div>
     {trend && (
       <div className="mt-4 flex items-center">
         <span className={`text-${color}-500 text-sm`}>{trend.value}</span>
@@ -100,7 +100,7 @@ const UnitCard: React.FC<{
     'Campus Principal': 'bg-accent-purple/20 text-accent-purple',
     'Unidade': 'bg-primary/10 text-primary',
     'Polo': 'bg-accent-blue/20 text-accent-blue',
-    'Extensão': 'bg-gray-100 text-gray-800'
+    'Extensão': 'bg-gray-100 text-gray-600'
   };
 
   const statusColors = {
@@ -127,7 +127,7 @@ const UnitCard: React.FC<{
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">{unit.name}</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-1">{unit.name}</h3>
             <p className="text-sm text-gray-600 mb-1">{unit.institutionName}</p>
             <p className="text-xs text-gray-500">{unit.location}</p>
           </div>
@@ -316,7 +316,7 @@ export default function AdminUnitsPage() {
         {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Gestão de Unidades de Ensino</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Gestão de Unidades de Ensino</h1>
             <p className="text-gray-600">Gerencie as unidades e campus das instituições</p>
           </div>
           <div className="flex flex-wrap gap-3">

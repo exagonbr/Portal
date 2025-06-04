@@ -75,11 +75,11 @@ export default function SentNotificationsPage() {
       case 'scheduled':
         return 'bg-blue-100 text-blue-800'
       case 'draft':
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-600'
       case 'failed':
         return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-600'
     }
   }
 
@@ -150,7 +150,7 @@ export default function SentNotificationsPage() {
               </span>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Notificações Enviadas</h1>
+              <h1 className="text-2xl font-bold text-gray-700">Notificações Enviadas</h1>
               <p className="text-sm text-gray-500">
                 Histórico de notificações que você enviou
               </p>
@@ -204,7 +204,7 @@ export default function SentNotificationsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-medium text-gray-900">
+                        <h3 className="text-lg font-medium text-gray-700">
                           {notification.title}
                         </h3>
                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(notification.status)}`}>
@@ -306,7 +306,7 @@ export default function SentNotificationsPage() {
               <span className="material-symbols-outlined text-4xl text-gray-300 mb-4">
                 send
               </span>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-700 mb-2">
                 Nenhuma notificação encontrada
               </h3>
               <p className="text-gray-500 mb-4">

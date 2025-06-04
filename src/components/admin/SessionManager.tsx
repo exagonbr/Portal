@@ -148,7 +148,7 @@ const SessionManager: React.FC = () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+        <h2 className="text-2xl font-bold text-gray-600 mb-4">
           Gerenciador de Sessões Redis
         </h2>
         
@@ -211,7 +211,7 @@ const SessionManager: React.FC = () => {
       {selectedUserId && (
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold text-gray-800">
+            <h3 className="text-xl font-semibold text-gray-600">
               Sessões do Usuário: {selectedUserId}
             </h3>
             {sessions.length > 0 && (
@@ -261,22 +261,22 @@ const SessionManager: React.FC = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {sessions.map((session) => (
                     <tr key={session.sessionId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
                         {session.sessionId.substring(0, 8)}...
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-700">
                           {session.user.name}
                         </div>
                         <div className="text-sm text-gray-500">
                           {session.user.email}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         {formatDate(session.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-700">
                           {formatDate(session.lastActivity)}
                         </div>
                         <div className="text-xs text-gray-500">

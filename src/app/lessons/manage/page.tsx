@@ -6,10 +6,10 @@ export default function ManageLessonsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gerenciar Aulas</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Gerenciar Aulas</h1>
           <p className="text-gray-600">Crie e organize o conteúdo das aulas</p>
         </div>
         <div className="space-x-4">
@@ -67,7 +67,7 @@ export default function ManageLessonsPage() {
                 <div className="flex items-center space-x-4">
                   <div className="cursor-move text-gray-400">⋮⋮</div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">Introdução à Álgebra</h3>
+                    <h3 className="text-lg font-semibold text-gray-600">Introdução à Álgebra</h3>
                     <p className="text-gray-600">Duração: 45min • Módulo 1</p>
                   </div>
                 </div>
@@ -75,7 +75,7 @@ export default function ManageLessonsPage() {
                   <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
                     Publicada
                   </span>
-                  <button className="text-gray-600 hover:text-gray-800">
+                  <button className="text-gray-600 hover:text-gray-600">
                     <span className="material-icons">mais_vert</span>
                   </button>
                 </div>
@@ -88,7 +88,7 @@ export default function ManageLessonsPage() {
                 <div className="flex items-center space-x-4">
                   <div className="cursor-move text-gray-400">⋮⋮</div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">Equações do 1º Grau</h3>
+                    <h3 className="text-lg font-semibold text-gray-600">Equações do 1º Grau</h3>
                     <p className="text-gray-600">Duração: 60min • Módulo 1</p>
                   </div>
                 </div>
@@ -96,7 +96,7 @@ export default function ManageLessonsPage() {
                   <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
                     Rascunho
                   </span>
-                  <button className="text-gray-600 hover:text-gray-800">
+                  <button className="text-gray-600 hover:text-gray-600">
                     <span className="material-icons">mais_vert</span>
                   </button>
                 </div>
@@ -118,11 +118,11 @@ export default function ManageLessonsPage() {
           <div className="aspect-video bg-gray-100 rounded-lg mb-4"></div>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-gray-800">Introdução à Álgebra</h3>
+              <h3 className="font-semibold text-gray-600">Introdução à Álgebra</h3>
               <p className="text-gray-600">Última atualização: 01/01/2024</p>
             </div>
             <div className="space-x-2">
-              <button className="px-4 py-2 text-gray-600 hover:text-gray-800">
+              <button className="px-4 py-2 text-gray-600 hover:text-gray-600">
                 Visualizar
               </button>
               <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">

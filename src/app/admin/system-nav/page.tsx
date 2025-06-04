@@ -98,7 +98,7 @@ export default function SystemNavigationPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Navegação do Sistema</h1>
+        <h1 className="text-3xl font-bold text-gray-600 mb-2">Navegação do Sistema</h1>
         <p className="text-gray-600">
           Mapa completo de todas as páginas e funcionalidades disponíveis no sistema educacional.
           Use esta página para navegar rapidamente entre as diferentes seções.
@@ -132,7 +132,7 @@ export default function SystemNavigationPage() {
         {navigationSections.map((section, sectionIndex) => (
           <div key={sectionIndex} className="bg-white rounded-lg shadow-md p-6">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">{section.title}</h2>
+              <h2 className="text-xl font-semibold text-gray-600 mb-2">{section.title}</h2>
               <p className="text-gray-600 text-sm">{section.description}</p>
             </div>
             
@@ -143,7 +143,7 @@ export default function SystemNavigationPage() {
                   href={link.url}
                   className="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all duration-200"
                 >
-                  <div className="font-medium text-gray-800 mb-1">{link.name}</div>
+                  <div className="font-medium text-gray-600 mb-1">{link.name}</div>
                   <div className="text-sm text-gray-600">{link.description}</div>
                   <div className="text-xs text-blue-600 mt-2">{link.url}</div>
                 </Link>

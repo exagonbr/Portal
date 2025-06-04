@@ -6,10 +6,10 @@ export default function ManageCoursesPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gerenciar Cursos</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Gerenciar Cursos</h1>
           <p className="text-gray-600">Gerencie os cursos e seu conteúdo</p>
         </div>
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
@@ -46,7 +46,7 @@ export default function ManageCoursesPage() {
                   <div className="flex items-center">
                     <div className="h-10 w-10 bg-gray-200 rounded-lg mr-3"></div>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">Nome do Curso</div>
+                      <div className="text-sm font-medium text-gray-700">Nome do Curso</div>
                       <div className="text-sm text-gray-500">Categoria do Curso</div>
                     </div>
                   </div>

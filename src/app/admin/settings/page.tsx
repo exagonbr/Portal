@@ -81,10 +81,10 @@ export default function AdminSettingsPage() {
   }, [])
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Configurações do Sistema</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Configurações do Sistema</h1>
           <p className="text-gray-600">Gerencie as configurações globais da plataforma</p>
         </div>
         <div className="space-x-4">
@@ -109,7 +109,7 @@ export default function AdminSettingsPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* AWS Configuration */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Configurações da AWS</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Configurações da AWS</h2>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -197,7 +197,7 @@ export default function AdminSettingsPage() {
 
           {/* S3 Storage Configuration */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Configurações do S3</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Configurações do S3</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -247,7 +247,7 @@ export default function AdminSettingsPage() {
 
           {/* General Settings */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Configurações Gerais</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Configurações Gerais</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -421,7 +421,7 @@ export default function AdminSettingsPage() {
 
           {/* Security Settings */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Segurança</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Segurança</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -467,7 +467,7 @@ export default function AdminSettingsPage() {
 
           {/* Email Settings */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Configurações de Email</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Configurações de Email</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -519,7 +519,7 @@ export default function AdminSettingsPage() {
         <div className="space-y-6">
           {/* AWS Status */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Status da AWS</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Status da AWS</h2>
             <div className="space-y-3">
               <div>
                 <span className="text-sm text-gray-600">Conexão</span>
@@ -527,7 +527,7 @@ export default function AdminSettingsPage() {
               </div>
               <div>
                 <span className="text-sm text-gray-600">Região Ativa</span>
-                <p className="text-sm font-medium text-gray-800">{awsSettings.region}</p>
+                <p className="text-sm font-medium text-gray-600">{awsSettings.region}</p>
               </div>
               <div>
                 <span className="text-sm text-gray-600">CloudWatch</span>
@@ -535,22 +535,22 @@ export default function AdminSettingsPage() {
               </div>
               <div>
                 <span className="text-sm text-gray-600">Última Sincronização</span>
-                <p className="text-sm font-medium text-gray-800">Há 2 minutos</p>
+                <p className="text-sm font-medium text-gray-600">Há 2 minutos</p>
               </div>
             </div>
           </div>
 
           {/* System Info */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Informações do Sistema</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Informações do Sistema</h2>
             <div className="space-y-3">
               <div>
                 <span className="text-sm text-gray-600">Versão</span>
-                <p className="text-sm font-medium text-gray-800">2.1.0</p>
+                <p className="text-sm font-medium text-gray-600">2.1.0</p>
               </div>
               <div>
                 <span className="text-sm text-gray-600">Última Atualização</span>
-                <p className="text-sm font-medium text-gray-800">01/01/2024</p>
+                <p className="text-sm font-medium text-gray-600">01/01/2024</p>
               </div>
               <div>
                 <span className="text-sm text-gray-600">Status</span>
@@ -561,12 +561,12 @@ export default function AdminSettingsPage() {
 
           {/* AWS S3 Storage */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Armazenamento S3</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Armazenamento S3</h2>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">Uso do Bucket</span>
-                  <span className="text-gray-800">2.3 GB</span>
+                  <span className="text-gray-600">2.3 GB</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div className="bg-primary h-2 rounded-full" style={{ width: '23%' }}></div>
@@ -591,7 +591,7 @@ export default function AdminSettingsPage() {
 
           {/* Maintenance Mode */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Modo de Manutenção</h2>
+            <h2 className="text-lg font-semibold text-gray-600 mb-4">Modo de Manutenção</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Status</span>

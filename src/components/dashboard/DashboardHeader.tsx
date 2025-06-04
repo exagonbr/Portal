@@ -77,7 +77,7 @@ export default function DashboardHeader() {
     <header className="bg-white border-b border-gray-100 h-13">
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left side - Title */}
-        <h1 className=" font-semibold text-gray-900">
+        <h1 className=" font-semibold text-gray-700">
           Portal Educacional Sabercon
         </h1>
         
@@ -104,7 +104,7 @@ export default function DashboardHeader() {
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
                 <div className="p-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-900">Central de Notificações</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">Central de Notificações</h3>
                     <span className="text-xs text-gray-500">{notifications.length} não lidas</span>
                   </div>
                 </div>
@@ -124,7 +124,7 @@ export default function DashboardHeader() {
                               {getNotificationIcon(notification.type)}
                             </span>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-900">{notification.message}</p>
+                              <p className="text-sm text-gray-700">{notification.message}</p>
                               <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
                             </div>
                             {!notification.read && (
@@ -185,7 +185,7 @@ export default function DashboardHeader() {
               {/* Profile Info */}
               <div className="flex items-center">
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-gray-700">
                     {user?.name || 'Administrator'}
                   </span>
                   <span className="text-xs text-gray-500">

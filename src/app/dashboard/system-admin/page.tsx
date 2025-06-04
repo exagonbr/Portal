@@ -211,7 +211,7 @@ export default function SystemAdminDashboard() {
       case 'active':
         return 'bg-accent-green/10 text-accent-green';
       case 'inactive':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-600';
       case 'suspended':
         return 'bg-red-100 text-red-800';
     }
@@ -237,11 +237,11 @@ export default function SystemAdminDashboard() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
               <Shield className="w-8 h-8 text-primary" />
               Painel do Administrador do Sistema
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-gray-600 dark:text-gray-600 mt-2">
               Monitoramento e gestão completa da plataforma
             </p>
           </div>
@@ -370,7 +370,7 @@ export default function SystemAdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Instituições */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               <Building2 className="w-5 h-5 mr-2 text-primary-dark" />
               Instituições Cadastradas
@@ -390,7 +390,7 @@ export default function SystemAdminDashboard() {
                            institution.status === 'inactive' ? 'Inativa' : 'Suspensa'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-600">
                         <span>{institution.schools} escolas</span>
                         <span>•</span>
                         <span>{institution.users.toLocaleString('pt-BR')} usuários</span>
@@ -415,13 +415,13 @@ export default function SystemAdminDashboard() {
 
           {/* Gráficos de Performance */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Uso de Recursos (24h)</h3>
               <div className="h-48 flex items-center justify-center text-gray-500">
                 Gráfico de linha - CPU, Memória, Rede
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Distribuição de Usuários</h3>
               <div className="h-48 flex items-center justify-center text-gray-500">
                 Gráfico de pizza - Por tipo de usuário
@@ -433,7 +433,7 @@ export default function SystemAdminDashboard() {
         {/* Painel Lateral */}
         <div className="space-y-6">
           {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações do Sistema</h3>
             <div className="space-y-2">
               <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
@@ -456,7 +456,7 @@ export default function SystemAdminDashboard() {
           </div>
 
           {/* Logs Recentes */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Logs do Sistema</h3>
             <div className="space-y-2 text-sm">
               <div className="p-2 bg-gray-50 dark:bg-gray-300 rounded">
@@ -486,7 +486,7 @@ export default function SystemAdminDashboard() {
           </div>
 
           {/* Status dos Serviços */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Status dos Serviços</h3>
             <div className="space-y-3">
               <ServiceStatus name="API Principal" status="online" />
@@ -514,7 +514,7 @@ interface MetricCardProps {
 
 function MetricCard({ icon: Icon, title, value, subtitle, color, isRealtime }: MetricCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
           <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
@@ -526,10 +526,10 @@ function MetricCard({ icon: Icon, title, value, subtitle, color, isRealtime }: M
           </div>
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <p className="text-2xl font-bold text-gray-700 dark:text-gray-800">
         {value}
       </p>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>
       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{subtitle}</p>
     </div>
   );
@@ -547,7 +547,7 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, subtitle, color, isRealtime }: StatCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
           <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
@@ -556,10 +556,10 @@ function StatCard({ icon: Icon, title, value, subtitle, color, isRealtime }: Sta
           <Activity className="w-3 h-3 text-accent-green animate-pulse" />
         )}
       </div>
-      <p className="text-xl font-bold text-gray-900 dark:text-white">
+      <p className="text-xl font-bold text-gray-700 dark:text-gray-800">
         {value}
       </p>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>
       <p className="text-xs text-gray-500 dark:text-gray-500">{subtitle}</p>
     </div>
   );

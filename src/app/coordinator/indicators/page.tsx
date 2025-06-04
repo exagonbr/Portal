@@ -180,7 +180,7 @@ export default function CoordinatorIndicatorsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Indicadores de Qualidade</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Indicadores de Qualidade</h1>
             <p className="text-gray-600">Monitore os principais indicadores da instituição</p>
           </div>
           <div className="flex space-x-4">
@@ -264,7 +264,7 @@ export default function CoordinatorIndicatorsPage() {
           <div key={indicator.id} className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">{indicator.name}</h3>
+                <h3 className="text-lg font-semibold text-gray-600">{indicator.name}</h3>
                 <p className="text-sm text-gray-600">{indicator.description}</p>
               </div>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -281,7 +281,7 @@ export default function CoordinatorIndicatorsPage() {
 
             <div className="mb-4">
               <div className="flex items-baseline space-x-2">
-                <span className="text-3xl font-bold text-gray-800">
+                <span className="text-3xl font-bold text-gray-600">
                   {indicator.value}
                 </span>
                 <span className="text-lg text-gray-600">{indicator.unit}</span>
@@ -304,7 +304,7 @@ export default function CoordinatorIndicatorsPage() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Progresso da Meta</span>
-                <span className="text-gray-800">
+                <span className="text-gray-600">
                   {Math.round((indicator.value / indicator.target) * 100)}%
                 </span>
               </div>
@@ -326,7 +326,7 @@ export default function CoordinatorIndicatorsPage() {
 
       {/* Performance Trends */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Tendência de Performance</h3>
+        <h3 className="text-lg font-semibold text-gray-600 mb-4">Tendência de Performance</h3>
         <div className="space-y-4">
           {PERFORMANCE_TRENDS.map((trend, index) => (
             <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -342,7 +342,7 @@ export default function CoordinatorIndicatorsPage() {
                         style={{ width: `${trend.academic}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-800">{trend.academic}%</span>
+                    <span className="text-sm font-medium text-gray-600">{trend.academic}%</span>
                   </div>
                 </div>
                 
@@ -355,7 +355,7 @@ export default function CoordinatorIndicatorsPage() {
                         style={{ width: `${trend.teaching}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-800">{trend.teaching}%</span>
+                    <span className="text-sm font-medium text-gray-600">{trend.teaching}%</span>
                   </div>
                 </div>
                 
@@ -368,7 +368,7 @@ export default function CoordinatorIndicatorsPage() {
                         style={{ width: `${trend.infrastructure}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-800">{trend.infrastructure}%</span>
+                    <span className="text-sm font-medium text-gray-600">{trend.infrastructure}%</span>
                   </div>
                 </div>
               </div>
@@ -379,12 +379,12 @@ export default function CoordinatorIndicatorsPage() {
 
       {/* Action Items */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Ações Recomendadas</h3>
+        <h3 className="text-lg font-semibold text-gray-600 mb-4">Ações Recomendadas</h3>
         <div className="space-y-4">
           <div className="flex items-start space-x-4 p-4 bg-yellow-50 rounded-lg">
             <span className="material-symbols-outlined text-yellow-600 mt-1">warning</span>
             <div>
-              <h4 className="font-medium text-gray-800">Média Geral Abaixo da Meta</h4>
+              <h4 className="font-medium text-gray-600">Média Geral Abaixo da Meta</h4>
               <p className="text-sm text-gray-600 mt-1">
                 A média geral está em 7.8, abaixo da meta de 8.0. Considere implementar programas de reforço.
               </p>
@@ -397,7 +397,7 @@ export default function CoordinatorIndicatorsPage() {
           <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
             <span className="material-symbols-outlined text-blue-600 mt-1">info</span>
             <div>
-              <h4 className="font-medium text-gray-800">Satisfação dos Professores</h4>
+              <h4 className="font-medium text-gray-600">Satisfação dos Professores</h4>
               <p className="text-sm text-gray-600 mt-1">
                 Implementar mais programas de capacitação pode melhorar a satisfação docente.
               </p>
@@ -410,7 +410,7 @@ export default function CoordinatorIndicatorsPage() {
           <div className="flex items-start space-x-4 p-4 bg-green-50 rounded-lg">
             <span className="material-symbols-outlined text-green-600 mt-1">check_circle</span>
             <div>
-              <h4 className="font-medium text-gray-800">Excelente Taxa de Frequência</h4>
+              <h4 className="font-medium text-gray-600">Excelente Taxa de Frequência</h4>
               <p className="text-sm text-gray-600 mt-1">
                 A taxa de frequência está acima da meta. Continue com as estratégias atuais.
               </p>

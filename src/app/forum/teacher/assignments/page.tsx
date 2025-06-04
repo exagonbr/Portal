@@ -9,7 +9,7 @@ export default function TeacherAssignmentsPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Assignments</h2>
+      <h2 className="text-2xl font-bold text-gray-700 mb-4">Assignments</h2>
       <p className="text-gray-600">
         Create and manage assignments for your classes.
       </p>

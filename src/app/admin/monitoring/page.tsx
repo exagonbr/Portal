@@ -68,7 +68,7 @@ export default function AdminMonitoringPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Monitoramento</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Monitoramento</h1>
             <p className="text-gray-600">Monitoramento em tempo real do sistema</p>
           </div>
           <div className="flex space-x-4">
@@ -93,7 +93,7 @@ export default function AdminMonitoringPage() {
         <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Usuários Ativos</div>
-            <div className="text-2xl font-bold text-gray-800">{MONITORING_DATA.realTime.activeUsers.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-gray-600">{MONITORING_DATA.realTime.activeUsers.toLocaleString()}</div>
             <div className="mt-2 flex items-center">
               <span className="text-green-500 text-sm">↑ 12%</span>
               <span className="text-gray-500 text-sm ml-2">vs. ontem</span>
@@ -102,7 +102,7 @@ export default function AdminMonitoringPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Professores</div>
-            <div className="text-2xl font-bold text-gray-800">{MONITORING_DATA.realTime.activeTeachers}</div>
+            <div className="text-2xl font-bold text-gray-600">{MONITORING_DATA.realTime.activeTeachers}</div>
             <div className="mt-2 flex items-center">
               <span className="text-green-500 text-sm">↑ 5%</span>
               <span className="text-gray-500 text-sm ml-2">vs. ontem</span>
@@ -111,7 +111,7 @@ export default function AdminMonitoringPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Estudantes</div>
-            <div className="text-2xl font-bold text-gray-800">{MONITORING_DATA.realTime.activeStudents.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-gray-600">{MONITORING_DATA.realTime.activeStudents.toLocaleString()}</div>
             <div className="mt-2 flex items-center">
               <span className="text-green-500 text-sm">↑ 8%</span>
               <span className="text-gray-500 text-sm ml-2">vs. ontem</span>
@@ -120,7 +120,7 @@ export default function AdminMonitoringPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Carga do Sistema</div>
-            <div className="text-2xl font-bold text-gray-800">{MONITORING_DATA.realTime.systemLoad}%</div>
+            <div className="text-2xl font-bold text-gray-600">{MONITORING_DATA.realTime.systemLoad}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div 
                 className="bg-yellow-500 h-2 rounded-full" 
@@ -131,7 +131,7 @@ export default function AdminMonitoringPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Tempo de Resposta</div>
-            <div className="text-2xl font-bold text-gray-800">{MONITORING_DATA.realTime.responseTime}ms</div>
+            <div className="text-2xl font-bold text-gray-600">{MONITORING_DATA.realTime.responseTime}ms</div>
             <div className="mt-2 flex items-center">
               <span className="text-red-500 text-sm">↑ 15ms</span>
               <span className="text-gray-500 text-sm ml-2">vs. média</span>
@@ -140,7 +140,7 @@ export default function AdminMonitoringPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Erro</div>
-            <div className="text-2xl font-bold text-gray-800">{MONITORING_DATA.realTime.errorRate}%</div>
+            <div className="text-2xl font-bold text-gray-600">{MONITORING_DATA.realTime.errorRate}%</div>
             <div className="mt-2 flex items-center">
               <span className="text-green-500 text-sm">↓ 0.01%</span>
               <span className="text-gray-500 text-sm ml-2">vs. ontem</span>
@@ -190,7 +190,7 @@ export default function AdminMonitoringPage() {
         <div className="space-y-6">
           {/* Performance Chart */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Performance do Sistema</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-4">Performance do Sistema</h3>
             <div className="space-y-4">
               {MONITORING_DATA.performance.map((data, index) => (
                 <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -209,7 +209,7 @@ export default function AdminMonitoringPage() {
                             style={{ width: `${data.cpu}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-medium text-gray-800">{data.cpu}%</span>
+                        <span className="text-sm font-medium text-gray-600">{data.cpu}%</span>
                       </div>
                     </div>
                     
@@ -225,7 +225,7 @@ export default function AdminMonitoringPage() {
                             style={{ width: `${data.memory}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-medium text-gray-800">{data.memory}%</span>
+                        <span className="text-sm font-medium text-gray-600">{data.memory}%</span>
                       </div>
                     </div>
                     
@@ -238,7 +238,7 @@ export default function AdminMonitoringPage() {
                             style={{ width: `${data.disk}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-medium text-gray-800">{data.disk}%</span>
+                        <span className="text-sm font-medium text-gray-600">{data.disk}%</span>
                       </div>
                     </div>
                     
@@ -251,7 +251,7 @@ export default function AdminMonitoringPage() {
                             style={{ width: `${data.network}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm font-medium text-gray-800">{data.network}%</span>
+                        <span className="text-sm font-medium text-gray-600">{data.network}%</span>
                       </div>
                     </div>
                   </div>
@@ -285,7 +285,7 @@ export default function AdminMonitoringPage() {
                     </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800">{alert.title}</h4>
+                    <h4 className="font-semibold text-gray-600">{alert.title}</h4>
                     <p className="text-gray-600 mt-1">{alert.message}</p>
                     <p className="text-sm text-gray-500 mt-2">{alert.timestamp}</p>
                   </div>
@@ -336,7 +336,7 @@ export default function AdminMonitoringPage() {
                 {MONITORING_DATA.services.map((service, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-4 px-6">
-                      <div className="font-medium text-gray-800">{service.name}</div>
+                      <div className="font-medium text-gray-600">{service.name}</div>
                     </td>
                     <td className="py-4 px-6">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${

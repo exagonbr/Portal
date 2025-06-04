@@ -67,7 +67,7 @@ export default function TeacherReportsPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Relatórios e Análises</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Relatórios e Análises</h1>
             <p className="text-gray-600">Acompanhe o desempenho das suas turmas</p>
           </div>
           <div className="flex space-x-4">
@@ -86,7 +86,7 @@ export default function TeacherReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Alunos</div>
-            <div className="text-2xl font-bold text-gray-800">93</div>
+            <div className="text-2xl font-bold text-gray-600">93</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 8</span>
               <span className="text-gray-500 text-sm ml-2">vs. semestre anterior</span>
@@ -143,7 +143,7 @@ export default function TeacherReportsPage() {
                 <div>
                   <p className="text-sm text-gray-500">Média da Turma</p>
                   <div className="flex items-center mt-1">
-                    <span className="text-2xl font-bold text-gray-800">
+                    <span className="text-2xl font-bold text-gray-600">
                       {classData.averageGrade.toFixed(1)}
                     </span>
                     <span className={`material-icons ml-2 ${TREND_COLORS[classData.trend]}`}>
@@ -154,7 +154,7 @@ export default function TeacherReportsPage() {
                 <div>
                   <p className="text-sm text-gray-500">Frequência</p>
                   <div className="flex items-center mt-1">
-                    <span className="text-2xl font-bold text-gray-800">
+                    <span className="text-2xl font-bold text-gray-600">
                       {classData.attendanceRate}%
                     </span>
                   </div>
@@ -166,7 +166,7 @@ export default function TeacherReportsPage() {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-600">Progresso do Conteúdo</span>
-                    <span className="text-gray-800">{classData.completionRate}%</span>
+                    <span className="text-gray-600">{classData.completionRate}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
@@ -222,7 +222,7 @@ export default function TeacherReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Grade Distribution Chart */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribuição de Notas</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Distribuição de Notas</h3>
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <span className="text-gray-400">Gráfico de Distribuição de Notas</span>
           </div>
@@ -230,7 +230,7 @@ export default function TeacherReportsPage() {
 
         {/* Attendance Trends Chart */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Tendências de Frequência</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Tendências de Frequência</h3>
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <span className="text-gray-400">Gráfico de Tendências de Frequência</span>
           </div>
@@ -238,7 +238,7 @@ export default function TeacherReportsPage() {
 
         {/* Performance Timeline */}
         <div className="bg-white rounded-lg shadow-md p-6 md:col-span-2">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Linha do Tempo de Desempenho</h3>
+          <h3 className="text-lg font-semibold text-gray-600 mb-4">Linha do Tempo de Desempenho</h3>
           <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <span className="text-gray-400">Gráfico de Linha do Tempo de Desempenho</span>
           </div>

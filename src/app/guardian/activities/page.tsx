@@ -108,7 +108,7 @@ export default function GuardianActivitiesPage() {
       case 'overdue':
         return 'bg-error/20 text-error'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-600'
     }
   }
 
@@ -136,7 +136,7 @@ export default function GuardianActivitiesPage() {
       case 'low':
         return 'bg-accent-green/20 text-accent-green'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-600'
     }
   }
 

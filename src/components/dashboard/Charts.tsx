@@ -71,7 +71,7 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
     return (
       <div className="bg-white rounded-xl overflow-hidden shadow-sm">
         <div className="p-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+          <h2 className="text-lg font-semibold text-gray-600">{title}</h2>
           {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
         </div>
         <div className={`${height} flex items-center justify-center`}>
@@ -141,7 +141,7 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm">
       <div className="p-4 border-b border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+        <h2 className="text-lg font-semibold text-gray-600">{title}</h2>
         {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
       </div>
       

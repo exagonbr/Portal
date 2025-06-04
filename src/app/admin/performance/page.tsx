@@ -3,10 +3,45 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAwsSettings } from '@/hooks/useAwsSettings'
 import { awsService, CloudWatchMetric } from '@/services/awsService'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js'
+import { Line, Bar, Doughnut } from 'react-chartjs-2'
+
+// Registrar componentes do Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
+
+// Interface para histórico de métricas
+interface MetricHistory {
+  timestamp: string
+  [key: string]: string | number
+}
 
 export default function AdminPerformancePage() {
   const { settings, isLoading: settingsLoading } = useAwsSettings()
   const [metrics, setMetrics] = useState<CloudWatchMetric[]>([])
+  const [metricsHistory, setMetricsHistory] = useState<MetricHistory[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [error, setError] = useState<string | null>(null)
@@ -18,6 +53,22 @@ export default function AdminPerformancePage() {
       const data = await awsService.getPerformanceMetrics()
       setMetrics(data)
       setLastUpdate(new Date())
+
+      // Adicionar ao histórico (manter apenas os últimos 20 pontos)
+      const historyEntry: MetricHistory = {
+        timestamp: new Date().toLocaleTimeString(),
+        ...data.reduce((acc, metric) => {
+          // Extrair valor numérico do string (ex: "70%" -> 70)
+          const numericValue = parseFloat(metric.value.replace(/[^0-9.]/g, ''))
+          acc[metric.name] = isNaN(numericValue) ? 0 : numericValue
+          return acc
+        }, {} as Record<string, number>)
+      }
+
+      setMetricsHistory(prev => {
+        const newHistory = [...prev, historyEntry]
+        return newHistory.slice(-20) // Manter apenas os últimos 20 pontos
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar métricas')
       console.error('Erro ao buscar métricas:', err)
@@ -55,6 +106,121 @@ export default function AdminPerformancePage() {
       case 'critical': return 'Crítico'
       default: return 'Desconhecido'
     }
+  }
+
+  // Configuração do gráfico de linha (histórico)
+  const lineChartData = {
+    labels: metricsHistory.map(h => h.timestamp),
+    datasets: [
+      {
+        label: 'CPU Usage (%)',
+        data: metricsHistory.map(h => h['CPU Usage'] || 0),
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: 'Memory Usage (%)',
+        data: metricsHistory.map(h => h['Memory Usage'] || 0),
+        borderColor: 'rgb(16, 185, 129)',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: 'Disk Usage (%)',
+        data: metricsHistory.map(h => h['Disk Usage'] || 0),
+        borderColor: 'rgb(245, 158, 11)',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+        fill: true,
+        tension: 0.4,
+      }
+    ]
+  }
+
+  // Configuração do gráfico de barras (valores atuais)
+  const barChartData = {
+    labels: metrics.map(m => m.name),
+    datasets: [{
+      label: 'Valores Atuais',
+      data: metrics.map(m => {
+        const numericValue = parseFloat(m.value.replace(/[^0-9.]/g, ''))
+        return isNaN(numericValue) ? 0 : numericValue
+      }),
+      backgroundColor: metrics.map(m => {
+        switch (m.status) {
+          case 'good': return 'rgba(16, 185, 129, 0.8)'
+          case 'warning': return 'rgba(245, 158, 11, 0.8)'
+          case 'critical': return 'rgba(239, 68, 68, 0.8)'
+          default: return 'rgba(156, 163, 175, 0.8)'
+        }
+      }),
+      borderColor: metrics.map(m => {
+        switch (m.status) {
+          case 'good': return 'rgb(16, 185, 129)'
+          case 'warning': return 'rgb(245, 158, 11)'
+          case 'critical': return 'rgb(239, 68, 68)'
+          default: return 'rgb(156, 163, 175)'
+        }
+      }),
+      borderWidth: 2,
+    }]
+  }
+
+  // Configuração do gráfico de rosca (status das métricas)
+  const statusCounts = metrics.reduce((acc, metric) => {
+    acc[metric.status] = (acc[metric.status] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const doughnutChartData = {
+    labels: ['Normal', 'Atenção', 'Crítico'],
+    datasets: [{
+      data: [
+        statusCounts['good'] || 0,
+        statusCounts['warning'] || 0,
+        statusCounts['critical'] || 0
+      ],
+      backgroundColor: [
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(239, 68, 68, 0.8)'
+      ],
+      borderColor: [
+        'rgb(16, 185, 129)',
+        'rgb(245, 158, 11)',
+        'rgb(239, 68, 68)'
+      ],
+      borderWidth: 2,
+    }]
+  }
+
+  // Opções dos gráficos
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100, // Para métricas em porcentagem
+      }
+    }
+  }
+
+  const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+      },
+    },
   }
 
   if (settingsLoading) {
@@ -148,20 +314,80 @@ export default function AdminPerformancePage() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-primary">Gráfico de Performance</h2>
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <span>CloudWatch:</span>
-            <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">{settings.cloudWatchNamespace}</span>
+      {/* Gráficos de Performance */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Gráfico de Linha - Histórico */}
+        <div className="xl:col-span-2 bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-primary">Histórico de Performance</h2>
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <span>CloudWatch:</span>
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">{settings.cloudWatchNamespace}</span>
+            </div>
+          </div>
+          <div className="h-64">
+            {metricsHistory.length > 0 ? (
+              <Line data={lineChartData} options={chartOptions} />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500 border border-gray-100 rounded-lg bg-gray-50">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">📈</div>
+                  <p>Coletando dados de histórico...</p>
+                  <p className="text-sm mt-1">Os gráficos aparecerão após algumas atualizações</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-        <div className="h-64 flex items-center justify-center text-gray-500 border border-gray-100 rounded-lg bg-gray-50">
-          <div className="text-center">
-            <div className="text-4xl mb-2">📊</div>
-            <p>Gráfico de performance será implementado aqui</p>
-            <p className="text-sm mt-1">Dados do CloudWatch: {metrics.length} métricas carregadas</p>
+
+        {/* Gráfico de Rosca - Status */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-primary mb-4">Status das Métricas</h2>
+          <div className="h-64">
+            {metrics.length > 0 ? (
+              <Doughnut data={doughnutChartData} options={doughnutOptions} />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500 border border-gray-100 rounded-lg bg-gray-50">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">🍩</div>
+                  <p>Carregando status...</p>
+                </div>
+              </div>
+            )}
           </div>
+        </div>
+      </div>
+
+      {/* Gráfico de Barras - Valores Atuais */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-primary">Valores Atuais</h2>
+          <div className="flex items-center space-x-4 text-sm text-gray-600">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span>Normal</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <span>Atenção</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span>Crítico</span>
+            </div>
+          </div>
+        </div>
+        <div className="h-64">
+          {metrics.length > 0 ? (
+            <Bar data={barChartData} options={chartOptions} />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500 border border-gray-100 rounded-lg bg-gray-50">
+              <div className="text-center">
+                <div className="text-4xl mb-2">📊</div>
+                <p>Carregando métricas...</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

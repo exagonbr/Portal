@@ -246,7 +246,7 @@ export default function StudentQuizPage() {
               <Target className="w-16 h-16 text-gray-500 mx-auto mb-4" />
             )}
             
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz Finalizado!</h1>
+            <h1 className="text-3xl font-bold text-gray-700 mb-2">Quiz Finalizado!</h1>
             <p className="text-gray-600">{selectedQuiz.title}</p>
           </div>
 
@@ -303,7 +303,7 @@ export default function StudentQuizPage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{selectedQuiz.title}</h1>
+              <h1 className="text-xl font-bold text-gray-700">{selectedQuiz.title}</h1>
               <p className="text-gray-600">Questão {currentQuestion + 1} de {questions.length}</p>
             </div>
             <div className="flex items-center gap-4">
@@ -324,7 +324,7 @@ export default function StudentQuizPage() {
 
         {/* Questão */}
         <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          <h2 className="text-xl font-semibold text-gray-700 mb-6">
             {currentQ.question}
           </h2>
 
@@ -381,7 +381,7 @@ export default function StudentQuizPage() {
           </Link>
         </div>
         
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-gray-700 mb-2 flex items-center gap-3">
           <Gamepad2 className="w-8 h-8 text-primary" />
           Quiz Interativo
         </h1>
@@ -396,7 +396,7 @@ export default function StudentQuizPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Quizzes Disponíveis</p>
-              <p className="text-2xl font-bold text-gray-900">{quizzes.length}</p>
+              <p className="text-2xl font-bold text-gray-700">{quizzes.length}</p>
             </div>
             <Gamepad2 className="w-8 h-8 text-primary" />
           </div>
@@ -456,7 +456,7 @@ export default function StudentQuizPage() {
               )}
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{quiz.title}</h3>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">{quiz.title}</h3>
             <p className="text-gray-600 text-sm mb-4">{quiz.description}</p>
 
             <div className="space-y-2 mb-4 text-sm text-gray-500">

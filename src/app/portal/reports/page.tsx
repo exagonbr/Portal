@@ -47,7 +47,7 @@ export default function PortalReportsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Relatórios</h1>
+        <h1 className="text-2xl font-bold text-gray-600 mb-2">Relatórios</h1>
         <p className="text-gray-600">Acesse e baixe relatórios acadêmicos</p>
       </div>
 
@@ -67,7 +67,7 @@ export default function PortalReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredReports.map((report) => (
           <div key={report.id} className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">{report.title}</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">{report.title}</h3>
             <p className="text-gray-600 text-sm mb-4">{report.description}</p>
             
             <div className="space-y-2 text-sm text-gray-600 mb-4">

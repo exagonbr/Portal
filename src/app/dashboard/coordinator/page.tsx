@@ -299,11 +299,11 @@ export default function CoordinatorDashboard() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
               <GraduationCap className="w-8 h-8 text-primary" />
               Coordenação Acadêmica
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-gray-600 dark:text-gray-600 mt-2">
               Monitoramento e gestão pedagógica
             </p>
           </div>
@@ -311,7 +311,7 @@ export default function CoordinatorDashboard() {
             <select
               value={selectedCycle}
               onChange={(e) => setSelectedCycle(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-300"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-400 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-300"
             >
               <option value="all">Todos os Ciclos</option>
               <option value="fundamental1">Fundamental I</option>
@@ -410,7 +410,7 @@ export default function CoordinatorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ciclos Educacionais */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
                 <Calendar className="w-5 h-5 mr-2 text-primary" />
@@ -470,7 +470,7 @@ export default function CoordinatorDashboard() {
           </div>
 
           {/* Desempenho dos Professores */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mt-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
                 <Briefcase className="w-5 h-5 mr-2 text-accent-green" />
@@ -484,7 +484,7 @@ export default function CoordinatorDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="text-left text-sm text-gray-600 dark:text-gray-400 border-b">
+                  <tr className="text-left text-sm text-gray-600 dark:text-gray-600 border-b">
                     <th className="pb-2">Professor</th>
                     <th className="pb-2">Disciplina</th>
                     <th className="pb-2">Turmas</th>
@@ -540,7 +540,7 @@ export default function CoordinatorDashboard() {
         {/* Painel Lateral */}
         <div className="space-y-6">
           {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
             <div className="space-y-2">
               <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
@@ -563,7 +563,7 @@ export default function CoordinatorDashboard() {
           </div>
 
           {/* Status do Currículo */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <BookOpen className="w-5 h-5 mr-2 text-accent-purple" />
               Status Curricular
@@ -600,7 +600,7 @@ export default function CoordinatorDashboard() {
           </div>
 
           {/* Métricas de Qualidade */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Award className="w-5 h-5 mr-2 text-accent-yellow" />
               Indicadores de Qualidade
@@ -652,16 +652,16 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
           <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <p className="text-2xl font-bold text-gray-700 dark:text-gray-800">
         {value}
       </p>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>
       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{subtitle}</p>
     </div>
   );
@@ -683,7 +683,7 @@ function QualityIndicator({ title, value, icon: Icon, description }: QualityIndi
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <Icon className="w-8 h-8 text-gray-400" />
         <span className={`text-3xl font-bold ${getColor()}`}>
@@ -691,7 +691,7 @@ function QualityIndicator({ title, value, icon: Icon, description }: QualityIndi
         </span>
       </div>
       <h3 className="font-semibold mb-1">{title}</h3>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-600">{description}</p>
     </div>
   );
 }

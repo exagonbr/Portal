@@ -6,10 +6,10 @@ export default function InstitutionTeachersPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gestão de Professores</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Gestão de Professores</h1>
           <p className="text-gray-600">Gerencie o corpo docente da instituição</p>
         </div>
         <div className="space-x-4">
@@ -26,22 +26,22 @@ export default function InstitutionTeachersPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Total de Professores</div>
-          <div className="text-2xl font-bold text-gray-800">32</div>
+          <div className="text-2xl font-bold text-gray-600">32</div>
           <div className="text-xs text-green-600 mt-2">↑ 2 este mês</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Cursos Ativos</div>
-          <div className="text-2xl font-bold text-gray-800">48</div>
+          <div className="text-2xl font-bold text-gray-600">48</div>
           <div className="text-xs text-blue-600 mt-2">= Estável</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Média de Avaliação</div>
-          <div className="text-2xl font-bold text-gray-800">4.8/5.0</div>
+          <div className="text-2xl font-bold text-gray-600">4.8/5.0</div>
           <div className="text-xs text-green-600 mt-2">↑ 0.2 este mês</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-sm font-medium text-gray-500 mb-1">Aulas Este Mês</div>
-          <div className="text-2xl font-bold text-gray-800">256</div>
+          <div className="text-2xl font-bold text-gray-600">256</div>
           <div className="text-xs text-green-600 mt-2">↑ 12% este mês</div>
         </div>
       </div>
@@ -106,7 +106,7 @@ export default function InstitutionTeachersPage() {
                   <div className="flex items-center">
                     <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">João Silva</div>
+                      <div className="text-sm font-medium text-gray-700">João Silva</div>
                       <div className="text-sm text-gray-500">joao@email.com</div>
                     </div>
                   </div>

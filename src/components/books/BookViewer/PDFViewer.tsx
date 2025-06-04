@@ -261,10 +261,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`h-screen w-full flex flex-col overflow-hidden ${viewerState.isFullscreen ? 'fixed inset-0 z-50' : ''} ${isDarkMode ? 'dark' : ''} bg-gray-50 dark:bg-gray-900`}
+      className={`flex flex-col h-screen ${
+        isDarkMode ? 'dark' : ''
+      } bg-gray-50 dark:bg-gray-100`}
     >
       {/* Barra de ferramentas superior */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-lg flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-100 border-b border-gray-200 dark:border-gray-300 shadow-lg flex-shrink-0">
         {/* Controles à esquerda - Botão Voltar Proeminente */}
         <div className="flex items-center space-x-4">
           {onBack && (
@@ -279,11 +281,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           )}
 
           <div className="flex items-center space-x-2">
-            <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
               <button
                 onClick={() => handlePageChange(1)}
                 disabled={viewerState.currentPage <= 1}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 title="Primeira página"
               >
                 <FiChevronsLeft className="w-4 h-4" />
@@ -292,7 +294,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               <button
                 onClick={() => handlePageChange(viewerState.currentPage - (viewerState.isDualPage ? 2 : 1))}
                 disabled={viewerState.currentPage <= 1}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 title="Página anterior"
               >
                 <FiChevronLeft className="w-4 h-4" />
@@ -308,11 +310,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                       handlePageChange(value);
                     }
                   }}
-                  className="w-16 px-2 py-1 text-center bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-16 px-2 py-1 text-center bg-white dark:bg-gray-100 rounded-lg border border-gray-300 dark:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   min={1}
                   max={numPages || 1}
                 />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-gray-600 dark:text-gray-600">
                   / {numPages || '?'}
                 </span>
               </div>
@@ -320,7 +322,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               <button
                 onClick={() => handlePageChange(viewerState.currentPage + (viewerState.isDualPage ? 2 : 1))}
                 disabled={viewerState.currentPage >= (numPages || 1)}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 title="Próxima página"
               >
                 <FiChevronRight className="w-4 h-4" />
@@ -329,7 +331,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               <button
                 onClick={() => handlePageChange(numPages || 1)}
                 disabled={viewerState.currentPage >= (numPages || 1)}
-                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 title="Última página"
               >
                 <FiChevronsRight className="w-4 h-4" />
@@ -339,19 +341,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
           {/* Informações do livro */}
           <div className="hidden lg:flex items-center space-x-3 text-sm">
-            <div className="text-gray-800 dark:text-gray-200">
+            <div className="text-gray-600 dark:text-gray-700">
               <span className="font-bold">{mockBook.title}</span>
-              <span className="text-gray-600 dark:text-gray-400 ml-2">• {mockBook.author}</span>
+              <span className="text-gray-600 dark:text-gray-600 ml-2">• {mockBook.author}</span>
             </div>
           </div>
         </div>
 
         {/* Controles centrais */}
         <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => handleZoom('out')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors"
+              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
               title="Diminuir zoom"
             >
               <FiZoomOut className="w-4 h-4" />
@@ -361,7 +363,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             </span>
             <button
               onClick={() => handleZoom('in')}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors"
+              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
               title="Aumentar zoom"
             >
               <FiZoomIn className="w-4 h-4" />
@@ -369,20 +371,20 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
             <button
               onClick={() => handleZoomChange(100)}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors"
+              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
               title="Redefinir zoom"
             >
               <FiRotateCw className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
             <button
               onClick={handleDualPageToggle}
               className={`p-2 rounded-lg transition-colors ${
                 viewerState.isDualPage
                   ? 'bg-blue-500 text-white'
-                  : 'hover:bg-white dark:hover:bg-gray-600'
+                  : 'hover:bg-white dark:hover:bg-gray-200'
               }`}
               title="Alternar visualização de página dupla"
             >
@@ -393,13 +395,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
         {/* Controles à direita */}
         <div className="flex items-center space-x-2">
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => setShowSearch(!showSearch)}
               className={`p-2 rounded-lg transition-colors ${
                 showSearch
                   ? 'bg-blue-500 text-white'
-                  : 'hover:bg-white dark:hover:bg-gray-600'
+                  : 'hover:bg-white dark:hover:bg-gray-200'
               }`}
               title="Pesquisar"
             >
@@ -422,7 +424,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               className={`p-2 rounded-lg transition-colors ${
                 viewerState.bookmarks.some(b => b.pageNumber === viewerState.currentPage)
                   ? 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
-                  : 'hover:bg-white dark:hover:bg-gray-600'
+                  : 'hover:bg-white dark:hover:bg-gray-200'
               }`}
               title="Alternar marcador"
             >
@@ -430,10 +432,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             </button>
           </div>
           
-          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-100 rounded-xl p-1">
             <button
               onClick={onThemeToggle}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors"
+              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
               title="Alternar modo escuro"
             >
               {isDarkMode ? <FiSun className="w-4 h-4" /> : <FiMoon className="w-4 h-4" />}
@@ -441,7 +443,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             
             <button
               onClick={handleFullscreenToggle}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-600 transition-colors"
+              className="p-2 rounded-lg hover:bg-white dark:hover:bg-gray-200 transition-colors"
               title="Alternar tela cheia"
             >
               {viewerState.isFullscreen ? <FiMinimize className="w-4 h-4" /> : <FiMaximize className="w-4 h-4" />}
@@ -451,7 +453,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       </div>
 
       {/* Barra de progresso */}
-      <div className="h-1 bg-gray-200 dark:bg-gray-700 flex-shrink-0">
+      <div className="h-1 bg-gray-200 dark:bg-gray-100 flex-shrink-0">
         <div
           className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300"
           style={{ width: `${readingProgress}%` }}
@@ -460,7 +462,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
       {/* Barra de pesquisa */}
       {showSearch && (
-        <div className="px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="px-4 py-3 bg-white dark:bg-gray-100 border-b border-gray-200 dark:border-gray-300 flex-shrink-0">
           <div className="flex items-center space-x-3 max-w-2xl mx-auto">
             <div className="relative flex-1">
               <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -470,7 +472,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Pesquisar no documento..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <button
@@ -494,8 +496,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           
           {/* Resultados da pesquisa */}
           {searchResults.length > 0 && (
-            <div className="mt-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 max-h-60 overflow-y-auto max-w-2xl mx-auto">
-              <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Resultados da Pesquisa</h4>
+            <div className="mt-3 bg-gray-50 dark:bg-gray-100/50 rounded-xl p-3 max-h-60 overflow-y-auto max-w-2xl mx-auto">
+              <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-700">Resultados da Pesquisa</h4>
               <div className="space-y-2">
                 {searchResults.map((result, i) => (
                   <div
@@ -507,7 +509,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                       <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Página {result.page}</span>
                       <button className="text-xs text-gray-500 hover:text-gray-700">Ir para página</button>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{result.text}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-700 mt-1">{result.text}</p>
                   </div>
                 ))}
               </div>
@@ -519,14 +521,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       {/* Modal para adicionar marcador */}
       {isAddingBookmark && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-96 max-w-full mx-4 shadow-2xl">
+          <div className="bg-white dark:bg-gray-100 rounded-2xl p-6 w-96 max-w-full mx-4 shadow-2xl">
             <h3 className="text-lg font-semibold mb-4">Adicionar Marcador</h3>
             <input
               type="text"
               value={newBookmarkTitle}
               onChange={(e) => setNewBookmarkTitle(e.target.value)}
               placeholder="Título do marcador..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-100"
               autoFocus
             />
             <div className="flex justify-end space-x-3 mt-6">
@@ -535,7 +537,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                   setIsAddingBookmark(false);
                   setNewBookmarkTitle('');
                 }}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                className="px-4 py-2 text-gray-600 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
                 Cancelar
               </button>
@@ -554,13 +556,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       {/* PDF Content - Fit to screen */}
       <div 
         ref={contentRef}
-        className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900"
+        className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-200"
       >
         {loading && (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-6"></div>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">Carregando PDF...</p>
+              <p className="text-gray-600 dark:text-gray-600 text-lg">Carregando PDF...</p>
               <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Por favor, aguarde</p>
             </div>
           </div>
@@ -574,7 +576,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">{error}</p>
+              <p className="text-gray-600 dark:text-gray-600 mb-6 text-lg">{error}</p>
               <button
                 onClick={() => {
                   setError(null);
@@ -607,7 +609,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
               {getPagesToDisplay().map((pageNum) => (
                 <div 
                   key={pageNum} 
-                  className="relative bg-white dark:bg-gray-800 shadow-2xl rounded-xl overflow-hidden"
+                  className="relative bg-white dark:bg-gray-100 shadow-2xl rounded-xl overflow-hidden"
                   style={{ 
                     transform: `scale(${viewerState.currentScale})`,
                     transformOrigin: 'center',
@@ -622,7 +624,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
                     renderAnnotationLayer={true}
                     className="pdf-page"
                     loading={
-                      <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-xl" style={{ width: contentDimensions.width, height: contentDimensions.height }}>
+                      <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-100 rounded-xl" style={{ width: contentDimensions.width, height: contentDimensions.height }}>
                         <div className="animate-pulse text-center">
                           <div className="h-6 bg-gray-200 dark:bg-gray-300 rounded w-3/4 mb-4 mx-auto"></div>
                           <div className="h-4 bg-gray-200 dark:bg-gray-300 rounded w-1/2 mx-auto"></div>

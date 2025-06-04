@@ -228,11 +228,11 @@ export default function InstitutionManagerDashboard() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
               <Building2 className="w-8 h-8 text-primary-dark" />
               Painel de Gestão Institucional
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
+            <p className="text-gray-600 dark:text-gray-600 mt-2">
               Gerenciamento completo da rede educacional
             </p>
           </div>
@@ -240,7 +240,7 @@ export default function InstitutionManagerDashboard() {
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-dark dark:bg-gray-300"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-400 rounded-lg focus:ring-2 focus:ring-primary-dark dark:bg-gray-300"
             >
               <option value="week">Última Semana</option>
               <option value="month">Último Mês</option>
@@ -323,7 +323,7 @@ export default function InstitutionManagerDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Escolas */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
                 <School className="w-5 h-5 mr-2 text-primary-dark" />
@@ -348,7 +348,7 @@ export default function InstitutionManagerDashboard() {
                           {getStatusLabel(school.status)}
                         </span>
                       </div>
-                      <div className="grid grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="grid grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-600">
                         <div>
                           <p className="font-medium">{school.students}</p>
                           <p className="text-xs">Alunos</p>
@@ -378,13 +378,13 @@ export default function InstitutionManagerDashboard() {
 
           {/* Gráficos */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Evolução de Matrículas</h3>
               <div className="h-48 flex items-center justify-center text-gray-500">
                 Gráfico de linha - Matrículas por mês
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Distribuição por Nível</h3>
               <div className="h-48 flex items-center justify-center text-gray-500">
                 Gráfico de pizza - Alunos por nível de ensino
@@ -396,7 +396,7 @@ export default function InstitutionManagerDashboard() {
         {/* Painel Lateral */}
         <div className="space-y-6">
           {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
             <div className="space-y-2">
               <button className="w-full px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-primary transition-colors flex items-center justify-center gap-2">
@@ -419,7 +419,7 @@ export default function InstitutionManagerDashboard() {
           </div>
 
           {/* Comunicados */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Bell className="w-5 h-5 mr-2 text-accent-orange" />
               Comunicados Recentes
@@ -437,7 +437,7 @@ export default function InstitutionManagerDashboard() {
                        announcement.priority === 'medium' ? 'Média' : 'Baixa'}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                  <p className="text-xs text-gray-600 dark:text-gray-600 mb-2">
                     {announcement.content}
                   </p>
                   <div className="flex items-center justify-between text-xs text-gray-500">
@@ -450,7 +450,7 @@ export default function InstitutionManagerDashboard() {
           </div>
 
           {/* Metas e Objetivos */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
               <Target className="w-5 h-5 mr-2 text-accent-green" />
               Metas do Período
@@ -501,7 +501,7 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, subtitle, trend, trendUp, color }: StatCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
           <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
@@ -513,10 +513,10 @@ function StatCard({ icon: Icon, title, value, subtitle, trend, trendUp, color }:
           {trend}
         </span>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+      <p className="text-2xl font-bold text-gray-700 dark:text-gray-800">
         {value}
       </p>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>
       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{subtitle}</p>
     </div>
   );
@@ -536,13 +536,13 @@ function PerformanceIndicator({ title, value, target, icon: Icon, color }: Perfo
   const isAboveTarget = value >= target;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</h3>
+        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-600">{title}</h3>
         <Icon className={`w-5 h-5 ${color === 'primary' ? 'text-primary' : color === 'accent-green' ? 'text-accent-green' : 'text-accent-purple'}`} />
       </div>
       <div className="flex items-end gap-2 mb-2">
-        <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}%</p>
+        <p className="text-3xl font-bold text-gray-700 dark:text-gray-800">{value}%</p>
         <p className="text-sm text-gray-500 mb-1">/ {target}%</p>
       </div>
       <div className="w-full bg-gray-200 dark:bg-gray-300 rounded-full h-2 mb-2">
@@ -576,7 +576,7 @@ function MetricProgress({ label, current, target, unit }: MetricProgressProps) {
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
-        <span className="text-gray-600 dark:text-gray-400">{label}</span>
+        <span className="text-gray-600 dark:text-gray-600">{label}</span>
         <span className="font-medium">
           {current}{unit} / {target}{unit}
         </span>

@@ -5,34 +5,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  /* Cores principais para ambiente acadêmico/educacional */
-  --primary: #1e3a8a; /* Azul acadêmico profundo */
-  --primary-dark: #1e293b; /* Azul muito escuro */
-  --primary-light: #3b82f6; /* Azul claro */
-  --secondary: #059669; /* Verde educacional */
-  --accent-blue: #2563eb; /* Azul acadêmico */
-  --accent-green: #10b981; /* Verde conhecimento */
-  --accent-orange: #f59e0b; /* Laranja criatividade */
-  --accent-purple: #7c3aed; /* Roxo sabedoria */
-  --accent-yellow: #f59e0b; /* Amarelo atenção */
-  --success: #10b981; /* Verde sucesso */
+  /* Cores empresariais baseadas no layout CRM */
+  --primary: #1e293b; /* Azul corporativo escuro */
+  --primary-dark: #0f172a; /* Azul muito escuro */
+  --primary-light: #334155; /* Azul claro */
+  --secondary: #059669; /* Verde empresarial */
+  --accent-blue: #3b82f6; /* Azul vibrante */
+  --accent-green: #10b981; /* Verde sucesso */
+  --accent-orange: #f59e0b; /* Laranja alerta */
+  --accent-purple: #8b5cf6; /* Roxo premium */
+  --accent-yellow: #eab308; /* Amarelo atenção */
+  --success: #22c55e; /* Verde sucesso */
   --warning: #f59e0b; /* Amarelo aviso */
   --error: #ef4444; /* Vermelho erro */
   --info: #3b82f6; /* Azul informação */
   --background-primary: #ffffff;
   --background-secondary: #f8fafc;
   --background-tertiary: #f1f5f9;
-  --text-primary: #0f172a; /* Texto principal escuro */
+  --background-accent: #e2e8f0;
+  --text-primary: #1e293b; /* Texto principal escuro */
   --text-secondary: #475569; /* Texto secundário */
   --text-tertiary: #64748b; /* Texto terciário */
+  --text-muted: #94a3b8; /* Texto esmaecido */
   --border: #e2e8f0;
   --border-light: #f1f5f9;
   --border-dark: #cbd5e1;
-  --sidebar-bg: #1e3a8a; /* Azul acadêmico */
-  --sidebar-hover: #2563eb; /* Azul hover */
+  --sidebar-bg: #1e293b; /* Azul corporativo */
+  --sidebar-hover: #334155; /* Azul hover */
   --sidebar-active: #3b82f6; /* Azul ativo */
-  --sidebar-text: #e0e7ff; /* Texto claro */
+  --sidebar-text: #cbd5e1; /* Texto claro */
   --sidebar-text-active: #ffffff;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 /* Dark mode colors for academic theme */

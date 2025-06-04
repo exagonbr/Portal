@@ -486,7 +486,7 @@ export default function CoordinatorReportsPage() {
                   <div className="flex items-center space-x-3">
                     <span className="material-symbols-outlined text-blue-600">description</span>
                     <div>
-                      <div className="font-medium text-gray-800">Usar Modelo</div>
+                      <div className="font-medium text-gray-600">Usar Modelo</div>
                       <div className="text-sm text-gray-600">Criar relatório baseado em um modelo</div>
                     </div>
                   </div>
@@ -496,7 +496,7 @@ export default function CoordinatorReportsPage() {
                   <div className="flex items-center space-x-3">
                     <span className="material-symbols-outlined text-green-600">edit</span>
                     <div>
-                      <div className="font-medium text-gray-800">Criar do Zero</div>
+                      <div className="font-medium text-gray-600">Criar do Zero</div>
                       <div className="text-sm text-gray-600">Criar relatório personalizado</div>
                     </div>
                   </div>

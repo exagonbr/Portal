@@ -324,7 +324,7 @@ export default function ForumPage() {
                       {category.icon}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-base-responsive font-semibold mb-1 text-gray-900">{category.name}</h3>
+                      <h3 className="text-base-responsive font-semibold mb-1 text-gray-700">{category.name}</h3>
                       <p className="text-xs-responsive text-gray-600 mb-3">
                         {category.description}
                       </p>
@@ -340,7 +340,7 @@ export default function ForumPage() {
                 {category.lastPost && (
                   <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
                     <p className="text-xs-responsive text-gray-500">Último post:</p>
-                    <p className="text-xs-responsive font-medium text-gray-800 truncate">{category.lastPost.title}</p>
+                    <p className="text-xs-responsive font-medium text-gray-600 truncate">{category.lastPost.title}</p>
                     <p className="text-xs text-gray-500">
                       por {category.lastPost.author} • {formatDate(category.lastPost.date)}
                     </p>
@@ -372,7 +372,7 @@ export default function ForumPage() {
                       <div className="flex items-center gap-2 mb-2">
                         {topic.isPinned && <Pin className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />}
                         {topic.isLocked && <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />}
-                        <h3 className="text-sm-responsive font-medium text-gray-900 hover:text-primary transition-colors">
+                        <h3 className="text-sm-responsive font-medium text-gray-700 hover:text-primary transition-colors">
                           {topic.title}
                         </h3>
                       </div>
@@ -434,7 +434,7 @@ export default function ForumPage() {
                       <div className="flex items-center gap-2 mb-2">
                         {topic.isPinned && <Pin className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />}
                         {topic.isLocked && <Lock className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />}
-                        <h3 className="text-sm-responsive font-medium text-gray-900 hover:text-primary transition-colors">
+                        <h3 className="text-sm-responsive font-medium text-gray-700 hover:text-primary transition-colors">
                           {topic.title}
                         </h3>
                       </div>

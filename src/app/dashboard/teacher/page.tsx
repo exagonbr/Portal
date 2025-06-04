@@ -333,7 +333,7 @@ function TeacherDashboardContent() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold  text-gray-800 mb-2 flex items-center gap-3">
+            <h1 className="text-3xl font-bold  text-gray-600 mb-2 flex items-center gap-3">
               <BookOpen className="w-8 h-8 text-primary" />
               Painel do Professor
             </h1>
@@ -1041,7 +1041,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
           <Icon className={`w-4 h-4 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-xl font-bold text-gray-900 text-white">
+      <p className="text-xl font-bold text-gray-700 text-white">
         {value}
       </p>
       <p className="text-xs text-gray-600 text-gray-400">{title}</p>
@@ -1072,7 +1072,7 @@ export default function TeacherDashboard() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 text-white mb-2">
+            <h2 className="text-xl font-semibold text-gray-700 text-white mb-2">
               Acesso Negado
             </h2>
             <p className="text-gray-600 text-gray-400 mb-4">

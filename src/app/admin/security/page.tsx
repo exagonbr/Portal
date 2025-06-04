@@ -143,7 +143,7 @@ export default function AdminSecurityPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Ameaças Ativas</div>
-            <div className="text-2xl font-bold text-gray-800">{SECURITY_DATA.overview.activeThreats}</div>
+            <div className="text-2xl font-bold text-gray-600">{SECURITY_DATA.overview.activeThreats}</div>
             <div className="mt-2 flex items-center">
               <span className="text-error text-sm">↑ 1</span>
               <span className="text-gray-500 text-sm ml-2">última hora</span>
@@ -152,7 +152,7 @@ export default function AdminSecurityPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Tentativas Bloqueadas</div>
-            <div className="text-2xl font-bold text-gray-800">{SECURITY_DATA.overview.blockedAttempts}</div>
+            <div className="text-2xl font-bold text-gray-600">{SECURITY_DATA.overview.blockedAttempts}</div>
             <div className="mt-2 flex items-center">
               <span className="text-accent-green text-sm">↓ 12</span>
               <span className="text-gray-500 text-sm ml-2">hoje</span>
@@ -161,7 +161,7 @@ export default function AdminSecurityPage() {
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Score de Segurança</div>
-            <div className="text-2xl font-bold text-gray-800">{SECURITY_DATA.overview.securityScore}%</div>
+            <div className="text-2xl font-bold text-gray-600">{SECURITY_DATA.overview.securityScore}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div 
                 className="bg-accent-green h-2 rounded-full"
@@ -241,7 +241,7 @@ export default function AdminSecurityPage() {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-gray-800">{event.message}</p>
+                      <p className="text-sm text-gray-600">{event.message}</p>
                       <p className="text-xs text-gray-500 mt-1">{event.timestamp}</p>
                     </div>
                   </div>
@@ -318,7 +318,7 @@ export default function AdminSecurityPage() {
                     </span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800">{event.message}</h4>
+                    <h4 className="font-semibold text-gray-600">{event.message}</h4>
                     <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
                       <span>IP: {event.ip}</span>
                       <span>•</span>
@@ -365,7 +365,7 @@ export default function AdminSecurityPage() {
                 </div>
                 <div className="flex items-center space-x-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    policy.status === 'active' ? 'bg-accent-green/20 text-accent-green' : 'bg-gray-100 text-gray-800'
+                    policy.status === 'active' ? 'bg-accent-green/20 text-accent-green' : 'bg-gray-100 text-gray-600'
                   }`}>
                     {policy.status === 'active' ? 'Ativa' : 'Inativa'}
                   </span>

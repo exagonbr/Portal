@@ -194,7 +194,7 @@ export default function GuardianMessagesPage() {
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-1">
-                  <h3 className={`text-lg font-semibold ${!message.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                  <h3 className={`text-lg font-semibold ${!message.read ? 'text-gray-700' : 'text-gray-700'}`}>
                     {message.subject}
                   </h3>
                   {!message.read && (

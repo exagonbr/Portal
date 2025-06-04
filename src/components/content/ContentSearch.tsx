@@ -143,7 +143,7 @@ export default function ContentSearch() {
                         .map(tag => (
                           <span
                             key={tag}
-                            className="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded-full"
+                            className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full"
                           >
                             {tag}
                           </span>

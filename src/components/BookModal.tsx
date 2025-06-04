@@ -107,19 +107,19 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
 
                 {/* Quick Stats Card */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
-                  <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                  <h4 className="font-bold text-gray-600 mb-4 flex items-center">
                     📊 <span className="ml-2">Estatísticas</span>
                   </h4>
                   
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 font-medium">Duração</span>
-                      <span className="font-bold text-gray-800">{book.duration}</span>
+                      <span className="font-bold text-gray-600">{book.duration}</span>
                     </div>
                     
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600 font-medium">Formato</span>
-                      <span className="font-bold text-gray-800">{book.format?.toUpperCase() || 'Digital'}</span>
+                      <span className="font-bold text-gray-600">{book.format?.toUpperCase() || 'Digital'}</span>
                     </div>
 
                     {/* Progress Section */}
@@ -177,14 +177,14 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
                     <h3 className="text-sm font-bold text-blue-600 mb-2 uppercase tracking-wider flex items-center">
                       👤 <span className="ml-2">Autor</span>
                     </h3>
-                    <p className="text-gray-800 font-semibold text-lg">{book.author}</p>
+                    <p className="text-gray-600 font-semibold text-lg">{book.author}</p>
                   </div>
                   
                   <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
                     <h3 className="text-sm font-bold text-purple-600 mb-2 uppercase tracking-wider flex items-center">
                       🏢 <span className="ml-2">Editora</span>
                     </h3>
-                    <p className="text-gray-800 font-semibold text-lg">{book.publisher}</p>
+                    <p className="text-gray-600 font-semibold text-lg">{book.publisher}</p>
                   </div>
                 </div>
 
@@ -208,19 +208,19 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600 font-medium">Disponibilidade:</span>
-                      <p className="text-gray-800 font-semibold">Disponível</p>
+                      <p className="text-gray-600 font-semibold">Disponível</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Categoria:</span>
-                      <p className="text-gray-800 font-semibold">Educacional</p>
+                      <p className="text-gray-600 font-semibold">Educacional</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Idioma:</span>
-                      <p className="text-gray-800 font-semibold">Português</p>
+                      <p className="text-gray-600 font-semibold">Português</p>
                     </div>
                     <div>
                       <span className="text-gray-600 font-medium">Última atualização:</span>
-                      <p className="text-gray-800 font-semibold">Hoje</p>
+                      <p className="text-gray-600 font-semibold">Hoje</p>
                     </div>
                   </div>
                 </div>

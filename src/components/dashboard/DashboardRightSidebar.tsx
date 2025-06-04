@@ -206,7 +206,7 @@ export default function DashboardRightSidebar() {
                 <span className="material-symbols-outlined text-[16px]">
                   assignment
                 </span>
-                <div className="absolute right-full mr-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                <div className="absolute right-full mr-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
                   Atividades ({activities.length})
                 </div>
               </button>
@@ -226,7 +226,7 @@ export default function DashboardRightSidebar() {
                     {notifications.filter(n => !n.read).length}
                   </span>
                 )}
-                <div className="absolute right-full mr-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                <div className="absolute right-full mr-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
                   Avisos ({notifications.filter(n => !n.read).length} não lidos)
                 </div>
               </button>
@@ -241,7 +241,7 @@ export default function DashboardRightSidebar() {
                 <span className="material-symbols-outlined text-[16px]">
                   calendar_month
                 </span>
-                <div className="absolute right-full mr-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                <div className="absolute right-full mr-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
                   Agenda (3 eventos)
                 </div>
               </button>

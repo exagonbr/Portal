@@ -28,21 +28,21 @@ export default function CourseCard({ course, userType }: CourseCardProps) {
         <div className="space-y-2">
           <div className="flex items-center text-sm">
             <span className="w-20 text-gray-500">Nível:</span>
-            <span className="text-gray-900">{course.level}</span>
+            <span className="text-gray-700">{course.level}</span>
           </div>
           {course.cycle && (
             <div className="flex items-center text-sm">
               <span className="w-20 text-gray-500">Ciclo:</span>
-              <span className="text-gray-900">{course.cycle}</span>
+              <span className="text-gray-700">{course.cycle}</span>
             </div>
           )}
           <div className="flex items-center text-sm">
             <span className="w-20 text-gray-500">Duração:</span>
-            <span className="text-gray-900">{course.duration}</span>
+            <span className="text-gray-700">{course.duration}</span>
           </div>
           <div className="flex items-center text-sm">
             <span className="w-20 text-gray-500">Horário:</span>
-            <span className="text-gray-900">{course.schedule.classTime}</span>
+            <span className="text-gray-700">{course.schedule.classTime}</span>
           </div>
         </div>
         <div className="mt-6 flex justify-end">

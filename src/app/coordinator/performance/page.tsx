@@ -53,7 +53,7 @@ export default function CoordinatorPerformancePage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Análise de Desempenho</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Análise de Desempenho</h1>
             <p className="text-gray-600">Monitore o desempenho acadêmico da instituição</p>
           </div>
           <div className="flex space-x-4">
@@ -77,7 +77,7 @@ export default function CoordinatorPerformancePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Total de Alunos</div>
-            <div className="text-2xl font-bold text-gray-800">{overview.totalStudents.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-gray-600">{overview.totalStudents.toLocaleString()}</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 45</span>
               <span className="text-gray-500 text-sm ml-2">este ano</span>
@@ -85,7 +85,7 @@ export default function CoordinatorPerformancePage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Média Geral</div>
-            <div className="text-2xl font-bold text-gray-800">{overview.averageGrade.toFixed(1)}</div>
+            <div className="text-2xl font-bold text-gray-600">{overview.averageGrade.toFixed(1)}</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 0.2</span>
               <span className="text-gray-500 text-sm ml-2">este bimestre</span>
@@ -93,7 +93,7 @@ export default function CoordinatorPerformancePage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Aprovação</div>
-            <div className="text-2xl font-bold text-gray-800">{overview.approvalRate}%</div>
+            <div className="text-2xl font-bold text-gray-600">{overview.approvalRate}%</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 2%</span>
               <span className="text-gray-500 text-sm ml-2">este ano</span>
@@ -101,7 +101,7 @@ export default function CoordinatorPerformancePage() {
           </div>
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Frequência</div>
-            <div className="text-2xl font-bold text-gray-800">{overview.attendanceRate}%</div>
+            <div className="text-2xl font-bold text-gray-600">{overview.attendanceRate}%</div>
             <div className="mt-4 flex items-center">
               <span className="text-green-500 text-sm">↑ 1%</span>
               <span className="text-gray-500 text-sm ml-2">este mês</span>
@@ -151,7 +151,7 @@ export default function CoordinatorPerformancePage() {
         <div className="space-y-6">
           {/* Grade Distribution */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribuição de Notas</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-4">Distribuição de Notas</h3>
             <div className="space-y-4">
               {gradeDistribution.map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
@@ -173,7 +173,7 @@ export default function CoordinatorPerformancePage() {
                   </div>
                   <div className="flex items-center space-x-4 text-sm">
                     <span className="text-gray-600">{item.count} alunos</span>
-                    <span className="font-medium text-gray-800">{item.percentage.toFixed(1)}%</span>
+                    <span className="font-medium text-gray-600">{item.percentage.toFixed(1)}%</span>
                   </div>
                 </div>
               ))}
@@ -182,7 +182,7 @@ export default function CoordinatorPerformancePage() {
 
           {/* Performance Trends */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Tendências de Desempenho</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-4">Tendências de Desempenho</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
@@ -226,14 +226,14 @@ export default function CoordinatorPerformancePage() {
                     <span className="material-symbols-outlined text-blue-600">school</span>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{subject.subject}</h3>
+                    <h3 className="text-lg font-semibold text-gray-600">{subject.subject}</h3>
                     <p className="text-sm text-gray-600">{subject.students} alunos</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-6">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-800">{subject.average.toFixed(1)}</div>
+                    <div className="text-2xl font-bold text-gray-600">{subject.average.toFixed(1)}</div>
                     <div className="text-sm text-gray-600">Média</div>
                   </div>
                   
@@ -310,13 +310,13 @@ export default function CoordinatorPerformancePage() {
                 {classPerformance.map((classItem, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-4 px-6">
-                      <div className="font-medium text-gray-800">{classItem.class}</div>
+                      <div className="font-medium text-gray-600">{classItem.class}</div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="text-gray-600">{classItem.teacher}</div>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="text-gray-800">{classItem.students}</div>
+                      <div className="text-gray-600">{classItem.students}</div>
                     </td>
                     <td className="py-4 px-6">
                       <div className={`font-medium ${

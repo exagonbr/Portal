@@ -40,7 +40,7 @@ export default function InstitutionCurriculumPage() {
       <div className="mb-8">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Currículo Escolar</h1>
+            <h1 className="text-2xl font-bold text-gray-600">Currículo Escolar</h1>
             <p className="text-gray-600">Gestão do currículo e grade curricular</p>
           </div>
           <button 
@@ -70,7 +70,7 @@ export default function InstitutionCurriculumPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <h3 className="text-lg font-semibold text-gray-600 mb-4">
           Grade Curricular - {selectedGrade.grade}
         </h3>
         
@@ -87,7 +87,7 @@ export default function InstitutionCurriculumPage() {
             <tbody>
               {selectedGrade.subjects.map((subject, index) => (
                 <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-4 px-6 font-medium text-gray-800">{subject.name}</td>
+                  <td className="py-4 px-6 font-medium text-gray-600">{subject.name}</td>
                   <td className="py-4 px-6 text-gray-600">{subject.hours}h/semana</td>
                   <td className="py-4 px-6 text-gray-600">{subject.teacher}</td>
                   <td className="py-4 px-6">

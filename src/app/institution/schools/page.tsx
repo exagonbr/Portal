@@ -161,7 +161,7 @@ export default function SchoolsManagement() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-primary text-gray-800 mb-2">
+        <h1 className="text-3xl font-bold text-primary text-gray-600 mb-2">
           Gestão de Escolas
         </h1>
         <p className="text-gray-600 text-gray-400">
@@ -224,7 +224,7 @@ export default function SchoolsManagement() {
                   <SchoolIcon className="w-6 h-6 text-primary text-primary-light" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 text-white">
+                  <h3 className="text-lg font-semibold text-gray-700 text-white">
                     {school.name}
                   </h3>
                   <p className="text-sm text-gray-500">Código: {school.code}</p>

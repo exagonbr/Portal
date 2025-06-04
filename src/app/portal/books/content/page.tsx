@@ -29,7 +29,7 @@ export default function BooksContentPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-900">
+    <div className="flex h-screen bg-gray-200">
       {/* Left Sidebar */}
       <div className="w-64 bg-gray-800 text-gray-300 p-4 flex flex-col">
         <div className="mb-8">

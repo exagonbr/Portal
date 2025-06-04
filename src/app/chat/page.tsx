@@ -287,7 +287,7 @@ export default function ChatPage() {
         {/* Cabeçalho */}
         <div className="p-3 lg:p-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <h2 className="text-lg lg:text-xl font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-lg lg:text-xl font-bold text-gray-700 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
               <span className="hidden sm:inline">Mensagens</span>
             </h2>
@@ -345,7 +345,7 @@ export default function ChatPage() {
                 {/* Conteúdo */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-sm font-medium text-gray-900 truncate flex items-center gap-1">
+                    <h3 className="text-sm font-medium text-gray-700 truncate flex items-center gap-1">
                       {conversation.isPinned && <Star className="w-3 h-3 text-amber-500 fill-current" />}
                       {conversation.name}
                     </h3>
@@ -399,7 +399,7 @@ export default function ChatPage() {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-medium text-gray-900 truncate">{selectedConversation.name}</h3>
+                  <h3 className="text-sm font-medium text-gray-700 truncate">{selectedConversation.name}</h3>
                   <p className="text-xs text-gray-500">
                     {selectedConversation.type === 'group' 
                       ? `${selectedConversation.participants.length} participantes`
@@ -449,7 +449,7 @@ export default function ChatPage() {
                     <div className={`max-w-xs lg:max-w-md rounded-2xl px-4 py-2 shadow-sm ${
                       isCurrentUser 
                         ? 'bg-primary text-white' 
-                        : 'bg-white text-gray-800'
+                        : 'bg-white text-gray-600'
                     }`}>
                       <p className="text-sm">{message.content}</p>
                       <div className={`flex items-center justify-end gap-1 mt-1 ${
@@ -542,7 +542,7 @@ export default function ChatPage() {
                   </span>
                 )}
               </div>
-              <h3 className="font-medium text-sm lg:text-base text-gray-900">{selectedConversation.name}</h3>
+              <h3 className="font-medium text-sm lg:text-base text-gray-700">{selectedConversation.name}</h3>
               {selectedConversation.type === 'direct' && (
                 <p className="text-xs lg:text-sm text-gray-600">
                   {selectedConversation.participants[0]?.role}
@@ -574,7 +574,7 @@ export default function ChatPage() {
 
             {selectedConversation.type === 'group' && (
               <div className="mt-4 lg:mt-6">
-                <h4 className="text-xs lg:text-sm font-medium text-gray-900 mb-2 lg:mb-3">Participantes ({selectedConversation.participants.length})</h4>
+                <h4 className="text-xs lg:text-sm font-medium text-gray-700 mb-2 lg:mb-3">Participantes ({selectedConversation.participants.length})</h4>
                 <div className="space-y-1 lg:space-y-2">
                   {selectedConversation.participants.map((participant) => (
                     <div key={participant.id} className="flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 rounded-lg hover:bg-gray-50 transition-colors">
@@ -589,7 +589,7 @@ export default function ChatPage() {
                         }`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs lg:text-sm font-medium text-gray-900 truncate">{participant.name}</p>
+                        <p className="text-xs lg:text-sm font-medium text-gray-700 truncate">{participant.name}</p>
                         <p className="text-xs text-gray-500">{participant.role}</p>
                       </div>
                     </div>

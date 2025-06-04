@@ -6,10 +6,10 @@ export default function AttendanceReportsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Relatório de Frequência</h1>
+          <h1 className="text-2xl font-bold text-gray-600">Relatório de Frequência</h1>
           <p className="text-gray-600">Acompanhamento detalhado da frequência dos alunos</p>
         </div>
         <div className="space-x-4">
@@ -52,7 +52,7 @@ export default function AttendanceReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Taxa de Presença</div>
-          <div className="text-2xl font-bold text-gray-800">92%</div>
+          <div className="text-2xl font-bold text-gray-600">92%</div>
           <div className="mt-4 flex items-center">
             <span className="text-green-500 text-sm">↑ 2%</span>
             <span className="text-gray-500 text-sm ml-2">vs. mês anterior</span>
@@ -60,7 +60,7 @@ export default function AttendanceReportsPage() {
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Faltas</div>
-          <div className="text-2xl font-bold text-gray-800">8%</div>
+          <div className="text-2xl font-bold text-gray-600">8%</div>
           <div className="mt-4 flex items-center">
             <span className="text-red-500 text-sm">↓ 2%</span>
             <span className="text-gray-500 text-sm ml-2">vs. mês anterior</span>
@@ -68,7 +68,7 @@ export default function AttendanceReportsPage() {
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-sm font-medium text-gray-500 mb-1">Atrasos</div>
-          <div className="text-2xl font-bold text-gray-800">5%</div>
+          <div className="text-2xl font-bold text-gray-600">5%</div>
           <div className="mt-4 flex items-center">
             <span className="text-blue-500 text-sm">=</span>
             <span className="text-gray-500 text-sm ml-2">vs. mês anterior</span>
@@ -86,7 +86,7 @@ export default function AttendanceReportsPage() {
 
       {/* Attendance Calendar */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Calendário de Frequência</h3>
+        <h3 className="text-lg font-semibold text-gray-600 mb-4">Calendário de Frequência</h3>
         <div className="grid grid-cols-7 gap-4">
           {/* Calendar Header */}
           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
@@ -144,7 +144,7 @@ export default function AttendanceReportsPage() {
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-gray-200"></div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">João Silva</div>
+                      <div className="text-sm font-medium text-gray-700">João Silva</div>
                       <div className="text-sm text-gray-500">Turma A</div>
                     </div>
                   </div>

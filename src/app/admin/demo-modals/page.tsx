@@ -159,7 +159,7 @@ export default function DemoModalsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Demonstração de Modais</h1>
+        <h1 className="text-3xl font-bold text-gray-600 mb-2">Demonstração de Modais</h1>
         <p className="text-gray-600">
           Esta página demonstra todos os modais de CRUD criados no sistema. 
           Clique nos botões abaixo para testar cada funcionalidade.
@@ -175,7 +175,7 @@ export default function DemoModalsPage() {
               <span className="text-2xl">📚</span>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Gestão de Cursos</h3>
+              <h3 className="text-lg font-semibold text-gray-600">Gestão de Cursos</h3>
               <p className="text-sm text-gray-600">Modais para criar e editar cursos</p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function DemoModalsPage() {
               <span className="text-2xl">👨‍🎓</span>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Gestão de Alunos</h3>
+              <h3 className="text-lg font-semibold text-gray-600">Gestão de Alunos</h3>
               <p className="text-sm text-gray-600">Modais para criar e editar alunos</p>
             </div>
           </div>
@@ -229,7 +229,7 @@ export default function DemoModalsPage() {
               <span className="text-2xl">🔐</span>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Gestão de Funções</h3>
+              <h3 className="text-lg font-semibold text-gray-600">Gestão de Funções</h3>
               <p className="text-sm text-gray-600">Modais para criar e editar funções/papéis</p>
             </div>
           </div>
@@ -256,7 +256,7 @@ export default function DemoModalsPage() {
               <span className="text-2xl">📝</span>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Gestão de Notas</h3>
+              <h3 className="text-lg font-semibold text-gray-600">Gestão de Notas</h3>
               <p className="text-sm text-gray-600">Modal para editar notas e avaliações</p>
             </div>
           </div>
@@ -288,7 +288,7 @@ export default function DemoModalsPage() {
 
       {/* Seção de Estatísticas */}
       <div className="mt-12 bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Resumo dos Modais Criados</h3>
+        <h3 className="text-lg font-semibold text-gray-600 mb-4">📊 Resumo dos Modais Criados</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">7</div>

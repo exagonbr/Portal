@@ -58,7 +58,7 @@ export default function ProductList() {
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <h3 className="font-medium text-gray-900">{item.subject}</h3>
+                <h3 className="font-medium text-gray-700">{item.subject}</h3>
                 <span className="text-sm text-gray-500">{item.time}</span>
               </div>
               <p className="text-sm text-gray-600">

@@ -68,7 +68,7 @@ export default function NotificationSettings() {
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-700">
               Configurações de Notificação
             </h3>
             <button
@@ -85,7 +85,7 @@ export default function NotificationSettings() {
         <div className="p-6 space-y-6">
           {/* Métodos de Notificação */}
           <div>
-            <h4 className="text-sm font-medium text-gray-900 mb-3">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
               Métodos de Notificação
             </h4>
             <div className="space-y-3">
@@ -121,7 +121,7 @@ export default function NotificationSettings() {
 
           {/* Categorias */}
           <div>
-            <h4 className="text-sm font-medium text-gray-900 mb-3">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
               Categorias de Notificação
             </h4>
             <div className="space-y-3">

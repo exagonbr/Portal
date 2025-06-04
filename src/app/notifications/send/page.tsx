@@ -296,7 +296,7 @@ export default function SendNotificationPage() {
             </span>
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Enviar Notificação</h1>
+            <h1 className="text-2xl font-bold text-gray-700">Enviar Notificação</h1>
             <p className="text-sm text-gray-500">
               Criar e enviar notificações para usuários
             </p>
@@ -365,7 +365,7 @@ export default function SendNotificationPage() {
 
         {/* Botões de Teste */}
         <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Testes de Configuração</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Testes de Configuração</h3>
           <div className="flex space-x-4">
             <button
               onClick={handleTestEmail}
@@ -586,7 +586,7 @@ export default function SendNotificationPage() {
                               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             />
                             <div className="ml-2 flex-1">
-                              <span className="text-sm text-gray-900">{user.name}</span>
+                              <span className="text-sm text-gray-700">{user.name}</span>
                               <span className="text-xs text-gray-500 ml-2">({user.email})</span>
                             </div>
                           </label>
