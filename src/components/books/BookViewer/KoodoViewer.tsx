@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Book as EpubBook, Rendition } from 'epubjs';
+import ePub, { Book as EpubBook, Rendition } from 'epubjs';
 import { Book } from '@/constants/mockData';
 import { Annotation, Highlight, Bookmark, ViewerState } from './types';
 import { v4 as uuidv4 } from 'uuid';
@@ -300,6 +300,16 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
   // Estados específicos para EPUB
   const [epubBook, setEpubBook] = useState<EpubBook | null>(null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false); // Lock para prevenir múltiplas inicializações
+
+  // Estados para buffer de arquivos
+  const [fileBuffer, setFileBuffer] = useState<ArrayBuffer | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const fileBufferRef = useRef<ArrayBuffer | null>(null);
+
+  // Cache inteligente para evitar recarregamentos
+  const fileCacheRef = useRef<Map<string, ArrayBuffer>>(new Map());
 
   // Aplicar CSS padrão (copiado do koodo-reader)
   useEffect(() => {
@@ -374,20 +384,481 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
     }
   }, [book.id]);
 
-  // Inicialização do PDF (melhorado com base no koodo-reader)
+  // Cleanup completo e controlado
+  const performCleanup = useCallback(async () => {
+    console.log('🧹 Iniciando cleanup completo...');
+    
+    try {
+      // Limpar rendition primeiro
+      if (rendition) {
+        console.log('🧹 Destruindo rendition...');
+        try {
+          rendition.destroy();
+        } catch (error) {
+          console.warn('⚠️ Erro ao destruir rendition:', error);
+        }
+        setRendition(null);
+      }
+
+      // Aguardar um pouco
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Limpar book
+      if (epubBook) {
+        console.log('🧹 Destruindo EPUB book...');
+        try {
+          epubBook.destroy();
+        } catch (error) {
+          console.warn('⚠️ Erro ao destruir EPUB book:', error);
+        }
+        setEpubBook(null);
+      }
+
+      // Aguardar cleanup completo
+      await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('✅ Cleanup completo finalizado');
+    } catch (error) {
+      console.error('❌ Erro durante cleanup:', error);
+    }
+  }, [rendition, epubBook]);
+
+  // Função para carregar arquivo como ArrayBuffer (OCTET-STREAM)
+  const loadFileAsBuffer = useCallback(async (fileUrl: string): Promise<ArrayBuffer> => {
+    // Verificar cache primeiro
+    const cacheKey = `${fileUrl}-${book.id}`;
+    const cachedBuffer = fileCacheRef.current.get(cacheKey);
+    if (cachedBuffer) {
+      console.log('✅ Arquivo encontrado no cache:', fileUrl);
+      return cachedBuffer;
+    }
+
+    console.log('📥 Carregando arquivo como ArrayBuffer:', fileUrl);
+    setIsDownloading(true);
+    setDownloadProgress(0);
+
+    try {
+      // Fazer requisição com suporte a progresso
+      const response = await fetch(fileUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/octet-stream, application/epub+zip, application/pdf, */*',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const contentLength = response.headers.get('content-length');
+      const totalSize = contentLength ? parseInt(contentLength, 10) : 0;
+
+      console.log(`📊 Tamanho do arquivo: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+
+      if (!response.body) {
+        throw new Error('Response body não disponível');
+      }
+
+      // Ler stream com progresso
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let receivedSize = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
+        
+        chunks.push(value);
+        receivedSize += value.length;
+
+        // Atualizar progresso
+        if (totalSize > 0) {
+          const progress = Math.round((receivedSize / totalSize) * 100);
+          setDownloadProgress(progress);
+          console.log(`📥 Download: ${progress}% (${(receivedSize / 1024 / 1024).toFixed(2)} MB)`);
+        }
+      }
+
+      // Combinar chunks em ArrayBuffer
+      const buffer = new ArrayBuffer(receivedSize);
+      const uint8Array = new Uint8Array(buffer);
+      let position = 0;
+
+      for (const chunk of chunks) {
+        uint8Array.set(chunk, position);
+        position += chunk.length;
+      }
+
+      console.log('✅ Arquivo carregado como ArrayBuffer:', buffer.byteLength, 'bytes');
+
+      // Salvar no cache
+      fileCacheRef.current.set(cacheKey, buffer);
+      
+      // Limitar tamanho do cache (máximo 3 arquivos)
+      if (fileCacheRef.current.size > 3) {
+        const firstKey = fileCacheRef.current.keys().next().value;
+        if (firstKey) {
+          fileCacheRef.current.delete(firstKey);
+          console.log('🧹 Cache limpo:', firstKey);
+        }
+      }
+
+      setFileBuffer(buffer);
+      fileBufferRef.current = buffer;
+      
+      return buffer;
+
+    } catch (error) {
+      console.error('❌ Erro ao carregar arquivo como buffer:', error);
+      throw new Error(`Falha no download: ${error instanceof Error ? error.message : error}`);
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(100);
+    }
+  }, [book.id]);
+
+  // Função para validar ArrayBuffer de EPUB
+  const validateEpubBuffer = useCallback((buffer: ArrayBuffer): boolean => {
+    try {
+      // Verificar se é um buffer válido
+      if (!buffer || buffer.byteLength === 0) {
+        console.warn('⚠️ Buffer vazio ou inválido');
+        return false;
+      }
+
+      // Verificar assinatura ZIP (EPUB é baseado em ZIP)
+      const uint8Array = new Uint8Array(buffer);
+      const signature = uint8Array.slice(0, 4);
+      
+      // Assinatura ZIP: PK (0x50, 0x4B)
+      if (signature[0] === 0x50 && signature[1] === 0x4B) {
+        console.log('✅ Buffer EPUB válido (assinatura ZIP detectada)');
+        return true;
+      }
+
+      console.warn('⚠️ Buffer não parece ser um arquivo ZIP/EPUB válido');
+      return false;
+    } catch (error) {
+      console.error('❌ Erro ao validar buffer EPUB:', error);
+      return false;
+    }
+  }, []);
+
+  // Função para criar Blob a partir do ArrayBuffer (mais compatível)
+  const createEpubBlob = useCallback((buffer: ArrayBuffer): Blob => {
+    return new Blob([buffer], { 
+      type: 'application/epub+zip' 
+    });
+  }, []);
+
+  // Função de logging melhorada para debug
+  const logEpubState = useCallback((stage: string, details?: any) => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`📊 [${timestamp}] EPUB ${stage}:`, details || '');
+  }, []);
+
+  // Sistema de retry inteligente para EPUB.js
+  const retryWithDifferentStrategy = useCallback(async (fileUrl: string, buffer: ArrayBuffer, pageAreaElement: HTMLElement, attempt = 1): Promise<EpubBook> => {
+    const maxAttempts = 3;
+    
+    console.log(`🔄 Tentativa ${attempt}/${maxAttempts} de inicialização EPUB`);
+    logEpubState('RETRY_ATTEMPT', { attempt, maxAttempts });
+    
+    const strategies = [
+      // Estratégia 1: Blob URL (mais compatível)
+      async () => {
+        logEpubState('STRATEGY_BLOB', { attempt });
+        const epubBlob = createEpubBlob(buffer);
+        const blobUrl = URL.createObjectURL(epubBlob);
+        const book = ePub(blobUrl, { openAs: 'epub' });
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+        return book;
+      },
+      
+      // Estratégia 2: ArrayBuffer direto
+      async () => {
+        logEpubState('STRATEGY_BUFFER', { attempt });
+        return ePub(buffer, { openAs: 'epub' });
+      },
+      
+      // Estratégia 3: URL tradicional
+      async () => {
+        logEpubState('STRATEGY_URL', { attempt });
+        return ePub(fileUrl, { openAs: 'epub' });
+      }
+    ];
+    
+    const strategy = strategies[attempt - 1];
+    if (!strategy) {
+      throw new Error('Todas as estratégias de carregamento falharam');
+    }
+    
+    try {
+      const book = await strategy();
+      
+      // Aguardar com timeout mais longo
+      await Promise.race([
+        book.ready,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`Timeout na tentativa ${attempt}`)), 20000)
+        )
+      ]);
+      
+      // Verificar se resources está inicializado
+      await new Promise<void>((resolve, reject) => {
+        const checkResources = (retries = 0) => {
+          if ((book as any).resources) {
+            console.log(`✅ Resources inicializados na tentativa ${attempt}`);
+            logEpubState('RESOURCES_READY', { attempt, retries });
+            resolve();
+          } else if (retries < 10) {
+            console.log(`⏳ Aguardando resources... (${retries + 1}/10)`);
+            setTimeout(() => checkResources(retries + 1), 500);
+          } else {
+            logEpubState('RESOURCES_TIMEOUT', { attempt, retries });
+            reject(new Error(`Resources não inicializados após 10 tentativas na estratégia ${attempt}`));
+          }
+        };
+        checkResources();
+      });
+      
+      return book;
+      
+    } catch (error) {
+      console.error(`❌ Estratégia ${attempt} falhou:`, error);
+      logEpubState('STRATEGY_FAILED', { attempt, error: error instanceof Error ? error.message : error });
+      
+      if (attempt < maxAttempts) {
+        // Aguardar antes de tentar próxima estratégia
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        return retryWithDifferentStrategy(fileUrl, buffer, pageAreaElement, attempt + 1);
+      } else {
+        throw new Error(`Todas as ${maxAttempts} estratégias falharam. Último erro: ${error instanceof Error ? error.message : error}`);
+      }
+    }
+  }, [createEpubBlob, logEpubState]);
+
+  // Inicialização do EPUB com ArrayBuffer ROBUSTA
+  const initializeEPUB = useCallback(async (fileUrl: string) => {
+    if (isInitializing) {
+      console.warn('⚠️ Inicialização já em progresso, ignorando duplicata');
+      return;
+    }
+
+    console.log('🔄 Inicializando EPUB com validação robusta:', fileUrl);
+    setIsInitializing(true);
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    logEpubState('INICIANDO', { fileUrl });
+
+    let pageAreaElement: HTMLElement | null = null;
+    let buffer: ArrayBuffer | null = null;
+
+    try {
+      // Buscar elemento page-area
+      pageAreaElement = document.getElementById('page-area');
+      if (!pageAreaElement) {
+        throw new Error('Elemento page-area não encontrado no DOM');
+      }
+      logEpubState('DOM_READY', { pageAreaFound: true });
+
+      // CLEANUP COMPLETO
+      await performCleanup();
+      await new Promise(resolve => setTimeout(resolve, 100));
+      logEpubState('CLEANUP_COMPLETE');
+
+      // CARREGAR E VALIDAR ARQUIVO
+      try {
+        buffer = await loadFileAsBuffer(fileUrl);
+        logEpubState('BUFFER_LOADED', { size: buffer.byteLength });
+        
+        // VALIDAR BUFFER
+        if (!validateEpubBuffer(buffer)) {
+          throw new Error('Buffer EPUB inválido ou corrompido');
+        }
+        logEpubState('BUFFER_VALIDATED');
+
+        console.log('📚 Buffer EPUB validado, usando sistema de retry...');
+
+        // USAR SISTEMA DE RETRY INTELIGENTE
+        const readyBook = await retryWithDifferentStrategy(fileUrl, buffer, pageAreaElement);
+        console.log('✅ EPUB carregado com sucesso via retry system');
+        logEpubState('BOOK_READY', { hasSpine: !!readyBook.spine });
+
+        setEpubBook(readyBook);
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Calcular dimensões
+        const dimensions = KoodoUtils.getPageWidth(
+          state.readerMode,
+          state.scale,
+          20,
+          false,
+          false
+        );
+
+        console.log('🎨 Criando rendition...');
+
+        // Criar rendition
+        const newRendition = readyBook.renderTo(pageAreaElement, {
+          width: dimensions.pageWidth,
+          height: "100%",
+          spread: state.readerMode === 'double' ? 'auto' : 'none',
+          flow: state.readerMode === 'scroll' ? 'scrolled-doc' : 'paginated',
+          allowScriptedContent: false,
+          manager: 'default'
+        });
+
+        if (!newRendition) {
+          throw new Error('Falha ao criar rendition');
+        }
+
+        console.log('✅ Rendition criado');
+        logEpubState('RENDITION_CREATED');
+
+        // Display
+        console.log('🎨 Fazendo display inicial...');
+        
+        const displayPromise = Promise.race([
+          newRendition.display().then(() => {
+            console.log('✅ Display completado!');
+            logEpubState('DISPLAY_COMPLETE');
+          }),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout: Display não completou em 15 segundos')), 15000)
+          )
+        ]);
+
+        await displayPromise;
+        setRendition(newRendition);
+        logEpubState('RENDITION_SET');
+
+        // Event listeners
+        newRendition.on('relocated', (location: any) => {
+          if (location && location.start && location.start.cfi && readyBook.locations) {
+            try {
+              const locationsLength = readyBook.locations.length();
+              if (locationsLength > 0) {
+                const currentLocation = readyBook.locations.locationFromCfi(location.start.cfi);
+                if (typeof currentLocation === 'number') {
+                  setState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
+                }
+              }
+            } catch (error) {
+              console.warn('⚠️ Erro ao processar localização:', error);
+            }
+          }
+        });
+
+        newRendition.on('rendered', () => {
+          console.log('🎨 EPUB renderizado');
+          try {
+            handleLocation();
+            setState(prev => ({ ...prev, loading: false }));
+            
+            const pageArea = document.getElementById('page-area');
+            if (pageArea) {
+              pageArea.style.display = 'block';
+            }
+            
+            console.log('✅ EPUB inicializado com sucesso!');
+          } catch (error) {
+            console.error('❌ Erro no rendered handler:', error);
+          }
+        });
+
+        newRendition.on('error', (error: any) => {
+          console.error('❌ Erro na renderização EPUB:', error);
+        });
+
+        // Gerar localizações em background
+        setTimeout(async () => {
+          try {
+            console.log('📍 Gerando localizações em background...');
+            
+            await Promise.race([
+              readyBook.locations.generate(1024),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout background de locations')), 20000)
+              )
+            ]);
+
+            const totalPages = readyBook.locations.length();
+            if (totalPages > 0) {
+              setState(prev => ({ ...prev, totalPages }));
+              console.log(`✅ Localizações: ${totalPages} páginas`);
+            } else {
+              setState(prev => ({ ...prev, totalPages: 100 }));
+            }
+          } catch (locationError) {
+            console.warn('⚠️ Erro nas localizações:', locationError);
+            setState(prev => ({ ...prev, totalPages: 100 }));
+          }
+        }, 2000);
+
+        // Aplicar tema
+        setTimeout(() => {
+          try {
+            applyTheme(newRendition);
+          } catch (themeError) {
+            console.warn('⚠️ Erro ao aplicar tema:', themeError);
+          }
+        }, 1000);
+
+        setState(prev => ({ ...prev, loading: false }));
+
+      } catch (bufferError) {
+        console.error('❌ Erro com ArrayBuffer:', bufferError);
+        throw bufferError;
+      }
+
+    } catch (error) {
+      console.error('❌ Erro crítico ao inicializar EPUB:', error);
+      
+      // Determinar tipo de erro para mensagem mais específica
+      let errorMessage = 'Falha ao carregar EPUB';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('resources')) {
+          errorMessage = 'Arquivo EPUB corrompido ou incompatível. Tente um arquivo diferente.';
+        } else if (error.message.includes('Timeout')) {
+          errorMessage = 'Arquivo muito grande ou conexão lenta. Tente novamente.';
+        } else if (error.message.includes('ZIP')) {
+          errorMessage = 'Arquivo não é um EPUB válido. Verifique o formato.';
+        } else {
+          errorMessage = `Erro: ${error.message}`;
+        }
+      }
+      
+      setState(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: errorMessage
+      }));
+    } finally {
+      setIsInitializing(false);
+      logEpubState('FINALIZANDO', { success: !state.error });
+    }
+  }, [state.readerMode, state.scale, handleLocation, performCleanup, isInitializing, loadFileAsBuffer, validateEpubBuffer, createEpubBlob, retryWithDifferentStrategy, logEpubState]);
+
+  // Inicialização do PDF com ArrayBuffer
   const initializePDF = useCallback(async (fileUrl: string) => {
-    console.log('🔄 Inicializando PDF:', fileUrl);
+    console.log('🔄 Inicializando PDF com ArrayBuffer:', fileUrl);
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // Verificar se o arquivo existe
-      const response = await fetch(fileUrl, { method: 'HEAD' });
-      if (!response.ok) {
-        throw new Error(`Arquivo PDF não encontrado (Status: ${response.status})`);
-      }
+      // CARREGAR PDF COMO ARRAYBUFFER
+      const buffer = await loadFileAsBuffer(fileUrl);
+      
+      console.log('📄 PDF carregado como ArrayBuffer, configurando...');
+      
+      // Definir buffer para o componente PDF
+      setFileBuffer(buffer);
+      fileBufferRef.current = buffer;
       
       setState(prev => ({ ...prev, loading: false }));
-      console.log('✅ PDF pronto para carregamento');
+      console.log('✅ PDF pronto para renderização');
+      
     } catch (error) {
       console.error('❌ Erro ao inicializar PDF:', error);
       setState(prev => ({ 
@@ -396,113 +867,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
         error: `Falha ao carregar PDF: ${error instanceof Error ? error.message : error}` 
       }));
     }
-  }, []);
-
-  // Inicialização do EPUB (corrigido para aguardar o DOM)
-  const initializeEPUB = useCallback(async (fileUrl: string) => {
-    console.log('🔄 Inicializando EPUB:', fileUrl);
-    setState(prev => ({ ...prev, loading: true, error: null }));
-
-    try {
-      // Verificar se o arquivo existe
-      const response = await fetch(fileUrl, { method: 'HEAD' });
-      if (!response.ok) {
-        throw new Error(`Arquivo EPUB não encontrado (Status: ${response.status})`);
-      }
-
-      // Aguardar um momento para garantir que o DOM esteja pronto
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Buscar o elemento page-area que agora está sempre presente
-      const pageAreaElement = document.getElementById('page-area');
-      if (!pageAreaElement) {
-        throw new Error('Elemento page-area não encontrado no DOM');
-      }
-      console.log('✅ Elemento page-area encontrado');
-
-      const newBook = new EpubBook(fileUrl, {
-        openAs: 'epub',
-        requestHeaders: {
-          'Accept': 'application/epub+zip',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-
-      console.log('📚 Carregando EPUB book...');
-      setEpubBook(newBook);
-      await newBook.ready;
-      console.log('✅ EPUB book pronto');
-
-      // Calcular dimensões (copiado do koodo-reader)
-      const dimensions = KoodoUtils.getPageWidth(
-        state.readerMode,
-        state.scale,
-        20, // margin
-        false, // isNavLocked
-        false  // isSettingLocked
-      );
-
-      console.log('🎨 Criando rendition com dimensões:', dimensions);
-      const newRendition = newBook.renderTo(pageAreaElement, {
-        width: dimensions.pageWidth,
-        height: "100%",
-        spread: state.readerMode === 'double' ? 'auto' : 'none',
-        flow: state.readerMode === 'scroll' ? 'scrolled-doc' : 'paginated',
-        allowScriptedContent: false
-      });
-
-      setRendition(newRendition);
-      console.log('📖 Exibindo conteúdo...');
-      await newRendition.display();
-
-      // Gerar localizações (copiado do koodo-reader)
-      try {
-        console.log('📍 Gerando localizações...');
-        await newBook.locations.generate(1024);
-        const totalPages = newBook.locations.length();
-        setState(prev => ({ ...prev, totalPages }));
-        console.log(`✅ ${totalPages} localizações geradas`);
-      } catch (locationError) {
-        console.warn('⚠️ Erro ao gerar localizações:', locationError);
-        setState(prev => ({ ...prev, totalPages: 100 }));
-      }
-
-      // Event listeners (copiados do koodo-reader)
-      newRendition.on('relocated', (location: any) => {
-        if (location && location.start && location.start.cfi && newBook.locations) {
-          const currentLocation = newBook.locations.locationFromCfi(location.start.cfi);
-          if (typeof currentLocation === 'number') {
-            setState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
-          }
-        }
-      });
-
-      newRendition.on('rendered', () => {
-        console.log('🎨 EPUB renderizado');
-        handleLocation();
-        setState(prev => ({ ...prev, loading: false }));
-        
-        // Mostrar o elemento page-area
-        const pageArea = document.getElementById('page-area');
-        if (pageArea) {
-          pageArea.style.display = 'block';
-        }
-        
-        console.log('✅ EPUB inicializado com sucesso!');
-      });
-
-      // Aplicar tema
-      applyTheme(newRendition);
-
-    } catch (error) {
-      console.error('❌ Erro ao inicializar EPUB:', error);
-      setState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: `Falha ao carregar EPUB: ${error instanceof Error ? error.message : error}` 
-      }));
-    }
-  }, [state.readerMode, state.scale, handleLocation]);
+  }, [loadFileAsBuffer]);
 
   // Aplicar tema (copiado do koodo-reader)
   const applyTheme = useCallback((renditionInstance?: Rendition) => {
@@ -579,8 +944,42 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
     if (book.format === 'pdf') {
       setState(prev => ({ ...prev, currentPage: newPage }));
     } else if (book.format === 'epub' && epubBook && rendition) {
-      const cfi = epubBook.locations.cfiFromLocation(newPage - 1);
-      rendition.display(cfi);
+      // ESTRATÉGIA OTIMIZADA: tentar usar locations, mas não bloquear
+      
+      // Atualizar estado imediatamente
+      setState(prev => ({ ...prev, currentPage: newPage }));
+      
+      // Tentar navegação com locations se disponível
+      if (epubBook.locations) {
+        try {
+          const locationsLength = epubBook.locations.length();
+          if (locationsLength > 0) {
+            const cfi = epubBook.locations.cfiFromLocation(newPage - 1);
+            if (cfi) {
+              rendition.display(cfi).catch((error) => {
+                console.warn('⚠️ Erro ao navegar via CFI, tentando método alternativo:', error);
+                // Fallback: navegação por spine
+                try {
+                  const spine = epubBook.spine.get(Math.floor((newPage - 1) / 10));
+                  if (spine) {
+                    rendition.display(spine.href);
+                  }
+                } catch (spineError) {
+                  console.warn('⚠️ Fallback de spine também falhou:', spineError);
+                }
+              });
+            } else {
+              console.warn('⚠️ CFI não encontrado para página:', newPage);
+            }
+          } else {
+            console.warn('⚠️ Locations ainda não geradas, aguardando...');
+          }
+        } catch (error) {
+          console.warn('⚠️ Erro ao acessar locations:', error);
+        }
+      } else {
+        console.warn('⚠️ Locations não inicializadas ainda');
+      }
     }
   }, [state.totalPages, book.format, epubBook, rendition]);
 
@@ -665,6 +1064,9 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
   // Cleanup (copiado do koodo-reader)
   useEffect(() => {
     return () => {
+      // Limpar cache de arquivos
+      fileCacheRef.current.clear();
+      
       if (epubBook) {
         try {
           epubBook.destroy();
@@ -679,6 +1081,10 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
           console.warn('Erro ao destruir rendition:', error);
         }
       }
+      
+      // Limpar buffer refs
+      setFileBuffer(null);
+      fileBufferRef.current = null;
     };
   }, [epubBook, rendition]);
 
@@ -812,32 +1218,86 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
           />
         )}
 
-        {state.loading && (
+        {(state.loading || isDownloading) && (
           <div className="koodo-loading">
             <div className="koodo-spinner"></div>
-            <p>Carregando {book.format?.toUpperCase()}...</p>
+            {isDownloading ? (
+              <>
+                <p>Baixando {book.format?.toUpperCase()}... {downloadProgress}%</p>
+                <div style={{ 
+                  width: '300px', 
+                  height: '6px', 
+                  backgroundColor: '#f0f0f0', 
+                  borderRadius: '3px',
+                  overflow: 'hidden',
+                  margin: '10px 0'
+                }}>
+                  <div style={{
+                    width: `${downloadProgress}%`,
+                    height: '100%',
+                    backgroundColor: '#4285f4',
+                    transition: 'width 0.3s ease',
+                    borderRadius: '3px'
+                  }} />
+                </div>
+              </>
+            ) : (
+              <p>Carregando {book.format?.toUpperCase()}...</p>
+            )}
           </div>
         )}
 
         {state.error && (
           <div className="koodo-error">
-            <h3>Erro ao carregar o livro</h3>
+            <h3>⚠️ Erro ao carregar o livro</h3>
             <p>{state.error}</p>
-            <button
-              onClick={() => {
-                setState(prev => ({ ...prev, error: null }));
-                window.location.reload();
-              }}
-              className="koodo-btn primary"
-            >
-              Tentar Novamente
-            </button>
+            
+            {/* Dicas específicas para problemas de EPUB */}
+            {state.error.includes('corrompido') && (
+              <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fff3cd', borderRadius: '8px', fontSize: '14px' }}>
+                <strong>💡 Dicas:</strong>
+                <ul style={{ textAlign: 'left', marginTop: '8px' }}>
+                  <li>Verifique se o arquivo EPUB não está corrompido</li>
+                  <li>Tente fazer download do arquivo novamente</li>
+                  <li>Alguns EPUBs antigos podem ser incompatíveis</li>
+                </ul>
+              </div>
+            )}
+            
+            {state.error.includes('grande') && (
+              <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#d1ecf1', borderRadius: '8px', fontSize: '14px' }}>
+                <strong>⏱️ Arquivo grande:</strong>
+                <ul style={{ textAlign: 'left', marginTop: '8px' }}>
+                  <li>Aguarde alguns segundos a mais</li>
+                  <li>Verifique sua conexão com internet</li>
+                  <li>Arquivos maiores podem demorar mais para carregar</li>
+                </ul>
+              </div>
+            )}
+            
+            <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  setState(prev => ({ ...prev, error: null }));
+                  window.location.reload();
+                }}
+                className="koodo-btn primary"
+              >
+                🔄 Tentar Novamente
+              </button>
+              
+              {onBack && (
+                <button onClick={onBack} className="koodo-btn">
+                  ← Voltar
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        {!state.loading && !state.error && book.format === 'pdf' && (
+        {!state.loading && !state.error && book.format === 'pdf' && fileBuffer && (
           <Document
-            file={getFileUrl()}
+            file={fileBuffer}
             onLoadSuccess={({ numPages }) => {
               console.log('✅ PDF carregado:', numPages, 'páginas');
               setState(prev => ({ ...prev, totalPages: numPages }));
@@ -871,4 +1331,14 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
   );
 };
 
-export default KoodoViewer; 
+export default KoodoViewer;
+
+// Adicionar displayName para debug
+KoodoViewer.displayName = 'KoodoViewer';
+
+// Verificação de tipo para desenvolvimento
+if (process.env.NODE_ENV === 'development') {
+  if (typeof KoodoViewer !== 'function') {
+    console.error('⚠️ KoodoViewer não é uma função válida:', typeof KoodoViewer);
+  }
+} 

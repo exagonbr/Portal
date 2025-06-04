@@ -85,18 +85,18 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
   }
 
   return (
-    <div className="fixed bottom-4 right-8 z-50">
+    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
       <button
         onClick={handleInstallClick}
-        className={`flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg transition-colors duration-200 ${
+        className={`flex items-center gap-3 px-6 py-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-105 ${
           isHttps 
-            ? 'bg-primary-DEFAULT text-white hover:bg-primary-dark' 
-            : 'bg-yellow-600 text-white hover:bg-yellow-700'
-        }`}
+            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-blue-500/25' 
+            : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 shadow-orange-500/25'
+        } backdrop-blur-sm border border-white/20`}
         aria-label="Install PWA"
       >
-        <FaDownload className="text-lg" />
-        <span className="font-medium">
+        <FaDownload className="text-xl animate-bounce" />
+        <span className="font-semibold text-lg">
           {isHttps ? 'Instalar App' : 'Instalar App'}
         </span>
       </button>

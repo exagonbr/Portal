@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Book as EpubBook, Rendition } from 'epubjs';
 import { Book } from '@/constants/mockData';
@@ -23,6 +25,7 @@ import {
   FiHome
 } from 'react-icons/fi';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import dynamic from 'next/dynamic';
 
 interface EPUBViewerProps {
   fileUrl: string;
@@ -48,6 +51,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   
+  const [isClient, setIsClient] = useState(false);
   const [book, setBook] = useState<EpubBook | null>(null);
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const [viewerState, setViewerState] = useState<ViewerState>({
@@ -72,6 +76,9 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
   const [newBookmarkTitle, setNewBookmarkTitle] = useState('');
   const [isAddingBookmark, setIsAddingBookmark] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [epubLoaded, setEpubLoaded] = useState(false);
+  const initLockRef = useRef(false);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   // Função para obter URL completa do arquivo
   const getFileUrl = useCallback((url: string): string => {
@@ -171,149 +178,185 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     };
   }, []);
 
-  const initializeEPUB = useCallback(async () => {
-    if (!viewerRef.current) return;
+  // Função de cleanup melhorada
+  const cleanupEPUB = useCallback(() => {
+    console.log('🧹 Iniciando cleanup EPUB...');
     
+    try {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+
+      if (rendition) {
+        console.log('🧹 Destruindo rendition...');
+        rendition.destroy();
+        setRendition(null);
+      }
+
+      if (book) {
+        console.log('🧹 Destruindo book...');
+        book.destroy();
+        setBook(null);
+      }
+
+      setEpubLoaded(false);
+      setError(null);
+      initLockRef.current = false;
+      
+      console.log('✅ Cleanup EPUB completo');
+    } catch (error) {
+      console.warn('⚠️ Erro durante cleanup EPUB:', error);
+    }
+  }, [book, rendition]);
+
+  const initializeEPUB = useCallback(async () => {
+    // Prevenir múltiplas inicializações
+    if (initLockRef.current) {
+      console.log('🔒 Inicialização EPUB já em andamento, ignorando...');
+      return;
+    }
+
+    initLockRef.current = true;
     setLoading(true);
     setError(null);
 
     try {
+      console.log('🔄 Iniciando inicialização EPUB robusta...');
+      
+      // Cleanup anterior
+      cleanupEPUB();
+
       const absoluteUrl = getFileUrl(fileUrl);
-      console.log('Carregando EPUB:', absoluteUrl);
+      console.log('📚 Carregando EPUB:', absoluteUrl);
 
       // Verificar se o arquivo existe
-      try {
-        const response = await fetch(absoluteUrl, { method: 'HEAD' });
-        if (!response.ok) {
-          throw new Error(`Arquivo não encontrado: ${response.status}`);
-        }
-      } catch (fetchError) {
-        throw new Error('Arquivo EPUB não encontrado ou inacessível');
+      const response = await fetch(absoluteUrl, { method: 'HEAD' });
+      if (!response.ok) {
+        throw new Error(`Arquivo EPUB não encontrado (Status: ${response.status})`);
       }
 
+      // Aguardar próximo tick para garantir que o DOM está pronto
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Verificar se o container existe
+      const container = document.getElementById('epub-viewer');
+      if (!container) {
+        throw new Error('Container #epub-viewer não encontrado');
+      }
+
+      console.log('📚 Criando instância EPUB com configurações robustas...');
+      
+      // Criar nova instância com configurações seguras
       const newBook = new EpubBook(absoluteUrl, {
         openAs: 'epub',
         requestHeaders: {
-          'Accept': 'application/epub+zip',
-          'Access-Control-Allow-Origin': '*'
+          'Accept': 'application/epub+zip, application/zip',
+          'Cache-Control': 'no-cache'
         }
       });
 
-      setBook(newBook);
-
-      // Aguardar o livro estar pronto
-      await newBook.ready;
+      // Aguardar o book estar completamente pronto com timeout
+      console.log('⏳ Aguardando EPUB estar completamente pronto...');
       
-      // Carregar metadados com timeout de segurança
-      try {
-        const meta = await Promise.race([
-          newBook.loaded.metadata,
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout ao carregar metadados')), 10000)
-          )
-        ]);
-        setBookMetadata(meta);
-      } catch (metaError) {
-        console.warn('Erro ao carregar metadados:', metaError);
-        // Continuar sem os metadados
-      }
-      
-      // Renderizar o livro com dimensões fit-to-screen
-      const newRendition = newBook.renderTo(viewerRef.current, {
-        width: dimensions.width,
-        height: dimensions.height,
-        spread: viewerState.isDualPage ? 'auto' : 'none',
-        flow: 'paginated',
-        allowScriptedContent: false // Desabilitar scripts para evitar problemas
-      });
-      
-      setRendition(newRendition);
-
-      // Aguardar que o rendition esteja completamente carregado
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Timeout ao renderizar EPUB'));
-        }, 15000);
-
-        newRendition.on('rendered', () => {
-          clearTimeout(timeout);
-          resolve(true);
-        });
-
-        // Fallback - se não houver evento rendered, usar display
-        newRendition.display().then(() => {
-          clearTimeout(timeout);
-          resolve(true);
-        }).catch(reject);
-      });
-
-      // Gerar localizações para paginação com timeout
-      try {
-        await Promise.race([
-          newBook.locations.generate(1024),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout ao gerar localizações')), 15000)
-          )
-        ]);
-        const total = newBook.locations.length();
-        setTotalPages(total);
-      } catch (locationError) {
-        console.warn('Erro ao gerar localizações:', locationError);
-        // Usar um número estimado de páginas
-        setTotalPages(100);
-      }
-
-      // Configurar listeners de eventos com verificações de segurança
-      newRendition.on('relocated', (location: any) => {
-        if (location && location.start && location.start.cfi && newBook.locations) {
-          const currentLocation = newBook.locations.locationFromCfi(location.start.cfi);
-          if (typeof currentLocation === 'number') {
-            setViewerState(prev => ({ ...prev, currentPage: currentLocation + 1 }));
-          }
-        }
-      });
-
-      // Manipular seleção de texto para destaques com verificações de segurança
-      newRendition.on('selected', (cfiRange: string, contents: any) => {
-        try {
-          if (contents && contents.window && contents.window.getSelection) {
-            const selection = contents.window.getSelection();
-            const text = selection ? selection.toString() : null;
-            if (text) {
-              handleTextSelection(cfiRange, text);
+      const readyBook = await Promise.race([
+        new Promise<EpubBook>((resolve, reject) => {
+          newBook.ready.then(() => {
+            console.log('✅ EPUB.ready resolvido');
+            
+            // Validações básicas
+            if (!newBook.spine) {
+              reject(new Error('EPUB sem spine válido'));
+              return;
             }
-          }
-        } catch (selectionError) {
-          console.warn('Erro ao processar seleção de texto:', selectionError);
+
+            if (!newBook.navigation) {
+              console.warn('⚠️ EPUB sem navigation, mas continuando...');
+            }
+
+            console.log('✅ EPUB book validado e pronto');
+            resolve(newBook);
+          }).catch(reject);
+        }),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: EPUB não carregou em 30 segundos')), 30000)
+        )
+      ]);
+
+      console.log('✅ EPUB book completamente pronto');
+      setBook(readyBook);
+
+      // Aguardar um tick antes de renderizar
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Criar rendition com configurações robustas
+      console.log('🎨 Criando rendition EPUB...');
+      
+      const newRendition = readyBook.renderTo('epub-viewer', {
+        width: '100%',
+        height: '100%',
+        spread: 'none',
+        flow: 'paginated',
+        manager: 'default',
+        minSpreadWidth: 600
+      });
+
+      // Aguardar renderização com timeout
+      await Promise.race([
+        new Promise<void>((resolve, reject) => {
+          newRendition.display().then(() => {
+            console.log('🎨 EPUB renderizado com sucesso');
+            resolve();
+          }).catch(reject);
+        }),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout: Renderização EPUB falhou em 15 segundos')), 15000)
+        )
+      ]);
+
+      setRendition(newRendition);
+      setEpubLoaded(true);
+
+      // Configurar cleanup para este componente
+      cleanupRef.current = () => {
+        try {
+          newRendition.destroy();
+          readyBook.destroy();
+        } catch (error) {
+          console.warn('Erro no cleanup específico:', error);
         }
-      });
+      };
 
-      // Adicionar listener para erros de rendering
-      newRendition.on('error', (error: any) => {
-        console.warn('Erro de renderização EPUB:', error);
-        // Não parar a execução, apenas registrar o erro
-      });
+      console.log('✅ EPUB inicializado com sucesso!');
 
-      setLoading(false);
     } catch (error) {
-      console.error('Erro ao carregar EPUB:', error);
+      console.error('❌ Erro ao inicializar EPUB:', error);
       setError(error instanceof Error ? error.message : 'Falha ao carregar o documento EPUB');
+      cleanupEPUB();
+    } finally {
       setLoading(false);
+      initLockRef.current = false;
     }
-  }, [fileUrl, getFileUrl, viewerState.isDualPage, dimensions]);
+  }, [fileUrl, getFileUrl]);
 
+  // Effect para inicialização
   useEffect(() => {
-    // Só inicializar se as dimensões são válidas e ainda não foi inicializado
-    if (dimensions.width > 0 && dimensions.height > 0 && !book) {
-      initializeEPUB();
-    }
+    if (fileUrl && !epubLoaded && !initLockRef.current) {
+      const timer = setTimeout(() => {
+        initializeEPUB();
+      }, 100);
 
+      return () => clearInterval(timer);
+    }
+  }, [fileUrl, epubLoaded, initializeEPUB]);
+
+  // Effect para cleanup na desmontagem
+  useEffect(() => {
     return () => {
-      if (book) {
-        book.destroy();
-      }
+      console.log('🔄 Componente EPUBViewer desmontando...');
+      cleanupEPUB();
     };
-  }, [initializeEPUB]); // Remover dimensions das dependências
+  }, [cleanupEPUB]);
 
   // Separar useEffect para redimensionamento da renderização existente
   useEffect(() => {
@@ -471,6 +514,23 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
     pageCount: totalPages,
     format: 'epub'
   };
+
+  // Effect para detectar client-side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Não renderizar nada no servidor
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Carregando visualizador EPUB...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

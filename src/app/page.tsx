@@ -11,7 +11,7 @@ export default function HomePage() {
   const [showUnauthorizedMessage, setShowUnauthorizedMessage] = useState(false);
 
   useEffect(() => {
-    const error = searchParams.get('error');
+    const error = searchParams?.get('error');
     if (error === 'unauthorized') {
       setShowUnauthorizedMessage(true);
       // Remove the error parameter from URL after showing the message

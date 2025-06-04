@@ -13,7 +13,7 @@ export default function BooksLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-fit w-full">
       {children}
     </div>
   )

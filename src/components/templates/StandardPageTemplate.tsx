@@ -1,7 +1,7 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import StandardLayout from '@/components/templates/StandardLayout';
+import StandardLayout from '@/components/StandardLayout';
 import StatCard from '@/components/ui/StatCard';
 import StandardTable from '@/components/ui/StandardTable';
 
