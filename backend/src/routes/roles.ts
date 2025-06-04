@@ -1,7 +1,9 @@
 import express from 'express';
 import { validateJWT, requireRole } from '../middleware/auth';
+import { RoleController } from '../controllers/refactored/RoleController';
 
 const router = express.Router();
+const roleController = new RoleController();
 
 /**
  * @swagger
@@ -24,6 +26,21 @@ const router = express.Router();
  *           type: string
  *           enum: [active, inactive]
  *         description: Filter roles by status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search in role name and description
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Items per page
  *     responses:
  *       200:
  *         description: List of roles
@@ -38,9 +55,7 @@ const router = express.Router();
  *       403:
  *         description: Forbidden
  */
-router.get('/', validateJWT, requireRole(['admin', 'manager']), async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.get('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getAll);
 
 /**
  * @swagger
@@ -67,9 +82,85 @@ router.get('/', validateJWT, requireRole(['admin', 'manager']), async (req, res)
  *       404:
  *         description: Role not found
  */
-router.get('/:id', validateJWT, requireRole(['admin', 'manager']), async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.get('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getById);
+
+/**
+ * @swagger
+ * /api/roles/stats:
+ *   get:
+ *     summary: Get role statistics
+ *     tags: [Roles]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Role statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalRoles:
+ *                   type: integer
+ *                 systemRoles:
+ *                   type: integer
+ *                 customRoles:
+ *                   type: integer
+ *                 activeRoles:
+ *                   type: integer
+ *                 inactiveRoles:
+ *                   type: integer
+ *                 totalUsers:
+ *                   type: integer
+ */
+router.get('/stats', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getStats);
+
+/**
+ * @swagger
+ * /api/roles/frontend:
+ *   get:
+ *     summary: Get roles formatted for frontend
+ *     tags: [Roles]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Frontend formatted roles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 systemRoles:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ExtendedRole'
+ *                 customRoles:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/CustomRole'
+ */
+router.get('/frontend', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getRolesForFrontend);
+
+/**
+ * @swagger
+ * /api/roles/permission-groups:
+ *   get:
+ *     summary: Get permission groups for frontend
+ *     tags: [Roles]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Permission groups
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/PermissionGroup'
+ */
+router.get('/permission-groups', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getPermissionGroups);
 
 /**
  * @swagger
@@ -117,9 +208,7 @@ router.get('/:id', validateJWT, requireRole(['admin', 'manager']), async (req, r
  *       409:
  *         description: Role name already exists
  */
-router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.create);
 
 /**
  * @swagger
@@ -165,9 +254,7 @@ router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
  *       404:
  *         description: Role not found
  */
-router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.put('/:id', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.update);
 
 /**
  * @swagger
@@ -192,39 +279,30 @@ router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
  *       400:
  *         description: Cannot delete system role or role with users
  */
-router.delete('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.delete('/:id', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.delete);
 
 /**
  * @swagger
- * /api/roles/{id}/permissions:
- *   get:
- *     summary: Get permissions for a role
+ * /api/roles/assign-teacher-role:
+ *   post:
+ *     summary: Assign TEACHER role to imported users
  *     tags: [Roles]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
  *     responses:
  *       200:
- *         description: Role permissions
+ *         description: Teacher role assigned successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Permission'
+ *               type: object
+ *               properties:
+ *                 updated:
+ *                   type: integer
+ *                   description: Number of users updated
  *       404:
- *         description: Role not found
+ *         description: TEACHER role not found
  */
-router.get('/:id/permissions', validateJWT, requireRole(['admin', 'manager']), async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.post('/assign-teacher-role', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.assignTeacherRoleToImportedUsers);
 
 export default router;

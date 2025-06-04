@@ -29,7 +29,12 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "queue:dev": "nodemon src/queues/worker.ts"
+    "queue:dev": "nodemon src/queues/worker.ts",
+    "migrate:latest": "knex migrate:latest",
+    "migrate:make": "knex migrate:make",
+    "seed:run": "knex seed:run",
+    "seed:make": "knex seed:make",
+    "assign-teacher-role": "node -r ts-node/register src/scripts/assignTeacherRole.ts"
   },
   "keywords": [
     "education",
