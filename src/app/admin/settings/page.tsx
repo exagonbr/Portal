@@ -3,11 +3,232 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
+// Interfaces para tipagem
+interface AwsSettings {
+  id?: string
+  accessKeyId: string
+  secretAccessKey: string
+  region: string
+  s3BucketName: string
+  cloudWatchNamespace: string
+  updateInterval: number
+  enableRealTimeUpdates: boolean
+}
+
+interface BackgroundSettings {
+  id?: string
+  type: string
+  videoFile: string
+  customUrl: string
+  solidColor: string
+}
+
+interface GeneralSettings {
+  id?: string
+  platformName: string
+  systemUrl: string
+  supportEmail: string
+}
+
+interface SecuritySettings {
+  id?: string
+  minPasswordLength: number
+  requireSpecialChars: boolean
+  requireNumbers: boolean
+  twoFactorAuth: string
+  sessionTimeout: number
+}
+
+interface EmailSettings {
+  id?: string
+  smtpServer: string
+  smtpPort: number
+  encryption: string
+  senderEmail: string
+  senderPassword: string
+}
+
+// Funções CRUD para API
+const settingsAPI = {
+  // AWS Settings CRUD
+  async getAwsSettings(): Promise<AwsSettings> {
+    try {
+      const response = await fetch('/api/settings/aws')
+      if (!response.ok) throw new Error('Erro ao carregar configurações AWS')
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao carregar AWS settings:', error)
+      return {
+        accessKeyId: '',
+        secretAccessKey: '',
+        region: 'us-east-1',
+        s3BucketName: '',
+        cloudWatchNamespace: 'Portal/Metrics',
+        updateInterval: 30,
+        enableRealTimeUpdates: true
+      }
+    }
+  },
+
+  async saveAwsSettings(settings: AwsSettings): Promise<AwsSettings> {
+    const response = await fetch('/api/settings/aws', {
+      method: settings.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    })
+    if (!response.ok) throw new Error('Erro ao salvar configurações AWS')
+    return await response.json()
+  },
+
+  async deleteAwsSettings(id: string): Promise<void> {
+    const response = await fetch(`/api/settings/aws/${id}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Erro ao deletar configurações AWS')
+  },
+
+  // Background Settings CRUD
+  async getBackgroundSettings(): Promise<BackgroundSettings> {
+    try {
+      const response = await fetch('/api/settings/background')
+      if (!response.ok) throw new Error('Erro ao carregar configurações de fundo')
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao carregar background settings:', error)
+      return {
+        type: 'video',
+        videoFile: '/back_video1.mp4',
+        customUrl: '',
+        solidColor: '#1e3a8a'
+      }
+    }
+  },
+
+  async saveBackgroundSettings(settings: BackgroundSettings): Promise<BackgroundSettings> {
+    const response = await fetch('/api/settings/background', {
+      method: settings.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    })
+    if (!response.ok) throw new Error('Erro ao salvar configurações de fundo')
+    return await response.json()
+  },
+
+  // General Settings CRUD
+  async getGeneralSettings(): Promise<GeneralSettings> {
+    try {
+      const response = await fetch('/api/settings/general')
+      if (!response.ok) throw new Error('Erro ao carregar configurações gerais')
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao carregar general settings:', error)
+      return {
+        platformName: 'Portal Educacional',
+        systemUrl: 'https://portal.educacional.com',
+        supportEmail: 'suporte@portal.educacional.com'
+      }
+    }
+  },
+
+  async saveGeneralSettings(settings: GeneralSettings): Promise<GeneralSettings> {
+    const response = await fetch('/api/settings/general', {
+      method: settings.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    })
+    if (!response.ok) throw new Error('Erro ao salvar configurações gerais')
+    return await response.json()
+  },
+
+  // Security Settings CRUD
+  async getSecuritySettings(): Promise<SecuritySettings> {
+    try {
+      const response = await fetch('/api/settings/security')
+      if (!response.ok) throw new Error('Erro ao carregar configurações de segurança')
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao carregar security settings:', error)
+      return {
+        minPasswordLength: 8,
+        requireSpecialChars: true,
+        requireNumbers: true,
+        twoFactorAuth: 'optional',
+        sessionTimeout: 30
+      }
+    }
+  },
+
+  async saveSecuritySettings(settings: SecuritySettings): Promise<SecuritySettings> {
+    const response = await fetch('/api/settings/security', {
+      method: settings.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    })
+    if (!response.ok) throw new Error('Erro ao salvar configurações de segurança')
+    return await response.json()
+  },
+
+  // Email Settings CRUD
+  async getEmailSettings(): Promise<EmailSettings> {
+    try {
+      const response = await fetch('/api/settings/email')
+      if (!response.ok) throw new Error('Erro ao carregar configurações de email')
+      return await response.json()
+    } catch (error) {
+      console.error('Erro ao carregar email settings:', error)
+      return {
+        smtpServer: '',
+        smtpPort: 587,
+        encryption: 'tls',
+        senderEmail: '',
+        senderPassword: ''
+      }
+    }
+  },
+
+  async saveEmailSettings(settings: EmailSettings): Promise<EmailSettings> {
+    const response = await fetch('/api/settings/email', {
+      method: settings.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    })
+    if (!response.ok) throw new Error('Erro ao salvar configurações de email')
+    return await response.json()
+  },
+
+  // Teste de conexões
+  async testS3Connection(settings: AwsSettings): Promise<boolean> {
+    try {
+      const response = await fetch('/api/settings/test-s3', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      })
+      return response.ok
+    } catch (error) {
+      console.error('Erro ao testar conexão S3:', error)
+      return false
+    }
+  },
+
+  async testEmailConnection(settings: EmailSettings): Promise<boolean> {
+    try {
+      const response = await fetch('/api/settings/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      })
+      return response.ok
+    } catch (error) {
+      console.error('Erro ao testar conexão email:', error)
+      return false
+    }
+  }
+}
+
 export default function AdminSettingsPage() {
   const { user } = useAuth()
   
-  // Estados para as configurações da AWS
-  const [awsSettings, setAwsSettings] = useState({
+  // Estados para as configurações
+  const [awsSettings, setAwsSettings] = useState<AwsSettings>({
     accessKeyId: '',
     secretAccessKey: '',
     region: 'us-east-1',
@@ -17,13 +238,41 @@ export default function AdminSettingsPage() {
     enableRealTimeUpdates: true
   })
 
-  // Estado para o plano de fundo do login
-  const [backgroundSettings, setBackgroundSettings] = useState({
-    type: 'video', // 'video', 'url', 'color'
+  const [backgroundSettings, setBackgroundSettings] = useState<BackgroundSettings>({
+    type: 'video',
     videoFile: '/back_video1.mp4',
     customUrl: '',
     solidColor: '#1e3a8a'
   })
+
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
+    platformName: 'Portal Educacional',
+    systemUrl: 'https://portal.educacional.com',
+    supportEmail: 'suporte@portal.educacional.com'
+  })
+
+  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
+    minPasswordLength: 8,
+    requireSpecialChars: true,
+    requireNumbers: true,
+    twoFactorAuth: 'optional',
+    sessionTimeout: 30
+  })
+
+  const [emailSettings, setEmailSettings] = useState<EmailSettings>({
+    smtpServer: '',
+    smtpPort: 587,
+    encryption: 'tls',
+    senderEmail: '',
+    senderPassword: ''
+  })
+
+  // Estados para controle de UI
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [testingS3, setTestingS3] = useState(false)
+  const [testingEmail, setTestingEmail] = useState(false)
 
   // Lista de vídeos disponíveis na pasta public
   const availableVideos = [
@@ -34,6 +283,7 @@ export default function AdminSettingsPage() {
     '/back_video4.mp4'
   ]
 
+  // Funções de manipulação de estado
   const handleAwsSettingsChange = (field: string, value: string | number | boolean) => {
     setAwsSettings(prev => ({ ...prev, [field]: value }))
   }
@@ -42,46 +292,180 @@ export default function AdminSettingsPage() {
     setBackgroundSettings(prev => ({ ...prev, [field]: value }))
   }
 
-  const saveSettings = () => {
-    // Aqui você salvaria as configurações no backend
-    localStorage.setItem('awsSettings', JSON.stringify(awsSettings))
-    localStorage.setItem('backgroundSettings', JSON.stringify(backgroundSettings))
-    alert('Configurações salvas com sucesso!')
+  const handleGeneralSettingsChange = (field: string, value: string) => {
+    setGeneralSettings(prev => ({ ...prev, [field]: value }))
   }
 
-  const restoreDefaults = () => {
-    setAwsSettings({
-      accessKeyId: '',
-      secretAccessKey: '',
-      region: 'us-east-1',
-      s3BucketName: '',
-      cloudWatchNamespace: 'Portal/Metrics',
-      updateInterval: 30,
-      enableRealTimeUpdates: true
-    })
-    setBackgroundSettings({
-      type: 'video',
-      videoFile: '/back_video1.mp4',
-      customUrl: '',
-      solidColor: '#1e3a8a'
-    })
+  const handleSecuritySettingsChange = (field: string, value: string | number | boolean) => {
+    setSecuritySettings(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleEmailSettingsChange = (field: string, value: string | number) => {
+    setEmailSettings(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Função para mostrar notificações
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    if (type === 'success') {
+      setSuccess(message)
+      setError(null)
+    } else {
+      setError(message)
+      setSuccess(null)
+    }
+    setTimeout(() => {
+      setSuccess(null)
+      setError(null)
+    }, 5000)
+  }
+
+  // Salvar todas as configurações
+  const saveSettings = async () => {
+    setLoading(true)
+    try {
+      await Promise.all([
+        settingsAPI.saveAwsSettings(awsSettings),
+        settingsAPI.saveBackgroundSettings(backgroundSettings),
+        settingsAPI.saveGeneralSettings(generalSettings),
+        settingsAPI.saveSecuritySettings(securitySettings),
+        settingsAPI.saveEmailSettings(emailSettings)
+      ])
+      showNotification('Configurações salvas com sucesso!', 'success')
+    } catch (error: any) {
+      showNotification(error.message || 'Erro ao salvar configurações', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Restaurar configurações padrão
+  const restoreDefaults = async () => {
+    if (!confirm('Tem certeza que deseja restaurar as configurações padrão? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      // Reset dos estados para valores padrão
+      setAwsSettings({
+        accessKeyId: '',
+        secretAccessKey: '',
+        region: 'us-east-1',
+        s3BucketName: '',
+        cloudWatchNamespace: 'Portal/Metrics',
+        updateInterval: 30,
+        enableRealTimeUpdates: true
+      })
+      setBackgroundSettings({
+        type: 'video',
+        videoFile: '/back_video1.mp4',
+        customUrl: '',
+        solidColor: '#1e3a8a'
+      })
+      setGeneralSettings({
+        platformName: 'Portal Educacional',
+        systemUrl: 'https://portal.educacional.com',
+        supportEmail: 'suporte@portal.educacional.com'
+      })
+      setSecuritySettings({
+        minPasswordLength: 8,
+        requireSpecialChars: true,
+        requireNumbers: true,
+        twoFactorAuth: 'optional',
+        sessionTimeout: 30
+      })
+      setEmailSettings({
+        smtpServer: '',
+        smtpPort: 587,
+        encryption: 'tls',
+        senderEmail: '',
+        senderPassword: ''
+      })
+      
+      showNotification('Configurações restauradas para os valores padrão', 'success')
+    } catch (error: any) {
+      showNotification('Erro ao restaurar configurações padrão', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Testar conexão S3
+  const testS3Connection = async () => {
+    setTestingS3(true)
+    try {
+      const result = await settingsAPI.testS3Connection(awsSettings)
+      if (result) {
+        showNotification('Conexão S3 testada com sucesso!', 'success')
+      } else {
+        showNotification('Falha na conexão S3. Verifique as credenciais.', 'error')
+      }
+    } catch (error) {
+      showNotification('Erro ao testar conexão S3', 'error')
+    } finally {
+      setTestingS3(false)
+    }
+  }
+
+  // Testar conexão de email
+  const testEmailConnection = async () => {
+    setTestingEmail(true)
+    try {
+      const result = await settingsAPI.testEmailConnection(emailSettings)
+      if (result) {
+        showNotification('Conexão de email testada com sucesso!', 'success')
+      } else {
+        showNotification('Falha na conexão de email. Verifique as configurações.', 'error')
+      }
+    } catch (error) {
+      showNotification('Erro ao testar conexão de email', 'error')
+    } finally {
+      setTestingEmail(false)
+    }
+  }
+
+  // Carregar configurações ao montar o componente
   useEffect(() => {
-    // Carregar configurações salvas
-    const saved = localStorage.getItem('awsSettings')
-    if (saved) {
-      setAwsSettings(JSON.parse(saved))
+    const loadSettings = async () => {
+      setLoading(true)
+      try {
+        const [aws, background, general, security, email] = await Promise.all([
+          settingsAPI.getAwsSettings(),
+          settingsAPI.getBackgroundSettings(),
+          settingsAPI.getGeneralSettings(),
+          settingsAPI.getSecuritySettings(),
+          settingsAPI.getEmailSettings()
+        ])
+        
+        setAwsSettings(aws)
+        setBackgroundSettings(background)
+        setGeneralSettings(general)
+        setSecuritySettings(security)
+        setEmailSettings(email)
+      } catch (error: any) {
+        showNotification('Erro ao carregar configurações', 'error')
+      } finally {
+        setLoading(false)
+      }
     }
     
-    const savedBackground = localStorage.getItem('backgroundSettings')
-    if (savedBackground) {
-      setBackgroundSettings(JSON.parse(savedBackground))
-    }
+    loadSettings()
   }, [])
 
   return (
     <div className="space-y-6">
+      {/* Notificações */}
+      {success && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+          <span className="block sm:inline">{success}</span>
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-600">Configurações do Sistema</h1>
@@ -90,15 +474,17 @@ export default function AdminSettingsPage() {
         <div className="space-x-4">
           <button 
             onClick={restoreDefaults}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+            disabled={loading}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 disabled:opacity-50"
           >
-            Restaurar Padrões
+            {loading ? 'Carregando...' : 'Restaurar Padrões'}
           </button>
           <button 
             onClick={saveSettings}
-            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
+            disabled={loading}
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200 disabled:opacity-50"
           >
-            Salvar Alterações
+            {loading ? 'Salvando...' : 'Salvar Alterações'}
           </button>
         </div>
       </div>
@@ -235,8 +621,12 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <button className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/80">
-                  Testar Conexão S3
+                <button 
+                  onClick={testS3Connection}
+                  disabled={testingS3}
+                  className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/80 disabled:opacity-50"
+                >
+                  {testingS3 ? 'Testando...' : 'Testar Conexão S3'}
                 </button>
                 <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
                   Visualizar Buckets
@@ -255,8 +645,9 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="text"
+                  value={generalSettings.platformName}
+                  onChange={(e) => handleGeneralSettingsChange('platformName', e.target.value)}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  defaultValue="Portal Educacional"
                 />
               </div>
               <div>
@@ -265,8 +656,9 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="text"
+                  value={generalSettings.systemUrl}
+                  onChange={(e) => handleGeneralSettingsChange('systemUrl', e.target.value)}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  defaultValue="https://portal.educacional.com"
                 />
               </div>
               <div>
@@ -275,8 +667,9 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="email"
+                  value={generalSettings.supportEmail}
+                  onChange={(e) => handleGeneralSettingsChange('supportEmail', e.target.value)}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  defaultValue="suporte@portal.educacional.com"
                 />
               </div>
               <div>
@@ -429,15 +822,30 @@ export default function AdminSettingsPage() {
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center">
-                    <input type="checkbox" className="h-4 w-4 text-primary" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="h-4 w-4 text-primary" 
+                      checked={securitySettings.minPasswordLength >= 8}
+                      onChange={(e) => handleSecuritySettingsChange('minPasswordLength', e.target.checked ? 8 : 6)}
+                    />
                     <span className="ml-2 text-sm text-gray-600">Mínimo 8 caracteres</span>
                   </div>
                   <div className="flex items-center">
-                    <input type="checkbox" className="h-4 w-4 text-primary" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="h-4 w-4 text-primary" 
+                      checked={securitySettings.requireSpecialChars}
+                      onChange={(e) => handleSecuritySettingsChange('requireSpecialChars', e.target.checked)}
+                    />
                     <span className="ml-2 text-sm text-gray-600">Exigir caracteres especiais</span>
                   </div>
                   <div className="flex items-center">
-                    <input type="checkbox" className="h-4 w-4 text-primary" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="h-4 w-4 text-primary" 
+                      checked={securitySettings.requireNumbers}
+                      onChange={(e) => handleSecuritySettingsChange('requireNumbers', e.target.checked)}
+                    />
                     <span className="ml-2 text-sm text-gray-600">Exigir números</span>
                   </div>
                 </div>
@@ -446,7 +854,11 @@ export default function AdminSettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Autenticação em Duas Etapas
                 </label>
-                <select className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                <select 
+                  value={securitySettings.twoFactorAuth}
+                  onChange={(e) => handleSecuritySettingsChange('twoFactorAuth', e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                >
                   <option value="optional">Opcional</option>
                   <option value="required">Obrigatório</option>
                   <option value="disabled">Desativado</option>
@@ -458,8 +870,9 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="number"
+                  value={securitySettings.sessionTimeout}
+                  onChange={(e) => handleSecuritySettingsChange('sessionTimeout', parseInt(e.target.value))}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  defaultValue="30"
                 />
               </div>
             </div>
@@ -475,6 +888,8 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="text"
+                  value={emailSettings.smtpServer}
+                  onChange={(e) => handleEmailSettingsChange('smtpServer', e.target.value)}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   placeholder="smtp.servidor.com"
                 />
@@ -486,6 +901,8 @@ export default function AdminSettingsPage() {
                   </label>
                   <input
                     type="number"
+                    value={emailSettings.smtpPort}
+                    onChange={(e) => handleEmailSettingsChange('smtpPort', parseInt(e.target.value))}
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                     placeholder="587"
                   />
@@ -494,7 +911,11 @@ export default function AdminSettingsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Criptografia
                   </label>
-                  <select className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                  <select 
+                    value={emailSettings.encryption}
+                    onChange={(e) => handleEmailSettingsChange('encryption', e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                  >
                     <option value="tls">TLS</option>
                     <option value="ssl">SSL</option>
                     <option value="none">Nenhuma</option>
@@ -507,9 +928,32 @@ export default function AdminSettingsPage() {
                 </label>
                 <input
                   type="email"
+                  value={emailSettings.senderEmail}
+                  onChange={(e) => handleEmailSettingsChange('senderEmail', e.target.value)}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
                   placeholder="noreply@portal.educacional.com"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Senha do Email
+                </label>
+                <input
+                  type="password"
+                  value={emailSettings.senderPassword}
+                  onChange={(e) => handleEmailSettingsChange('senderPassword', e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                  placeholder="Senha do email"
+                />
+              </div>
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={testEmailConnection}
+                  disabled={testingEmail}
+                  className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/80 disabled:opacity-50"
+                >
+                  {testingEmail ? 'Testando...' : 'Testar Conexão Email'}
+                </button>
               </div>
             </div>
           </div>

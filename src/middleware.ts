@@ -154,13 +154,19 @@ class SessionValidator {
       'responsável': '/dashboard/guardian',
       // Fallback para roles em inglês (compatibilidade)
       'student': '/dashboard/student',
+      'STUDENT': '/dashboard/student',
       'teacher': '/dashboard/teacher',
+      'TEACHER': '/dashboard/teacher',
       'manager': '/dashboard/manager',
       'admin': '/dashboard/admin',
       'system_admin': '/dashboard/admin',
+      'SYSTEM_ADMIN': '/dashboard/system-admin',
       'institution_manager': '/dashboard/manager',
+      'INSTITUTION_MANAGER': '/dashboard/institution-manager',
       'academic_coordinator': '/dashboard/coordinator',
+      'ACADEMIC_COORDINATOR': '/dashboard/coordinator',
       'guardian': '/dashboard/guardian',
+      'GUARDIAN': '/dashboard/guardian',
     }
 
 

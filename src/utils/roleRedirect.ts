@@ -6,13 +6,19 @@ import { UserRole } from '../types/auth';
 export const ROLE_DASHBOARD_MAP: Record<string, string> = {
   // Roles em inglês (mantidas para compatibilidade)
   'student': '/dashboard/student',
+  'STUDENT': '/dashboard/student',  // Adicionando versão em maiúsculas
   'teacher': '/dashboard/teacher',
+  'TEACHER': '/dashboard/teacher',  // Adicionando versão em maiúsculas
   'admin': '/dashboard/system-admin',
   'manager': '/dashboard/institution-manager',
   'system_admin': '/dashboard/system-admin',
+  'SYSTEM_ADMIN': '/dashboard/system-admin',  // Adicionando versão em maiúsculas
   'institution_manager': '/dashboard/institution-manager',
+  'INSTITUTION_MANAGER': '/dashboard/institution-manager',  // Adicionando versão em maiúsculas
   'academic_coordinator': '/dashboard/coordinator',
+  'ACADEMIC_COORDINATOR': '/dashboard/coordinator',  // Adicionando versão em maiúsculas
   'guardian': '/dashboard/guardian',
+  'GUARDIAN': '/dashboard/guardian',  // Adicionando versão em maiúsculas
   
   // Roles em português (vindas do backend)
   'aluno': '/dashboard/student',
