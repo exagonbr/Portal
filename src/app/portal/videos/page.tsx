@@ -18,13 +18,18 @@ import {
   ChevronDownIcon,
   BookmarkIcon,
   BookOpenIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  PlayIcon,
+  HeartIcon,
+  ShareIcon,
+  EllipsisVerticalIcon
 } from '@heroicons/react/24/outline';
-import { XMarkIcon as XMarkSolidIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon as XMarkSolidIcon, HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import Carousel from '../../../components/Carousel';
 import VideoCard from '../../../components/VideoCard';
 import SimpleCarousel from "@/components/SimpleCarousel";
 import { mockVideos, carouselVideoImages } from '@/constants/mockData';
+import { useTheme } from '@/contexts/ThemeContext';
 
 // Types
 type ViewMode = 'grid' | 'list';
@@ -61,61 +66,277 @@ const formatDuration = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-// Carousel settings
-const carouselSettings = {
-  slidesToShow: 6,
-  slidesToScroll: 1,
-  infinite: true,
-  dots: false,
-  arrows: true,
-  autoplay: false,
-  responsive: [
-    {
-      breakpoint: 1536,
-      settings: {
-        slidesToShow: 5,
-      },
-    },
-    {
-      breakpoint: 1280,
-      settings: {
-        slidesToShow: 4,
-      },
-    },
-    {
-      breakpoint: 1024,
-      settings: {
-        slidesToShow: 3,
-      },
-    },
-    {
-      breakpoint: 768,
-      settings: {
-        slidesToShow: 2,
-      },
-    },
-    {
-      breakpoint: 640,
-      settings: {
-        slidesToShow: 1,
-      },
-    },
-  ],
+// Modern Video Card Component
+const ModernVideoCard = ({ video, viewMode }: { video: typeof mockVideos[0], viewMode: ViewMode }) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const { theme } = useTheme();
+
+  if (viewMode === 'list') {
+    return (
+      <div 
+        className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="flex items-center p-4">
+          {/* Thumbnail */}
+          <div className="relative w-48 h-28 flex-shrink-0 rounded-lg overflow-hidden">
+            <img
+              src={video.thumbnail}
+              alt={video.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            />
+            {/* Play Overlay */}
+            <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+              <PlayIcon className="w-12 h-12 text-white" />
+            </div>
+            {/* Duration */}
+            <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 text-white text-xs font-medium rounded">
+              {video.duration}
+            </div>
+            {/* Progress Bar */}
+            {video.progress !== undefined && video.progress > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-300/50">
+                <div
+                  className="h-full transition-all duration-300"
+                  style={{ 
+                    width: `${video.progress}%`,
+                    backgroundColor: theme.colors.primary
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-grow ml-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2 mb-2">
+              {video.title}
+            </h3>
+            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+              {video.progress !== undefined && (
+                <span className="flex items-center gap-1">
+                  {video.progress === 100 ? (
+                    <>
+                      <CheckCircleIcon className="w-4 h-4" style={{ color: theme.colors.success }} />
+                      <span style={{ color: theme.colors.success }}>Concluído</span>
+                    </>
+                  ) : (
+                    <>
+                      <ClockIcon className="w-4 h-4" />
+                      {video.progress}% assistido
+                    </>
+                  )}
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <PlayCircleIcon className="w-4 h-4" />
+                1.2K visualizações
+              </span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLiked(!isLiked);
+              }}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              {isLiked ? (
+                <HeartSolidIcon className="w-5 h-5" style={{ color: theme.colors.accent }} />
+              ) : (
+                <HeartIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              )}
+            </button>
+            <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <ShareIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
+            <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <EllipsisVerticalIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Thumbnail Container */}
+      <div className="relative aspect-video overflow-hidden">
+        <img
+          src={video.thumbnail}
+          alt={video.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        
+        {/* Play Button Overlay */}
+        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center transform transition-transform duration-300 hover:scale-110">
+            <PlayIcon className="w-8 h-8 text-gray-900 ml-1" />
+          </div>
+        </div>
+
+        {/* Duration Badge */}
+        <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/80 text-white text-xs font-medium rounded-md">
+          {video.duration}
+        </div>
+
+        {/* Progress Bar */}
+        {video.progress !== undefined && video.progress > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-300/30">
+            <div
+              className="h-full transition-all duration-300"
+              style={{ 
+                width: `${video.progress}%`,
+                backgroundColor: theme.colors.primary
+              }}
+            />
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsLiked(!isLiked);
+            }}
+            className="p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
+          >
+            {isLiked ? (
+              <HeartSolidIcon className="w-4 h-4" style={{ color: theme.colors.accent }} />
+            ) : (
+              <HeartIcon className="w-4 h-4 text-gray-700" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+          {video.title}
+        </h3>
+        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+          <span className="flex items-center gap-1">
+            <PlayCircleIcon className="w-4 h-4" />
+            1.2K views
+          </span>
+          {video.progress !== undefined && video.progress > 0 && (
+            <span className="flex items-center gap-1">
+              {video.progress === 100 ? (
+                <CheckCircleIcon className="w-4 h-4" style={{ color: theme.colors.success }} />
+              ) : (
+                <>
+                  <ClockIcon className="w-4 h-4" />
+                  {video.progress}%
+                </>
+              )}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Hero Section Component
+const HeroSection = () => {
+  const { theme } = useTheme();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselVideoImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="relative h-[500px] overflow-hidden">
+      {/* Background Images */}
+      {carouselVideoImages.map((image, index) => (
+        <div
+          key={index}
+          className={`absolute inset-0 transition-opacity duration-1000 ${
+            index === currentSlide ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <img
+            src={image}
+            alt={`Slide ${index + 1}`}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ))}
+
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+
+      {/* Content */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center text-white max-w-4xl px-6">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 animate-fade-in">
+            Biblioteca de Vídeos
+          </h1>
+          <p className="text-xl md:text-2xl mb-8 opacity-90">
+            Explore nossa coleção de conteúdos educacionais em vídeo
+          </p>
+          <button
+            className="px-8 py-4 text-lg font-semibold rounded-full transition-all duration-300 transform hover:scale-105"
+            style={{
+              backgroundColor: theme.colors.primary,
+              color: 'white'
+            }}
+          >
+            Começar a Assistir
+          </button>
+        </div>
+      </div>
+
+      {/* Slide Indicators */}
+      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2">
+        {carouselVideoImages.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              index === currentSlide
+                ? 'w-8 bg-white'
+                : 'bg-white/50 hover:bg-white/70'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default function VideosPage() {
-  // State for view mode, filters, and sorting
+  const { theme } = useTheme();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortOption, setSortOption] = useState<SortOption>('recent');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
-  const [showAllVideos, setShowAllVideos] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
   
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
     category: 'all',
     searchQuery: '',
-    durationRange: [0, 60 * 60], // 0 seconds to 60 minutes
+    durationRange: [0, 60 * 60],
     subjects: [],
   });
 
@@ -130,7 +351,7 @@ export default function VideosPage() {
 
   // Filter videos for different sections
   const continueWatching = useMemo(() =>
-    mockVideos.filter(video => video.progress && video.progress > 0),
+    mockVideos.filter(video => video.progress && video.progress > 0 && video.progress < 100),
   []);
   
   const recommendations = useMemo(() =>
@@ -184,23 +405,35 @@ export default function VideosPage() {
           return progressB - progressA;
         case 'recent':
         default:
-          // Assuming newer videos have higher IDs
           return b.id.localeCompare(a.id);
       }
     });
   }, [filteredVideos, sortOption]);
 
+  // Get videos by tab
+  const getVideosByTab = () => {
+    switch (activeTab) {
+      case 'continue':
+        return continueWatching;
+      case 'new':
+        return newReleases;
+      case 'popular':
+        return popular;
+      case 'recommendations':
+        return recommendations;
+      default:
+        return sortedVideos;
+    }
+  };
+
   // Handle filter changes
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFilters(prev => ({ ...prev, searchQuery: e.target.value }));
+    setActiveTab('all');
   }, []);
 
   const handleCategoryChange = useCallback((category: FilterCategory) => {
     setFilters(prev => ({ ...prev, category }));
-  }, []);
-
-  const handleDurationChange = useCallback((range: [number, number]) => {
-    setFilters(prev => ({ ...prev, durationRange: range }));
   }, []);
 
   const handleSubjectToggle = useCallback((subject: string) => {
@@ -232,127 +465,73 @@ export default function VideosPage() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Render video grid or list
-  const renderVideoItems = (videos: typeof mockVideos) => {
-    if (viewMode === 'grid') {
-      return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 md:gap-6">
-          {videos.map(video => (
-            <VideoCard
-              key={video.id}
-              id={video.id}
-              thumbnail={video.thumbnail}
-              title={video.title}
-              duration={video.duration}
-              progress={video.progress}
-            />
-          ))}
-        </div>
-      );
-    } else {
-      return (
-        <div className="space-y-4">
-          {videos.map(video => (
-            <div
-              key={video.id}
-              className="flex items-center bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 cursor-pointer"
-              onClick={() => {/* Handle video click */}}
-            >
-              <div className="relative w-32 h-20 flex-shrink-0">
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  className="w-full h-full object-cover rounded-md"
-                />
-                {video.progress !== undefined && video.progress > 0 && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1">
-                    <div className="h-full bg-gray-200/30">
-                      <div
-                        className="h-full bg-blue-600 transition-all duration-300"
-                        style={{ width: `${video.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/70 text-white text-xs font-medium rounded-md">
-                  {video.duration}
-                </div>
-              </div>
-              <div className="ml-4 flex-grow">
-                <h3 className="text-sm font-medium text-gray-700 line-clamp-2">{video.title}</h3>
-                <div className="flex items-center mt-2 text-xs text-gray-500">
-                  {video.progress !== undefined && (
-                    <span className="flex items-center">
-                      <ClockIcon className="w-3 h-3 mr-1" />
-                      {video.progress === 100 ? 'Concluído' : `${video.progress}% completo`}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <PlayCircleIcon className="w-8 h-8 text-blue-600 flex-shrink-0 ml-4" />
-            </div>
-          ))}
-        </div>
-      );
-    }
-  };
+  const tabs = [
+    { id: 'all', label: 'Todos', icon: Squares2X2Icon, count: mockVideos.length },
+    { id: 'continue', label: 'Continuar', icon: ClockIcon, count: continueWatching.length },
+    { id: 'new', label: 'Novos', icon: SparklesIcon, count: newReleases.length },
+    { id: 'popular', label: 'Populares', icon: FireIcon, count: popular.length },
+    { id: 'recommendations', label: 'Recomendados', icon: BookOpenIcon, count: recommendations.length },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section with Featured Carousel */}
-      <section className="relative w-full h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] bg-gradient-to-b from-gray-900 to-gray-800">
-        <SimpleCarousel images={carouselVideoImages} autoplaySpeed={3000} />
-      </section>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Hero Section */}
+      <HeroSection />
 
-      {/* Sticky Filter Bar */}
-      <div className="sticky top-0 z-30 bg-white shadow-md border-b border-gray-200">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            {/* Search Bar */}
-            <div className="relative w-full sm:w-auto sm:flex-grow max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+      {/* Main Content */}
+      <div className="max-w-[1920px] mx-auto px-6 lg:px-8 py-8">
+        {/* Search and Filter Bar */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-grow">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar vídeos..."
+                  className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all"
+                  style={{ focusRingColor: theme.colors.primary }}
+                  value={filters.searchQuery}
+                  onChange={handleSearchChange}
+                />
+                {filters.searchQuery && (
+                  <button
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2"
+                    onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
+                  >
+                    <XMarkIcon className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                  </button>
+                )}
               </div>
-              <input
-                type="text"
-                placeholder="Buscar vídeos..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                value={filters.searchQuery}
-                onChange={handleSearchChange}
-              />
-              {filters.searchQuery && (
-                <button
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
-                >
-                  <XMarkIcon className="h-4 w-4 text-gray-400" />
-                </button>
-              )}
             </div>
 
-            <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+            {/* Actions */}
+            <div className="flex items-center gap-3">
               {/* Filter Button */}
               <div className="relative">
                 <button
-                  className={`flex items-center px-3 py-2 border ${isFilterOpen || Object.values(filters).some(v =>
-                    Array.isArray(v) ? v.length > 0 : Boolean(v) && v !== 'all'
-                  ) ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-700'} rounded-md bg-white text-sm font-medium hover:bg-gray-50`}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
+                    isFilterOpen || filters.category !== 'all' || filters.subjects.length > 0
+                      ? 'text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  style={{
+                    backgroundColor: isFilterOpen || filters.category !== 'all' || filters.subjects.length > 0
+                      ? theme.colors.primary
+                      : undefined
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsFilterOpen(!isFilterOpen);
                     setIsSortOpen(false);
                   }}
                 >
-                  <FunnelIcon className="h-4 w-4 mr-2" />
+                  <FunnelIcon className="w-5 h-5" />
                   Filtros
-                  {(filters.category !== 'all' || filters.subjects.length > 0 ||
-                   filters.durationRange[0] !== durationRange[0] ||
-                   filters.durationRange[1] !== durationRange[1]) && (
-                    <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-500 rounded-full">
-                      {(filters.category !== 'all' ? 1 : 0) +
-                       (filters.subjects.length > 0 ? 1 : 0) +
-                       (filters.durationRange[0] !== durationRange[0] ||
-                        filters.durationRange[1] !== durationRange[1] ? 1 : 0)}
+                  {(filters.category !== 'all' || filters.subjects.length > 0) && (
+                    <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                      {(filters.category !== 'all' ? 1 : 0) + filters.subjects.length}
                     </span>
                   )}
                 </button>
@@ -360,118 +539,66 @@ export default function VideosPage() {
                 {/* Filter Dropdown */}
                 {isFilterOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-50 overflow-hidden"
+                    className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="p-4 border-b border-gray-200">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-medium text-gray-700">Filtros</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filtros</h3>
                         <button
-                          className="text-gray-400 hover:text-gray-500"
+                          className="text-sm font-medium transition-colors"
+                          style={{ color: theme.colors.primary }}
                           onClick={resetFilters}
                         >
-                          <span className="text-xs text-blue-600">Limpar</span>
+                          Limpar tudo
                         </button>
                       </div>
                     </div>
 
                     {/* Categories */}
-                    <div className="p-4 border-b border-gray-200">
-                      <h4 className="text-sm font-medium text-gray-700 mb-3">Status</h4>
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Status</h4>
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                            filters.category === 'all'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          onClick={() => handleCategoryChange('all')}
-                        >
-                          Todos
-                        </button>
-                        <button
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                            filters.category === 'inProgress'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          onClick={() => handleCategoryChange('inProgress')}
-                        >
-                          <div className="flex items-center">
-                            <ClockIcon className="w-3 h-3 mr-1" />
-                            Em Progresso
-                          </div>
-                        </button>
-                        <button
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                            filters.category === 'notStarted'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          onClick={() => handleCategoryChange('notStarted')}
-                        >
-                          <div className="flex items-center">
-                            <BookmarkIcon className="w-3 h-3 mr-1" />
-                            Não Iniciados
-                          </div>
-                        </button>
-                        <button
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                            filters.category === 'completed'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                          onClick={() => handleCategoryChange('completed')}
-                        >
-                          <div className="flex items-center">
-                            <CheckCircleIcon className="w-3 h-3 mr-1" />
-                            Concluídos
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Duration Range */}
-                    <div className="p-4 border-b border-gray-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium text-gray-700">Duração</h4>
-                        <span className="text-xs text-gray-500">
-                          {formatDuration(filters.durationRange[0])} - {formatDuration(filters.durationRange[1])}
-                        </span>
-                      </div>
-                      <div className="px-2">
-                        <input
-                          type="range"
-                          min={durationRange[0]}
-                          max={durationRange[1]}
-                          value={filters.durationRange[1]}
-                          onChange={(e) => handleDurationChange([filters.durationRange[0], parseInt(e.target.value)])}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                        />
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
-                        <span>Curto</span>
-                        <span>Longo</span>
+                        {[
+                          { value: 'all', label: 'Todos', icon: null },
+                          { value: 'inProgress', label: 'Em Progresso', icon: ClockIcon },
+                          { value: 'notStarted', label: 'Não Iniciados', icon: BookmarkIcon },
+                          { value: 'completed', label: 'Concluídos', icon: CheckCircleIcon }
+                        ].map((option) => (
+                          <button
+                            key={option.value}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              filters.category === option.value
+                                ? 'text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            }`}
+                            style={{
+                              backgroundColor: filters.category === option.value ? theme.colors.primary : undefined
+                            }}
+                            onClick={() => handleCategoryChange(option.value as FilterCategory)}
+                          >
+                            {option.icon && <option.icon className="w-3 h-3" />}
+                            {option.label}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
                     {/* Subjects */}
                     <div className="p-4 max-h-60 overflow-y-auto">
-                      <h4 className="text-sm font-medium text-gray-700 mb-3">Disciplinas</h4>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Disciplinas</h4>
                       <div className="space-y-2">
                         {allSubjects.map(subject => (
-                          <div key={subject} className="flex items-center">
+                          <label key={subject} className="flex items-center cursor-pointer">
                             <input
                               type="checkbox"
-                              id={`subject-${subject}`}
                               checked={filters.subjects.includes(subject)}
                               onChange={() => handleSubjectToggle(subject)}
-                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 focus:ring-2"
+                              style={{ accentColor: theme.colors.primary }}
                             />
-                            <label htmlFor={`subject-${subject}`} className="ml-2 text-sm text-gray-700">
-                              {subject}
-                            </label>
-                          </div>
+                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{subject}</span>
+                          </label>
                         ))}
                       </div>
                     </div>
@@ -482,202 +609,153 @@ export default function VideosPage() {
               {/* Sort Button */}
               <div className="relative">
                 <button
-                  className="flex items-center px-3 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsSortOpen(!isSortOpen);
                     setIsFilterOpen(false);
                   }}
                 >
-                  <ArrowsUpDownIcon className="h-4 w-4 mr-2" />
+                  <ArrowsUpDownIcon className="w-5 h-5" />
                   Ordenar
                 </button>
 
                 {/* Sort Dropdown */}
                 {isSortOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50"
+                    className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="py-1">
-                      {[
-                        { value: 'recent', label: 'Mais Recentes' },
-                        { value: 'title', label: 'Título (A-Z)' },
-                        { value: 'duration', label: 'Duração (Menor)' },
-                        { value: 'progress', label: 'Progresso' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          className={`flex items-center justify-between w-full px-4 py-2 text-sm ${
-                            sortOption === option.value ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                          onClick={() => {
-                            setSortOption(option.value as SortOption);
-                            setIsSortOpen(false);
-                          }}
-                        >
-                          {option.label}
-                          {sortOption === option.value && (
-                            <CheckIcon className="h-4 w-4" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
+                    {[
+                      { value: 'recent', label: 'Mais Recentes' },
+                      { value: 'title', label: 'Título (A-Z)' },
+                      { value: 'duration', label: 'Duração' },
+                      { value: 'progress', label: 'Progresso' }
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        className={`flex items-center justify-between w-full px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                          sortOption === option.value ? 'text-white' : 'text-gray-700 dark:text-gray-300'
+                        }`}
+                        style={{
+                          backgroundColor: sortOption === option.value ? theme.colors.primary : undefined
+                        }}
+                        onClick={() => {
+                          setSortOption(option.value as SortOption);
+                          setIsSortOpen(false);
+                        }}
+                      >
+                        {option.label}
+                        {sortOption === option.value && (
+                          <CheckIcon className="w-4 h-4" />
+                        )}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
+              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
                 <button
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'bg-white text-gray-700'}`}
+                  className={`p-2 rounded-lg transition-all ${
+                    viewMode === 'grid' ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                  style={{
+                    backgroundColor: viewMode === 'grid' ? theme.colors.primary : 'transparent'
+                  }}
                   onClick={() => setViewMode('grid')}
                   aria-label="Grid view"
                 >
-                  <Squares2X2Icon className="h-4 w-4" />
+                  <Squares2X2Icon className="w-5 h-5" />
                 </button>
                 <button
-                  className={`p-2 ${viewMode === 'list' ? 'bg-blue-50 text-blue-600' : 'bg-white text-gray-700'}`}
+                  className={`p-2 rounded-lg transition-all ${
+                    viewMode === 'list' ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                  style={{
+                    backgroundColor: viewMode === 'list' ? theme.colors.primary : 'transparent'
+                  }}
                   onClick={() => setViewMode('list')}
                   aria-label="List view"
                 >
-                  <ListBulletIcon className="h-4 w-4" />
+                  <ListBulletIcon className="w-5 h-5" />
                 </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
-        {/* Continue Watching Section */}
-        {continueWatching.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Continue Assistindo</h2>
-                <p className="text-sm text-gray-600 mt-1">Retome de onde parou</p>
-              </div>
-              <button
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
-                onClick={() => {
-                  setFilters(prev => ({ ...prev, category: 'inProgress' }));
-                  setShowAllVideos(true);
-                }}
-              >
-                Ver todos <ChevronRightIcon className="h-4 w-4 ml-1" />
-              </button>
-            </div>
-            <div className="relative">
-              <Carousel settings={carouselSettings}>
-                {continueWatching.map(video => (
-                  <div key={video.id} className="px-2">
-                    <VideoCard
-                      id={video.id}
-                      thumbnail={video.thumbnail}
-                      title={video.title}
-                      duration={video.duration}
-                      progress={video.progress}
-                    />
-                  </div>
-                ))}
-              </Carousel>
-            </div>
-          </section>
-        )}
-
-        {/* Popular Section */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Mais Populares</h2>
-              <p className="text-sm text-gray-600 mt-1">Os conteúdos mais assistidos da biblioteca</p>
-            </div>
-            <button
-              className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
-              onClick={() => {
-                setShowAllVideos(true);
-              }}
-            >
-              Ver todos <ChevronRightIcon className="h-4 w-4 ml-1" />
-            </button>
-          </div>
-          <div className="relative">
-            <Carousel settings={carouselSettings}>
-              {popular.map(video => (
-                <div key={video.id} className="px-2">
-                  <VideoCard
-                    id={video.id}
-                    thumbnail={video.thumbnail}
-                    title={video.title}
-                    duration={video.duration}
-                    progress={video.progress}
-                  />
-                </div>
-              ))}
-            </Carousel>
-          </div>
-        </section>
-
-        {/* All Videos Section (when filters are applied or "Ver todos" is clicked) */}
-        {(showAllVideos || filters.searchQuery || filters.category !== 'all' ||
-          filters.subjects.length > 0 ||
-          filters.durationRange[0] !== durationRange[0] ||
-          filters.durationRange[1] !== durationRange[1]) && (
-          <section className="mt-8 pt-8 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-700 dark:text-gray-800">
-                  {filters.searchQuery
-                    ? `Resultados para "${filters.searchQuery}"`
-                    : filters.category !== 'all'
-                      ? filters.category === 'inProgress'
-                        ? 'Vídeos em Progresso'
-                        : filters.category === 'notStarted'
-                          ? 'Vídeos Não Iniciados'
-                          : 'Vídeos Concluídos'
-                      : 'Todos os Vídeos'}
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  {sortedVideos.length} {sortedVideos.length === 1 ? 'vídeo encontrado' : 'vídeos encontrados'}
-                </p>
-              </div>
-              {(filters.searchQuery || filters.category !== 'all' ||
-                filters.subjects.length > 0 ||
-                filters.durationRange[0] !== durationRange[0] ||
-                filters.durationRange[1] !== durationRange[1]) && (
+        {/* Tabs */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
                 <button
-                  className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium whitespace-nowrap transition-all ${
+                    activeTab === tab.id
+                      ? 'text-white shadow-lg transform scale-105'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  style={{
+                    backgroundColor: activeTab === tab.id ? theme.colors.primary : undefined
+                  }}
+                >
+                  <Icon className="w-5 h-5" />
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                      activeTab === tab.id
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Videos Grid/List */}
+        <div className="mb-12">
+          {getVideosByTab().length > 0 ? (
+            <div className={
+              viewMode === 'grid'
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6'
+                : 'space-y-4'
+            }>
+              {getVideosByTab().map(video => (
+                <ModernVideoCard key={video.id} video={video} viewMode={viewMode} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: theme.colors.primary + '20' }}>
+                <PlayCircleIcon className="w-10 h-10" style={{ color: theme.colors.primary }} />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Nenhum vídeo encontrado
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 max-w-md">
+                Não encontramos vídeos que correspondam aos seus filtros. Tente ajustar os critérios de busca.
+              </p>
+              {(filters.searchQuery || filters.category !== 'all' || filters.subjects.length > 0) && (
+                <button
+                  className="mt-6 px-6 py-3 text-white font-medium rounded-xl transition-all hover:shadow-lg"
+                  style={{ backgroundColor: theme.colors.primary }}
                   onClick={resetFilters}
                 >
-                  <XMarkSolidIcon className="h-4 w-4 mr-1" />
                   Limpar filtros
                 </button>
               )}
             </div>
-
-            {sortedVideos.length > 0 ? (
-              renderVideoItems(sortedVideos)
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="bg-gray-100 rounded-full p-4 mb-4">
-                  <XMarkSolidIcon className="h-8 w-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-700 mb-1">Nenhum vídeo encontrado</h3>
-                <p className="text-gray-500 max-w-md">
-                  Não encontramos vídeos que correspondam aos seus filtros. Tente ajustar os critérios de busca.
-                </p>
-                <button
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  onClick={resetFilters}
-                >
-                  Limpar filtros
-                </button>
-              </div>
-            )}
-          </section>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
