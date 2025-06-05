@@ -300,6 +300,34 @@ export default function StandardSidebar() {
             ]
           },
           {
+            section: 'Relatórios',
+            items: [
+              {
+                href: '/portal/reports',
+                icon: 'analytics',
+                label: 'Portal de Relatórios',
+                permission: 'canViewPortalReports'
+              }
+            ]
+          },
+          {
+            section: 'Gestão de Conteúdo',
+            items: [
+              {
+                href: '/admin/content/library',
+                icon: 'library_books',
+                label: 'Acervo Digital',
+                permission: 'canManageSystem'
+              },
+              {
+                href: '/admin/content/search',
+                icon: 'archive',
+                label: 'Arquivos',
+                permission: 'canManageSystem'
+              }
+            ]
+          },
+          {
             section: 'Monitoramento',
             items: [
               {

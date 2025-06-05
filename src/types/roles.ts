@@ -14,6 +14,7 @@ export interface RolePermissions {
   canManageGlobalUsers: boolean;
   canViewSystemAnalytics: boolean;
   canManageSecurityPolicies: boolean;
+  canViewPortalReports:boolean;
   
   // Institution Management
   canManageSchools: boolean;
@@ -69,6 +70,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageGlobalUsers: true,
     canViewSystemAnalytics: true,
     canManageSecurityPolicies: true,
+    canViewPortalReports:true,
     
     // Institution Management - ACESSO COMPLETO (para supervisionar)
     canManageSchools: true,
@@ -120,6 +122,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageInstitutions: false,
     canManageGlobalUsers: false,
     canViewSystemAnalytics: false,
+    canViewPortalReports:true,
     canManageSecurityPolicies: false,
     canManageSchools: true,
     canManageInstitutionUsers: true,
@@ -160,6 +163,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageInstitutions: false,
     canManageGlobalUsers: false,
     canViewSystemAnalytics: false,
+    canViewPortalReports:true,
     canManageSecurityPolicies: false,
     canManageSchools: false,
     canManageInstitutionUsers: false,
@@ -202,6 +206,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewSystemAnalytics: false,
     canManageSecurityPolicies: false,
     canManageSchools: false,
+    canViewPortalReports:true,
     canManageInstitutionUsers: false,
     canManageClasses: false,
     canManageSchedules: false,
@@ -239,6 +244,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageSystem: false,
     canManageInstitutions: false,
     canManageGlobalUsers: false,
+    canViewPortalReports:false,
     canViewSystemAnalytics: false,
     canManageSecurityPolicies: false,
     canManageSchools: false,
@@ -279,6 +285,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageSystem: false,
     canManageInstitutions: false,
     canManageGlobalUsers: false,
+    canViewPortalReports:false,
     canViewSystemAnalytics: false,
     canManageSecurityPolicies: false,
     canManageSchools: false,

@@ -379,7 +379,7 @@ export default function SystemAdminDashboard() {
               {institutions.map((institution) => (
                 <div
                   key={institution.id}
-                  className="p-4 bg-gray-50 dark:bg-gray-300 rounded-lg hover:shadow-md transition-shadow"
+                  className="p-4  bg-gray-50 rounded-lg hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -459,23 +459,23 @@ export default function SystemAdminDashboard() {
           <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Logs do Sistema</h3>
             <div className="space-y-2 text-sm">
-              <div className="p-2 bg-gray-50 dark:bg-gray-300 rounded">
+              <div className="p-2 bg-gray-50 dark:bg-blue-100 rounded">
                 <p className="font-mono text-xs">
                   [INFO] 12:15:23 - Backup iniciado
                 </p>
               </div>
-              <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
-                <p className="font-mono text-xs text-yellow-800 dark:text-yellow-200">
+              <div className="p-2 bg-yellow-100 rounded">
+                <p className="font-mono text-xs">
                   [WARN] 12:14:15 - Alto uso de CPU detectado
                 </p>
               </div>
-              <div className="p-2 bg-gray-50 dark:bg-gray-300 rounded">
+              <div className="p-2 bg-gray-50 dark:bg-blue-100 rounded">
                 <p className="font-mono text-xs">
                   [INFO] 12:10:45 - Nova instituição cadastrada
                 </p>
               </div>
-              <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                <p className="font-mono text-xs text-red-800 dark:text-red-200">
+              <div className="p-2 bg-red-50 dark:bg-red-100 rounded">
+              <p className="font-mono text-xs">
                   [ERROR] 12:08:32 - Falha na autenticação
                 </p>
               </div>

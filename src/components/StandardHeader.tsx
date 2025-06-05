@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { UserRole } from '../types/auth';
+import { ROLE_LABELS } from '@/types/roles';
 
 interface StandardHeaderProps {
   title?: string;
@@ -389,21 +390,6 @@ const StandardHeader = ({
 
         {/* Right Section - Actions and User Menu */}
         <div className="flex items-center space-x-4">
-          {/* Search Bar */}
-          <div className="hidden md:flex items-center">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Buscar..."
-                className="w-64 pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-slate-50 transition-all duration-200"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
 
           {/* Activities */}
           <div className="relative" ref={activitiesMenuRef}>
@@ -612,7 +598,9 @@ const StandardHeader = ({
                 </div>
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-semibold text-slate-800">{user.name}</p>
-                  <p className="text-xs text-slate-600">{getRoleLabel(user.role)}</p>
+                  <p className="text-xs text-slate-600">
+                  {getRoleLabel(user?.role) && ROLE_LABELS[user.role as UserRole]}
+                  </p>
                 </div>
                 <svg 
                   className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
@@ -631,7 +619,7 @@ const StandardHeader = ({
                     <p className="text-sm font-semibold text-slate-800">{user.name}</p>
                     <p className="text-sm text-slate-600">{user.email}</p>
                     <span className="inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                      {getRoleLabel(user.role)}
+                      {getRoleLabel(user?.role) && ROLE_LABELS[user.role as UserRole]}
                     </span>
                   </div>
                   
@@ -645,19 +633,7 @@ const StandardHeader = ({
                     </svg>
                     <span className="font-medium">Meu Perfil</span>
                   </Link>
-                  
-                  <Link
-                    href="/settings"
-                    className="flex items-center px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                  >
-                    <svg className="mr-3 h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span className="font-medium">Configurações</span>
-                  </Link>
-                  
+
                   <hr className="my-2 border-slate-100" />
                   
                   <button
