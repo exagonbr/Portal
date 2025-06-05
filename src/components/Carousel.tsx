@@ -4,6 +4,8 @@ import React from 'react';
 import Slider from 'react-slick';
 import type { Settings } from 'react-slick';
 import '../styles/carousel.css';
+import { useTheme } from '@/contexts/ThemeContext';
+import { motion } from 'framer-motion';
 
 interface CarouselProps {
   settings?: Settings;
@@ -11,6 +13,8 @@ interface CarouselProps {
 }
 
 export default function Carousel({ settings, children }: CarouselProps) {
+  const { theme } = useTheme();
+  
   const defaultSettings: Settings = {
     dots: true,
     infinite: true,
@@ -60,9 +64,20 @@ export default function Carousel({ settings, children }: CarouselProps) {
   };
 
   return (
-    <div className="mx-auto max-w-[90rem] -mx-2 sm:-mx-3 md:-mx-4">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="mx-auto max-w-[90rem] -mx-2 sm:-mx-3 md:-mx-4 carousel-container"
+      style={{
+        '--carousel-dot-color': theme.colors.text.tertiary,
+        '--carousel-dot-active': theme.colors.primary.DEFAULT,
+        '--carousel-arrow-color': theme.colors.text.secondary,
+        '--carousel-arrow-hover': theme.colors.primary.DEFAULT,
+      } as React.CSSProperties}
+    >
       {/* @ts-ignore */}
       <Slider {...defaultSettings}>{children}</Slider>
-    </div>
+    </motion.div>
   );
 }

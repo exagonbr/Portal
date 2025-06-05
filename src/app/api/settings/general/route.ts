@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
 // Simulação de banco de dados - em produção, usar um banco real
 let generalSettingsData = {
@@ -8,10 +12,17 @@ let generalSettingsData = {
   supportEmail: 'suporte@portal.educacional.com'
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     return NextResponse.json(generalSettingsData)
   } catch (error) {
+    console.error('Erro ao buscar configurações gerais:', error)
     return NextResponse.json(
       { error: 'Erro ao buscar configurações gerais' },
       { status: 500 }
@@ -21,6 +32,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const body = await request.json()
     
     // Validação básica
@@ -49,47 +66,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(generalSettingsData)
   } catch (error) {
+    console.error('Erro ao salvar configurações gerais:', error)
     return NextResponse.json(
-      { error: 'Erro ao criar configurações gerais' },
+      { error: 'Erro ao salvar configurações gerais' },
       { status: 500 }
     )
   }
 }
 
 export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json()
-    
-    // Validação básica
-    if (!body.platformName || !body.systemUrl || !body.supportEmail) {
-      return NextResponse.json(
-        { error: 'Campos obrigatórios não preenchidos' },
-        { status: 400 }
-      )
-    }
-
-    // Validação de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(body.supportEmail)) {
-      return NextResponse.json(
-        { error: 'Email de suporte inválido' },
-        { status: 400 }
-      )
-    }
-
-    // Atualiza os dados
-    generalSettingsData = {
-      ...generalSettingsData,
-      ...body
-    }
-
-    return NextResponse.json(generalSettingsData)
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Erro ao atualizar configurações gerais' },
-      { status: 500 }
-    )
-  }
+  return POST(request)
 }
 
 export async function DELETE() {

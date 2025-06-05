@@ -1,7 +1,9 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { teacherMockData, studentMockData } from '@/constants/mockData'
+import { motion } from 'framer-motion'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -57,29 +59,46 @@ interface ChartProps {
   showLegend?: boolean
 }
 
-const chartColors = {
-  blue: '#3B82F6',
-  lightBlue: '#60A5FA',
-  lighterBlue: '#93C5FD',
-  lightestBlue: '#BFDBFE',
-  darkBlue: '#2563EB',
-  darkerBlue: '#1D4ED8',
-}
-
 export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend = false }: ChartProps) {
+  const { theme } = useTheme();
+
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-600">{title}</h2>
-          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-xl overflow-hidden shadow-sm"
+        style={{ 
+          backgroundColor: theme.colors.background.card,
+          boxShadow: theme.shadows.sm
+        }}
+      >
+        <div 
+          className="p-4 border-b"
+          style={{ borderColor: theme.colors.border.light }}
+        >
+          <h2 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>{title}</h2>
+          {subtitle && <p className="text-sm mt-1" style={{ color: theme.colors.text.secondary }}>{subtitle}</p>}
         </div>
         <div className={`${height} flex items-center justify-center`}>
-          <p className="text-gray-500">Não há dados disponíveis</p>
+          <p style={{ color: theme.colors.text.tertiary }}>Não há dados disponíveis</p>
         </div>
-      </div>
+      </motion.div>
     )
   }
+
+  // Configurar cores do gráfico baseadas no tema
+  const chartColors = {
+    primary: theme.colors.primary.DEFAULT,
+    secondary: theme.colors.secondary.DEFAULT,
+    accent: theme.colors.accent.DEFAULT,
+    success: theme.colors.status.success,
+    warning: theme.colors.status.warning,
+    error: theme.colors.status.error,
+    info: theme.colors.status.info,
+  };
+
+  const colorArray = Object.values(chartColors);
 
   const chartData = {
     labels: data.map(item => item.label),
@@ -88,11 +107,18 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
         label: title,
         data: data.map(item => item.value),
         backgroundColor: type === 'pie' 
-          ? Object.values(chartColors)
-          : chartColors.blue,
-        borderColor: type === 'line' ? chartColors.blue : undefined,
-        borderWidth: type === 'line' ? 2 : 1,
+          ? colorArray.slice(0, data.length)
+          : type === 'line'
+          ? `${theme.colors.primary.DEFAULT}20`
+          : theme.colors.primary.DEFAULT,
+        borderColor: type === 'line' ? theme.colors.primary.DEFAULT : 'transparent',
+        borderWidth: type === 'line' ? 3 : 1,
         tension: 0.4,
+        pointBackgroundColor: type === 'line' ? theme.colors.primary.DEFAULT : undefined,
+        pointBorderColor: type === 'line' ? theme.colors.background.card : undefined,
+        pointBorderWidth: type === 'line' ? 2 : undefined,
+        pointRadius: type === 'line' ? 4 : undefined,
+        pointHoverRadius: type === 'line' ? 6 : undefined,
       },
     ],
   }
@@ -104,8 +130,23 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
       legend: {
         display: showLegend,
         position: 'right' as const,
+        labels: {
+          color: theme.colors.text.primary,
+          font: {
+            size: 12,
+          },
+          padding: 15,
+        },
       },
       tooltip: {
+        backgroundColor: theme.colors.background.card,
+        titleColor: theme.colors.text.primary,
+        bodyColor: theme.colors.text.secondary,
+        borderColor: theme.colors.border.DEFAULT,
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: true,
         callbacks: {
           label: function(context: any) {
             let label = context.dataset.label || ''
@@ -129,20 +170,51 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
     scales: type !== 'pie' ? {
       y: {
         beginAtZero: true,
+        grid: {
+          color: `${theme.colors.border.light}50`,
+          drawBorder: false,
+        },
         ticks: {
+          color: theme.colors.text.secondary,
+          font: {
+            size: 11,
+          },
           callback: function(value: any) {
             return value + (type === 'line' ? '%' : '')
           }
+        }
+      },
+      x: {
+        grid: {
+          display: false,
+          drawBorder: false,
+        },
+        ticks: {
+          color: theme.colors.text.secondary,
+          font: {
+            size: 11,
+          },
         }
       }
     } : undefined
   }
 
   return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-      <div className="p-4 border-b border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-600">{title}</h2>
-        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl overflow-hidden"
+      style={{ 
+        backgroundColor: theme.colors.background.card,
+        boxShadow: theme.shadows.md
+      }}
+    >
+      <div 
+        className="p-4 border-b"
+        style={{ borderColor: theme.colors.border.light }}
+      >
+        <h2 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>{title}</h2>
+        {subtitle && <p className="text-sm mt-1" style={{ color: theme.colors.text.secondary }}>{subtitle}</p>}
       </div>
       
       <div className="p-4">
@@ -153,29 +225,42 @@ export function Chart({ title, subtitle, type, data, height = 'h-64', showLegend
           {type === 'stats' && (
             <div className="grid grid-cols-2 gap-4">
               {data.map((item, index) => (
-                <div key={index} className="p-4 rounded-lg bg-gray-50">
-                  <div className="text-sm text-gray-500">{item.label}</div>
-                  <div className="text-xl font-semibold mt-1">{item.value}</div>
+                <motion.div 
+                  key={index} 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-4 rounded-lg"
+                  style={{ backgroundColor: theme.colors.background.secondary }}
+                >
+                  <div className="text-sm" style={{ color: theme.colors.text.secondary }}>{item.label}</div>
+                  <div className="text-xl font-semibold mt-1" style={{ color: theme.colors.text.primary }}>{item.value}</div>
                   {item.details?.change !== undefined && (
-                    <div className={`text-sm ${Number(item.details.change) >= 0 ? 'text-green-500' : 'text-red-500'} flex items-center mt-1`}>
+                    <div 
+                      className="text-sm flex items-center mt-1"
+                      style={{ 
+                        color: Number(item.details.change) >= 0 ? theme.colors.status.success : theme.colors.status.error 
+                      }}
+                    >
                       <span className="material-symbols-outlined text-sm mr-1">
                         {Number(item.details.change) >= 0 ? 'trending_up' : 'trending_down'}
                       </span>
                       {Number(item.details.change) >= 0 ? '+' : ''}{item.details.change}%
                     </div>
                   )}
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 export default function Charts() {
   const { user } = useAuth()
+  const { theme } = useTheme()
 
   if (!user) {
     return null

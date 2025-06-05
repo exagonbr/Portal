@@ -308,4 +308,4 @@ class SessionService {
 
 // Instância singleton do serviço de sessão
 export const sessionService = new SessionService();
-export default sessionService;
+export default sessionService; 

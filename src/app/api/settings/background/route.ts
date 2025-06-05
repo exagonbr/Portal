@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
 // Simulação de banco de dados - em produção, usar um banco real
 let backgroundSettingsData = {
@@ -9,10 +13,17 @@ let backgroundSettingsData = {
   solidColor: '#1e3a8a'
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     return NextResponse.json(backgroundSettingsData)
   } catch (error) {
+    console.error('Erro ao buscar configurações de background:', error)
     return NextResponse.json(
       { error: 'Erro ao buscar configurações de background' },
       { status: 500 }
@@ -22,6 +33,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const body = await request.json()
     
     // Validação básica
@@ -41,38 +58,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(backgroundSettingsData)
   } catch (error) {
+    console.error('Erro ao salvar configurações de background:', error)
     return NextResponse.json(
-      { error: 'Erro ao criar configurações de background' },
+      { error: 'Erro ao salvar configurações de background' },
       { status: 500 }
     )
   }
 }
 
 export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json()
-    
-    // Validação básica
-    if (!body.type || !['video', 'url', 'color'].includes(body.type)) {
-      return NextResponse.json(
-        { error: 'Tipo de background inválido' },
-        { status: 400 }
-      )
-    }
-
-    // Atualiza os dados
-    backgroundSettingsData = {
-      ...backgroundSettingsData,
-      ...body
-    }
-
-    return NextResponse.json(backgroundSettingsData)
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Erro ao atualizar configurações de background' },
-      { status: 500 }
-    )
-  }
+  return POST(request)
 }
 
 export async function DELETE() {

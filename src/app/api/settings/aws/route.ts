@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 // Simulação de banco de dados - em produção, usar um banco real
 let awsSettingsData = {
@@ -12,10 +14,18 @@ let awsSettingsData = {
   enableRealTimeUpdates: true
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    // Retorna os dados simulados diretamente
     return NextResponse.json(awsSettingsData)
   } catch (error) {
+    console.error('Erro ao buscar configurações AWS:', error)
     return NextResponse.json(
       { error: 'Erro ao buscar configurações AWS' },
       { status: 500 }
@@ -25,6 +35,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const body = await request.json()
     
     // Validação básica
@@ -35,7 +51,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Atualiza os dados (em produção, salvar no banco)
+    // Atualiza os dados simulados
     awsSettingsData = {
       ...awsSettingsData,
       ...body,
@@ -44,43 +60,27 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(awsSettingsData)
   } catch (error) {
+    console.error('Erro ao salvar configurações AWS:', error)
     return NextResponse.json(
-      { error: 'Erro ao criar configurações AWS' },
+      { error: 'Erro ao salvar configurações AWS' },
       { status: 500 }
     )
   }
 }
 
 export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json()
-    
-    // Validação básica
-    if (!body.region) {
-      return NextResponse.json(
-        { error: 'Região é obrigatória' },
-        { status: 400 }
-      )
-    }
-
-    // Atualiza os dados (em produção, atualizar no banco)
-    awsSettingsData = {
-      ...awsSettingsData,
-      ...body
-    }
-
-    return NextResponse.json(awsSettingsData)
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Erro ao atualizar configurações AWS' },
-      { status: 500 }
-    )
-  }
+  return POST(request)
 }
 
 export async function DELETE() {
   try {
-    // Reset para valores padrão (em produção, deletar do banco)
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    // Reset para valores padrão
     awsSettingsData = {
       id: '1',
       accessKeyId: '',

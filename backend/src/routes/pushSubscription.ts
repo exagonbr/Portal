@@ -5,12 +5,12 @@ import { pushSubscriptionController } from '../controllers/pushSubscriptionContr
 const router = express.Router();
 
 // Subscribe to push notifications
-router.post('/', validateJWT, requireInstitution, pushSubscriptionController.subscribe.bind(pushSubscriptionController));
+router.post('/', validateJWT, requireInstitution, (req, res) => pushSubscriptionController.subscribe(req, res));
 
 // Unsubscribe from push notifications
-router.delete('/:endpoint', validateJWT, requireInstitution, pushSubscriptionController.unsubscribe.bind(pushSubscriptionController));
+router.delete('/:endpoint', validateJWT, requireInstitution, (req, res) => pushSubscriptionController.unsubscribe(req, res));
 
 // Send bulk notification (admin only)
-router.post('/send', validateJWT, requireInstitution, pushSubscriptionController.sendBulkNotification.bind(pushSubscriptionController));
+router.post('/send', validateJWT, requireInstitution, (req, res) => pushSubscriptionController.sendBulkNotification(req, res));
 
 export default router;

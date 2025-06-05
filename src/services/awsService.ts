@@ -1,4 +1,5 @@
 import { AwsSettings } from '@/hooks/useAwsSettings'
+import { SystemUsageData, ResourceDistribution, S3FileTypeDistribution } from '@/types/analytics'
 
 // Simulação de dados da AWS CloudWatch
 export interface CloudWatchMetric {
@@ -14,6 +15,7 @@ export interface S3StorageInfo {
   objectCount: number
   lastModified: Date
   monthlyCost: number
+  fileTypeDistribution?: S3FileTypeDistribution[]
 }
 
 export interface SystemAnalytics {
@@ -109,8 +111,64 @@ class AwsService {
       bucketSize: sizeInGB,
       objectCount: Math.floor(Math.random() * 500 + 1000),
       lastModified: new Date(Date.now() - Math.random() * 86400000), // Último dia
-      monthlyCost: sizeInGB * 0.023 // Custo aproximado do S3
+      monthlyCost: sizeInGB * 0.023, // Custo aproximado do S3
+      fileTypeDistribution: await this.getS3FileTypeDistribution()
     }
+  }
+
+  // Obter distribuição de tipos de arquivo no S3
+  async getS3FileTypeDistribution(): Promise<S3FileTypeDistribution[]> {
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    const distribution = [
+      { fileType: 'PDF', count: 450, size: 1250, percentage: 35 },
+      { fileType: 'Vídeos', count: 120, size: 3200, percentage: 25 },
+      { fileType: 'Imagens', count: 380, size: 890, percentage: 20 },
+      { fileType: 'Documentos', count: 250, size: 450, percentage: 15 },
+      { fileType: 'Outros', count: 100, size: 210, percentage: 5 }
+    ]
+
+    return distribution
+  }
+
+  // Obter dados históricos de uso do sistema
+  async getSystemUsageHistory(hours: number = 24): Promise<SystemUsageData[]> {
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    const data: SystemUsageData[] = []
+    const now = new Date()
+
+    for (let i = hours; i >= 0; i--) {
+      const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000)
+      
+      // Simular variação ao longo do dia
+      const hourOfDay = timestamp.getHours()
+      const baseUsers = hourOfDay >= 8 && hourOfDay <= 18 ? 800 : 200
+      const baseCpu = hourOfDay >= 8 && hourOfDay <= 18 ? 60 : 30
+      
+      data.push({
+        timestamp,
+        activeUsers: Math.floor(baseUsers + Math.random() * 400),
+        cpuUsage: Math.floor(baseCpu + Math.random() * 20),
+        memoryUsage: Math.floor(50 + Math.random() * 30),
+        responseTime: Math.floor(150 + Math.random() * 100)
+      })
+    }
+
+    return data
+  }
+
+  // Obter distribuição de recursos do sistema
+  async getResourceDistribution(): Promise<ResourceDistribution[]> {
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    return [
+      { category: 'Aplicação Web', value: 35, percentage: 35, color: '#3B82F6' },
+      { category: 'Banco de Dados', value: 25, percentage: 25, color: '#10B981' },
+      { category: 'Armazenamento S3', value: 20, percentage: 20, color: '#F59E0B' },
+      { category: 'Cache Redis', value: 10, percentage: 10, color: '#EF4444' },
+      { category: 'Outros Serviços', value: 10, percentage: 10, color: '#8B5CF6' }
+    ]
   }
 
   // Simulação de teste de conexão

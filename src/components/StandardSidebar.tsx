@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect, useCallback, memo } from 'react'
 import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
+import { useTheme } from '@/contexts/ThemeContext'
+import { motion } from 'framer-motion'
 
 interface NavItem {
   href: string
@@ -25,11 +27,14 @@ const COLLAPSED_WIDTH = '4rem'
 const MOBILE_BREAKPOINT = 768
 
 // Memoized Components
-const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
+const SidebarLogo = memo(({ isCollapsed, theme }: { isCollapsed: boolean, theme: any }) => (
   <Link href="/" className="overflow-hidden flex items-center justify-center py-1">
     {isCollapsed ? (
-      <div className="w-8 h-8 bg-primary-light/20 rounded-lg flex items-center justify-center">
-        <span className="text-xl font-bold text-white">S</span>
+      <div 
+        className="w-8 h-8 rounded-lg flex items-center justify-center"
+        style={{ backgroundColor: `${theme.colors.primary.light}20` }}
+      >
+        <span className="text-xl font-bold" style={{ color: theme.colors.primary.DEFAULT }}>S</span>
       </div>
     ) : (
       <div className="w-full flex justify-center">
@@ -47,18 +52,24 @@ const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
   </Link>
 ));
 
-const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boolean }) => (
-  <div className="px-2 py-3 border-b border-white/10 flex-shrink-0">
+const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed: boolean, theme: any }) => (
+  <div className="px-2 py-3 border-b flex-shrink-0" style={{ borderColor: `${theme.colors.border.light}40` }}>
     <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
-      <div className="w-7 h-7 rounded-full bg-primary-light/30 flex items-center justify-center flex-shrink-0">
-        <span className={`material-symbols-outlined text-primary ${isCollapsed ? 'text-[16px]' : 'text-[14px]'}`}>
+      <div 
+        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: `${theme.colors.primary.light}30` }}
+      >
+        <span 
+          className={`material-symbols-outlined ${isCollapsed ? 'text-[16px]' : 'text-[14px]'}`}
+          style={{ color: theme.colors.primary.DEFAULT }}
+        >
           person
         </span>
       </div>
       {!isCollapsed && (
         <div className="overflow-hidden min-w-0 flex-1">
-          <p className="text-xs font-semibold text-sidebar-text-active truncate leading-tight">{user?.name}</p>
-          <span className="text-[10px] text-sidebar-text leading-tight">
+          <p className="text-xs font-semibold truncate leading-tight" style={{ color: theme.colors.text.primary }}>{user?.name}</p>
+          <span className="text-[10px] leading-tight" style={{ color: theme.colors.text.secondary }}>
             {user?.role && ROLE_LABELS[user.role as UserRole]}
           </span>
         </div>
@@ -67,21 +78,35 @@ const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boole
   </div>
 ));
 
-const NavItem = memo(({ item, isActive, isCollapsed, onClick }: { 
+const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: { 
   item: NavItem, 
   isActive: boolean, 
   isCollapsed: boolean,
-  onClick?: () => void
+  onClick?: () => void,
+  theme: any
 }) => (
   <Link
     href={item.href}
-    className={`flex items-center gap-2 px-2 py-2 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative outline-none
-      ${isActive
-        ? 'bg-sidebar-active text-white shadow-sm'
-        : ''
-      } ${isCollapsed ? 'justify-center' : ''}`}
+    className={`flex items-center gap-2 px-2 py-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative outline-none
+      ${isCollapsed ? 'justify-center' : ''}`}
+    style={{
+      backgroundColor: isActive ? theme.colors.primary.DEFAULT : 'transparent',
+      color: isActive ? 'white' : theme.colors.text.secondary
+    }}
     onClick={onClick}
     aria-current={isActive ? 'page' : undefined}
+    onMouseEnter={(e) => {
+      if (!isActive) {
+        e.currentTarget.style.backgroundColor = `${theme.colors.primary.light}20`;
+        e.currentTarget.style.color = theme.colors.primary.DEFAULT;
+      }
+    }}
+    onMouseLeave={(e) => {
+      if (!isActive) {
+        e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.color = theme.colors.text.secondary;
+      }
+    }}
   >
     <span
       className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
@@ -97,7 +122,12 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
     {/* Tooltip for collapsed state */}
     {isCollapsed && (
       <div
-        className="absolute left-full ml-2 px-2 py-1 bg-primary-dark text-sidebar-text-active text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+        className="absolute left-full ml-2 px-2 py-1 text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+        style={{ 
+          backgroundColor: theme.colors.background.card,
+          color: theme.colors.text.primary,
+          borderColor: theme.colors.border.DEFAULT
+        }}
         role="tooltip"
       >
         {item.label}
@@ -106,13 +136,14 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
   </Link>
 ));
 
-const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole }: { 
+const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: { 
   section: string, 
   items: NavItem[], 
   pathname: string | null,
   isCollapsed: boolean,
   onItemClick?: () => void,
-  userRole: UserRole
+  userRole: UserRole,
+  theme: any
 }) => {
   // Filter items based on user permissions
   const filteredItems = items.filter(item => {
@@ -125,7 +156,10 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
   return (
     <div className="mb-3">
       {!isCollapsed && (
-        <p className="px-2 py-1 text-[10px] font-bold text-sidebar-text uppercase tracking-wider opacity-75">
+        <p 
+          className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider opacity-75"
+          style={{ color: theme.colors.text.tertiary }}
+        >
           {section}
         </p>
       )}
@@ -137,6 +171,7 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
             isActive={pathname === item.href}
             isCollapsed={isCollapsed}
             onClick={onItemClick}
+            theme={theme}
           />
         ))}
       </div>
@@ -144,11 +179,20 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
   );
 });
 
-const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, onLogout: () => void }) => (
+const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: boolean, onLogout: () => void, theme: any }) => (
   <button
     onClick={onLogout}
-    className={`flex items-center gap-2 px-2 py-2 rounded-md text-sidebar-text hover:bg-error/10 hover:text-error transition-all duration-300 group relative w-full mx-1 text-xs font-medium
+    className={`flex items-center gap-2 px-2 py-2 rounded-md transition-all duration-300 group relative w-full mx-1 text-xs font-medium
       ${isCollapsed ? 'justify-center' : ''}`}
+    style={{ color: theme.colors.text.secondary }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.backgroundColor = `${theme.colors.status.error}10`;
+      e.currentTarget.style.color = theme.colors.status.error;
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.backgroundColor = 'transparent';
+      e.currentTarget.style.color = theme.colors.text.secondary;
+    }}
     aria-label="Sair da Plataforma"
   >
     <span
@@ -163,7 +207,12 @@ const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, on
     {/* Tooltip for collapsed state */}
     {isCollapsed && (
       <div
-        className="absolute left-full ml-2 px-2 py-1 bg-primary-dark text-sidebar-text-active text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+        className="absolute left-full ml-2 px-2 py-1 text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+        style={{ 
+          backgroundColor: theme.colors.background.card,
+          color: theme.colors.text.primary,
+          borderColor: theme.colors.border.DEFAULT
+        }}
         role="tooltip"
       >
         Sair da Plataforma
@@ -175,6 +224,7 @@ const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, on
 export default function StandardSidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const { theme } = useTheme()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   
@@ -742,9 +792,24 @@ export default function StandardSidebar() {
   return (
     <>
       {/* Mobile Menu Button */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={toggleSidebar}
-        className="md:hidden fixed top-3 left-3 z-[9998] bg-sidebar-bg rounded-lg p-2.5 text-sidebar-text hover:bg-sidebar-hover transition-colors shadow-lg border border-white/10"
+        className="md:hidden fixed top-3 left-3 z-[9998] rounded-lg p-2.5 transition-colors shadow-lg border"
+        style={{ 
+          backgroundColor: theme.colors.background.card,
+          color: theme.colors.text.secondary,
+          borderColor: theme.colors.border.DEFAULT
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = theme.colors.background.secondary;
+          e.currentTarget.style.color = theme.colors.primary.DEFAULT;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme.colors.background.card;
+          e.currentTarget.style.color = theme.colors.text.secondary;
+        }}
         aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
         aria-expanded={isMobileOpen}
         aria-controls="sidebar-menu"
@@ -752,19 +817,24 @@ export default function StandardSidebar() {
         <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
           {isMobileOpen ? 'close' : 'menu'}
         </span>
-      </button>
+      </motion.button>
 
       {/* Backdrop for mobile */}
       {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[9997] md:hidden sidebar-mobile-backdrop"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 z-[9997] md:hidden"
           onClick={closeMobileSidebar}
           aria-hidden="true"
         />
       )}
 
       {/* Main Sidebar Container */}
-      <div
+      <motion.div
+        initial={{ x: -300 }}
+        animate={{ x: 0 }}
         id="sidebar-menu"
         className={`fixed md:sticky top-0 h-screen transition-all duration-300 ease-in-out z-[9999] overflow-hidden
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
@@ -773,28 +843,51 @@ export default function StandardSidebar() {
         aria-label="Menu principal"
       >
         {/* Sidebar Content */}
-        <aside className="bg-sidebar-bg text-sidebar-text h-full flex flex-col shadow-xl overflow-hidden border-r border-primary-dark/20">
+        <aside 
+          className="h-full flex flex-col shadow-xl overflow-hidden border-r"
+          style={{ 
+            backgroundColor: theme.colors.background.secondary,
+            color: theme.colors.text.primary,
+            borderColor: theme.colors.border.DEFAULT
+          }}
+        >
           {/* Logo */}
-          <div className="p-2 border-b border-white/10 relative flex-shrink-0">
+          <div className="p-2 border-b relative flex-shrink-0" style={{ borderColor: `${theme.colors.border.light}40` }}>
             {/* Desktop Toggle Button */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={toggleSidebar}
-              className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 bg-sidebar-bg rounded-full p-1 hover:bg-sidebar-hover transition-colors z-[9995] items-center justify-center border border-white/10"
+              className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 rounded-full p-1 transition-colors z-[9995] items-center justify-center border"
+              style={{ 
+                backgroundColor: theme.colors.background.card,
+                borderColor: theme.colors.border.DEFAULT
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.background.secondary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.background.card;
+              }}
               aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
             >
-              <span className="material-symbols-outlined text-sidebar-text-active text-[16px]" aria-hidden="true">
+              <span 
+                className="material-symbols-outlined text-[16px]" 
+                style={{ color: theme.colors.text.secondary }}
+                aria-hidden="true"
+              >
                 {isCollapsed ? 'chevron_right' : 'chevron_left'}
               </span>
-            </button>
+            </motion.button>
             
-            <SidebarLogo isCollapsed={isCollapsed} />
+            <SidebarLogo isCollapsed={isCollapsed} theme={theme} />
           </div>
 
           {/* User Info */}
-          <UserProfile user={user} isCollapsed={isCollapsed} />
+          <UserProfile user={user} isCollapsed={isCollapsed} theme={theme} />
 
           {/* Navigation */}
-          <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-hover scrollbar-track-transparent">
+          <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin">
             <div className="space-y-1">
               {navItems.map((section, idx) => (
                 <NavSection
@@ -805,17 +898,18 @@ export default function StandardSidebar() {
                   isCollapsed={isCollapsed}
                   onItemClick={closeMobileSidebar}
                   userRole={userRole}
+                  theme={theme}
                 />
               ))}
             </div>
           </nav>
 
           {/* Bottom Actions */}
-          <div className="p-1 border-t border-white/10 flex-shrink-0">
-            <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} />
+          <div className="p-1 border-t flex-shrink-0" style={{ borderColor: `${theme.colors.border.light}40` }}>
+            <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} theme={theme} />
           </div>
         </aside>
-      </div>
+      </motion.div>
     </>
   )
 }

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { teacherMockData } from '@/constants/mockData'
+import { ROLE_LABELS, UserRole } from '@/types/roles'
 
 interface Notification {
   id: number
@@ -189,10 +190,7 @@ export default function DashboardHeader() {
                     {user?.name || 'Administrator'}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {user?.role === 'student' ? 'Estudante' : 
-                     user?.role === 'teacher' ? 'Professor' : 
-                     user?.role === 'manager' ? 'Gestor' : 
-                     user?.role === 'admin' ? 'Administrador' : 'Usuário'}
+                    {user?.role && ROLE_LABELS[user.role.toUpperCase() as keyof typeof ROLE_LABELS] || 'Usuário'}
                   </span>
                 </div>
                 <span className="material-symbols-outlined text-gray-400 ml-2">

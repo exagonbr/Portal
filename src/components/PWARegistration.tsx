@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Workbox } from 'workbox-window';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
+import { IOSInstallBanner } from './IOSInstallBanner';
 import { OfflineIndicator } from './OfflineIndicator';
 
 export function PWARegistration() {
@@ -71,6 +72,7 @@ export function PWARegistration() {
 
   return (
     <>
+      <IOSInstallBanner />
       <OfflineIndicator isOnline={isOnline} />
 
       {isUpdateAvailable && (

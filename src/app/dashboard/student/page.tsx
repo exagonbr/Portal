@@ -35,6 +35,8 @@ import { Class } from '@/types/class';
 import { SHIFT_LABELS } from '@/types/class';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
 import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
+import { useTheme } from '@/contexts/ThemeContext';
+import { motion } from 'framer-motion';
 
 interface StudentStats {
   averageGrade: number;
@@ -116,6 +118,7 @@ interface StudyGroup {
 function StudentDashboardContent() {
   const { user } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [myClass, setMyClass] = useState<Class | null>(null);
   const [stats, setStats] = useState<StudentStats>({
@@ -397,59 +400,71 @@ function StudentDashboardContent() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
-      <div className="flex justify-between items-center mb-6">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center mb-6"
+      >
         <div>
-          <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
-            <BookOpen className="w-8 h-8 text-primary" />
+          <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: theme.colors.text.primary }}>
+            <BookOpen className="w-8 h-8" style={{ color: theme.colors.primary.DEFAULT }} />
             Portal do Estudante
           </h1>
-          <p className="text-gray-600 dark:text-gray-600 mt-2">
+          <p className="mt-2" style={{ color: theme.colors.text.secondary }}>
             Acompanhe seu progresso acadêmico e atividades
           </p>
         </div>
         <div className="flex flex-col md:flex-row gap-2">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('overview')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              selectedView === 'overview'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-            }`}
+            className={`px-4 py-2 rounded-lg transition-colors`}
+            style={{
+              backgroundColor: selectedView === 'overview' ? theme.colors.primary.DEFAULT : theme.colors.background.secondary,
+              color: selectedView === 'overview' ? 'white' : theme.colors.text.primary
+            }}
           >
             Visão Geral
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('academic')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              selectedView === 'academic'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-            }`}
+            className={`px-4 py-2 rounded-lg transition-colors`}
+            style={{
+              backgroundColor: selectedView === 'academic' ? theme.colors.primary.DEFAULT : theme.colors.background.secondary,
+              color: selectedView === 'academic' ? 'white' : theme.colors.text.primary
+            }}
           >
             Acadêmico
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('activities')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              selectedView === 'activities'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-            }`}
+            className={`px-4 py-2 rounded-lg transition-colors`}
+            style={{
+              backgroundColor: selectedView === 'activities' ? theme.colors.primary.DEFAULT : theme.colors.background.secondary,
+              color: selectedView === 'activities' ? 'white' : theme.colors.text.primary
+            }}
           >
             Atividades
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('calendar')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              selectedView === 'calendar'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 dark:bg-gray-300 text-gray-700 dark:text-gray-700'
-            }`}
+            className={`px-4 py-2 rounded-lg transition-colors`}
+            style={{
+              backgroundColor: selectedView === 'calendar' ? theme.colors.primary.DEFAULT : theme.colors.background.secondary,
+              color: selectedView === 'calendar' ? 'white' : theme.colors.text.primary
+            }}
           >
             Calendário
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Barra de Progresso e Gamificação */}
       <div className="bg-gradient-to-r from-accent-purple to-primary text-white rounded-lg shadow-md p-6 mb-6">

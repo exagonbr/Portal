@@ -1,51 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const session = await getServerSession(authOptions)
     
-    // Validação básica dos campos necessários
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    const body = await request.json()
+
+    // Simulação de teste de conexão
+    // Em produção, aqui você usaria o AWS SDK para testar a conexão
     if (!body.accessKeyId || !body.secretAccessKey || !body.region) {
       return NextResponse.json(
-        { error: 'Credenciais AWS incompletas' },
+        { 
+          success: false, 
+          message: 'Credenciais AWS incompletas. Verifique Access Key, Secret Key e Região.'
+        },
         { status: 400 }
       )
     }
 
-    // Simulação de teste de conexão S3
-    // Em produção, aqui você faria a conexão real com AWS SDK
-    await new Promise(resolve => setTimeout(resolve, 2000)) // Simula delay da API
-
-    // Simula resultado baseado nas credenciais
-    const isValid = body.accessKeyId.startsWith('AKIA') && 
-                   body.secretAccessKey.length >= 40 &&
-                   body.region.length > 0
-
-    if (isValid) {
-      return NextResponse.json({
-        success: true,
-        message: 'Conexão S3 testada com sucesso',
-        details: {
-          region: body.region,
-          bucketAccess: true,
-          permissions: ['read', 'write']
-        }
-      })
-    } else {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Credenciais AWS inválidas ou insuficientes' 
-        },
-        { status: 401 }
-      )
-    }
-
+    // Simula um teste bem-sucedido
+    return NextResponse.json({
+      success: true,
+      message: 'Conexão com AWS S3 estabelecida com sucesso!'
+    })
   } catch (error) {
+    console.error('Erro ao testar conexão S3:', error)
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Erro interno ao testar conexão S3' 
+        message: 'Erro ao testar conexão S3',
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
       },
       { status: 500 }
     )

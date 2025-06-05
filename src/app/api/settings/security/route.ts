@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
 // Simulação de banco de dados - em produção, usar um banco real
 let securitySettingsData = {
@@ -10,10 +14,17 @@ let securitySettingsData = {
   sessionTimeout: 30
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     return NextResponse.json(securitySettingsData)
   } catch (error) {
+    console.error('Erro ao buscar configurações de segurança:', error)
     return NextResponse.json(
       { error: 'Erro ao buscar configurações de segurança' },
       { status: 500 }
@@ -23,30 +34,14 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const body = await request.json()
     
-    // Validação básica
-    if (body.minPasswordLength < 6 || body.minPasswordLength > 128) {
-      return NextResponse.json(
-        { error: 'Tamanho mínimo da senha deve estar entre 6 e 128 caracteres' },
-        { status: 400 }
-      )
-    }
-
-    if (!['optional', 'required', 'disabled'].includes(body.twoFactorAuth)) {
-      return NextResponse.json(
-        { error: 'Configuração de 2FA inválida' },
-        { status: 400 }
-      )
-    }
-
-    if (body.sessionTimeout < 5 || body.sessionTimeout > 1440) {
-      return NextResponse.json(
-        { error: 'Timeout de sessão deve estar entre 5 e 1440 minutos' },
-        { status: 400 }
-      )
-    }
-
     // Atualiza os dados
     securitySettingsData = {
       ...securitySettingsData,
@@ -56,52 +51,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(securitySettingsData)
   } catch (error) {
+    console.error('Erro ao salvar configurações de segurança:', error)
     return NextResponse.json(
-      { error: 'Erro ao criar configurações de segurança' },
+      { error: 'Erro ao salvar configurações de segurança' },
       { status: 500 }
     )
   }
 }
 
 export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json()
-    
-    // Validação básica
-    if (body.minPasswordLength < 6 || body.minPasswordLength > 128) {
-      return NextResponse.json(
-        { error: 'Tamanho mínimo da senha deve estar entre 6 e 128 caracteres' },
-        { status: 400 }
-      )
-    }
-
-    if (!['optional', 'required', 'disabled'].includes(body.twoFactorAuth)) {
-      return NextResponse.json(
-        { error: 'Configuração de 2FA inválida' },
-        { status: 400 }
-      )
-    }
-
-    if (body.sessionTimeout < 5 || body.sessionTimeout > 1440) {
-      return NextResponse.json(
-        { error: 'Timeout de sessão deve estar entre 5 e 1440 minutos' },
-        { status: 400 }
-      )
-    }
-
-    // Atualiza os dados
-    securitySettingsData = {
-      ...securitySettingsData,
-      ...body
-    }
-
-    return NextResponse.json(securitySettingsData)
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Erro ao atualizar configurações de segurança' },
-      { status: 500 }
-    )
-  }
+  return POST(request)
 }
 
 export async function DELETE() {

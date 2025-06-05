@@ -4,6 +4,8 @@ import { ReactNode, useState } from 'react';
 import StandardSidebar from '@/components/StandardSidebar';
 import StandardHeader from '@/components/StandardHeader';
 import Link from 'next/link';
+import { useTheme } from '@/contexts/ThemeContext';
+import { motion } from 'framer-motion';
 
 interface StandardLayoutProps {
   children: ReactNode;
@@ -23,13 +25,18 @@ const StandardLayout = ({
   rightContent
 }: StandardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme } = useTheme();
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen" style={{ backgroundColor: theme.colors.background.primary }}>
       {/* Mobile Sidebar Backdrop */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-slate-900 bg-opacity-50 md:hidden backdrop-blur-sm"
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-40 bg-opacity-50 md:hidden backdrop-blur-sm"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -49,42 +56,65 @@ const StandardLayout = ({
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+        <header 
+          className="shadow-sm border-b sticky top-0 z-10"
+          style={{ 
+            backgroundColor: theme.colors.background.card,
+            borderColor: theme.colors.border.DEFAULT
+          }}
+        >
           <div className="px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               {/* Mobile menu button */}
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 type="button"
-                className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-slate-500 hover:text-slate-600 hover:bg-slate-100"
+                className="md:hidden inline-flex items-center justify-center p-2 rounded-md transition-colors"
+                style={{ color: theme.colors.text.secondary }}
                 onClick={() => setSidebarOpen(true)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = `${theme.colors.primary.light}20`;
+                  e.currentTarget.style.color = theme.colors.primary.DEFAULT;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = theme.colors.text.secondary;
+                }}
               >
                 <span className="sr-only">Abrir menu</span>
                 <span className="material-symbols-outlined">menu</span>
-              </button>
+              </motion.button>
 
               <div className="flex-1 min-w-0">
                 {title && (
-                  <h1 className="text-2xl font-semibold text-slate-900 truncate">
+                  <h1 className="text-2xl font-semibold truncate" style={{ color: theme.colors.text.primary }}>
                     {title}
                   </h1>
                 )}
                 {subtitle && (
-                  <p className="mt-1 text-sm text-slate-500 truncate">
+                  <p className="mt-1 text-sm truncate" style={{ color: theme.colors.text.secondary }}>
                     {subtitle}
                   </p>
                 )}
                 {showBreadcrumb && breadcrumbItems.length > 0 && (
                   <nav className="mt-1">
-                    <ol className="flex items-center space-x-1 text-sm text-slate-500">
+                    <ol className="flex items-center space-x-1 text-sm">
                       {breadcrumbItems.map((item, index) => (
                         <li key={index} className="flex items-center">
-                          {index > 0 && <span className="mx-1">/</span>}
+                          {index > 0 && <span className="mx-1" style={{ color: theme.colors.text.tertiary }}>/</span>}
                           {item.href ? (
-                            <Link href={item.href} className="hover:text-slate-700">
+                            <Link 
+                              href={item.href} 
+                              className="transition-colors"
+                              style={{ color: theme.colors.primary.DEFAULT }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = theme.colors.primary.dark}
+                              onMouseLeave={(e) => e.currentTarget.style.color = theme.colors.primary.DEFAULT}
+                            >
                               {item.label}
                             </Link>
                           ) : (
-                            <span>{item.label}</span>
+                            <span style={{ color: theme.colors.text.secondary }}>{item.label}</span>
                           )}
                         </li>
                       ))}
@@ -97,7 +127,10 @@ const StandardLayout = ({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50">
+        <main 
+          className="flex-1 overflow-x-hidden overflow-y-auto"
+          style={{ backgroundColor: theme.colors.background.primary }}
+        >
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {children}
@@ -108,11 +141,19 @@ const StandardLayout = ({
 
       {/* Right Sidebar (if provided) */}
       {rightContent && (
-        <div className="hidden lg:block w-64 border-l border-slate-200 bg-white overflow-y-auto">
+        <motion.div 
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          className="hidden lg:block w-64 border-l overflow-y-auto"
+          style={{ 
+            borderColor: theme.colors.border.DEFAULT,
+            backgroundColor: theme.colors.background.card
+          }}
+        >
           <div className="p-4">
             {rightContent}
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -5,6 +5,8 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { UserRole } from '../types/auth';
 import { ROLE_LABELS } from '@/types/roles';
+import { useTheme } from '@/contexts/ThemeContext';
+import { motion } from 'framer-motion';
 
 interface StandardHeaderProps {
   title?: string;
@@ -60,6 +62,7 @@ const StandardHeader = ({
   breadcrumbItems = []
 }: StandardHeaderProps) => {
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isActivitiesMenuOpen, setIsActivitiesMenuOpen] = useState(false);
   const [isCalendarMenuOpen, setIsCalendarMenuOpen] = useState(false);
@@ -227,32 +230,32 @@ const StandardHeader = ({
     switch (type) {
       case 'assignment':
         return (
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.primary.light}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.primary.DEFAULT }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
         );
       case 'exam':
         return (
-          <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.status.error}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.status.error }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
         );
       case 'class':
         return (
-          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.status.success}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.status.success }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253" />
             </svg>
           </div>
         );
       default:
         return (
-          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.text.tertiary}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.text.tertiary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
@@ -264,32 +267,32 @@ const StandardHeader = ({
     switch (type) {
       case 'class':
         return (
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.primary.light}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.primary.DEFAULT }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253" />
             </svg>
           </div>
         );
       case 'exam':
         return (
-          <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.status.error}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.status.error }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
         );
       case 'meeting':
         return (
-          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.secondary.light}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.secondary.DEFAULT }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
         );
       default:
         return (
-          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.status.success}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.status.success }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
@@ -301,32 +304,32 @@ const StandardHeader = ({
     switch (type) {
       case 'info':
         return (
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.primary.light}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.primary.DEFAULT }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
         );
       case 'warning':
         return (
-          <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.status.warning}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.status.warning }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
         );
       case 'success':
         return (
-          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.status.success}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.status.success }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
         );
       case 'error':
         return (
-          <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${theme.colors.status.error}20` }}>
+            <svg className="w-4 h-4" style={{ color: theme.colors.status.error }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -354,14 +357,22 @@ const StandardHeader = ({
   };
 
   return (
-    <header className="bg-white border-b border-slate-20 p-4">
+    <motion.header 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border-b shadow-sm"
+      style={{ 
+        backgroundColor: theme.colors.background.primary,
+        borderColor: theme.colors.border.DEFAULT 
+      }}
+    >
       <div className="flex items-center justify-between h-16 px-6">
         {/* Left Section - Title and Breadcrumb */}
         <div className="flex-1">
           <div className="flex flex-col">
-            <h1 className="text-xl font-semibold text-slate-800">{title}</h1>
+            <h1 className="text-xl font-semibold" style={{ color: theme.colors.text.primary }}>{title}</h1>
             {subtitle && (
-              <p className="text-sm text-slate-600 mt-0.5">{subtitle}</p>
+              <p className="text-sm mt-0.5" style={{ color: theme.colors.text.secondary }}>{subtitle}</p>
             )}
             {showBreadcrumb && breadcrumbItems.length > 0 && (
               <nav className="flex mt-2" aria-label="Breadcrumb">
@@ -369,16 +380,22 @@ const StandardHeader = ({
                   {breadcrumbItems.map((item, index) => (
                     <li key={index} className="flex items-center">
                       {index > 0 && (
-                        <svg className="w-4 h-4 text-slate-400 mx-2" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 mx-2" style={{ color: theme.colors.text.tertiary }} fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                         </svg>
                       )}
                       {item.href ? (
-                        <Link href={item.href} className="text-blue-600 hover:text-blue-800 transition-colors font-medium">
+                        <Link 
+                          href={item.href} 
+                          className="font-medium transition-colors"
+                          style={{ color: theme.colors.primary.DEFAULT }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = theme.colors.primary.dark}
+                          onMouseLeave={(e) => e.currentTarget.style.color = theme.colors.primary.DEFAULT}
+                        >
                           {item.label}
                         </Link>
                       ) : (
-                        <span className="text-slate-500 font-medium">{item.label}</span>
+                        <span className="font-medium" style={{ color: theme.colors.text.secondary }}>{item.label}</span>
                       )}
                     </li>
                   ))}
@@ -393,103 +410,181 @@ const StandardHeader = ({
 
           {/* Activities */}
           <div className="relative" ref={activitiesMenuRef}>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setIsActivitiesMenuOpen(!isActivitiesMenuOpen)}
-              className="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:text-slate-700 transition-all duration-200 rounded-xl"
+              className="relative p-2.5 focus:outline-none transition-all duration-200 rounded-xl"
+              style={{ 
+                color: theme.colors.text.secondary,
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = `${theme.colors.primary.light}20`;
+                e.currentTarget.style.color = theme.colors.primary.DEFAULT;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = theme.colors.text.secondary;
+              }}
             >
               <span className="sr-only">Atividades</span>
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
               {pendingActivities > 0 && (
-                <span className="absolute -top-1 -right-1 block h-4 w-4 bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+                <span 
+                  className="absolute -top-1 -right-1 block h-4 w-4 text-white text-xs font-bold rounded-full flex items-center justify-center ring-2 ring-white"
+                  style={{ 
+                    backgroundColor: theme.colors.primary.DEFAULT
+                  }}
+                >
                   {pendingActivities > 9 ? '9+' : pendingActivities}
                 </span>
               )}
-            </button>
+            </motion.button>
 
             {/* Activities Dropdown */}
             {isActivitiesMenuOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-[9999] animate-scale-in">
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <h3 className="text-sm font-semibold text-slate-800">Atividades</h3>
-                  <p className="text-xs text-slate-600">{pendingActivities} pendentes</p>
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute right-0 mt-2 w-80 rounded-xl shadow-xl border py-2 z-[9999]"
+                style={{ 
+                  backgroundColor: theme.colors.background.card,
+                  borderColor: theme.colors.border.DEFAULT
+                }}
+              >
+                <div className="px-4 py-3 border-b" style={{ borderColor: theme.colors.border.light }}>
+                  <h3 className="text-sm font-semibold" style={{ color: theme.colors.text.primary }}>Atividades</h3>
+                  <p className="text-xs" style={{ color: theme.colors.text.secondary }}>{pendingActivities} pendentes</p>
                 </div>
                 
                 <div className="max-h-80 overflow-y-auto">
                   {activities.map((activity) => (
-                    <div key={activity.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0">
+                    <div 
+                      key={activity.id} 
+                      className="px-4 py-3 border-b last:border-b-0 transition-colors"
+                      style={{ 
+                        borderColor: theme.colors.border.light,
+                        backgroundColor: theme.colors.background.card
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.background.secondary}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.colors.background.card}
+                    >
                       <div className="flex items-start space-x-3">
                         {getActivityIcon(activity.type)}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-slate-800 truncate">{activity.title}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              activity.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              activity.status === 'completed' ? 'bg-green-100 text-green-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
+                            <p className="text-sm font-medium" style={{ color: theme.colors.text.primary }}>{activity.title}</p>
+                            <span className={`text-xs px-2 py-1 rounded-full`} style={{
+                              backgroundColor: activity.status === 'pending' ? `${theme.colors.status.warning}20` :
+                                             activity.status === 'completed' ? `${theme.colors.status.success}20` :
+                                             `${theme.colors.status.error}20`,
+                              color: activity.status === 'pending' ? theme.colors.status.warning :
+                                     activity.status === 'completed' ? theme.colors.status.success :
+                                     theme.colors.status.error
+                            }}>
                               {activity.status === 'pending' ? 'Pendente' :
                                activity.status === 'completed' ? 'Concluída' : 'Atrasada'}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-600 mt-1">{activity.description}</p>
-                          <p className="text-xs text-slate-500 mt-1">Prazo: {formatDate(activity.date)}</p>
+                          <p className="text-xs mt-1" style={{ color: theme.colors.text.secondary }}>{activity.description}</p>
+                          <p className="text-xs mt-1" style={{ color: theme.colors.text.tertiary }}>Prazo: {formatDate(activity.date)}</p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                <div className="px-4 py-3 border-t border-slate-100">
+                <div className="px-4 py-3 border-t" style={{ borderColor: theme.colors.border.light }}>
                   <Link
                     href="/activities"
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-sm font-medium transition-colors"
+                    style={{ color: theme.colors.primary.DEFAULT }}
                     onClick={() => setIsActivitiesMenuOpen(false)}
+                    onMouseEnter={(e) => e.currentTarget.style.color = theme.colors.primary.dark}
+                    onMouseLeave={(e) => e.currentTarget.style.color = theme.colors.primary.DEFAULT}
                   >
                     Ver todas as atividades
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
 
           {/* Calendar */}
           <div className="relative" ref={calendarMenuRef}>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setIsCalendarMenuOpen(!isCalendarMenuOpen)}
-              className="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:text-slate-700 transition-all duration-200 rounded-xl"
+              className="relative p-2.5 focus:outline-none transition-all duration-200 rounded-xl"
+              style={{ 
+                color: theme.colors.text.secondary,
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = `${theme.colors.primary.light}20`;
+                e.currentTarget.style.color = theme.colors.primary.DEFAULT;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = theme.colors.text.secondary;
+              }}
             >
               <span className="sr-only">Calendário</span>
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               {todayEvents > 0 && (
-                <span className="absolute -top-1 -right-1 block h-4 w-4 bg-green-500 text-white text-xs font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+                <span 
+                  className="absolute -top-1 -right-1 block h-4 w-4 text-white text-xs font-bold rounded-full flex items-center justify-center ring-2 ring-white"
+                  style={{ 
+                    backgroundColor: theme.colors.status.success
+                  }}
+                >
                   {todayEvents > 9 ? '9+' : todayEvents}
                 </span>
               )}
-            </button>
+            </motion.button>
 
             {/* Calendar Dropdown */}
             {isCalendarMenuOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-[9999] animate-scale-in">
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <h3 className="text-sm font-semibold text-slate-800">Calendário</h3>
-                  <p className="text-xs text-slate-600">Próximos eventos</p>
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute right-0 mt-2 w-80 rounded-xl shadow-xl border py-2 z-[9999]"
+                style={{ 
+                  backgroundColor: theme.colors.background.card,
+                  borderColor: theme.colors.border.DEFAULT
+                }}
+              >
+                <div className="px-4 py-3 border-b" style={{ borderColor: theme.colors.border.light }}>
+                  <h3 className="text-sm font-semibold" style={{ color: theme.colors.text.primary }}>Calendário</h3>
+                  <p className="text-xs" style={{ color: theme.colors.text.secondary }}>Próximos eventos</p>
                 </div>
                 
                 <div className="max-h-80 overflow-y-auto">
                   {calendarEvents.map((event) => (
-                    <div key={event.id} className="px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0">
+                    <div 
+                      key={event.id} 
+                      className="px-4 py-3 border-b last:border-b-0 transition-colors"
+                      style={{ 
+                        borderColor: theme.colors.border.light,
+                        backgroundColor: theme.colors.background.card
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.background.secondary}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.colors.background.card}
+                    >
                       <div className="flex items-start space-x-3">
                         {getCalendarIcon(event.type)}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-800">{event.title}</p>
+                          <p className="text-sm font-medium" style={{ color: theme.colors.text.primary }}>{event.title}</p>
                           <div className="flex items-center space-x-2 mt-1">
-                            <p className="text-xs text-slate-600">{formatDate(event.date)}</p>
-                            <span className="text-xs text-slate-400">•</span>
-                            <p className="text-xs text-slate-600">{event.time}</p>
+                            <p className="text-xs" style={{ color: theme.colors.text.secondary }}>{formatDate(event.date)}</p>
+                            <span className="text-xs" style={{ color: theme.colors.text.tertiary }}>•</span>
+                            <p className="text-xs" style={{ color: theme.colors.text.secondary }}>{event.time}</p>
                           </div>
                         </div>
                       </div>
@@ -497,48 +592,81 @@ const StandardHeader = ({
                   ))}
                 </div>
                 
-                <div className="px-4 py-3 border-t border-slate-100">
+                <div className="px-4 py-3 border-t" style={{ borderColor: theme.colors.border.light }}>
                   <Link
                     href="/calendar"
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-sm font-medium transition-colors"
+                    style={{ color: theme.colors.primary.DEFAULT }}
                     onClick={() => setIsCalendarMenuOpen(false)}
+                    onMouseEnter={(e) => e.currentTarget.style.color = theme.colors.primary.dark}
+                    onMouseLeave={(e) => e.currentTarget.style.color = theme.colors.primary.DEFAULT}
                   >
                     Ver calendário completo
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
 
           {/* Notifications */}
           <div className="relative" ref={notificationsMenuRef}>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setIsNotificationsMenuOpen(!isNotificationsMenuOpen)}
-              className="relative p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:text-slate-700 transition-all duration-200 rounded-xl"
+              className="relative p-2.5 focus:outline-none transition-all duration-200 rounded-xl"
+              style={{ 
+                color: theme.colors.text.secondary,
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = `${theme.colors.primary.light}20`;
+                e.currentTarget.style.color = theme.colors.primary.DEFAULT;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = theme.colors.text.secondary;
+              }}
             >
               <span className="sr-only">Notificações</span>
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM15 17H9a4 4 0 01-4-4V5a4 4 0 014-4h6a4 4 0 014 4v8a4 4 0 01-4 4z" />
               </svg>
               {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 block h-4 w-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+                <span 
+                  className="absolute -top-1 -right-1 block h-4 w-4 text-white text-xs font-bold rounded-full flex items-center justify-center ring-2 ring-white"
+                  style={{ 
+                    backgroundColor: theme.colors.status.error
+                  }}
+                >
                   {unreadNotifications > 9 ? '9+' : unreadNotifications}
                 </span>
               )}
-            </button>
+            </motion.button>
 
             {/* Notifications Dropdown */}
             {isNotificationsMenuOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-[9999] animate-scale-in">
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute right-0 mt-2 w-80 rounded-xl shadow-xl border py-2 z-[9999]"
+                style={{ 
+                  backgroundColor: theme.colors.background.card,
+                  borderColor: theme.colors.border.DEFAULT
+                }}
+              >
+                <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: theme.colors.border.light }}>
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-800">Notificações</h3>
-                    <p className="text-xs text-slate-600">{unreadNotifications} não lidas</p>
+                    <h3 className="text-sm font-semibold" style={{ color: theme.colors.text.primary }}>Notificações</h3>
+                    <p className="text-xs" style={{ color: theme.colors.text.secondary }}>{unreadNotifications} não lidas</p>
                   </div>
                   {user?.role !== 'student' && (
                     <Link
                       href="/notifications/send"
-                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-xs font-medium transition-colors"
+                      style={{ color: theme.colors.primary.DEFAULT }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = theme.colors.primary.dark}
+                      onMouseLeave={(e) => e.currentTarget.style.color = theme.colors.primary.DEFAULT}
                     >
                       Enviar Nova
                     </Link>
@@ -549,109 +677,157 @@ const StandardHeader = ({
                   {notifications.map((notification) => (
                     <div 
                       key={notification.id} 
-                      className={`px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 cursor-pointer ${
-                        !notification.read ? 'bg-blue-50' : ''
-                      }`}
+                      className={`px-4 py-3 border-b last:border-b-0 cursor-pointer transition-colors`}
+                      style={{ 
+                        borderColor: theme.colors.border.light,
+                        backgroundColor: !notification.read ? `${theme.colors.primary.light}10` : theme.colors.background.card
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.background.secondary}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = !notification.read ? `${theme.colors.primary.light}10` : theme.colors.background.card}
                       onClick={() => markNotificationAsRead(notification.id)}
                     >
                       <div className="flex items-start space-x-3">
                         {getNotificationIcon(notification.type)}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-slate-800">{notification.title}</p>
+                            <p className="text-sm font-medium" style={{ color: theme.colors.text.primary }}>{notification.title}</p>
                             {!notification.read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.colors.primary.DEFAULT }}></div>
                             )}
                           </div>
-                          <p className="text-xs text-slate-600 mt-1">{notification.message}</p>
-                          <p className="text-xs text-slate-500 mt-1">{formatTime(notification.timestamp)}</p>
+                          <p className="text-xs mt-1" style={{ color: theme.colors.text.secondary }}>{notification.message}</p>
+                          <p className="text-xs mt-1" style={{ color: theme.colors.text.tertiary }}>{formatTime(notification.timestamp)}</p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                <div className="px-4 py-3 border-t border-slate-100">
+                <div className="px-4 py-3 border-t" style={{ borderColor: theme.colors.border.light }}>
                   <Link
                     href="/notifications"
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    className="text-sm font-medium transition-colors"
+                    style={{ color: theme.colors.primary.DEFAULT }}
                     onClick={() => setIsNotificationsMenuOpen(false)}
+                    onMouseEnter={(e) => e.currentTarget.style.color = theme.colors.primary.dark}
+                    onMouseLeave={(e) => e.currentTarget.style.color = theme.colors.primary.DEFAULT}
                   >
                     Ver todas as notificações
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
 
           {/* User Profile Menu */}
           {user && (
             <div className="relative" ref={profileMenuRef}>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center space-x-3 p-2 rounded-xl hover:bg-slate-100 focus:outline-none focus:bg-slate-100 transition-all duration-200"
+                className="flex items-center space-x-3 p-2 rounded-xl focus:outline-none transition-all duration-200"
+                style={{ backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${theme.colors.primary.light}10`}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                <div 
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.primary.dark})`
+                  }}
+                >
                   <span className="text-white font-semibold text-sm">
                     {user.name?.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-semibold text-slate-800">{user.name}</p>
-                  <p className="text-xs text-slate-600">
+                  <p className="text-sm font-semibold" style={{ color: theme.colors.text.primary }}>{user.name}</p>
+                  <p className="text-xs" style={{ color: theme.colors.text.secondary }}>
                     {user?.role && ROLE_LABELS[user.role as keyof typeof ROLE_LABELS]}
                   </p>
                 </div>
                 <svg 
-                  className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
+                  style={{ color: theme.colors.text.secondary }}
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
-              </button>
+              </motion.button>
 
               {/* Profile Dropdown */}
               {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-[9999] animate-scale-in">
-                  <div className="px-4 py-3 border-b border-slate-100">
-                    <p className="text-sm font-semibold text-slate-800">{user.name}</p>
-                    <p className="text-sm text-slate-600">{user.email}</p>
-                    <span className="inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute right-0 mt-2 w-64 rounded-xl shadow-xl border py-2 z-[9999]"
+                  style={{ 
+                    backgroundColor: theme.colors.background.card,
+                    borderColor: theme.colors.border.DEFAULT
+                  }}
+                >
+                  <div className="px-4 py-3 border-b" style={{ borderColor: theme.colors.border.light }}>
+                    <p className="text-sm font-semibold" style={{ color: theme.colors.text.primary }}>{user.name}</p>
+                    <p className="text-sm" style={{ color: theme.colors.text.secondary }}>{user.email}</p>
+                    <span 
+                      className="inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full"
+                      style={{ 
+                        backgroundColor: `${theme.colors.primary.light}20`,
+                        color: theme.colors.primary.DEFAULT
+                      }}
+                    >
                       {user?.role && ROLE_LABELS[user.role as keyof typeof ROLE_LABELS]}
                     </span>
                   </div>
                   
                   <Link
                     href="/profile"
-                    className="flex items-center px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="flex items-center px-4 py-3 text-sm transition-colors"
+                    style={{ color: theme.colors.text.primary }}
                     onClick={() => setIsProfileMenuOpen(false)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.colors.background.secondary;
+                      e.currentTarget.style.color = theme.colors.primary.DEFAULT;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = theme.colors.text.primary;
+                    }}
                   >
-                    <svg className="mr-3 h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="mr-3 h-4 w-4" style={{ color: theme.colors.text.secondary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <span className="font-medium">Meu Perfil</span>
                   </Link>
 
-                  <hr className="my-2 border-slate-100" />
+                  <hr className="my-2" style={{ borderColor: theme.colors.border.light }} />
                   
                   <button
                     onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="flex items-center w-full px-4 py-3 text-sm transition-colors"
+                    style={{ color: theme.colors.status.error }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = `${theme.colors.status.error}10`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
                   >
-                    <svg className="mr-3 h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="mr-3 h-4 w-4" style={{ color: theme.colors.status.error }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     <span className="font-medium">Sair</span>
                   </button>
-                </div>
+                </motion.div>
               )}
             </div>
           )}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };
 

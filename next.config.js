@@ -1,10 +1,27 @@
 /** @type {import('next').NextConfig} */
 
+const isDev = process.env.NODE_ENV === 'development';
+
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development' && process.env.DISABLE_PWA === 'true',
+  disable: isDev,
+  buildExcludes: [/middleware-manifest\.json$/],
+  generateInDevMode: false,
+  scope: '/',
+  sw: 'sw.js',
+  publicExcludes: ['!noprecache/**/*'],
+  fallbacks: {
+    document: '/offline'
+  },
+  workboxOptions: {
+    disableDevLogs: true,
+    ...(isDev && {
+      mode: 'development',
+      sourcemap: false
+    })
+  },
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

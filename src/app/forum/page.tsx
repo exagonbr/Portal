@@ -20,6 +20,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { UserRole } from '@/types/roles';
 
 interface ForumCategory {
   id: string;
@@ -64,6 +68,19 @@ interface ForumTopic {
   isPinned: boolean;
   isLocked: boolean;
   tags: string[];
+}
+
+interface ForumPost {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  category: string;
+  replies: number;
+  views: number;
+  lastActivity: string;
+  isPinned: boolean;
+  isLocked: boolean;
 }
 
 export default function ForumPage() {
@@ -134,6 +151,45 @@ export default function ForumPage() {
     }
   ];
 
+  const forumPosts: ForumPost[] = [
+    {
+      id: 1,
+      title: 'Dúvidas sobre a prova de Matemática',
+      content: 'Alguém pode me ajudar com as questões de função quadrática?',
+      author: 'Ana Silva',
+      category: 'Matemática',
+      replies: 15,
+      views: 234,
+      lastActivity: '2024-03-20 14:30',
+      isPinned: true,
+      isLocked: false
+    },
+    {
+      id: 2,
+      title: 'Discussão sobre Literatura Brasileira',
+      content: 'Vamos discutir sobre as características do Romantismo brasileiro...',
+      author: 'Prof. João Santos',
+      category: 'Português',
+      replies: 28,
+      views: 456,
+      lastActivity: '2024-03-20 13:45',
+      isPinned: false,
+      isLocked: false
+    },
+    {
+      id: 3,
+      title: 'Projeto de Ciências - Grupo A',
+      content: 'Compartilhando resultados do experimento sobre fotossíntese',
+      author: 'Carlos Lima',
+      category: 'Ciências',
+      replies: 8,
+      views: 156,
+      lastActivity: '2024-03-20 12:15',
+      isPinned: false,
+      isLocked: true
+    }
+  ];
+
   // Filtrar tópicos baseado na busca e categoria
   const filteredTopics = mockTopics.filter(topic => {
     const matchesSearch = searchTerm === '' || 
@@ -144,6 +200,13 @@ export default function ForumPage() {
       topic.category === selectedCategory;
 
     return matchesSearch && matchesCategory;
+  });
+
+  const filteredPosts = forumPosts.filter(post => {
+    const categoryMatch = selectedCategory === 'all' || post.category === selectedCategory;
+    const searchMatch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       post.content.toLowerCase().includes(searchTerm.toLowerCase());
+    return categoryMatch && searchMatch;
   });
 
   useEffect(() => {
@@ -296,238 +359,210 @@ export default function ForumPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Cabeçalho */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-primary" />
-              Fórum Acadêmico
-            </h1>
-            <p className="mt-1 text-sm sm:text-base text-gray-600">
-              Participe das discussões e compartilhe conhecimento com a comunidade escolar
-            </p>
-          </div>
-          <button className="button-primary flex items-center justify-center gap-2 w-full sm:w-auto">
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Novo Tópico</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Barra de Pesquisa e Filtros */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar tópicos..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm sm:text-base"
-            />
-          </div>
-          <div className="flex gap-2">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm sm:text-base bg-white"
-            >
-              <option value="">Todas Categorias</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <button className="px-3 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-primary focus:border-primary text-sm sm:text-base flex items-center gap-2">
-              <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">Filtros</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100">
-              <MessageSquare className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                {stats.topics}
-              </p>
-              <p className="text-sm text-gray-600">Tópicos</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-100">
-              <MessageCircle className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                {stats.replies}
-              </p>
-              <p className="text-sm text-gray-600">Respostas</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-100">
-              <User className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                {stats.activeUsers}
-              </p>
-              <p className="text-sm text-gray-600">Usuários Ativos</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-100">
-              <TrendingUp className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                {stats.responseRate}%
-              </p>
-              <p className="text-sm text-gray-600">Taxa de Resposta</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Lista de Tópicos */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-200">
-        {filteredTopics.map((topic) => (
-          <div key={topic.id} className="p-3 sm:p-4 lg:p-6 hover:bg-gray-50 transition-colors">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-600">
-                        {topic.author.name.charAt(0)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                      {topic.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-                      {topic.preview}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {topic.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <div className="flex items-center gap-1">
-                  <MessageCircle className="w-4 h-4" />
-                  <span>{topic.replies}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Eye className="w-4 h-4" />
-                  <span>{topic.views}</span>
-                </div>
-                <div className="hidden sm:block text-right">
-                  <p className="text-xs text-gray-500">
-                    Última resposta
-                  </p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {topic.lastReply}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Paginação */}
-      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-3 py-2 sm:px-4 rounded-lg">
-        <div className="flex flex-1 justify-between sm:hidden">
-          <button
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-          <button
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Próxima
-          </button>
-        </div>
-        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-gray-700">
-              Mostrando <span className="font-medium">1</span> até{' '}
-              <span className="font-medium">10</span> de{' '}
-              <span className="font-medium">{totalTopics}</span> tópicos
-            </p>
-          </div>
-          <div>
-            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="sr-only">Anterior</span>
-                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-              </button>
-              {/* Números das páginas */}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                    page === currentPage
-                      ? 'z-10 bg-primary text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
-                      : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                  }`}
+    <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.TEACHER]}>
+      <DashboardLayout>
+        <DashboardPageLayout
+          title="Fórum de Discussões"
+          subtitle="Participe das discussões acadêmicas e tire suas dúvidas"
+        >
+          <div className="space-y-6">
+            {/* Controles */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                <input
+                  type="text"
+                  placeholder="Buscar discussões..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  {page}
-                </button>
-              ))}
-              <button
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="sr-only">Próxima</span>
-                <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                  <option value="all">Todas as Categorias</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 transition-colors duration-200">
+                Nova Discussão
               </button>
-            </nav>
+            </div>
+
+            {/* Estatísticas */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-gray-500 mb-1">Total de Tópicos</div>
+                    <div className="text-2xl font-bold text-gray-600">{forumPosts.length}</div>
+                  </div>
+                  <div className="p-3 rounded-full bg-primary/20">
+                    <span className="material-symbols-outlined text-lg text-primary">forum</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-gray-500 mb-1">Total de Respostas</div>
+                    <div className="text-2xl font-bold text-gray-600">
+                      {forumPosts.reduce((total, post) => total + post.replies, 0)}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-accent-blue/20">
+                    <span className="material-symbols-outlined text-lg text-accent-blue">chat</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-gray-500 mb-1">Visualizações</div>
+                    <div className="text-2xl font-bold text-gray-600">
+                      {forumPosts.reduce((total, post) => total + post.views, 0)}
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-full bg-accent-green/20">
+                    <span className="material-symbols-outlined text-lg text-accent-green">visibility</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-gray-500 mb-1">Usuários Ativos</div>
+                    <div className="text-2xl font-bold text-gray-600">89</div>
+                  </div>
+                  <div className="p-3 rounded-full bg-accent-yellow/20">
+                    <span className="material-symbols-outlined text-lg text-accent-yellow">people</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Lista de Discussões */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-600">
+                  Discussões ({filteredPosts.length})
+                </h3>
+              </div>
+              <div className="divide-y divide-gray-200">
+                {filteredPosts.map((post) => (
+                  <div key={post.id} className="p-6 hover:bg-gray-50 transition-colors duration-200">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          {post.isPinned && (
+                            <span className="material-symbols-outlined text-accent-yellow text-sm">push_pin</span>
+                          )}
+                          {post.isLocked && (
+                            <span className="material-symbols-outlined text-gray-400 text-sm">lock</span>
+                          )}
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            post.category === 'Matemática' ? 'bg-accent-blue/20 text-accent-blue' :
+                            post.category === 'Português' ? 'bg-accent-green/20 text-accent-green' :
+                            post.category === 'Ciências' ? 'bg-primary/20 text-primary' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {post.category}
+                          </span>
+                        </div>
+                        
+                        <h4 className="font-semibold text-gray-700 mb-2">{post.title}</h4>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{post.content}</p>
+                        
+                        <div className="flex items-center text-sm text-gray-500 space-x-4">
+                          <span>Por: {post.author}</span>
+                          <span>•</span>
+                          <span>{post.replies} respostas</span>
+                          <span>•</span>
+                          <span>{post.views} visualizações</span>
+                          <span>•</span>
+                          <span>Última atividade: {post.lastActivity}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 ml-4">
+                        <button className="text-primary hover:text-primary/80 transition-colors duration-200">
+                          <span className="material-symbols-outlined">visibility</span>
+                        </button>
+                        <button className="text-accent-blue hover:text-accent-blue/80 transition-colors duration-200">
+                          <span className="material-symbols-outlined">reply</span>
+                        </button>
+                                                 {user?.role === 'teacher' && (
+                           <button className="text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                             <span className="material-symbols-outlined">more_vert</span>
+                           </button>
+                         )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Categorias Populares */}
+            <div className="bg-white rounded-lg shadow-md">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-600">Categorias Populares</h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categories.map((category, index) => (
+                    <div key={category.id} className="border border-gray-200 rounded-lg p-4 hover:border-primary transition-colors duration-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-gray-700">{category.name}</h4>
+                        <span className="text-xs text-gray-500">
+                          {forumPosts.filter(post => post.category === category.id).length} tópicos
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        <div>
+                          {forumPosts.filter(post => post.category === category.id)
+                            .reduce((total, post) => total + post.replies, 0)} respostas
+                        </div>
+                        <div>
+                          Última atividade: {
+                            forumPosts.filter(post => post.category === category.id)
+                              .sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime())[0]?.lastActivity || 'N/A'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Regras do Fórum */}
+            <div className="bg-accent-blue/10 border border-accent-blue/20 rounded-lg p-6">
+              <div className="flex items-start">
+                <span className="material-symbols-outlined text-accent-blue mr-3 mt-1">info</span>
+                <div>
+                  <h4 className="font-medium text-accent-blue mb-2">Regras do Fórum</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• Mantenha um tom respeitoso em todas as discussões</li>
+                    <li>• Use categorias apropriadas para seus tópicos</li>
+                    <li>• Evite spam e mensagens duplicadas</li>
+                    <li>• Respeite as opiniões diferentes</li>
+                    <li>• Professores podem moderar discussões</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </DashboardPageLayout>
+      </DashboardLayout>
+    </ProtectedRoute>
   );
 }

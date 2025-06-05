@@ -6,6 +6,8 @@ import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { signIn, signOut } from 'next-auth/react';
 import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
+import { motion } from 'framer-motion';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface LoginFormData {
   email: string;
@@ -54,10 +56,12 @@ const searchValidationRules = {
 export function LoginForm() {
   const { login, logout } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
   const [submitError, setSubmitError] = useState<string>('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchFormKey, setSearchFormKey] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     values,
@@ -167,11 +171,25 @@ export function LoginForm() {
     <>
       <div className="space-y-6 mt-8" role="form" aria-label="Formulário de login">
         <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <label 
+              htmlFor="email" 
+              className="block text-sm font-medium mb-2"
+              style={{ color: theme.colors.text.secondary }}
+            >
               Email
             </label>
-            <div className="mt-1">
+            <div className="relative">
+              <span 
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 material-symbols-outlined text-xl"
+                style={{ color: theme.colors.text.tertiary }}
+              >
+                mail
+              </span>
               <input
                 id="email"
                 name="email"
@@ -183,29 +201,63 @@ export function LoginForm() {
                 onBlur={handleBlur}
                 aria-invalid={touched.email && errors.email ? 'true' : 'false'}
                 aria-describedby={touched.email && errors.email ? 'email-error' : undefined}
-                className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200 ${
+                className={`appearance-none block w-full pl-10 pr-3 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${
                   touched.email && errors.email
-                    ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
-                    : 'border-gray-300 focus:ring-accent-blue focus:border-accent-blue'
+                    ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
+                    : 'border-2 focus:ring-2'
                 }`}
+                style={{
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: touched.email && errors.email ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                  color: theme.colors.text.primary,
+                  ...(!(touched.email && errors.email) && {
+                    ':focus': {
+                      borderColor: theme.colors.primary.DEFAULT,
+                      '--tw-ring-color': theme.colors.primary.light
+                    }
+                  })
+                }}
+                placeholder="seu@email.com"
               />
               {touched.email && errors.email && (
-                <p className="mt-2 text-sm text-red-600" id="email-error" role="alert">
+                <motion.p 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm flex items-center gap-1" 
+                  style={{ color: theme.colors.status.error }}
+                  id="email-error" 
+                  role="alert"
+                >
+                  <span className="material-symbols-outlined text-base">error</span>
                   {errors.email}
-                </p>
+                </motion.p>
               )}
             </div>
-          </div>
+          </motion.div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <label 
+              htmlFor="password" 
+              className="block text-sm font-medium mb-2"
+              style={{ color: theme.colors.text.secondary }}
+            >
               Senha
             </label>
-            <div className="mt-1">
+            <div className="relative">
+              <span 
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 material-symbols-outlined text-xl"
+                style={{ color: theme.colors.text.tertiary }}
+              >
+                lock
+              </span>
               <input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 required
                 value={values.password}
@@ -213,69 +265,167 @@ export function LoginForm() {
                 onBlur={handleBlur}
                 aria-invalid={touched.password && errors.password ? 'true' : 'false'}
                 aria-describedby={touched.password && errors.password ? 'password-error' : undefined}
-                className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200 ${
+                className={`appearance-none block w-full pl-10 pr-10 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${
                   touched.password && errors.password
-                    ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
-                    : 'border-gray-300 focus:ring-accent-blue focus:border-accent-blue'
+                    ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
+                    : 'border-2 focus:ring-2'
                 }`}
+                style={{
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: touched.password && errors.password ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                  color: theme.colors.text.primary,
+                  ...(!(touched.password && errors.password) && {
+                    ':focus': {
+                      borderColor: theme.colors.primary.DEFAULT,
+                      '--tw-ring-color': theme.colors.primary.light
+                    }
+                  })
+                }}
+                placeholder="••••••••"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                style={{ color: theme.colors.text.tertiary }}
+              >
+                <span className="material-symbols-outlined text-xl">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
               {touched.password && errors.password && (
-                <p className="mt-2 text-sm text-red-600" id="password-error" role="alert">
+                <motion.p 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm flex items-center gap-1" 
+                  style={{ color: theme.colors.status.error }}
+                  id="password-error" 
+                  role="alert"
+                >
+                  <span className="material-symbols-outlined text-base">error</span>
                   {errors.password}
-                </p>
+                </motion.p>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {submitError && (
-            <div className="rounded-md bg-red-50 p-4" role="alert">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <span className="material-symbols-outlined text-red-400" aria-hidden="true">error</span>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{submitError}</h3>
-                </div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="rounded-lg p-4 flex items-start gap-3" 
+              style={{
+                backgroundColor: `${theme.colors.status.error}20`,
+                border: `1px solid ${theme.colors.status.error}40`
+              }}
+              role="alert"
+            >
+              <span 
+                className="material-symbols-outlined text-xl mt-0.5" 
+                style={{ color: theme.colors.status.error }}
+                aria-hidden="true"
+              >
+                error
+              </span>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium" style={{ color: theme.colors.status.error }}>
+                  {submitError}
+                </h3>
               </div>
-            </div>
+            </motion.div>
           )}
 
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              style={{
+                backgroundColor: theme.colors.primary.DEFAULT,
+                color: theme.colors.primary.contrast,
+                boxShadow: theme.shadows.md
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.primary.dark;
+                e.currentTarget.style.boxShadow = theme.shadows.lg;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT;
+                e.currentTarget.style.boxShadow = theme.shadows.md;
+              }}
               aria-busy={isSubmitting}
             >
-              {isSubmitting ? 'Acessando...' : 'Acessar'}
+              {isSubmitting ? (
+                <>
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="material-symbols-outlined"
+                  >
+                    progress_activity
+                  </motion.span>
+                  Acessando...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined">login</span>
+                  Acessar
+                </>
+              )}
             </button>
-          </div>
-
-          <div className="text-center">
-            <a
-              href="/forgot-password"
-              className="text-sm text-primary hover:text-primary-dark transition-colors duration-200"
-            >
-              Esqueceu sua senha?
-            </a>
-          </div>
+          </motion.div>
         </form>
 
-        <div className="relative">
+        <motion.div 
+          className="relative"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
+            <div className="w-full border-t" style={{ borderColor: theme.colors.border.light }} />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">ou</span>
+            <span 
+              className="px-2" 
+              style={{ 
+                backgroundColor: theme.type === 'modern' ? theme.colors.background.card : theme.colors.background.primary,
+                color: theme.colors.text.tertiary 
+              }}
+            >
+              ou continue com
+            </span>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="space-y-3">
+        <motion.div 
+          className="space-y-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
           <button
             type="button"
             onClick={handleGoogleLogin}
             disabled={isGoogleLoading}
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg shadow-sm text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            style={{
+              backgroundColor: theme.colors.background.card,
+              border: `2px solid ${theme.colors.border.DEFAULT}`,
+              color: theme.colors.text.primary
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = theme.colors.primary.DEFAULT;
+              e.currentTarget.style.backgroundColor = `${theme.colors.primary.DEFAULT}10`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = theme.colors.border.DEFAULT;
+              e.currentTarget.style.backgroundColor = theme.colors.background.card;
+            }}
             aria-busy={isGoogleLoading}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -296,42 +446,113 @@ export function LoginForm() {
                 fill="#EA4335"
               />
             </svg>
-            {isGoogleLoading ? 'Conectando...' : 'Acessar com Google'}
+            {isGoogleLoading ? (
+              <>
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="material-symbols-outlined"
+                >
+                  progress_activity
+                </motion.span>
+                Conectando...
+              </>
+            ) : (
+              'Acessar com Google'
+            )}
           </button>
 
           <button
             type="button"
             onClick={openModal}
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg shadow-sm text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95"
+            style={{
+              backgroundColor: theme.colors.secondary.DEFAULT,
+              color: theme.colors.secondary.contrast,
+              boxShadow: theme.shadows.md
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.secondary.dark;
+              e.currentTarget.style.boxShadow = theme.shadows.lg;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.secondary.DEFAULT;
+              e.currentTarget.style.boxShadow = theme.shadows.md;
+            }}
           >
             <span className="material-symbols-outlined" aria-hidden="true">verified</span>
             Validar Licença
           </button>
-        </div>
+        </motion.div>
       </div>
 
       {/* Modal de Busca */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 overflow-y-auto" 
+          aria-labelledby="modal-title" 
+          role="dialog" 
+          aria-modal="true"
+        >
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={closeModal}></div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 backdrop-blur-sm transition-opacity" 
+              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+              aria-hidden="true" 
+              onClick={closeModal}
+            />
             
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             
-            <div className="relative inline-block align-bottom bg-white z-999 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+              style={{
+                backgroundColor: theme.colors.background.card,
+                border: `1px solid ${theme.colors.border.DEFAULT}`
+              }}
+            >
+              <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <h3 className="text-lg leading-6 font-medium text-gray-700 mb-4" id="modal-title">
+                    <h3 
+                      className="text-lg leading-6 font-medium mb-4" 
+                      id="modal-title"
+                      style={{ color: theme.colors.text.primary }}
+                    >
                       Validar Licença
                     </h3>
                     
                     <form onSubmit={handleSearchSubmit} className="space-y-4" key={searchFormKey}>
-                      <div>
-                        <label htmlFor="numeroLicenca" className="block text-sm font-medium text-gray-700">
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                      >
+                        <label 
+                          htmlFor="numeroLicenca" 
+                          className="block text-sm font-medium mb-2"
+                          style={{ color: theme.colors.text.secondary }}
+                        >
                           Número da Licença
                         </label>
-                        <div className="mt-1">
+                        <div className="relative">
+                          <span 
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 material-symbols-outlined text-xl"
+                            style={{ color: theme.colors.text.tertiary }}
+                          >
+                            badge
+                          </span>
                           <input
                             id="numeroLicenca"
                             name="numeroLicenca"
@@ -342,26 +563,59 @@ export function LoginForm() {
                             onBlur={handleSearchBlur}
                             aria-invalid={searchTouched.numeroLicenca && searchErrors.numeroLicenca ? 'true' : 'false'}
                             aria-describedby={searchTouched.numeroLicenca && searchErrors.numeroLicenca ? 'numeroLicenca-error' : undefined}
-                            className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200 ${
+                            className={`appearance-none block w-full pl-10 pr-3 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${
                               searchTouched.numeroLicenca && searchErrors.numeroLicenca
-                                ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
-                                : 'border-gray-300 focus:ring-accent-blue focus:border-accent-blue'
+                                ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
+                                : 'border-2 focus:ring-2'
                             }`}
+                            style={{
+                              backgroundColor: theme.colors.background.secondary,
+                              borderColor: searchTouched.numeroLicenca && searchErrors.numeroLicenca ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                              color: theme.colors.text.primary,
+                              ...(!(searchTouched.numeroLicenca && searchErrors.numeroLicenca) && {
+                                ':focus': {
+                                  borderColor: theme.colors.primary.DEFAULT,
+                                  '--tw-ring-color': theme.colors.primary.light
+                                }
+                              })
+                            }}
                             placeholder="Digite o número da licença do certificado"
                           />
                           {searchTouched.numeroLicenca && searchErrors.numeroLicenca && (
-                            <p className="mt-2 text-sm text-red-600" id="numeroLicenca-error" role="alert">
+                            <motion.p 
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="mt-2 text-sm flex items-center gap-1" 
+                              style={{ color: theme.colors.status.error }}
+                              id="numeroLicenca-error" 
+                              role="alert"
+                            >
+                              <span className="material-symbols-outlined text-base">error</span>
                               {searchErrors.numeroLicenca}
-                            </p>
+                            </motion.p>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
 
-                      <div>
-                        <label htmlFor="aws" className="block text-sm font-medium text-gray-700">
-                          Ultimos 4 Numeros do CPF
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <label 
+                          htmlFor="aws" 
+                          className="block text-sm font-medium mb-2"
+                          style={{ color: theme.colors.text.secondary }}
+                        >
+                          Últimos 4 Números do CPF
                         </label>
-                        <div className="mt-1">
+                        <div className="relative">
+                          <span 
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 material-symbols-outlined text-xl"
+                            style={{ color: theme.colors.text.tertiary }}
+                          >
+                            pin
+                          </span>
                           <input
                             id="aws"
                             name="aws"
@@ -372,45 +626,119 @@ export function LoginForm() {
                             onBlur={handleSearchBlur}
                             aria-invalid={searchTouched.aws && searchErrors.aws ? 'true' : 'false'}
                             aria-describedby={searchTouched.aws && searchErrors.aws ? 'aws-error' : undefined}
-                            className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors duration-200 ${
+                            className={`appearance-none block w-full pl-10 pr-3 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${
                               searchTouched.aws && searchErrors.aws
-                                ? 'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500'
-                                : 'border-gray-300 focus:ring-accent-blue focus:border-accent-blue'
+                                ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
+                                : 'border-2 focus:ring-2'
                             }`}
+                            style={{
+                              backgroundColor: theme.colors.background.secondary,
+                              borderColor: searchTouched.aws && searchErrors.aws ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                              color: theme.colors.text.primary,
+                              ...(!(searchTouched.aws && searchErrors.aws) && {
+                                ':focus': {
+                                  borderColor: theme.colors.primary.DEFAULT,
+                                  '--tw-ring-color': theme.colors.primary.light
+                                }
+                              })
+                            }}
                             placeholder="0-000"
                           />
                           {searchTouched.aws && searchErrors.aws && (
-                            <p className="mt-2 text-sm text-red-600" id="aws-error" role="alert">
+                            <motion.p 
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="mt-2 text-sm flex items-center gap-1" 
+                              style={{ color: theme.colors.status.error }}
+                              id="aws-error" 
+                              role="alert"
+                            >
+                              <span className="material-symbols-outlined text-base">error</span>
                               {searchErrors.aws}
-                            </p>
+                            </motion.p>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     </form>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
+              <div 
+                className="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t"
+                style={{ 
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: theme.colors.border.light
+                }}
+              >
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={handleSearchSubmit}
                   disabled={isSearchSubmitting}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full inline-flex justify-center rounded-lg shadow-sm px-4 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  style={{
+                    backgroundColor: theme.colors.primary.DEFAULT,
+                    color: theme.colors.primary.contrast,
+                    boxShadow: theme.shadows.md
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSearchSubmitting) {
+                      e.currentTarget.style.backgroundColor = theme.colors.primary.dark;
+                      e.currentTarget.style.boxShadow = theme.shadows.lg;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT;
+                    e.currentTarget.style.boxShadow = theme.shadows.md;
+                  }}
                 >
-                  {isSearchSubmitting ? 'Buscando...' : 'Buscar'}
-                </button>
-                <button
+                  {isSearchSubmitting ? (
+                    <>
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="material-symbols-outlined mr-2"
+                      >
+                        progress_activity
+                      </motion.span>
+                      Buscando...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined mr-2">search</span>
+                      Buscar
+                    </>
+                  )}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={closeModal}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-blue sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  className="mt-3 w-full inline-flex justify-center rounded-lg shadow-sm px-4 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all duration-200"
+                  style={{
+                    backgroundColor: theme.colors.background.card,
+                    color: theme.colors.text.primary,
+                    border: `1px solid ${theme.colors.border.DEFAULT}`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.background.secondary;
+                    e.currentTarget.style.borderColor = theme.colors.border.dark;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.background.card;
+                    e.currentTarget.style.borderColor = theme.colors.border.DEFAULT;
+                  }}
                 >
+                  <span className="material-symbols-outlined mr-2">close</span>
                   Cancelar
-                </button>
+                </motion.button>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
     </>
   );

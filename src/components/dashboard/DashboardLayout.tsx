@@ -4,12 +4,15 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
+import { useTheme } from '@/contexts/ThemeContext'
+import { motion, AnimatePresence } from 'framer-motion'
+interface DashboardLayoutProps {
+  children: React.ReactNode
+}
 
 export default function DashboardLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: DashboardLayoutProps) {
   const { user, logout } = useAuth()
   const router = useRouter()
   const [showNotifications, setShowNotifications] = useState(false)
@@ -17,6 +20,7 @@ export default function DashboardLayout({
   const [showCalendar, setShowCalendar] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { theme, themeType, toggleTheme } = useTheme()
 
   // Mock data para notificações - em produção viria de uma API
   const notifications = [
@@ -127,7 +131,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen w-screen bg-background-secondary overflow-hidden" onClick={handleClickOutside}>
+    <div className="flex h-screen w-screen overflow-hidden" onClick={handleClickOutside} style={{ backgroundColor: theme.colors.background.secondary }}>
       {/* Left Sidebar - Ajustado para ser responsivo */}
       <div className="hidden md:block">
         <DashboardSidebar />
@@ -136,14 +140,17 @@ export default function DashboardLayout({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0 w-full">
         {/* Header - Ajustado para mobile */}
-        <header className="bg-background-primary shadow-sm border-b border-border flex-shrink-0">
+        <header className="shadow-sm border-b flex-shrink-0" style={{ 
+          backgroundColor: theme.colors.background.primary,
+          borderColor: theme.colors.border.DEFAULT 
+        }}>
           <div className="px-3 sm:px-6 lg:px-8 py-2 sm:py-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-text-primary truncate">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold truncate" style={{ color: theme.colors.text.primary }}>
                   Portal Educacional Sabercon
                 </h1>
-                <p className="text-xs sm:text-sm text-text-secondary truncate">
+                <p className="text-xs sm:text-sm truncate" style={{ color: theme.colors.text.secondary }}>
                   Bem-vindo(a), {user?.name}
                 </p>
               </div>
@@ -151,17 +158,140 @@ export default function DashboardLayout({
               <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
                 {/* Menu Mobile */}
                 <button
-                  className="md:hidden p-2 text-text-secondary hover:text-text-primary hover:bg-background-tertiary rounded-lg transition-colors"
+                  className="md:hidden p-2 rounded-lg transition-colors"
                   onClick={() => setMobileMenuOpen(true)}
+                  style={{ color: theme.colors.text.secondary }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                    e.currentTarget.style.color = theme.colors.text.primary
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = theme.colors.text.secondary
+                  }}
                 >
                   <span className="material-symbols-outlined">menu</span>
                 </button>
 
-                {/* Atividades/Tarefas */}
+                {/* Notificações */}
                 <div className="relative">
                   <button
-                    className="p-2 text-text-secondary hover:text-text-primary hover:bg-background-tertiary rounded-lg transition-colors relative"
-                    title="Atividades"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowNotifications(!showNotifications)
+                      setShowActivities(false)
+                      setShowCalendar(false)
+                      setShowUserMenu(false)
+                    }}
+                    className="p-2 rounded-lg transition-all duration-200 relative"
+                    style={{ 
+                      color: theme.colors.text.secondary,
+                      backgroundColor: showNotifications ? theme.colors.background.tertiary : 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!showNotifications) {
+                        e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                        e.currentTarget.style.color = theme.colors.text.primary
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!showNotifications) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = theme.colors.text.secondary
+                      }
+                    }}
+                    title="Notificações"
+                  >
+                    <span className="material-symbols-outlined">notifications</span>
+                    {unreadCount > 0 && (
+                      <span 
+                        className="absolute top-1 right-1 w-2 h-2 rounded-full"
+                        style={{ backgroundColor: theme.colors.status.error }}
+                      />
+                    )}
+                  </button>
+
+                  {/* Dropdown de Notificações */}
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-80 rounded-lg shadow-xl z-50 max-h-96 overflow-hidden"
+                      style={{
+                        backgroundColor: theme.colors.background.primary,
+                        border: `1px solid ${theme.colors.border.DEFAULT}`
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="p-4 border-b" style={{ borderColor: theme.colors.border.DEFAULT }}>
+                        <h3 className="font-semibold" style={{ color: theme.colors.text.primary }}>
+                          Notificações
+                        </h3>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`p-4 border-b transition-colors cursor-pointer ${
+                              !notification.read ? 'bg-opacity-5' : ''
+                            }`}
+                            style={{
+                              borderColor: theme.colors.border.light,
+                              backgroundColor: !notification.read ? theme.colors.primary.DEFAULT + '10' : 'transparent'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = !notification.read ? theme.colors.primary.DEFAULT + '10' : 'transparent'
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span 
+                                className={`material-symbols-outlined text-lg ${getNotificationColor(notification.type)}`}
+                              >
+                                {getNotificationIcon(notification.type)}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm" style={{ color: theme.colors.text.primary }}>
+                                  {notification.title}
+                                </p>
+                                <p className="text-xs mt-1" style={{ color: theme.colors.text.secondary }}>
+                                  {notification.message}
+                                </p>
+                                <p className="text-xs mt-2" style={{ color: theme.colors.text.tertiary }}>
+                                  {notification.time}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-3 border-t" style={{ borderColor: theme.colors.border.DEFAULT }}>
+                        <button
+                          className="text-sm font-medium w-full py-2 rounded-lg transition-colors"
+                          style={{ 
+                            color: theme.colors.primary.DEFAULT,
+                            backgroundColor: theme.colors.primary.DEFAULT + '10'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT + '20'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT + '10'
+                          }}
+                        >
+                          Ver todas as notificações
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Atividades */}
+                <div className="relative">
+                  <button
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowActivities(!showActivities)
@@ -169,85 +299,123 @@ export default function DashboardLayout({
                       setShowCalendar(false)
                       setShowUserMenu(false)
                     }}
+                    className="p-2 rounded-lg transition-all duration-200"
+                    style={{ 
+                      color: theme.colors.text.secondary,
+                      backgroundColor: showActivities ? theme.colors.background.tertiary : 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!showActivities) {
+                        e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                        e.currentTarget.style.color = theme.colors.text.primary
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!showActivities) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = theme.colors.text.secondary
+                      }
+                    }}
+                    title="Atividades"
                   >
                     <span className="material-symbols-outlined">assignment</span>
-                    {activities.length > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-blue text-white text-xs rounded-full flex items-center justify-center">
-                        {activities.length}
-                      </span>
-                    )}
                   </button>
 
                   {/* Dropdown de Atividades */}
                   {showActivities && (
-                    <div
-                      className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-background-primary border border-border rounded-lg shadow-xl z-50"
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-80 rounded-lg shadow-xl z-50 max-h-96 overflow-hidden"
+                      style={{
+                        backgroundColor: theme.colors.background.primary,
+                        border: `1px solid ${theme.colors.border.DEFAULT}`
+                      }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="p-4 border-b border-border">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-text-primary">Atividades Recentes</h3>
-                          <span className="text-xs text-text-secondary">{activities.length} itens</span>
-                        </div>
+                      <div className="p-4 border-b" style={{ borderColor: theme.colors.border.DEFAULT }}>
+                        <h3 className="font-semibold" style={{ color: theme.colors.text.primary }}>
+                          Atividades Pendentes
+                        </h3>
                       </div>
-                      
-                      <div className="max-h-96 overflow-y-auto p-4">
-                        <div className="space-y-3">
-                          {activities.map((activity) => (
-                            <div
-                              key={activity.id}
-                              className="p-3 rounded-lg bg-background-secondary border border-border hover:shadow-sm transition-shadow cursor-pointer"
-                            >
-                              <div className="flex items-start space-x-3">
-                                <div className={`w-8 h-8 rounded-full bg-accent-blue/20 flex items-center justify-center flex-shrink-0`}>
-                                  <span className={`material-symbols-outlined text-[16px] ${getActivityColor(activity.priority)}`}>
-                                    {getActivityIcon(activity.type)}
+                      <div className="max-h-64 overflow-y-auto">
+                        {activities.map((activity) => (
+                          <div
+                            key={activity.id}
+                            className="p-4 border-b transition-colors cursor-pointer"
+                            style={{ borderColor: theme.colors.border.light }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span 
+                                className={`material-symbols-outlined text-lg ${getActivityColor(activity.priority)}`}
+                              >
+                                {getActivityIcon(activity.type)}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm" style={{ color: theme.colors.text.primary }}>
+                                  {activity.title}
+                                </p>
+                                <p className="text-xs mt-1" style={{ color: theme.colors.text.secondary }}>
+                                  {activity.description}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="text-xs" style={{ color: theme.colors.text.tertiary }}>
+                                    {activity.time}
                                   </span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-text-primary truncate">
-                                    {activity.title}
-                                  </p>
-                                  <p className="text-xs text-text-secondary mt-1">
-                                    {activity.description}
-                                  </p>
-                                  <p className="text-xs text-text-tertiary mt-1">
-                                    há {activity.time}
-                                  </p>
+                                  <span 
+                                    className="text-xs px-2 py-0.5 rounded-full"
+                                    style={{ 
+                                      backgroundColor: activity.priority === 'high' 
+                                        ? theme.colors.status.error + '20'
+                                        : activity.priority === 'medium'
+                                        ? theme.colors.status.warning + '20'
+                                        : theme.colors.status.info + '20',
+                                      color: activity.priority === 'high' 
+                                        ? theme.colors.status.error
+                                        : activity.priority === 'medium'
+                                        ? theme.colors.status.warning
+                                        : theme.colors.status.info
+                                    }}
+                                  >
+                                    {activity.priority === 'high' ? 'Alta' : activity.priority === 'medium' ? 'Média' : 'Baixa'}
+                                  </span>
                                 </div>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                        
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-3 border-t" style={{ borderColor: theme.colors.border.DEFAULT }}>
                         <button
-                          className="w-full mt-4 py-2 text-xs text-accent-blue hover:text-accent-blue/80 transition-colors"
-                          onClick={() => {
-                            setShowActivities(false)
-                            // Navegar para página de atividades
+                          className="text-sm font-medium w-full py-2 rounded-lg transition-colors"
+                          style={{ 
+                            color: theme.colors.primary.DEFAULT,
+                            backgroundColor: theme.colors.primary.DEFAULT + '10'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT + '20'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT + '10'
                           }}
                         >
                           Ver todas as atividades
                         </button>
                       </div>
-                      
-                      {activities.length === 0 && (
-                        <div className="p-8 text-center">
-                          <span className="material-symbols-outlined text-4xl text-text-tertiary mb-2">
-                            assignment_turned_in
-                          </span>
-                          <p className="text-sm text-text-secondary">Nenhuma atividade pendente</p>
-                        </div>
-                      )}
-                    </div>
+                    </motion.div>
                   )}
                 </div>
 
-                {/* Agenda/Calendário */}
+                {/* Calendário */}
                 <div className="relative">
                   <button
-                    className="p-2 text-text-secondary hover:text-text-primary hover:bg-background-tertiary rounded-lg transition-colors"
-                    title="Agenda"
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowCalendar(!showCalendar)
@@ -255,180 +423,114 @@ export default function DashboardLayout({
                       setShowActivities(false)
                       setShowUserMenu(false)
                     }}
+                    className="p-2 rounded-lg transition-all duration-200"
+                    style={{ 
+                      color: theme.colors.text.secondary,
+                      backgroundColor: showCalendar ? theme.colors.background.tertiary : 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!showCalendar) {
+                        e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                        e.currentTarget.style.color = theme.colors.text.primary
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!showCalendar) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = theme.colors.text.secondary
+                      }
+                    }}
+                    title="Calendário"
                   >
-                    <span className="material-symbols-outlined">calendar_month</span>
+                    <span className="material-symbols-outlined">calendar_today</span>
                   </button>
 
-                  {/* Dropdown de Calendário */}
+                  {/* Dropdown do Calendário */}
                   {showCalendar && (
-                    <div
-                      className="absolute right-0 mt-2 w-80 bg-background-primary border border-border rounded-lg shadow-xl z-50"
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-80 rounded-lg shadow-xl z-50"
+                      style={{
+                        backgroundColor: theme.colors.background.primary,
+                        border: `1px solid ${theme.colors.border.DEFAULT}`
+                      }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="p-4 border-b border-border">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-text-primary">Próximos Eventos</h3>
-                        </div>
+                      <div className="p-4 border-b" style={{ borderColor: theme.colors.border.DEFAULT }}>
+                        <h3 className="font-semibold" style={{ color: theme.colors.text.primary }}>
+                          Próximos Eventos
+                        </h3>
                       </div>
-                      
-                      <div className="p-4">
-                        {/* Mini Calendar */}
-                        <div className="bg-background-secondary rounded-lg border border-border p-3 mb-4">
-                          <div className="text-center mb-3">
-                            <h4 className="text-sm font-medium text-text-primary">Junho 2025</h4>
+                      <div className="p-4 space-y-3">
+                        {calendarEvents.map((event) => (
+                          <div
+                            key={event.id}
+                            className="flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer"
+                            style={{ backgroundColor: theme.colors.background.tertiary }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = theme.colors.background.secondary
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                            }}
+                          >
+                            <div className={`w-3 h-3 rounded-full ${event.color}`} />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium" style={{ color: theme.colors.text.primary }}>
+                                {event.title}
+                              </p>
+                              <p className="text-xs" style={{ color: theme.colors.text.secondary }}>
+                                {event.date}
+                              </p>
+                            </div>
                           </div>
-                          
-                          <div className="grid grid-cols-7 gap-1 text-xs">
-                            {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, idx) => (
-                              <div key={idx} className="text-center text-text-tertiary font-medium py-1">
-                                {day}
-                              </div>
-                            ))}
-                            
-                            {/* Calendar days */}
-                            {Array.from({ length: 30 }, (_, i) => i + 1).map((day) => (
-                              <div
-                                key={day}
-                                className={`text-center py-1 rounded transition-colors cursor-pointer ${
-                                  day === 15
-                                    ? 'bg-accent-blue text-white'
-                                    : day === 20
-                                    ? 'bg-warning/20 text-warning'
-                                    : 'text-text-secondary hover:bg-background-tertiary'
-                                }`}
-                              >
-                                {day}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Upcoming Events */}
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-text-primary">Próximos</h4>
-                          
-                          <div className="space-y-2">
-                            {calendarEvents.map((event) => (
-                              <div key={event.id} className="p-2 rounded-lg bg-background-secondary border border-border hover:shadow-sm transition-shadow cursor-pointer">
-                                <div className="flex items-center space-x-2">
-                                  <div className={`w-2 h-2 rounded-full ${event.color}`}></div>
-                                  <div className="flex-1">
-                                    <p className="text-xs font-medium text-text-primary">{event.title}</p>
-                                    <p className="text-xs text-text-secondary">{event.date}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
+                        ))}
+                      </div>
+                      <div className="p-3 border-t" style={{ borderColor: theme.colors.border.DEFAULT }}>
                         <button
-                          className="w-full mt-4 py-2 text-xs text-accent-blue hover:text-accent-blue/80 transition-colors"
-                          onClick={() => {
-                            setShowCalendar(false)
-                            // Navegar para página de calendário
+                          className="text-sm font-medium w-full py-2 rounded-lg transition-colors"
+                          style={{ 
+                            color: theme.colors.primary.DEFAULT,
+                            backgroundColor: theme.colors.primary.DEFAULT + '10'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT + '20'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT + '10'
                           }}
                         >
                           Ver calendário completo
                         </button>
                       </div>
-                      
-                      {calendarEvents.length === 0 && (
-                        <div className="p-8 text-center">
-                          <span className="material-symbols-outlined text-4xl text-text-tertiary mb-2">
-                            event_available
-                          </span>
-                          <p className="text-sm text-text-secondary">Nenhum evento próximo</p>
-                        </div>
-                      )}
-                    </div>
+                    </motion.div>
                   )}
                 </div>
-                
-                {/* Notificações */}
-                <div className="relative">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setShowNotifications(!showNotifications)
-                      setShowUserMenu(false)
-                    }}
-                    className="p-2 text-text-secondary hover:text-text-primary hover:bg-background-tertiary rounded-lg transition-colors relative"
-                    title="Notificações"
-                  >
-                    <span className="material-symbols-outlined">notifications</span>
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-xs rounded-full flex items-center justify-center">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
 
-                  {/* Dropdown de Notificações */}
-                  {showNotifications && (
-                    <div 
-                      className="absolute right-0 mt-2 w-80 bg-background-primary border border-border rounded-lg shadow-xl z-50"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="p-4 border-b border-border">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-text-primary">Notificações</h3>
-                          <button
-                            onClick={() => {
-                              router.push('/notifications')
-                              setShowNotifications(false)
-                            }}
-                            className="text-xs text-accent-blue hover:text-accent-blue/80"
-                          >
-                            Ver todas
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="max-h-96 overflow-y-auto">
-                        {notifications.slice(0, 5).map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`p-4 border-b border-border hover:bg-background-secondary transition-colors cursor-pointer ${
-                              !notification.read ? 'bg-accent-blue/5' : ''
-                            }`}
-                          >
-                            <div className="flex items-start space-x-3">
-                              <div className={`w-8 h-8 rounded-full bg-background-tertiary flex items-center justify-center flex-shrink-0`}>
-                                <span className={`material-symbols-outlined text-[16px] ${getNotificationColor(notification.type)}`}>
-                                  {getNotificationIcon(notification.type)}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-text-primary truncate">
-                                  {notification.title}
-                                </p>
-                                <p className="text-xs text-text-secondary mt-1 line-clamp-2">
-                                  {notification.message}
-                                </p>
-                                <p className="text-xs text-text-tertiary mt-1">
-                                  {notification.time}
-                                </p>
-                              </div>
-                              {!notification.read && (
-                                <div className="w-2 h-2 rounded-full bg-accent-blue flex-shrink-0 mt-2"></div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      {notifications.length === 0 && (
-                        <div className="p-8 text-center">
-                          <span className="material-symbols-outlined text-4xl text-text-tertiary mb-2">
-                            notifications_off
-                          </span>
-                          <p className="text-sm text-text-secondary">Nenhuma notificação</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                {/* Dark/Light Mode Toggle */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg transition-all duration-200"
+                  style={{ 
+                    color: theme.colors.text.secondary,
+                    backgroundColor: 'transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                    e.currentTarget.style.color = theme.colors.text.primary
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = theme.colors.text.secondary
+                  }}
+                  title={themeType === 'modern' ? 'Modo Claro' : themeType === 'corporate' ? 'Modo Moderno' : 'Modo Corporativo'}
+                >
+                  <span className="material-symbols-outlined">
+                    {themeType === 'modern' ? 'light_mode' : themeType === 'corporate' ? 'contrast' : 'dark_mode'}
+                  </span>
+                </button>
                 
                 {/* Avatar e Menu do Usuário - Ajustado para mobile */}
                 <div className="relative">
@@ -438,19 +540,31 @@ export default function DashboardLayout({
                       setShowUserMenu(!showUserMenu)
                       setShowNotifications(false)
                     }}
-                    className="flex items-center gap-2 hover:bg-background-tertiary rounded-lg p-1 sm:p-2 transition-colors"
+                    className="flex items-center gap-2 rounded-lg p-1 sm:p-2 transition-colors"
+                    style={{
+                      backgroundColor: 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
                   >
                     <div className="hidden sm:block text-right">
-                      <p className="text-sm font-medium text-text-primary truncate max-w-24 lg:max-w-32">
+                      <p className="text-sm font-medium truncate max-w-24 lg:max-w-32" style={{ color: theme.colors.text.primary }}>
                         {user?.name || 'Usuário'}
                       </p>
-                      <p className="text-xs text-text-secondary">
+                      <p className="text-xs" style={{ color: theme.colors.text.secondary }}>
                         {user?.role || 'Estudante'}
                       </p>
                     </div>
                     
-                    <div className="w-8 h-8 bg-accent-blue rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ 
+                      backgroundColor: theme.colors.primary.DEFAULT,
+                      color: theme.colors.primary.contrast
+                    }}>
+                      <span className="text-sm font-medium">
                         {user?.name?.charAt(0).toUpperCase() || 'U'}
                       </span>
                     </div>
@@ -459,7 +573,11 @@ export default function DashboardLayout({
                   {/* Dropdown do Usuário */}
                   {showUserMenu && (
                     <div 
-                      className="absolute right-0 mt-2 w-48 bg-background-primary border border-border rounded-lg shadow-xl z-50"
+                      className="absolute right-0 mt-2 w-48 rounded-lg shadow-xl z-50"
+                      style={{
+                        backgroundColor: theme.colors.background.primary,
+                        border: `1px solid ${theme.colors.border.DEFAULT}`
+                      }}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="p-2">
@@ -468,7 +586,14 @@ export default function DashboardLayout({
                             setShowUserMenu(false)
                             // Navegar para perfil
                           }}
-                          className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-background-tertiary rounded-lg transition-colors flex items-center space-x-2"
+                          className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center space-x-2"
+                          style={{ color: theme.colors.text.primary }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }}
                         >
                           <span className="material-symbols-outlined text-sm">person</span>
                           <span>Meu Perfil</span>
@@ -479,20 +604,34 @@ export default function DashboardLayout({
                             setShowUserMenu(false)
                             // Navegar para configurações
                           }}
-                          className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-background-tertiary rounded-lg transition-colors flex items-center space-x-2"
+                          className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center space-x-2"
+                          style={{ color: theme.colors.text.primary }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.background.tertiary
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }}
                         >
                           <span className="material-symbols-outlined text-sm">settings</span>
                           <span>Configurações</span>
                         </button>
                         
-                        <hr className="my-2 border-border" />
+                        <hr className="my-2" style={{ borderColor: theme.colors.border.DEFAULT }} />
                         
                         <button
                           onClick={() => {
                             setShowUserMenu(false)
                             logout()
                           }}
-                          className="w-full text-left px-3 py-2 text-sm text-error hover:bg-error/10 rounded-lg transition-colors flex items-center space-x-2"
+                          className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center space-x-2"
+                          style={{ color: theme.colors.status.error }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = theme.colors.status.error + '10'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }}
                         >
                           <span className="material-symbols-outlined text-sm">logout</span>
                           <span>Sair</span>
@@ -507,7 +646,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page Content - Ajustado para mobile */}
-        <main className="flex-1 overflow-y-auto bg-background-tertiary min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <main className="flex-1 overflow-y-auto min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6" style={{ backgroundColor: theme.colors.background.tertiary }}>
           <div className="h-full max-w-7xl mx-auto">
             {children}
           </div>
@@ -517,7 +656,7 @@ export default function DashboardLayout({
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden" onClick={() => setMobileMenuOpen(false)}>
-          <div className="absolute inset-y-0 left-0 w-64 bg-background-primary shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute inset-y-0 left-0 w-64 shadow-xl" style={{ backgroundColor: theme.colors.background.primary }} onClick={(e) => e.stopPropagation()}>
             <DashboardSidebar />
           </div>
         </div>

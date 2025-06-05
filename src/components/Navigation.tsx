@@ -5,22 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import { UserRole } from '../types/auth';
-
-// Função utilitária para mapear roles para labels em português
-const getRoleLabel = (role: UserRole): string => {
-  const roleLabels: Record<UserRole, string> = {
-    'student': 'Aluno',
-    'teacher': 'Professor',
-    'manager': 'Gestor',
-    'institution_manager': 'Gestor Institucional',
-    'admin': 'Administrador',
-    'system_admin': 'Administrador do Sistema',
-    'academic_coordinator': 'Coordenador Acadêmico',
-    'guardian': 'Responsável'
-  };
-
-  return roleLabels[role] || role;
-};
+import { ROLE_LABELS } from '../types/roles';
 
 export const Navigation = () => {
   const pathname = usePathname();
@@ -127,7 +112,7 @@ export const Navigation = () => {
                       {user.name}
                     </span>
                     <span className="text-xs text-text-tertiary">
-                      {user?.role && getRoleLabel(user.role)}
+                      {user?.role && ROLE_LABELS[user.role.toUpperCase() as keyof typeof ROLE_LABELS] || 'Usuário'}
                     </span>
                   </div>
                   <svg

@@ -4,8 +4,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../../contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useEffect, useCallback, memo } from 'react'
 import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface NavItem {
   href: string
@@ -46,74 +48,148 @@ const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
 </span>
 ));
 
-const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boolean }) => (
-  <div className="px-4 py-4 border-b border-white/10">
+const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed: boolean, theme: any }) => (
+  <motion.div 
+    className="px-4 py-4 border-b"
+    style={{ borderColor: theme.colors.sidebar.border }}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3, delay: 0.2 }}
+  >
     <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
-      <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0">
-        <span className={`material-symbols-outlined text-blue-500 ${isCollapsed ? 'text-[24px]' : 'text-[20px]'}`}>
+      <motion.div 
+        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ 
+          backgroundColor: theme.colors.primary.DEFAULT + '20',
+          color: theme.colors.primary.DEFAULT
+        }}
+        whileHover={{ scale: 1.1 }}
+        transition={{ duration: 0.2 }}
+      >
+        <span className={`material-symbols-outlined ${isCollapsed ? 'text-[24px]' : 'text-[20px]'}`}>
           person
         </span>
-      </div>
-      {!isCollapsed && (
-        <div className="overflow-hidden min-w-0 flex-1">
-          <p className="text-xs font-semibold text-sidebar-text-active truncate leading-tight">{user?.name}</p>
-          <span className="text-[10px] text-gray-400 leading-tight">
-            {user?.role && ROLE_LABELS[user.role as UserRole]}
-          </span>
-        </div>
-      )}
+      </motion.div>
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.div 
+            className="overflow-hidden min-w-0 flex-1"
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: 'auto' }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <p 
+              className="text-xs font-semibold truncate leading-tight"
+              style={{ color: theme.colors.sidebar.textActive }}
+            >
+              {user?.name}
+            </p>
+            <span 
+              className="text-[10px] leading-tight"
+              style={{ color: theme.colors.sidebar.text }}
+            >
+              {user?.role && ROLE_LABELS[user.role as UserRole]}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-  </div>
+  </motion.div>
 ));
 
-const NavItem = memo(({ item, isActive, isCollapsed, onClick }: { 
+const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: { 
   item: NavItem, 
   isActive: boolean, 
   isCollapsed: boolean,
-  onClick?: () => void
+  onClick?: () => void,
+  theme: any
 }) => (
-  <Link
-    href={item.href}
-    prefetch={true}
-    locale={false}
-    className={`flex items-center gap-2 px-2 py-2 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
-      ${isActive
-        ? 'bg-sidebar-active text-white shadow-sm'
-        : ''
-      } ${isCollapsed ? 'justify-center' : ''}`}
-    onClick={onClick}
-    aria-current={isActive ? 'page' : undefined}
+  <motion.div
+    initial={{ opacity: 0, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.2 }}
+    whileHover={{ x: 4 }}
   >
-    <span
-      className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
-      aria-hidden="true"
+    <Link
+      href={item.href}
+      prefetch={true}
+      locale={false}
+      className={`flex items-center gap-2 px-2 py-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
+        ${isCollapsed ? 'justify-center' : ''}`}
+      style={{
+        backgroundColor: isActive ? theme.colors.sidebar.active : 'transparent',
+        color: isActive ? theme.colors.sidebar.textActive : theme.colors.sidebar.text
+      }}
+      onClick={onClick}
+      aria-current={isActive ? 'page' : undefined}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = theme.colors.sidebar.hover
+          e.currentTarget.style.color = theme.colors.sidebar.textActive
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = 'transparent'
+          e.currentTarget.style.color = theme.colors.sidebar.text
+        }
+      }}
     >
-      {item.icon}
-    </span>
-
-    {!isCollapsed && (
-      <span className="text-xs font-medium truncate leading-tight">{item.label}</span>
-    )}
-
-    {/* Tooltip for collapsed state */}
-    {isCollapsed && (
-      <div
-        className="absolute left-full ml-2 px-2 py-1 bg-primary-dark text-sidebar-text-active text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
-        role="tooltip"
+      <motion.span
+        className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
+        aria-hidden="true"
+        whileHover={{ scale: 1.1 }}
+        transition={{ duration: 0.2 }}
       >
-        {item.label}
-      </div>
-    )}
-  </Link>
+        {item.icon}
+      </motion.span>
+
+      <AnimatePresence>
+        {!isCollapsed && (
+          <motion.span 
+            className="text-xs font-medium truncate leading-tight"
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: 'auto' }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {item.label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+
+      {/* Tooltip for collapsed state */}
+      <AnimatePresence>
+        {isCollapsed && (
+          <motion.div
+            className="absolute left-full ml-2 px-2 py-1 text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+            style={{
+              backgroundColor: theme.colors.primary.dark,
+              color: theme.colors.sidebar.textActive
+            }}
+            role="tooltip"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {item.label}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Link>
+  </motion.div>
 ));
 
-const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole }: { 
+const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: { 
   section: string, 
   items: NavItem[], 
   pathname: string | null,
   isCollapsed: boolean,
   onItemClick?: () => void,
-  userRole: UserRole
+  userRole: UserRole,
+  theme: any
 }) => {
   // Filter items based on user permissions
   const filteredItems = items.filter(item => {
@@ -138,6 +214,7 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
             isActive={pathname === item.href}
             isCollapsed={isCollapsed}
             onClick={onItemClick}
+            theme={theme}
           />
         ))}
       </div>
@@ -145,37 +222,75 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
   );
 });
 
-const LogoutButton = memo(({ isCollapsed, onLogout }: { isCollapsed: boolean, onLogout: () => void }) => (
-  <button
+const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: boolean, onLogout: () => void, theme: any }) => (
+  <motion.button
     onClick={onLogout}
-    className={`flex items-center gap-2 px-2 py-2 rounded-md text-sidebar-text hover:bg-error/10 hover:text-error transition-all duration-300 group relative w-full mx-1 text-xs font-medium
+    className={`flex items-center gap-2 px-2 py-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative w-full
       ${isCollapsed ? 'justify-center' : ''}`}
+    style={{
+      color: theme.colors.sidebar.text
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.backgroundColor = theme.colors.status.error + '20'
+      e.currentTarget.style.color = theme.colors.status.error
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.backgroundColor = 'transparent'
+      e.currentTarget.style.color = theme.colors.sidebar.text
+    }}
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
     aria-label="Sair da Plataforma"
   >
-    <span
-      className={`material-symbols-outlined group-hover:animate-pulse transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
+    <motion.span
+      className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
       aria-hidden="true"
+      whileHover={{ rotate: -15 }}
+      transition={{ duration: 0.2 }}
     >
       logout
-    </span>
-    
-    {!isCollapsed && <span className="text-xs font-medium leading-tight">Sair da Plataforma</span>}
-    
+    </motion.span>
+
+    <AnimatePresence>
+      {!isCollapsed && (
+        <motion.span 
+          className="text-xs font-medium truncate leading-tight"
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: 'auto' }}
+          exit={{ opacity: 0, width: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          Sair da Plataforma
+        </motion.span>
+      )}
+    </AnimatePresence>
+
     {/* Tooltip for collapsed state */}
-    {isCollapsed && (
-      <div
-        className="absolute left-full ml-2 px-2 py-1 bg-primary-dark text-sidebar-text-active text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
-        role="tooltip"
-      >
-        Sair da Plataforma
-      </div>
-    )}
-  </button>
+    <AnimatePresence>
+      {isCollapsed && (
+        <motion.div
+          className="absolute left-full ml-2 px-2 py-1 text-xs rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 whitespace-nowrap z-50 shadow-lg font-medium"
+          style={{
+            backgroundColor: theme.colors.status.error,
+            color: theme.colors.text.inverse
+          }}
+          role="tooltip"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.2 }}
+        >
+          Sair da Plataforma
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </motion.button>
 ));
 
 export default function DashboardSidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const { theme } = useTheme()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   
@@ -302,6 +417,23 @@ export default function DashboardSidebar() {
                 icon: 'settings',
                 label: 'Configurações do Sistema',
                 permission: 'canManageSystem'
+              }
+            ]
+          },
+          {
+            section: 'Conteúdo',
+            items: [
+              {
+                href: '/admin/content/library',
+                icon: 'archive',
+                label: 'Conteúdo da Platforma',
+                permission: 'canUploadResources'
+              },
+              {
+                href: '/admin/content/search',
+                icon: 'search',
+                label: 'Arquivos e Conteúdos Gerais',
+                permission: 'canUploadResources'
               }
             ]
           },
@@ -787,26 +919,46 @@ export default function DashboardSidebar() {
   const navItems = getNavItems();
 
   return (
-      <aside className="w-64 bg-[#0A1628] text-white flex flex-col min-h-screen">
-        {/* Logo */}
-        <div className="p-6 border-b border-white/10">
-          <Link href="/" className="flex items-center justify-center">
-            <div className="table">
-              <Image
-                  src="/sabercon-logo-white.png"
-                  alt="Logo"
-                  width={250}
-                  height={100}
-                  className="object-contain"
-                  priority
-              />
-            </div>
-          </Link>
-        </div>
+    <motion.aside 
+      initial={{ x: -300 }}
+      animate={{ x: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="w-64 flex flex-col min-h-screen shadow-xl"
+      style={{
+        backgroundColor: theme.colors.sidebar.bg,
+        borderRight: `1px solid ${theme.colors.sidebar.border}`,
+        color: theme.colors.sidebar.text
+      }}
+    >
+      {/* Logo */}
+      <motion.div 
+        className="p-6 border-b"
+        style={{ borderColor: theme.colors.sidebar.border }}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
+        <Link href="/" className="flex items-center justify-center group">
+          <motion.div 
+            className="table transition-transform duration-200"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Image
+              src="/sabercon-logo-white.png"
+              alt="Logo"
+              width={250}
+              height={100}
+              className="object-contain group-hover:brightness-110 transition-all duration-200"
+              priority
+            />
+          </motion.div>
+        </Link>
+      </motion.div>
 
 
           {/* User Info */}
-          <UserProfile user={user} isCollapsed={isCollapsed} />
+          <UserProfile user={user} isCollapsed={isCollapsed} theme={theme} />
 
           {/* Navigation */}
           <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-hover scrollbar-track-transparent">
@@ -820,6 +972,7 @@ export default function DashboardSidebar() {
                   isCollapsed={isCollapsed}
                   onItemClick={closeMobileSidebar}
                   userRole={userRole}
+                  theme={theme}
                 />
               ))}
             </div>
@@ -827,8 +980,8 @@ export default function DashboardSidebar() {
 
           {/* Bottom Actions */}
           <div className="p-1 border-t border-white/10 flex-shrink-0">
-            <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} />
+                          <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} theme={theme} />
           </div>
-        </aside>
+    </motion.aside>
   )
 }

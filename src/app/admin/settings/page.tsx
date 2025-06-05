@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSession } from 'next-auth/react'
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import { UserRole } from '@/types/roles'
 
 // Interfaces para tipagem
 interface AwsSettings {
@@ -53,8 +58,18 @@ const settingsAPI = {
   // AWS Settings CRUD
   async getAwsSettings(): Promise<AwsSettings> {
     try {
-      const response = await fetch('/api/settings/aws')
-      if (!response.ok) throw new Error('Erro ao carregar configurações AWS')
+      const response = await fetch('/api/settings/aws', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.')
+        }
+        throw new Error('Erro ao carregar configurações AWS')
+      }
       return await response.json()
     } catch (error) {
       console.error('Erro ao carregar AWS settings:', error)
@@ -74,22 +89,43 @@ const settingsAPI = {
     const response = await fetch('/api/settings/aws', {
       method: settings.id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
+      body: JSON.stringify(settings),
+      credentials: 'include'
     })
-    if (!response.ok) throw new Error('Erro ao salvar configurações AWS')
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.')
+      }
+      throw new Error('Erro ao salvar configurações AWS')
+    }
     return await response.json()
   },
 
   async deleteAwsSettings(id: string): Promise<void> {
-    const response = await fetch(`/api/settings/aws/${id}`, { method: 'DELETE' })
-    if (!response.ok) throw new Error('Erro ao deletar configurações AWS')
+    const response = await fetch(`/api/settings/aws/${id}`, { 
+      method: 'DELETE',
+      credentials: 'include'
+    })
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.')
+      }
+      throw new Error('Erro ao deletar configurações AWS')
+    }
   },
 
   // Background Settings CRUD
   async getBackgroundSettings(): Promise<BackgroundSettings> {
     try {
-      const response = await fetch('/api/settings/background')
-      if (!response.ok) throw new Error('Erro ao carregar configurações de fundo')
+      const response = await fetch('/api/settings/background', {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.')
+        }
+        throw new Error('Erro ao carregar configurações de fundo')
+      }
       return await response.json()
     } catch (error) {
       console.error('Erro ao carregar background settings:', error)
@@ -106,17 +142,30 @@ const settingsAPI = {
     const response = await fetch('/api/settings/background', {
       method: settings.id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
+      body: JSON.stringify(settings),
+      credentials: 'include'
     })
-    if (!response.ok) throw new Error('Erro ao salvar configurações de fundo')
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.')
+      }
+      throw new Error('Erro ao salvar configurações de fundo')
+    }
     return await response.json()
   },
 
   // General Settings CRUD
   async getGeneralSettings(): Promise<GeneralSettings> {
     try {
-      const response = await fetch('/api/settings/general')
-      if (!response.ok) throw new Error('Erro ao carregar configurações gerais')
+      const response = await fetch('/api/settings/general', {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.')
+        }
+        throw new Error('Erro ao carregar configurações gerais')
+      }
       return await response.json()
     } catch (error) {
       console.error('Erro ao carregar general settings:', error)
@@ -132,17 +181,30 @@ const settingsAPI = {
     const response = await fetch('/api/settings/general', {
       method: settings.id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
+      body: JSON.stringify(settings),
+      credentials: 'include'
     })
-    if (!response.ok) throw new Error('Erro ao salvar configurações gerais')
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.')
+      }
+      throw new Error('Erro ao salvar configurações gerais')
+    }
     return await response.json()
   },
 
   // Security Settings CRUD
   async getSecuritySettings(): Promise<SecuritySettings> {
     try {
-      const response = await fetch('/api/settings/security')
-      if (!response.ok) throw new Error('Erro ao carregar configurações de segurança')
+      const response = await fetch('/api/settings/security', {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.')
+        }
+        throw new Error('Erro ao carregar configurações de segurança')
+      }
       return await response.json()
     } catch (error) {
       console.error('Erro ao carregar security settings:', error)
@@ -160,17 +222,30 @@ const settingsAPI = {
     const response = await fetch('/api/settings/security', {
       method: settings.id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
+      body: JSON.stringify(settings),
+      credentials: 'include'
     })
-    if (!response.ok) throw new Error('Erro ao salvar configurações de segurança')
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.')
+      }
+      throw new Error('Erro ao salvar configurações de segurança')
+    }
     return await response.json()
   },
 
   // Email Settings CRUD
   async getEmailSettings(): Promise<EmailSettings> {
     try {
-      const response = await fetch('/api/settings/email')
-      if (!response.ok) throw new Error('Erro ao carregar configurações de email')
+      const response = await fetch('/api/settings/email', {
+        credentials: 'include'
+      })
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.')
+        }
+        throw new Error('Erro ao carregar configurações de email')
+      }
       return await response.json()
     } catch (error) {
       console.error('Erro ao carregar email settings:', error)
@@ -188,24 +263,63 @@ const settingsAPI = {
     const response = await fetch('/api/settings/email', {
       method: settings.id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
+      body: JSON.stringify(settings),
+      credentials: 'include'
     })
-    if (!response.ok) throw new Error('Erro ao salvar configurações de email')
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.')
+      }
+      throw new Error('Erro ao salvar configurações de email')
+    }
     return await response.json()
   },
 
   // Teste de conexões
-  async testS3Connection(settings: AwsSettings): Promise<boolean> {
+  async testS3Connection(settings: AwsSettings): Promise<{ success: boolean; buckets?: string[]; message?: string }> {
     try {
       const response = await fetch('/api/settings/test-s3', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settings),
+        credentials: 'include'
       })
-      return response.ok
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.')
+        }
+        return { success: false, message: data.message || 'Erro ao testar conexão S3' }
+      }
+      
+      return data
     } catch (error) {
       console.error('Erro ao testar conexão S3:', error)
-      return false
+      return { success: false, message: error instanceof Error ? error.message : 'Erro ao testar conexão S3' }
+    }
+  },
+
+  async listS3Buckets(): Promise<{ success: boolean; buckets?: string[]; error?: string }> {
+    try {
+      const response = await fetch('/api/settings/s3-buckets', {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.')
+        }
+        const data = await response.json()
+        return { success: false, error: data.error || 'Erro ao listar buckets' }
+      }
+      
+      const data = await response.json()
+      return { success: true, buckets: data.buckets || [] }
+    } catch (error) {
+      console.error('Erro ao listar buckets S3:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Erro ao listar buckets' }
     }
   },
 
@@ -214,8 +328,12 @@ const settingsAPI = {
       const response = await fetch('/api/settings/test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settings),
+        credentials: 'include'
       })
+      if (response.status === 401) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.')
+      }
       return response.ok
     } catch (error) {
       console.error('Erro ao testar conexão email:', error)
@@ -226,6 +344,7 @@ const settingsAPI = {
 
 export default function AdminSettingsPage() {
   const { user } = useAuth()
+  const { data: session } = useSession()
   
   // Estados para as configurações
   const [awsSettings, setAwsSettings] = useState<AwsSettings>({
@@ -273,6 +392,9 @@ export default function AdminSettingsPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [testingS3, setTestingS3] = useState(false)
   const [testingEmail, setTestingEmail] = useState(false)
+  const [s3Buckets, setS3Buckets] = useState<string[]>([])
+  const [showBuckets, setShowBuckets] = useState(false)
+  const [activeTab, setActiveTab] = useState('general')
 
   // Lista de vídeos disponíveis na pasta public
   const availableVideos = [
@@ -390,18 +512,25 @@ export default function AdminSettingsPage() {
     }
   }
 
-  // Testar conexão S3
+  // Testar conexão S3 e listar buckets
   const testS3Connection = async () => {
     setTestingS3(true)
+    setShowBuckets(false)
     try {
       const result = await settingsAPI.testS3Connection(awsSettings)
-      if (result) {
+      if (result.success) {
         showNotification('Conexão S3 testada com sucesso!', 'success')
+        // Listar buckets após teste bem-sucedido
+        const bucketsResult = await settingsAPI.listS3Buckets()
+        if (bucketsResult.success && bucketsResult.buckets) {
+          setS3Buckets(bucketsResult.buckets)
+          setShowBuckets(true)
+        }
       } else {
-        showNotification('Falha na conexão S3. Verifique as credenciais.', 'error')
+        showNotification(result.message || 'Falha na conexão S3. Verifique as credenciais.', 'error')
       }
     } catch (error) {
-      showNotification('Erro ao testar conexão S3', 'error')
+      showNotification(error instanceof Error ? error.message : 'Erro ao testar conexão S3', 'error')
     } finally {
       setTestingS3(false)
     }
@@ -453,611 +582,340 @@ export default function AdminSettingsPage() {
   }, [])
 
   return (
-    <div className="space-y-6">
-      {/* Notificações */}
-      {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
-          <span className="block sm:inline">{success}</span>
-        </div>
-      )}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-600">Configurações do Sistema</h1>
-          <p className="text-gray-600">Gerencie as configurações globais da plataforma</p>
-        </div>
-        <div className="space-x-4">
-          <button 
-            onClick={restoreDefaults}
-            disabled={loading}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 disabled:opacity-50"
-          >
-            {loading ? 'Carregando...' : 'Restaurar Padrões'}
-          </button>
-          <button 
-            onClick={saveSettings}
-            disabled={loading}
-            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200 disabled:opacity-50"
-          >
-            {loading ? 'Salvando...' : 'Salvar Alterações'}
-          </button>
-        </div>
-      </div>
-
-      {/* Settings Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Settings */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* AWS Configuration */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Configurações da AWS</h2>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Access Key ID
-                  </label>
-                  <input
-                    type="password"
-                    value={awsSettings.accessKeyId}
-                    onChange={(e) => handleAwsSettingsChange('accessKeyId', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                    placeholder="AKIA..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Secret Access Key
-                  </label>
-                  <input
-                    type="password"
-                    value={awsSettings.secretAccessKey}
-                    onChange={(e) => handleAwsSettingsChange('secretAccessKey', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                    placeholder="*****"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Região
-                  </label>
-                  <select 
-                    value={awsSettings.region}
-                    onChange={(e) => handleAwsSettingsChange('region', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
+    <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
+      <DashboardLayout>
+        <DashboardPageLayout
+          title="Configurações do Sistema"
+          subtitle="Gerencie as configurações globais do sistema"
+        >
+          <div className="space-y-6">
+            {/* Tabs */}
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                {[
+                  { id: 'general', label: 'Geral', icon: 'settings' },
+                  { id: 'email', label: 'Email', icon: 'mail' },
+                  { id: 'security', label: 'Segurança', icon: 'security' },
+                  { id: 'notifications', label: 'Notificações', icon: 'notifications' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200 ${
+                      activeTab === tab.id
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
                   >
-                    <option value="us-east-1">US East (N. Virginia)</option>
-                    <option value="us-west-2">US West (Oregon)</option>
-                    <option value="eu-west-1">Europe (Ireland)</option>
-                    <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
-                    <option value="sa-east-1">South America (São Paulo)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Intervalo de Atualização (segundos)
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="300"
-                    value={awsSettings.updateInterval}
-                    onChange={(e) => handleAwsSettingsChange('updateInterval', parseInt(e.target.value))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  CloudWatch Namespace
-                </label>
-                <input
-                  type="text"
-                  value={awsSettings.cloudWatchNamespace}
-                  onChange={(e) => handleAwsSettingsChange('cloudWatchNamespace', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  placeholder="Portal/Metrics"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Atualizações em Tempo Real</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    className="sr-only peer" 
-                    checked={awsSettings.enableRealTimeUpdates}
-                    onChange={(e) => handleAwsSettingsChange('enableRealTimeUpdates', e.target.checked)}
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-blue/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
+                    <span className="material-symbols-outlined text-sm">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </nav>
             </div>
-          </div>
 
-          {/* S3 Storage Configuration */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Configurações do S3</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome do Bucket S3
-                </label>
-                <input
-                  type="text"
-                  value={awsSettings.s3BucketName}
-                  onChange={(e) => handleAwsSettingsChange('s3BucketName', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  placeholder="portal-educacional-storage"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Classe de Armazenamento
-                  </label>
-                  <select className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
-                    <option value="STANDARD">Standard</option>
-                    <option value="REDUCED_REDUNDANCY">Reduced Redundancy</option>
-                    <option value="STANDARD_IA">Standard-IA</option>
-                    <option value="GLACIER">Glacier</option>
-                  </select>
+            {/* Configurações Gerais */}
+            {activeTab === 'general' && (
+              <div className="bg-white rounded-lg shadow-md">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-600">Configurações Gerais</h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Criptografia
-                  </label>
-                  <select className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue">
-                    <option value="AES256">AES-256</option>
-                    <option value="aws:kms">AWS KMS</option>
-                    <option value="none">Nenhuma</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <button 
-                  onClick={testS3Connection}
-                  disabled={testingS3}
-                  className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/80 disabled:opacity-50"
-                >
-                  {testingS3 ? 'Testando...' : 'Testar Conexão S3'}
-                </button>
-                <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
-                  Visualizar Buckets
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* General Settings */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Configurações Gerais</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome da Plataforma
-                </label>
-                <input
-                  type="text"
-                  value={generalSettings.platformName}
-                  onChange={(e) => handleGeneralSettingsChange('platformName', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL do Sistema
-                </label>
-                <input
-                  type="text"
-                  value={generalSettings.systemUrl}
-                  onChange={(e) => handleGeneralSettingsChange('systemUrl', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email de Suporte
-                </label>
-                <input
-                  type="email"
-                  value={generalSettings.supportEmail}
-                  onChange={(e) => handleGeneralSettingsChange('supportEmail', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Plano de Fundo do Login
-                </label>
-                <div className="space-y-4">
-                  {/* Tipo de plano de fundo */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo de Plano de Fundo
-                    </label>
-                    <div className="flex space-x-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="backgroundType"
-                          value="video"
-                          checked={backgroundSettings.type === 'video'}
-                          onChange={(e) => handleBackgroundSettingsChange('type', e.target.value)}
-                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                        />
-                        <span className="ml-2 text-sm text-gray-600">Vídeo</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="backgroundType"
-                          value="url"
-                          checked={backgroundSettings.type === 'url'}
-                          onChange={(e) => handleBackgroundSettingsChange('type', e.target.value)}
-                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                        />
-                        <span className="ml-2 text-sm text-gray-600">URL</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="backgroundType"
-                          value="color"
-                          checked={backgroundSettings.type === 'color'}
-                          onChange={(e) => handleBackgroundSettingsChange('type', e.target.value)}
-                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                        />
-                        <span className="ml-2 text-sm text-gray-600">Cor Sólida</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Opções condicionais baseadas no tipo */}
-                  {backgroundSettings.type === 'video' && (
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Selecionar Vídeo
-                      </label>
-                      <select
-                        value={backgroundSettings.videoFile}
-                        onChange={(e) => handleBackgroundSettingsChange('videoFile', e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                      >
-                        {availableVideos.map((video) => (
-                          <option key={video} value={video}>
-                            {video.replace('/', '').replace('.mp4', '')}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Vídeos disponíveis na pasta public/
-                      </p>
-                    </div>
-                  )}
-
-                  {backgroundSettings.type === 'url' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        URL do Arquivo
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nome do Sistema
                       </label>
                       <input
-                        type="url"
-                        value={backgroundSettings.customUrl}
-                        onChange={(e) => handleBackgroundSettingsChange('customUrl', e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                        placeholder="https://exemplo.com/video.mp4"
+                        type="text"
+                        value={generalSettings.platformName}
+                        onChange={(e) => handleGeneralSettingsChange('platformName', e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        URL para vídeo ou imagem externa
-                      </p>
                     </div>
-                  )}
-
-                  {backgroundSettings.type === 'color' && (
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Cor de Fundo
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Fuso Horário
                       </label>
-                      <div className="flex space-x-2">
-                        <input
-                          type="color"
-                          value={backgroundSettings.solidColor}
-                          onChange={(e) => handleBackgroundSettingsChange('solidColor', e.target.value)}
-                          className="h-10 w-20 rounded border border-gray-300"
-                        />
-                        <input
-                          type="text"
-                          value={backgroundSettings.solidColor}
-                          onChange={(e) => handleBackgroundSettingsChange('solidColor', e.target.value)}
-                          className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                          placeholder="#1e3a8a"
-                        />
+                      <select
+                        value={generalSettings.systemUrl}
+                        onChange={(e) => handleGeneralSettingsChange('systemUrl', e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="America/Sao_Paulo">São Paulo (GMT-3)</option>
+                        <option value="America/Rio_Branco">Rio Branco (GMT-5)</option>
+                        <option value="America/Manaus">Manaus (GMT-4)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Descrição do Sistema
+                    </label>
+                    <textarea
+                      value={generalSettings.supportEmail}
+                      onChange={(e) => handleGeneralSettingsChange('supportEmail', e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-accent-yellow/10 rounded-lg border border-accent-yellow/20">
+                    <div>
+                      <div className="font-medium text-gray-700">Modo de Manutenção</div>
+                      <div className="text-sm text-gray-500">Ativar para bloquear acesso de usuários</div>
+                    </div>
+                    <input
+                      type="checkbox"
+                                               checked={generalSettings.systemUrl === 'maintenance'}
+                         onChange={(e) => handleGeneralSettingsChange('systemUrl', e.target.checked ? 'maintenance' : generalSettings.systemUrl)}
+                      className="w-4 h-4 text-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Configurações de Email */}
+            {activeTab === 'email' && (
+              <div className="bg-white rounded-lg shadow-md">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-600">Configurações de Email</h3>
+                </div>
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Servidor SMTP
+                      </label>
+                      <input
+                        type="text"
+                        value={emailSettings.smtpServer}
+                        onChange={(e) => handleEmailSettingsChange('smtpServer', e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Porta SMTP
+                      </label>
+                      <input
+                        type="text"
+                        value={emailSettings.smtpPort}
+                        onChange={(e) => handleEmailSettingsChange('smtpPort', parseInt(e.target.value))}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Usuário SMTP
+                      </label>
+                      <input
+                        type="email"
+                        value={emailSettings.senderEmail}
+                        onChange={(e) => handleEmailSettingsChange('senderEmail', e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Senha SMTP
+                      </label>
+                      <input
+                        type="password"
+                        value={emailSettings.senderPassword}
+                        onChange={(e) => handleEmailSettingsChange('senderPassword', e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-200">
+                    <button className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/80 transition-colors duration-200">
+                      Testar Configuração
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Configurações de Segurança */}
+            {activeTab === 'security' && (
+              <div className="bg-white rounded-lg shadow-md">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-600">Configurações de Segurança</h3>
+                </div>
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Timeout de Sessão (min)
+                      </label>
+                      <input
+                        type="number"
+                        value={securitySettings.sessionTimeout}
+                        onChange={(e) => handleSecuritySettingsChange('sessionTimeout', parseInt(e.target.value))}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Max. Tentativas de Login
+                      </label>
+                      <input
+                        type="number"
+                        value={securitySettings.minPasswordLength}
+                        onChange={(e) => handleSecuritySettingsChange('minPasswordLength', parseInt(e.target.value))}
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    
+                                         <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                         Tamanho Mín. da Senha
+                       </label>
+                       <input
+                         type="number"
+                         value={securitySettings.minPasswordLength}
+                         onChange={(e) => handleSecuritySettingsChange('minPasswordLength', parseInt(e.target.value))}
+                         className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                       />
+                     </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-700">Requerer Letras Maiúsculas</div>
+                        <div className="text-sm text-gray-500">A senha deve conter pelo menos uma letra maiúscula</div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Escolha uma cor sólida para o fundo
-                      </p>
+                      <input
+                        type="checkbox"
+                        checked={securitySettings.requireNumbers}
+                        onChange={(e) => handleSecuritySettingsChange('requireNumbers', e.target.checked)}
+                        className="w-4 h-4 text-primary"
+                      />
                     </div>
-                  )}
-
-                  {/* Preview */}
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
-                    <div className="h-24 rounded border-2 border-dashed border-gray-300 flex items-center justify-center text-sm text-gray-600">
-                      {backgroundSettings.type === 'video' && (
-                        <span>Vídeo: {backgroundSettings.videoFile.replace('/', '').replace('.mp4', '')}</span>
-                      )}
-                      {backgroundSettings.type === 'url' && (
-                        <span>URL: {backgroundSettings.customUrl || 'Nenhuma URL definida'}</span>
-                      )}
-                      {backgroundSettings.type === 'color' && (
-                        <div className="flex items-center space-x-2">
-                          <div 
-                            className="w-6 h-6 rounded border"
-                            style={{ backgroundColor: backgroundSettings.solidColor }}
-                          />
-                          <span>Cor: {backgroundSettings.solidColor}</span>
-                        </div>
-                      )}
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-700">Requerer Números</div>
+                        <div className="text-sm text-gray-500">A senha deve conter pelo menos um número</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={securitySettings.requireSpecialChars}
+                        onChange={(e) => handleSecuritySettingsChange('requireSpecialChars', e.target.checked)}
+                        className="w-4 h-4 text-primary"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-700">Autenticação de Dois Fatores</div>
+                        <div className="text-sm text-gray-500">Obrigar 2FA para todos os usuários</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={securitySettings.twoFactorAuth === 'required'}
+                        onChange={(e) => handleSecuritySettingsChange('twoFactorAuth', e.target.checked ? 'required' : 'optional')}
+                        className="w-4 h-4 text-primary"
+                      />
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            )}
 
-          {/* Security Settings */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Segurança</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Política de Senha
-                </label>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      className="h-4 w-4 text-primary" 
-                      checked={securitySettings.minPasswordLength >= 8}
-                      onChange={(e) => handleSecuritySettingsChange('minPasswordLength', e.target.checked ? 8 : 6)}
-                    />
-                    <span className="ml-2 text-sm text-gray-600">Mínimo 8 caracteres</span>
+            {/* Configurações de Notificações */}
+            {activeTab === 'notifications' && (
+              <div className="bg-white rounded-lg shadow-md">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-600">Configurações de Notificações</h3>
+                </div>
+                <div className="p-6 space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-700">Notificações por Email</div>
+                        <div className="text-sm text-gray-500">Enviar notificações via email</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={emailSettings.senderEmail !== 'noreply@escola.com'}
+                        onChange={(e) => handleEmailSettingsChange('senderEmail', e.target.checked ? 'noreply@escola.com' : '')}
+                        className="w-4 h-4 text-primary"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-700">Notificações por SMS</div>
+                        <div className="text-sm text-gray-500">Enviar notificações via SMS</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        onChange={(e) => handleEmailSettingsChange('senderEmail', 'noreply@escola.com')}
+                        className="w-4 h-4 text-primary"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-700">Notificações Push</div>
+                        <div className="text-sm text-gray-500">Enviar notificações push no navegador</div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={false}
+                        onChange={(e) => handleEmailSettingsChange('senderEmail', 'noreply@escola.com')}
+                        className="w-4 h-4 text-primary"
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      className="h-4 w-4 text-primary" 
-                      checked={securitySettings.requireSpecialChars}
-                      onChange={(e) => handleSecuritySettingsChange('requireSpecialChars', e.target.checked)}
-                    />
-                    <span className="ml-2 text-sm text-gray-600">Exigir caracteres especiais</span>
-                  </div>
-                  <div className="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      className="h-4 w-4 text-primary" 
-                      checked={securitySettings.requireNumbers}
-                      onChange={(e) => handleSecuritySettingsChange('requireNumbers', e.target.checked)}
-                    />
-                    <span className="ml-2 text-sm text-gray-600">Exigir números</span>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Frequência do Resumo
+                    </label>
+                    <select
+                      value={emailSettings.encryption}
+                      onChange={(e) => handleEmailSettingsChange('encryption', e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="tls">TLS</option>
+                      <option value="ssl">SSL</option>
+                      <option value="none">Nenhuma</option>
+                    </select>
                   </div>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Autenticação em Duas Etapas
-                </label>
-                <select 
-                  value={securitySettings.twoFactorAuth}
-                  onChange={(e) => handleSecuritySettingsChange('twoFactorAuth', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                >
-                  <option value="optional">Opcional</option>
-                  <option value="required">Obrigatório</option>
-                  <option value="disabled">Desativado</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tempo de Sessão (minutos)
-                </label>
-                <input
-                  type="number"
-                  value={securitySettings.sessionTimeout}
-                  onChange={(e) => handleSecuritySettingsChange('sessionTimeout', parseInt(e.target.value))}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                />
-              </div>
-            </div>
-          </div>
+            )}
 
-          {/* Email Settings */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Configurações de Email</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Servidor SMTP
-                </label>
-                <input
-                  type="text"
-                  value={emailSettings.smtpServer}
-                  onChange={(e) => handleEmailSettingsChange('smtpServer', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  placeholder="smtp.servidor.com"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Porta
-                  </label>
-                  <input
-                    type="number"
-                    value={emailSettings.smtpPort}
-                    onChange={(e) => handleEmailSettingsChange('smtpPort', parseInt(e.target.value))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                    placeholder="587"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Criptografia
-                  </label>
-                  <select 
-                    value={emailSettings.encryption}
-                    onChange={(e) => handleEmailSettingsChange('encryption', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  >
-                    <option value="tls">TLS</option>
-                    <option value="ssl">SSL</option>
-                    <option value="none">Nenhuma</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email de Envio
-                </label>
-                <input
-                  type="email"
-                  value={emailSettings.senderEmail}
-                  onChange={(e) => handleEmailSettingsChange('senderEmail', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  placeholder="noreply@portal.educacional.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Senha do Email
-                </label>
-                <input
-                  type="password"
-                  value={emailSettings.senderPassword}
-                  onChange={(e) => handleEmailSettingsChange('senderPassword', e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  placeholder="Senha do email"
-                />
-              </div>
-              <div className="flex items-center space-x-4">
-                <button 
-                  onClick={testEmailConnection}
-                  disabled={testingEmail}
-                  className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/80 disabled:opacity-50"
-                >
-                  {testingEmail ? 'Testando...' : 'Testar Conexão Email'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar Settings */}
-        <div className="space-y-6">
-          {/* AWS Status */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Status da AWS</h2>
-            <div className="space-y-3">
-              <div>
-                <span className="text-sm text-gray-600">Conexão</span>
-                <p className="text-sm font-medium text-accent-green">Conectado</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-600">Região Ativa</span>
-                <p className="text-sm font-medium text-gray-600">{awsSettings.region}</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-600">CloudWatch</span>
-                <p className="text-sm font-medium text-accent-green">Ativo</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-600">Última Sincronização</span>
-                <p className="text-sm font-medium text-gray-600">Há 2 minutos</p>
-              </div>
-            </div>
-          </div>
-
-          {/* System Info */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Informações do Sistema</h2>
-            <div className="space-y-3">
-              <div>
-                <span className="text-sm text-gray-600">Versão</span>
-                <p className="text-sm font-medium text-gray-600">2.1.0</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-600">Última Atualização</span>
-                <p className="text-sm font-medium text-gray-600">01/01/2024</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-600">Status</span>
-                <p className="text-sm font-medium text-accent-green">Operacional</p>
-              </div>
-            </div>
-          </div>
-
-          {/* AWS S3 Storage */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Armazenamento S3</h2>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">Uso do Bucket</span>
-                  <span className="text-gray-600">2.3 GB</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-primary h-2 rounded-full" style={{ width: '23%' }}></div>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">2.3GB de 10GB usado</p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="text-center">
-                  <p className="text-gray-600">Arquivos</p>
-                  <p className="font-medium">1,234</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-600">Custo/Mês</p>
-                  <p className="font-medium">$12.45</p>
-                </div>
-              </div>
-              <button className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 text-sm">
-                Gerenciar S3
+            {/* Botões de Ação */}
+            <div className="flex justify-end space-x-4">
+              <button className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                Cancelar
+              </button>
+              <button 
+                onClick={saveSettings}
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors duration-200"
+              >
+                Salvar Configurações
               </button>
             </div>
           </div>
-
-          {/* Maintenance Mode */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-600 mb-4">Modo de Manutenção</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Status</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-blue/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mensagem de Manutenção
-                </label>
-                <textarea
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                  rows={3}
-                  placeholder="Sistema em manutenção..."
-                ></textarea>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        </DashboardPageLayout>
+      </DashboardLayout>
+    </ProtectedRoute>
   )
 }

@@ -1,50 +1,112 @@
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-
+// Criar instância do axios
 const api: AxiosInstance = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
   timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
-// Request interceptor para adicionar token
+// Interceptor para adicionar token de autenticação
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config) => {
     const token = localStorage.getItem('token');
-    if (token && config.headers) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error: AxiosError) => {
+  (error) => {
     return Promise.reject(error);
   }
 );
 
-// Response interceptor para tratar erros
+// Interceptor para tratar respostas
 api.interceptors.response.use(
-  (response: any) => response,
-  async (error: AxiosError) => {
+  (response) => response,
+  async (error) => {
     if (error.response?.status === 401) {
       // Token expirado ou inválido
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login?error=unauthorized';
+      window.location.href = '/login';
     }
-    
-    // Formatar mensagem de erro
-    const message = (error.response?.data as any)?.message || error.message || 'Erro ao processar requisição';
-    
-    return Promise.reject({
-      ...error,
-      message,
-      response: error.response
-    });
+    return Promise.reject(error);
   }
 );
+
+// Tipos genéricos para respostas
+export interface ApiResponse<T = any> {
+  data: T;
+  message?: string;
+  success: boolean;
+}
+
+export interface PaginatedResponse<T = any> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// Classe base para serviços de API
+export class BaseApiService<T> {
+  protected endpoint: string;
+
+  constructor(endpoint: string) {
+    this.endpoint = endpoint;
+  }
+
+  async getAll(params?: any): Promise<T[]> {
+    const response = await api.get<ApiResponse<T[]>>(this.endpoint, { params });
+    return response.data.data;
+  }
+
+  async getPaginated(params?: any): Promise<PaginatedResponse<T>> {
+    const response = await api.get<ApiResponse<PaginatedResponse<T>>>(this.endpoint, { params });
+    return response.data.data;
+  }
+
+  async getById(id: string | number): Promise<T> {
+    const response = await api.get<ApiResponse<T>>(`${this.endpoint}/${id}`);
+    return response.data.data;
+  }
+
+  async create(data: Partial<T>): Promise<T> {
+    const response = await api.post<ApiResponse<T>>(this.endpoint, data);
+    return response.data.data;
+  }
+
+  async update(id: string | number, data: Partial<T>): Promise<T> {
+    const response = await api.put<ApiResponse<T>>(`${this.endpoint}/${id}`, data);
+    return response.data.data;
+  }
+
+  async delete(id: string | number): Promise<void> {
+    await api.delete(`${this.endpoint}/${id}`);
+  }
+
+  async search(query: string, params?: any): Promise<T[]> {
+    const response = await api.get<ApiResponse<T[]>>(`${this.endpoint}/search`, {
+      params: { q: query, ...params }
+    });
+    return response.data.data;
+  }
+}
+
+// Funções auxiliares
+export const handleApiError = (error: any): string => {
+  if (error.response?.data?.message) {
+    return error.response.data.message;
+  }
+  if (error.message) {
+    return error.message;
+  }
+  return 'Ocorreu um erro inesperado';
+};
 
 export default api;
 
