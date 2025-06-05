@@ -64,7 +64,12 @@ export default function SendNotificationPage() {
     }
 
     // Verificar se o usuário tem permissão para enviar notificações
-    const allowedRoles = ['admin', 'manager', 'teacher', 'institution_manager', 'academic_coordinator', 'guardian']
+    const allowedRoles = ['admin',
+        'system_admin',
+        'institution_manager',
+        'academic_coordinator',
+        'manager',
+        'teacher']
     if (!allowedRoles.includes(user.role)) {
       router.push('/notifications')
       return
