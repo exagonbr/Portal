@@ -766,7 +766,7 @@ export default function StandardSidebar() {
       {/* Main Sidebar Container */}
       <div
         id="sidebar-menu"
-        className={`fixed md:sticky top-0 h-screen transition-all duration-300 ease-in-out z-[9996] overflow-hidden
+        className={`fixed md:fixed top-0 h-screen transition-all duration-300 ease-in-out z-[40] overflow-hidden
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
         style={{ width: isCollapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH }}
         role="navigation"

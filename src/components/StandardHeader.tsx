@@ -354,7 +354,7 @@ const StandardHeader = ({
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 shadow-sm backdrop-blur-sm relative z-50">
+    <header className="bg-white border-b border-slate-200 shadow-sm backdrop-blur-sm relative z-[50]">
       <div className="flex items-center justify-between h-16 px-6">
         {/* Left Section - Title and Breadcrumb */}
         <div className="flex-1">
