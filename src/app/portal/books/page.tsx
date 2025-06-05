@@ -205,7 +205,6 @@ export default function BooksPage() {
   const navigateTo = useCallback((route: RouteState) => {
     console.log('🧭 Navegando para:', route);
     setCurrentRoute(route);
-    setIsMobileMenuOpen(false);
     
     // Se for abrir um livro, preparar viewer
     if ((route.type === 'pdf' || route.type === 'epub') && route.id) {
@@ -885,88 +884,6 @@ export default function BooksPage() {
           </div>
         )}
 
-      </div>
-
-      {/* Sidebar (copiada exatamente do koodo-reader) */}
-      <div className={`
-        fixed lg:relative inset-y-0 right-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
-        ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-16'}
-        ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-      `}>
-        <div className="flex flex-col h-full">
-          {/* Logo/Header */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="hidden lg:block p-1 rounded-md hover:bg-gray-100"
-            >
-              <Bars3Icon className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Menu principal */}
-          <nav className="flex-1 p-4 space-y-2">
-            {updatedSidebarItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentRoute.type === item.route;
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => navigateTo({ type: item.route as RouteType })}
-                  className={`
-                    w-full flex items-center px-3 py-2.5 rounded-lg text-left transition-colors
-                    ${isActive 
-                      ? 'bg-blue-100 text-blue-700 shadow-sm' 
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }
-                    ${!isSidebarOpen && !isMobileMenuOpen ? 'lg:justify-center lg:px-2' : ''}
-                  `}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  {(isSidebarOpen || isMobileMenuOpen) && (
-                    <>
-                      <span className="ml-3 font-medium">{item.label}</span>
-                      {item.count > 0 && (
-                        <span className="ml-auto bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full min-w-[1.5rem] text-center">
-                          {item.count}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Menu inferior */}
-          <div className="p-4 border-t border-gray-200 space-y-2">
-            {bottomMenuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentRoute.type === item.route;
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => navigateTo({ type: item.route as RouteType })}
-                  className={`
-                    w-full flex items-center px-3 py-2.5 rounded-lg text-left transition-colors
-                    ${isActive 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }
-                    ${!isSidebarOpen && !isMobileMenuOpen ? 'lg:justify-center lg:px-2' : ''}
-                  `}
-                >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
-                  {(isSidebarOpen || isMobileMenuOpen) && (
-                    <span className="ml-3 font-medium">{item.label}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
       {/* Modal de Importação */}

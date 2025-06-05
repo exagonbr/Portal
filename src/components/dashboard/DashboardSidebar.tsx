@@ -26,32 +26,31 @@ const MOBILE_BREAKPOINT = 768
 
 // Memoized Components
 const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
-  <Link href="/" className="overflow-hidden flex items-center justify-center py-1">
+  <span className="overflow-hidden flex items-center justify-center py-1">
     {isCollapsed ? (
       <div className="w-8 h-8 bg-primary-light/20 rounded-lg flex items-center justify-center">
         <span className="text-xl font-bold text-white">S</span>
-      </div>
-    ) : (
-      <div className="w-full flex justify-center">
-        <Image
+</div>
+) : (
+    <div className="table">
+      <Image
           src="/sabercon-logo-white.png"
           alt="Logo"
-          width={160}
-          height={35}
-          sizes="(max-width: 768px) 140px, 160px"
-          className="object-contain max-w-full h-auto"
+          width={250}
+          height={100}
+          className="object-contain"
           priority
-        />
-      </div>
-    )}
-  </Link>
+      />
+    </div>
+)}
+</span>
 ));
 
 const UserProfile = memo(({ user, isCollapsed }: { user: any, isCollapsed: boolean }) => (
-  <div className="px-2 py-3 border-b border-white/10 flex-shrink-0">
+  <div className="px-4 py-4 border-b border-white/10">
     <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
-      <div className="w-7 h-7 rounded-full bg-primary-light/30 flex items-center justify-center flex-shrink-0">
-        <span className={`material-symbols-outlined text-primary ${isCollapsed ? 'text-[16px]' : 'text-[14px]'}`}>
+      <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0">
+        <span className={`material-symbols-outlined text-blue-500 ${isCollapsed ? 'text-[24px]' : 'text-[20px]'}`}>
           person
         </span>
       </div>
@@ -75,6 +74,8 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
 }) => (
   <Link
     href={item.href}
+    prefetch={true}
+    locale={false}
     className={`flex items-center gap-2 px-2 py-2 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
       ${isActive
         ? 'bg-sidebar-active text-white shadow-sm'
@@ -89,11 +90,11 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
     >
       {item.icon}
     </span>
-    
+
     {!isCollapsed && (
       <span className="text-xs font-medium truncate leading-tight">{item.label}</span>
     )}
-    
+
     {/* Tooltip for collapsed state */}
     {isCollapsed && (
       <div
@@ -383,19 +384,19 @@ export default function DashboardSidebar() {
             section: 'Relatórios',
             items: [
               {
-                href: '/institution/reports',
+                href: '/reports/institutional',
                 icon: 'analytics',
                 label: 'Relatórios Institucionais',
                 permission: 'canViewInstitutionAnalytics'
               },
               {
-                href: '/institution/performance',
+                href: '/reports/performance',
                 icon: 'assessment',
                 label: 'Desempenho Acadêmico',
                 permission: 'canViewAcademicAnalytics'
               },
               {
-                href: '/institution/financial',
+                href: '/reports/financial',
                 icon: 'payments',
                 label: 'Financeiro',
                 permission: 'canViewInstitutionAnalytics'
@@ -491,25 +492,25 @@ export default function DashboardSidebar() {
             section: 'Área do Professor',
             items: [
               {
-                href: '/teacher/courses',
+                href: '/courses',
                 icon: 'school',
                 label: 'Gestão de Cursos',
                 permission: 'canManageLessonPlans'
               },
               {
-                href: '/teacher/assignments',
+                href: '/assignments/manage',
                 icon: 'assignment',
                 label: 'Gestão de Atividades',
                 permission: 'canManageLessonPlans'
               },
               {
-                href: '/teacher/live-classes',
+                href: '/live/manage',
                 icon: 'video_camera_front',
                 label: 'Gestão de Aulas ao Vivo',
                 permission: 'canManageLessonPlans'
               },
               {
-                href: '/teacher/lessons',
+                href: '/lessons/manage',
                 icon: 'menu_book',
                 label: 'Gestão de Aulas',
                 permission: 'canManageLessonPlans'
@@ -532,13 +533,13 @@ export default function DashboardSidebar() {
                 permission: 'canManageGrades'
               },
               {
-                href: '/teacher/reports',
+                href: '/reports/teacher',
                 icon: 'analytics',
                 label: 'Relatórios',
                 permission: 'canManageGrades'
               },
               {
-                href: '/teacher/forum',
+                href: '/forum',
                 icon: 'forum',
                 label: 'Fórum',
                 permission: 'canCommunicateWithStudents'
@@ -571,31 +572,31 @@ export default function DashboardSidebar() {
             section: 'Área Acadêmica',
             items: [
               {
-                href: '/student/courses',
+                href: '/courses',
                 icon: 'school',
                 label: 'Meus Cursos',
                 permission: 'canAccessLearningMaterials'
               },
               {
-                href: '/student/assignments',
+                href: '/assignments',
                 icon: 'assignment',
                 label: 'Atividades',
                 permission: 'canSubmitAssignments'
               },
               {
-                href: '/student/live-classes',
+                href: '/live',
                 icon: 'video_camera_front',
                 label: 'Aulas ao Vivo',
                 permission: 'canViewOwnSchedule'
               },
               {
-                href: '/student/lessons',
+                href: '/lessons',
                 icon: 'school',
                 label: 'Aulas',
                 permission: 'canAccessLearningMaterials'
               },
               {
-                href: '/student/forum',
+                href: '/forum',
                 icon: 'forum',
                 label: 'Fórum',
                 permission: 'canCommunicateWithStudents'
@@ -646,7 +647,7 @@ export default function DashboardSidebar() {
                 permission: 'canViewChildrenAttendance'
               },
               {
-                href: '/guardian/assignments',
+                href: '/guardian/activities',
                 icon: 'assignment',
                 label: 'Atividades',
                 permission: 'canViewChildrenAssignments'
@@ -686,13 +687,13 @@ export default function DashboardSidebar() {
                 permission: 'canViewPayments'
               },
               {
-                href: '/guardian/boletos',
+                href: '/guardian/invoices',
                 icon: 'receipt',
                 label: 'Boletos',
                 permission: 'canViewBoletos'
               },
               {
-                href: '/guardian/financial-history',
+                href: '/guardian/history',
                 icon: 'history',
                 label: 'Histórico',
                 permission: 'canViewFinancialHistory'
@@ -712,55 +713,23 @@ export default function DashboardSidebar() {
   const navItems = getNavItems();
 
   return (
-    <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={toggleSidebar}
-        className="md:hidden fixed top-3 left-3 z-[9998] bg-sidebar-bg rounded-lg p-2.5 text-sidebar-text hover:bg-sidebar-hover transition-colors shadow-lg border border-white/10"
-        aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
-        aria-expanded={isMobileOpen}
-        aria-controls="sidebar-menu"
-      >
-        <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
-          {isMobileOpen ? 'close' : 'menu'}
-        </span>
-      </button>
+      <aside className="w-64 bg-[#0A1628] text-white flex flex-col min-h-screen">
+        {/* Logo */}
+        <div className="p-6 border-b border-white/10">
+          <Link href="/" className="flex items-center justify-center">
+            <div className="table">
+              <Image
+                  src="/sabercon-logo-white.png"
+                  alt="Logo"
+                  width={250}
+                  height={100}
+                  className="object-contain"
+                  priority
+              />
+            </div>
+          </Link>
+        </div>
 
-      {/* Backdrop for mobile */}
-      {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[9997] md:hidden sidebar-mobile-backdrop"
-          onClick={closeMobileSidebar}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Main Sidebar Container */}
-      <div
-        id="sidebar-menu"
-        className={`fixed md:sticky top-0 h-screen transition-all duration-300 ease-in-out z-[9996] overflow-hidden
-          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
-        style={{ width: isCollapsed ? COLLAPSED_WIDTH : SIDEBAR_WIDTH }}
-        role="navigation"
-        aria-label="Menu principal"
-      >
-        {/* Sidebar Content */}
-        <aside className="bg-sidebar-bg text-sidebar-text h-full flex flex-col shadow-xl overflow-hidden border-r border-primary-dark/20">
-          {/* Logo */}
-          <div className="p-2 border-b border-white/10 relative flex-shrink-0">
-            {/* Desktop Toggle Button */}
-            <button
-              onClick={toggleSidebar}
-              className="hidden md:flex absolute -right-2 top-1/2 -translate-y-1/2 bg-sidebar-bg rounded-full p-1 hover:bg-sidebar-hover transition-colors z-[9995] items-center justify-center border border-white/10"
-              aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
-            >
-              <span className="material-symbols-outlined text-sidebar-text-active text-[16px]" aria-hidden="true">
-                {isCollapsed ? 'chevron_right' : 'chevron_left'}
-              </span>
-            </button>
-            
-            <SidebarLogo isCollapsed={isCollapsed} />
-          </div>
 
           {/* User Info */}
           <UserProfile user={user} isCollapsed={isCollapsed} />
@@ -787,7 +756,5 @@ export default function DashboardSidebar() {
             <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} />
           </div>
         </aside>
-      </div>
-    </>
   )
 }

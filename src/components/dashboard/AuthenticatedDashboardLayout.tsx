@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import StandardLayout from '@/components/StandardLayout'
+import DashboardLayout from './DashboardLayout'
 
 export default function AuthenticatedDashboardLayout({
   children,
@@ -15,17 +15,14 @@ export default function AuthenticatedDashboardLayout({
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login?error=unauthorized')
+      router.push('/login')
     }
   }, [loading, user, router])
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-slate-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-          <p className="mt-4 text-slate-600 font-medium">Carregando...</p>
-        </div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="loading-spinner"></div>
       </div>
     )
   }
@@ -34,12 +31,5 @@ export default function AuthenticatedDashboardLayout({
     return null // Will redirect in useEffect
   }
 
-  return (
-    <StandardLayout
-      title="Dashboard"
-      subtitle="Bem-vindo ao Portal Educacional"
-    >
-      {children}
-    </StandardLayout>
-  )
+  return <DashboardLayout>{children}</DashboardLayout>
 }

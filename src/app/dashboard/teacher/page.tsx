@@ -341,7 +341,7 @@ function TeacherDashboardContent() {
               Bem-vindo(a), {user?.name}! Acompanhe o progresso dos seus alunos.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col md:flex-row gap-2">
             <button
               onClick={() => setSelectedView('overview')}
               className={`px-4 py-2 rounded-lg transition-colors ${
@@ -1041,7 +1041,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
           <Icon className={`w-4 h-4 ${color.replace('bg-', 'text-')}`} />
         </div>
       </div>
-      <p className="text-xl font-bold text-gray-700 text-white">
+      <p className="text-xl font-bold text-gray-700 ">
         {value}
       </p>
       <p className="text-xs text-gray-600 text-gray-400">{title}</p>

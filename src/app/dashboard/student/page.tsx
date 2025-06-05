@@ -407,7 +407,7 @@ function StudentDashboardContent() {
             Acompanhe seu progresso acadêmico e atividades
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col md:flex-row gap-2">
           <button
             onClick={() => setSelectedView('overview')}
             className={`px-4 py-2 rounded-lg transition-colors ${
@@ -827,7 +827,7 @@ function StudentDashboardContent() {
               </h2>
               
               <div className="mb-6">
-                <div className="flex gap-2 mb-4">
+                <div className="flex flex-col md:flex-row gap-2 mb-4">
                   <button className="px-4 py-2 bg-accent-purple text-white rounded-lg">
                     Para Você
                   </button>

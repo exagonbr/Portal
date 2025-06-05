@@ -209,7 +209,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-secondary-light text-text-primary rounded-lg hover:bg-secondary-DEFAULT/80 transition-colors"
+                className="px-4 py-2 bg-secondary-light text-text-primary rounded-lg hover:bg-secondary/80 transition-colors"
               >
                 Cancelar
               </button>
@@ -217,7 +217,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
                 type="submit"
                 disabled={loading}
                 onClick={handleSubmit}
-                className="px-4 py-2 bg-primary-DEFAULT text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
               >
                 {loading ? 'Salvando...' : classItem ? 'Salvar Alterações' : 'Criar Turma'}
               </button>

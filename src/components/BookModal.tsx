@@ -57,7 +57,7 @@ export default function BookModal({ isOpen, onClose, book }: BookModalProps): JS
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-4xl max-h-[95vh] bg-white rounded-3xl shadow-2xl overflow-hidden animate-modalSlideIn border border-gray-200">
+      <div className="relative w-full max-w-4xl max-h-[95vh] bg-white rounded-3xl shadow-2xl overflow-y-auto overflow-x-hidden animate-modalSlideIn border border-gray-200">
         
         {/* Header with gradient */}
         <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white px-8 py-6">

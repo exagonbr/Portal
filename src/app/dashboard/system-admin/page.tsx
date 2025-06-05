@@ -25,6 +25,35 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
+import { Line, Pie } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  ChartOptions,
+  TooltipItem,
+  ChartData
+} from 'chart.js';
+
+// Registrando os componentes necessários do Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 interface SystemStats {
   totalInstitutions: number;
@@ -61,6 +90,30 @@ interface InstitutionOverview {
   healthScore: number;
 }
 
+// Interfaces para os dados dos gráficos
+interface ResourceUsageData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    borderColor: string;
+    backgroundColor: string;
+    tension: number;
+    fill: boolean;
+  }[];
+}
+
+interface UserDistributionData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor: string[];
+    borderColor: string[];
+    borderWidth: number;
+  }[];
+}
+
 export default function SystemAdminDashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -81,6 +134,59 @@ export default function SystemAdminDashboard() {
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [institutions, setInstitutions] = useState<InstitutionOverview[]>([]);
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
+  const [resourceUsageData, setResourceUsageData] = useState<ResourceUsageData>({
+    labels: Array.from({ length: 24 }, (_, i) => `${i}h`),
+    datasets: [
+      {
+        label: 'CPU',
+        data: Array.from({ length: 24 }, () => Math.floor(Math.random() * 50) + 30),
+        borderColor: 'rgba(59, 130, 246, 1)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Memória',
+        data: Array.from({ length: 24 }, () => Math.floor(Math.random() * 40) + 40),
+        borderColor: 'rgba(168, 85, 247, 1)',
+        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+        tension: 0.4,
+        fill: true,
+      },
+      {
+        label: 'Rede',
+        data: Array.from({ length: 24 }, () => Math.floor(Math.random() * 70) + 20),
+        borderColor: 'rgba(16, 185, 129, 1)',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        tension: 0.4,
+        fill: true,
+      }
+    ]
+  });
+  const [userDistributionData, setUserDistributionData] = useState<UserDistributionData>({
+    labels: ['Professores', 'Alunos', 'Gestores', 'Administrativo', 'Pais'],
+    datasets: [
+      {
+        label: 'Usuários por Tipo',
+        data: [1200, 10500, 890, 350, 2300],
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(249, 115, 22, 0.8)',
+          'rgba(168, 85, 247, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+        ],
+        borderColor: [
+          'rgba(59, 130, 246, 1)',
+          'rgba(16, 185, 129, 1)',
+          'rgba(249, 115, 22, 1)',
+          'rgba(168, 85, 247, 1)',
+          'rgba(236, 72, 153, 1)',
+        ],
+        borderWidth: 1,
+      }
+    ]
+  });
 
   useEffect(() => {
     loadDashboardData();
@@ -193,6 +299,27 @@ export default function SystemAdminDashboard() {
       activeConnections: Math.max(0, prev.activeConnections + Math.floor((Math.random() - 0.5) * 100)),
       requestsPerMinute: Math.max(0, prev.requestsPerMinute + Math.floor((Math.random() - 0.5) * 500))
     }));
+    
+    // Atualizar também os dados do gráfico de recursos
+    setResourceUsageData(prev => {
+      const newData = { ...prev };
+      // Remover o primeiro valor e adicionar um novo no final para CPU
+      newData.datasets[0].data = [
+        ...newData.datasets[0].data.slice(1),
+        Math.floor(Math.random() * 50) + 30
+      ];
+      // Remover o primeiro valor e adicionar um novo no final para Memória
+      newData.datasets[1].data = [
+        ...newData.datasets[1].data.slice(1),
+        Math.floor(Math.random() * 40) + 40
+      ];
+      // Remover o primeiro valor e adicionar um novo no final para Rede
+      newData.datasets[2].data = [
+        ...newData.datasets[2].data.slice(1),
+        Math.floor(Math.random() * 70) + 20
+      ];
+      return newData;
+    });
   };
 
   const getAlertIcon = (type: SystemAlert['type']) => {
@@ -417,14 +544,86 @@ export default function SystemAdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Uso de Recursos (24h)</h3>
-              <div className="h-48 flex items-center justify-center text-gray-500">
-                Gráfico de linha - CPU, Memória, Rede
+              <div className="h-48">
+                <Line 
+                  data={resourceUsageData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                        labels: {
+                          boxWidth: 12,
+                          usePointStyle: true,
+                          font: {
+                            size: 10
+                          }
+                        }
+                      },
+                      tooltip: {
+                        mode: 'index',
+                        intersect: false
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                          callback: function(value) {
+                            return value + '%';
+                          }
+                        }
+                      },
+                      x: {
+                        grid: {
+                          display: false
+                        },
+                        ticks: {
+                          font: {
+                            size: 9
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
               </div>
             </div>
             <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold mb-4">Distribuição de Usuários</h3>
-              <div className="h-48 flex items-center justify-center text-gray-500">
-                Gráfico de pizza - Por tipo de usuário
+              <div className="h-48">
+                <Pie 
+                  data={userDistributionData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: 'right',
+                        labels: {
+                          boxWidth: 12,
+                          usePointStyle: true,
+                          font: {
+                            size: 10
+                          }
+                        }
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw as number;
+                            const total = (context.chart.data.datasets[0].data as number[]).reduce((a: number, b: number) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value.toLocaleString('pt-BR')} (${percentage}%)`;
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
               </div>
             </div>
           </div>

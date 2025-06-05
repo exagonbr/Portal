@@ -262,7 +262,7 @@ const InstitutionEditModal: React.FC<InstitutionEditModalProps> = ({
                       className="text-error-DEFAULT hover:text-error-dark p-1 rounded-full hover:bg-error-light/20"
                       aria-label="Remover Unidade"
                     >
-                      <span className="material-icons text-lg">delete_outline</span>
+                      <span className="material-symbols-outlined text-lg">delete_outline</span>
                     </button>
                   </div>
                 ))}
@@ -277,9 +277,9 @@ const InstitutionEditModal: React.FC<InstitutionEditModalProps> = ({
                   <button
                     type="button"
                     onClick={handleAddUnit}
-                    className="bg-success-DEFAULT text-white px-3 py-2 rounded-lg hover:bg-success-dark text-sm flex items-center"
+                    className="bg-success text-white px-3 py-2 rounded-lg hover:bg-success-dark text-sm flex items-center"
                   >
-                    <span className="material-icons text-lg mr-1">add_circle_outline</span>
+                    <span className="material-symbols-outlined text-lg mr-1">add_circle_outline</span>
                     Adicionar Unidade
                   </button>
                 </div>

@@ -71,7 +71,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={`${inter.className} m-0 p-0 h-full w-full overflow-hidden text-base antialiased bg-background-primary text-text-primary`}>
+      <body className={`${inter.className} m-0 p-0 h-full w-full`}>
         <ErrorSuppressor />
         <GlobalSetup />
         <AppProviders>
