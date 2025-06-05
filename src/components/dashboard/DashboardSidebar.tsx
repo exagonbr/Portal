@@ -323,23 +323,6 @@ export default function DashboardSidebar() {
             ]
           },
           {
-            section: 'Portais',
-            items: [
-              {
-                href: '/portal/books',
-                icon: 'auto_stories',
-                label: 'Portal de Literatura',
-                permission: 'canAccessLearningMaterials'
-              },
-              {
-                href: '/portal/student',
-                icon: 'person_outline',
-                label: 'Portal do Aluno',
-                permission: 'canAccessLearningMaterials'
-              }
-            ]
-          },
-          {
             section: 'Monitoramento',
             items: [
               {
