@@ -242,6 +242,11 @@ export default function DashboardSidebar() {
             href: dashboardRoute,
             icon: 'dashboard',
             label: 'Painel Principal'
+          },
+          {
+            href: '/chat',
+            icon: 'chat',
+            label: 'Mensagens'
           }
         ]
       }
@@ -492,7 +497,7 @@ export default function DashboardSidebar() {
             section: 'Área do Professor',
             items: [
               {
-                href: '/courses',
+                href: '/courses/manage',
                 icon: 'school',
                 label: 'Gestão de Cursos',
                 permission: 'canManageLessonPlans'
@@ -572,7 +577,7 @@ export default function DashboardSidebar() {
             section: 'Área Acadêmica',
             items: [
               {
-                href: '/courses',
+                href: '/courses/',
                 icon: 'school',
                 label: 'Meus Cursos',
                 permission: 'canAccessLearningMaterials'
@@ -593,6 +598,18 @@ export default function DashboardSidebar() {
                 href: '/lessons',
                 icon: 'school',
                 label: 'Aulas',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/quiz/student',
+                icon: 'quiz',
+                label: 'Quiz Interativo',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/study-groups/student',
+                icon: 'group',
+                label: 'Grupos de Estudo',
                 permission: 'canAccessLearningMaterials'
               },
               {
