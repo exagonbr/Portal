@@ -34,7 +34,10 @@ export class ApiClient {
     this.baseURL = baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
-      'Allow-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://portal.sabercon.com.br',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true'
     };
   }
 
@@ -79,6 +82,12 @@ export class ApiClient {
    */
   private prepareHeaders(customHeaders?: Record<string, string>): Record<string, string> {
     const headers = { ...this.defaultHeaders, ...customHeaders };
+
+    // Mantém os headers de CORS
+    headers['Access-Control-Allow-Origin'] = 'https://portal.sabercon.com.br';
+    headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS';
+    headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+    headers['Access-Control-Allow-Credentials'] = 'true';
 
     // Adiciona token de autenticação se disponível
     const token = this.getAuthToken();
