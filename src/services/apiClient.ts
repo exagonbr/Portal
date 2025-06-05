@@ -34,6 +34,7 @@ export class ApiClient {
     this.baseURL = baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
+      'Allow-Control-Allow-Origin': '*',
     };
   }
 
