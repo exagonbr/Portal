@@ -75,7 +75,7 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick }: {
 }) => (
   <Link
     href={item.href}
-    className={`flex items-center gap-2 px-2 py-2 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
+    className={`flex items-center gap-2 px-2 py-2 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative outline-none
       ${isActive
         ? 'bg-sidebar-active text-white shadow-sm'
         : ''

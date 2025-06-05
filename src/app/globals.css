@@ -38,6 +38,46 @@
   --card-bg: #ffffff;
   --card-border: #e2e8f0;
   --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+
+  /* Cores do Sistema */
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-primary-light: #3b82f6;
+
+  /* Cores de Background */
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f8fafc;
+  --color-background-tertiary: #f1f5f9;
+
+  /* Cores de Texto */
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-tertiary: #94a3b8;
+
+  /* Cores de Borda */
+  --color-border: #e2e8f0;
+  --color-border-focus: #bfdbfe;
+
+  /* Cores de Estado */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Espaçamento Base */
+  --spacing-base: 0.25rem;
+  --spacing-xs: calc(var(--spacing-base) * 2);
+  --spacing-sm: calc(var(--spacing-base) * 3);
+  --spacing-md: calc(var(--spacing-base) * 4);
+  --spacing-lg: calc(var(--spacing-base) * 6);
+  --spacing-xl: calc(var(--spacing-base) * 8);
+
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
 }
 
 /* Dark mode colors for academic theme */
@@ -334,6 +374,39 @@
 
   .animate-slide-down {
     animation: slideDown 0.3s ease-out;
+  }
+
+  /* Utilitários de Responsividade */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animações Suaves */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Sombras Personalizadas */
+  .shadow-card {
+    @apply shadow-sm hover:shadow-md transition-shadow duration-300;
+  }
+
+  /* Gradientes */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary to-primary-dark;
+  }
+
+  .gradient-light {
+    @apply bg-gradient-to-r from-background-secondary to-background-tertiary;
   }
 }
 
