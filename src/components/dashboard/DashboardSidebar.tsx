@@ -315,9 +315,9 @@ export default function DashboardSidebar() {
                 permission: 'canAccessLearningMaterials'
               },
               {
-                href: '/portal/student',
+                href: '/portal/videos',
                 icon: 'person_outline',
-                label: 'Portal do Aluno',
+                label: 'Portal do Videos',
                 permission: 'canAccessLearningMaterials'
               }
             ]
@@ -412,9 +412,9 @@ export default function DashboardSidebar() {
                 permission: 'canAccessLearningMaterials'
               },
               {
-                href: '/portal/student',
+                href: '/portal/videos',
                 icon: 'person_outline',
-                label: 'Portal do Aluno',
+                label: 'Portal do Videos',
                 permission: 'canAccessLearningMaterials'
               }
             ]
@@ -529,6 +529,12 @@ export default function DashboardSidebar() {
                 href: '/portal/books',
                 icon: 'auto_stories',
                 label: 'Portal de Literatura',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/videos',
+                icon: 'person_outline',
+                label: 'Portal do Videos',
                 permission: 'canAccessLearningMaterials'
               },
               {
