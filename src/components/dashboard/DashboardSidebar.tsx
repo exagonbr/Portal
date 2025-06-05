@@ -306,6 +306,57 @@ export default function DashboardSidebar() {
             ]
           },
           {
+            section: 'Portais',
+            items: [
+              {
+                href: '/portal/books',
+                icon: 'auto_stories',
+                label: 'Portal de Literatura',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/student',
+                icon: 'person_outline',
+                label: 'Portal do Aluno',
+                permission: 'canAccessLearningMaterials'
+              }
+            ]
+          },
+          {
+            section: 'Portais',
+            items: [
+              {
+                href: '/portal/books',
+                icon: 'auto_stories',
+                label: 'Portal de Literatura',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/student',
+                icon: 'person_outline',
+                label: 'Portal do Aluno',
+                permission: 'canAccessLearningMaterials'
+              }
+            ]
+          },
+          {
+            section: 'Portais',
+            items: [
+              {
+                href: '/portal/books',
+                icon: 'auto_stories',
+                label: 'Portal de Literatura',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/student',
+                icon: 'person_outline',
+                label: 'Portal do Aluno',
+                permission: 'canAccessLearningMaterials'
+              }
+            ]
+          },
+          {
             section: 'Monitoramento',
             items: [
               {
@@ -386,6 +437,23 @@ export default function DashboardSidebar() {
             ]
           },
           {
+            section: 'Portais',
+            items: [
+              {
+                href: '/portal/books',
+                icon: 'auto_stories',
+                label: 'Portal de Literatura',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/student',
+                icon: 'person_outline',
+                label: 'Portal do Aluno',
+                permission: 'canAccessLearningMaterials'
+              }
+            ]
+          },
+          {
             section: 'Relatórios',
             items: [
               {
@@ -405,7 +473,7 @@ export default function DashboardSidebar() {
                 icon: 'payments',
                 label: 'Financeiro',
                 permission: 'canViewInstitutionAnalytics'
-              }
+              },
             ]
           }
         ];
@@ -439,7 +507,7 @@ export default function DashboardSidebar() {
                 icon: 'grade',
                 label: 'Avaliações',
                 permission: 'canViewAcademicAnalytics'
-              }
+              },
             ]
           },
           {
@@ -485,6 +553,23 @@ export default function DashboardSidebar() {
                 icon: 'tips_and_updates',
                 label: 'Melhorias',
                 permission: 'canCoordinateDepartments'
+              }
+            ]
+          },
+          {
+            section: 'Portais',
+            items: [
+              {
+                href: '/portal/books',
+                icon: 'auto_stories',
+                label: 'Portal de Literatura',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/student',
+                icon: 'person_outline',
+                label: 'Portal do Aluno',
+                permission: 'canAccessLearningMaterials'
               }
             ]
           }
