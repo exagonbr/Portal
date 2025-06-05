@@ -91,26 +91,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="lg:pl-64">
         {/* Header */}
-        <header className="bg-background-primary shadow-sm border-b border-border sticky top-0 z-20">
-          <div className="px-3 sm:px-6 lg:px-8 py-2 sm:py-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 -m-2 text-text-secondary hover:text-text-primary lg:hidden"
-              >
-                {isSidebarOpen ? (
-                  <X className="w-6 h-6" />
-                ) : (
-                  <Menu className="w-6 h-6" />
-                )}
-              </button>
-              <h1 className="text-lg sm:text-xl font-semibold text-text-primary">Dashboard</h1>
+        <header className="bg-background-primary shadow-sm border-b border-border sticky top-0 z-20 header-safe-area">
+          <div className="px-2 sm:px-4 lg:px-6 py-2 sm:py-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-1.5 -m-1.5 text-text-secondary hover:text-text-primary lg:hidden"
+                >
+                  {isSidebarOpen ? (
+                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                  ) : (
+                    <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+                  )}
+                </button>
+                <h1 className="text-base sm:text-lg lg:text-xl font-semibold text-text-primary">Dashboard</h1>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Content */}
-        <main className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <main className="container mx-auto px-2 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6 content-safe-area">
           {children}
         </main>
       </div>

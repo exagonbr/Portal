@@ -27,7 +27,7 @@ interface ResponsiveGridProps {
 export const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   children,
   cols = { default: 1, sm: 2, lg: 3, xl: 4 },
-  gap = 'gap-3 sm:gap-4 lg:gap-6',
+  gap = 'gap-2 sm:gap-3 lg:gap-4',
   className = ''
 }) => {
   const getGridCols = () => {
@@ -40,7 +40,7 @@ export const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   };
 
   return (
-    <div className={`grid ${getGridCols()} ${gap} ${className}`}>
+    <div className={`grid ${getGridCols()} ${gap} ${className} min-w-0`}>
       {children}
     </div>
   );
@@ -54,7 +54,7 @@ interface ResponsiveCardProps {
 
 export const ResponsiveCard: React.FC<ResponsiveCardProps> = ({ children, className = '', onClick }) => (
   <div
-    className={`bg-background-primary rounded-lg sm:rounded-xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow duration-300 ${className}`}
+    className={`bg-background-primary rounded-lg sm:rounded-xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow duration-300 min-w-0 ${className}`}
     onClick={onClick}
   >
     {children}
@@ -107,7 +107,7 @@ export const ResponsiveButton: React.FC<ResponsiveButtonProps> = ({
   disabled = false,
   type = 'button'
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium transition-colors duration-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const baseStyles = 'inline-flex items-center justify-center font-medium transition-colors duration-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-1';
   
   const variants = {
     primary: 'bg-primary text-white hover:bg-primary-dark focus:ring-primary/50 disabled:bg-primary/50',
@@ -116,9 +116,9 @@ export const ResponsiveButton: React.FC<ResponsiveButtonProps> = ({
   };
 
   const sizes = {
-    sm: 'px-2 py-1 text-sm',
-    md: 'px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base',
-    lg: 'px-4 py-2 sm:px-6 sm:py-3 text-base sm:text-lg'
+    sm: 'px-2 py-1 text-xs sm:text-sm',
+    md: 'px-2 py-1.5 sm:px-3 sm:py-2 text-sm sm:text-base',
+    lg: 'px-3 py-2 sm:px-4 sm:py-2.5 text-base sm:text-lg'
   };
 
   return (
@@ -156,7 +156,7 @@ export const ResponsiveInput: React.FC<ResponsiveInputProps> = ({
 }) => (
   <div className="space-y-1">
     {label && (
-      <label className="block text-sm font-medium text-text-primary">
+      <label className="block text-xs sm:text-sm font-medium text-text-primary">
         {label}
         {required && <span className="text-error ml-1">*</span>}
       </label>
@@ -167,19 +167,19 @@ export const ResponsiveInput: React.FC<ResponsiveInputProps> = ({
       value={value}
       onChange={onChange}
       className={`
-        w-full px-3 py-2 sm:px-4 sm:py-2
+        w-full px-2 py-1.5 sm:px-3 sm:py-2
         border border-border rounded-lg
         bg-background-primary text-text-primary
         placeholder-text-tertiary
         focus:outline-none focus:ring-2 focus:ring-primary/20
         disabled:bg-background-secondary disabled:cursor-not-allowed
-        text-sm sm:text-base
+        text-sm
         ${error ? 'border-error focus:ring-error/20' : ''}
         ${className}
       `}
     />
     {error && (
-      <p className="text-error text-xs sm:text-sm mt-1">{error}</p>
+      <p className="text-error text-xs mt-1">{error}</p>
     )}
   </div>
 );

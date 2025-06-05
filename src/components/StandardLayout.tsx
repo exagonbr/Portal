@@ -3,6 +3,7 @@
 import { ReactNode, useState } from 'react';
 import StandardSidebar from '@/components/StandardSidebar';
 import StandardHeader from '@/components/StandardHeader';
+import Link from 'next/link';
 
 interface StandardLayoutProps {
   children: ReactNode;
@@ -24,7 +25,7 @@ const StandardLayout = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50">
       {/* Mobile Sidebar Backdrop */}
       {sidebarOpen && (
         <div 
@@ -34,7 +35,7 @@ const StandardLayout = ({
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:shrink-0">
+      <div className="hidden md:block">
         <StandardSidebar />
       </div>
 
@@ -46,48 +47,73 @@ const StandardLayout = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 min-w-0">
-        {/* Mobile Menu Button */}
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 shadow-sm">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2.5 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <StandardHeader 
-          title={title}
-          subtitle={subtitle}
-          showBreadcrumb={showBreadcrumb}
-          breadcrumbItems={breadcrumbItems}
-        />
+        <header className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              {/* Mobile menu button */}
+              <button
+                type="button"
+                className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-slate-500 hover:text-slate-600 hover:bg-slate-100"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <span className="sr-only">Abrir menu</span>
+                <span className="material-symbols-outlined">menu</span>
+              </button>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-auto bg-slate-50">
-          <div className="flex h-full">
-            {/* Primary Content */}
-            <div className={`flex-1 ${rightContent ? 'pr-0' : ''}`}>
-              <div className="p-6 lg:p-8">
-                {children}
+              <div className="flex-1 min-w-0">
+                {title && (
+                  <h1 className="text-2xl font-semibold text-slate-900 truncate">
+                    {title}
+                  </h1>
+                )}
+                {subtitle && (
+                  <p className="mt-1 text-sm text-slate-500 truncate">
+                    {subtitle}
+                  </p>
+                )}
+                {showBreadcrumb && breadcrumbItems.length > 0 && (
+                  <nav className="mt-1">
+                    <ol className="flex items-center space-x-1 text-sm text-slate-500">
+                      {breadcrumbItems.map((item, index) => (
+                        <li key={index} className="flex items-center">
+                          {index > 0 && <span className="mx-1">/</span>}
+                          {item.href ? (
+                            <Link href={item.href} className="hover:text-slate-700">
+                              {item.label}
+                            </Link>
+                          ) : (
+                            <span>{item.label}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  </nav>
+                )}
               </div>
             </div>
+          </div>
+        </header>
 
-            {/* Right Sidebar Content (Optional) */}
-            {rightContent && (
-              <div className="w-80 bg-white border-l border-slate-200 overflow-y-auto shadow-sm">
-                <div className="p-6 lg:p-8">
-                  {rightContent}
-                </div>
-              </div>
-            )}
+        {/* Page Content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50">
+          <div className="py-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {children}
+            </div>
           </div>
         </main>
       </div>
+
+      {/* Right Sidebar (if provided) */}
+      {rightContent && (
+        <div className="hidden lg:block w-64 border-l border-slate-200 bg-white overflow-y-auto">
+          <div className="p-4">
+            {rightContent}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

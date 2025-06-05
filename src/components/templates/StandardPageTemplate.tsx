@@ -163,24 +163,24 @@ const StandardPageTemplate: React.FC<TemplateProps> = ({
       breadcrumbItems={breadcrumbItems}
       rightContent={rightSidebarContent || defaultRightContent}
     >
-      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+      <div className="space-y-3 sm:space-y-4 lg:space-y-6">
         {/* Stats Cards */}
         {statsCards.length > 0 && (
-          <ResponsiveGrid cols={{ default: 1, sm: 2, lg: 4 }}>
+          <ResponsiveGrid cols={{ default: 2, sm: 2, lg: 4 }} gap="gap-2 sm:gap-3 lg:gap-4">
             {statsCards.map((stat, index) => (
               <ResponsiveCard key={index}>
-                <div className="p-3 sm:p-4 lg:p-6">
-                  <div className="flex items-center gap-3">
+                <div className="p-2 sm:p-3 lg:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     {stat.icon && (
-                      <div className={`p-2 rounded-lg bg-${stat.color || 'primary'}/10`}>
+                      <div className={`p-1.5 sm:p-2 rounded-lg bg-${stat.color || 'primary'}/10`}>
                         {stat.icon}
                       </div>
                     )}
                     <div>
-                      <ResponsiveText variant="2xl" className="font-bold text-text-primary">
+                      <ResponsiveText variant="xl" className="font-bold text-text-primary">
                         {stat.value}
                       </ResponsiveText>
-                      <ResponsiveText variant="sm" className="text-text-secondary">
+                      <ResponsiveText variant="xs" className="text-text-secondary">
                         {stat.title}
                       </ResponsiveText>
                     </div>
