@@ -16,6 +16,7 @@ export default function DashboardLayout({
   const [showActivities, setShowActivities] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Mock data para notificações - em produção viria de uma API
   const notifications = [
@@ -126,26 +127,36 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen w-screen bg-background-secondary" onClick={handleClickOutside}>
-      {/* Left Sidebar */}
-      <DashboardSidebar />
+    <div className="flex h-screen w-screen bg-background-secondary overflow-hidden" onClick={handleClickOutside}>
+      {/* Left Sidebar - Ajustado para ser responsivo */}
+      <div className="hidden md:block">
+        <DashboardSidebar />
+      </div>
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Header */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 w-full">
+        {/* Header - Ajustado para mobile */}
         <header className="bg-background-primary shadow-sm border-b border-border flex-shrink-0">
-          <div className="px-4 sm:px-6 lg:px-8 py-4">
+          <div className="px-3 sm:px-6 lg:px-8 py-2 sm:py-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <h1 className="text-xl sm:text-2xl font-semibold text-text-primary truncate">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-text-primary truncate">
                   Portal Educacional Sabercon
                 </h1>
-                <p className="text-sm text-text-secondary truncate">
+                <p className="text-xs sm:text-sm text-text-secondary truncate">
                   Bem-vindo(a), {user?.name}
                 </p>
               </div>
               
-              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2 lg:gap-4 flex-shrink-0">
+                {/* Menu Mobile */}
+                <button
+                  className="md:hidden p-2 text-text-secondary hover:text-text-primary hover:bg-background-tertiary rounded-lg transition-colors"
+                  onClick={() => setMobileMenuOpen(true)}
+                >
+                  <span className="material-symbols-outlined">menu</span>
+                </button>
+
                 {/* Atividades/Tarefas */}
                 <div className="relative">
                   <button
@@ -170,7 +181,7 @@ export default function DashboardLayout({
                   {/* Dropdown de Atividades */}
                   {showActivities && (
                     <div
-                      className="absolute right-0 mt-2 w-80 bg-background-primary border border-border rounded-lg shadow-xl z-50"
+                      className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-background-primary border border-border rounded-lg shadow-xl z-50"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="p-4 border-b border-border">
@@ -419,7 +430,7 @@ export default function DashboardLayout({
                   )}
                 </div>
                 
-                {/* Avatar e Menu do Usuário */}
+                {/* Avatar e Menu do Usuário - Ajustado para mobile */}
                 <div className="relative">
                   <button
                     onClick={(e) => {
@@ -427,10 +438,10 @@ export default function DashboardLayout({
                       setShowUserMenu(!showUserMenu)
                       setShowNotifications(false)
                     }}
-                    className="flex items-center space-x-2 hover:bg-background-tertiary rounded-lg p-2 transition-colors"
+                    className="flex items-center gap-2 hover:bg-background-tertiary rounded-lg p-1 sm:p-2 transition-colors"
                   >
                     <div className="hidden sm:block text-right">
-                      <p className="text-sm font-medium text-text-primary truncate max-w-32">
+                      <p className="text-sm font-medium text-text-primary truncate max-w-24 lg:max-w-32">
                         {user?.name || 'Usuário'}
                       </p>
                       <p className="text-xs text-text-secondary">
@@ -495,13 +506,22 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Page Content - Sem Right Sidebar */}
-        <main className="flex-1 overflow-y-auto bg-background-tertiary min-w-0">
-          <div className="h-full">
+        {/* Page Content - Ajustado para mobile */}
+        <main className="flex-1 overflow-y-auto bg-background-tertiary min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="h-full max-w-7xl mx-auto">
             {children}
           </div>
         </main>
       </div>
+      
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden" onClick={() => setMobileMenuOpen(false)}>
+          <div className="absolute inset-y-0 left-0 w-64 bg-background-primary shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <DashboardSidebar />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

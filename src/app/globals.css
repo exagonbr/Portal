@@ -124,9 +124,9 @@
 }
 
 @layer components {
-  /* Container Responsivo */
+  /* Container Responsivo - Ajustado */
   .container-responsive {
-    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+    @apply container mx-auto px-3 sm:px-6 lg:px-8 max-w-7xl;
   }
 
   /* Títulos de Página */
@@ -147,50 +147,50 @@
     @apply text-sm sm:text-base text-gray-600;
   }
 
-  /* Cards Responsivos */
+  /* Cards Responsivos - Ajustados */
   .card {
-    @apply bg-background-primary rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
+    @apply bg-background-primary rounded-lg sm:rounded-xl shadow-sm border border-gray-100 overflow-hidden;
   }
 
   .card-header {
-    @apply p-4 sm:p-6 border-b border-gray-100 bg-gradient-to-r from-primary/5 to-transparent;
+    @apply p-3 sm:p-4 lg:p-6 border-b border-gray-100 bg-gradient-to-r from-primary/5 to-transparent;
   }
 
   .card-body {
-    @apply p-4 sm:p-6;
+    @apply p-3 sm:p-4 lg:p-6;
   }
 
-  /* Botões Responsivos */
+  /* Botões Responsivos - Ajustados */
   .button-primary {
-    @apply px-4 py-2 sm:px-6 sm:py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200 text-sm sm:text-base font-medium;
+    @apply px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200 text-sm sm:text-base font-medium;
   }
 
   .button-secondary {
-    @apply px-4 py-2 sm:px-6 sm:py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm sm:text-base font-medium;
+    @apply px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm sm:text-base font-medium;
   }
 
   .button-icon {
     @apply p-2 hover:bg-gray-100 rounded-lg transition-colors;
   }
 
-  /* Input Fields Responsivos */
+  /* Input Fields Responsivos - Ajustados */
   .input-field {
-    @apply w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-200 text-sm sm:text-base;
+    @apply w-full px-3 py-2 sm:px-4 sm:py-2 lg:py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-200 text-sm sm:text-base;
   }
 
-  /* Grid Responsivo */
+  /* Grid Responsivo - Ajustado */
   .grid-responsive {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6;
   }
 
-  /* Navegação */
+  /* Navegação Responsiva */
   .nav-link {
-    @apply text-gray-600 hover:text-primary transition-colors duration-200 text-sm sm:text-base;
+    @apply text-gray-600 hover:text-primary transition-colors duration-200 text-sm sm:text-base py-2 px-3 sm:px-4;
   }
 
-  /* Sidebar Responsivo */
+  /* Sidebar Link Responsivo */
   .sidebar-link {
-    @apply flex items-center gap-3 px-3 py-2 sm:px-4 sm:py-3 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-lg mx-2 text-sm sm:text-base;
+    @apply flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-200 rounded-lg mx-2 text-sm sm:text-base;
   }
 
   .sidebar-link-active {
@@ -218,13 +218,13 @@
     @apply bg-info/20 text-info;
   }
 
-  /* Stat Cards */
+  /* Stat Cards - Ajustados */
   .stat-card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 hover:shadow-md transition-shadow;
+    @apply bg-white rounded-lg shadow-sm border border-gray-100 p-3 sm:p-4 lg:p-6 hover:shadow-md transition-shadow;
   }
 
   .stat-value {
-    @apply text-2xl sm:text-3xl font-bold text-gray-900;
+    @apply text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900;
   }
 
   .stat-label {
@@ -258,17 +258,60 @@
     @apply w-6 h-6 sm:w-8 sm:h-8 sm:border-4 border-primary/30 border-t-primary rounded-full animate-spin;
   }
 
-  /* Spacing Utilities */
+  /* Espaçamento Responsivo - Ajustado */
   .spacing-responsive {
-    @apply p-4 sm:p-6 lg:p-8;
+    @apply p-3 sm:p-4 lg:p-6 xl:p-8;
   }
 
   .spacing-x-responsive {
-    @apply px-4 sm:px-6 lg:px-8;
+    @apply px-3 sm:px-4 lg:px-6 xl:px-8;
   }
 
   .spacing-y-responsive {
-    @apply py-4 sm:py-6 lg:py-8;
+    @apply py-3 sm:py-4 lg:py-6 xl:py-8;
+  }
+
+  /* Margens Responsivas */
+  .margin-responsive {
+    @apply m-3 sm:m-4 lg:m-6 xl:m-8;
+  }
+
+  .margin-x-responsive {
+    @apply mx-3 sm:mx-4 lg:mx-6 xl:mx-8;
+  }
+
+  .margin-y-responsive {
+    @apply my-3 sm:my-4 lg:my-6 xl:my-8;
+  }
+
+  /* Gap Responsivo */
+  .gap-responsive {
+    @apply gap-2 sm:gap-3 lg:gap-4 xl:gap-6;
+  }
+
+  /* Largura Máxima Responsiva */
+  .max-w-responsive {
+    @apply max-w-full sm:max-w-xl lg:max-w-3xl xl:max-w-5xl;
+  }
+
+  /* Altura Responsiva */
+  .h-responsive {
+    @apply h-8 sm:h-10 lg:h-12;
+  }
+
+  /* Largura Responsiva */
+  .w-responsive {
+    @apply w-8 sm:w-10 lg:w-12;
+  }
+
+  /* Fonte Responsiva */
+  .text-responsive {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+
+  /* Borda Arredondada Responsiva */
+  .rounded-responsive {
+    @apply rounded-lg sm:rounded-xl lg:rounded-2xl;
   }
 
   /* Hide on Mobile */
