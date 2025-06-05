@@ -354,7 +354,7 @@ const StandardHeader = ({
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 shadow-sm backdrop-blur-sm relative z-[50]">
+    <header className="bg-white border-b border-slate-200">
       <div className="flex items-center justify-between h-16 px-6">
         {/* Left Section - Title and Breadcrumb */}
         <div className="flex-1">
@@ -599,7 +599,7 @@ const StandardHeader = ({
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-semibold text-slate-800">{user.name}</p>
                   <p className="text-xs text-slate-600">
-                  {getRoleLabel(user?.role) && ROLE_LABELS[user.role as UserRole]}
+                    {user?.role && ROLE_LABELS[user.role as keyof typeof ROLE_LABELS]}
                   </p>
                 </div>
                 <svg 
@@ -619,7 +619,7 @@ const StandardHeader = ({
                     <p className="text-sm font-semibold text-slate-800">{user.name}</p>
                     <p className="text-sm text-slate-600">{user.email}</p>
                     <span className="inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                      {getRoleLabel(user?.role) && ROLE_LABELS[user.role as UserRole]}
+                      {user?.role && ROLE_LABELS[user.role as keyof typeof ROLE_LABELS]}
                     </span>
                   </div>
                   
