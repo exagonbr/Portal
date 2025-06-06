@@ -2,18 +2,17 @@
 
 import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { Book } from '@/constants/mockData';
+import { Book } from '../../../constants/mockData';
 import { Annotation, Highlight, Bookmark } from './types';
 
 // Importação dinâmica do ModernKoodoViewer (mais recente)
-const ModernKoodoViewer = dynamic(() => import('./ModernKoodoViewer'), {
+const UnifiedBookViewer = dynamic(() => import('./UnifiedBookViewer'), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-screen bg-gray-900">
       <div className="text-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-white text-lg">Carregando visualizador moderno...</p>
-        <p className="text-gray-400 text-sm mt-2">Baseado no KoodoReader 2.0.0</p>
+        <p className="text-white text-lg">Carregando visualizador ...</p>
       </div>
     </div>
   ),
@@ -110,14 +109,11 @@ const BookViewer: React.FC<BookViewerProps> = ({
       </div>
     }>
       {useModernViewer ? (
-        <ModernKoodoViewer
-          {...commonProps}
+        <UnifiedBookViewer
+          bookUrl={book.filePath || ''}
+          bookType={book.format === 'pdf' ? 'pdf' : 'epub'}
+          bookTitle={book.title}
           onClose={onBack}
-          config={modernConfig}
-          onAIInteraction={(type, data) => {
-            console.log('🤖 Interação com IA:', type, data);
-            // Aqui você pode implementar a lógica para lidar com interações de IA
-          }}
         />
       ) : (
         <KoodoViewer

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { UserEssentials, Permission } from '@/types/auth';
 import * as authService from '@/services/auth';
 import { getDashboardPath } from '@/utils/roleRedirect';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 interface AuthContextType {
   user: UserEssentials | null;
@@ -113,6 +114,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       setLoading(true);
+      
+      // Limpar todos os dados antes do logout
+      await clearAllDataForUnauthorized();
+      
       await authService.logout();
       setUser(null);
       setError(null);
@@ -120,6 +125,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       console.error('Erro no logout:', err);
       setError(err.message || 'Erro ao fazer logout');
+      
+      // Mesmo com erro, tentar limpar dados e redirecionar
+      try {
+        await clearAllDataForUnauthorized();
+      } catch (clearError) {
+        console.error('Erro ao limpar dados durante logout:', clearError);
+      }
+      
+      setUser(null);
+      router.push('/login');
     } finally {
       setLoading(false);
     }
@@ -177,7 +192,17 @@ export function useRequireAuth(redirectTo = '/login') {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(redirectTo);
+      // Se redirecionando para login, limpar dados primeiro
+      if (redirectTo.includes('/login')) {
+        clearAllDataForUnauthorized().then(() => {
+          router.push(redirectTo + '?error=unauthorized');
+        }).catch((error) => {
+          console.error('❌ Erro durante limpeza de dados:', error);
+          router.push(redirectTo + '?error=unauthorized');
+        });
+      } else {
+        router.push(redirectTo);
+      }
     }
   }, [user, loading, router, redirectTo]);
 

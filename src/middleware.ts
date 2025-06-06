@@ -77,6 +77,12 @@ class MiddlewareUtils {
   static createRedirectWithClearCookies(url: string, request: NextRequest): NextResponse {
     const response = this.createRedirectResponse(url, request);
     this.clearAuthCookies(response);
+    
+    // Adicionar header especial para indicar que deve limpar todos os dados no cliente
+    if (url.includes('error=unauthorized')) {
+      response.headers.set('X-Clear-All-Data', 'true');
+    }
+    
     return response;
   }
 

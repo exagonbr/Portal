@@ -10,6 +10,7 @@ import { ThemeSelectorCompact } from '@/components/ui/ThemeSelector';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 export function LoginPage() {
   const router = useRouter();
@@ -23,6 +24,14 @@ export function LoginPage() {
     const error = searchParams?.get('error');
     if (error === 'unauthorized') {
       setShowUnauthorizedMessage(true);
+      
+      // Limpar todos os dados quando redirecionar para login com erro unauthorized
+      clearAllDataForUnauthorized().then(() => {
+        console.log('✅ Limpeza completa de dados concluída para erro unauthorized');
+      }).catch((error) => {
+        console.error('❌ Erro durante limpeza de dados:', error);
+      });
+      
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
       window.history.replaceState({}, '', url.toString());

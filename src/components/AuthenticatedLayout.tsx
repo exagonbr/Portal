@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../contexts/AuthContext'
 import { Header } from './Header'
+import { clearAllDataForUnauthorized } from '../utils/clearAllData'
 
 export default function AuthenticatedLayout({
   children,
@@ -18,7 +19,14 @@ export default function AuthenticatedLayout({
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/login?error=unauthorized')
+        // Limpar todos os dados antes de redirecionar para login
+        clearAllDataForUnauthorized().then(() => {
+          router.push('/login?error=unauthorized')
+        }).catch((error) => {
+          console.error('❌ Erro durante limpeza de dados:', error);
+          // Redirecionar mesmo com erro na limpeza
+          router.push('/login?error=unauthorized')
+        });
       } else if (requiredRole && user.role !== requiredRole) {
         router.push(user.role === 'student' ? '/dashboard/student' : '/dashboard/teacher')
       }

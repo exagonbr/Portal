@@ -13,9 +13,9 @@ export default function PortalLayout({ children }: PortalLayoutProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-background-secondary">
+        <div className="min-h-screen">
             {/* Conteúdo Principal */}
-            <main className="container mx-auto px-0 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+            <main className="min-h-screen w-full">
                 {children}
             </main>
         </div>

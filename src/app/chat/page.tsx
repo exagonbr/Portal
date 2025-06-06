@@ -281,11 +281,11 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="flex h-full bg-gray-50 full-screen-content">
+    <div className="flex h-screen w-screen bg-gray-50">
       {/* Lista de Conversas */}
-      <div className="w-64 lg:w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-64 lg:w-80 bg-white flex flex-col">
         {/* Cabeçalho */}
-        <div className="p-3 lg:p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="p-3 lg:p-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
             <h2 className="text-lg lg:text-xl font-bold text-gray-700 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
@@ -377,7 +377,7 @@ export default function ChatPage() {
       {selectedConversation ? (
         <div className="flex-1 flex flex-col min-w-0">
           {/* Cabeçalho do Chat */}
-          <div className="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+          <div className="bg-white p-4 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative flex-shrink-0">
@@ -480,7 +480,7 @@ export default function ChatPage() {
           </div>
 
           {/* Input de Mensagem */}
-          <form onSubmit={handleSendMessage} className="bg-white border-t border-gray-200 p-4 flex-shrink-0">
+          <form onSubmit={handleSendMessage} className="bg-white p-4 flex-shrink-0">
             <div className="flex items-end gap-2">
               <button
                 type="button"
@@ -528,7 +528,7 @@ export default function ChatPage() {
 
       {/* Painel de Informações */}
       {showUserInfo && selectedConversation && (
-        <div className="w-64 lg:w-80 bg-white border-l border-gray-200 flex flex-col overflow-y-auto">
+        <div className="w-64 lg:w-80 bg-white flex flex-col overflow-y-auto">
           <div className="p-3 lg:p-4">
             <div className="text-center mb-4 lg:mb-6">
               <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full mx-auto mb-2 lg:mb-3 flex items-center justify-center font-semibold text-white ${

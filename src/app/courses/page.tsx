@@ -20,8 +20,10 @@ export default function Courses() {
   })
 
   return (
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
+    <div className="container mx-auto px-4 py-8">
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex justify-between items-start mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
             {user.role === 'teacher' ? 'Meus Cursos' : 'Cursos Disponíveis'}
           </h1>
@@ -59,6 +61,7 @@ export default function Courses() {
               ))
           )}
         </div>
+      </div>
       </div>
   )
 }

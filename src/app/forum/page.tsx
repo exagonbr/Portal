@@ -359,8 +359,6 @@ export default function ForumPage() {
   }
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.TEACHER]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Fórum de Discussões"
           subtitle="Participe das discussões acadêmicas e tire suas dúvidas"
@@ -562,7 +560,5 @@ export default function ForumPage() {
             </div>
           </div>
         </DashboardPageLayout>
-      </DashboardLayout>
-    </ProtectedRoute>
   );
 }

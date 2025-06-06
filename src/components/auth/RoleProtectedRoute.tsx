@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { isValidRole, getDashboardPath } from '../../utils/roleRedirect';
+import { clearAllDataForUnauthorized } from '../../utils/clearAllData';
 
 interface RoleProtectedRouteProps {
   children: ReactNode;
@@ -40,7 +41,19 @@ export function RoleProtectedRoute({
       // Se não há usuário, redireciona para login
       if (!user) {
         console.log('Usuário não autenticado, redirecionando para login');
-        router.push(fallbackPath);
+        
+        // Se redirecionando para login, limpar dados primeiro
+        if (fallbackPath.includes('/login')) {
+          clearAllDataForUnauthorized().then(() => {
+            router.push(fallbackPath + '?error=unauthorized');
+          }).catch((error) => {
+            console.error('❌ Erro durante limpeza de dados:', error);
+            router.push(fallbackPath + '?error=unauthorized');
+          });
+        } else {
+          router.push(fallbackPath);
+        }
+        
         setIsAuthorized(false);
         return;
       }
@@ -49,7 +62,19 @@ export function RoleProtectedRoute({
       if (!isValidRole(user.role)) {
         console.error(`Role inválida detectada: ${user.role}`);
         await logout();
-        router.push(fallbackPath);
+        
+        // Se redirecionando para login, limpar dados primeiro
+        if (fallbackPath.includes('/login')) {
+          clearAllDataForUnauthorized().then(() => {
+            router.push(fallbackPath + '?error=unauthorized');
+          }).catch((error) => {
+            console.error('❌ Erro durante limpeza de dados:', error);
+            router.push(fallbackPath + '?error=unauthorized');
+          });
+        } else {
+          router.push(fallbackPath);
+        }
+        
         setIsAuthorized(false);
         return;
       }

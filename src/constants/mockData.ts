@@ -978,7 +978,7 @@ export const studentMockData: StudentMockData = {
 
 // Annotations Mock Data
 export const mockAnnotations: AnnotationsMap = {
-  'test-book-1': [
+  'local-epub-1': [
     {
       id: 'ann-1',
       pageNumber: 15,
@@ -994,7 +994,7 @@ export const mockAnnotations: AnnotationsMap = {
       createdAt: '2024-01-16T14:20:00Z'
     }
   ],
-  'test-book-2': [
+  'local-epub-2': [
     {
       id: 'ann-3',
       pageNumber: 42,
@@ -1003,7 +1003,7 @@ export const mockAnnotations: AnnotationsMap = {
       createdAt: '2024-01-14T09:15:00Z'
     }
   ],
-  'test-book-3': [
+  'external-pdf-1': [
     {
       id: 'ann-4',
       pageNumber: 67,
@@ -1023,7 +1023,7 @@ export const mockAnnotations: AnnotationsMap = {
 
 // Highlights Mock Data
 export const mockHighlights: HighlightsMap = {
-  'test-book-1': [
+  'local-epub-1': [
     {
       id: 'hl-1',
       pageNumber: 15,
@@ -1041,7 +1041,7 @@ export const mockHighlights: HighlightsMap = {
       createdAt: '2024-01-16T14:20:00Z'
     }
   ],
-  'test-book-2': [
+  'local-epub-2': [
     {
       id: 'hl-3',
       pageNumber: 42,
@@ -1051,7 +1051,7 @@ export const mockHighlights: HighlightsMap = {
       createdAt: '2024-01-14T09:15:00Z'
     }
   ],
-  'test-book-3': [
+  'external-pdf-1': [
     {
       id: 'hl-4',
       pageNumber: 67,

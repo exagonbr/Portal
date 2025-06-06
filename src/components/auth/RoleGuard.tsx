@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_BASED_ROUTES } from '@/types/roles';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -22,8 +23,14 @@ export default function RoleGuard({
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        // Se não há usuário, redireciona para login
-        router.push('/login?error=unauthorized');
+        // Se não há usuário, limpar dados e redirecionar para login
+        clearAllDataForUnauthorized().then(() => {
+          router.push('/login?error=unauthorized');
+        }).catch((error) => {
+          console.error('❌ Erro durante limpeza de dados:', error);
+          // Redirecionar mesmo com erro na limpeza
+          router.push('/login?error=unauthorized');
+        });
       } else if (!allowedRoles.includes(user.role as UserRole)) {
         // Se o usuário não tem o papel permitido, redireciona para seu dashboard específico
         const roleRoute = ROLE_BASED_ROUTES.find(route =>

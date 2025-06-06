@@ -646,8 +646,8 @@ export default function DashboardLayout({
         </header>
 
         {/* Page Content - Ajustado para mobile */}
-        <main className="flex-1 overflow-y-auto min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6" style={{ backgroundColor: theme.colors.background.tertiary }}>
-          <div className="h-full max-w-7xl mx-auto">
+        <main className="flex overflow-y-auto w-full h-full" style={{ backgroundColor: theme.colors.background.tertiary }}>
+          <div className="h-full max-w-max mx-auto">
             {children}
           </div>
         </main>

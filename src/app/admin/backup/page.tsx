@@ -6,10 +6,6 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { UserRole } from '@/types/roles'
-import DashboardLayout from '@/components/dashboard/DashboardLayout'
-import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
-import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import { UserRole } from '@/types/roles'
 
 const MOCK_BACKUPS = [
   {

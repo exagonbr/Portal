@@ -102,7 +102,7 @@ const ModernVideoCard = ({ video, viewMode }: { video: typeof mockVideos[0], vie
                   className="h-full transition-all duration-300"
                   style={{ 
                     width: `${video.progress}%`,
-                    backgroundColor: theme.colors.primary
+                    backgroundColor: theme.colors.primary.DEFAULT
                   }}
                 />
               </div>
@@ -119,8 +119,8 @@ const ModernVideoCard = ({ video, viewMode }: { video: typeof mockVideos[0], vie
                 <span className="flex items-center gap-1">
                   {video.progress === 100 ? (
                     <>
-                      <CheckCircleIcon className="w-4 h-4" style={{ color: theme.colors.success }} />
-                      <span style={{ color: theme.colors.success }}>Concluído</span>
+                      <CheckCircleIcon className="w-4 h-4" style={{ color: theme.colors.status.success }} />
+                      <span style={{ color: theme.colors.status.success }}>Concluído</span>
                     </>
                   ) : (
                     <>
@@ -147,7 +147,7 @@ const ModernVideoCard = ({ video, viewMode }: { video: typeof mockVideos[0], vie
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               {isLiked ? (
-                <HeartSolidIcon className="w-5 h-5" style={{ color: theme.colors.accent }} />
+                <HeartSolidIcon className="w-5 h-5" style={{ color: theme.colors.accent.DEFAULT }} />
               ) : (
                 <HeartIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               )}
@@ -200,7 +200,7 @@ const ModernVideoCard = ({ video, viewMode }: { video: typeof mockVideos[0], vie
               className="h-full transition-all duration-300"
               style={{ 
                 width: `${video.progress}%`,
-                backgroundColor: theme.colors.primary
+                backgroundColor: theme.colors.primary.DEFAULT
               }}
             />
           </div>
@@ -216,7 +216,7 @@ const ModernVideoCard = ({ video, viewMode }: { video: typeof mockVideos[0], vie
             className="p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
           >
             {isLiked ? (
-              <HeartSolidIcon className="w-4 h-4" style={{ color: theme.colors.accent }} />
+              <HeartSolidIcon className="w-4 h-4" style={{ color: theme.colors.accent.DEFAULT }} />
             ) : (
               <HeartIcon className="w-4 h-4 text-gray-700" />
             )}
@@ -237,7 +237,7 @@ const ModernVideoCard = ({ video, viewMode }: { video: typeof mockVideos[0], vie
           {video.progress !== undefined && video.progress > 0 && (
             <span className="flex items-center gap-1">
               {video.progress === 100 ? (
-                <CheckCircleIcon className="w-4 h-4" style={{ color: theme.colors.success }} />
+                <CheckCircleIcon className="w-4 h-4" style={{ color: theme.colors.status.success }} />
               ) : (
                 <>
                   <ClockIcon className="w-4 h-4" />
@@ -275,7 +275,7 @@ const HeroSection = () => {
           }`}
         >
           <img
-            src={image}
+            src={typeof image === 'string' ? image : image.src}
             alt={`Slide ${index + 1}`}
             className="w-full h-full object-cover"
           />
@@ -297,7 +297,7 @@ const HeroSection = () => {
           <button
             className="px-8 py-4 text-lg font-semibold rounded-full transition-all duration-300 transform hover:scale-105"
             style={{
-              backgroundColor: theme.colors.primary,
+              backgroundColor: theme.colors.primary.DEFAULT,
               color: 'white'
             }}
           >
@@ -479,9 +479,9 @@ export default function VideosPage() {
       <HeroSection />
 
       {/* Main Content */}
-      <div className="max-w-[1920px] mx-auto px-6 lg:px-8 py-8">
+      <div className="w-full">
         {/* Search and Filter Bar */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 p-4">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-grow">
@@ -491,7 +491,7 @@ export default function VideosPage() {
                   type="text"
                   placeholder="Buscar vídeos..."
                   className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all"
-                  style={{ focusRingColor: theme.colors.primary }}
+                  style={{ '--tw-ring-color': theme.colors.primary.DEFAULT } as React.CSSProperties}
                   value={filters.searchQuery}
                   onChange={handleSearchChange}
                 />
@@ -518,7 +518,7 @@ export default function VideosPage() {
                   }`}
                   style={{
                     backgroundColor: isFilterOpen || filters.category !== 'all' || filters.subjects.length > 0
-                      ? theme.colors.primary
+                      ? theme.colors.primary.DEFAULT
                       : undefined
                   }}
                   onClick={(e) => {
@@ -547,7 +547,7 @@ export default function VideosPage() {
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filtros</h3>
                         <button
                           className="text-sm font-medium transition-colors"
-                          style={{ color: theme.colors.primary }}
+                          style={{ color: theme.colors.primary.DEFAULT }}
                           onClick={resetFilters}
                         >
                           Limpar tudo
@@ -573,7 +573,7 @@ export default function VideosPage() {
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
                             }`}
                             style={{
-                              backgroundColor: filters.category === option.value ? theme.colors.primary : undefined
+                              backgroundColor: filters.category === option.value ? theme.colors.primary.DEFAULT : undefined
                             }}
                             onClick={() => handleCategoryChange(option.value as FilterCategory)}
                           >
@@ -595,7 +595,7 @@ export default function VideosPage() {
                               checked={filters.subjects.includes(subject)}
                               onChange={() => handleSubjectToggle(subject)}
                               className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 focus:ring-2"
-                              style={{ accentColor: theme.colors.primary }}
+                              style={{ accentColor: theme.colors.primary.DEFAULT }}
                             />
                             <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{subject}</span>
                           </label>
@@ -638,7 +638,7 @@ export default function VideosPage() {
                           sortOption === option.value ? 'text-white' : 'text-gray-700 dark:text-gray-300'
                         }`}
                         style={{
-                          backgroundColor: sortOption === option.value ? theme.colors.primary : undefined
+                          backgroundColor: sortOption === option.value ? theme.colors.primary.DEFAULT : undefined
                         }}
                         onClick={() => {
                           setSortOption(option.value as SortOption);
@@ -662,7 +662,7 @@ export default function VideosPage() {
                     viewMode === 'grid' ? 'text-white' : 'text-gray-600 dark:text-gray-400'
                   }`}
                   style={{
-                    backgroundColor: viewMode === 'grid' ? theme.colors.primary : 'transparent'
+                    backgroundColor: viewMode === 'grid' ? theme.colors.primary.DEFAULT : 'transparent'
                   }}
                   onClick={() => setViewMode('grid')}
                   aria-label="Grid view"
@@ -674,7 +674,7 @@ export default function VideosPage() {
                     viewMode === 'list' ? 'text-white' : 'text-gray-600 dark:text-gray-400'
                   }`}
                   style={{
-                    backgroundColor: viewMode === 'list' ? theme.colors.primary : 'transparent'
+                    backgroundColor: viewMode === 'list' ? theme.colors.primary.DEFAULT : 'transparent'
                   }}
                   onClick={() => setViewMode('list')}
                   aria-label="List view"
@@ -687,7 +687,7 @@ export default function VideosPage() {
         </div>
 
         {/* Tabs */}
-        <div className="mb-8">
+        <div className="px-4 py-4">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -701,7 +701,7 @@ export default function VideosPage() {
                       : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                   style={{
-                    backgroundColor: activeTab === tab.id ? theme.colors.primary : undefined
+                    backgroundColor: activeTab === tab.id ? theme.colors.primary.DEFAULT : undefined
                   }}
                 >
                   <Icon className="w-5 h-5" />
@@ -722,7 +722,7 @@ export default function VideosPage() {
         </div>
 
         {/* Videos Grid/List */}
-        <div className="mb-12">
+        <div className="px-4 pb-4">
           {getVideosByTab().length > 0 ? (
             <div className={
               viewMode === 'grid'
@@ -735,8 +735,8 @@ export default function VideosPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: theme.colors.primary + '20' }}>
-                <PlayCircleIcon className="w-10 h-10" style={{ color: theme.colors.primary }} />
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: theme.colors.primary.DEFAULT + '20' }}>
+                <PlayCircleIcon className="w-10 h-10" style={{ color: theme.colors.primary.DEFAULT }} />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Nenhum vídeo encontrado
@@ -747,7 +747,7 @@ export default function VideosPage() {
               {(filters.searchQuery || filters.category !== 'all' || filters.subjects.length > 0) && (
                 <button
                   className="mt-6 px-6 py-3 text-white font-medium rounded-xl transition-all hover:shadow-lg"
-                  style={{ backgroundColor: theme.colors.primary }}
+                  style={{ backgroundColor: theme.colors.primary.DEFAULT }}
                   onClick={resetFilters}
                 >
                   Limpar filtros

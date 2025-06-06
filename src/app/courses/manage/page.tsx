@@ -6,8 +6,10 @@ export default function ManageCoursesPage() {
   const { user } = useAuth()
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto px-4 py-8">
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-600">Gerenciar Cursos</h1>
           <p className="text-gray-600">Gerencie os cursos e seu conteúdo</p>
@@ -108,6 +110,7 @@ export default function ManageCoursesPage() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   )
 }

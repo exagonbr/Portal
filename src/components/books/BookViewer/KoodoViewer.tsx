@@ -10,6 +10,42 @@ import screenfull from 'screenfull';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
+// Ícones do Koodo Reader
+import {
+  BookOpenIcon,
+  HeartIcon,
+  StarIcon,
+  PencilSquareIcon,
+  BookmarkIcon,
+  Cog6ToothIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+  SunIcon,
+  MoonIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
+  HomeIcon,
+  ListBulletIcon,
+  DocumentTextIcon,
+  AdjustmentsHorizontalIcon,
+  XMarkIcon,
+  PlusIcon,
+  MinusIcon,
+  Bars3Icon,
+  Square2StackIcon,
+  DocumentIcon,
+  ClockIcon,
+  LanguageIcon,
+  PaintBrushIcon,
+  SpeakerWaveIcon,
+  ArrowDownTrayIcon,
+  ShareIcon,
+  TrashIcon,
+  InformationCircleIcon
+} from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolidIcon, StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
+
 // Configuração do PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
@@ -81,8 +117,9 @@ class KoodoUtils {
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: #f5f5f5;
+        background: #f9f9fa;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        position: relative;
       }
       
       .koodo-content {
@@ -92,16 +129,29 @@ class KoodoUtils {
         justify-content: center;
         align-items: center;
         overflow: auto;
+        transition: all 0.3s ease;
+        background: #f9f9fa;
+      }
+      
+      .koodo-content.nav-locked {
+        margin-left: 280px;
+      }
+      
+      .koodo-content.setting-locked {
+        margin-right: 280px;
       }
       
       .koodo-page-container {
         max-width: 100%;
         max-height: 100%;
-        margin: 20px;
+        margin: 0 auto;
         background: white;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        border: 1px solid #e8e8e8;
         overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
       
       #page-area {
@@ -110,16 +160,261 @@ class KoodoUtils {
         min-height: 500px;
         min-width: 300px;
         background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border-radius: 0;
+        box-shadow: none;
         box-sizing: border-box;
         position: relative;
         overflow: hidden;
         margin: 0 auto;
-        /* Proteções específicas para EPUB.js */
         contain: layout style;
         will-change: auto;
         transform: translateZ(0);
+      }
+      
+      /* Menu lateral esquerdo - Navegação */
+      .koodo-nav-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        background: #fff;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1001;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      
+      .koodo-nav-panel.active {
+        transform: translateX(0);
+      }
+      
+      /* Menu lateral direito - Configurações */
+      .koodo-setting-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 280px;
+        background: #fff;
+        box-shadow: -2px 0 8px rgba(0,0,0,0.08);
+        transform: translateX(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1001;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      
+      .koodo-setting-panel.active {
+        transform: translateX(0);
+      }
+      
+      /* Estilos dos painéis */
+      .koodo-panel-header {
+        height: 60px;
+        padding: 0 24px;
+        border-bottom: 1px solid #e8e8e8;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fafafa;
+      }
+      
+      .koodo-panel-header span {
+        font-size: 18px;
+        font-weight: 500;
+        color: #333;
+      }
+      
+      .koodo-panel-section {
+        padding: 20px 24px;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      
+      .koodo-panel-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #999;
+        margin-bottom: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+      
+      .koodo-panel-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-radius: 8px;
+        margin: 4px -16px;
+        position: relative;
+      }
+      
+      .koodo-panel-item:hover {
+        background: #f5f5f5;
+      }
+      
+      .koodo-panel-item.active {
+        background: #e8f4fd;
+        color: #1890ff;
+      }
+      
+      .koodo-panel-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 20px;
+        background: #1890ff;
+        border-radius: 0 2px 2px 0;
+      }
+      
+      .koodo-panel-item-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 16px;
+        opacity: 0.6;
+      }
+      
+      .koodo-panel-item.active .koodo-panel-item-icon {
+        opacity: 1;
+        color: #1890ff;
+      }
+      
+      .koodo-panel-item-text {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 400;
+      }
+      
+      .koodo-panel-item-badge {
+        background: #f0f0f0;
+        color: #666;
+        font-size: 12px;
+        padding: 2px 10px;
+        border-radius: 10px;
+        margin-left: 8px;
+        font-weight: 500;
+      }
+      
+      /* Controles de configuração */
+      .koodo-setting-control {
+        margin: 12px 0;
+      }
+      
+      .koodo-setting-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+      
+      .koodo-slider {
+        width: 100%;
+        height: 4px;
+        background: #e0e0e0;
+        border-radius: 2px;
+        outline: none;
+        -webkit-appearance: none;
+      }
+      
+      .koodo-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #4285f4;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      
+      .koodo-select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+      }
+      
+      .koodo-color-picker {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      
+      .koodo-color-option {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+      }
+      
+      .koodo-color-option:hover {
+        transform: scale(1.1);
+      }
+      
+      .koodo-color-option.selected {
+        border-color: #4285f4;
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+      }
+      
+      /* Overlay */
+      .koodo-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      
+      .koodo-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      
+      /* Tema escuro */
+      .dark .koodo-nav-panel,
+      .dark .koodo-setting-panel {
+        background: #1a1a1a;
+        border-color: #333;
+      }
+      
+      .dark .koodo-panel-header,
+      .dark .koodo-panel-section {
+        border-color: #333;
+      }
+      
+      .dark .koodo-panel-item:hover {
+        background: #2a2a2a;
+      }
+      
+      .dark .koodo-panel-item.active {
+        background: #1e3a5f;
+        color: #64b5f6;
+      }
+      
+      .dark .koodo-select {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+      }
+      
+      .dark .koodo-slider {
+        background: #444;
       }
       
       .koodo-controls {
@@ -128,14 +423,14 @@ class KoodoUtils {
         left: 0;
         right: 0;
         height: 60px;
-        background: rgba(255,255,255,0.95);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid #e0e0e0;
+        background: #fff;
+        border-bottom: 1px solid #e8e8e8;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 20px;
+        padding: 0 24px;
         z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
       }
       
       .koodo-progress {
@@ -143,43 +438,59 @@ class KoodoUtils {
         bottom: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: #e0e0e0;
-        z-index: 1000;
+        height: 3px;
+        background: #f0f0f0;
+        z-index: 999;
       }
       
       .koodo-progress-bar {
         height: 100%;
-        background: linear-gradient(90deg, #4285f4, #7b68ee);
+        background: #1890ff;
         transition: width 0.3s ease;
+        box-shadow: 0 0 4px rgba(24, 144, 255, 0.4);
       }
       
       .koodo-btn {
         padding: 8px 16px;
-        border: none;
+        border: 1px solid #e0e0e0;
         border-radius: 6px;
-        background: #f0f0f0;
+        background: #fff;
         cursor: pointer;
         font-size: 14px;
         transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-weight: 400;
+        color: #333;
       }
       
       .koodo-btn:hover {
-        background: #e0e0e0;
+        background: #f5f5f5;
+        border-color: #d0d0d0;
       }
       
       .koodo-btn.primary {
-        background: #4285f4;
+        background: #1890ff;
         color: white;
+        border-color: #1890ff;
       }
       
       .koodo-btn.primary:hover {
-        background: #3367d6;
+        background: #40a9ff;
+        border-color: #40a9ff;
       }
       
       .koodo-btn:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
+      }
+      
+      .koodo-btn.icon-only {
+        padding: 8px;
+        width: 36px;
+        height: 36px;
       }
       
       .koodo-input {
@@ -319,6 +630,20 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
 
   // Cache inteligente para evitar recarregamentos
   const fileCacheRef = useRef<Map<string, ArrayBuffer>>(new Map());
+
+  // Estados para os menus laterais
+  const [isNavPanelOpen, setIsNavPanelOpen] = useState(false);
+  const [isSettingPanelOpen, setIsSettingPanelOpen] = useState(false);
+  const [activeNavItem, setActiveNavItem] = useState('contents');
+  const [activeSettingTab, setActiveSettingTab] = useState('reading');
+  
+  // Estados de configuração adicionais
+  const [fontSize, setFontSize] = useState(100);
+  const [lineHeight, setLineHeight] = useState(1.5);
+  const [fontFamily, setFontFamily] = useState('default');
+  const [textAlign, setTextAlign] = useState('left');
+  const [margin, setMargin] = useState(20);
+  const [highlightColor, setHighlightColor] = useState('#ffeb3b');
 
   // Aplicar CSS padrão (copiado do koodo-reader)
   useEffect(() => {
@@ -1354,98 +1679,168 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       {/* Controles superiores (copiado do koodo-reader) */}
       <div className="koodo-controls">
         {/* Lado esquerdo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Menu de navegação */}
+          <button
+            onClick={() => setIsNavPanelOpen(!isNavPanelOpen)}
+            className="koodo-btn icon-only"
+            title="Menu de navegação"
+          >
+            <Bars3Icon className="w-5 h-5" />
+          </button>
+          
+          {/* Voltar */}
           {onBack && (
-            <button onClick={onBack} className="koodo-btn primary">
-              ← Voltar
+            <button onClick={onBack} className="koodo-btn" title="Voltar para biblioteca">
+              <HomeIcon className="w-4 h-4" />
+              <span>Biblioteca</span>
             </button>
           )}
           
-          {/* Navegação */}
+          <div style={{ width: '1px', height: '24px', background: '#e0e0e0', margin: '0 8px' }} />
+          
+          {/* Navegação de páginas */}
           <button
             onClick={() => handlePageChange(state.currentPage - 1)}
             disabled={state.currentPage <= 1}
-            className="koodo-btn"
+            className="koodo-btn icon-only"
+            title="Página anterior"
           >
-            ←
+            <ChevronLeftIcon className="w-5 h-5" />
           </button>
           
-          <input
-            type="number"
-            value={state.currentPage}
-            onChange={(e) => handlePageChange(parseInt(e.target.value) || 1)}
-            className="koodo-input"
-            min={1}
-            max={state.totalPages}
-          />
-          
-          <span>/ {state.totalPages}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <input
+              type="number"
+              value={state.currentPage}
+              onChange={(e) => handlePageChange(parseInt(e.target.value) || 1)}
+              className="koodo-input"
+              min={1}
+              max={state.totalPages}
+              style={{ width: '60px' }}
+            />
+            <span style={{ color: '#666', fontSize: '14px' }}>/ {state.totalPages}</span>
+          </div>
           
           <button
             onClick={() => handlePageChange(state.currentPage + 1)}
             disabled={state.currentPage >= state.totalPages}
-            className="koodo-btn"
+            className="koodo-btn icon-only"
+            title="Próxima página"
           >
-            →
+            <ChevronRightIcon className="w-5 h-5" />
           </button>
         </div>
 
         {/* Centro - Informações do livro */}
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{book.title}</div>
-          <div style={{ fontSize: '12px', opacity: 0.7 }}>
-            {book.author} • {formatReadingTime} lendo
+        <div style={{ 
+          textAlign: 'center', 
+          flex: 1,
+          overflow: 'hidden',
+          padding: '0 20px'
+        }}>
+          <div style={{ 
+            fontSize: '16px', 
+            fontWeight: '500',
+            color: '#333',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            {book.title}
+          </div>
+          <div style={{ 
+            fontSize: '13px', 
+            color: '#666',
+            marginTop: '2px'
+          }}>
+            {book.author} • {formatReadingTime} de leitura
           </div>
         </div>
 
         {/* Lado direito - Controles */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Zoom */}
-          <button
-            onClick={() => handleScaleChange(state.scale - 0.1)}
-            className="koodo-btn"
-          >
-            -
-          </button>
-          <span style={{ minWidth: '50px', textAlign: 'center' }}>
-            {Math.round(state.scale * 100)}%
-          </span>
-          <button
-            onClick={() => handleScaleChange(state.scale + 0.1)}
-            className="koodo-btn"
-          >
-            +
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginRight: '8px' }}>
+            <button
+              onClick={() => handleScaleChange(state.scale - 0.1)}
+              className="koodo-btn icon-only"
+              title="Diminuir zoom"
+            >
+              <MinusIcon className="w-4 h-4" />
+            </button>
+            <span style={{ 
+              minWidth: '50px', 
+              textAlign: 'center',
+              fontSize: '13px',
+              color: '#666'
+            }}>
+              {Math.round(state.scale * 100)}%
+            </span>
+            <button
+              onClick={() => handleScaleChange(state.scale + 0.1)}
+              className="koodo-btn icon-only"
+              title="Aumentar zoom"
+            >
+              <PlusIcon className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div style={{ width: '1px', height: '24px', background: '#e0e0e0' }} />
 
           {/* Modo de leitura */}
           <button
             onClick={handleReaderModeToggle}
-            className="koodo-btn"
-            title={`Modo: ${state.readerMode}`}
+            className="koodo-btn icon-only"
+            title={`Modo: ${state.readerMode === 'single' ? 'Página única' : state.readerMode === 'double' ? 'Página dupla' : 'Rolagem'}`}
           >
-            {state.readerMode === 'single' ? '📄' : state.readerMode === 'double' ? '📖' : '📜'}
+            {state.readerMode === 'single' ? (
+              <DocumentIcon className="w-5 h-5" />
+            ) : state.readerMode === 'double' ? (
+              <Square2StackIcon className="w-5 h-5" />
+            ) : (
+              <Bars3Icon className="w-5 h-5" />
+            )}
           </button>
 
           {/* Tema */}
           <button
             onClick={handleThemeToggle}
-            className="koodo-btn"
+            className="koodo-btn icon-only"
+            title={state.isDarkMode ? 'Modo claro' : 'Modo escuro'}
           >
-            {state.isDarkMode ? '☀️' : '🌙'}
+            {state.isDarkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
           </button>
 
           {/* Tela cheia */}
           <button
             onClick={handleFullscreenToggle}
-            className="koodo-btn"
+            className="koodo-btn icon-only"
+            title={state.isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
           >
-            {state.isFullscreen ? '📱' : '🖥️'}
+            {state.isFullscreen ? (
+              <ArrowsPointingInIcon className="w-5 h-5" />
+            ) : (
+              <ArrowsPointingOutIcon className="w-5 h-5" />
+            )}
+          </button>
+
+          {/* Configurações */}
+          <button
+            onClick={() => setIsSettingPanelOpen(!isSettingPanelOpen)}
+            className="koodo-btn icon-only"
+            title="Configurações"
+          >
+            <Cog6ToothIcon className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       {/* Área de conteúdo (copiado do koodo-reader) */}
-      <div className="koodo-content" style={{ paddingTop: '60px', paddingBottom: '4px' }}>
+      <div 
+        className={`koodo-content ${isNavPanelOpen ? 'nav-locked' : ''} ${isSettingPanelOpen ? 'setting-locked' : ''}`}
+        style={{ paddingTop: '60px', paddingBottom: '4px' }}
+      >
         {/* Elemento page-area sempre presente para EPUB (mesmo durante loading) */}
         {book.format === 'epub' && (
           <div 
@@ -1582,6 +1977,306 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
           style={{ width: `${readingProgress}%` }}
         />
       </div>
+
+      {/* Overlay */}
+      {(isNavPanelOpen || isSettingPanelOpen) && (
+        <div 
+          className={`koodo-overlay ${isNavPanelOpen || isSettingPanelOpen ? 'active' : ''}`}
+          onClick={() => {
+            setIsNavPanelOpen(false);
+            setIsSettingPanelOpen(false);
+          }}
+        />
+      )}
+
+      {/* Menu lateral esquerdo - Navegação */}
+      <div className={`koodo-nav-panel ${isNavPanelOpen ? 'active' : ''}`}>
+        <div className="koodo-panel-header">
+          <span>Navegação</span>
+          <button 
+            onClick={() => setIsNavPanelOpen(false)} 
+            className="koodo-btn icon-only"
+            style={{ border: 'none', background: 'transparent' }}
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Conteúdo/Capítulos */}
+        <div className="koodo-panel-section">
+          <div className="koodo-panel-section-title">Conteúdo</div>
+          <div
+            className={`koodo-panel-item ${activeNavItem === 'contents' ? 'active' : ''}`}
+            onClick={() => setActiveNavItem('contents')}
+          >
+            <ListBulletIcon className="koodo-panel-item-icon" />
+            <span className="koodo-panel-item-text">Capítulos</span>
+          </div>
+        </div>
+
+        {/* Marcadores */}
+        <div className="koodo-panel-section">
+          <div className="koodo-panel-section-title">Marcadores</div>
+          <div
+            className={`koodo-panel-item ${activeNavItem === 'bookmarks' ? 'active' : ''}`}
+            onClick={() => setActiveNavItem('bookmarks')}
+          >
+            <BookmarkIcon className="koodo-panel-item-icon" />
+            <span className="koodo-panel-item-text">Meus Marcadores</span>
+            <span className="koodo-panel-item-badge">{initialBookmarks.length}</span>
+          </div>
+        </div>
+
+        {/* Destaques */}
+        <div className="koodo-panel-section">
+          <div className="koodo-panel-section-title">Destaques</div>
+          <div
+            className={`koodo-panel-item ${activeNavItem === 'highlights' ? 'active' : ''}`}
+            onClick={() => setActiveNavItem('highlights')}
+          >
+            <StarIcon className="koodo-panel-item-icon" />
+            <span className="koodo-panel-item-text">Meus Destaques</span>
+            <span className="koodo-panel-item-badge">{initialHighlights.length}</span>
+          </div>
+        </div>
+
+        {/* Anotações */}
+        <div className="koodo-panel-section">
+          <div className="koodo-panel-section-title">Anotações</div>
+          <div
+            className={`koodo-panel-item ${activeNavItem === 'annotations' ? 'active' : ''}`}
+            onClick={() => setActiveNavItem('annotations')}
+          >
+            <PencilSquareIcon className="koodo-panel-item-icon" />
+            <span className="koodo-panel-item-text">Minhas Anotações</span>
+            <span className="koodo-panel-item-badge">{initialAnnotations.length}</span>
+          </div>
+        </div>
+
+        {/* Lista de itens baseada na seleção */}
+        {activeNavItem === 'highlights' && initialHighlights.length > 0 && (
+          <div className="koodo-panel-section">
+            {initialHighlights.map((highlight, index) => (
+              <div key={highlight.id} className="koodo-panel-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                  Página {highlight.pageNumber}
+                </div>
+                <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
+                  "{highlight.content.substring(0, 50)}..."
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeNavItem === 'annotations' && initialAnnotations.length > 0 && (
+          <div className="koodo-panel-section">
+            {initialAnnotations.map((annotation, index) => (
+              <div key={annotation.id} className="koodo-panel-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                  Página {annotation.pageNumber}
+                </div>
+                <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
+                  {annotation.content.substring(0, 50)}...
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Menu lateral direito - Configurações */}
+      <div className={`koodo-setting-panel ${isSettingPanelOpen ? 'active' : ''}`}>
+        <div className="koodo-panel-header">
+          <span>Configurações</span>
+          <button 
+            onClick={() => setIsSettingPanelOpen(false)} 
+            className="koodo-btn icon-only"
+            style={{ border: 'none', background: 'transparent' }}
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Abas de configuração */}
+        <div className="koodo-panel-section" style={{ display: 'flex', gap: '8px', padding: '12px 20px' }}>
+          <button
+            className={`koodo-btn ${activeSettingTab === 'reading' ? 'primary' : ''}`}
+            onClick={() => setActiveSettingTab('reading')}
+            style={{ flex: 1, fontSize: '13px' }}
+          >
+            Leitura
+          </button>
+          <button
+            className={`koodo-btn ${activeSettingTab === 'theme' ? 'primary' : ''}`}
+            onClick={() => setActiveSettingTab('theme')}
+            style={{ flex: 1, fontSize: '13px' }}
+          >
+            Tema
+          </button>
+          <button
+            className={`koodo-btn ${activeSettingTab === 'more' ? 'primary' : ''}`}
+            onClick={() => setActiveSettingTab('more')}
+            style={{ flex: 1, fontSize: '13px' }}
+          >
+            Mais
+          </button>
+        </div>
+
+        {/* Configurações de Leitura */}
+        {activeSettingTab === 'reading' && (
+          <>
+            <div className="koodo-panel-section">
+              <div className="koodo-setting-control">
+                <div className="koodo-setting-label">
+                  <span>Tamanho da Fonte</span>
+                  <span>{fontSize}%</span>
+                </div>
+                <input
+                  type="range"
+                  className="koodo-slider"
+                  min="50"
+                  max="200"
+                  value={fontSize}
+                  onChange={(e) => {
+                    const newSize = parseInt(e.target.value);
+                    setFontSize(newSize);
+                    if (rendition) {
+                      rendition.themes.fontSize(`${newSize}%`);
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="koodo-setting-control">
+                <div className="koodo-setting-label">
+                  <span>Altura da Linha</span>
+                  <span>{lineHeight}</span>
+                </div>
+                <input
+                  type="range"
+                  className="koodo-slider"
+                  min="1"
+                  max="3"
+                  step="0.1"
+                  value={lineHeight}
+                  onChange={(e) => {
+                    const newHeight = parseFloat(e.target.value);
+                    setLineHeight(newHeight);
+                    if (rendition) {
+                      rendition.themes.default({ 'line-height': `${newHeight} !important` });
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="koodo-setting-control">
+                <div className="koodo-setting-label">
+                  <span>Margem</span>
+                  <span>{margin}px</span>
+                </div>
+                <input
+                  type="range"
+                  className="koodo-slider"
+                  min="0"
+                  max="100"
+                  value={margin}
+                  onChange={(e) => setMargin(parseInt(e.target.value))}
+                />
+              </div>
+
+              <div className="koodo-setting-control">
+                <div className="koodo-setting-label">
+                  <span>Fonte</span>
+                </div>
+                <select
+                  className="koodo-select"
+                  value={fontFamily}
+                  onChange={(e) => {
+                    setFontFamily(e.target.value);
+                    if (rendition) {
+                      rendition.themes.font(e.target.value);
+                    }
+                  }}
+                >
+                  <option value="default">Padrão</option>
+                  <option value="Arial">Arial</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Verdana">Verdana</option>
+                </select>
+              </div>
+
+              <div className="koodo-setting-control">
+                <div className="koodo-setting-label">
+                  <span>Alinhamento</span>
+                </div>
+                <select
+                  className="koodo-select"
+                  value={textAlign}
+                  onChange={(e) => {
+                    setTextAlign(e.target.value);
+                    if (rendition) {
+                      rendition.themes.default({ 'text-align': `${e.target.value} !important` });
+                    }
+                  }}
+                >
+                  <option value="left">Esquerda</option>
+                  <option value="center">Centro</option>
+                  <option value="right">Direita</option>
+                  <option value="justify">Justificado</option>
+                </select>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Configurações de Tema */}
+        {activeSettingTab === 'theme' && (
+          <div className="koodo-panel-section">
+            <div className="koodo-setting-control">
+              <div className="koodo-setting-label">
+                <span>Cor de Destaque</span>
+              </div>
+              <div className="koodo-color-picker">
+                {['#ffeb3b', '#4caf50', '#2196f3', '#ff5722', '#9c27b0', '#00bcd4'].map(color => (
+                  <div
+                    key={color}
+                    className={`koodo-color-option ${highlightColor === color ? 'selected' : ''}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setHighlightColor(color)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="koodo-panel-item" onClick={handleThemeToggle}>
+              {state.isDarkMode ? <MoonIcon className="koodo-panel-item-icon" /> : <SunIcon className="koodo-panel-item-icon" />}
+              <span className="koodo-panel-item-text">Modo {state.isDarkMode ? 'Escuro' : 'Claro'}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Mais Opções */}
+        {activeSettingTab === 'more' && (
+          <div className="koodo-panel-section">
+            <div className="koodo-panel-item">
+              <ArrowDownTrayIcon className="koodo-panel-item-icon" />
+              <span className="koodo-panel-item-text">Baixar Livro</span>
+            </div>
+            <div className="koodo-panel-item">
+              <ShareIcon className="koodo-panel-item-icon" />
+              <span className="koodo-panel-item-text">Compartilhar</span>
+            </div>
+            <div className="koodo-panel-item">
+              <InformationCircleIcon className="koodo-panel-item-icon" />
+              <span className="koodo-panel-item-text">Informações do Livro</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+
     </div>
   );
 };

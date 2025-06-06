@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { UserRole, ROLE_PERMISSIONS } from '@/types/roles'
 import { motion } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -30,7 +31,17 @@ export default function ProtectedRoute({
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push(redirectTo)
+        // Se redirecionando para login, limpar dados primeiro
+        if (redirectTo.includes('/login')) {
+          clearAllDataForUnauthorized().then(() => {
+            router.push(redirectTo + '?error=unauthorized')
+          }).catch((error) => {
+            console.error('❌ Erro durante limpeza de dados:', error);
+            router.push(redirectTo + '?error=unauthorized')
+          });
+        } else {
+          router.push(redirectTo)
+        }
         return
       }
 

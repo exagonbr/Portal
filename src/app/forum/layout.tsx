@@ -26,23 +26,10 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
   ]
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto">
-        {/* Mobile Menu Button */}
-        <div className="md:hidden px-4 py-3 bg-white border-b border-gray-200">
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-6 h-6 text-gray-600" />
-            ) : (
-              <Menu className="w-6 h-6 text-gray-600" />
-            )}
-          </button>
-        </div>
+    <main className="container w-full h-full">
+      <div className="mb-8">
 
-        <div className="py-4 px-4 sm:px-6 lg:px-8">
+        <div className="py-4 lg:px-8">
           <div className="flex gap-6 lg:gap-8">
             {/* Navigation Sidebar */}
             <nav className={`
@@ -51,7 +38,7 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
               md:flex-shrink-0 md:transform-none
               border-r border-gray-200 md:border-none
             `}>
-              <div className="h-full overflow-y-auto p-4 md:p-0 space-y-1">
+              <div className="w-full h-full overflow-y-auto p-4 md:p-0 space-y-1">
                 {navigationItems.map((item) => (
                   <Link
                     key={item.href}
@@ -68,14 +55,6 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
                 ))}
               </div>
             </nav>
-
-            {/* Mobile Menu Overlay */}
-            {isMobileMenuOpen && (
-              <div
-                className="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden"
-                onClick={() => setIsMobileMenuOpen(false)}
-              />
-            )}
 
             {/* Main Content */}
             <div className="flex-1 min-w-0 pt-4 md:pt-0">
