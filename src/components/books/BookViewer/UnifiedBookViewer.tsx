@@ -61,6 +61,15 @@ export default function UnifiedBookViewer({
   bookTitle = 'Livro',
   onClose 
 }: UnifiedBookViewerProps) {
+  console.log('UnifiedBookViewer iniciado com:', { bookUrl, bookType, bookTitle })
+  
+  // Usar proxy para PDFs externos
+  const pdfUrl = bookType === 'pdf' && bookUrl.startsWith('http') 
+    ? `/api/proxy-pdf?url=${encodeURIComponent(bookUrl)}`
+    : bookUrl
+  
+  console.log('URL final do PDF:', pdfUrl)
+  
   // Estados gerais
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -95,13 +104,15 @@ export default function UnifiedBookViewer({
 
   // Carregar PDF
   const onPdfLoadSuccess = ({ numPages }: { numPages: number }) => {
+    console.log('PDF carregado com sucesso. Páginas:', numPages)
     setNumPages(numPages)
     setLoading(false)
   }
 
   const onPdfLoadError = (error: Error) => {
     console.error('Erro ao carregar PDF:', error)
-    setError('Erro ao carregar o PDF')
+    console.error('URL do PDF:', bookUrl)
+    setError(`Erro ao carregar o PDF: ${error.message}`)
     setLoading(false)
   }
 
@@ -136,6 +147,16 @@ export default function UnifiedBookViewer({
       }
     }
   }, [bookUrl, bookType])
+
+  // Verificar se é PDF e resetar loading se necessário
+  useEffect(() => {
+    if (bookType === 'pdf') {
+      console.log('Preparando para carregar PDF:', pdfUrl)
+      // Para PDFs, o loading será controlado pelos callbacks do react-pdf
+      setLoading(true)
+      setError(null)
+    }
+  }, [pdfUrl, bookType])
 
   // Navegação PDF
   const goToPreviousPage = () => {
@@ -480,10 +501,29 @@ export default function UnifiedBookViewer({
           <div className="h-full flex items-center justify-center">
             {bookType === 'pdf' ? (
               <Document
-                file={bookUrl}
+                file={pdfUrl}
                 onLoadSuccess={onPdfLoadSuccess}
                 onLoadError={onPdfLoadError}
                 className="flex justify-center"
+                loading={
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando PDF...</p>
+                  </div>
+                }
+                error={
+                  <div className="text-center">
+                    <p className="text-red-600 dark:text-red-400">Erro ao carregar o PDF</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                      Verifique se o arquivo está disponível e tente novamente.
+                    </p>
+                  </div>
+                }
+                options={{
+                  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                  cMapPacked: true,
+                  standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+                }}
               >
                 <Page
                   pageNumber={currentPage}

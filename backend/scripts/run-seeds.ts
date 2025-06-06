@@ -36,12 +36,12 @@ async function main() {
     console.log('   • STUDENT: Aluno');
     console.log('   • GUARDIAN: Responsável');
     console.log('\n🔑 Usuários criados:');
-    console.log('   👑 admin@portal.com / admin123 (SYSTEM_ADMIN)');
-    console.log('   🏢 gestor@sabercon.edu.br / admin123');
-    console.log('   📚 coordenador@sabercon.edu.br / admin123');
-    console.log('   👨‍🏫 professor@sabercon.edu.br / admin123');
-    console.log('   🎓 julia.costa@sabercon.edu.br / admin123');
-    console.log('   👨‍👩‍👧‍👦 responsavel@sabercon.edu.br / admin123');
+    console.log('   👑 admin@portal.com / password123 (SYSTEM_ADMIN)');
+    console.log('   🏢 gestor@sabercon.edu.br / password123');
+    console.log('   📚 coordenador@sabercon.edu.br / password123');
+    console.log('   👨‍🏫 professor@sabercon.edu.br / password123');
+    console.log('   🎓 julia.costa@sabercon.edu.br / password123');
+    console.log('   👨‍👩‍👧‍👦 responsavel@sabercon.edu.br / password123');
     console.log('\n🚀 Sistema pronto para uso!');
 
   } catch (error) {

@@ -34,12 +34,12 @@ export default function TestLoginPage() {
   };
 
   const testCredentials = [
-    { email: 'admin@portal.com', password: 'admin123', role: 'SYSTEM_ADMIN' },
-    { email: 'gestor@sabercon.edu.br', password: 'admin123', role: 'INSTITUTION_MANAGER' },
-    { email: 'coordenador@sabercon.edu.br', password: 'admin123', role: 'ACADEMIC_COORDINATOR' },
-    { email: 'professor@sabercon.edu.br', password: 'admin123', role: 'TEACHER' },
-    { email: 'julia.costa@sabercon.edu.br', password: 'admin123', role: 'STUDENT' },
-    { email: 'responsavel@sabercon.edu.br', password: 'admin123', role: 'GUARDIAN' },
+    { email: 'admin@portal.com', password: 'password123', role: 'SYSTEM_ADMIN' },
+    { email: 'gestor@sabercon.edu.br', password: 'password123', role: 'INSTITUTION_MANAGER' },
+    { email: 'coordenador@sabercon.edu.br', password: 'password123', role: 'ACADEMIC_COORDINATOR' },
+    { email: 'professor@sabercon.edu.br', password: 'password123', role: 'TEACHER' },
+    { email: 'julia.costa@sabercon.edu.br', password: 'password123', role: 'STUDENT' },
+    { email: 'responsavel@sabercon.edu.br', password: 'password123', role: 'GUARDIAN' },
   ];
 
   return (
@@ -78,7 +78,7 @@ export default function TestLoginPage() {
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <h3 className="font-medium text-yellow-800 mb-2">💡 Informações importantes:</h3>
           <ul className="text-sm text-yellow-700 space-y-1">
-            <li>• Todos os usuários de teste usam a senha: <code className="bg-yellow-100 px-1 rounded">admin123</code></li>
+            <li>• Todos os usuários de teste usam a senha: <code className="bg-yellow-100 px-1 rounded">password123</code></li>
             <li>• Se o login falhar, pode ser que o seed não foi executado ou o backend não está rodando</li>
             <li>• Backend deve estar rodando em: <code className="bg-yellow-100 px-1 rounded">http://localhost:3001</code></li>
           </ul>

@@ -1,4 +1,4 @@
-import { Queue, Worker, QueueOptions, WorkerOptions } from 'bullmq';
+import { Queue, QueueOptions, WorkerOptions } from 'bullmq';
 import { getQueueRedisClient } from './redis';
 
 // Configurações das filas

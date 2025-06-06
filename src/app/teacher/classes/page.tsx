@@ -12,9 +12,9 @@ import { BaseApiService } from '@/services/api'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { useRouter } from 'next/navigation'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
+import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
+import { Button, ButtonGroup } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 interface Class {
   id: string
@@ -258,7 +258,6 @@ export default function TeacherClassesPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.ACADEMIC_COORDINATOR]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Minhas Turmas"
           subtitle="Gerencie suas turmas e acompanhe o progresso dos alunos"
@@ -362,7 +361,6 @@ export default function TeacherClassesPage() {
             />
           </Modal>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 } 

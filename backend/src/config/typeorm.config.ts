@@ -20,6 +20,7 @@ import { ForumThread } from '../entities/ForumThread';
 import { ForumReply } from '../entities/ForumReply';
 import { ChatMessage } from '../entities/ChatMessage';
 import { Announcement } from '../entities/Announcement';
+import { File } from '../entities/File';
 
 dotenv.config();
 
@@ -33,7 +34,7 @@ export const dataSourceOptions: DataSourceOptions = {
   password: process.env.DB_PASSWORD || 'root',
   database: process.env.DB_NAME || 'portal_sabercon',
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  synchronize: environment === 'development',
+  synchronize: false, // Disabled to prevent conflicts with Knex migrations
   logging: environment === 'development',
   entities: [
     User,
@@ -55,7 +56,8 @@ export const dataSourceOptions: DataSourceOptions = {
     ForumThread,
     ForumReply,
     ChatMessage,
-    Announcement
+    Announcement,
+    File
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],

@@ -1,272 +1,380 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
+import { 
+  Search, 
+  Filter,
+  Mail,
+  Phone,
+  MoreVertical,
+  UserCheck,
+  UserX,
+  TrendingUp,
+  TrendingDown,
+  Award,
+  AlertCircle
+} from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface Student {
-  id: number
+  id: string
   name: string
   email: string
-  registration: string
+  phone: string
+  enrollment_number: string
   course: string
-  status: 'active' | 'inactive'
-  avatar: string
-  attendance: number
-  grade: number
-  lastActivity: string
-  enrollmentDate: string
   class: string
-}
-
-const MOCK_STUDENTS: Student[] = [
-  {
-    id: 1,
-    name: 'Ana Silva',
-    email: 'ana.silva@email.com',
-    registration: '2024001',
-    course: 'Matemática Avançada',
-    status: 'active',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    attendance: 92,
-    grade: 8.5,
-    lastActivity: '2024-01-15',
-    enrollmentDate: '2024-01-01',
-    class: 'Turma A'
-  },
-  {
-    id: 2,
-    name: 'Pedro Santos',
-    email: 'pedro.santos@email.com',
-    registration: '2024002',
-    course: 'Matemática Avançada',
-    status: 'active',
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    attendance: 88,
-    grade: 7.8,
-    lastActivity: '2024-01-14',
-    enrollmentDate: '2024-01-01',
-    class: 'Turma A'
-  },
-  {
-    id: 3,
-    name: 'Maria Costa',
-    email: 'maria.costa@email.com',
-    registration: '2024003',
-    course: 'Matemática Avançada',
-    status: 'active',
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    attendance: 95,
-    grade: 9.2,
-    lastActivity: '2024-01-15',
-    enrollmentDate: '2024-01-01',
-    class: 'Turma B'
-  },
-  {
-    id: 4,
-    name: 'João Oliveira',
-    email: 'joao.oliveira@email.com',
-    registration: '2024004',
-    course: 'Matemática Avançada',
-    status: 'inactive',
-    avatar: 'https://i.pravatar.cc/150?img=4',
-    attendance: 65,
-    grade: 6.5,
-    lastActivity: '2024-01-10',
-    enrollmentDate: '2024-01-01',
-    class: 'Turma B'
-  },
-  {
-    id: 5,
-    name: 'Carla Souza',
-    email: 'carla.souza@email.com',
-    registration: '2024005',
-    course: 'Matemática Avançada',
-    status: 'active',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    attendance: 98,
-    grade: 9.8,
-    lastActivity: '2024-01-15',
-    enrollmentDate: '2024-01-01',
-    class: 'Turma A'
-  },
-  {
-    id: 6,
-    name: 'Lucas Ferreira',
-    email: 'lucas.ferreira@email.com',
-    registration: '2024006',
-    course: 'Matemática Avançada',
-    status: 'active',
-    avatar: 'https://i.pravatar.cc/150?img=6',
-    attendance: 85,
-    grade: 7.5,
-    lastActivity: '2024-01-13',
-    enrollmentDate: '2024-01-01',
-    class: 'Turma B'
-  }
-]
-
-const STATUS_COLORS = {
-  active: { bg: 'bg-accent-green/20', text: 'text-accent-green', label: 'Ativo' },
-  inactive: { bg: 'bg-error/20', text: 'text-error', label: 'Inativo' }
+  status: 'active' | 'inactive' | 'suspended'
+  average_grade: number
+  attendance_rate: number
+  completed_activities: number
+  total_activities: number
+  last_access: string
+  profile_image?: string
 }
 
 export default function TeacherStudentsPage() {
   const { user } = useAuth()
+  const [students, setStudents] = useState<Student[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterCourse, setFilterCourse] = useState<string>('all')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [showFilters, setShowFilters] = useState(false)
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+
+  useEffect(() => {
+    loadStudents()
+  }, [])
+
+  const loadStudents = async () => {
+    try {
+      setLoading(true)
+      // Simular carregamento de dados
+      setTimeout(() => {
+        setStudents([
+          {
+            id: '1',
+            name: 'Ana Silva',
+            email: 'ana.silva@email.com',
+            phone: '(11) 98765-4321',
+            enrollment_number: '2024001',
+            course: 'Matemática Básica',
+            class: 'Turma A',
+            status: 'active',
+            average_grade: 8.5,
+            attendance_rate: 95,
+            completed_activities: 18,
+            total_activities: 20,
+            last_access: '2024-03-14T10:30:00'
+          },
+          {
+            id: '2',
+            name: 'Carlos Santos',
+            email: 'carlos.santos@email.com',
+            phone: '(11) 98765-4322',
+            enrollment_number: '2024002',
+            course: 'Matemática Básica',
+            class: 'Turma A',
+            status: 'active',
+            average_grade: 7.2,
+            attendance_rate: 88,
+            completed_activities: 15,
+            total_activities: 20,
+            last_access: '2024-03-13T14:20:00'
+          },
+          {
+            id: '3',
+            name: 'Maria Oliveira',
+            email: 'maria.oliveira@email.com',
+            phone: '(11) 98765-4323',
+            enrollment_number: '2024003',
+            course: 'Português - Gramática',
+            class: 'Turma B',
+            status: 'active',
+            average_grade: 9.1,
+            attendance_rate: 98,
+            completed_activities: 22,
+            total_activities: 22,
+            last_access: '2024-03-14T09:15:00'
+          },
+          {
+            id: '4',
+            name: 'João Pereira',
+            email: 'joao.pereira@email.com',
+            phone: '(11) 98765-4324',
+            enrollment_number: '2024004',
+            course: 'História do Brasil',
+            class: 'Turma C',
+            status: 'inactive',
+            average_grade: 6.5,
+            attendance_rate: 72,
+            completed_activities: 10,
+            total_activities: 18,
+            last_access: '2024-03-01T16:45:00'
+          }
+        ])
+        setLoading(false)
+      }, 1000)
+    } catch (error) {
+      console.error('Erro ao carregar alunos:', error)
+      setLoading(false)
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800'
+      case 'inactive':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'suspended':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Ativo'
+      case 'inactive':
+        return 'Inativo'
+      case 'suspended':
+        return 'Suspenso'
+      default:
+        return status
+    }
+  }
+
+  const getGradeColor = (grade: number) => {
+    if (grade >= 8) return 'text-green-600'
+    if (grade >= 6) return 'text-yellow-600'
+    return 'text-red-600'
+  }
+
+  const filteredStudents = students.filter(student => {
+    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.enrollment_number.includes(searchTerm)
+    const matchesCourse = filterCourse === 'all' || student.course === filterCourse
+    const matchesStatus = filterStatus === 'all' || student.status === filterStatus
+    return matchesSearch && matchesCourse && matchesStatus
+  })
+
+  const uniqueCourses = Array.from(new Set(students.map(s => s.course)))
+
+  const getDaysSinceLastAccess = (lastAccess: string) => {
+    const last = new Date(lastAccess)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - last.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header Section */}
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Cabeçalho */}
       <div className="mb-8">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Meus Alunos</h1>
-            <p className="text-gray-600">Gerencie e acompanhe o desempenho dos seus alunos</p>
-          </div>
-          <div className="flex space-x-4">
-            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors" aria-label="Exportar lista de alunos">
-              <span className="material-icons text-sm mr-2"></span>
-              Exportar
-            </button>
-            <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors" aria-label="Adicionar novo aluno">
-              <span className="material-icons text-sm mr-2"></span>
-              Adicionar Aluno
-            </button>
+        <h1 className="text-3xl font-bold text-slate-800 mb-2">
+          Meus Alunos
+        </h1>
+        <p className="text-slate-600">
+          Acompanhe o desempenho e progresso dos seus alunos
+        </p>
+      </div>
+
+      {/* Estatísticas gerais */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Total de Alunos</p>
+              <p className="text-2xl font-bold text-slate-800">{students.length}</p>
+            </div>
+            <UserCheck className="h-8 w-8 text-slate-300" />
           </div>
         </div>
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Total de Alunos</div>
-            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">126</div>
-            <div className="mt-4 flex items-center">
-              <span className="text-accent-green text-sm">↑ 12</span>
-              <span className="text-gray-500 text-sm ml-2">este semestre</span>
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Média Geral</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {(students.reduce((acc, s) => acc + s.average_grade, 0) / students.length).toFixed(1)}
+              </p>
             </div>
+            <TrendingUp className="h-8 w-8 text-blue-300" />
           </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Média de Notas</div>
-            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">8.2</div>
-            <div className="mt-4 flex items-center">
-              <span className="text-accent-green text-sm">↑ 0.3</span>
-              <span className="text-gray-500 text-sm ml-2">vs. semestre anterior</span>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Taxa de Presença</p>
+              <p className="text-2xl font-bold text-green-600">
+                {Math.round(students.reduce((acc, s) => acc + s.attendance_rate, 0) / students.length)}%
+              </p>
             </div>
+            <Award className="h-8 w-8 text-green-300" />
           </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Frequência Média</div>
-            <div className="text-2xl font-bold text-accent-green">92%</div>
-            <div className="mt-4 flex items-center">
-              <span className="text-accent-green text-sm">↑ 2%</span>
-              <span className="text-gray-500 text-sm ml-2">este mês</span>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Alunos em Risco</p>
+              <p className="text-2xl font-bold text-red-600">
+                {students.filter(s => s.average_grade < 6 || s.attendance_rate < 75).length}
+              </p>
             </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Alunos em Risco</div>
-            <div className="text-2xl font-bold text-error">8</div>
-            <div className="mt-4 flex items-center">
-              <span className="text-error text-sm">Requer atenção</span>
-            </div>
+            <AlertCircle className="h-8 w-8 text-red-300" />
           </div>
         </div>
       </div>
 
-      {/* Filters Section */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex flex-wrap gap-4">
+      {/* Barra de ações */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex w-full md:w-auto gap-2">
+          <div className="relative flex-grow md:flex-grow-0">
             <input
-            type="text"
-            placeholder="Pesquisar alunos..."
-            aria-label="Pesquisar alunos"
-            className="flex-1 min-w-[200px] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Filtrar por turma">
-            <option value="">Todas as Turmas</option>
-            <option value="A">Turma A</option>
-            <option value="B">Turma B</option>
-          </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Filtrar por status">
-            <option value="">Status</option>
-            <option value="active">Ativos</option>
-            <option value="inactive">Inativos</option>
-          </select>
-          <select className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Ordenar alunos">
-            <option value="">Ordenar por</option>
-            <option value="name">Nome</option>
-            <option value="grade">Nota</option>
-            <option value="attendance">Frequência</option>
-          </select>
+              type="text"
+              placeholder="Buscar alunos..."
+              className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-primary-dark"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+          >
+            <Filter className="h-4 w-4" />
+            Filtros
+          </button>
         </div>
       </div>
 
-      {/* Students Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {MOCK_STUDENTS.map((student) => (
-          <div key={student.id} className="bg-white rounded-lg shadow-md overflow-hidden">
-            {/* Student Card Header */}
-            <div className="relative h-32 bg-gradient-to-r from-primary to-primary-dark">
-              <div className="absolute -bottom-10 left-6">
-                <img
-                  src={student.avatar}
-                  alt={student.name}
-                  className="w-20 h-20 rounded-full border-4 border-white"
-                />
-              </div>
+      {/* Filtros */}
+      {showFilters && (
+        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Curso
+              </label>
+              <select
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                value={filterCourse}
+                onChange={(e) => setFilterCourse(e.target.value)}
+              >
+                <option value="all">Todos os Cursos</option>
+                {uniqueCourses.map(course => (
+                  <option key={course} value={course}>{course}</option>
+                ))}
+              </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Status
+              </label>
+              <select
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="all">Todos</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+                <option value="suspended">Suspensos</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
-            {/* Student Info */}
-            <div className="pt-12 p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-primary">{student.name}</h3>
-                  <p className="text-sm text-gray-500">{student.email}</p>
+      {/* Lista de alunos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {loading ? (
+          <div className="col-span-full flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-dark"></div>
+          </div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <UserX className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-600">Nenhum aluno encontrado</p>
+          </div>
+        ) : (
+          filteredStudents.map((student) => (
+            <div key={student.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center">
+                      <span className="text-lg font-semibold text-slate-600">
+                        {student.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-800">{student.name}</h3>
+                      <p className="text-sm text-slate-500">#{student.enrollment_number}</p>
+                    </div>
+                  </div>
+                  <button className="p-1 hover:bg-slate-100 rounded">
+                    <MoreVertical className="h-4 w-4 text-slate-400" />
+                  </button>
                 </div>
-                <span className={`px-3 py-1 ${STATUS_COLORS[student.status].bg} ${STATUS_COLORS[student.status].text} rounded-full text-sm`}>
-                  {STATUS_COLORS[student.status].label}
-                </span>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Matrícula</p>
-                  <p className="font-medium">{student.registration}</p>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Curso:</span>
+                    <span className="font-medium text-slate-800">{student.course}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Turma:</span>
+                    <span className="font-medium text-slate-800">{student.class}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Média:</span>
+                    <span className={`font-bold ${getGradeColor(student.average_grade)}`}>
+                      {student.average_grade.toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Presença:</span>
+                    <span className={`font-medium ${student.attendance_rate >= 75 ? 'text-green-600' : 'text-red-600'}`}>
+                      {student.attendance_rate}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Atividades:</span>
+                    <span className="font-medium text-slate-800">
+                      {student.completed_activities}/{student.total_activities}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-500">Turma</p>
-                  <p className="font-medium">{student.class}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Frequência</p>
-                  <p className={`font-medium ${student.attendance >= 75 ? 'text-accent-green' : 'text-error'}`}>
-                    {student.attendance}%
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Nota Média</p>
-                  <p className={`font-medium ${student.grade >= 7 ? 'text-accent-green' : 'text-error'}`}>
-                    {student.grade.toFixed(1)}
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                <span>Última atividade: {new Date(student.lastActivity).toLocaleDateString()}</span>
-              </div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(student.status)}`}>
+                    {getStatusLabel(student.status)}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Último acesso há {getDaysSinceLastAccess(student.last_access)} dias
+                  </span>
+                </div>
 
-              <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                <button className="text-gray-600 hover:text-gray-600">
-<span className="material-icons">mais_vert</span>
-                </button>
-                <div className="flex space-x-2">
-                  <button className="px-3 py-1 text-sm text-primary hover:text-primary-dark transition-colors">
+                <div className="flex gap-2">
+                  <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </button>
+                  <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors">
                     Ver Detalhes
                   </button>
-                  <button className="px-3 py-1 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
-                    Enviar Mensagem
-                  </button>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   )

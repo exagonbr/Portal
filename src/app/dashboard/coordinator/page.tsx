@@ -23,7 +23,9 @@ import {
   Download
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserRole, ROLE_COLORS } from '@/types/roles';
+import { UserRole } from '@/types/roles';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
 
 interface CoordinatorStats {
   totalCycles: number;
@@ -78,566 +80,177 @@ interface AcademicAlert {
   actionRequired: boolean;
 }
 
-export default function CoordinatorDashboard() {
+export default function CoordinatorDashboardPage() {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<CoordinatorStats>({
-    totalCycles: 0,
-    activeCycles: 0,
-    totalTeachers: 0,
-    totalStudents: 0,
-    averagePerformance: 0,
-    curriculumCompletion: 0,
-    teacherSatisfaction: 0,
-    studentProgress: 0
-  });
-  const [cycles, setCycles] = useState<EducationCycleOverview[]>([]);
-  const [teachers, setTeachers] = useState<TeacherPerformance[]>([]);
-  const [curriculum, setCurriculum] = useState<CurriculumItem[]>([]);
-  const [alerts, setAlerts] = useState<AcademicAlert[]>([]);
-  const [selectedCycle, setSelectedCycle] = useState('all');
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [selectedCycle, selectedDepartment]);
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      
-      // Dados simulados
-      setStats({
-        totalCycles: 6,
-        activeCycles: 5,
-        totalTeachers: 45,
-        totalStudents: 1234,
-        averagePerformance: 76.8,
-        curriculumCompletion: 82.5,
-        teacherSatisfaction: 88.2,
-        studentProgress: 79.3
-      });
-
-      setCycles([
-        {
-          id: '1',
-          name: 'Ensino Fundamental I',
-          level: '1º ao 5º ano',
-          students: 456,
-          teachers: 18,
-          performance: 82.3,
-          completion: 85,
-          status: 'on-track'
-        },
-        {
-          id: '2',
-          name: 'Ensino Fundamental II',
-          level: '6º ao 9º ano',
-          students: 523,
-          teachers: 22,
-          performance: 75.6,
-          completion: 78,
-          status: 'delayed'
-        },
-        {
-          id: '3',
-          name: 'Ensino Médio',
-          level: '1º ao 3º ano',
-          students: 255,
-          teachers: 15,
-          performance: 71.2,
-          completion: 82,
-          status: 'at-risk'
-        }
-      ]);
-
-      setTeachers([
-        {
-          id: '1',
-          name: 'Prof. Ana Silva',
-          subject: 'Matemática',
-          classes: 5,
-          students: 125,
-          averageGrade: 8.2,
-          satisfaction: 92,
-          attendance: 98
-        },
-        {
-          id: '2',
-          name: 'Prof. Carlos Santos',
-          subject: 'Português',
-          classes: 4,
-          students: 98,
-          averageGrade: 7.8,
-          satisfaction: 88,
-          attendance: 95
-        },
-        {
-          id: '3',
-          name: 'Prof. Maria Oliveira',
-          subject: 'Ciências',
-          classes: 6,
-          students: 145,
-          averageGrade: 7.5,
-          satisfaction: 85,
-          attendance: 93
-        }
-      ]);
-
-      setCurriculum([
-        {
-          id: '1',
-          subject: 'Matemática',
-          cycle: 'Fundamental I',
-          completion: 92,
-          lastUpdate: new Date(Date.now() - 86400000),
-          responsible: 'Ana Silva',
-          status: 'approved'
-        },
-        {
-          id: '2',
-          subject: 'Português',
-          cycle: 'Fundamental II',
-          completion: 78,
-          lastUpdate: new Date(Date.now() - 172800000),
-          responsible: 'Carlos Santos',
-          status: 'pending'
-        },
-        {
-          id: '3',
-          subject: 'História',
-          cycle: 'Ensino Médio',
-          completion: 65,
-          lastUpdate: new Date(Date.now() - 259200000),
-          responsible: 'João Pereira',
-          status: 'revision'
-        }
-      ]);
-
-      setAlerts([
-        {
-          id: '1',
-          type: 'performance',
-          title: 'Queda no desempenho - Ensino Médio',
-          description: 'Média geral caiu 5% no último mês',
-          severity: 'high',
-          date: new Date(),
-          actionRequired: true
-        },
-        {
-          id: '2',
-          type: 'teacher',
-          title: 'Necessidade de substituição',
-          description: 'Prof. de Física ausente há 3 dias',
-          severity: 'medium',
-          date: new Date(Date.now() - 86400000),
-          actionRequired: true
-        },
-        {
-          id: '3',
-          type: 'curriculum',
-          title: 'Atualização curricular pendente',
-          description: 'Novo conteúdo de Biologia aguardando aprovação',
-          severity: 'low',
-          date: new Date(Date.now() - 172800000),
-          actionRequired: false
-        }
-      ]);
-
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: EducationCycleOverview['status']) => {
-    switch (status) {
-      case 'on-track': return 'text-accent-green bg-green-100';
-      case 'ahead': return 'text-primary bg-primary/10';
-      case 'delayed': return 'text-accent-yellow bg-yellow-100';
-      case 'at-risk': return 'text-red-600 bg-red-100';
-    }
-  };
-
-  const getStatusLabel = (status: EducationCycleOverview['status']) => {
-    switch (status) {
-      case 'on-track': return 'No prazo';
-      case 'ahead': return 'Adiantado';
-      case 'delayed': return 'Atrasado';
-      case 'at-risk': return 'Em risco';
-    }
-  };
-
-  const getCurriculumStatusColor = (status: CurriculumItem['status']) => {
-    switch (status) {
-      case 'approved': return 'text-accent-green bg-green-100';
-      case 'pending': return 'text-accent-yellow bg-yellow-100';
-      case 'revision': return 'text-accent-orange bg-orange-100';
-    }
-  };
-
-  const getSeverityIcon = (severity: AcademicAlert['severity']) => {
-    switch (severity) {
-      case 'high': return <AlertCircle className="w-5 h-5 text-red-600" />;
-      case 'medium': return <AlertCircle className="w-5 h-5 text-accent-yellow" />;
-      case 'low': return <AlertCircle className="w-5 h-5 text-primary" />;
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Cabeçalho */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
-              <GraduationCap className="w-8 h-8 text-primary" />
-              Coordenação Acadêmica
-            </h1>
-            <p className="text-gray-600 dark:text-gray-600 mt-2">
-              Monitoramento e gestão pedagógica
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <select
-              value={selectedCycle}
-              onChange={(e) => setSelectedCycle(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-400 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-300"
-            >
-              <option value="all">Todos os Ciclos</option>
-              <option value="fundamental1">Fundamental I</option>
-              <option value="fundamental2">Fundamental II</option>
-              <option value="medio">Ensino Médio</option>
-            </select>
-            <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Relatório
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Alertas Acadêmicos */}
-      {alerts.filter(a => a.actionRequired).length > 0 && (
-        <div className="mb-6 space-y-3">
-          {alerts.filter(a => a.actionRequired).map(alert => (
-            <div
-              key={alert.id}
-              className={`p-4 rounded-lg border ${
-                alert.severity === 'high' ? 'bg-red-50 border-red-200' :
-                alert.severity === 'medium' ? 'bg-accent-yellow/10 border-accent-yellow/20' :
-                'bg-primary/10 border-primary/20'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                {getSeverityIcon(alert.severity)}
-                <div className="flex-1">
-                  <h3 className="font-semibold">{alert.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{alert.description}</p>
-                </div>
-                <button className="text-sm text-primary hover:text-primary-dark">
-                  Tomar ação
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          icon={BookOpen}
-          title="Ciclos Ativos"
-          value={`${stats.activeCycles}/${stats.totalCycles}`}
-          subtitle="83% em andamento"
-          color="bg-primary"
-        />
-        <StatCard
-          icon={Users}
-          title="Professores"
-          value={stats.totalTeachers}
-          subtitle={`${stats.totalStudents} alunos`}
-          color="bg-accent-green"
-        />
-        <StatCard
-          icon={TrendingUp}
-          title="Desempenho Médio"
-          value={`${stats.averagePerformance}%`}
-          subtitle="Meta: 80%"
-          color="bg-accent-purple"
-        />
-        <StatCard
-          icon={Target}
-          title="Currículo"
-          value={`${stats.curriculumCompletion}%`}
-          subtitle="Completo"
-          color="bg-accent-yellow"
-        />
-      </div>
-
-      {/* Indicadores de Qualidade */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <QualityIndicator
-          title="Progresso dos Alunos"
-          value={stats.studentProgress}
-          icon={Activity}
-          description="Taxa de aprovação e evolução"
-        />
-        <QualityIndicator
-          title="Satisfação Docente"
-          value={stats.teacherSatisfaction}
-          icon={Star}
-          description="Pesquisa de clima organizacional"
-        />
-        <QualityIndicator
-          title="Execução Curricular"
-          value={stats.curriculumCompletion}
-          icon={CheckCircle}
-          description="Conteúdo programático cumprido"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Ciclos Educacionais */}
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-primary" />
-                Ciclos Educacionais
-              </h2>
-              <button className="text-sm text-primary hover:text-primary-dark">
-                Gerenciar ciclos
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              {cycles.map((cycle) => (
-                <div
-                  key={cycle.id}
-                  className="p-4 bg-gray-50 dark:bg-gray-300 rounded-lg hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold">{cycle.name}</h3>
-                      <p className="text-sm text-gray-500">{cycle.level}</p>
-                    </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(cycle.status)}`}>
-                      {getStatusLabel(cycle.status)}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Alunos</p>
-                      <p className="font-medium">{cycle.students}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Professores</p>
-                      <p className="font-medium">{cycle.teachers}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Desempenho</p>
-                      <p className="font-medium">{cycle.performance}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Conclusão</p>
-                      <p className="font-medium">{cycle.completion}%</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-3">
-                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${cycle.completion}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Desempenho dos Professores */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center">
-                <Briefcase className="w-5 h-5 mr-2 text-accent-green" />
-                Desempenho Docente
-              </h2>
-              <button className="text-sm text-primary hover:text-primary-dark">
-                Ver todos
-              </button>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-sm text-gray-600 dark:text-gray-600 border-b">
-                    <th className="pb-2">Professor</th>
-                    <th className="pb-2">Disciplina</th>
-                    <th className="pb-2">Turmas</th>
-                    <th className="pb-2">Média</th>
-                    <th className="pb-2">Satisfação</th>
-                    <th className="pb-2">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {teachers.map((teacher) => (
-                    <tr key={teacher.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-300">
-                      <td className="py-3">
-                        <p className="font-medium">{teacher.name}</p>
-                        <p className="text-xs text-gray-500">{teacher.students} alunos</p>
-                      </td>
-                      <td className="py-3 text-sm">{teacher.subject}</td>
-                      <td className="py-3 text-sm">{teacher.classes}</td>
-                      <td className="py-3">
-                        <span className={`font-medium ${
-                          teacher.averageGrade >= 8 ? 'text-accent-green' :
-                          teacher.averageGrade >= 6 ? 'text-accent-yellow' : 'text-red-600'
-                        }`}>
-                          {teacher.averageGrade.toFixed(1)}
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${
-                                teacher.satisfaction >= 90 ? 'bg-accent-green' :
-                                teacher.satisfaction >= 70 ? 'bg-accent-yellow' : 'bg-red-500'
-                              }`}
-                              style={{ width: `${teacher.satisfaction}%` }}
-                            />
-                          </div>
-                          <span className="text-xs">{teacher.satisfaction}%</span>
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        <button className="text-primary hover:text-primary-dark text-sm">
-                          Detalhes
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Painel Lateral */}
+    <ProtectedRoute requiredRole={[UserRole.ACADEMIC_COORDINATOR]}>
+      <DashboardPageLayout
+        title="Painel do Coordenador"
+        subtitle="Gerencie o planejamento acadêmico e o corpo docente"
+      >
         <div className="space-y-6">
+          {/* Cards de Estatísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="text-sm font-medium text-gray-500 mb-1">Total de Professores</div>
+              <div className="text-2xl font-bold text-gray-600">24</div>
+              <div className="text-xs text-green-600 mt-2">↑ 2 este mês</div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="text-sm font-medium text-gray-500 mb-1">Turmas Ativas</div>
+              <div className="text-2xl font-bold text-gray-600">18</div>
+              <div className="text-xs text-blue-600 mt-2">3 em formação</div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="text-sm font-medium text-gray-500 mb-1">Média de Desempenho</div>
+              <div className="text-2xl font-bold text-gray-600">8.2</div>
+              <div className="text-xs text-green-600 mt-2">↑ 0.3 este bimestre</div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="text-sm font-medium text-gray-500 mb-1">Reuniões Pendentes</div>
+              <div className="text-2xl font-bold text-gray-600">5</div>
+              <div className="text-xs text-red-600 mt-2">2 para hoje</div>
+            </div>
+          </div>
+
           {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
-            <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Novo Ciclo
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Ações Rápidas</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button className="flex items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <span className="material-symbols-outlined text-blue-600">calendar_month</span>
+                <span className="text-sm font-medium text-gray-700">Gerenciar Ciclos</span>
               </button>
-              <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                Atualizar Currículo
+              <button className="flex items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <span className="material-symbols-outlined text-blue-600">menu_book</span>
+                <span className="text-sm font-medium text-gray-700">Gestão Curricular</span>
               </button>
-              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                <UserCheck className="w-4 h-4" />
-                Avaliar Professores
-              </button>
-              <button className="w-full px-4 py-2 bg-accent-yellow text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2">
-                <FileText className="w-4 h-4" />
-                Relatórios
+              <button className="flex items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <span className="material-symbols-outlined text-blue-600">groups</span>
+                <span className="text-sm font-medium text-gray-700">Gestão de Docentes</span>
               </button>
             </div>
           </div>
 
-          {/* Status do Currículo */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-accent-purple" />
-              Status Curricular
-            </h3>
-            <div className="space-y-3">
-              {curriculum.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-3 bg-gray-50 dark:bg-gray-300 rounded-lg"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <p className="font-medium text-sm">{item.subject}</p>
-                      <p className="text-xs text-gray-500">{item.cycle}</p>
-                    </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${getCurriculumStatusColor(item.status)}`}>
-                      {item.status === 'approved' ? 'Aprovado' :
-                       item.status === 'pending' ? 'Pendente' : 'Revisão'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{item.responsible}</span>
-                    <span>{item.completion}% completo</span>
-                  </div>
-                  <div className="mt-2 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1">
-                    <div
-                      className="bg-accent-purple h-1 rounded-full"
-                      style={{ width: `${item.completion}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Métricas de Qualidade */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Award className="w-5 h-5 mr-2 text-accent-yellow" />
-              Indicadores de Qualidade
-            </h3>
+          {/* Atividades Recentes */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Atividades Recentes</h2>
             <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Taxa de Aprovação</span>
-                  <span className="font-medium">87%</span>
+              <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
+                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-blue-600">assignment</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-accent-green h-2 rounded-full" style={{ width: '87%' }} />
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-700">Nova Avaliação Criada</h3>
+                  <p className="text-sm text-gray-500">Matemática - 9º Ano • Prof. Silva</p>
                 </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Evasão Escolar</span>
-                  <span className="font-medium">3.2%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-red-500 h-2 rounded-full" style={{ width: '3.2%' }} />
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-700">Status</div>
+                  <div className="text-xs text-green-600">Concluído</div>
                 </div>
               </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Participação em Projetos</span>
-                  <span className="font-medium">72%</span>
+              <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
+                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-green-600">update</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-primary h-2 rounded-full" style={{ width: '72%' }} />
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-700">Planejamento Atualizado</h3>
+                  <p className="text-sm text-gray-500">Português - 8º Ano • Prof. Santos</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-700">Status</div>
+                  <div className="text-xs text-green-600">Concluído</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
+                <div className="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-yellow-600">event</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-700">Reunião de Planejamento</h3>
+                  <p className="text-sm text-gray-500">Equipe de Matemática • 15:00</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-700">Status</div>
+                  <div className="text-xs text-yellow-600">Pendente</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desempenho por Disciplina */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Desempenho por Disciplina</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-blue-600">science</span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-700">Matemática</h3>
+                    <p className="text-sm text-gray-500">Prof. Silva</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-600">8.7</div>
+                  <div className="text-xs text-green-600">↑ 0.3 este bimestre</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-green-600">menu_book</span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-700">Português</h3>
+                    <p className="text-sm text-gray-500">Prof. Santos</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-600">8.5</div>
+                  <div className="text-xs text-green-600">↑ 0.2 este bimestre</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Próximas Reuniões */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Próximas Reuniões</h2>
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border border-gray-200">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-700">Reunião de Planejamento</h3>
+                  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">Hoje</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-2">
+                  Reunião com a equipe de Matemática para planejamento do próximo bimestre.
+                </p>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>15:00 - 16:30</span>
+                  <span>Sala de Reuniões</span>
+                </div>
+              </div>
+              <div className="p-4 rounded-lg border border-gray-200">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-700">Avaliação de Desempenho</h3>
+                  <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full">Amanhã</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-2">
+                  Reunião individual com Prof. Santos para avaliação de desempenho.
+                </p>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>10:00 - 11:00</span>
+                  <span>Sala de Coordenação</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </DashboardPageLayout>
+    </ProtectedRoute>
   );
 }
 

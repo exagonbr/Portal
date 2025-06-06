@@ -412,7 +412,7 @@ export class AuthService {
 
   static async createDefaultAdminUser(): Promise<void> {
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@portal.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'password123';
 
     const existingAdmin = await this.userRepository.findOne({
       where: { email: adminEmail }

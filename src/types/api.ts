@@ -211,6 +211,48 @@ export interface UpdateCourseDto {
   duration?: number;
 }
 
+export interface CourseResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  level: string;
+  type: string;
+  active: boolean;
+  institution_id: string;
+  created_at: string;
+  updated_at: string;
+  institution?: {
+    id: string;
+    name: string;
+  };
+  teachers?: {
+    id: string;
+    name: string;
+  }[];
+  students?: {
+    id: string;
+    name: string;
+  }[];
+}
+
+export interface CourseCreateDto {
+  name: string;
+  description: string;
+  level: string;
+  type: string;
+  institution_id: string;
+  active?: boolean;
+}
+
+export interface CourseUpdateDto {
+  name?: string;
+  description?: string;
+  level?: string;
+  type?: string;
+  institution_id?: string;
+  active?: boolean;
+}
+
 // Tipos de erro da API
 export interface ApiError {
   message: string;
@@ -300,4 +342,74 @@ export interface NotificationStatsDto {
   total: number;
   read: number;
   unread: number;
+}
+
+export interface UnitResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  active: boolean;
+  institution_id: string;
+  created_at: string;
+  updated_at: string;
+  institution?: InstitutionResponseDto;
+}
+
+export interface UnitCreateDto {
+  name: string;
+  description: string;
+  type: string;
+  institution_id: string;
+  active?: boolean;
+}
+
+export interface UnitUpdateDto {
+  name?: string;
+  description?: string;
+  type?: string;
+  institution_id?: string;
+  active?: boolean;
+}
+
+export interface ClassResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  active: boolean;
+  course_id: string;
+  teacher_id: string;
+  created_at: string;
+  updated_at: string;
+  course?: {
+    id: string;
+    name: string;
+  };
+  teacher?: {
+    id: string;
+    name: string;
+  };
+  students?: {
+    id: string;
+    name: string;
+  }[];
+}
+
+export interface ClassCreateDto {
+  name: string;
+  description: string;
+  status: string;
+  course_id: string;
+  teacher_id: string;
+  active?: boolean;
+}
+
+export interface ClassUpdateDto {
+  name?: string;
+  description?: string;
+  status?: string;
+  course_id?: string;
+  teacher_id?: string;
+  active?: boolean;
 }

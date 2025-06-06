@@ -12,9 +12,9 @@ import { BaseApiService } from '@/services/api'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { usePermissions } from '@/hooks/usePermissions'
-import { Button } from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
+import { Button, ButtonGroup } from '@/components/ui/Button';
+import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
 
 interface Module {
   id: string
@@ -228,7 +228,6 @@ export default function ModulesPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR, UserRole.TEACHER]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Gerenciar Módulos"
           subtitle="Gerencie o conteúdo dos cursos"
@@ -332,7 +331,6 @@ export default function ModulesPage() {
             />
           </Modal>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 } 

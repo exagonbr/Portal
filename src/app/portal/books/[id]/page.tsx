@@ -25,18 +25,29 @@ export default function BookViewerPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [book, setBook] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Simular carregamento do livro
     const loadBook = async () => {
       try {
+        console.log('Carregando livro com ID:', params.id)
         // Aqui você faria uma chamada à API real
         // Por enquanto, vamos usar os dados mockados
         const foundBook = mockBooks.find(b => b.id === params.id)
+        console.log('Livro encontrado:', foundBook)
+        
         if (foundBook) {
+          // Verificar se o livro tem filePath
+          if (!foundBook.filePath) {
+            console.error('Livro não tem filePath definido:', foundBook)
+            setError('Este livro não está disponível para leitura no momento.')
+            return
+          }
           setBook(foundBook)
         } else {
           // Livro não encontrado
+          console.error('Livro não encontrado com ID:', params.id)
           router.push('/portal/books')
         }
       } catch (error) {
@@ -58,19 +69,43 @@ export default function BookViewerPage({ params }: { params: { id: string } }) {
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-600 text-lg mb-4">{error}</p>
+          <button
+            onClick={() => router.push('/portal/books')}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Voltar para a biblioteca
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (!book) {
     return null
   }
 
   // Determinar a URL do livro
   const bookUrl = book.format === 'pdf' 
-    ? book.url 
-    : `/books/${book.url}` // Para EPUBs locais
+    ? book.filePath 
+    : book.filePath.startsWith('http') 
+      ? book.filePath 
+      : `/books/${book.filePath}` // Para EPUBs locais
+
+  console.log('Renderizando visualizador:', {
+    bookUrl,
+    bookType: book.format,
+    bookTitle: book.title
+  })
 
   return (
     <UnifiedBookViewer
       bookUrl={bookUrl}
-      bookType={book.format}
+      bookType={book.format || 'pdf'}
       bookTitle={book.title}
       onClose={() => router.push('/portal/books')}
     />

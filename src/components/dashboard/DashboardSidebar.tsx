@@ -8,6 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useEffect, useCallback, memo } from 'react'
 import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 
 interface NavItem {
   href: string
@@ -49,7 +50,7 @@ const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
 ));
 
 const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed: boolean, theme: any }) => (
-  <motion.div 
+  <motion.div
     className="px-4 py-4 border-b"
     style={{ borderColor: theme.colors.sidebar.border }}
     initial={{ opacity: 0, y: 10 }}
@@ -57,35 +58,35 @@ const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed
     transition={{ duration: 0.3, delay: 0.2 }}
   >
     <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
-      <motion.div 
+      <motion.div
         className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ 
-          backgroundColor: theme.colors.primary.DEFAULT + '20',
-          color: theme.colors.primary.DEFAULT
+        style={{
+          backgroundColor: theme.colors.primary.light || theme.colors.primary.DEFAULT + '40',
+          color: theme.colors.sidebar.textActive || '#ffffff'
         }}
         whileHover={{ scale: 1.1 }}
         transition={{ duration: 0.2 }}
       >
-        <span className={`material-symbols-outlined ${isCollapsed ? 'text-[24px]' : 'text-[20px]'}`}>
+        <span className={`material-symbols-outlined ${isCollapsed ? 'text-[24px]' : 'text-[20px]'} font-medium`}>
           person
         </span>
       </motion.div>
       <AnimatePresence>
         {!isCollapsed && (
-          <motion.div 
+          <motion.div
             className="overflow-hidden min-w-0 flex-1"
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: 'auto' }}
             exit={{ opacity: 0, width: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <p 
+            <p
               className="text-xs font-semibold truncate leading-tight"
               style={{ color: theme.colors.sidebar.textActive }}
             >
               {user?.name}
             </p>
-            <span 
+            <span
               className="text-[10px] leading-tight"
               style={{ color: theme.colors.sidebar.text }}
             >
@@ -98,9 +99,9 @@ const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed
   </motion.div>
 ));
 
-const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: { 
-  item: NavItem, 
-  isActive: boolean, 
+const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
+  item: NavItem,
+  isActive: boolean,
   isCollapsed: boolean,
   onClick?: () => void,
   theme: any
@@ -147,7 +148,7 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
 
       <AnimatePresence>
         {!isCollapsed && (
-          <motion.span 
+          <motion.span
             className="text-xs font-medium truncate leading-tight"
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: 'auto' }}
@@ -182,9 +183,9 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
   </motion.div>
 ));
 
-const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: { 
-  section: string, 
-  items: NavItem[], 
+const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: {
+  section: string,
+  items: NavItem[],
   pathname: string | null,
   isCollapsed: boolean,
   onItemClick?: () => void,
@@ -253,7 +254,7 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: bool
 
     <AnimatePresence>
       {!isCollapsed && (
-        <motion.span 
+        <motion.span
           className="text-xs font-medium truncate leading-tight"
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: 'auto' }}
@@ -293,7 +294,7 @@ export default function DashboardSidebar() {
   const { theme } = useTheme()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  
+
   // Get user role with fallback to STUDENT
   const userRole: UserRole = (user?.role || 'STUDENT') as UserRole;
 
@@ -372,112 +373,10 @@ export default function DashboardSidebar() {
 
     switch (userRole) {
       case UserRole.SYSTEM_ADMIN:
-        roleSpecificItems = [
-          {
-            section: 'Administração do Sistema',
-            items: [
-              {
-                href: '/admin/institutions',
-                icon: 'business',
-                label: 'Gerenciar Instituições',
-                permission: 'canManageInstitutions'
-              },
-              {
-                href: '/admin/users',
-                icon: 'manage_accounts',
-                label: 'Usuários Globais',
-                permission: 'canManageGlobalUsers'
-              },
-              {
-                href: '/admin/security',
-                icon: 'security',
-                label: 'Políticas de Segurança',
-                permission: 'canManageSecurityPolicies'
-              },
-              {
-                href: '/admin/roles',
-                icon: 'key',
-                label: 'Gerenciar Permissões',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/audit',
-                icon: 'history',
-                label: 'Logs de Auditoria',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/backup',
-                icon: 'backup',
-                label: 'Backup do Sistema',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/settings',
-                icon: 'settings',
-                label: 'Configurações do Sistema',
-                permission: 'canManageSystem'
-              }
-            ]
-          },
-          {
-            section: 'Conteúdo',
-            items: [
-              {
-                href: '/admin/content/library',
-                icon: 'archive',
-                label: 'Conteúdo da Platforma',
-                permission: 'canUploadResources'
-              },
-              {
-                href: '/admin/content/search',
-                icon: 'search',
-                label: 'Arquivos e Conteúdos Gerais',
-                permission: 'canUploadResources'
-              }
-            ]
-          },
-          {
-            section: 'Portais',
-            items: [
-              {
-                href: '/portal/books',
-                icon: 'auto_stories',
-                label: 'Portal de Literatura',
-                permission: 'canAccessLearningMaterials'
-              },
-              {
-                href: '/portal/videos',
-                icon: 'person_outline',
-                label: 'Portal do Videos',
-                permission: 'canAccessLearningMaterials'
-              }
-            ]
-          },
-          {
-            section: 'Monitoramento',
-            items: [
-              {
-                href: '/admin/analytics',
-                icon: 'analytics',
-                label: 'Analytics do Sistema',
-                permission: 'canViewSystemAnalytics'
-              },
-              {
-                href: '/admin/logs',
-                icon: 'terminal',
-                label: 'Logs do Sistema',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/performance',
-                icon: 'speed',
-                label: 'Performance',
-                permission: 'canManageSystem'
-              }
-            ]
-          }
-        ];
+        // Usa o menu simplificado do SystemAdminMenu
+        const adminMenuItems = getSystemAdminMenuItems();
+        // Remove a seção "Principal" pois já está nos commonItems
+        roleSpecificItems = adminMenuItems.filter(section => section.section !== 'Principal');
         break;
 
       case UserRole.INSTITUTION_MANAGER:
@@ -919,7 +818,7 @@ export default function DashboardSidebar() {
   const navItems = getNavItems();
 
   return (
-    <motion.aside 
+    <motion.aside
       initial={{ x: -300 }}
       animate={{ x: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -931,7 +830,7 @@ export default function DashboardSidebar() {
       }}
     >
       {/* Logo */}
-      <motion.div 
+      <motion.div
         className="p-6 border-b"
         style={{ borderColor: theme.colors.sidebar.border }}
         initial={{ opacity: 0, y: -20 }}
@@ -939,7 +838,7 @@ export default function DashboardSidebar() {
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <Link href="/" className="flex items-center justify-center group">
-          <motion.div 
+          <motion.div
             className="table transition-transform duration-200"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

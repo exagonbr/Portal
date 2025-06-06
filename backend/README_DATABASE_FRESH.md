@@ -177,12 +177,12 @@ O sistema cria os seguintes usuários de teste:
 
 | Email | Role | Senha | Descrição |
 |-------|------|-------|-----------|
-| `admin@portal.com` | SYSTEM_ADMIN | `admin123` | Administrador completo |
-| `gestor@sabercon.edu.br` | INSTITUTION_MANAGER | `admin123` | Gestor institucional |
-| `coordenador@sabercon.edu.br` | ACADEMIC_COORDINATOR | `admin123` | Coordenador acadêmico |
-| `professor@sabercon.edu.br` | TEACHER | `admin123` | Professor |
-| `julia.costa@sabercon.edu.br` | STUDENT | `admin123` | Aluna |
-| `responsavel@sabercon.edu.br` | GUARDIAN | `admin123` | Responsável |
+| `admin@portal.com` | SYSTEM_ADMIN | `password123` | Administrador completo |
+| `gestor@sabercon.edu.br` | INSTITUTION_MANAGER | `password123` | Gestor institucional |
+| `coordenador@sabercon.edu.br` | ACADEMIC_COORDINATOR | `password123` | Coordenador acadêmico |
+| `professor@sabercon.edu.br` | TEACHER | `password123` | Professor |
+| `julia.costa@sabercon.edu.br` | STUDENT | `password123` | Aluna |
+| `responsavel@sabercon.edu.br` | GUARDIAN | `password123` | Responsável |
 
 ## 🗂️ Sistema de Permissões
 

@@ -30,6 +30,21 @@ import VideoCard from '../../../components/VideoCard';
 import SimpleCarousel from "@/components/SimpleCarousel";
 import { mockVideos, carouselVideoImages } from '@/constants/mockData';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  Play,
+  Plus,
+  Search,
+  Filter,
+  Upload,
+  Eye,
+  Calendar,
+  MoreVertical,
+  Video,
+  Folder,
+  Star,
+  Download
+} from 'lucide-react';
 
 // Types
 type ViewMode = 'grid' | 'list';
@@ -324,438 +339,404 @@ const HeroSection = () => {
   );
 };
 
-export default function VideosPage() {
+export default function VideoPortalPage() {
   const { theme } = useTheme();
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [sortOption, setSortOption] = useState<SortOption>('recent');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isSortOpen, setIsSortOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
-  
-  // Filter state
-  const [filters, setFilters] = useState<FilterState>({
-    category: 'all',
-    searchQuery: '',
-    durationRange: [0, 60 * 60],
-    subjects: [],
-  });
+  const { user } = useAuth();
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [categories, setCategories] = useState<VideoCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterCourse, setFilterCourse] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('recent');
+  const [showFilters, setShowFilters] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
-  // Get all available subjects
-  const allSubjects = useMemo(() => extractSubjects(mockVideos), []);
-  
-  // Get min and max duration from all videos
-  const durationRange = useMemo(() => {
-    const durations = mockVideos.map(video => parseDuration(video.duration));
-    return [Math.min(...durations), Math.max(...durations)] as [number, number];
-  }, []);
+  useEffect(() => {
+    loadVideos();
+    loadCategories();
+  }, [filterCategory, filterCourse, sortBy]);
 
-  // Filter videos for different sections
-  const continueWatching = useMemo(() =>
-    mockVideos.filter(video => video.progress && video.progress > 0 && video.progress < 100),
-  []);
-  
-  const recommendations = useMemo(() =>
-    mockVideos.filter((_, index) => index < 15),
-  []);
-  
-  const newReleases = useMemo(() =>
-    mockVideos.slice(0, 10),
-  []);
-  
-  const popular = useMemo(() =>
-    mockVideos.slice(10, 20),
-  []);
-
-  // Apply filters to all videos
-  const filteredVideos = useMemo(() => {
-    return mockVideos.filter(video => {
-      // Filter by category
-      if (filters.category === 'inProgress' && (!video.progress || video.progress === 0)) return false;
-      if (filters.category === 'notStarted' && video.progress) return false;
-      if (filters.category === 'completed' && (!video.progress || video.progress < 100)) return false;
-      
-      // Filter by search query
-      if (filters.searchQuery && !video.title.toLowerCase().includes(filters.searchQuery.toLowerCase())) return false;
-      
-      // Filter by duration
-      const duration = parseDuration(video.duration);
-      if (duration < filters.durationRange[0] || duration > filters.durationRange[1]) return false;
-      
-      // Filter by subjects
-      if (filters.subjects.length > 0) {
-        const videoSubject = video.title.split(':')[0].trim();
-        if (!filters.subjects.includes(videoSubject)) return false;
-      }
-      
-      return true;
-    });
-  }, [filters]);
-
-  // Sort filtered videos
-  const sortedVideos = useMemo(() => {
-    return [...filteredVideos].sort((a, b) => {
-      switch (sortOption) {
-        case 'title':
-          return a.title.localeCompare(b.title);
-        case 'duration':
-          return parseDuration(a.duration) - parseDuration(b.duration);
-        case 'progress':
-          const progressA = a.progress || 0;
-          const progressB = b.progress || 0;
-          return progressB - progressA;
-        case 'recent':
-        default:
-          return b.id.localeCompare(a.id);
-      }
-    });
-  }, [filteredVideos, sortOption]);
-
-  // Get videos by tab
-  const getVideosByTab = () => {
-    switch (activeTab) {
-      case 'continue':
-        return continueWatching;
-      case 'new':
-        return newReleases;
-      case 'popular':
-        return popular;
-      case 'recommendations':
-        return recommendations;
-      default:
-        return sortedVideos;
+  const loadVideos = async () => {
+    try {
+      setLoading(true);
+      // Simular carregamento de dados
+      setTimeout(() => {
+        setVideos([
+          {
+            id: '1',
+            title: 'Introdução às Equações do 2º Grau',
+            description: 'Aula completa sobre os conceitos fundamentais das equações quadráticas',
+            thumbnail: 'https://via.placeholder.com/320x180/4F46E5/FFFFFF?text=Matemática',
+            duration: '45:30',
+            course: 'Matemática Básica',
+            category: 'Aulas',
+            uploaded_by: 'Prof. João Silva',
+            uploaded_at: '2024-03-10',
+            views: 234,
+            likes: 45,
+            status: 'published',
+            url: 'https://example.com/video1.mp4',
+            size: '250 MB'
+          },
+          {
+            id: '2',
+            title: 'Exercícios Resolvidos - Bhaskara',
+            description: 'Resolução passo a passo de exercícios usando a fórmula de Bhaskara',
+            thumbnail: 'https://via.placeholder.com/320x180/10B981/FFFFFF?text=Exercícios',
+            duration: '32:15',
+            course: 'Matemática Básica',
+            category: 'Exercícios',
+            uploaded_by: 'Prof. João Silva',
+            uploaded_at: '2024-03-12',
+            views: 189,
+            likes: 38,
+            status: 'published',
+            url: 'https://example.com/video2.mp4',
+            size: '180 MB'
+          },
+          {
+            id: '3',
+            title: 'Concordância Verbal - Regras Básicas',
+            description: 'Explicação detalhada sobre as principais regras de concordância verbal',
+            thumbnail: 'https://via.placeholder.com/320x180/F59E0B/FFFFFF?text=Português',
+            duration: '28:45',
+            course: 'Português - Gramática',
+            category: 'Aulas',
+            uploaded_by: 'Prof. Maria Santos',
+            uploaded_at: '2024-03-08',
+            views: 156,
+            likes: 29,
+            status: 'published',
+            url: 'https://example.com/video3.mp4',
+            size: '150 MB'
+          },
+          {
+            id: '4',
+            title: 'Brasil Colonial - Documentário',
+            description: 'Documentário educativo sobre o período colonial brasileiro',
+            thumbnail: 'https://via.placeholder.com/320x180/EF4444/FFFFFF?text=História',
+            duration: '52:00',
+            course: 'História do Brasil',
+            category: 'Documentários',
+            uploaded_by: 'Prof. Roberto Lima',
+            uploaded_at: '2024-03-05',
+            views: 312,
+            likes: 67,
+            status: 'published',
+            url: 'https://example.com/video4.mp4',
+            size: '380 MB'
+          },
+          {
+            id: '5',
+            title: 'Tutorial: Gravação de Aulas',
+            description: 'Como gravar e editar suas aulas para o portal',
+            thumbnail: 'https://via.placeholder.com/320x180/8B5CF6/FFFFFF?text=Tutorial',
+            duration: '15:20',
+            course: 'Geral',
+            category: 'Tutoriais',
+            uploaded_by: 'Admin',
+            uploaded_at: '2024-03-01',
+            views: 89,
+            likes: 15,
+            status: 'processing',
+            url: 'https://example.com/video5.mp4',
+            size: '95 MB'
+          }
+        ]);
+        setLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Erro ao carregar vídeos:', error);
+      setLoading(false);
     }
   };
 
-  // Handle filter changes
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters(prev => ({ ...prev, searchQuery: e.target.value }));
-    setActiveTab('all');
-  }, []);
+  const loadCategories = async () => {
+    setCategories([
+      { id: '1', name: 'Aulas', count: 45, icon: '🎓' },
+      { id: '2', name: 'Exercícios', count: 32, icon: '📝' },
+      { id: '3', name: 'Documentários', count: 12, icon: '🎬' },
+      { id: '4', name: 'Tutoriais', count: 8, icon: '💡' },
+      { id: '5', name: 'Webinars', count: 5, icon: '🎯' }
+    ]);
+  };
 
-  const handleCategoryChange = useCallback((category: FilterCategory) => {
-    setFilters(prev => ({ ...prev, category }));
-  }, []);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'published':
+        return 'bg-green-100 text-green-800';
+      case 'draft':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
-  const handleSubjectToggle = useCallback((subject: string) => {
-    setFilters(prev => {
-      const subjects = prev.subjects.includes(subject)
-        ? prev.subjects.filter(s => s !== subject)
-        : [...prev.subjects, subject];
-      return { ...prev, subjects };
-    });
-  }, []);
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'published':
+        return 'Publicado';
+      case 'draft':
+        return 'Rascunho';
+      case 'processing':
+        return 'Processando';
+      default:
+        return status;
+    }
+  };
 
-  const resetFilters = useCallback(() => {
-    setFilters({
-      category: 'all',
-      searchQuery: '',
-      durationRange: durationRange,
-      subjects: [],
-    });
-  }, [durationRange]);
+  const filteredVideos = videos.filter(video => {
+    const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         video.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = filterCategory === 'all' || video.category === filterCategory
+    const matchesCourse = filterCourse === 'all' || video.course === filterCourse
+    return matchesSearch && matchesCategory && matchesCourse
+  });
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setIsFilterOpen(false);
-      setIsSortOpen(false);
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  const sortedVideos = [...filteredVideos].sort((a, b) => {
+    switch (sortBy) {
+      case 'recent':
+        return new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime();
+      case 'popular':
+        return b.views - a.views;
+      case 'mostLiked':
+        return b.likes - a.likes;
+      default:
+        return 0;
+    }
+  });
 
-  const tabs = [
-    { id: 'all', label: 'Todos', icon: Squares2X2Icon, count: mockVideos.length },
-    { id: 'continue', label: 'Continuar', icon: ClockIcon, count: continueWatching.length },
-    { id: 'new', label: 'Novos', icon: SparklesIcon, count: newReleases.length },
-    { id: 'popular', label: 'Populares', icon: FireIcon, count: popular.length },
-    { id: 'recommendations', label: 'Recomendados', icon: BookOpenIcon, count: recommendations.length },
-  ];
+  const uniqueCourses = Array.from(new Set(videos.map(v => v.course)));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Hero Section */}
-      <HeroSection />
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Cabeçalho */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-800 mb-2">
+          Portal de Vídeos
+        </h1>
+        <p className="text-slate-600">
+          Biblioteca de vídeos educacionais para suas aulas
+        </p>
+      </div>
 
-      {/* Main Content */}
-      <div className="w-full">
-        {/* Search and Filter Bar */}
-        <div className="bg-white dark:bg-gray-800 p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-grow">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar vídeos..."
-                  className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all"
-                  style={{ '--tw-ring-color': theme.colors.primary.DEFAULT } as React.CSSProperties}
-                  value={filters.searchQuery}
-                  onChange={handleSearchChange}
-                />
-                {filters.searchQuery && (
-                  <button
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2"
-                    onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
-                  >
-                    <XMarkIcon className="w-5 h-5 text-gray-400 hover:text-gray-600" />
-                  </button>
-                )}
-              </div>
+      {/* Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Total de Vídeos</p>
+              <p className="text-2xl font-bold text-slate-800">{videos.length}</p>
             </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              {/* Filter Button */}
-              <div className="relative">
-                <button
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
-                    isFilterOpen || filters.category !== 'all' || filters.subjects.length > 0
-                      ? 'text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                  style={{
-                    backgroundColor: isFilterOpen || filters.category !== 'all' || filters.subjects.length > 0
-                      ? theme.colors.primary.DEFAULT
-                      : undefined
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsFilterOpen(!isFilterOpen);
-                    setIsSortOpen(false);
-                  }}
-                >
-                  <FunnelIcon className="w-5 h-5" />
-                  Filtros
-                  {(filters.category !== 'all' || filters.subjects.length > 0) && (
-                    <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs">
-                      {(filters.category !== 'all' ? 1 : 0) + filters.subjects.length}
-                    </span>
-                  )}
-                </button>
-
-                {/* Filter Dropdown */}
-                {isFilterOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 overflow-hidden"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filtros</h3>
-                        <button
-                          className="text-sm font-medium transition-colors"
-                          style={{ color: theme.colors.primary.DEFAULT }}
-                          onClick={resetFilters}
-                        >
-                          Limpar tudo
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Categories */}
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Status</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { value: 'all', label: 'Todos', icon: null },
-                          { value: 'inProgress', label: 'Em Progresso', icon: ClockIcon },
-                          { value: 'notStarted', label: 'Não Iniciados', icon: BookmarkIcon },
-                          { value: 'completed', label: 'Concluídos', icon: CheckCircleIcon }
-                        ].map((option) => (
-                          <button
-                            key={option.value}
-                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                              filters.category === option.value
-                                ? 'text-white'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
-                            style={{
-                              backgroundColor: filters.category === option.value ? theme.colors.primary.DEFAULT : undefined
-                            }}
-                            onClick={() => handleCategoryChange(option.value as FilterCategory)}
-                          >
-                            {option.icon && <option.icon className="w-3 h-3" />}
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Subjects */}
-                    <div className="p-4 max-h-60 overflow-y-auto">
-                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Disciplinas</h4>
-                      <div className="space-y-2">
-                        {allSubjects.map(subject => (
-                          <label key={subject} className="flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={filters.subjects.includes(subject)}
-                              onChange={() => handleSubjectToggle(subject)}
-                              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 focus:ring-2"
-                              style={{ accentColor: theme.colors.primary.DEFAULT }}
-                            />
-                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">{subject}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Sort Button */}
-              <div className="relative">
-                <button
-                  className="flex items-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsSortOpen(!isSortOpen);
-                    setIsFilterOpen(false);
-                  }}
-                >
-                  <ArrowsUpDownIcon className="w-5 h-5" />
-                  Ordenar
-                </button>
-
-                {/* Sort Dropdown */}
-                {isSortOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 overflow-hidden"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {[
-                      { value: 'recent', label: 'Mais Recentes' },
-                      { value: 'title', label: 'Título (A-Z)' },
-                      { value: 'duration', label: 'Duração' },
-                      { value: 'progress', label: 'Progresso' }
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        className={`flex items-center justify-between w-full px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                          sortOption === option.value ? 'text-white' : 'text-gray-700 dark:text-gray-300'
-                        }`}
-                        style={{
-                          backgroundColor: sortOption === option.value ? theme.colors.primary.DEFAULT : undefined
-                        }}
-                        onClick={() => {
-                          setSortOption(option.value as SortOption);
-                          setIsSortOpen(false);
-                        }}
-                      >
-                        {option.label}
-                        {sortOption === option.value && (
-                          <CheckIcon className="w-4 h-4" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* View Mode Toggle */}
-              <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
-                <button
-                  className={`p-2 rounded-lg transition-all ${
-                    viewMode === 'grid' ? 'text-white' : 'text-gray-600 dark:text-gray-400'
-                  }`}
-                  style={{
-                    backgroundColor: viewMode === 'grid' ? theme.colors.primary.DEFAULT : 'transparent'
-                  }}
-                  onClick={() => setViewMode('grid')}
-                  aria-label="Grid view"
-                >
-                  <Squares2X2Icon className="w-5 h-5" />
-                </button>
-                <button
-                  className={`p-2 rounded-lg transition-all ${
-                    viewMode === 'list' ? 'text-white' : 'text-gray-600 dark:text-gray-400'
-                  }`}
-                  style={{
-                    backgroundColor: viewMode === 'list' ? theme.colors.primary.DEFAULT : 'transparent'
-                  }}
-                  onClick={() => setViewMode('list')}
-                  aria-label="List view"
-                >
-                  <ListBulletIcon className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+            <Video className="h-8 w-8 text-slate-300" />
           </div>
         </div>
-
-        {/* Tabs */}
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium whitespace-nowrap transition-all ${
-                    activeTab === tab.id
-                      ? 'text-white shadow-lg transform scale-105'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  style={{
-                    backgroundColor: activeTab === tab.id ? theme.colors.primary.DEFAULT : undefined
-                  }}
-                >
-                  <Icon className="w-5 h-5" />
-                  {tab.label}
-                  {tab.count > 0 && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                      activeTab === tab.id
-                        ? 'bg-white/20 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Videos Grid/List */}
-        <div className="px-4 pb-4">
-          {getVideosByTab().length > 0 ? (
-            <div className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6'
-                : 'space-y-4'
-            }>
-              {getVideosByTab().map(video => (
-                <ModernVideoCard key={video.id} video={video} viewMode={viewMode} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: theme.colors.primary.DEFAULT + '20' }}>
-                <PlayCircleIcon className="w-10 h-10" style={{ color: theme.colors.primary.DEFAULT }} />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Nenhum vídeo encontrado
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md">
-                Não encontramos vídeos que correspondam aos seus filtros. Tente ajustar os critérios de busca.
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Visualizações</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {videos.reduce((acc, v) => acc + v.views, 0)}
               </p>
-              {(filters.searchQuery || filters.category !== 'all' || filters.subjects.length > 0) && (
-                <button
-                  className="mt-6 px-6 py-3 text-white font-medium rounded-xl transition-all hover:shadow-lg"
-                  style={{ backgroundColor: theme.colors.primary.DEFAULT }}
-                  onClick={resetFilters}
-                >
-                  Limpar filtros
-                </button>
-              )}
             </div>
-          )}
+            <Eye className="h-8 w-8 text-blue-300" />
+          </div>
         </div>
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Duração Total</p>
+              <p className="text-2xl font-bold text-green-600">12h 45m</p>
+            </div>
+            <Clock className="h-8 w-8 text-green-300" />
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Armazenamento</p>
+              <p className="text-2xl font-bold text-purple-600">2.3 GB</p>
+            </div>
+            <Folder className="h-8 w-8 text-purple-300" />
+          </div>
+        </div>
+      </div>
+
+      {/* Categorias */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-slate-800 mb-3">Categorias</h2>
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setFilterCategory(category.name)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border whitespace-nowrap transition-colors ${
+                filterCategory === category.name
+                  ? 'bg-primary-dark text-white border-primary-dark'
+                  : 'bg-white border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <span className="text-lg">{category.icon}</span>
+              <span className="text-sm font-medium">{category.name}</span>
+              <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                {category.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Barra de ações */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex w-full md:w-auto gap-2">
+          <div className="relative flex-grow md:flex-grow-0">
+            <input
+              type="text"
+              placeholder="Buscar vídeos..."
+              className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-primary-dark"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+          >
+            <Filter className="h-4 w-4" />
+            Filtros
+          </button>
+        </div>
+        
+        {user?.role === 'TEACHER' && (
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="flex items-center gap-1 px-4 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors"
+          >
+            <Upload className="h-4 w-4" />
+            Enviar Vídeo
+          </button>
+        )}
+      </div>
+
+      {/* Filtros */}
+      {showFilters && (
+        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Curso
+              </label>
+              <select
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                value={filterCourse}
+                onChange={(e) => setFilterCourse(e.target.value)}
+              >
+                <option value="all">Todos os Cursos</option>
+                {uniqueCourses.map(course => (
+                  <option key={course} value={course}>{course}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Ordenar por
+              </label>
+              <select
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="recent">Mais Recentes</option>
+                <option value="popular">Mais Visualizados</option>
+                <option value="mostLiked">Mais Curtidos</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grid de vídeos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {loading ? (
+          <div className="col-span-full flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-dark"></div>
+          </div>
+        ) : sortedVideos.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <Video className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-600">Nenhum vídeo encontrado</p>
+          </div>
+        ) : (
+          sortedVideos.map((video) => (
+            <div key={video.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="relative aspect-video bg-slate-100">
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                  {video.duration}
+                </div>
+                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 hover:opacity-100">
+                  <Play className="h-12 w-12 text-white" />
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-semibold text-slate-800 line-clamp-2 flex-1">
+                    {video.title}
+                  </h3>
+                  <button className="p-1 hover:bg-slate-100 rounded ml-2">
+                    <MoreVertical className="h-4 w-4 text-slate-400" />
+                  </button>
+                </div>
+                
+                <p className="text-sm text-slate-600 line-clamp-2 mb-3">
+                  {video.description}
+                </p>
+                
+                <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                  <span>{video.course}</span>
+                  <span className={`px-2 py-1 rounded-full ${getStatusColor(video.status)}`}>
+                    {getStatusLabel(video.status)}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-3 w-3" />
+                      {video.views}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Star className="h-3 w-3" />
+                      {video.likes}
+                    </span>
+                  </div>
+                  <span>{video.size}</span>
+                </div>
+                
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="text-xs text-slate-500">
+                    <p>{video.uploaded_by}</p>
+                    <p>{new Date(video.uploaded_at).toLocaleDateString('pt-BR')}</p>
+                  </div>
+                  {user?.role === 'TEACHER' && (
+                    <button className="text-primary-dark hover:text-primary-darker">
+                      <Download className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

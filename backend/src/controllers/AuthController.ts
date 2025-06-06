@@ -73,19 +73,19 @@ export class AuthController {
 
   static async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
       const sessionId = (req as any).sessionId;
+      const authUser = (req as any).user;
       
-      if (!userId) {
+      if (!authUser?.userId) {
         return res.status(401).json({
           success: false,
           message: 'Usuário não autenticado'
         });
       }
 
-      const user = await AuthService.getUserById(userId);
+      const userData = await AuthService.getUserById(authUser.userId);
       
-      if (!user) {
+      if (!userData) {
         return res.status(404).json({
           success: false,
           message: 'Usuário não encontrado'
@@ -98,15 +98,15 @@ export class AuthController {
       }
 
       // Remove senha da resposta
-      const { password, ...userWithoutPassword } = user;
+      const { password, ...userWithoutPassword } = userData;
 
       return res.json({
         success: true,
         data: {
           user: {
             ...userWithoutPassword,
-            role_name: user.role?.name,
-            institution_name: user.institution?.name
+            role_name: userData.role?.name,
+            institution_name: userData.institution?.name
           }
         }
       });
@@ -183,7 +183,6 @@ export class AuthController {
 
   static async logout(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user?.userId;
       const sessionId = (req as any).sessionId || req.body.sessionId;
 
       if (sessionId) {

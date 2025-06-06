@@ -6,9 +6,9 @@ import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import Select from '@/components/ui/Select'
+import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
+import { Button, ButtonGroup } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import Table from '@/components/ui/Table'
 import { motion } from 'framer-motion'
 
@@ -184,7 +184,6 @@ export default function StudentGradesPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.STUDENT]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Minhas Notas"
           subtitle="Acompanhe seu desempenho acadêmico"
@@ -376,7 +375,6 @@ export default function StudentGradesPage() {
             ))}
           </div>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 } 

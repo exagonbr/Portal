@@ -32,7 +32,7 @@ const sizeClasses = {
   lg: 'px-5 py-4 text-lg'
 }
 
-export default function Select({
+export function Select({
   label,
   placeholder = 'Selecione uma opção',
   options,

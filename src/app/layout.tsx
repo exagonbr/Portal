@@ -6,6 +6,7 @@ import { PushNotificationInitializer } from '@/components/PushNotificationInitia
 import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
 import GlobalSetup from '@/components/GlobalSetup';
+import Handtalk from '@/components/Handtalk';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -41,6 +42,8 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+
+
 export default function RootLayout({
   children,
 }: {
@@ -66,6 +69,8 @@ export default function RootLayout({
         <ErrorSuppressor />
         <GlobalSetup />
         <AppProviders>
+        <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
+
           <div className="flex flex-col min-h-full">
             {children}
           </div>

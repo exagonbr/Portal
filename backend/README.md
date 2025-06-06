@@ -118,7 +118,7 @@ CORS_CREDENTIALS=true
 
 # ADMIN USER SETTINGS
 ADMIN_EMAIL=admin@portal.com
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=password123
 ```
 
 📋 **Veja a documentação completa das variáveis em:** [`docs/ENVIRONMENT_VARIABLES.md`](./docs/ENVIRONMENT_VARIABLES.md)

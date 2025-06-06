@@ -87,7 +87,6 @@ export default function CoordinatorCurriculumPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.COORDINATOR]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Gestão Curricular"
           subtitle="Gerencie e organize o currículo escolar"
@@ -334,7 +333,6 @@ export default function CoordinatorCurriculumPage() {
             </div>
           </div>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 }

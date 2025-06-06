@@ -6,10 +6,10 @@ import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
+import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
+import { Button, ButtonGroup } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { motion } from 'framer-motion'
 
 interface Activity {
@@ -158,7 +158,6 @@ export default function StudentActivitiesPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.STUDENT]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Minhas Atividades"
           subtitle="Acompanhe suas tarefas, trabalhos e avaliações"
@@ -390,7 +389,6 @@ export default function StudentActivitiesPage() {
             </Card>
           )}
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 } 

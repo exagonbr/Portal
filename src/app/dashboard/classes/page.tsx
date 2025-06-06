@@ -12,7 +12,7 @@ import { BaseApiService } from '@/services/api'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { usePermissions } from '@/hooks/usePermissions'
-import { Button } from '@/components/ui/Button'
+import { Button, ButtonGroup } from '@/components/ui/Button';
 
 interface Class {
   id: string
@@ -173,7 +173,6 @@ export default function ClassesPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR, UserRole.TEACHER]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Gerenciar Turmas"
           subtitle="Gerencie as turmas e seus alunos"
@@ -247,7 +246,6 @@ export default function ClassesPage() {
             </div>
           </Modal>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 } 

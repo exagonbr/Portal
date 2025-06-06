@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import Table from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
+import {Input} from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import { usePermissions } from '@/hooks/usePermissions'
 
@@ -158,7 +158,6 @@ export default function GenericCRUD<T extends { id: string | number }>({
             (!action.permission || hasPermission(action.permission as any)) && (
               <Button
                 key={index}
-                variant={action.variant === 'danger' ? 'error' : action.variant || 'ghost'}
                 size="sm"
                 onClick={() => action.onClick(item)}
               >
@@ -188,7 +187,7 @@ export default function GenericCRUD<T extends { id: string | number }>({
               type="search"
               placeholder={searchPlaceholder || `Buscar ${plural}...`}
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e: { target: { value: string } }) => handleSearch(e.target.value)}
               leftIcon="search"
               className="w-64"
             />
@@ -198,7 +197,6 @@ export default function GenericCRUD<T extends { id: string | number }>({
             <Button
               variant="primary"
               onClick={onCreate}
-              icon="add"
             >
               Novo {entityName}
             </Button>
@@ -246,9 +244,7 @@ export default function GenericCRUD<T extends { id: string | number }>({
               Cancelar
             </Button>
             <Button
-              variant="error"
-              onClick={confirmDelete}
-              icon="delete"
+                onClick={confirmDelete}
             >
               Excluir
             </Button>

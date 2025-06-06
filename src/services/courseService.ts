@@ -13,6 +13,7 @@ export interface CourseFilters {
   level?: string;
   search?: string;
   active?: boolean;
+  type?: string;
 }
 
 export interface CourseListOptions {

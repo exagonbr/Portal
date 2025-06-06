@@ -140,7 +140,6 @@ export default function AdminAnalyticsPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Analytics do Sistema"
           subtitle={`Monitoramento e estatísticas em tempo real | Última atualização: ${lastUpdate.toLocaleTimeString()}`}
@@ -399,7 +398,6 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 }

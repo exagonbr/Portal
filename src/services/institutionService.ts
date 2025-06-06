@@ -1,513 +1,162 @@
-import { apiClient, handleApiError, ApiClientError } from './apiClient';
-import { 
-  InstitutionResponseDto, 
-  InstitutionCreateDto, 
-  InstitutionUpdateDto,
-  PaginatedResponseDto 
-} from '../types/api';
+import { API_BASE_URL } from '../config/constants';
 
-export interface InstitutionFilters {
-  name?: string;
-  description?: string;
-  active?: boolean;
-  search?: string;
+export interface Institution {
+  id: string;
+  name: string;
+  code: string;
+  type: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
+  address?: string;
   city?: string;
   state?: string;
+  zip_code?: string;
+  country?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logo_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface InstitutionListOptions {
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface InstitutionQueryParams {
   page?: number;
   limit?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  filters?: InstitutionFilters;
+  search?: string;
+  type?: string;
+  is_active?: boolean;
 }
 
-export class InstitutionService {
-  private readonly baseEndpoint = '/institutions';
+// Helper function to get auth token
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // Try to get token from localStorage (matches auth service)
+  return localStorage.getItem('auth_token');
+};
 
-  /**
-   * Busca todas as instituições com paginação e filtros
-   */
-  async getInstitutions(options: InstitutionListOptions = {}): Promise<PaginatedResponseDto<InstitutionResponseDto>> {
-    try {
-      const {
-        page = 1,
-        limit = 10,
-        sortBy = 'name',
-        sortOrder = 'asc',
-        filters = {}
-      } = options;
-
-      // Converte filtros para parâmetros de query
-      const searchParams: Record<string, string | number | boolean> = {
-        page,
-        limit,
-        sortBy,
-        sortOrder
-      };
-
-      // Adiciona filtros se fornecidos
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          searchParams[key] = value;
-        }
-      });
-
-      const response = await apiClient.get<PaginatedResponseDto<InstitutionResponseDto>>(
-        this.baseEndpoint,
-        searchParams
-      );
-
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao buscar instituições');
-      }
-
-      return response.data!;
-    } catch (error) {
-      console.error('Erro ao buscar instituições:', error);
-      throw new Error(handleApiError(error));
-    }
+// Helper function to get auth headers
+const getAuthHeaders = (): HeadersInit => {
+  const token = getAuthToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
+  
+  return headers;
+};
 
-  /**
-   * Busca instituição por ID
-   */
-  async getInstitutionById(id: string): Promise<InstitutionResponseDto> {
-    try {
-      const response = await apiClient.get<InstitutionResponseDto>(`${this.baseEndpoint}/${id}`);
+export const institutionService = {
+  async getInstitutions(params: InstitutionQueryParams = {}): Promise<PaginatedResponse<Institution>> {
+    const queryParams = new URLSearchParams();
+    
+    // Add query parameters if they exist
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.type) queryParams.append('type', params.type);
+    if (params.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
 
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Instituição não encontrada');
+    const response = await fetch(`${API_BASE_URL}/api/institutions?${queryParams.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
       }
+      throw new Error('Falha ao buscar instituições');
+    }
 
-      return response.data;
-    } catch (error) {
-      console.error(`Erro ao buscar instituição ${id}:`, error);
-      
-      if (error instanceof ApiClientError && error.status === 404) {
+    return response.json();
+  },
+
+  async getInstitutionById(id: string): Promise<Institution> {
+    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
+      }
+      if (response.status === 404) {
         throw new Error('Instituição não encontrada');
       }
-      
-      throw new Error(handleApiError(error));
+      throw new Error('Falha ao buscar instituição');
     }
-  }
 
-  /**
-   * Cria nova instituição
-   */
-  async createInstitution(institutionData: InstitutionCreateDto): Promise<InstitutionResponseDto> {
-    try {
-      // Validação básica
-      if (!institutionData.name?.trim()) {
-        throw new Error('Nome da instituição é obrigatório');
+    return response.json();
+  },
+
+  async createInstitution(data: Partial<Institution>): Promise<Institution> {
+    const response = await fetch(`${API_BASE_URL}/api/institutions`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
       }
-
-      const response = await apiClient.post<InstitutionResponseDto>(this.baseEndpoint, institutionData);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao criar instituição');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao criar instituição:', error);
-      
-      if (error instanceof ApiClientError) {
-        if (error.status === 409) {
-          throw new Error('Já existe uma instituição com este nome');
-        }
-        if (error.status === 400) {
-          throw new Error(error.errors?.join(', ') || 'Dados inválidos');
-        }
-      }
-      
-      throw new Error(handleApiError(error));
+      throw new Error('Falha ao criar instituição');
     }
-  }
 
-  /**
-   * Atualiza instituição existente
-   */
-  async updateInstitution(id: string, institutionData: InstitutionUpdateDto): Promise<InstitutionResponseDto> {
-    try {
-      const response = await apiClient.put<InstitutionResponseDto>(`${this.baseEndpoint}/${id}`, institutionData);
+    return response.json();
+  },
 
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao atualizar instituição');
+  async updateInstitution(id: string, data: Partial<Institution>): Promise<Institution> {
+    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
       }
-
-      return response.data;
-    } catch (error) {
-      console.error(`Erro ao atualizar instituição ${id}:`, error);
-      
-      if (error instanceof ApiClientError) {
-        if (error.status === 404) {
-          throw new Error('Instituição não encontrada');
-        }
-        if (error.status === 409) {
-          throw new Error('Já existe uma instituição com este nome');
-        }
-        if (error.status === 400) {
-          throw new Error(error.errors?.join(', ') || 'Dados inválidos');
-        }
+      if (response.status === 404) {
+        throw new Error('Instituição não encontrada');
       }
-      
-      throw new Error(handleApiError(error));
+      throw new Error('Falha ao atualizar instituição');
     }
-  }
 
-  /**
-   * Remove instituição
-   */
+    return response.json();
+  },
+
   async deleteInstitution(id: string): Promise<void> {
-    try {
-      const response = await apiClient.delete<void>(`${this.baseEndpoint}/${id}`);
+    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
 
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao deletar instituição');
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
       }
-    } catch (error) {
-      console.error(`Erro ao deletar instituição ${id}:`, error);
-      
-      if (error instanceof ApiClientError) {
-        if (error.status === 404) {
-          throw new Error('Instituição não encontrada');
-        }
-        if (error.status === 409) {
-          throw new Error('Não é possível deletar instituição que possui usuários ou cursos');
-        }
-      }
-      
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Busca instituições ativas (para dropdowns e seletores)
-   */
-  async getActiveInstitutions(): Promise<InstitutionResponseDto[]> {
-    try {
-      const response = await this.getInstitutions({
-        filters: { active: true },
-        limit: 100, // Busca muitas instituições ativas
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
-
-      return response.items;
-    } catch (error) {
-      console.error('Erro ao buscar instituições ativas:', error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Busca instituições por nome (para autocomplete)
-   */
-  async searchInstitutionsByName(name: string): Promise<InstitutionResponseDto[]> {
-    try {
-      if (!name.trim()) {
-        return [];
-      }
-
-      const response = await this.getInstitutions({
-        filters: { search: name.trim() },
-        limit: 20,
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
-
-      return response.items;
-    } catch (error) {
-      console.error('Erro ao buscar instituições por nome:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Ativa/desativa instituição
-   */
-  async toggleInstitutionStatus(id: string, active: boolean): Promise<InstitutionResponseDto> {
-    try {
-      const response = await apiClient.patch<InstitutionResponseDto>(
-        `${this.baseEndpoint}/${id}/status`,
-        { active }
-      );
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao alterar status da instituição');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error(`Erro ao alterar status da instituição ${id}:`, error);
-      
-      if (error instanceof ApiClientError && error.status === 404) {
+      if (response.status === 404) {
         throw new Error('Instituição não encontrada');
       }
-      
-      throw new Error(handleApiError(error));
+      throw new Error('Falha ao deletar instituição');
     }
-  }
-
-  /**
-   * Busca estatísticas das instituições
-   */
-  async getInstitutionStats(): Promise<{
-    total: number;
-    active: number;
-    inactive: number;
-    usersCount: Record<string, number>;
-    coursesCount: Record<string, number>;
-  }> {
-    try {
-      const response = await apiClient.get<{
-        total: number;
-        active: number;
-        inactive: number;
-        usersCount: Record<string, number>;
-        coursesCount: Record<string, number>;
-      }>(`${this.baseEndpoint}/stats`);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao buscar estatísticas');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao buscar estatísticas das instituições:', error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Verifica se instituição pode ser deletada
-   */
-  async canDeleteInstitution(id: string): Promise<{ canDelete: boolean; reason?: string }> {
-    try {
-      const response = await apiClient.get<{ canDelete: boolean; reason?: string }>(
-        `${this.baseEndpoint}/${id}/can-delete`
-      );
-
-      if (!response.success || !response.data) {
-        return { canDelete: false, reason: 'Erro ao verificar se instituição pode ser deletada' };
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error(`Erro ao verificar se instituição ${id} pode ser deletada:`, error);
-      return { canDelete: false, reason: handleApiError(error) };
-    }
-  }
-
-  /**
-   * Busca usuários de uma instituição
-   */
-  async getInstitutionUsers(id: string, options: { page?: number; limit?: number } = {}): Promise<{
-    users: any[];
-    pagination: any;
-  }> {
-    try {
-      const { page = 1, limit = 10 } = options;
-
-      const response = await apiClient.get<{
-        users: any[];
-        pagination: any;
-      }>(`${this.baseEndpoint}/${id}/users`, { page, limit });
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao buscar usuários da instituição');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error(`Erro ao buscar usuários da instituição ${id}:`, error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Busca cursos de uma instituição
-   */
-  async getInstitutionCourses(id: string, options: { page?: number; limit?: number } = {}): Promise<{
-    courses: any[];
-    pagination: any;
-  }> {
-    try {
-      const { page = 1, limit = 10 } = options;
-
-      const response = await apiClient.get<{
-        courses: any[];
-        pagination: any;
-      }>(`${this.baseEndpoint}/${id}/courses`, { page, limit });
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao buscar cursos da instituição');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error(`Erro ao buscar cursos da instituição ${id}:`, error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Exporta instituições para CSV
-   */
-  async exportInstitutions(filters?: InstitutionFilters): Promise<Blob> {
-    try {
-      const searchParams: Record<string, string | number | boolean> = {
-        format: 'csv'
-      };
-
-      // Adiciona filtros se fornecidos
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            searchParams[key] = value;
-          }
-        });
-      }
-
-      const response = await apiClient.get<Blob>(
-        `${this.baseEndpoint}/export`,
-        searchParams
-      );
-
-      if (!response.data) {
-        throw new Error('Falha ao exportar instituições');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao exportar instituições:', error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Importa instituições de arquivo CSV
-   */
-  async importInstitutions(file: File): Promise<{
-    success: number;
-    errors: Array<{ line: number; error: string }>;
-  }> {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await apiClient.post<{
-        success: number;
-        errors: Array<{ line: number; error: string }>;
-      }>(`${this.baseEndpoint}/import`, formData);
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao importar instituições');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao importar instituições:', error);
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Busca instituições por localização
-   */
-  async getInstitutionsByLocation(city?: string, state?: string): Promise<InstitutionResponseDto[]> {
-    try {
-      const filters: InstitutionFilters = {};
-      if (city) filters.city = city;
-      if (state) filters.state = state;
-
-      const response = await this.getInstitutions({
-        filters,
-        limit: 100,
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
-
-      return response.items;
-    } catch (error) {
-      console.error('Erro ao buscar instituições por localização:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Valida dados da instituição
-   */
-  validateInstitutionData(data: InstitutionCreateDto | InstitutionUpdateDto): string[] {
-    const errors: string[] = [];
-
-    if ('name' in data && data.name !== undefined) {
-      if (!data.name.trim()) {
-        errors.push('Nome é obrigatório');
-      } else if (data.name.length < 2) {
-        errors.push('Nome deve ter pelo menos 2 caracteres');
-      } else if (data.name.length > 100) {
-        errors.push('Nome deve ter no máximo 100 caracteres');
-      }
-    }
-
-    if (data.email && data.email.trim()) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(data.email)) {
-        errors.push('Email inválido');
-      }
-    }
-
-    if (data.phone && data.phone.trim()) {
-      const phoneRegex = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
-      if (!phoneRegex.test(data.phone)) {
-        errors.push('Telefone deve estar no formato (XX) XXXXX-XXXX');
-      }
-    }
-
-    return errors;
-  }
-
-  /**
-   * Método list para compatibilidade com outros serviços
-   */
-  async list(options?: InstitutionListOptions): Promise<PaginatedResponseDto<InstitutionResponseDto>> {
-    return this.getInstitutions(options);
-  }
-
-  /**
-   * Método getAll para compatibilidade com outros serviços
-   */
-  async getAll(): Promise<{ data: InstitutionResponseDto[] }> {
-    const response = await this.getInstitutions({ limit: 1000 });
-    return { data: response.items };
-  }
-
-  /**
-   * Método create para compatibilidade com outros serviços
-   */
-  async create(data: InstitutionCreateDto): Promise<InstitutionResponseDto> {
-    return this.createInstitution(data);
-  }
-
-  /**
-   * Método update para compatibilidade com outros serviços
-   */
-  async update(id: string, data: InstitutionUpdateDto): Promise<InstitutionResponseDto> {
-    return this.updateInstitution(id, data);
-  }
-}
-
-// Instância singleton do serviço de instituições
-export const institutionService = new InstitutionService();
-
-// Funções de conveniência para compatibilidade
-export const getInstitutions = (options?: InstitutionListOptions) => institutionService.getInstitutions(options);
-export const getInstitutionById = (id: string) => institutionService.getInstitutionById(id);
-export const createInstitution = (data: InstitutionCreateDto) => institutionService.createInstitution(data);
-export const updateInstitution = (id: string, data: InstitutionUpdateDto) => institutionService.updateInstitution(id, data);
-export const deleteInstitution = (id: string) => institutionService.deleteInstitution(id);
-export const getActiveInstitutions = () => institutionService.getActiveInstitutions();
-export const searchInstitutionsByName = (name: string) => institutionService.searchInstitutionsByName(name);
+  },
+};

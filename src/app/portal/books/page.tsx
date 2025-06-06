@@ -21,7 +21,7 @@ import PageLayout from '@/components/layout/PageLayout';
 import ContentSection from '@/components/layout/ContentSection';
 import SearchBar from '@/components/layout/SearchBar';
 import StatCard from '@/components/layout/StatCard';
-import Button from '@/components/ui/Button';
+import { Button, ButtonGroup } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { UserRole } from '@/types/roles';
@@ -29,6 +29,22 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockBooks as importedMockBooks, carouselBookImages } from '@/constants/mockData';
+import {
+  Book,
+  Plus,
+  Search,
+  Filter,
+  Upload,
+  Download,
+  Eye,
+  Star,
+  Calendar,
+  MoreVertical,
+  FileText,
+  Bookmark,
+  Heart,
+  Share2
+} from 'lucide-react';
 
 // Extend the imported books with additional properties
 interface ExtendedBook {
@@ -134,6 +150,38 @@ const HeroSection = () => {
   );
 };
 
+interface BookItem {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  cover: string;
+  category: string;
+  subject: string;
+  pages: number;
+  language: string;
+  year: number;
+  isbn?: string;
+  publisher?: string;
+  uploaded_by: string;
+  uploaded_at: string;
+  downloads: number;
+  views: number;
+  rating: number;
+  reviews_count: number;
+  file_size: string;
+  file_type: 'pdf' | 'epub' | 'mobi';
+  is_favorite?: boolean;
+  reading_progress?: number;
+}
+
+interface BookCategory {
+  id: string;
+  name: string;
+  count: number;
+  icon: string;
+}
+
 export default function PortalBooksPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -143,48 +191,206 @@ export default function PortalBooksPage() {
   const [selectedFormat, setSelectedFormat] = useState('Todos');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [books, setBooks] = useState<BookItem[]>([]);
+  const [categories, setCategories] = useState<BookCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterSubject, setFilterSubject] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('recent');
 
-  // Filter books
+  useEffect(() => {
+    loadBooks();
+    loadCategories();
+  }, [filterCategory, filterSubject, sortBy]);
+
+  const loadBooks = async () => {
+    try {
+      setLoading(true);
+      // Simular carregamento de dados
+      setTimeout(() => {
+        setBooks([
+          {
+            id: '1',
+            title: 'Dom Casmurro',
+            author: 'Machado de Assis',
+            description: 'Um dos maiores clássicos da literatura brasileira, narra a história de Bentinho e Capitu.',
+            cover: 'https://via.placeholder.com/200x300/4F46E5/FFFFFF?text=Dom+Casmurro',
+            category: 'Literatura Clássica',
+            subject: 'Português',
+            pages: 256,
+            language: 'Português',
+            year: 1899,
+            isbn: '978-85-7232-406-7',
+            publisher: 'Editora Globo',
+            uploaded_by: 'Biblioteca Digital',
+            uploaded_at: '2024-01-15',
+            downloads: 1234,
+            views: 3456,
+            rating: 4.8,
+            reviews_count: 89,
+            file_size: '2.5 MB',
+            file_type: 'pdf',
+            is_favorite: true,
+            reading_progress: 45
+          },
+          {
+            id: '2',
+            title: 'O Cortiço',
+            author: 'Aluísio Azevedo',
+            description: 'Romance naturalista que retrata a vida em um cortiço do Rio de Janeiro.',
+            cover: 'https://via.placeholder.com/200x300/10B981/FFFFFF?text=O+Cortiço',
+            category: 'Literatura Clássica',
+            subject: 'Português',
+            pages: 320,
+            language: 'Português',
+            year: 1890,
+            uploaded_by: 'Biblioteca Digital',
+            uploaded_at: '2024-01-20',
+            downloads: 987,
+            views: 2345,
+            rating: 4.6,
+            reviews_count: 67,
+            file_size: '3.1 MB',
+            file_type: 'pdf',
+            is_favorite: false,
+            reading_progress: 0
+          },
+          {
+            id: '3',
+            title: 'Matemática Básica - Volume 1',
+            author: 'João Silva',
+            description: 'Livro didático completo para o ensino fundamental de matemática.',
+            cover: 'https://via.placeholder.com/200x300/F59E0B/FFFFFF?text=Matemática',
+            category: 'Didático',
+            subject: 'Matemática',
+            pages: 450,
+            language: 'Português',
+            year: 2023,
+            publisher: 'Editora Educação',
+            uploaded_by: 'Prof. João Silva',
+            uploaded_at: '2024-02-10',
+            downloads: 567,
+            views: 1890,
+            rating: 4.9,
+            reviews_count: 45,
+            file_size: '15.2 MB',
+            file_type: 'pdf',
+            is_favorite: true,
+            reading_progress: 78
+          },
+          {
+            id: '4',
+            title: 'História do Brasil Colonial',
+            author: 'Maria Santos',
+            description: 'Uma análise completa do período colonial brasileiro.',
+            cover: 'https://via.placeholder.com/200x300/EF4444/FFFFFF?text=História',
+            category: 'Didático',
+            subject: 'História',
+            pages: 380,
+            language: 'Português',
+            year: 2022,
+            uploaded_by: 'Prof. Roberto Lima',
+            uploaded_at: '2024-02-15',
+            downloads: 432,
+            views: 1567,
+            rating: 4.7,
+            reviews_count: 34,
+            file_size: '8.7 MB',
+            file_type: 'epub',
+            is_favorite: false
+          },
+          {
+            id: '5',
+            title: 'Contos Infantis Brasileiros',
+            author: 'Vários Autores',
+            description: 'Coletânea de contos populares do folclore brasileiro.',
+            cover: 'https://via.placeholder.com/200x300/8B5CF6/FFFFFF?text=Contos',
+            category: 'Literatura Infantil',
+            subject: 'Português',
+            pages: 180,
+            language: 'Português',
+            year: 2024,
+            uploaded_by: 'Biblioteca Digital',
+            uploaded_at: '2024-03-01',
+            downloads: 789,
+            views: 2134,
+            rating: 4.9,
+            reviews_count: 56,
+            file_size: '5.4 MB',
+            file_type: 'pdf',
+            is_favorite: true
+          }
+        ]);
+        setLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Erro ao carregar livros:', error);
+      setLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    setCategories([
+      { id: '1', name: 'Literatura Clássica', count: 45, icon: '📚' },
+      { id: '2', name: 'Didático', count: 78, icon: '📖' },
+      { id: '3', name: 'Literatura Infantil', count: 32, icon: '🧸' },
+      { id: '4', name: 'Referência', count: 23, icon: '📔' },
+      { id: '5', name: 'Paradidático', count: 19, icon: '📕' }
+    ]);
+  };
+
   const filteredBooks = useMemo(() => {
-    return mockBooks.filter(book => {
+    return books.filter(book => {
       const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          book.author.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'Todos' || book.category === selectedCategory;
-      const matchesFormat = selectedFormat === 'Todos' || book.format.toLowerCase() === selectedFormat.toLowerCase();
+                          book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          book.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = filterCategory === 'all' || book.category === filterCategory;
+      const matchesSubject = filterSubject === 'all' || book.subject === filterSubject;
       
-      return matchesSearch && matchesCategory && matchesFormat;
+      return matchesSearch && matchesCategory && matchesSubject;
     });
-  }, [searchTerm, selectedCategory, selectedFormat]);
+  }, [searchTerm, filterCategory, filterSubject, books]);
 
-  // Statistics
-  const stats = useMemo(() => ({
-    total: mockBooks.length,
-    reading: mockBooks.filter(b => b.status === 'reading').length,
-    completed: mockBooks.filter(b => b.status === 'completed').length,
-    wishlist: mockBooks.filter(b => b.status === 'wishlist').length
-  }), []);
+  const sortedBooks = useMemo(() => {
+    return [...filteredBooks].sort((a, b) => {
+      switch (sortBy) {
+        case 'recent':
+          return new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime();
+        case 'popular':
+          return b.downloads - a.downloads;
+        case 'rating':
+          return b.rating - a.rating;
+        case 'title':
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    });
+  }, [filteredBooks, sortBy]);
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      i < rating ? (
-        <StarSolidIcon key={i} className="w-4 h-4 text-yellow-400" />
-      ) : (
-        <StarIcon key={i} className="w-4 h-4 text-gray-300" />
-      )
+  const uniqueSubjects = useMemo(() => {
+    return Array.from(new Set(books.map(b => b.subject)));
+  }, [books]);
+
+  const toggleFavorite = (bookId: string) => {
+    setBooks(books.map(book => 
+      book.id === bookId ? { ...book, is_favorite: !book.is_favorite } : book
     ));
   };
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      reading: { text: 'Lendo', className: 'bg-blue-100 text-blue-700' },
-      completed: { text: 'Concluído', className: 'bg-green-100 text-green-700' },
-      wishlist: { text: 'Lista de Desejos', className: 'bg-yellow-100 text-yellow-700' }
-    };
-    const badge = badges[status as keyof typeof badges];
+  const renderRatingStars = (rating: number) => {
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${badge.className}`}>
-        {badge.text}
-      </span>
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-3 w-3 ${
+              star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+            }`}
+          />
+        ))}
+      </div>
     );
   };
 
@@ -203,35 +409,35 @@ export default function PortalBooksPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
             title="Total de Livros"
-            value={stats.total.toString()}
-            icon={<BookOpenIcon className="w-6 h-6 text-gray-600" />}
+            value={books.length.toString()}
+            icon={<Book className="h-6 w-6 text-gray-600" />}
           />
           <StatCard
-            title="Lendo Atualmente"
-            value={stats.reading.toString()}
-            icon={<ClockIcon className="w-6 h-6 text-blue-600" />}
+            title="Downloads"
+            value={books.reduce((acc, b) => acc + b.downloads, 0).toString()}
+            icon={<Download className="h-6 w-6 text-blue-600" />}
           />
           <StatCard
-            title="Concluídos"
-            value={stats.completed.toString()}
-            icon={<CheckCircleIcon className="w-6 h-6 text-green-600" />}
+            title="Favoritos"
+            value={books.filter(b => b.is_favorite).length.toString()}
+            icon={<Heart className="h-6 w-6 text-red-600" />}
           />
           <StatCard
-            title="Lista de Desejos"
-            value={stats.wishlist.toString()}
-            icon={<BookmarkIcon className="w-6 h-6 text-yellow-600" />}
+            title="Em Leitura"
+            value={books.filter(b => b.reading_progress && b.reading_progress > 0).length.toString()}
+            icon={<Bookmark className="h-6 w-6 text-green-600" />}
           />
         </div>
 
         {/* Quick Navigation */}
         <div className="flex flex-wrap gap-3 mb-6">
           <Link href="/portal/books/favorites">
-            <Button variant="outline" leftIcon={<HeartIcon className="w-4 h-4" />}>
+            <Button variant="outline" leftIcon={<Heart className="w-4 h-4" />}>
               Favoritos
             </Button>
           </Link>
           <Link href="/portal/books/highlights">
-            <Button variant="outline" leftIcon={<StarIcon className="w-4 h-4" />}>
+            <Button variant="outline" leftIcon={<Star className="w-4 h-4" />}>
               Destaques
             </Button>
           </Link>
@@ -241,7 +447,7 @@ export default function PortalBooksPage() {
             </Button>
           </Link>
           <Link href="/portal/books/content">
-            <Button variant="outline" leftIcon={<BookmarkIcon className="w-4 h-4" />}>
+            <Button variant="outline" leftIcon={<Bookmark className="w-4 h-4" />}>
               Marcadores
             </Button>
           </Link>
@@ -255,7 +461,7 @@ export default function PortalBooksPage() {
               <SearchBar
                 value={searchTerm}
                 onChange={setSearchTerm}
-                placeholder="Buscar livros ou autores..."
+                placeholder="Buscar livros, autores..."
                 className="flex-1"
               />
               
@@ -264,7 +470,7 @@ export default function PortalBooksPage() {
                   variant="outline"
                   size="md"
                   onClick={() => setShowFilters(!showFilters)}
-                  leftIcon={<FunnelIcon className="w-4 h-4" />}
+                  leftIcon={<Filter className="h-4 w-4" />}
                 >
                   Filtros
                 </Button>
@@ -298,11 +504,11 @@ export default function PortalBooksPage() {
                     Categoria
                   </label>
                   <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {categories.map(cat => (
+                    {['all', ...categories.map(c => c.name)].map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
@@ -310,15 +516,15 @@ export default function PortalBooksPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Formato
+                    Disciplina
                   </label>
                   <select
-                    value={selectedFormat}
-                    onChange={(e) => setSelectedFormat(e.target.value)}
+                    value={filterSubject}
+                    onChange={(e) => setFilterSubject(e.target.value)}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {formats.map(format => (
-                      <option key={format} value={format}>{format}</option>
+                    {['all', ...uniqueSubjects].map(subject => (
+                      <option key={subject} value={subject}>{subject}</option>
                     ))}
                   </select>
                 </div>
@@ -327,162 +533,245 @@ export default function PortalBooksPage() {
           </div>
         </ContentSection>
 
-        {/* Books Grid/List */}
-        {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
-            {filteredBooks.map((book) => (
-              <div key={book.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                {/* Book Cover */}
-                <div className="aspect-[3/4] bg-gray-100 relative">
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                    <BookOpenIcon className="w-16 h-16" />
-                  </div>
-                  <div className="absolute top-2 right-2">
-                    {getStatusBadge(book.status)}
-                  </div>
-                </div>
-                
-                {/* Book Info */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1">
-                    {book.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-2">{book.author}</p>
-                  <p className="text-xs text-gray-500 mb-3">
-                    {book.category} • {book.pages} páginas • {book.format.toUpperCase()}
-                  </p>
-                  
-                  {/* Progress */}
-                  {book.status === 'reading' && (
-                    <div className="mb-3">
-                      <div className="flex justify-between text-xs text-gray-600 mb-1">
-                        <span>Progresso</span>
-                        <span>{book.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all"
-                          style={{ width: `${book.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Rating */}
-                  {book.rating > 0 && (
-                    <div className="flex items-center mb-3">
-                      {renderStars(book.rating)}
-                    </div>
-                  )}
-                  
-                  {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => router.push(`/portal/books/${book.id}`)}
-                    >
-                      {book.status === 'wishlist' ? 'Adicionar' : 'Abrir'}
-                    </Button>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <DocumentArrowDownIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <ContentSection>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Livro
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Categoria
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Formato
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Progresso
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBooks.map((book) => (
-                    <tr key={book.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-14 bg-gray-100 rounded flex items-center justify-center mr-3">
-                            <BookOpenIcon className="w-6 h-6 text-gray-400" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{book.title}</div>
-                            <div className="text-sm text-gray-500">{book.author}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {book.category}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                          {book.format.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full"
-                              style={{ width: `${book.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-sm text-gray-500">{book.progress}%</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(book.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="mr-2"
-                          onClick={() => router.push(`/portal/books/${book.id}`)}
-                        >
-                          Abrir
-                        </Button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <DocumentArrowDownIcon className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Barra de ações */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div className="flex w-full md:w-auto gap-2">
+            <div className="relative flex-grow md:flex-grow-0">
+              <input
+                type="text"
+                placeholder="Buscar livros, autores..."
+                className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             </div>
-          </ContentSection>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+            >
+              <Filter className="h-4 w-4" />
+              Filtros
+            </button>
+          </div>
+          
+          <div className="flex gap-2">
+            <div className="flex bg-slate-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-1 rounded text-sm transition-colors ${
+                  viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-slate-600'
+                }`}
+              >
+                Grade
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 rounded text-sm transition-colors ${
+                  viewMode === 'list' ? 'bg-white shadow-sm' : 'text-slate-600'
+                }`}
+              >
+                Lista
+              </button>
+            </div>
+            {user?.role === 'TEACHER' && (
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="flex items-center gap-1 px-4 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors"
+              >
+                <Upload className="h-4 w-4" />
+                Enviar Livro
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filtros */}
+        {showFilters && (
+          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Ordenar por
+                </label>
+                <select
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="recent">Mais Recentes</option>
+                  <option value="popular">Mais Baixados</option>
+                  <option value="rating">Melhor Avaliados</option>
+                  <option value="title">Título (A-Z)</option>
+                </select>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Empty State */}
-        {filteredBooks.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum livro encontrado</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Tente ajustar os filtros ou adicione um novo livro.
-            </p>
+        {/* Grid/Lista de livros */}
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {loading ? (
+              <div className="col-span-full flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-dark"></div>
+              </div>
+            ) : sortedBooks.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <Book className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-600">Nenhum livro encontrado</p>
+              </div>
+            ) : (
+              sortedBooks.map((book) => (
+                <div key={book.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative">
+                    <img
+                      src={book.cover}
+                      alt={book.title}
+                      className="w-full h-64 object-cover"
+                    />
+                    {book.reading_progress && book.reading_progress > 0 && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2">
+                        <div className="flex items-center justify-between text-white text-xs mb-1">
+                          <span>Leitura: {book.reading_progress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-1">
+                          <div 
+                            className="bg-green-500 h-1 rounded-full"
+                            style={{ width: `${book.reading_progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => toggleFavorite(book.id)}
+                      className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
+                    >
+                      <Heart className={`h-4 w-4 ${book.is_favorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                    </button>
+                  </div>
+                  
+                  <div className="p-4">
+                    <h3 className="font-semibold text-slate-800 line-clamp-2 mb-1">
+                      {book.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 mb-2">{book.author}</p>
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      {renderRatingStars(book.rating)}
+                      <span className="text-xs text-slate-500">({book.reviews_count})</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                      <span>{book.pages} páginas</span>
+                      <span className="uppercase">{book.file_type}</span>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors">
+                        <Download className="h-4 w-4" />
+                        Baixar
+                      </button>
+                      <button className="flex items-center justify-center px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-dark"></div>
+              </div>
+            ) : sortedBooks.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                <Book className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-600">Nenhum livro encontrado</p>
+              </div>
+            ) : (
+              sortedBooks.map((book) => (
+                <div key={book.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex gap-6">
+                    <img
+                      src={book.cover}
+                      alt={book.title}
+                      className="w-32 h-48 object-cover rounded-lg flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="text-xl font-semibold text-slate-800 mb-1">
+                            {book.title}
+                          </h3>
+                          <p className="text-slate-600 mb-2">por {book.author}</p>
+                        </div>
+                        <button
+                          onClick={() => toggleFavorite(book.id)}
+                          className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                        >
+                          <Heart className={`h-5 w-5 ${book.is_favorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                        </button>
+                      </div>
+                      
+                      <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                        {book.description}
+                      </p>
+                      
+                      <div className="flex items-center gap-4 mb-3">
+                        <div className="flex items-center gap-2">
+                          {renderRatingStars(book.rating)}
+                          <span className="text-sm text-slate-500">({book.reviews_count} avaliações)</span>
+                        </div>
+                        <span className="text-sm text-slate-500">•</span>
+                        <span className="text-sm text-slate-500">{book.downloads} downloads</span>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-4 text-sm text-slate-600 mb-4">
+                        <span><strong>Categoria:</strong> {book.category}</span>
+                        <span><strong>Páginas:</strong> {book.pages}</span>
+                        <span><strong>Idioma:</strong> {book.language}</span>
+                        <span><strong>Formato:</strong> {book.file_type.toUpperCase()}</span>
+                        <span><strong>Tamanho:</strong> {book.file_size}</span>
+                      </div>
+                      
+                      {book.reading_progress && book.reading_progress > 0 && (
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-slate-600">Progresso de leitura</span>
+                            <span className="font-medium">{book.reading_progress}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-2">
+                            <div 
+                              className="bg-green-500 h-2 rounded-full"
+                              style={{ width: `${book.reading_progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-3">
+                        <button className="flex items-center gap-2 px-4 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors">
+                          <Download className="h-4 w-4" />
+                          Baixar ({book.file_size})
+                        </button>
+                        <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+                          <Eye className="h-4 w-4" />
+                          Ler Online
+                        </button>
+                        <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+                          <Share2 className="h-4 w-4" />
+                          Compartilhar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </PageLayout>

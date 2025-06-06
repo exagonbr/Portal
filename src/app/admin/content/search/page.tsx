@@ -14,8 +14,8 @@ const SORT_OPTIONS = [
   { value: 'type', label: 'Tipo' }
 ]
 
-const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100]
-const DEFAULT_ITEMS_PER_PAGE = 20
+const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100, 200, 500]
+const DEFAULT_ITEMS_PER_PAGE = 50
 
 interface BucketInfo {
   name: string
@@ -91,12 +91,21 @@ export default function AdminContentSearchPage() {
 
   // Carregar buckets ao montar o componente
   useEffect(() => {
-    loadBuckets()
+    const initializeData = async () => {
+      await loadBuckets()
+      // Após carregar os buckets, carregar todos os arquivos se a aba for "todos"
+      if (activeTab === 'todos' || !activeTab) {
+        await loadAllFiles()
+      }
+    }
+    initializeData()
   }, [])
 
   // Carregar arquivos quando mudar aba ativa
   useEffect(() => {
-    if (activeTab) {
+    if (activeTab === 'todos') {
+      loadAllFiles()
+    } else if (activeTab) {
       loadFiles()
     }
   }, [activeTab])
@@ -113,9 +122,9 @@ export default function AdminContentSearchPage() {
       const buckets = await BucketService.getConfiguredBuckets()
       setAvailableBuckets(buckets)
       
-      // Definir primeira aba como ativa se não houver nenhuma
+      // Definir aba "todos" como ativa por padrão
       if (buckets.length > 0 && !activeTab) {
-        setActiveTab(buckets[0].category)
+        setActiveTab('todos')
       }
       
       // Inicializar estado de contents para todos os buckets
@@ -282,7 +291,14 @@ export default function AdminContentSearchPage() {
 
   // Função para filtrar e ordenar conteúdo com paginação
   const getFilteredContent = useMemo(() => {
-    let content = contents[activeTab] || []
+    let content: S3FileInfo[] = []
+    
+    // Se a aba ativa for "todos", combinar todos os arquivos
+    if (activeTab === 'todos') {
+      content = Object.values(contents).flat()
+    } else {
+      content = contents[activeTab] || []
+    }
     
     // Filtrar por termo de busca
     if (searchTerm) {
@@ -702,6 +718,39 @@ export default function AdminContentSearchPage() {
         <div className="mb-6">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
+              {/* Aba Todos */}
+              <button
+                onClick={() => setActiveTab('todos')}
+                disabled={loading}
+                className={`py-3 px-4 border-b-2 font-medium text-sm flex items-center space-x-3 transition-all duration-200 disabled:cursor-not-allowed ${
+                  activeTab === 'todos'
+                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <span className="material-symbols-outlined text-lg">folder</span>
+                <div className="flex flex-col items-start">
+                  <span className="font-semibold">Todos os Arquivos</span>
+                  <span className="text-xs text-gray-500">Todos os buckets</span>
+                </div>
+                
+                {loading && activeTab === 'todos' ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                      {Object.values(contents).flat().length}
+                    </span>
+                    {Object.values(contents).flat().length > 0 && (
+                      <span className="text-xs text-green-600 font-medium">
+                        {Object.values(contents).flat().filter(file => file.hasDbReference).length} vinculados
+                      </span>
+                    )}
+                  </div>
+                )}
+              </button>
+
+              {/* Abas dos buckets */}
               {availableBuckets.map((bucket) => {
                 const isActive = activeTab === bucket.category
                 const filesCount = contents[bucket.category]?.length || 0
@@ -756,27 +805,39 @@ export default function AdminContentSearchPage() {
                   <span className="material-symbols-outlined text-blue-600">info</span>
                   <div>
                     <h3 className="font-medium text-blue-800">
-                      {availableBuckets.find(b => b.category === activeTab)?.label}
+                      {activeTab === 'todos' 
+                        ? 'Todos os Arquivos' 
+                        : availableBuckets.find(b => b.category === activeTab)?.label}
                     </h3>
                     <p className="text-blue-600 text-sm">
-                      Bucket: {availableBuckets.find(b => b.category === activeTab)?.name}
+                      {activeTab === 'todos' 
+                        ? `${availableBuckets.length} buckets configurados` 
+                        : `Bucket: ${availableBuckets.find(b => b.category === activeTab)?.name}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4 text-sm">
                   <div className="text-center">
-                    <div className="font-bold text-blue-800">{contents[activeTab]?.length || 0}</div>
+                    <div className="font-bold text-blue-800">
+                      {activeTab === 'todos' 
+                        ? Object.values(contents).flat().length 
+                        : contents[activeTab]?.length || 0}
+                    </div>
                     <div className="text-blue-600">Total</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-green-600">
-                      {contents[activeTab]?.filter(file => file.hasDbReference).length || 0}
+                      {activeTab === 'todos'
+                        ? Object.values(contents).flat().filter(file => file.hasDbReference).length
+                        : contents[activeTab]?.filter(file => file.hasDbReference).length || 0}
                     </div>
                     <div className="text-green-600">Vinculados</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-red-600">
-                      {contents[activeTab]?.filter(file => !file.hasDbReference).length || 0}
+                      {activeTab === 'todos'
+                        ? Object.values(contents).flat().filter(file => !file.hasDbReference).length
+                        : contents[activeTab]?.filter(file => !file.hasDbReference).length || 0}
                     </div>
                     <div className="text-red-600">Não vinculados</div>
                   </div>
@@ -789,6 +850,24 @@ export default function AdminContentSearchPage() {
 
       {/* Lista de Conteúdo */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        {/* Indicador de quantidade de arquivos */}
+        {getFilteredContent.length > 0 && (
+          <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-gray-700">
+                Exibindo <span className="font-bold">{paginatedContent.length}</span> de{' '}
+                <span className="font-bold">{getFilteredContent.length}</span> arquivos
+                {searchTerm && ` (filtrado por: "${searchTerm}")`}
+                {contentType !== 'Todos' && ` (tipo: ${contentType})`}
+              </p>
+              {activeTab === 'todos' && (
+                <p className="text-sm text-gray-600">
+                  De <span className="font-bold">{availableBuckets.length}</span> buckets diferentes
+                </p>
+              )}
+            </div>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -796,6 +875,11 @@ export default function AdminContentSearchPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Arquivo
                 </th>
+                {activeTab === 'todos' && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Bucket
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tipo
                 </th>
@@ -844,6 +928,16 @@ export default function AdminContentSearchPage() {
                       </div>
                     </div>
                   </td>
+                  {activeTab === 'todos' && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm">
+                        <div className="font-medium text-gray-700">
+                          {availableBuckets.find(b => b.category === item.category)?.label || item.category}
+                        </div>
+                        <div className="text-gray-500 text-xs">{item.bucket}</div>
+                      </div>
+                    </td>
+                  )}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                       {item.type}
@@ -990,21 +1084,22 @@ export default function AdminContentSearchPage() {
                   <span className="font-medium">{getFilteredContent.length}</span>
                   {' '}resultados
                 </p>
-                {totalPages > 1 && (
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm text-gray-700">Mostrar:</label>
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                      className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {ITEMS_PER_PAGE_OPTIONS.map(option => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                    <span className="text-sm text-gray-700">por página</span>
-                  </div>
-                )}
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm text-gray-700">Mostrar:</label>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {ITEMS_PER_PAGE_OPTIONS.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                    {getFilteredContent.length <= 500 && (
+                      <option value={getFilteredContent.length}>Todos ({getFilteredContent.length})</option>
+                    )}
+                  </select>
+                  <span className="text-sm text-gray-700">por página</span>
+                </div>
               </div>
               
               {totalPages > 1 && (

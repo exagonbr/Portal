@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient, handleApiError } from './api';
 import { 
   Class, 
   CreateClassData, 
@@ -7,7 +7,15 @@ import {
   ClassFilter,
   ClassWithDetails 
 } from '@/types/class';
-import { PaginatedResponseDto } from '@/types/api';
+import { PaginatedResponseDto, ClassResponseDto, ClassCreateDto, ClassUpdateDto } from '@/types/api';
+
+interface ClassFilters {
+  page?: number;
+  course_id?: string;
+  teacher_id?: string;
+  status?: string;
+  active?: boolean;
+}
 
 export const classService = {
   // Listar turmas com paginação
@@ -34,8 +42,12 @@ export const classService = {
 
   // Buscar turma por ID
   async getById(id: string): Promise<Class> {
-    const response = await apiClient.get<Class>(`/classes/${id}`);
-    return response.data!;
+    try {
+      const response = await apiClient.get<ClassResponseDto>(`/classes/${id}`);
+      return response.data!;
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   // Buscar turmas por escola
@@ -51,15 +63,23 @@ export const classService = {
   },
 
   // Criar nova turma
-  async create(data: CreateClassData): Promise<Class> {
-    const response = await apiClient.post<Class>('/classes', data);
-    return response.data!;
+  async create(data: ClassCreateDto): Promise<Class> {
+    try {
+      const response = await apiClient.post<ClassResponseDto>('/classes', data);
+      return response.data!;
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   // Atualizar turma
-  async update(id: string, data: UpdateClassData): Promise<Class> {
-    const response = await apiClient.put<Class>(`/classes/${id}`, data);
-    return response.data!;
+  async update(id: string, data: ClassUpdateDto): Promise<Class> {
+    try {
+      const response = await apiClient.put<ClassResponseDto>(`/classes/${id}`, data);
+      return response.data!;
+    } catch (error) {
+      throw handleApiError(error);
+    }
   },
 
   // Desativar turma
@@ -87,5 +107,57 @@ export const classService = {
   // Desassociar ciclo de ensino
   async disassociateEducationCycle(classId: string, cycleId: string): Promise<void> {
     await apiClient.delete(`/classes/${classId}/education-cycles/${cycleId}`);
+  },
+
+  async search(query: string, filters?: ClassFilters) {
+    try {
+      const response = await apiClient.get<{ data: ClassResponseDto[]; total: number }>('/classes/search', {
+        params: {
+          query,
+          ...filters
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  async addStudent(classId: string, studentId: string) {
+    try {
+      const response = await apiClient.post<ClassResponseDto>(`/classes/${classId}/students`, {
+        student_id: studentId
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  async removeStudent(classId: string, studentId: string) {
+    try {
+      await apiClient.delete(`/classes/${classId}/students/${studentId}`);
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  async addTeacher(classId: string, teacherId: string) {
+    try {
+      const response = await apiClient.post<ClassResponseDto>(`/classes/${classId}/teachers`, {
+        teacher_id: teacherId
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  async removeTeacher(classId: string, teacherId: string) {
+    try {
+      await apiClient.delete(`/classes/${classId}/teachers/${teacherId}`);
+    } catch (error) {
+      throw handleApiError(error);
+    }
   }
 };

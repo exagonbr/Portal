@@ -226,7 +226,7 @@ export async function seed(knex: Knex): Promise<void> {
   const users = await knex('users').insert([
     {
       email: 'admin@sabercon.edu.br',
-      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
       name: 'Administrador do Sistema Sabercon',
       role_id: roleLookup['SYSTEM_ADMIN'],
       institution_id: institutions[0].id,
@@ -236,7 +236,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       email: 'gestor@sabercon.edu.br',
-      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
       name: 'Marina Silva Santos - Gestora Institucional',
       role_id: roleLookup['INSTITUTION_MANAGER'],
       institution_id: institutions[0].id,
@@ -246,7 +246,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       email: 'coordenador@sabercon.edu.com',
-      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
       name: 'Luciana Lima Costa - Coordenadora Acadêmica',
       role_id: roleLookup['ACADEMIC_COORDINATOR'],
       institution_id: institutions[0].id,
@@ -256,7 +256,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       email: 'professor@sabercon.edu.br',
-      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
       name: 'Ricardo Santos Oliveira - Professor',
       role_id: roleLookup['TEACHER'],
       institution_id: institutions[0].id,
@@ -266,7 +266,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       email: 'julia.c@ifsp.com',
-      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
       name: 'Julia Costa Ferreira - Estudante IFSP',
       role_id: roleLookup['STUDENT'],
       institution_id: institutions[1].id,
@@ -276,7 +276,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       email: 'renato@gmail.com',
-      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
       name: 'Renato Oliveira Silva - Responsável',
       role_id: roleLookup['GUARDIAN'],
       institution_id: institutions[0].id,
@@ -287,7 +287,7 @@ export async function seed(knex: Knex): Promise<void> {
     // Usuários de backup do sistema para testes
     {
       email: 'admin@portal.com',
-      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
       name: 'Admin Backup Portal',
       role_id: roleLookup['SYSTEM_ADMIN'],
       institution_id: institutions[0].id,
@@ -297,7 +297,7 @@ export async function seed(knex: Knex): Promise<void> {
     },
     {
       email: 'prof.carlos@ifsp.edu.br',
-      password: '$2a$12$B94GA3V2VLAJOtcfuM3O5OJIbaqWO1jSmCTiUQPyADBynIulqulIa', // admin123 (hash válido)
+      password: '$2a$12$CAEPB0QB3PdSAtrX1MewruU1rjW9fTdFgjmxGXllsturmPJkbNPFO', // password123 (hash válido)
       name: 'Carlos Alberto Professor - IFSP',
       role_id: roleLookup['TEACHER'],
       institution_id: institutions[1].id,
@@ -454,13 +454,13 @@ export async function seed(knex: Knex): Promise<void> {
   console.log(`   • ${educationCycles.length} ciclos educacionais`);
   console.log(`   • ${classes.length} turmas`);
   console.log('\n🔐 Usuários de teste criados:');
-  console.log('   👑 ADMIN SABERCON: admin@sabercon.edu.br / admin123');
-  console.log('   🏢 GESTOR: gestor@sabercon.edu.br / admin123');
-  console.log('   📚 COORDENADOR: coordenador@sabercon.edu.com / admin123');
-  console.log('   👨‍🏫 PROFESSOR: professor@sabercon.edu.br / admin123');
-  console.log('   🎓 ALUNA JULIA: julia.c@ifsp.com / admin123');
-  console.log('   👨‍👩‍👧‍👦 RENATO: renato@gmail.com / admin123');
-  console.log('   🔧 ADMIN BACKUP: admin@portal.com / admin123');
-  console.log('   👨‍🏫 PROF IFSP: prof.carlos@ifsp.edu.br / admin123');
+  console.log('   👑 ADMIN SABERCON: admin@sabercon.edu.br / password123');
+  console.log('   🏢 GESTOR: gestor@sabercon.edu.br / password123');
+  console.log('   📚 COORDENADOR: coordenador@sabercon.edu.com / password123');
+  console.log('   👨‍🏫 PROFESSOR: professor@sabercon.edu.br / password123');
+  console.log('   🎓 ALUNA JULIA: julia.c@ifsp.com / password123');
+  console.log('   👨‍👩‍👧‍👦 RENATO: renato@gmail.com / password123');
+  console.log('   🔧 ADMIN BACKUP: admin@portal.com / password123');
+  console.log('   👨‍🏫 PROF IFSP: prof.carlos@ifsp.edu.br / password123');
   console.log('\n✅ Sistema pronto para uso!');
 }

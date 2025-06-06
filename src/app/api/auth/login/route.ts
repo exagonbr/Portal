@@ -8,6 +8,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = body;
 
+    console.log('🔍 Login attempt:', { email, BACKEND_URL });
+
     // Fazer requisição para o backend
     const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: 'POST',
@@ -18,6 +20,7 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
+    console.log('📡 Backend response:', { status: response.status, data });
 
     if (!response.ok) {
       return NextResponse.json(
@@ -83,7 +86,9 @@ export async function POST(request: NextRequest) {
       token: data.token,
     });
   } catch (error) {
-    console.error('Erro no login:', error);
+    console.error('❌ Erro detalhado no login:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
+    
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

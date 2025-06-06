@@ -358,25 +358,14 @@
     @apply p-3 sm:p-4 lg:p-6 xl:p-8;
   }
 
-  .spacing-x-responsive {
-    @apply px-3 sm:px-4 lg:px-6 xl:px-8;
-  }
-
-  .spacing-y-responsive {
-    @apply py-3 sm:py-4 lg:py-6 xl:py-8;
+  /* Custom background color utility for background-primary */
+  .bg-background-primary {
+    background-color: var(--background-primary);
   }
 
   /* Margens Responsivas */
   .margin-responsive {
     @apply m-3 sm:m-4 lg:m-6 xl:m-8;
-  }
-
-  .margin-x-responsive {
-    @apply mx-3 sm:mx-4 lg:mx-6 xl:mx-8;
-  }
-
-  .margin-y-responsive {
-    @apply my-3 sm:my-4 lg:my-6 xl:my-8;
   }
 
   /* Gap Responsivo */
@@ -441,39 +430,6 @@
     display: none;
   }
 
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* Animações Suaves */
-  .transition-smooth {
-    @apply transition-all duration-300 ease-in-out;
-  }
-
-  /* Sombras Personalizadas */
-  .shadow-card {
-    @apply shadow-sm hover:shadow-md transition-shadow duration-300;
-  }
-
-  /* Gradientes */
-  .gradient-primary {
-    @apply bg-gradient-to-r from-primary to-primary-dark;
-  }
-
-  .gradient-light {
-    @apply bg-gradient-to-r from-background-secondary to-background-tertiary;
-  }
-
-  /* Scrollbar Styles */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
   /* Animations */
   @keyframes fade-in {
     from {
@@ -486,172 +442,25 @@
     }
   }
 
-  /* Custom focus styles */
-  .focus-visible:focus {
-    outline: 2px solid var(--color-primary-DEFAULT);
-    outline-offset: 2px;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideDown {
-  from {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%) skewX(-12deg);
-  }
-  100% {
-    transform: translateX(200%) skewX(-12deg);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 3s infinite;
-}
-
-/* PWA specific styles */
-@media (display-mode: standalone) {
-  /* Add padding for iOS safe areas */
-  body {
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-
-  /* Ajustes específicos para iPhone com notch/dynamic island */
-  @supports (padding-top: env(safe-area-inset-top)) {
-    .header-safe-area {
-      padding-top: env(safe-area-inset-top);
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
     }
-    
-    .content-safe-area {
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-      padding-bottom: env(safe-area-inset-bottom);
+    to {
+      transform: translateY(0);
+      opacity: 1;
     }
   }
 
-  /* Hide browser UI elements when in standalone mode */
-  .browser-ui {
-    display: none;
-  }
-}
-
-/* Offline indicator styles */
-.offline-indicator {
-  @apply fixed bottom-4 left-4 px-4 py-2 bg-warning text-white rounded-lg shadow-lg z-50 flex items-center gap-2;
-  animation: slideUp 0.3s ease-out;
-}
-
-.offline-indicator::before {
-  content: '';
-  @apply w-2 h-2 bg-current rounded-full animate-pulse;
-}
-
-/* Custom Scrollbar for Sidebar */
-.scrollbar-thin {
-  scrollbar-width: thin;
-}
-
-.scrollbar-thumb-sidebar-hover {
-  scrollbar-color: var(--sidebar-hover) transparent;
-}
-
-.scrollbar-track-transparent {
-  scrollbar-track-color: transparent;
-}
-
-/* Webkit scrollbar styles for better browser support */
-.scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: var(--sidebar-hover);
-  border-radius: 2px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: var(--sidebar-active);
-}
-
-/* Responsive sidebar improvements */
-@media (max-width: 768px) {
-  .sidebar-mobile-backdrop {
-    backdrop-filter: blur(4px);
-  }
-}
-
-/* Melhorias de responsividade para dispositivos móveis */
-@media (max-width: 390px) {
-  /* Ajustes específicos para iPhone 14 Pro */
-  .container-responsive {
-    @apply px-2 sm:px-3;
-  }
-
-  .card {
-    @apply rounded-lg;
-  }
-
-  .card-header {
-    @apply p-2 sm:p-3;
-  }
-
-  .card-body {
-    @apply p-2 sm:p-3;
-  }
-
-  .button-primary, .button-secondary {
-    @apply px-2 py-1.5 text-sm;
-  }
-
-  .input-field {
-    @apply px-2 py-1.5 text-sm;
-  }
-
-  .grid-responsive {
-    @apply gap-2;
-  }
-
-  .spacing-responsive {
-    @apply p-2;
-  }
-
-  .margin-responsive {
-    @apply m-2;
-  }
-
-  .gap-responsive {
-    @apply gap-1.5;
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 }

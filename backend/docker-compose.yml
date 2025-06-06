@@ -103,7 +103,7 @@ services:
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@portal.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_PASSWORD: password123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - "8080:80"

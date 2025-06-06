@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
-import Textarea from '@/components/ui/Textarea'
-import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
+import { Button, ButtonGroup } from '@/components/ui/Button';
 
 interface Institution {
   id: string
@@ -215,7 +215,6 @@ export default function InstitutionForm({ institution, mode, onSubmit, onCancel 
           <Button
             type="submit"
             variant="primary"
-            icon={mode === 'create' ? 'add' : 'save'}
           >
             {mode === 'create' ? 'Criar Instituição' : 'Salvar Alterações'}
           </Button>

@@ -75,6 +75,21 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showUserInfo, setShowUserInfo] = useState(false);
 
+  // Efeito para ajustar altura em dispositivos móveis
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+    
+    setVh();
+    window.addEventListener('resize', setVh);
+    
+    return () => {
+      window.removeEventListener('resize', setVh);
+    };
+  }, []);
+
   useEffect(() => {
     loadConversations();
   }, []);
@@ -281,11 +296,11 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="flex h-screen w-screen bg-gray-50">
+    <div className="flex w-full overflow-hidden" style={{ height: 'calc(var(--vh, 1vh) * 100)' }}>
       {/* Lista de Conversas */}
-      <div className="w-64 lg:w-80 bg-white flex flex-col">
+      <div className="w-64 lg:w-80 max-w-[320px] bg-white flex flex-col h-full border-r border-gray-200 overflow-hidden">
         {/* Cabeçalho */}
-        <div className="p-3 lg:p-4 flex-shrink-0">
+        <div className="p-3 lg:p-4 flex-shrink-0 border-b border-gray-100">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
             <h2 className="text-lg lg:text-xl font-bold text-gray-700 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
@@ -310,7 +325,7 @@ export default function ChatPage() {
         </div>
 
         {/* Lista de Conversas */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto">
           {filteredConversations.map((conversation) => (
             <div
               key={conversation.id}
@@ -375,9 +390,9 @@ export default function ChatPage() {
 
       {/* Área de Chat */}
       {selectedConversation ? (
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col h-full min-w-0">
           {/* Cabeçalho do Chat */}
-          <div className="bg-white p-4 flex-shrink-0">
+          <div className="bg-white p-4 flex-shrink-0 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative flex-shrink-0">
@@ -429,7 +444,7 @@ export default function ChatPage() {
           </div>
 
           {/* Mensagens */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 min-h-0">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
             {messages.map((message, index) => {
               const isCurrentUser = message.senderId === 'current';
               const showDate = index === 0 || 
@@ -480,7 +495,7 @@ export default function ChatPage() {
           </div>
 
           {/* Input de Mensagem */}
-          <form onSubmit={handleSendMessage} className="bg-white p-4 flex-shrink-0">
+          <form onSubmit={handleSendMessage} className="bg-white p-4 flex-shrink-0 border-t border-gray-200">
             <div className="flex items-end gap-2">
               <button
                 type="button"
@@ -517,7 +532,7 @@ export default function ChatPage() {
           </form>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
+        <div className="flex-1 flex items-center justify-center bg-gray-50 h-full">
           <div className="text-center">
             <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 text-lg">Selecione uma conversa para começar</p>
@@ -528,8 +543,8 @@ export default function ChatPage() {
 
       {/* Painel de Informações */}
       {showUserInfo && selectedConversation && (
-        <div className="w-64 lg:w-80 bg-white flex flex-col overflow-y-auto">
-          <div className="p-3 lg:p-4">
+        <div className="w-64 lg:w-80 max-w-[320px] bg-white flex flex-col h-full border-l border-gray-200 overflow-hidden">
+          <div className="p-3 lg:p-4 overflow-y-auto h-full">
             <div className="text-center mb-4 lg:mb-6">
               <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-full mx-auto mb-2 lg:mb-3 flex items-center justify-center font-semibold text-white ${
                 selectedConversation.type === 'group' ? 'bg-purple-500' : 'bg-blue-500'

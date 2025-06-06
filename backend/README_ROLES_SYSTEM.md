@@ -103,7 +103,7 @@ ts-node scripts/run-seeds.ts
 ## 👥 Usuários de Teste Criados
 
 ### Credenciais Padrão
-**Senha para todos:** `admin123`
+**Senha para todos:** `password123`
 
 | Usuário | Email | Role | Instituição |
 |---------|-------|------|-------------|
@@ -120,7 +120,7 @@ ts-node scripts/run-seeds.ts
 ```bash
 # SYSTEM_ADMIN Principal
 Email: admin@portal.com
-Senha: admin123
+Senha: password123
 Dashboard: /dashboard/system-admin
 ```
 
@@ -235,7 +235,7 @@ profile.manage
 POST /api/auth/login
 {
   "email": "admin@portal.com",
-  "password": "admin123"
+  "password": "password123"
 }
 
 # 2. Verificar resposta

@@ -38,7 +38,7 @@ const router = express.Router();
  *               summary: Login básico
  *               value:
  *                 email: "admin@portal.com"
- *                 password: "admin123"
+ *                 password: "password123"
  *             webLogin:
  *               summary: Login com dispositivo web
  *               value:

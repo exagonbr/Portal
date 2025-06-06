@@ -1,0 +1,79 @@
+import { apiClient, handleApiError, ApiClientError } from './apiClient';
+import { 
+  UnitResponseDto, 
+  UnitCreateDto, 
+  UnitUpdateDto,
+  PaginatedResponseDto 
+} from '../types/api';
+
+export interface UnitFilters {
+  name?: string;
+  description?: string;
+  active?: boolean;
+  search?: string;
+  institution_id?: string;
+  type?: string;
+}
+
+class UnitService {
+  private baseUrl = '/units';
+
+  async list(filters?: UnitFilters): Promise<PaginatedResponseDto<UnitResponseDto>> {
+    try {
+      const response = await apiClient.get<PaginatedResponseDto<UnitResponseDto>>(this.baseUrl, {
+        params: filters
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async getById(id: string): Promise<UnitResponseDto> {
+    try {
+      const response = await apiClient.get<UnitResponseDto>(`${this.baseUrl}/${id}`);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async create(data: UnitCreateDto): Promise<UnitResponseDto> {
+    try {
+      const response = await apiClient.post<UnitResponseDto>(this.baseUrl, data);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async update(id: string, data: UnitUpdateDto): Promise<UnitResponseDto> {
+    try {
+      const response = await apiClient.put<UnitResponseDto>(`${this.baseUrl}/${id}`, data);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    try {
+      await apiClient.delete(`${this.baseUrl}/${id}`);
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async search(query: string, filters?: UnitFilters): Promise<UnitResponseDto[]> {
+    try {
+      const response = await apiClient.get<UnitResponseDto[]>(`${this.baseUrl}/search`, {
+        params: { q: query, ...filters }
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+}
+
+export const unitService = new UnitService(); 

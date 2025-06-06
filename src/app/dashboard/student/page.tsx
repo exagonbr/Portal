@@ -518,713 +518,131 @@ function StudentDashboardContent() {
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          icon={TrendingUp}
-          title="Média Geral"
-          value={stats.averageGrade.toFixed(1)}
-          subtitle="de 10.0"
-          color="bg-primary-light"
-          trend="+0.5"
-        />
-        <StatCard
-          icon={CheckCircle}
-          title="Tarefas"
-          value={stats.completedTasks}
-          subtitle={`${stats.pendingTasks} pendentes`}
-          color="bg-accent-green"
-        />
-        <StatCard
-          icon={Calendar}
-          title="Frequência"
-          value={`${stats.attendance}%`}
-          subtitle="de presença"
-          color="bg-accent-purple"
-        />
-        <StatCard
-          icon={Activity}
-          title="Atividade"
-          value={`${stats.streakDays}d`}
-          subtitle="sequência atual"
-          color="bg-accent-orange"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="text-sm font-medium text-gray-500 mb-1">Média Geral</div>
+          <div className="text-2xl font-bold text-gray-600">8.7</div>
+          <div className="text-xs text-green-600 mt-2">↑ 0.2 este bimestre</div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="text-sm font-medium text-gray-500 mb-1">Presença</div>
+          <div className="text-2xl font-bold text-gray-600">96%</div>
+          <div className="text-xs text-green-600 mt-2">↑ 1% este mês</div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="text-sm font-medium text-gray-500 mb-1">Tarefas Pendentes</div>
+          <div className="text-2xl font-bold text-gray-600">2</div>
+          <div className="text-xs text-red-600 mt-2">1 para hoje</div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="text-sm font-medium text-gray-500 mb-1">Próxima Avaliação</div>
+          <div className="text-2xl font-bold text-gray-600">15/05</div>
+          <div className="text-xs text-blue-600 mt-2">Matemática</div>
+        </div>
       </div>
 
-      {/* Conteúdo baseado na view selecionada */}
-      {selectedView === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Tarefas Pendentes */}
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-primary" />
-              Minhas Tarefas
-            </h2>
-            <div className="space-y-3">
-              {assignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 bg-primary/10 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-medium">{assignment.title}</h3>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                      <span>{assignment.subject}</span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(assignment.dueDate).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {assignment.grade !== undefined && (
-                      <span className={`font-bold ${getGradeColor(assignment.grade, 10)}`}>
-                        {assignment.grade.toFixed(1)}
-                      </span>
-                    )}
-                    <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(assignment.status)}`}>
-                      {assignment.status === 'pending' ? 'Pendente' :
-                       assignment.status === 'submitted' ? 'Enviada' : 'Corrigida'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+      {/* Aulas do Dia */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">Aulas de Hoje</h2>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
+            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-blue-600">science</span>
             </div>
-            <button 
-              onClick={() => router.push('/assignments/view-all')}
-              className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark transition-colors"
-            >
-              Ver todas as tarefas
-            </button>
-          </div>
-
-          {/* Notas Recentes */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mt-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <BarChart className="w-5 h-5 mr-2 text-accent-green" />
-              Notas Recentes
-            </h2>
-            <div className="space-y-3">
-              {recentGrades.map((grade) => (
-                <div
-                  key={grade.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 bg-primary/10 rounded-lg"
-                >
-                  <div>
-                    <h3 className="font-medium">{grade.subject}</h3>
-                    <p className="text-sm text-gray-500">{grade.assessment}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new Date(grade.date).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-2xl font-bold ${getGradeColor(grade.grade, grade.maxGrade)}`}>
-                      {grade.grade.toFixed(1)}
-                    </p>
-                    <p className="text-sm text-gray-500">de {grade.maxGrade}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex-1">
+              <h3 className="font-medium text-gray-700">Matemática</h3>
+              <p className="text-sm text-gray-500">Prof. Silva • 08:00 - 09:30</p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-medium text-gray-700">Sala 203</div>
+              <div className="text-xs text-green-600">Presença Confirmada</div>
             </div>
           </div>
-
-          {/* Trilhas de Aprendizagem */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mt-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Brain className="w-5 h-5 mr-2 text-accent-purple" />
-              Minhas Trilhas de Aprendizagem
-            </h2>
-            <div className="space-y-4">
-              {learningPaths.map((path) => (
-                <div key={path.id} className="p-4 bg-gray-50 bg-primary/10 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold">{path.subject}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-600">
-                        Tópico atual: {path.currentTopic}
-                      </p>
-                    </div>
-                    <span className="text-sm text-gray-500">{path.estimatedTime}</span>
-                  </div>
-                  <div className="mb-2">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Progresso</span>
-                      <span>{path.progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 bg-gray-600 rounded-full h-2">
-                      <div
-                        className="bg-accent-purple h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${path.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Próximo: {path.nextTopic}
-                  </p>
-                  <button className="mt-2 text-sm text-accent-purple hover:text-purple-800">
-                    Continuar aprendendo →
-                  </button>
-                </div>
-              ))}
+          <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
+            <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-green-600">menu_book</span>
             </div>
-          </div>
-        </div>
-
-        {/* Coluna Lateral */}
-        <div className="space-y-6">
-          {/* Desafio do Dia */}
-          <div className="bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-2 flex items-center">
-              <Zap className="w-5 h-5 mr-2" />
-              Desafio do Dia
-            </h3>
-            <p className="text-sm mb-3">
-              Complete 3 exercícios de matemática para ganhar 50 XP bonus!
-            </p>
-            <div className="flex justify-between items-center">
-              <div className="text-xs">
-                <p>Progresso: 1/3</p>
-                <p>Expira em: 8h</p>
-              </div>
-              <button className="px-3 py-1 bg-white/20 rounded hover:bg-white/30 transition-colors">
-                Aceitar
-              </button>
+            <div className="flex-1">
+              <h3 className="font-medium text-gray-700">Português</h3>
+              <p className="text-sm text-gray-500">Prof. Santos • 10:00 - 11:30</p>
             </div>
-          </div>
-
-          {/* Materiais de Estudo */}
-          <div className="bg-white bg-primary/10 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-accent-purple" />
-              Materiais de Estudo
-            </h2>
-            <div className="space-y-3">
-              {studyMaterials.map((material) => (
-                <div
-                  key={material.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 bg-primary/10 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-200 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      material.type === 'pdf' ? 'bg-red-100 text-red-600' :
-                      material.type === 'video' ? 'bg-primary/20 text-primary' :
-                      material.type === 'document' ? 'bg-accent-green/20 text-accent-green' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{material.title}</p>
-                      <p className="text-xs text-gray-500">{material.subject}</p>
-                    </div>
-                  </div>
-                  <Download className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                </div>
-              ))}
-            </div>
-            <button 
-              onClick={() => router.push('/portal/student/materials')}
-              className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark transition-colors"
-            >
-              Ver todos os materiais
-            </button>
-          </div>
-
-          {/* Comunicados */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-accent-orange" />
-              Comunicados
-            </h2>
-            <div className="space-y-3">
-              {announcements.map((announcement) => (
-                <div
-                  key={announcement.id}
-                  className="p-3 bg-gray-50 bg-primary/10 rounded-lg"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-medium text-sm">{announcement.title}</h3>
-                    {announcement.priority === 'high' && (
-                      <AlertCircle className="w-4 h-4 text-red-500" />
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-600 mb-2">
-                    {announcement.content}
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{announcement.author}</span>
-                    <span>{new Date(announcement.date).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Próximas Conquistas */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
-              Próximas Conquistas
-            </h3>
-            <div className="space-y-3">
-              {achievements.filter(a => !a.unlocked).slice(0, 3).map((achievement) => (
-                <div key={achievement.id} className="p-3 bg-gray-50 bg-primary/10 rounded-lg">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-medium text-sm">{achievement.title}</p>
-                      <p className="text-xs text-gray-500">{achievement.description}</p>
-                    </div>
-                    <span className="text-xs text-accent-purple font-medium">
-                      +{achievement.xpReward} XP
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 bg-gray-600 rounded-full h-2">
-                    <div
-                      className="bg-accent-yellow h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {achievement.progress}/{achievement.total}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
-            <div className="space-y-2">
-              <button 
-                onClick={() => router.push('/live/student')}
-                className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
-              >
-                <Video className="w-4 h-4" />
-                Aula ao Vivo
-              </button>
-              <button 
-                onClick={() => router.push('/quiz/student')}
-                className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Gamepad2 className="w-4 h-4" />
-                Quiz Interativo
-              </button>
-              <button 
-                onClick={() => router.push('/study-groups/student')}
-                className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Users className="w-4 h-4" />
-                Grupo de Estudos
-              </button>
-              <button 
-                onClick={() => router.push('/chat/teacher')}
-                className="w-full px-4 py-2 bg-accent-orange text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <MessageSquare className="w-4 h-4" />
-                Falar com Professor
-              </button>
+            <div className="text-right">
+              <div className="text-sm font-medium text-gray-700">Sala 105</div>
+              <div className="text-xs text-green-600">Presença Confirmada</div>
             </div>
           </div>
         </div>
       </div>
-      )}
 
-      {/* View de Aprendizado */}
-      {selectedView === 'academic' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <Brain className="w-5 h-5 mr-2 text-accent-purple" />
-                Recursos de Aprendizagem Personalizados
-              </h2>
-              
-              <div className="mb-6">
-                <div className="flex flex-col md:flex-row gap-2 mb-4">
-                  <button className="px-4 py-2 bg-accent-purple text-white rounded-lg">
-                    Para Você
-                  </button>
-                  <button className="px-4 py-2 bg-gray-200 dark:bg-gray-300 rounded-lg">
-                    Todos
-                  </button>
-                  <button className="px-4 py-2 bg-gray-200 dark:bg-gray-300 rounded-lg">
-                    Favoritos
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {studyMaterials.map((material) => (
-                    <div
-                      key={material.id}
-                      className="p-4 border border-gray-200 dark:border-gray-400 rounded-lg hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className={`p-3 rounded-lg ${
-                          material.type === 'video' ? 'bg-red-100 text-red-600' :
-                          material.type === 'pdf' ? 'bg-primary/20 text-primary' :
-                          material.type === 'document' ? 'bg-accent-green/20 text-accent-green' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {material.type === 'video' ? <Video className="w-6 h-6" /> :
-                           <FileText className="w-6 h-6" />}
-                        </div>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <Heart className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <h3 className="font-semibold mb-1">{material.title}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-600 mb-3">
-                        {material.subject}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          {new Date(material.uploadDate).toLocaleDateString('pt-BR')}
-                        </span>
-                        <button className="px-3 py-1 bg-accent-purple text-white rounded text-sm hover:bg-purple-700">
-                          Acessar
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Jogos Educativos */}
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <Gamepad2 className="w-5 h-5 mr-2 text-accent-green" />
-                  Jogos Educativos
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-gradient-to-br from-primary-light to-primary text-white rounded-lg">
-                    <Zap className="w-8 h-8 mb-2" />
-                    <h4 className="font-semibold">Math Quest</h4>
-                    <p className="text-sm text-blue-100">Aventura matemática</p>
-                    <button className="mt-2 text-sm underline">Jogar →</button>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-accent-green to-green-600 text-white rounded-lg">
-                    <Brain className="w-8 h-8 mb-2" />
-                    <h4 className="font-semibold">Word Master</h4>
-                    <p className="text-sm text-green-100">Desafio de palavras</p>
-                    <button className="mt-2 text-sm underline">Jogar →</button>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-accent-purple to-purple-600 text-white rounded-lg">
-                    <Star className="w-8 h-8 mb-2" />
-                    <h4 className="font-semibold">Science Lab</h4>
-                    <p className="text-sm text-purple-100">Experimentos virtuais</p>
-                    <button className="mt-2 text-sm underline">Jogar →</button>
-                  </div>
-                </div>
-              </div>
+      {/* Tarefas Pendentes */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">Tarefas Pendentes</h2>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
+            <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-red-600">assignment</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-gray-700">Exercícios de Matemática</h3>
+              <p className="text-sm text-gray-500">Entrega: Hoje, 23:59</p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-medium text-gray-700">Status</div>
+              <div className="text-xs text-red-600">Pendente</div>
             </div>
           </div>
-
-          <div className="space-y-6">
-            {/* Recomendações Personalizadas */}
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Recomendado para Você</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-600 mb-4">
-                Baseado no seu desempenho e interesses
-              </p>
-              <div className="space-y-3">
-                <div className="p-3 bg-blue-50 bg-blue-900/20 rounded-lg">
-                  <p className="font-medium text-sm">Reforço em Frações</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-600 mt-1">
-                    Melhore sua nota em matemática
-                  </p>
-                  <button className="mt-2 text-xs text-primary hover:text-primary-dark">
-                    Começar agora →
-                  </button>
-                </div>
-                <div className="p-3 bg-green-50 bg-green-900/20 rounded-lg">
-                  <p className="font-medium text-sm">Desafio de Redação</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-600 mt-1">
-                    Pratique escrita criativa
-                  </p>
-                  <button className="mt-2 text-xs text-accent-green hover:text-green-800">
-                    Aceitar desafio →
-                  </button>
-                </div>
-              </div>
+          <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
+            <div className="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-yellow-600">assignment</span>
             </div>
-
-            {/* Estatísticas de Aprendizado */}
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Seu Progresso</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Tempo de estudo hoje</span>
-                    <span className="font-medium">2h 15min</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-primary h-2 rounded-full" style={{ width: '75%' }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Exercícios completados</span>
-                    <span className="font-medium">18/25</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-accent-green h-2 rounded-full" style={{ width: '72%' }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Vídeos assistidos</span>
-                    <span className="font-medium">5/8</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-accent-purple h-2 rounded-full" style={{ width: '62.5%' }} />
-                  </div>
-                </div>
-              </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-gray-700">Resenha de Literatura</h3>
+              <p className="text-sm text-gray-500">Entrega: Amanhã, 23:59</p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-medium text-gray-700">Status</div>
+              <div className="text-xs text-yellow-600">Em Andamento</div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* View Social */}
-      {selectedView === 'activities' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <Users className="w-5 h-5 mr-2 text-primary" />
-                Grupos de Estudo
-              </h2>
-              
-              <div className="space-y-4">
-                {studyGroups.map((group) => (
-                  <div
-                    key={group.id}
-                    className="p-4 border border-gray-200 dark:border-gray-400 rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold">{group.name}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-600">
-                          {group.subject} • {group.members} membros
-                        </p>
-                      </div>
-                      {group.isActive && (
-                        <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
-                          Ativo agora
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-500">
-                        Próximo encontro: {new Date(group.nextMeeting).toLocaleString('pt-BR')}
-                      </p>
-                      <button className="px-3 py-1 bg-primary text-white rounded text-sm hover:bg-primary-dark">
-                        Participar
-                      </button>
-                    </div>
-                  </div>
-                ))}
+      {/* Notas Recentes */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">Notas Recentes</h2>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-blue-600">science</span>
               </div>
-
-              <button className="w-full mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-300 rounded-lg hover:bg-gray-300 hover:bg-gray-600 transition-colors">
-                Criar Novo Grupo
-              </button>
+              <div>
+                <h3 className="font-medium text-gray-700">Matemática</h3>
+                <p className="text-sm text-gray-500">Prova Bimestral</p>
+              </div>
             </div>
-
-            {/* Ranking da Turma */}
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mt-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
-                Ranking da Turma
-              </h2>
-              
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((position) => (
-                  <div
-                    key={position}
-                    className={`flex items-center justify-between p-3 rounded-lg ${
-                      position === stats.ranking ? 'bg-primary/10 border border-primary/30' : 'bg-gray-50 bg-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                        position === 1 ? 'bg-yellow-400 text-yellow-900' :
-                        position === 2 ? 'bg-gray-300 text-gray-700' :
-                        position === 3 ? 'bg-orange-400 text-orange-900' :
-                        'bg-gray-200 text-gray-600'
-                      }`}>
-                        {position}
-                      </div>
-                      <div>
-                        <p className="font-medium">
-                          {position === stats.ranking ? user?.name : `Aluno ${position}`}
-                        </p>
-                        <p className="text-xs text-gray-500">{2500 - (position - 1) * 100} XP</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">Nível {13 - position}</p>
-                      <p className="text-xs text-gray-500">Média: {(9.5 - (position - 1) * 0.3).toFixed(1)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-gray-600">9.0</div>
+              <div className="text-xs text-green-600">Acima da média</div>
             </div>
           </div>
-
-          <div className="space-y-6">
-            {/* Atividade dos Amigos */}
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Atividade dos Amigos</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
-                    M
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm">
-                      <span className="font-medium">Maria</span> completou o desafio de matemática
-                    </p>
-                    <p className="text-xs text-gray-500">Há 2 horas</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-accent-green flex items-center justify-center text-white text-sm font-bold">
-                    J
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm">
-                      <span className="font-medium">João</span> subiu para o nível 15!
-                    </p>
-                    <p className="text-xs text-gray-500">Há 5 horas</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-accent-purple flex items-center justify-center text-white text-sm font-bold">
-                    A
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm">
-                      <span className="font-medium">Ana</span> criou um grupo de estudos
-                    </p>
-                    <p className="text-xs text-gray-500">Ontem</p>
-                  </div>
-                </div>
+          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-green-600">menu_book</span>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-700">Português</h3>
+                <p className="text-sm text-gray-500">Redação</p>
               </div>
             </div>
-
-            {/* Desafios em Grupo */}
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Desafios em Grupo</h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-gradient-to-r from-accent-purple to-pink-500 text-white rounded-lg">
-                  <h4 className="font-medium">Maratona de Matemática</h4>
-                  <p className="text-sm text-purple-100 mt-1">
-                    Resolva 50 problemas em equipe
-                  </p>
-                  <div className="mt-2 flex justify-between items-center">
-                    <span className="text-xs">3 dias restantes</span>
-                    <button className="text-sm underline">Participar →</button>
-                  </div>
-                </div>
-              </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-gray-600">8.5</div>
+              <div className="text-xs text-green-600">Acima da média</div>
             </div>
           </div>
         </div>
-      )}
-
-      {/* View de Conquistas */}
-      {selectedView === 'calendar' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-6 flex items-center">
-              <Trophy className="w-5 h-5 mr-2 text-accent-yellow" />
-              Minhas Conquistas
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {achievements.map((achievement) => (
-                <div
-                  key={achievement.id}
-                  className={`p-4 border rounded-lg ${
-                    achievement.unlocked
-                      ? 'border-yellow-400 bg-yellow-50 bg-yellow-900/20'
-                      : 'border-gray-200 dark:border-gray-400 bg-gray-50 bg-gray-800'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`p-3 rounded-lg ${
-                      achievement.unlocked
-                        ? 'bg-yellow-200 text-yellow-800'
-                        : 'bg-gray-200 dark:bg-gray-300 text-gray-500'
-                    }`}>
-                      {achievement.icon === 'star' ? <Star className="w-6 h-6" /> :
-                       achievement.icon === 'calculator' ? <Brain className="w-6 h-6" /> :
-                       <Users className="w-6 h-6" />}
-                    </div>
-                    {achievement.unlocked && (
-                      <Shield className="w-5 h-5 text-yellow-600" />
-                    )}
-                  </div>
-                  <h3 className={`font-semibold mb-1 ${
-                    !achievement.unlocked && 'text-gray-500'
-                  }`}>
-                    {achievement.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-600 mb-3">
-                    {achievement.description}
-                  </p>
-                  {!achievement.unlocked && (
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span>Progresso</span>
-                        <span>{achievement.progress}/{achievement.total}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <div
-                          className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-purple-600">
-                      +{achievement.xpReward} XP
-                    </span>
-                    {achievement.unlocked && (
-                      <span className="text-xs text-gray-500">
-                        Desbloqueado!
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Estatísticas de Conquistas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 text-center">
-              <Gem className="w-12 h-12 mx-auto mb-3 text-accent-purple" />
-              <h3 className="text-2xl font-bold mb-1">{stats.badges}</h3>
-              <p className="text-gray-600 dark:text-gray-600">Conquistas Desbloqueadas</p>
-            </div>
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 text-center">
-              <Zap className="w-12 h-12 mx-auto mb-3 text-accent-yellow" />
-              <h3 className="text-2xl font-bold mb-1">{stats.xpPoints}</h3>
-              <p className="text-gray-600 dark:text-gray-600">Pontos de Experiência</p>
-            </div>
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 text-center">
-              <Flame className="w-12 h-12 mx-auto mb-3 text-accent-orange" />
-              <h3 className="text-2xl font-bold mb-1">{stats.streakDays}</h3>
-              <p className="text-gray-600 dark:text-gray-600">Dias de Sequência</p>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

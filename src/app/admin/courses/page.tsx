@@ -1,216 +1,218 @@
 'use client'
 
-import { useState } from 'react'
-import DashboardLayout from '@/components/dashboard/DashboardLayout'
-import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
-import GenericCRUD from '@/components/crud/GenericCRUD'
-import Modal from '@/components/ui/Modal'
-import CourseForm from '@/components/forms/CourseForm'
-import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import { useCRUD } from '@/hooks/useCRUD'
-import { BaseApiService } from '@/services/api'
-import { useTheme } from '@/contexts/ThemeContext'
-import { UserRole } from '@/types/roles'
-import { useRouter } from 'next/navigation'
-
-interface Course {
-  id: string
-  name: string
-  code: string
-  description: string
-  institution_id: string
-  institution_name?: string
-  duration_hours: number
-  level: 'basic' | 'intermediate' | 'advanced'
-  category: string
-  active: boolean
-  created_at: string
-  updated_at: string
-}
-
-const courseService = new BaseApiService<Course>('/courses')
+import React, { useState, useEffect } from 'react';
+import { DataTable } from '@/components/DataTable';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/Input';
+import { Select } from '@/components/Select';
+import { CourseEditModal } from '@/components/CourseEditModal';
+import { toast } from 'react-hot-toast';
+import { courseService } from '@/services/courseService';
+import { institutionService } from '@/services/institutionService';
+import { CourseResponseDto } from '@/types/api';
 
 export default function CoursesPage() {
-  const { theme } = useTheme()
-  const router = useRouter()
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create')
-  
-  const {
-    data,
-    loading,
-    selectedItem,
-    pagination,
-    create,
-    update,
-    remove,
-    search,
-    setSelectedItem,
-    setPage
-  } = useCRUD({
-    service: courseService,
-    entityName: 'Curso',
-    autoFetch: true,
-    paginated: true
-  })
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<CourseResponseDto | undefined>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({
+    search: '',
+    institution_id: '',
+    level: '',
+    type: '',
+    active: ''
+  });
+  const [courses, setCourses] = useState<CourseResponseDto[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([]);
 
-  const handleCreate = () => {
-    setSelectedItem(null)
-    setModalMode('create')
-    setModalOpen(true)
-  }
+  useEffect(() => {
+    loadInstitutions();
+  }, []);
 
-  const handleEdit = (course: Course) => {
-    setSelectedItem(course)
-    setModalMode('edit')
-    setModalOpen(true)
-  }
+  useEffect(() => {
+    loadCourses();
+  }, [currentPage, filters]);
 
-  const handleView = (course: Course) => {
-    setSelectedItem(course)
-    setModalMode('view')
-    setModalOpen(true)
-  }
-
-  const handleManageModules = (course: Course) => {
-    router.push(`/admin/courses/${course.id}/modules`)
-  }
-
-  const handleSubmit = async (data: Partial<Course>) => {
-    if (modalMode === 'create') {
-      const result = await create(data)
-      if (result) {
-        setModalOpen(false)
-      }
-    } else if (modalMode === 'edit' && selectedItem) {
-      const result = await update(selectedItem.id, data)
-      if (result) {
-        setModalOpen(false)
-      }
+  const loadInstitutions = async () => {
+    try {
+      const response = await institutionService.list();
+      setInstitutions(response.data.map(inst => ({
+        id: inst.id,
+        name: inst.name
+      })));
+    } catch (error) {
+      toast.error('Erro ao carregar instituições');
     }
-  }
+  };
 
-  const getLevelBadge = (level: string) => {
-    const levelConfig = {
-      basic: { label: 'Básico', color: theme.colors.status.success },
-      intermediate: { label: 'Intermediário', color: theme.colors.status.warning },
-      advanced: { label: 'Avançado', color: theme.colors.status.error }
+  const loadCourses = async () => {
+    setIsLoading(true);
+    try {
+      const response = await courseService.search(filters.search, {
+        page: currentPage,
+        institution_id: filters.institution_id || undefined,
+        level: filters.level || undefined,
+        type: filters.type || undefined,
+        active: filters.active ? filters.active === 'true' : undefined
+      });
+      setCourses(response.data);
+      setTotalItems(response.total);
+    } catch (error) {
+      toast.error('Erro ao carregar cursos');
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const config = levelConfig[level as keyof typeof levelConfig] || { label: level, color: theme.colors.text.secondary }
+  const handleAdd = () => {
+    setSelectedCourse(undefined);
+    setIsModalOpen(true);
+  };
 
-    return (
-      <span 
-        className="px-3 py-1 rounded-full text-xs font-medium"
-        style={{ 
-          backgroundColor: config.color + '20',
-          color: config.color
-        }}
-      >
-        {config.label}
-      </span>
-    )
-  }
+  const handleEdit = (course: CourseResponseDto) => {
+    setSelectedCourse(course);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este curso?')) return;
+
+    try {
+      await courseService.delete(id);
+      toast.success('Curso excluído com sucesso!');
+      loadCourses();
+    } catch (error) {
+      toast.error('Erro ao excluir curso');
+    }
+  };
+
+  const handleSave = async (data: any) => {
+    try {
+      if (selectedCourse) {
+        await courseService.update(selectedCourse.id, data);
+        toast.success('Curso atualizado com sucesso!');
+      } else {
+        await courseService.create(data);
+        toast.success('Curso criado com sucesso!');
+      }
+      loadCourses();
+    } catch (error) {
+      toast.error('Erro ao salvar curso');
+      throw error;
+    }
+  };
 
   const columns = [
+    { header: 'Nome', accessorKey: 'name' },
+    { header: 'Nível', accessorKey: 'level' },
+    { header: 'Tipo', accessorKey: 'type' },
     {
-      key: 'name',
-      label: 'Nome',
-      sortable: true
+      header: 'Instituição',
+      accessorKey: 'institution',
+      cell: ({ row }: any) => row.original.institution?.name || '-'
     },
     {
-      key: 'code',
-      label: 'Código',
-      sortable: true
-    },
-    {
-      key: 'institution_name',
-      label: 'Instituição',
-      sortable: true
-    },
-    {
-      key: 'level',
-      label: 'Nível',
-      render: (course: Course) => getLevelBadge(course.level)
-    },
-    {
-      key: 'duration_hours',
-      label: 'Duração',
-      render: (course: Course) => `${course.duration_hours}h`
-    },
-    {
-      key: 'active',
-      label: 'Status',
-      render: (course: Course) => (
-        <span 
-          className="flex items-center gap-2"
-          style={{ color: course.active ? theme.colors.status.success : theme.colors.status.error }}
-        >
-          <span className="material-symbols-outlined text-sm">
-            {course.active ? 'check_circle' : 'cancel'}
-          </span>
-          {course.active ? 'Ativo' : 'Inativo'}
+      header: 'Status',
+      accessorKey: 'active',
+      cell: ({ row }: any) => (
+        <span className={`px-2 py-1 rounded-full text-xs ${
+          row.original.active ? 'bg-success-light text-success-dark' : 'bg-error-light text-error-dark'
+        }`}>
+          {row.original.active ? 'Ativo' : 'Inativo'}
         </span>
       )
-    }
-  ]
-
-  const customActions = [
+    },
     {
-      label: 'Gerenciar Módulos',
-      icon: 'folder_open',
-      onClick: handleManageModules,
-      variant: 'primary' as const
+      header: 'Ações',
+      accessorKey: 'actions',
+      cell: ({ row }: any) => (
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleEdit(row.original)}
+          >
+            Editar
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete(row.original.id)}
+          >
+            Excluir
+          </Button>
+        </div>
+      )
     }
-  ]
+  ];
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR]}>
-      <DashboardLayout>
-        <DashboardPageLayout
-          title="Gerenciar Cursos"
-          subtitle="Gerencie os cursos oferecidos pela instituição"
-        >
-          <GenericCRUD
-            title=""
-            entityName="Curso"
-            entityNamePlural="Cursos"
-            columns={columns}
-            data={data}
-            loading={loading}
-            totalItems={pagination.total}
-            currentPage={pagination.currentPage}
-            itemsPerPage={pagination.pageSize}
-            onPageChange={setPage}
-            onSearch={search}
-            onCreate={handleCreate}
-            onEdit={handleEdit}
-            onDelete={(course) => remove(course.id)}
-            onView={handleView}
-            customActions={customActions}
-          />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Cursos</h1>
+        <Button onClick={handleAdd}>Novo Curso</Button>
+      </div>
 
-          <Modal
-            isOpen={modalOpen}
-            onClose={() => setModalOpen(false)}
-            title={
-              modalMode === 'create' 
-                ? 'Novo Curso' 
-                : modalMode === 'edit' 
-                  ? 'Editar Curso' 
-                  : 'Visualizar Curso'
-            }
-            size="lg"
-          >
-            <CourseForm
-              course={selectedItem}
-              mode={modalMode}
-              onSubmit={handleSubmit}
-              onCancel={() => setModalOpen(false)}
-            />
-          </Modal>
-        </DashboardPageLayout>
-      </DashboardLayout>
-    </ProtectedRoute>
-  )
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Input
+          placeholder="Buscar cursos..."
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+        />
+        <Select
+          value={filters.institution_id}
+          onChange={(e) => setFilters({ ...filters, institution_id: e.target.value })}
+        >
+          <option value="">Todas as instituições</option>
+          {institutions.map((inst) => (
+            <option key={inst.id} value={inst.id}>
+              {inst.name}
+            </option>
+          ))}
+        </Select>
+        <Select
+          value={filters.level}
+          onChange={(e) => setFilters({ ...filters, level: e.target.value })}
+        >
+          <option value="">Todos os níveis</option>
+          <option value="FUNDAMENTAL">Ensino Fundamental</option>
+          <option value="MEDIO">Ensino Médio</option>
+          <option value="SUPERIOR">Ensino Superior</option>
+          <option value="POS_GRADUACAO">Pós-Graduação</option>
+          <option value="MESTRADO">Mestrado</option>
+          <option value="DOUTORADO">Doutorado</option>
+        </Select>
+        <Select
+          value={filters.type}
+          onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+        >
+          <option value="">Todos os tipos</option>
+          <option value="PRESENCIAL">Presencial</option>
+          <option value="EAD">EAD</option>
+          <option value="HIBRIDO">Híbrido</option>
+        </Select>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={courses}
+        isLoading={isLoading}
+        pagination={{
+          currentPage,
+          totalItems,
+          onPageChange: setCurrentPage
+        }}
+      />
+
+      <CourseEditModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSave}
+        course={selectedCourse}
+        title={selectedCourse ? 'Editar Curso' : 'Novo Curso'}
+      />
+    </div>
+  );
 } 

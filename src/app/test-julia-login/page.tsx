@@ -22,7 +22,7 @@ export default function TestJuliaLoginPage() {
         },
         body: JSON.stringify({ 
           email: 'julia.c@ifsp.com', 
-          password: 'admin123' 
+          password: 'password123'
         }),
       });
 
@@ -68,7 +68,7 @@ export default function TestJuliaLoginPage() {
             <h2 className="font-semibold text-blue-800 mb-2">Informações do Teste:</h2>
             <ul className="text-sm text-blue-700 space-y-1">
               <li>📧 Email: julia.c@ifsp.com</li>
-              <li>🔐 Senha: admin123</li>
+              <li>🔐 Senha: password123</li>
               <li>👤 Role Esperado: STUDENT</li>
               <li>🎯 Dashboard: /dashboard/student</li>
             </ul>

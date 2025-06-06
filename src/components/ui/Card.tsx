@@ -40,7 +40,7 @@ const roundedSizes = {
   full: 'rounded-full',
 };
 
-export const Card: React.FC<CardProps> = ({
+const Card: React.FC<CardProps> = ({
   children,
   className = '',
   hover = true,
@@ -101,7 +101,7 @@ interface CardHeaderProps {
   action?: React.ReactNode;
 }
 
-export const CardHeader: React.FC<CardHeaderProps> = ({
+const CardHeader: React.FC<CardHeaderProps> = ({
   children,
   className = '',
   icon,
@@ -143,7 +143,7 @@ interface CardBodyProps {
   className?: string;
 }
 
-export const CardBody: React.FC<CardBodyProps> = ({ children, className = '' }) => {
+const CardBody: React.FC<CardBodyProps> = ({ children, className = '' }) => {
   return <div className={className}>{children}</div>;
 };
 
@@ -160,7 +160,7 @@ const alignClasses = {
   between: 'justify-between',
 };
 
-export const CardFooter: React.FC<CardFooterProps> = ({
+const CardFooter: React.FC<CardFooterProps> = ({
   children,
   className = '',
   align = 'right',
@@ -190,7 +190,7 @@ interface StatCardProps {
   onClick?: () => void;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({
+const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
   icon,
@@ -268,4 +268,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       </div>
     </Card>
   );
-}; 
+};
+
+export default Card;
+export { CardHeader, CardBody, CardFooter, StatCard }; 

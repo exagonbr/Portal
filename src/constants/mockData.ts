@@ -13,9 +13,16 @@ export interface Book {
   synopsis: string;
   duration: string;
   progress?: number;
-  format?: 'pdf' | 'epub';
-  filePath?: string;
   pageCount?: number;
+  description?: string;
+  format: string;
+  filePath: string;
+  coverImage?: string;
+  publishDate?: string;
+  language?: string;
+  pages?: number;
+  categories?: string[];
+  tags?: string[];
 }
 
 export interface Video {
@@ -629,10 +636,11 @@ export const mockBooks: Book[] = [
     publisher: 'Teste Publisher',
     synopsis: 'Este livro não tem filePath definido para testar o sistema de fallback.',
     duration: '1h 30min',
-    format: 'pdf',
+    format: `pdf`,
     // filePath não definido propositalmente para testar fallback
     pageCount: 100,
-    progress: 0
+    progress: 0,
+    filePath: ''
   }
 ];
 

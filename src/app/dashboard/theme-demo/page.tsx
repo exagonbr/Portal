@@ -1,17 +1,18 @@
 'use client'
 
+import React from 'react'
 import { useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { ThemeSelector } from '@/components/ui/ThemeSelector'
 import Modal from '@/components/ui/Modal'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
-import Textarea from '@/components/ui/Textarea'
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
 import Table from '@/components/ui/Table'
 import StatsGrid from '@/components/dashboard/StatsGrid'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
+import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card'
+import { Button, ButtonGroup } from '@/components/ui/Button';
 import { motion } from 'framer-motion'
 
 export default function ThemeDemoPage() {
@@ -179,7 +180,7 @@ export default function ThemeDemoPage() {
                 label="Descrição"
                 placeholder="Conte-nos mais sobre você..."
                 value={formData.description}
-                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
                 showCharCount
                 maxLength={200}
                 autoResize
@@ -324,12 +325,12 @@ export default function ThemeDemoPage() {
                 placeholder="Digite algo..."
                 leftIcon="edit"
               />
-                             <Select
-                 label="Seleção no Modal"
-                 options={roleOptions}
-                 placeholder="Escolha uma opção"
-                 onChange={(value) => console.log('Selected:', value)}
-               />
+              <Select
+                label="Seleção no Modal"
+                options={roleOptions}
+                placeholder="Escolha uma opção"
+                onChange={(value) => console.log('Selected:', value)}
+              />
             </div>
             
             <Textarea

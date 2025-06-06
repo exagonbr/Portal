@@ -51,7 +51,6 @@ export default function AdminMonitoringPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Monitoramento do Sistema"
           subtitle="Monitore a performance e status em tempo real"
@@ -259,7 +258,6 @@ export default function AdminMonitoringPage() {
             </div>
           </div>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 }

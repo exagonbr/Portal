@@ -112,7 +112,7 @@ export default function AssignmentsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="p-6 max-w-7xl mx-auto">
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">
@@ -122,7 +122,7 @@ export default function AssignmentsPage() {
           </div>
           <div className="flex space-x-4">
             <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200">
-              <span className="material-icons text-sm mr-2">filter_list</span>
+              <span className="material-icon text-sm mr-2">filter_list</span>
               Filtros
             </button>
             <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">

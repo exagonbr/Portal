@@ -21,10 +21,19 @@ import {
   AlertCircle,
   CheckCircle,
   DollarSign,
-  Activity
+  Activity,
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Eye
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
+import { institutionService, Institution, InstitutionQueryParams } from '@/services/institutionService';
 
 interface InstitutionStats {
   totalSchools: number;
@@ -67,424 +76,328 @@ interface Announcement {
   targetAudience: string[];
 }
 
-export default function InstitutionManagerDashboard() {
+export default function InstitutionManagerDashboardPage() {
   const { user } = useAuth();
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<InstitutionStats>({
-    totalSchools: 0,
-    activeSchools: 0,
-    totalStudents: 0,
-    totalTeachers: 0,
-    totalClasses: 0,
-    averagePerformance: 0,
-    attendanceRate: 0,
-    graduationRate: 0,
-    budget: 0,
-    expenses: 0
+  const [error, setError] = useState<string | null>(null);
+  const [queryParams, setQueryParams] = useState<InstitutionQueryParams>({
+    page: 1,
+    limit: 10,
+    sortBy: 'name',
+    sortOrder: 'asc'
   });
-  const [schools, setSchools] = useState<SchoolOverview[]>([]);
-  const [performanceData, setPerformanceData] = useState<PerformanceMetric[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
 
   useEffect(() => {
-    loadDashboardData();
-  }, [selectedPeriod]);
+    fetchInstitutions();
+  }, [queryParams]);
 
-  const loadDashboardData = async () => {
+  const fetchInstitutions = async () => {
     try {
       setLoading(true);
-      
-      // Dados simulados
-      setStats({
-        totalSchools: 12,
-        activeSchools: 11,
-        totalStudents: 4567,
-        totalTeachers: 234,
-        totalClasses: 156,
-        averagePerformance: 78.5,
-        attendanceRate: 92.3,
-        graduationRate: 87.2,
-        budget: 2500000,
-        expenses: 1850000
-      });
-
-      setSchools([
-        {
-          id: '1',
-          name: 'Escola Central Alpha',
-          type: 'Ensino Médio',
-          students: 1234,
-          teachers: 56,
-          classes: 42,
-          performance: 85.2,
-          status: 'excellent'
-        },
-        {
-          id: '2',
-          name: 'Colégio Beta',
-          type: 'Fundamental II',
-          students: 890,
-          teachers: 45,
-          classes: 35,
-          performance: 76.8,
-          status: 'good'
-        },
-        {
-          id: '3',
-          name: 'Instituto Gamma',
-          type: 'Técnico',
-          students: 567,
-          teachers: 34,
-          classes: 28,
-          performance: 68.5,
-          status: 'attention'
-        },
-        {
-          id: '4',
-          name: 'Escola Delta',
-          type: 'Fundamental I',
-          students: 456,
-          teachers: 28,
-          classes: 24,
-          performance: 82.1,
-          status: 'good'
-        }
-      ]);
-
-      setPerformanceData([
-        { month: 'Jan', students: 4200, performance: 75, attendance: 90 },
-        { month: 'Fev', students: 4350, performance: 76, attendance: 91 },
-        { month: 'Mar', students: 4400, performance: 77, attendance: 92 },
-        { month: 'Abr', students: 4450, performance: 78, attendance: 92 },
-        { month: 'Mai', students: 4500, performance: 78.5, attendance: 92.3 }
-      ]);
-
-      setAnnouncements([
-        {
-          id: '1',
-          title: 'Reunião de Diretores',
-          content: 'Reunião mensal de alinhamento estratégico',
-          priority: 'high',
-          date: new Date(Date.now() + 86400000),
-          author: 'Sistema',
-          targetAudience: ['directors', 'coordinators']
-        },
-        {
-          id: '2',
-          title: 'Novo Protocolo de Segurança',
-          content: 'Implementação de novas medidas de segurança nas escolas',
-          priority: 'medium',
-          date: new Date(),
-          author: 'Coordenação Geral',
-          targetAudience: ['all']
-        }
-      ]);
-
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      setError(null);
+      const response = await institutionService.getInstitutions(queryParams);
+      setInstitutions(response.data);
+    } catch (err) {
+      setError('Erro ao carregar instituições. Verifique se o backend está rodando.');
+      console.error('Error fetching institutions:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusColor = (status: SchoolOverview['status']) => {
-    switch (status) {
-      case 'excellent': return 'text-accent-green bg-green-100';
-      case 'good': return 'text-primary bg-primary/10';
-      case 'attention': return 'text-accent-yellow bg-yellow-100';
-      case 'critical': return 'text-red-600 bg-red-100';
-    }
-  };
-
-  const getStatusLabel = (status: SchoolOverview['status']) => {
-    switch (status) {
-      case 'excellent': return 'Excelente';
-      case 'good': return 'Bom';
-      case 'attention': return 'Atenção';
-      case 'critical': return 'Crítico';
-    }
-  };
-
-  const getPriorityColor = (priority: Announcement['priority']) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-accent-yellow/10 text-accent-yellow';
-      case 'low': return 'bg-primary/10 text-primary-dark';
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark"></div>
-      </div>
+      <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER]}>
+        <DashboardPageLayout
+          title="Painel do Gestor"
+          subtitle="Gerencie sua instituição de ensino"
+        >
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-500">Carregando...</div>
+          </div>
+        </DashboardPageLayout>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER]}>
+        <DashboardPageLayout
+          title="Painel do Gestor"
+          subtitle="Gerencie sua instituição de ensino"
+        >
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <div className="text-red-700">{error}</div>
+            </div>
+            <button 
+              onClick={fetchInstitutions}
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        </DashboardPageLayout>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Cabeçalho */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-primary-dark" />
-              Painel de Gestão Institucional
-            </h1>
-            <p className="text-gray-600 dark:text-gray-600 mt-2">
-              Gerenciamento completo da rede educacional
-            </p>
+    <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER]}>
+      <DashboardPageLayout
+        title="Painel do Gestor"
+        subtitle="Gerencie sua instituição de ensino"
+      >
+        <div className="space-y-6">
+          {/* Cards de Estatísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="text-sm font-medium text-gray-500 mb-1">Total de Instituições</div>
+              <div className="text-2xl font-bold text-gray-600">{institutions.length}</div>
+              <div className="text-xs text-green-600 mt-2">
+                {institutions.filter(i => i.is_active).length} ativas
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="text-sm font-medium text-gray-500 mb-1">Escolas</div>
+              <div className="text-2xl font-bold text-gray-600">
+                {institutions.filter(i => i.type === 'SCHOOL').length}
+              </div>
+              <div className="text-xs text-blue-600 mt-2">Ensino básico</div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="text-sm font-medium text-gray-500 mb-1">Universidades</div>
+              <div className="text-2xl font-bold text-gray-600">
+                {institutions.filter(i => i.type === 'UNIVERSITY').length}
+              </div>
+              <div className="text-xs text-purple-600 mt-2">Ensino superior</div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="text-sm font-medium text-gray-500 mb-1">Centros Técnicos</div>
+              <div className="text-2xl font-bold text-gray-600">
+                {institutions.filter(i => i.type === 'TECH_CENTER').length}
+              </div>
+              <div className="text-xs text-orange-600 mt-2">Ensino técnico</div>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-400 rounded-lg focus:ring-2 focus:ring-primary-dark dark:bg-gray-300"
-            >
-              <option value="week">Última Semana</option>
-              <option value="month">Último Mês</option>
-              <option value="quarter">Último Trimestre</option>
-              <option value="year">Último Ano</option>
-            </select>
-            <button className="px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-primary transition-colors flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Configurações
-            </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Cards de Estatísticas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          icon={School}
-          title="Escolas Ativas"
-          value={`${stats.activeSchools}/${stats.totalSchools}`}
-          subtitle="91.7% operacionais"
-          trend="+2"
-          trendUp={true}
-          color="bg-primary-dark"
-        />
-        <StatCard
-          icon={Users}
-          title="Total de Alunos"
-          value={stats.totalStudents.toLocaleString('pt-BR')}
-          subtitle={`${stats.totalTeachers} professores`}
-          trend="+5.2%"
-          trendUp={true}
-          color="bg-primary"
-        />
-        <StatCard
-          icon={TrendingUp}
-          title="Desempenho Médio"
-          value={`${stats.averagePerformance}%`}
-          subtitle="Meta: 80%"
-          trend="+2.3%"
-          trendUp={true}
-          color="bg-accent-green"
-        />
-        <StatCard
-          icon={DollarSign}
-          title="Orçamento"
-          value={`${((stats.expenses / stats.budget) * 100).toFixed(1)}%`}
-          subtitle="R$ 650k disponível"
-          trend="74%"
-          trendUp={false}
-          color="bg-accent-yellow"
-        />
-      </div>
-
-      {/* Indicadores de Performance */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <PerformanceIndicator
-          title="Taxa de Presença"
-          value={stats.attendanceRate}
-          target={95}
-          icon={UserPlus}
-          color="primary"
-        />
-        <PerformanceIndicator
-          title="Taxa de Aprovação"
-          value={stats.graduationRate}
-          target={90}
-          icon={GraduationCap}
-          color="accent-green"
-        />
-        <PerformanceIndicator
-          title="Satisfação Geral"
-          value={85.6}
-          target={90}
-          icon={Award}
-          color="accent-purple"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Escolas */}
-        <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
+          {/* Lista de Instituições */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center">
-                <School className="w-5 h-5 mr-2 text-primary-dark" />
-                Escolas da Rede
-              </h2>
-              <button className="text-sm text-primary-dark hover:text-primary">
-                Ver todas
+              <h2 className="text-lg font-semibold text-gray-700">Instituições</h2>
+              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <Plus className="w-4 h-4" />
+                Nova Instituição
               </button>
             </div>
             
-            <div className="space-y-4">
-              {schools.map((school) => (
-                <div
-                  key={school.id}
-                  className="p-4 bg-gray-50 dark:bg-gray-300 rounded-lg hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold">{school.name}</h3>
-                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(school.status)}`}>
-                          {getStatusLabel(school.status)}
-                        </span>
+            {institutions.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Nenhuma instituição encontrada
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {institutions.map((institution) => (
+                  <div key={institution.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        institution.type === 'SCHOOL' ? 'bg-blue-100' :
+                        institution.type === 'UNIVERSITY' ? 'bg-purple-100' :
+                        institution.type === 'COLLEGE' ? 'bg-green-100' :
+                        'bg-orange-100'
+                      }`}>
+                        <School className={`w-6 h-6 ${
+                          institution.type === 'SCHOOL' ? 'text-blue-600' :
+                          institution.type === 'UNIVERSITY' ? 'text-purple-600' :
+                          institution.type === 'COLLEGE' ? 'text-green-600' :
+                          'text-orange-600'
+                        }`} />
                       </div>
-                      <div className="grid grid-cols-4 gap-4 text-sm text-gray-600 dark:text-gray-600">
-                        <div>
-                          <p className="font-medium">{school.students}</p>
-                          <p className="text-xs">Alunos</p>
-                        </div>
-                        <div>
-                          <p className="font-medium">{school.teachers}</p>
-                          <p className="text-xs">Professores</p>
-                        </div>
-                        <div>
-                          <p className="font-medium">{school.classes}</p>
-                          <p className="text-xs">Turmas</p>
-                        </div>
-                        <div>
-                          <p className="font-medium">{school.performance}%</p>
-                          <p className="text-xs">Desempenho</p>
-                        </div>
+                      <div>
+                        <h3 className="font-medium text-gray-700">{institution.name}</h3>
+                        <p className="text-sm text-gray-500">
+                          {institution.code} • {institution.type.replace('_', ' ')}
+                        </p>
+                        {institution.city && institution.state && (
+                          <p className="text-xs text-gray-400">
+                            {institution.city}, {institution.state}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <button className="px-3 py-1 text-sm bg-primary-dark/10 text-primary-dark rounded-lg hover:bg-primary-dark/20">
-                      Detalhes
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        institution.is_active 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {institution.is_active ? 'Ativa' : 'Inativa'}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Gráficos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Evolução de Matrículas</h3>
-              <div className="h-48 flex items-center justify-center text-gray-500">
-                Gráfico de linha - Matrículas por mês
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Distribuição por Nível</h3>
-              <div className="h-48 flex items-center justify-center text-gray-500">
-                Gráfico de pizza - Alunos por nível de ensino
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Painel Lateral */}
-        <div className="space-y-6">
           {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Ações Rápidas</h3>
-            <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-primary-dark text-white rounded-lg hover:bg-primary transition-colors flex items-center justify-center gap-2">
-                <School className="w-4 h-4" />
-                Nova Escola
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Ações Rápidas</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <button className="flex items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <span className="material-symbols-outlined text-blue-600">school</span>
+                <span className="text-sm font-medium text-gray-700">Gerenciar Escolas</span>
               </button>
-              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
-                <Users className="w-4 h-4" />
-                Gerenciar Usuários
+              <button className="flex items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <span className="material-symbols-outlined text-blue-600">groups</span>
+                <span className="text-sm font-medium text-gray-700">Gerenciar Turmas</span>
               </button>
-              <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
-                <FileText className="w-4 h-4" />
-                Relatórios
+              <button className="flex items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <span className="material-symbols-outlined text-blue-600">person</span>
+                <span className="text-sm font-medium text-gray-700">Gerenciar Professores</span>
               </button>
-              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                <Bell className="w-4 h-4" />
-                Comunicados
+              <button className="flex items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                <span className="material-symbols-outlined text-blue-600">person_add</span>
+                <span className="text-sm font-medium text-gray-700">Gerenciar Alunos</span>
               </button>
             </div>
           </div>
 
-          {/* Comunicados */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-accent-orange" />
-              Comunicados Recentes
-            </h3>
-            <div className="space-y-3">
-              {announcements.map((announcement) => (
-                <div
-                  key={announcement.id}
-                  className="p-3 bg-gray-50 dark:bg-gray-300 rounded-lg"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-sm">{announcement.title}</h4>
-                    <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(announcement.priority)}`}>
-                      {announcement.priority === 'high' ? 'Alta' : 
-                       announcement.priority === 'medium' ? 'Média' : 'Baixa'}
-                    </span>
+          {/* Visão Geral das Escolas */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Visão Geral das Escolas</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-blue-600">school</span>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-600 mb-2">
-                    {announcement.content}
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{announcement.author}</span>
-                    <span>{announcement.date.toLocaleDateString('pt-BR')}</span>
+                  <div>
+                    <h3 className="font-medium text-gray-700">Escola Central</h3>
+                    <p className="text-sm text-gray-500">500 alunos • 25 professores</p>
                   </div>
                 </div>
-              ))}
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-700">Taxa de Ocupação</div>
+                  <div className="text-xs text-green-600">95%</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-green-600">school</span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-700">Escola Norte</h3>
+                    <p className="text-sm text-gray-500">350 alunos • 18 professores</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-700">Taxa de Ocupação</div>
+                  <div className="text-xs text-green-600">88%</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-yellow-600">school</span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-700">Escola Sul</h3>
+                    <p className="text-sm text-gray-500">400 alunos • 20 professores</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-gray-700">Taxa de Ocupação</div>
+                  <div className="text-xs text-yellow-600">75%</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Metas e Objetivos */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Target className="w-5 h-5 mr-2 text-accent-green" />
-              Metas do Período
-            </h3>
-            <div className="space-y-3">
-              <MetricProgress
-                label="Taxa de Retenção"
-                current={92}
-                target={95}
-                unit="%"
-              />
-              <MetricProgress
-                label="Novas Matrículas"
-                current={234}
-                target={300}
-                unit=""
-              />
-              <MetricProgress
-                label="Satisfação dos Pais"
-                current={88}
-                target={90}
-                unit="%"
-              />
-              <MetricProgress
-                label="Formação de Professores"
-                current={45}
-                target={60}
-                unit="h"
-              />
+          {/* Indicadores de Desempenho */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Indicadores de Desempenho</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-4 rounded-lg border border-gray-200">
+                <h3 className="font-medium text-gray-700 mb-2">Taxa de Aprovação</h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+                  </div>
+                  <span className="text-sm font-medium">85%</span>
+                </div>
+              </div>
+              <div className="p-4 rounded-lg border border-gray-200">
+                <h3 className="font-medium text-gray-700 mb-2">Taxa de Evasão</h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="bg-red-500 h-2 rounded-full" style={{ width: '5%' }}></div>
+                  </div>
+                  <span className="text-sm font-medium">5%</span>
+                </div>
+              </div>
+              <div className="p-4 rounded-lg border border-gray-200">
+                <h3 className="font-medium text-gray-700 mb-2">Satisfação dos Pais</h3>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '92%' }}></div>
+                  </div>
+                  <span className="text-sm font-medium">92%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Próximos Eventos */}
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Próximos Eventos</h2>
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border border-gray-200">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-700">Reunião de Diretores</h3>
+                  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">Hoje</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-2">
+                  Reunião mensal com diretores das unidades para alinhamento estratégico.
+                </p>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>14:00 - 16:00</span>
+                  <span>Sala de Reuniões</span>
+                </div>
+              </div>
+              <div className="p-4 rounded-lg border border-gray-200">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-700">Inauguração Nova Unidade</h3>
+                  <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">15/05</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-2">
+                  Cerimônia de inauguração da nova unidade escolar.
+                </p>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>10:00 - 12:00</span>
+                  <span>Nova Unidade</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </DashboardPageLayout>
+    </ProtectedRoute>
   );
 }
 

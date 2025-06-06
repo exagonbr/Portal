@@ -11,7 +11,6 @@ export default function AdminLogsPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Logs do Sistema"
           subtitle="Visualize e analise os logs do sistema"
@@ -258,7 +257,6 @@ export default function AdminLogsPage() {
             </div>
           </div>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 }

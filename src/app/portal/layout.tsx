@@ -1,23 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Menu, X } from 'lucide-react';
+import RoleGuard from '@/components/auth/RoleGuard';
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
+import { UserRole } from '@/types/roles';
 
-interface PortalLayoutProps {
-    children: React.ReactNode;
-}
-
-export default function PortalLayout({ children }: PortalLayoutProps) {
-    const { user } = useAuth();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-    return (
-        <div className="min-h-screen">
-            {/* Conteúdo Principal */}
-            <main className="min-h-screen w-full">
-                {children}
-            </main>
-        </div>
-    );
+export default function PortalLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <RoleGuard allowedRoles={[UserRole.SYSTEM_ADMIN]}>
+      {children}
+    </RoleGuard>
+    )
 } 

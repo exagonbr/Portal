@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ThemeSelector } from '@/components/ui/ThemeSelector';
-import { Card, CardHeader, CardBody, CardFooter, StatCard } from '@/components/ui/Card';
+import Card, { CardHeader, CardBody, CardFooter, StatCard } from '@/components/ui/Card';
 import { Button, ButtonGroup, FAB } from '@/components/ui/Button';
 
 export default function ExampleDashboard() {

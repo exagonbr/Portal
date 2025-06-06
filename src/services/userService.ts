@@ -21,8 +21,12 @@ import {
   PaginationParams
 } from '../types/api';
 
+interface UserListParams extends PaginationParams {
+  query?: string;
+}
+
 export class UserService {
-  private readonly baseEndpoint = '/users';
+  private readonly baseEndpoint = '/api/users';
 
   /**
    * Lista todos os usuários com filtros e paginação
@@ -428,6 +432,96 @@ export class UserService {
    */
   async list(filters?: UserFilterDto): Promise<ListResponse<UserResponseDto>> {
     return this.getUsers(filters);
+  }
+
+  /**
+   * Lista todos os usuários globais com paginação
+   */
+  async listGlobalUsers(params: UserListParams = {}): Promise<ListResponse<UserResponseDto>> {
+    try {
+      const queryParams = {
+        ...params,
+        query: params.query || undefined
+      } as Record<string, string | number | boolean>;
+
+      const response = await apiClient.get<ListResponse<UserResponseDto>>('/api/users', { params: queryParams });
+      if (!response.success || !response.data?.items) {
+        throw new Error(response.message || 'Falha ao buscar usuários');
+      }
+      return response.data;
+    } catch (error) {
+      // Para fins de desenvolvimento, retornamos dados simulados em caso de erro
+      console.warn('API não disponível, retornando dados simulados');
+      return this.mockUserList(params);
+    }
+  }
+
+  /**
+   * Gera uma lista de usuários de exemplo para desenvolvimento
+   */
+  private mockUserList(params: UserListParams = {}): ListResponse<UserResponseDto> {
+    const mockUsers: UserResponseDto[] = Array.from({ length: 10 }).map((_, index) => ({
+      id: `user-${index + 1}`,
+      name: `Usuário de Teste ${index + 1}`,
+      email: `usuario${index + 1}@exemplo.com`,
+      role_id: index % 3 === 0 ? 'role-1' : index % 3 === 1 ? 'role-2' : 'role-3',
+      is_active: true,
+      institution_id: 'inst-1',
+      endereco: `Endereço ${index + 1}`,
+      telefone: `(11) 9999-000${index}`,
+      school_id: undefined,
+      created_at: new Date(Date.now() - index * 86400000).toISOString(),
+      updated_at: new Date(Date.now() - index * 86400000).toISOString()
+    }));
+
+    // Filtragem simulada
+    let filteredUsers = [...mockUsers];
+    if (params.query) {
+      const query = params.query.toLowerCase();
+      filteredUsers = filteredUsers.filter(
+        user => 
+          user.name.toLowerCase().includes(query) || 
+          user.email.toLowerCase().includes(query)
+      );
+    }
+
+    // Paginação simulada
+    const page = params.page || 1;
+    const limit = params.limit || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+    return {
+      items: paginatedUsers,
+      pagination: {
+        page,
+        limit,
+        total: filteredUsers.length,
+        totalPages: Math.ceil(filteredUsers.length / limit),
+        hasNext: endIndex < filteredUsers.length,
+        hasPrev: page > 1
+      }
+    };
+  }
+
+  /**
+   * Gera um usuário de exemplo para desenvolvimento
+   */
+  private mockUser(id: string): UserResponseDto {
+    return {
+      id,
+      name: 'Usuário de Teste',
+      email: `usuario-${id}@exemplo.com`,
+      role_id: 'role-1',
+      is_active: true,
+      institution_id: 'inst-1',
+      endereco: 'Endereço de Teste',
+      telefone: '(11) 99999-0000',
+      school_id: undefined,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
   }
 }
 

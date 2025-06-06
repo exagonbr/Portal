@@ -43,7 +43,6 @@ export default function AdminBackupPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Backup"
           subtitle="Gerenciamento de backups do sistema"
@@ -191,7 +190,6 @@ export default function AdminBackupPage() {
             )}
           </div>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 }

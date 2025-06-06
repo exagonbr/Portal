@@ -22,26 +22,6 @@ export default function PageLayout({
       {/* Header Section */}
       <div className="bg-white border-b border-gray-200 w-full">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumbs */}
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <nav className="py-3 text-sm">
-              <ol className="flex items-center space-x-2">
-                {breadcrumbs.map((crumb, index) => (
-                  <li key={index} className="flex items-center">
-                    {index > 0 && <span className="mx-2 text-gray-400">/</span>}
-                    {crumb.href ? (
-                      <a href={crumb.href} className="text-gray-600 hover:text-gray-900 transition-colors">
-                        {crumb.label}
-                      </a>
-                    ) : (
-                      <span className="text-gray-900 font-medium">{crumb.label}</span>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          )}
-
           {/* Page Header */}
           <div className="py-6">
             <div className="flex items-center justify-between">

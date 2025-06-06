@@ -1,10 +1,15 @@
 'use client';
 
-export default function DashboardLayout({
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
+
+export default function DashboardRootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  // O AuthenticatedDashboardLayout já cuida da autenticação e do StandardLayout
-  return <>{children}</>;
+  return (
+    <DashboardLayout>
+      {children}
+    </DashboardLayout>
+  )
 }

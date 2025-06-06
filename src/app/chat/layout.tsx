@@ -1,19 +1,20 @@
-'use client'
+import { Viewport } from 'next'
 
-import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
-
-interface ChatLayoutProps {
-  children: React.ReactNode
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 }
 
-export default function ChatLayout({ children }: ChatLayoutProps) {
+export default function ChatLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <div className="">
-    {/* Conteúdo Principal */}
-    <main className="w-full h-full">
-        {children}
-      </main>
+    <div className="h-full w-full">
+      {children}
     </div>
   )
 }

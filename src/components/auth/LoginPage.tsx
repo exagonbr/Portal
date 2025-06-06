@@ -48,6 +48,23 @@ export function LoginPage() {
   const renderBackground = () => {
     if (isLoading) return null;
 
+    // Se settings for null, usar padrão
+    if (!settings) {
+      return (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute min-w-full min-h-full object-cover opacity-100"
+          preload="auto"
+        >
+          <source src="/back_video4.mp4" type="video/mp4" />
+          Seu navegador não suporta a tag de vídeo.
+        </video>
+      );
+    }
+
     const { loginBackground } = settings;
 
     // Sempre usar o vídeo como padrão se não houver configuração
@@ -182,7 +199,7 @@ export function LoginPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 max-w-md w-full space-y-8 p-8 rounded-2xl shadow-2xl backdrop-blur-xl"
+        className="relative z-10 max-w-lg w-full space-y-8 p-8 rounded-2xl shadow-2xl backdrop-blur-xl"
         style={{ 
           backgroundColor: theme.type === 'modern' 
             ? 'rgba(26, 26, 26, 0.95)' 

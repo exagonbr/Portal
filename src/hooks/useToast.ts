@@ -3,7 +3,7 @@ import { ToastProps } from '@/components/ui/Toast';
 
 interface UseToastReturn {
   toasts: ToastProps[];
-  showToast: (toast: Omit<ToastProps, 'id' | 'onClose'>) => void;
+  showToast: (erroAoCarregarCursos: string, error: string) => void;
   showSuccess: (title: string, message?: string) => void;
   showError: (title: string, message?: string) => void;
   showWarning: (title: string, message?: string) => void;

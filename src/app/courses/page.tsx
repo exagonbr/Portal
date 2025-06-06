@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { mockCourses, mockTeachers, mockStudents } from '@/constants/mockData'
 import CourseCard from '@/components/dashboard/CourseCard'
+import { BookOpen } from 'lucide-react'
 
 export default function Courses() {
   const { user } = useAuth()
@@ -20,7 +21,17 @@ export default function Courses() {
   })
 
   return (
-    <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold  text-gray-600 mb-2 flex items-center gap-3">
+              <BookOpen className="w-8 h-8 text-primary" />
+              Painel do Professor
+            </h1>
+            <p className="text-gray-600 text-gray-400">
+              Bem-vindo(a), {user?.name}! Acompanhe o progresso dos seus alunos.
+            </p>
+          </div>
+      
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex justify-between items-start mb-6">

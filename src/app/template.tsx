@@ -1,7 +1,6 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
 import AuthenticatedDashboardLayout from '@/components/dashboard/AuthenticatedDashboardLayout'
 
 // Routes that should not use the dashboard layout
@@ -13,17 +12,33 @@ const publicRoutes = [
   '/test-dashboard',
   '/test-student',
   '/debug-auth',
-  '/test-dashboard-simple', // Keep test route
+  '/test-dashboard-simple',
   '/' // Add root route as public
 ]
 
+// Dashboard routes that have their own layout
+const dashboardRoutesWithOwnLayout = [
+  '/dashboard/system-admin',
+  '/dashboard/institution-manager',
+  '/dashboard/coordinator',
+  '/dashboard/teacher',
+  '/dashboard/student',
+  '/dashboard/guardian',
+  '/dashboard/admin',
+  '/dashboard/manager'
+]
+
 export default function Template({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
   const pathname = usePathname()
 
   // Don't use dashboard layout for public routes
   if (pathname && publicRoutes.includes(pathname)) {
     return <div className="h-full w-full">{children}</div>
+  }
+
+  // Don't use dashboard layout for dashboard routes that have their own layout
+  if (pathname && dashboardRoutesWithOwnLayout.some(route => pathname.startsWith(route))) {
+    return <>{children}</>
   }
 
   // Use authenticated dashboard layout for all other routes

@@ -53,7 +53,7 @@ CORS_CREDENTIALS=true
 # ADMIN USER SETTINGS
 # ===================================
 ADMIN_EMAIL=admin@portal.com
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=password123
 
 # ===================================
 # QUEUE CONCURRENCY SETTINGS
@@ -127,7 +127,7 @@ npm_package_version=1.0.0
 | Variável | Tipo | Padrão | Descrição |
 |----------|------|--------|-----------|
 | `ADMIN_EMAIL` | string | admin@portal.com | Email do usuário administrador padrão |
-| `ADMIN_PASSWORD` | string | admin123 | Senha do usuário administrador padrão |
+| `ADMIN_PASSWORD` | string | password123 | Senha do usuário administrador padrão |
 
 ⚠️ **IMPORTANTE**: Altere estas credenciais em produção!
 

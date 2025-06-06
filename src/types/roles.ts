@@ -326,10 +326,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.SYSTEM_ADMIN]: 'Administrador do Sistema',
-  [UserRole.INSTITUTION_MANAGER]: 'Gestor Institucional',
+  [UserRole.INSTITUTION_MANAGER]: 'Gestor de Instituição',
   [UserRole.ACADEMIC_COORDINATOR]: 'Coordenador Acadêmico',
   [UserRole.TEACHER]: 'Professor',
-  [UserRole.STUDENT]: 'Aluno',
+  [UserRole.STUDENT]: 'Estudante',
   [UserRole.GUARDIAN]: 'Responsável'
 };
 

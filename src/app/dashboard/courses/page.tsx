@@ -154,7 +154,6 @@ export default function CoursesPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Gerenciar Cursos"
           subtitle="Gerencie os cursos oferecidos pela instituição"
@@ -197,7 +196,6 @@ export default function CoursesPage() {
             />
           </Modal>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 } 

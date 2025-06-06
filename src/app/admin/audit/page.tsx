@@ -53,7 +53,6 @@ export default function AdminAuditPage() {
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER]}>
-      <DashboardLayout>
         <DashboardPageLayout
           title="Auditoria"
           subtitle="Logs de auditoria e atividades do sistema"
@@ -124,7 +123,6 @@ export default function AdminAuditPage() {
             </div>
           </div>
         </DashboardPageLayout>
-      </DashboardLayout>
     </ProtectedRoute>
   )
 }

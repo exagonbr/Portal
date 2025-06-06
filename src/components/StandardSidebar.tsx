@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback, memo } from 'react'
 import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
 import { useTheme } from '@/contexts/ThemeContext'
 import { motion } from 'framer-motion'
+import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 
 interface NavItem {
   href: string
@@ -70,7 +71,7 @@ const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed
         <div className="overflow-hidden min-w-0 flex-1">
           <p className="text-xs font-semibold truncate leading-tight" style={{ color: theme.colors.text.primary }}>{user?.name}</p>
           <span className="text-[10px] leading-tight" style={{ color: theme.colors.text.secondary }}>
-            {user?.role && ROLE_LABELS[user.role as UserRole]}
+              {user?.role && ROLE_LABELS[user.role as UserRole]}
           </span>
         </div>
       )}
@@ -301,106 +302,10 @@ export default function StandardSidebar() {
 
     switch (userRole) {
       case UserRole.SYSTEM_ADMIN:
-        roleSpecificItems = [
-          {
-            section: 'Administração do Sistema',
-            items: [
-              {
-                href: '/admin/institutions',
-                icon: 'business',
-                label: 'Gerenciar Instituições',
-                permission: 'canManageInstitutions'
-              },
-              {
-                href: '/admin/users',
-                icon: 'manage_accounts',
-                label: 'Usuários Globais',
-                permission: 'canManageGlobalUsers'
-              },
-              {
-                href: '/admin/security',
-                icon: 'security',
-                label: 'Políticas de Segurança',
-                permission: 'canManageSecurityPolicies'
-              },
-              {
-                href: '/admin/roles',
-                icon: 'key',
-                label: 'Gerenciar Permissões',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/audit',
-                icon: 'history',
-                label: 'Logs de Auditoria',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/backup',
-                icon: 'backup',
-                label: 'Backup do Sistema',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/settings',
-                icon: 'settings',
-                label: 'Configurações do Sistema',
-                permission: 'canManageSystem'
-              }
-            ]
-          },
-          {
-            section: 'Relatórios',
-            items: [
-              {
-                href: '/portal/reports',
-                icon: 'analytics',
-                label: 'Portal de Relatórios',
-                permission: 'canViewPortalReports'
-              }
-            ]
-          },
-          {
-            section: 'Gestão de Conteúdo',
-            items: [
-              {
-                href: '/admin/content/library',
-                icon: 'library_books',
-                label: 'Acervo Digital',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/content/search',
-                icon: 'archive',
-                label: 'Arquivos',
-                permission: 'canManageSystem'
-              }
-            ]
-          },
-          {
-            section: 'Monitoramento',
-            items: [
-              {
-                href: '/admin/analytics',
-                icon: 'analytics',
-                label: 'Analytics do Sistema',
-                permission: 'canViewSystemAnalytics'
-              },
-              {
-                href: '/admin/logs',
-                icon: 'terminal',
-                label: 'Logs do Sistema',
-                permission: 'canManageSystem'
-              },
-              {
-                href: '/admin/performance',
-                icon: 'speed',
-                label: 'Performance',
-                permission: 'canManageSystem'
-              }
-            ]
-          }
-        ];
+        // Usa o menu simplificado do SystemAdminMenu
+        const adminMenuItems = getSystemAdminMenuItems();
+        // Remove a seção "Principal" pois já está nos commonItems
+        roleSpecificItems = adminMenuItems.filter(section => section.section !== 'Principal');
         break;
 
       case UserRole.INSTITUTION_MANAGER:
