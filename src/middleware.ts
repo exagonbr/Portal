@@ -193,7 +193,7 @@ class RoleAccessControl {
     return true;
   }
 
-  static hasAccessToPath(userRole: string, pathname: string): boolean {
+  static hasAccessToPath(userRole: string, pathname: string, searchParams?: URLSearchParams): boolean {
     if (!userRole) return true; // Se não tem role, permite acesso
     
     // Normaliza a role para lowercase
@@ -202,6 +202,12 @@ class RoleAccessControl {
     // SYSTEM_ADMIN tem acesso COMPLETO a todo o sistema
     if (normalizedRole === 'system_admin' || normalizedRole === 'administrador do sistema') {
       console.log(`✅ SYSTEM_ADMIN tem acesso completo ao caminho: ${pathname}`);
+      return true;
+    }
+    
+    // Verifica se é simulação de admin (SYSTEM_ADMIN acessando dashboard de outra role)
+    if (searchParams?.get('admin_simulation') === 'true' && (normalizedRole === 'system_admin' || normalizedRole === 'administrador do sistema')) {
+      console.log(`✅ SYSTEM_ADMIN simulando acesso ao caminho: ${pathname}`);
       return true;
     }
     
@@ -350,7 +356,8 @@ export async function middleware(request: NextRequest) {
     }
 
     // Check access permissions DEPOIS
-    if (!RoleAccessControl.hasAccessToPath(userData.role, pathname)) {
+    const searchParams = request.nextUrl.searchParams;
+    if (!RoleAccessControl.hasAccessToPath(userData.role, pathname, searchParams)) {
       console.warn(`Usuário ${userData.name} (${userData.role}) tentou acessar ${pathname} sem permissão`);
       const correctDashboard = RoleAccessControl.getCorrectDashboardForRole(userData.role);
       

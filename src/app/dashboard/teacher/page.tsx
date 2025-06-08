@@ -1038,7 +1038,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
     <div className="bg-white bg-gray-500 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-4 h-4 ${color.replace('bg-', 'text-')}`} />
+          <Icon className={`w-4 h-4 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
         </div>
       </div>
       <p className="text-xl font-bold text-gray-700 ">

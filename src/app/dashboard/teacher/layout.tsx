@@ -10,7 +10,7 @@ export default function TeacherLayout({
   children: React.ReactNode
 }) {
   return (
-    <ProtectedRoute requiredRole={[UserRole.TEACHER]}>
+    <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="Dashboard do Professor"
         subtitle="Gerencie suas turmas e alunos"

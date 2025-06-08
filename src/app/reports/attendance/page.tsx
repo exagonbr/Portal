@@ -167,8 +167,8 @@ export default function AttendanceReportsPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900 mr-3">Detalhes</button>
-                  <button className="text-purple-600 hover:text-purple-900">Justificar</button>
+                                  <button className="text-primary hover:text-primary/80 mr-3 px-3 py-1 rounded transition-colors">Detalhes</button>
+                <button className="text-accent-blue hover:text-accent-blue/80 px-3 py-1 rounded transition-colors">Justificar</button>
                 </td>
               </tr>
             </tbody>

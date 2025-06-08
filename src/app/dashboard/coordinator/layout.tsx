@@ -10,7 +10,7 @@ export default function CoordinatorLayout({
   children: React.ReactNode
 }) {
   return (
-    <ProtectedRoute requiredRole={[UserRole.ACADEMIC_COORDINATOR]}>
+    <ProtectedRoute requiredRole={[UserRole.ACADEMIC_COORDINATOR, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="Dashboard do Coordenador"
         subtitle="Gerencie os cursos e turmas"

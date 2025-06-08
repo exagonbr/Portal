@@ -10,7 +10,7 @@ export default function StudentLayout({
   children: React.ReactNode
 }) {
   return (
-    <ProtectedRoute requiredRole={[UserRole.STUDENT]}>
+    <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="Dashboard do Aluno"
         subtitle="Acompanhe seu progresso e atividades"

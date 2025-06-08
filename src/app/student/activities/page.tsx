@@ -157,7 +157,7 @@ export default function StudentActivitiesPage() {
   }
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.STUDENT]}>
+          <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.SYSTEM_ADMIN]}>
         <DashboardPageLayout
           title="Minhas Atividades"
           subtitle="Acompanhe suas tarefas, trabalhos e avaliações"

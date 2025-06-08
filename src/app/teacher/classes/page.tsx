@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import DashboardLayout from '@/components/dashboard/DashboardLayout'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import GenericCRUD from '@/components/crud/GenericCRUD'
 import Modal from '@/components/ui/Modal'
@@ -257,7 +256,7 @@ export default function TeacherClassesPage() {
   )
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.ACADEMIC_COORDINATOR]}>
+          <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.ACADEMIC_COORDINATOR, UserRole.SYSTEM_ADMIN]}>
         <DashboardPageLayout
           title="Minhas Turmas"
           subtitle="Gerencie suas turmas e acompanhe o progresso dos alunos"

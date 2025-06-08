@@ -84,7 +84,7 @@ export default function CoordinatorDashboardPage() {
   const { user } = useAuth();
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.ACADEMIC_COORDINATOR]}>
+          <ProtectedRoute requiredRole={[UserRole.ACADEMIC_COORDINATOR, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="Painel do Coordenador"
         subtitle="Gerencie o planejamento acadêmico e o corpo docente"
@@ -268,7 +268,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
     <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+          <Icon className={`w-6 h-6 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
         </div>
       </div>
       <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 dark:text-gray-800">

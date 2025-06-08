@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_BASED_ROUTES } from '@/types/roles';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
@@ -12,13 +12,29 @@ interface RoleGuardProps {
   redirectTo?: string;
 }
 
-export default function RoleGuard({
+function RoleGuardContent({
   children,
   allowedRoles,
   redirectTo
 }: RoleGuardProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [searchParams, setSearchParams] = useState<URLSearchParams>(new URLSearchParams());
+
+  // Safely get search params
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        setSearchParams(params);
+      } else {
+        setSearchParams(new URLSearchParams());
+      }
+    } catch (error) {
+      console.warn('Erro ao obter search params:', error);
+      setSearchParams(new URLSearchParams());
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -31,17 +47,22 @@ export default function RoleGuard({
           // Redirecionar mesmo com erro na limpeza
           router.push('/login?error=unauthorized');
         });
-      } else if (!allowedRoles.includes(user.role as UserRole)) {
-        // Se o usuário não tem o papel permitido, redireciona para seu dashboard específico
-        const roleRoute = ROLE_BASED_ROUTES.find(route =>
-          route.roles.includes(user.role as UserRole) &&
-          route.path.startsWith('/dashboard')
-        );
+      } else {
+        // Verifica se é SYSTEM_ADMIN simulando outra role
+        const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN;
         
-        router.push(roleRoute?.path || redirectTo || '/login');
+        if (!allowedRoles.includes(user.role as UserRole) && !isAdminSimulation) {
+          // Se o usuário não tem o papel permitido, redireciona para seu dashboard específico
+          const roleRoute = ROLE_BASED_ROUTES.find(route =>
+            route.roles.includes(user.role as UserRole) &&
+            route.path.startsWith('/dashboard')
+          );
+          
+          router.push(roleRoute?.path || redirectTo || '/login');
+        }
       }
     }
-  }, [user, loading, allowedRoles, router, redirectTo]);
+  }, [user, loading, allowedRoles, router, redirectTo, searchParams]);
 
   // Mostra loading enquanto verifica autenticação
   if (loading) {
@@ -52,11 +73,20 @@ export default function RoleGuard({
     );
   }
 
+  // Verifica se é SYSTEM_ADMIN simulando outra role
+  const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user?.role === UserRole.SYSTEM_ADMIN;
+  
   // Se não há usuário ou não tem permissão, não renderiza nada
-  if (!user || !allowedRoles.includes(user.role as UserRole)) {
+  if (!user || (!allowedRoles.includes(user.role as UserRole) && !isAdminSimulation)) {
     return null;
   }
 
   // Se tudo está ok, renderiza o conteúdo
   return <>{children}</>;
+}
+
+export default function RoleGuard(props: RoleGuardProps) {
+  return (
+    <RoleGuardContent {...props} />
+  );
 }

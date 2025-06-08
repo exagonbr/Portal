@@ -184,12 +184,12 @@ export default function LessonsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded flex items-center justify-center">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <span className="text-xs-responsive text-emerald-600 font-medium">60%</span>
+              <span className="text-xs-responsive text-success font-medium">60%</span>
             </div>
             <div className="stat-value">12/20</div>
             <div className="stat-label">Aulas Concluídas</div>
@@ -197,12 +197,12 @@ export default function LessonsPage() {
 
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent-blue/10 rounded flex items-center justify-center">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-accent-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <span className="text-xs-responsive text-emerald-600 font-medium">+2h</span>
+              <span className="text-xs-responsive text-success font-medium">+2h</span>
             </div>
             <div className="stat-value">8h 30min</div>
             <div className="stat-label">Tempo de Estudo</div>
@@ -210,12 +210,12 @@ export default function LessonsPage() {
 
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-success/10 rounded flex items-center justify-center">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <span className="text-xs-responsive text-emerald-600 font-medium">+5%</span>
+              <span className="text-xs-responsive text-success font-medium">+5%</span>
             </div>
             <div className="stat-value">85%</div>
             <div className="stat-label">Média nos Quizzes</div>
@@ -223,12 +223,12 @@ export default function LessonsPage() {
 
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-warning/10 rounded flex items-center justify-center">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
               </div>
-              <span className="text-xs-responsive text-blue-600 font-medium">1 pendente</span>
+              <span className="text-xs-responsive text-accent-blue font-medium">1 pendente</span>
             </div>
             <div className="stat-value">2</div>
             <div className="stat-label">Certificados</div>
@@ -296,9 +296,9 @@ export default function LessonsPage() {
           <div key={lesson.id} className="card hover:shadow-md transition-all duration-300">
             <div className="flex flex-col md:flex-row">
               {/* Thumbnail */}
-              <div className="md:w-48 lg:w-64 h-32 sm:h-48 md:h-auto bg-gradient-to-br from-blue-100 to-indigo-200 relative">
+              <div className="md:w-48 lg:w-64 h-32 sm:h-48 md:h-auto bg-gradient-to-br from-primary/20 to-accent-blue/30 relative">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-12 h-12 sm:w-16 sm:h-16 text-blue-500 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-12 h-12 sm:w-16 sm:h-16 text-primary opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -312,7 +312,7 @@ export default function LessonsPage() {
                     <div className="flex items-center mb-2">
                       <h3 className="text-base-responsive font-semibold text-gray-700">{lesson.title}</h3>
                       {lesson.status === 'completed' && (
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 ml-2" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-success ml-2" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
                       )}
@@ -352,10 +352,10 @@ export default function LessonsPage() {
                     </span>
                     {lesson.status !== 'locked' && (
                       <button 
-                        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 text-sm-responsive ${
+                        className={`px-4 py-2 rounded flex items-center gap-2 transition-all duration-200 text-sm-responsive ${
                           lesson.status === 'completed'
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-primary text-white hover:bg-primary-dark'
+                            ? 'bg-accent-blue text-white hover:bg-accent-blue/80'
+                            : 'bg-primary text-white hover:bg-primary/90'
                         }`}
                       >
                         {lesson.status === 'completed' ? (
@@ -414,7 +414,7 @@ export default function LessonsPage() {
                       <div className="flex items-center space-x-2 w-full sm:w-auto">
                         <div className="flex-1 sm:w-32 bg-gray-200 rounded-full h-2">
                           <div 
-                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300"
+                            className="bg-gradient-to-r from-primary to-accent-blue h-2 rounded-full transition-all duration-300"
                             style={{ width: `${lesson.progress}%` }}
                           ></div>
                         </div>

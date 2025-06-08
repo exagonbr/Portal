@@ -10,7 +10,7 @@ export default function GuardianLayout({
   children: React.ReactNode
 }) {
   return (
-    <ProtectedRoute requiredRole={[UserRole.GUARDIAN]}>
+    <ProtectedRoute requiredRole={[UserRole.GUARDIAN, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="Dashboard do Responsável"
         subtitle="Acompanhe o progresso dos alunos"

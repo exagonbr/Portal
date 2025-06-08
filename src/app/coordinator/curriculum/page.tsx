@@ -86,7 +86,7 @@ export default function CoordinatorCurriculumPage() {
   }
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.COORDINATOR]}>
+          <ProtectedRoute requiredRole={[UserRole.ACADEMIC_COORDINATOR, UserRole.SYSTEM_ADMIN]}>
         <DashboardPageLayout
           title="Gestão Curricular"
           subtitle="Gerencie e organize o currículo escolar"

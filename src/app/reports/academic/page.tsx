@@ -175,7 +175,7 @@ export default function AcademicReportsPage() {
                   <div className="text-sm text-gray-700">94%</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900">Detalhes</button>
+                  <button className="text-primary hover:text-primary/80 px-3 py-1 rounded transition-colors">Detalhes</button>
                 </td>
               </tr>
             </tbody>

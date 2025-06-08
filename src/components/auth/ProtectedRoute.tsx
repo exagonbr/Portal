@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserRole, ROLE_PERMISSIONS } from '@/types/roles'
 import { motion } from 'framer-motion'
@@ -16,7 +16,7 @@ interface ProtectedRouteProps {
   showUnauthorized?: boolean
 }
 
-export default function ProtectedRoute({
+function ProtectedRouteContent({
   children,
   requiredRole,
   requiredPermission,
@@ -27,6 +27,22 @@ export default function ProtectedRoute({
   const router = useRouter()
   const { theme } = useTheme()
   const [isAuthorized, setIsAuthorized] = useState(false)
+  const [searchParams, setSearchParams] = useState<URLSearchParams>(new URLSearchParams())
+
+  // Safely get search params
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        setSearchParams(params);
+      } else {
+        setSearchParams(new URLSearchParams());
+      }
+    } catch (error) {
+      console.warn('Erro ao obter search params:', error);
+      setSearchParams(new URLSearchParams());
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -45,12 +61,15 @@ export default function ProtectedRoute({
         return
       }
 
+      // Verificar se é SYSTEM_ADMIN simulando outra role
+      const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN
+
       // Verificar role
       if (requiredRole) {
         const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
         const hasRole = roles.includes(user.role as UserRole)
         
-        if (!hasRole) {
+        if (!hasRole && !isAdminSimulation) {
           setIsAuthorized(false)
           if (!showUnauthorized) {
             router.push('/dashboard')
@@ -68,7 +87,7 @@ export default function ProtectedRoute({
           userPermissions[permission] === true
         )
         
-        if (!hasPermission) {
+        if (!hasPermission && !isAdminSimulation) {
           setIsAuthorized(false)
           if (!showUnauthorized) {
             router.push('/dashboard')
@@ -79,7 +98,7 @@ export default function ProtectedRoute({
 
       setIsAuthorized(true)
     }
-  }, [user, loading, requiredRole, requiredPermission, router, redirectTo, showUnauthorized])
+  }, [user, loading, requiredRole, requiredPermission, router, redirectTo, showUnauthorized, searchParams])
 
   if (loading) {
     return (
@@ -155,4 +174,10 @@ export default function ProtectedRoute({
   }
 
   return <>{children}</>
+}
+
+export default function ProtectedRoute(props: ProtectedRouteProps) {
+  return (
+    <ProtectedRouteContent {...props} />
+  );
 } 

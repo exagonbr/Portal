@@ -10,7 +10,7 @@ export default function InstitutionManagerLayout({
   children: React.ReactNode
 }) {
   return (
-    <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER]}>
+    <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="Dashboard do Gestor Institucional"
         subtitle="Gerencie sua instituição"

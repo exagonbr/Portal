@@ -202,7 +202,7 @@ export default function InstitutionClassesPage() {
     return theme.colors.status.success;
   };
 
-  const schools = Array.from(new Set(classes.map(c => ({ id: c.schoolId, name: c.schoolName })));
+  const uniqueSchools = Array.from(new Set(classes.map(c => ({ id: c.schoolId, name: c.schoolName }))));
 
   const stats = {
     total: classes.length,
@@ -370,7 +370,7 @@ export default function InstitutionClassesPage() {
           }}
         >
           <option value="all">Todas as Escolas</option>
-          {schools.map(school => (
+          {uniqueSchools.map(school => (
             <option key={school.id} value={school.id}>{school.name}</option>
           ))}
         </select>

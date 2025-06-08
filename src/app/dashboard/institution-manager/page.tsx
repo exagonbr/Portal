@@ -219,7 +219,7 @@ export default function InstitutionManagerDashboardPage() {
                       <div>
                         <h3 className="font-medium text-gray-700">{institution.name}</h3>
                         <p className="text-sm text-gray-500">
-                          {institution.code} • {institution.type.replace('_', ' ')}
+                          {institution.code} • {institution.type?.replace('_', ' ') || institution.type}
                         </p>
                         {institution.city && institution.state && (
                           <p className="text-xs text-gray-400">
@@ -417,7 +417,7 @@ function StatCard({ icon: Icon, title, value, subtitle, trend, trendUp, color }:
     <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+          <Icon className={`w-6 h-6 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
         </div>
         <span className={`text-sm font-medium flex items-center gap-1 ${
           trendUp ? 'text-accent-green' : 'text-gray-600'

@@ -255,7 +255,7 @@ class SessionService {
         // Se TTL é -1, a chave não tem expiração definida (problema)
         // Se TTL é 0 ou negativo, a chave expirou
         if (ttl <= 0) {
-          const sessionId = key.replace(this.SESSION_PREFIX, '');
+          const sessionId = key?.replace(this.SESSION_PREFIX, '') || '';
           await this.destroySession(sessionId);
           cleanedCount++;
         }

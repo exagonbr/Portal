@@ -100,7 +100,7 @@ export class S3Service {
 
   private generateS3Key(fileName: string, contentType: ContentType): string {
     const timestamp = Date.now();
-    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const sanitizedFileName = fileName?.replace(/[^a-zA-Z0-9.-]/g, '_') || 'unnamed_file';
     return `content/${contentType.toLowerCase()}/${timestamp}_${sanitizedFileName}`;
   }
 

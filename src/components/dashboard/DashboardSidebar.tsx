@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useEffect, useCallback, memo } from 'react'
@@ -26,6 +26,22 @@ interface NavSection {
 const SIDEBAR_WIDTH = '16rem'
 const COLLAPSED_WIDTH = '4rem'
 const MOBILE_BREAKPOINT = 768
+
+// Error boundary wrapper
+function withErrorBoundary<T extends object>(Component: React.ComponentType<T>) {
+  return function WrappedComponent(props: T) {
+    try {
+      return <Component {...props} />;
+    } catch (error) {
+      console.error('Erro no DashboardSidebar:', error);
+      return (
+        <div className="w-64 bg-red-100 p-4 text-red-800">
+          <p>Erro no sidebar. Recarregue a página.</p>
+        </div>
+      );
+    }
+  };
+}
 
 // Memoized Components
 const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
@@ -345,8 +361,9 @@ const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme }: {
   );
 });
 
-export default function DashboardSidebar() {
+function DashboardSidebarComponent() {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, logout } = useAuth()
   const { theme } = useTheme()
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -366,11 +383,44 @@ export default function DashboardSidebar() {
 
   // Handle role change
   const handleRoleChange = useCallback((newRole: UserRole) => {
-    setSelectedRole(newRole);
-    if (userRole === UserRole.SYSTEM_ADMIN) {
-      localStorage.setItem('selectedRole', newRole);
+    try {
+      console.log('🔄 Iniciando mudança de role:', { from: selectedRole, to: newRole, userRole });
+      
+      setSelectedRole(newRole);
+      
+      if (userRole === UserRole.SYSTEM_ADMIN) {
+        console.log('✅ SYSTEM_ADMIN detectado, salvando role selecionada');
+        localStorage.setItem('selectedRole', newRole);
+        
+        // Redirect to the corresponding dashboard
+        const dashboardMap = {
+          [UserRole.SYSTEM_ADMIN]: '/dashboard/system-admin',
+          [UserRole.INSTITUTION_MANAGER]: '/dashboard/institution-manager',
+          [UserRole.ACADEMIC_COORDINATOR]: '/dashboard/coordinator',
+          [UserRole.TEACHER]: '/dashboard/teacher',
+          [UserRole.STUDENT]: '/dashboard/student',
+          [UserRole.GUARDIAN]: '/dashboard/guardian'
+        };
+        
+        const targetDashboard = dashboardMap[newRole];
+        console.log('🎯 Dashboard alvo:', targetDashboard, 'Pathname atual:', pathname);
+        
+        if (targetDashboard && pathname !== targetDashboard) {
+          const navigationUrl = `${targetDashboard}?admin_simulation=true`;
+          console.log('🚀 Navegando para:', navigationUrl);
+          
+          // Use Next.js router with admin simulation parameter
+          router.push(navigationUrl);
+        } else {
+          console.log('⏭️ Já está no dashboard correto ou dashboard não encontrado');
+        }
+      } else {
+        console.log('❌ Usuário não é SYSTEM_ADMIN, ignorando mudança de role');
+      }
+    } catch (error) {
+      console.error('❌ Erro durante mudança de role:', error);
     }
-  }, [userRole]);
+  }, [userRole, pathname, router, selectedRole]);
 
   // Handle window resize
   useEffect(() => {
@@ -965,3 +1015,6 @@ export default function DashboardSidebar() {
     </motion.aside>
   )
 }
+
+// Export with error boundary
+export default withErrorBoundary(DashboardSidebarComponent);

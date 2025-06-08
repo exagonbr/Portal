@@ -250,7 +250,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
                   >
                     {userRoles.map(role => (
                       <option key={role} value={role}>
-                        {role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, ' ')}
+                        {role?.charAt(0).toUpperCase() + role?.slice(1).replace(/_/g, ' ') || role}
                       </option>
                     ))}
                   </select>

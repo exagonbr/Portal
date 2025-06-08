@@ -372,7 +372,7 @@ export class SessionService {
       for (const key of sessionKeys) {
         const ttl = await this.redis.ttl(key);
         if (ttl <= 0) {
-          const sessionId = key.replace(this.SESSION_PREFIX, '');
+          const sessionId = key?.replace(this.SESSION_PREFIX, '') || '';
           await this.destroySession(sessionId);
           cleanedCount++;
         }

@@ -501,14 +501,26 @@ export const ROLE_BASED_ROUTES: RoleBasedRoute[] = [
 ];
 
 export function hasPermission(role: UserRole, permission: keyof RolePermissions): boolean {
+  // SYSTEM_ADMIN tem TODAS as permissões
+  if (role === UserRole.SYSTEM_ADMIN) {
+    return true;
+  }
   return ROLE_PERMISSIONS[role][permission];
 }
 
 export function canAccessRoute(userRole: UserRole, routePath: string): boolean {
+  // SYSTEM_ADMIN pode acessar TODAS as rotas
+  if (userRole === UserRole.SYSTEM_ADMIN) {
+    return true;
+  }
   const route = ROLE_BASED_ROUTES.find(r => r.path === routePath);
   return route ? route.roles.includes(userRole) : false;
 }
 
 export function getAccessibleRoutes(userRole: UserRole): RoleBasedRoute[] {
+  // SYSTEM_ADMIN tem acesso a TODAS as rotas
+  if (userRole === UserRole.SYSTEM_ADMIN) {
+    return ROLE_BASED_ROUTES;
+  }
   return ROLE_BASED_ROUTES.filter(route => route.roles.includes(userRole));
 }

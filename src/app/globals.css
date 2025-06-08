@@ -257,15 +257,15 @@
 
   /* Botões Responsivos - Ajustados */
   .button-primary {
-    @apply px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200 text-sm sm:text-base font-medium;
+    @apply px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 bg-primary text-white rounded hover:bg-primary/90 transition-colors duration-200 text-sm sm:text-base font-medium shadow-sm;
   }
 
   .button-secondary {
-    @apply px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 text-sm sm:text-base font-medium;
+    @apply px-3 py-2 sm:px-4 sm:py-2 lg:px-6 lg:py-3 bg-accent-blue text-white rounded hover:bg-accent-blue/80 transition-colors duration-200 text-sm sm:text-base font-medium shadow-sm;
   }
 
   .button-icon {
-    @apply p-2 hover:bg-gray-100 rounded-lg transition-colors;
+    @apply p-2 hover:bg-primary/10 hover:text-primary rounded transition-colors;
   }
 
   /* Input Fields Responsivos - Ajustados */

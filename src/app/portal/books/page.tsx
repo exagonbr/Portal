@@ -21,7 +21,7 @@ import PageLayout from '@/components/layout/PageLayout';
 import ContentSection from '@/components/layout/ContentSection';
 import SearchBar from '@/components/layout/SearchBar';
 import StatCard from '@/components/layout/StatCard';
-import { Button, ButtonGroup } from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { UserRole } from '@/types/roles';
@@ -245,29 +245,6 @@ export default function PortalBooksPage() {
           },
           {
             id: '2',
-            title: 'O Cortiço',
-            author: 'Aluísio Azevedo',
-            description: 'Romance naturalista que retrata a vida em um cortiço do Rio de Janeiro.',
-            cover: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop',
-            category: 'Literatura Clássica',
-            subject: 'Português',
-            pages: 320,
-            language: 'Português',
-            year: 1890,
-            uploaded_by: 'Biblioteca Digital',
-            uploaded_at: '2024-01-20',
-            downloads: 987,
-            views: 2345,
-            rating: 4.6,
-            reviews_count: 67,
-            file_size: '3.1 MB',
-            file_type: 'pdf',
-            is_favorite: false,
-            reading_progress: 0,
-            read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
-          },
-          {
-            id: '3',
             title: 'O Alienista',
             author: 'Machado de Assis',
             description: 'Novela satírica que narra a história do Dr. Simão Bacamarte e sua Casa Verde, questionando os limites entre razão e loucura na sociedade.',
@@ -292,7 +269,7 @@ export default function PortalBooksPage() {
             read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
           },
           {
-            id: '4',
+            id: '3',
             title: 'Iracema',
             author: 'José de Alencar',
             description: 'Romance indianista que narra a história de amor entre Iracema e Martim.',
@@ -314,7 +291,7 @@ export default function PortalBooksPage() {
             read_url: '#epub-content'
           },
           {
-            id: '5',
+            id: '4',
             title: 'A Moreninha',
             author: 'Joaquim Manuel de Macedo',
             description: 'Primeiro romance urbano brasileiro, retrata os costumes da sociedade carioca do século XIX.',
@@ -336,7 +313,7 @@ export default function PortalBooksPage() {
             read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
           },
           {
-            id: '6',
+            id: '5',
             title: 'O Guarani',
             author: 'José de Alencar',
             description: 'Romance indianista que conta a história de Peri e Ceci.',
@@ -358,7 +335,7 @@ export default function PortalBooksPage() {
             read_url: '#epub-content'
           },
           {
-            id: '7',
+            id: '6',
             title: 'Memórias Póstumas de Brás Cubas',
             author: 'Machado de Assis',
             description: 'Romance narrado por um defunto autor, marco do realismo brasileiro.',
@@ -381,7 +358,7 @@ export default function PortalBooksPage() {
             read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
           },
           {
-            id: '8',
+            id: '7',
             title: 'Senhora',
             author: 'José de Alencar',
             description: 'Romance que narra a história de Aurélia Camargo, uma mulher que compra seu próprio marido para vingar-se de uma humilhação amorosa, explorando temas como amor, dinheiro e dignidade.',
@@ -405,7 +382,7 @@ export default function PortalBooksPage() {
             read_url: '#epub-content'
           },
           {
-            id: '9',
+            id: '8',
             title: 'Quincas Borba',
             author: 'Machado de Assis',
             description: 'Romance que continua a filosofia do Humanitismo de Memórias Póstumas.',
@@ -428,7 +405,7 @@ export default function PortalBooksPage() {
             read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
           },
           {
-            id: '10',
+            id: '9',
             title: 'Lucíola',
             author: 'José de Alencar',
             description: 'Romance urbano que aborda temas como prostituição e redenção.',
@@ -654,10 +631,10 @@ export default function PortalBooksPage() {
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  size="md"
+                  size="sm"
                   onClick={() => setShowFilters(!showFilters)}
-                  leftIcon={<Filter className="h-4 w-4" />}
                 >
+                  <Filter className="h-4 w-4" />
                   Filtros
                 </Button>
                 
@@ -789,7 +766,7 @@ export default function PortalBooksPage() {
 
         {/* Grid/Lista de livros */}
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full overflow-hidden">
             {loading ? (
               <div className="col-span-full flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-dark"></div>
@@ -801,7 +778,7 @@ export default function PortalBooksPage() {
               </div>
             ) : (
               sortedBooks.map((book) => (
-                <div key={book.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                <div key={book.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow w-full">
                   <div className="relative cursor-pointer" onClick={() => openBookReader(book)}>
                     <img
                       src={book.cover}
@@ -815,7 +792,7 @@ export default function PortalBooksPage() {
                         </div>
                         <div className="w-full bg-gray-700 rounded-full h-1">
                           <div 
-                            className="bg-green-500 h-1 rounded-full"
+                            className="bg-green-500 h-1 rounded-full transition-all duration-300"
                             style={{ width: `${book.reading_progress}%` }}
                           />
                         </div>
@@ -837,7 +814,7 @@ export default function PortalBooksPage() {
                     </div>
                   </div>
                   
-                  <div className="p-4">
+                  <div className="p-4 w-full">
                     <h3 className="font-semibold text-slate-800 line-clamp-2 mb-1 cursor-pointer hover:text-primary-dark" onClick={() => openBookReader(book)}>
                       {book.title}
                     </h3>
@@ -874,7 +851,7 @@ export default function PortalBooksPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 w-full overflow-hidden">
             {loading ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-dark"></div>
@@ -886,7 +863,7 @@ export default function PortalBooksPage() {
               </div>
             ) : (
               sortedBooks.map((book) => (
-                <div key={book.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div key={book.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow w-full">
                   <div className="flex gap-6">
                     <div className="relative cursor-pointer" onClick={() => openBookReader(book)}>
                       <img

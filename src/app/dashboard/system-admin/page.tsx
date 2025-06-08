@@ -716,7 +716,7 @@ function MetricCard({ icon: Icon, title, value, subtitle, color, isRealtime }: M
     <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+          <Icon className={`w-6 h-6 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
         </div>
         {isRealtime && (
           <div className="flex items-center gap-1">
@@ -749,7 +749,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color, isRealtime }: Sta
     <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
+          <Icon className={`w-5 h-5 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
         </div>
         {isRealtime && (
           <Activity className="w-3 h-3 text-accent-green animate-pulse" />

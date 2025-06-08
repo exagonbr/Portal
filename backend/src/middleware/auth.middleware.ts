@@ -6,7 +6,7 @@ import { AuthTokenPayload } from '../types/express';
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Get token from header
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const token = req.header('Authorization')?.replace('Bearer ', '') || '';
 
     if (!token) {
       res.status(401).json({ error: 'No authentication token provided' });

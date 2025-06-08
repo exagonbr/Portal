@@ -538,7 +538,7 @@ export default function AdminContentSearchPage() {
 
   const openAddLibraryModal = (item: S3FileInfo) => {
     setSelectedItem(item)
-    setBookTitle(item.name.replace(/\.[^/.]+$/, "")) // Remove extensão
+    setBookTitle(item.name?.replace(/\.[^/.]+$/, "") || item.name || "") // Remove extensão
     setBookAuthor('Autor não informado')
     setBookPublisher('Editora não informada')
     setBookDescription(item.description || 'Descrição não disponível')

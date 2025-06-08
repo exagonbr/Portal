@@ -75,7 +75,7 @@ async function listS3Files(bucket: string): Promise<S3FileInfo[]> {
           const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 })
 
           const fileInfo: S3FileInfo = {
-            id: object.Key.replace(/[^a-zA-Z0-9]/g, '_'),
+            id: object.Key?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown_id',
             name: object.Key.split('/').pop() || object.Key,
             type: object.Key.split('.').pop()?.toUpperCase() || 'UNKNOWN',
             size: formatFileSize(object.Size),

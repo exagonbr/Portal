@@ -349,7 +349,7 @@ function StatCard({ icon: Icon, title, value, color }: StatCardProps) {
     <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
+          <Icon className={`w-5 h-5 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
         </div>
       </div>
       <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 dark:text-gray-800">

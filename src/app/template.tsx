@@ -25,7 +25,13 @@ const dashboardRoutesWithOwnLayout = [
   '/dashboard/student',
   '/dashboard/guardian',
   '/dashboard/admin',
-  '/dashboard/manager'
+  '/dashboard/manager',
+  '/institution',
+  '/student',
+  '/guardian',
+  '/teacher',
+  '/coordinator',
+  '/admin'
 ]
 
 export default function Template({ children }: { children: React.ReactNode }) {

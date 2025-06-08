@@ -183,7 +183,7 @@ export default function StudentGradesPage() {
   ]
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.STUDENT]}>
+          <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.SYSTEM_ADMIN]}>
         <DashboardPageLayout
           title="Minhas Notas"
           subtitle="Acompanhe seu desempenho acadêmico"
