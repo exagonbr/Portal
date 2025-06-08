@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { toast } from 'react-hot-toast'
+import { useToast } from '@/components/ToastManager'
 import Modal from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -18,6 +18,7 @@ interface ClassEditModalProps {
 }
 
 export function ClassEditModal({ classData, onSave, onClose }: ClassEditModalProps) {
+  const { showError } = useToast()
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -62,7 +63,7 @@ export function ClassEditModal({ classData, onSave, onClose }: ClassEditModalPro
       setCourses(coursesResponse)
       setTeachers(teachersResponse.data)
     } catch (error) {
-      toast.error('Erro ao carregar dados')
+      showError('Erro ao carregar dados')
     }
   }
 

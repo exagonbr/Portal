@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch'
 import { useTheme } from '@/contexts/ThemeContext'
 import { BaseApiService } from '@/services/api'
-import { useToast } from '@/hooks/useToast'
+import { useToast } from '@/components/ToastManager'
 import Input from '../ui/Input'
 
 const moduleSchema = z.object({
@@ -44,7 +44,7 @@ const courseService = new BaseApiService<Course>('/courses')
 
 export default function ModuleForm({ module, mode, onSubmit, onCancel }: ModuleFormProps) {
   const { theme } = useTheme()
-  const { showToast } = useToast()
+  const { showError } = useToast()
   const [loading, setLoading] = useState(false)
   const [courses, setCourses] = useState<Course[]>([])
   const isViewMode = mode === 'view'
@@ -78,7 +78,7 @@ export default function ModuleForm({ module, mode, onSubmit, onCancel }: ModuleF
       const response = await courseService.getAll()
       setCourses(response.items || [])
     } catch (error) {
-      showToast('Erro ao carregar cursos', 'error')
+      showError('Erro ao carregar cursos', 'Não foi possível carregar a lista de cursos')
     }
   }
 
@@ -87,7 +87,7 @@ export default function ModuleForm({ module, mode, onSubmit, onCancel }: ModuleF
     try {
       await onSubmit(data)
     } catch (error) {
-      showToast("Erro ao carregar cursos", "error")
+      showError("Erro ao salvar módulo", "Não foi possível salvar o módulo")
     } finally {
       setLoading(false)
     }

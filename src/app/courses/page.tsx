@@ -8,14 +8,14 @@ import CourseCard from '@/components/CourseCard'
 import { BookOpen, PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { CourseResponseDto } from '@/types/api'
-import { useToast } from '@/hooks/useToast'
+import { useToast } from '@/components/ToastManager'
 import { CourseAddModal } from '@/components/CourseAddModal'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 
 export default function Courses() {
   const { user } = useAuth()
   const router = useRouter()
-  const { toast } = useToast()
+  const { showSuccess, showError } = useToast()
   const [courses, setCourses] = useState<CourseResponseDto[]>([])
   const [loading, setLoading] = useState(true)
   const [addModalOpen, setAddModalOpen] = useState(false)
@@ -39,11 +39,7 @@ export default function Courses() {
 
       setCourses(coursesData)
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os cursos",
-        variant: "destructive"
-      })
+      showError("Erro", "Não foi possível carregar os cursos");
     } finally {
       setLoading(false)
     }
@@ -62,19 +58,11 @@ export default function Courses() {
   const handleSaveCourse = async (data: any) => {
     try {
       await courseService.createCourse(data)
-      toast({
-        title: "Sucesso",
-        description: "Curso criado com sucesso",
-        variant: "success"
-      })
+      showSuccess("Sucesso", "Curso criado com sucesso");
       loadCourses()
       setAddModalOpen(false)
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o curso",
-        variant: "destructive"
-      })
+      showError("Erro", "Não foi possível criar o curso");
     }
   }
 

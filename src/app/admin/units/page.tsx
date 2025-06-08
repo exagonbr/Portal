@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { UnitEditModal } from '@/components/UnitEditModal';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/components/ToastManager';
 import { unitService, UnitFilters } from '@/services/unitService';
 import { UnitResponseDto, UnitCreateDto, UnitUpdateDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';
 
 export default function AdminUnitsPage() {
   const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
   
   // State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -41,7 +42,7 @@ export default function AdminUnitsPage() {
           name: inst.name
         })));
       } catch (error) {
-        toast.error('Erro ao carregar instituições');
+        showError('Erro ao carregar instituições');
       }
     };
     loadInstitutions();
@@ -59,7 +60,7 @@ export default function AdminUnitsPage() {
       setUnits(response.data);
       setTotalItems(response.total);
     } catch (error) {
-      toast.error('Erro ao carregar unidades');
+      showError('Erro ao carregar unidades');
     } finally {
       setIsLoading(false);
     }
@@ -84,10 +85,10 @@ export default function AdminUnitsPage() {
     
     try {
       await unitService.delete(id);
-      toast.success('Unidade excluída com sucesso!');
+      showSuccess('Unidade excluída com sucesso!');
       loadUnits();
     } catch (error) {
-      toast.error('Erro ao excluir unidade');
+      showError('Erro ao excluir unidade');
     }
   };
 
@@ -95,14 +96,14 @@ export default function AdminUnitsPage() {
     try {
       if (selectedUnit) {
         await unitService.update(selectedUnit.id, data as UnitUpdateDto);
-        toast.success('Unidade atualizada com sucesso!');
+        showSuccess('Unidade atualizada com sucesso!');
       } else {
         await unitService.create(data as UnitCreateDto);
-        toast.success('Unidade criada com sucesso!');
+        showSuccess('Unidade criada com sucesso!');
       }
       loadUnits();
     } catch (error) {
-      toast.error('Erro ao salvar unidade');
+      showError('Erro ao salvar unidade');
       throw error;
     }
   };

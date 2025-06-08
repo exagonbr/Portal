@@ -7,7 +7,7 @@ import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/components/ToastManager';
 import { UnitResponseDto, UnitCreateDto, UnitUpdateDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';
 
@@ -18,6 +18,7 @@ interface UnitEditModalProps {
 }
 
 export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
+  const { showSuccess, showError } = useToast();
   const [formData, setFormData] = useState<UnitCreateDto | UnitUpdateDto>({
     name: '',
     description: '',
@@ -57,7 +58,7 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
           name: inst.name
         })));
       } catch (error) {
-        toast.error('Erro ao carregar instituições');
+        showError('Erro ao carregar instituições');
       }
     };
     loadInstitutions();
@@ -69,9 +70,9 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
     try {
       await onSave(formData);
       onClose();
-      toast.success('Unidade salva com sucesso!');
+      showSuccess('Unidade salva com sucesso!');
     } catch (error) {
-      toast.error('Erro ao salvar unidade');
+      showError('Erro ao salvar unidade');
     } finally {
       setIsLoading(false);
     }

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch';
 import { CourseResponseDto, CourseUpdateDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/components/ToastManager';
 
 interface Institution {
   id: string;

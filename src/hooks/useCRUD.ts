@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
 import { BaseApiService, PaginatedResponse, handleApiError } from '@/services/api'
-import { toast } from 'react-hot-toast'
 
 interface UseCRUDOptions<T> {
   service: BaseApiService<T>
@@ -92,7 +91,6 @@ export function useCRUD<T extends { id: string | number }>({
       const errorMessage = handleApiError(err)
       setError(errorMessage)
       onError?.('fetch', err)
-      toast.error(`Erro ao carregar ${entityName}: ${errorMessage}`)
     } finally {
       setLoading(false)
     }
@@ -105,7 +103,6 @@ export function useCRUD<T extends { id: string | number }>({
     
     try {
       const newItem = await service.create(data)
-      toast.success(`${entityName} criado com sucesso!`)
       onSuccess?.('create', newItem)
       await fetchData()
       return newItem
@@ -113,7 +110,6 @@ export function useCRUD<T extends { id: string | number }>({
       const errorMessage = handleApiError(err)
       setError(errorMessage)
       onError?.('create', err)
-      toast.error(`Erro ao criar ${entityName}: ${errorMessage}`)
       return null
     } finally {
       setLoading(false)
@@ -127,7 +123,6 @@ export function useCRUD<T extends { id: string | number }>({
     
     try {
       const updatedItem = await service.update(id, data)
-      toast.success(`${entityName} atualizado com sucesso!`)
       onSuccess?.('update', updatedItem)
       await fetchData()
       return updatedItem
@@ -135,7 +130,6 @@ export function useCRUD<T extends { id: string | number }>({
       const errorMessage = handleApiError(err)
       setError(errorMessage)
       onError?.('update', err)
-      toast.error(`Erro ao atualizar ${entityName}: ${errorMessage}`)
       return null
     } finally {
       setLoading(false)
@@ -149,7 +143,6 @@ export function useCRUD<T extends { id: string | number }>({
     
     try {
       await service.delete(id)
-      toast.success(`${entityName} removido com sucesso!`)
       onSuccess?.('delete')
       await fetchData()
       return true
@@ -157,7 +150,6 @@ export function useCRUD<T extends { id: string | number }>({
       const errorMessage = handleApiError(err)
       setError(errorMessage)
       onError?.('delete', err)
-      toast.error(`Erro ao remover ${entityName}: ${errorMessage}`)
       return false
     } finally {
       setLoading(false)

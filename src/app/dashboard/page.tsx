@@ -7,7 +7,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/components/ToastManager';
 import { 
   BookOpen, 
   Users, 
@@ -52,7 +52,7 @@ interface UpcomingEvent {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { showError } = useToast();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
@@ -75,11 +75,7 @@ export default function DashboardPage() {
       setRecentActivities(activitiesData);
       setUpcomingEvents(eventsData);
     } catch (error) {
-      toast({
-        title: "Erro ao carregar dashboard",
-        description: "Não foi possível carregar os dados do dashboard.",
-        variant: "destructive"
-      });
+      showError("Erro ao carregar dashboard", "Não foi possível carregar os dados do dashboard.");
     } finally {
       setLoading(false);
     }

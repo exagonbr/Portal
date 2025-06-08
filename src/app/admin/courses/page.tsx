@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { CourseEditModal } from '@/components/CourseEditModal';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/components/ToastManager';
 import { courseService } from '@/services/courseService';
 import { institutionService } from '@/services/institutionService';
 import { CourseResponseDto } from '@/types/api';
