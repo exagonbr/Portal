@@ -32,6 +32,7 @@ import { institutionService } from '@/services/institutionService'
 import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto, UserDto } from '@/types/api'
 import { formatDate } from '@/utils/date'
 import UserModal from '@/components/modals/UserModal'
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 
 // Estendendo o tipo UserResponseDto para incluir campos adicionais
 interface ExtendedUserResponseDto extends UserResponseDto {
@@ -425,8 +426,27 @@ export default function GlobalUsersPage() {
     }
   }
 
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-slate-500">
+        Total: {totalItems} usuários
+      </span>
+      <button
+        onClick={handleRefresh}
+        className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${refreshing ? 'animate-spin' : ''}`}
+        title="Atualizar lista"
+      >
+        <RefreshCw className="h-4 w-4" />
+      </button>
+    </div>
+  )
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <DashboardPageLayout
+      title="Gerenciar Usuários"
+      subtitle="Gerencie todos os usuários do sistema"
+      actions={headerActions}
+    >
       {/* Notificação */}
       {notification && (
         <Notification
@@ -435,32 +455,6 @@ export default function GlobalUsersPage() {
           onClose={() => setNotification(null)}
         />
       )}
-
-      {/* Cabeçalho */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">
-              Gerenciar Usuários
-            </h1>
-            <p className="text-slate-600">
-              Gerencie todos os usuários do sistema.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-500">
-              Total: {totalItems} usuários
-            </span>
-            <button
-              onClick={handleRefresh}
-              className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${refreshing ? 'animate-spin' : ''}`}
-              title="Atualizar lista"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Barra de ações */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -903,6 +897,6 @@ export default function GlobalUsersPage() {
           }}
         />
       )}
-    </div>
+    </DashboardPageLayout>
   )
 }

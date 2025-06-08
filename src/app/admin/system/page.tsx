@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 
 const SYSTEM_INFO = {
   version: '2.1.4',
@@ -45,29 +46,29 @@ export default function AdminSystemPage() {
   const [selectedTab, setSelectedTab] = useState('overview')
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false)
 
+  const headerActions = (
+    <div className="flex space-x-4">
+      <button 
+        onClick={() => setShowMaintenanceModal(true)}
+        className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 flex items-center space-x-2"
+      >
+        <span className="material-symbols-outlined">build</span>
+        <span>Manutenção</span>
+      </button>
+      <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+        <span className="material-symbols-outlined">refresh</span>
+        <span>Atualizar</span>
+      </button>
+    </div>
+  )
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-600">Sistema</h1>
-            <p className="text-gray-600">Monitoramento e configuração do sistema</p>
-          </div>
-          <div className="flex space-x-4">
-            <button 
-              onClick={() => setShowMaintenanceModal(true)}
-              className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 flex items-center space-x-2"
-            >
-              <span className="material-symbols-outlined">build</span>
-              <span>Manutenção</span>
-            </button>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
-              <span className="material-symbols-outlined">refresh</span>
-              <span>Atualizar</span>
-            </button>
-          </div>
-        </div>
+    <DashboardPageLayout
+      title="Sistema"
+      subtitle="Monitoramento e configuração do sistema"
+      actions={headerActions}
+    >
+      <div className="space-y-8">
 
         {/* System Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -353,6 +354,7 @@ export default function AdminSystemPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DashboardPageLayout>
   )
 }

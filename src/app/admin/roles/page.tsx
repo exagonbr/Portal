@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react'
+import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 
 export default function RolesPermissionsPage() {
   const [selectedRole, setSelectedRole] = useState<string | null>('admin')
@@ -184,18 +185,37 @@ export default function RolesPermissionsPage() {
     return group.permissions.some(permission => selectedPermissions[permission.id])
   }
 
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={handleSavePermissions}
+        disabled={loading}
+        className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+          loading 
+            ? 'bg-gray-400 cursor-not-allowed' 
+            : saved 
+            ? 'bg-green-600 hover:bg-green-700' 
+            : 'bg-blue-600 hover:bg-blue-700'
+        } text-white`}
+      >
+        {loading ? (
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+        ) : saved ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <Save className="h-4 w-4" />
+        )}
+        {loading ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar Alterações'}
+      </button>
+    </div>
+  )
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Cabeçalho */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 mb-2 flex items-center">
-          <Key className="mr-2 h-8 w-8 text-indigo-600" />
-          Gerenciar Permissões
-        </h1>
-        <p className="text-slate-600">
-          Configure os papéis e permissões de acesso ao sistema.
-        </p>
-      </div>
+    <DashboardPageLayout
+      title="Gerenciar Permissões"
+      subtitle="Configure os papéis e permissões de acesso ao sistema"
+      actions={headerActions}
+    >
 
       {/* Feedback de salvamento */}
       {saved && (
@@ -324,32 +344,11 @@ export default function RolesPermissionsPage() {
                 </div>
               ))}
               
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={handleSavePermissions}
-                  disabled={loading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Salvando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Salvar Alterações
-                    </>
-                  )}
-                </button>
-              </div>
+
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </DashboardPageLayout>
   )
 }

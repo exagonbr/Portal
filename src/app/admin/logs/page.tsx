@@ -9,22 +9,24 @@ import { UserRole } from '@/types/roles'
 export default function AdminLogsPage() {
   const { user } = useAuth()
 
+  const headerActions = (
+    <div className="flex space-x-4">
+      <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
+        Exportar Logs
+      </button>
+      <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 transition-colors duration-200">
+        Limpar Logs
+      </button>
+    </div>
+  )
+
   return (
-    <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
-        <DashboardPageLayout
-          title="Logs do Sistema"
-          subtitle="Visualize e analise os logs do sistema"
-        >
+    <DashboardPageLayout
+      title="Logs do Sistema"
+      subtitle="Visualize e analise os logs do sistema"
+      actions={headerActions}
+    >
           <div className="space-y-6">
-            {/* Header com ações */}
-            <div className="flex justify-end space-x-4">
-              <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">
-                Exportar Logs
-              </button>
-              <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 transition-colors duration-200">
-                Limpar Logs
-              </button>
-            </div>
 
             {/* Filtros */}
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -256,7 +258,6 @@ export default function AdminLogsPage() {
               </div>
             </div>
           </div>
-        </DashboardPageLayout>
-    </ProtectedRoute>
+    </DashboardPageLayout>
   )
 }
