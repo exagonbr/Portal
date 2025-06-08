@@ -160,12 +160,17 @@ const LoadingSpinner = () => (
 const HeroSection = () => {
   const [currentVideo, setCurrentVideo] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const featuredVideos = carouselVideoImages;
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentVideo((prev) => (prev + 1) % featuredVideos.length);
-    }, 10000);
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentVideo((prev) => (prev + 1) % featuredVideos.length);
+        setIsTransitioning(false);
+      }, 500);
+    }, 8000);
     return () => clearInterval(timer);
   }, [featuredVideos.length]);
 
@@ -173,40 +178,112 @@ const HeroSection = () => {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
-      {/* Background Video/Image */}
+      {/* Background Video/Image with smooth transitions */}
       <div className="absolute inset-0">
-        <img
-          src={current.src}
-          alt={current.alt}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent" />
+        {featuredVideos.map((video, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+              index === currentVideo 
+                ? 'opacity-100 scale-100' 
+                : 'opacity-0 scale-105'
+            }`}
+          >
+            <img
+              src={video.src}
+              alt={video.alt}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ))}
+        
+        {/* Enhanced gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+        
+        {/* Bottom fade shadow */}
+        <div className="absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+        
+        {/* Side shadows for depth */}
+        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-gray-900/50 to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-gray-900/50 to-transparent" />
       </div>
 
       {/* Content */}
       <div className="relative h-full flex items-center">
         <div className="px-20 max-w-5xl">
-          <h1 className="text-8xl font-bold text-white mb-10">
-            {current.title}
-          </h1>
-          <p className="text-2xl text-gray-200 mb-12 line-clamp-3 leading-relaxed max-w-4xl">
-            Explore conteúdo educacional de alta qualidade. Aprenda com os melhores professores e desenvolva novas habilidades no seu próprio ritmo.
-          </p>
-          
-          {/* Buttons */}
-          <div className="flex items-center gap-8">
-            <button className="flex items-center gap-4 px-12 py-5 bg-white text-black rounded hover:bg-gray-200 transition-colors text-2xl font-semibold">
-              <PlayIcon className="w-8 h-8" />
-              Assistir
-            </button>
-            <button className="flex items-center gap-4 px-12 py-5 bg-gray-500/70 text-white rounded hover:bg-gray-500/50 transition-colors text-2xl font-semibold">
-              <InformationCircleIcon className="w-8 h-8" />
-              Mais informações
-            </button>
+          <div className={`transition-all duration-700 ease-out ${
+            isTransitioning ? 'opacity-0 transform translate-y-4' : 'opacity-100 transform translate-y-0'
+          }`}>
+            <h1 className="text-5xl font-bold text-white mb-6 drop-shadow-2xl">
+              {current.title}
+            </h1>
+            <p className="text-lg text-gray-200 mb-8 line-clamp-3 leading-relaxed max-w-3xl drop-shadow-lg">
+              Explore conteúdo educacional de alta qualidade. Aprenda com os melhores professores e desenvolva novas habilidades no seu próprio ritmo.
+            </p>
+            
+            {/* Buttons */}
+            <div className="flex items-center gap-4">
+              <button className="flex items-center gap-3 px-8 py-3 bg-white text-black rounded hover:bg-gray-200 transition-all duration-300 text-lg font-semibold shadow-2xl hover:shadow-white/20 hover:scale-105">
+                <PlayIcon className="w-6 h-6" />
+                Assistir
+              </button>
+              <button className="flex items-center gap-3 px-8 py-3 bg-gray-500/70 text-white rounded hover:bg-gray-500/50 transition-all duration-300 text-lg font-semibold backdrop-blur-sm shadow-xl hover:shadow-gray-500/20 hover:scale-105">
+                <InformationCircleIcon className="w-6 h-6" />
+                Mais informações
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Navigation Dots */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
+        {featuredVideos.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              setIsTransitioning(true);
+              setTimeout(() => {
+                setCurrentVideo(index);
+                setIsTransitioning(false);
+              }, 300);
+            }}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              index === currentVideo 
+                ? 'bg-white scale-125 shadow-lg' 
+                : 'bg-white/50 hover:bg-white/80 hover:scale-110'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Navigation Arrows */}
+      <button
+        onClick={() => {
+          setIsTransitioning(true);
+          setTimeout(() => {
+            setCurrentVideo((prev) => prev === 0 ? featuredVideos.length - 1 : prev - 1);
+            setIsTransitioning(false);
+          }, 300);
+        }}
+        className="absolute left-8 top-1/2 transform -translate-y-1/2 w-16 h-16 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm z-10"
+      >
+        <ChevronLeftIcon className="w-8 h-8 text-white" />
+      </button>
+
+      <button
+        onClick={() => {
+          setIsTransitioning(true);
+          setTimeout(() => {
+            setCurrentVideo((prev) => (prev + 1) % featuredVideos.length);
+            setIsTransitioning(false);
+          }, 300);
+        }}
+        className="absolute right-8 top-1/2 transform -translate-y-1/2 w-16 h-16 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm z-10"
+      >
+        <ChevronRightIcon className="w-8 h-8 text-white" />
+      </button>
     </div>
   );
 };
