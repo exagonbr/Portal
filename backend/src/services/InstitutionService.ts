@@ -6,7 +6,7 @@ import {
   UpdateInstitutionDto, 
   InstitutionDto,
   InstitutionFilterDto,
-  PaginatedInstitutionsDto,
+  PaginatedInstitutionDto,
   InstitutionStatsDto
 } from '../dto/InstitutionDto';
 import { ServiceResult, PaginationResult } from '../types/common'; // Adicionado PaginationResult aqui
@@ -21,7 +21,7 @@ export class InstitutionService extends BaseService<Institution, CreateInstituti
     this.institutionRepository = institutionRepository;
   }
 
-  async findInstitutionsWithFilters(filters: InstitutionFilterDto): Promise<ServiceResult<PaginatedInstitutionsDto>> {
+  async findInstitutionsWithFilters(filters: InstitutionFilterDto): Promise<ServiceResult<PaginatedInstitutionDto>> {
     this.logger.debug('Finding institutions with filters', { filters });
     try {
       const { sortBy, sortOrder, search, type, is_active } = filters;
@@ -68,7 +68,7 @@ export class InstitutionService extends BaseService<Institution, CreateInstituti
       return {
         success: true,
         data: {
-          institutions: institutions.map(this.mapToDto),
+          institution: institutions.map(this.mapToDto),
           pagination: paginationResult,
         },
       };

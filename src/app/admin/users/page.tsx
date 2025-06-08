@@ -29,10 +29,15 @@ import { useAuth } from '@/contexts/AuthContext'
 import { userService } from '@/services/userService'
 import { roleService } from '@/services/roleService'
 import { institutionService } from '@/services/institutionService'
-import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto, UserDto } from '@/types/api'
+import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto, UserWithRoleDto } from '@/types/api'
 import { formatDate } from '@/utils/date'
 import UserModal from '@/components/modals/UserModal'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/useToast'
+import GenericCRUD, { CRUDColumn } from '@/components/crud/GenericCRUD'
+import { Badge } from '@/components/ui/Badge'
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 
 // Estendendo o tipo UserResponseDto para incluir campos adicionais
 interface ExtendedUserResponseDto extends UserResponseDto {
@@ -45,6 +50,22 @@ interface ExtendedUserResponseDto extends UserResponseDto {
   updated_at: string
   role_name?: string
   institution_name?: string
+}
+
+// Interface para o UserDto usado no modal
+interface UserDto {
+  id?: string
+  name: string
+  email: string
+  username?: string
+  role?: string
+  role_id?: string
+  avatar?: string
+  isActive?: boolean
+  institution_id?: string
+  institution_name?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 // Componente de notificação
@@ -197,7 +218,9 @@ const UserDetailsModal = ({ user, onClose }: { user: ExtendedUserResponseDto | n
   )
 }
 
-export default function GlobalUsersPage() {
+export default function ManageUsers() {
+  const router = useRouter()
+  const { showSuccess, showError } = useToast()
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -217,6 +240,7 @@ export default function GlobalUsersPage() {
   const [sortBy, setSortBy] = useState<'name' | 'email' | 'created_at'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const itemsPerPage = 10
+
 
   // Função para converter ExtendedUserResponseDto para UserDto
   const convertToUserDto = (user: ExtendedUserResponseDto): UserDto => {
@@ -246,10 +270,10 @@ export default function GlobalUsersPage() {
   const loadAuxiliaryData = async () => {
     try {
       const [rolesResponse, institutionsResponse] = await Promise.all([
-        roleService.getAll(),
+        roleService.getActiveRoles(),
         institutionService.getActiveInstitutions()
       ])
-      setRoles(rolesResponse.data || [])
+      setRoles(rolesResponse || [])
       setInstitutions(institutionsResponse || [])
     } catch (error) {
       console.error('Erro ao carregar dados auxiliares:', error)
@@ -321,18 +345,18 @@ export default function GlobalUsersPage() {
   }
 
   // Excluir usuário
-  const handleDeleteUser = async (id: string) => {
+  const handleDeleteUser = async (user: ExtendedUserResponseDto) => {
     if (!window.confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
       return
     }
 
     try {
-      await userService.deleteUser(id)
-      showNotification('Usuário excluído com sucesso!', 'success')
+      await userService.deleteUser(user.id)
+      showSuccess('Usuário excluído com sucesso!')
       loadUsers()
     } catch (error: any) {
       console.error('Erro ao excluir usuário:', error)
-      showNotification(error.message || 'Erro ao excluir usuário', 'error')
+      showError(error.message || 'Erro ao excluir usuário')
     }
   }
 
@@ -341,11 +365,11 @@ export default function GlobalUsersPage() {
     try {
       const newStatus = !user.is_active
       await userService.updateUser(user.id, { is_active: newStatus })
-      showNotification(`Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso!`, 'success')
+      showSuccess(`Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso!`)
       loadUsers()
     } catch (error: any) {
       console.error('Erro ao alterar status:', error)
-      showNotification(error.message || 'Erro ao alterar status do usuário', 'error')
+      showError(error.message || 'Erro ao alterar status do usuário')
     }
   }
 
@@ -360,7 +384,7 @@ export default function GlobalUsersPage() {
       showNotification('Funcionalidade de reset de senha será implementada em breve', 'info')
     } catch (error: any) {
       console.error('Erro ao resetar senha:', error)
-      showNotification(error.message || 'Erro ao resetar senha', 'error')
+      showError(error.message || 'Erro ao resetar senha')
     }
   }
 
@@ -368,10 +392,10 @@ export default function GlobalUsersPage() {
   const handleExport = async () => {
     try {
       const result = await userService.exportUsers(filters, 'csv')
-      showNotification('Exportação iniciada! Você receberá um email quando estiver pronta.', 'success')
+      showSuccess('Exportação iniciada! Você receberá um email quando estiver pronta.')
     } catch (error: any) {
       console.error('Erro ao exportar:', error)
-      showNotification(error.message || 'Erro ao exportar usuários', 'error')
+      showError(error.message || 'Erro ao exportar usuários')
     }
   }
 
@@ -382,11 +406,11 @@ export default function GlobalUsersPage() {
 
     try {
       const result = await userService.importUsers(file)
-      showNotification('Importação iniciada! Você receberá um email com o resultado.', 'success')
+      showSuccess('Importação iniciada! Você receberá um email com o resultado.')
       loadUsers()
     } catch (error: any) {
       console.error('Erro ao importar:', error)
-      showNotification(error.message || 'Erro ao importar usuários', 'error')
+      showError(error.message || 'Erro ao importar usuários')
     }
   }
 
@@ -441,462 +465,131 @@ export default function GlobalUsersPage() {
     </div>
   )
 
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case 'admin': return 'danger'
+      case 'teacher': return 'warning'
+      case 'student': return 'info'
+      case 'coordinator': return 'success'
+      default: return 'secondary'
+    }
+  }
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin': return 'Administrador'
+      case 'teacher': return 'Professor'
+      case 'student': return 'Aluno'
+      case 'coordinator': return 'Coordenador'
+      default: return role
+    }
+  }
+
+  const columns: CRUDColumn<ExtendedUserResponseDto>[] = [
+    {
+      key: 'name',
+      label: 'Nome',
+      sortable: true
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      sortable: true
+    },
+    {
+      key: 'role',
+      label: 'Função',
+      render: (user) => {
+        const roleName = user?.role_name || ''
+        return (
+          <Badge variant={getRoleBadgeVariant(roleName)}>
+            {getRoleLabel(roleName) || 'Sem função'}
+          </Badge>
+        )
+      }
+    },
+    {
+      key: 'institution_name',
+      label: 'Instituição',
+      sortable: true,
+      render: (user) => user?.institution_name || 'Não definida'
+    },
+    {
+      key: 'active',
+      label: 'Status',
+      render: (user) => (
+        <Badge variant={user?.is_active ? "success" : "danger"}>
+          {user?.is_active ? "Ativo" : "Inativo"}
+        </Badge>
+      )
+    },
+    {
+      key: 'created_at',
+      label: 'Cadastrado em',
+      render: (user) => user?.created_at ? formatDate(user.created_at) : 'Nunca'
+    }
+  ]
+
   return (
-    <DashboardPageLayout
-      title="Gerenciar Usuários"
-      subtitle="Gerencie todos os usuários do sistema"
-      actions={headerActions}
-    >
-      {/* Notificação */}
-      {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={() => setNotification(null)}
+    <AuthenticatedLayout>
+      <div className="container mx-auto py-8">
+        {notification && (
+          <Notification
+            message={notification.message}
+            type={notification.type}
+            onClose={() => setNotification(null)}
+          />
+        )}
+        
+        <GenericCRUD
+          title="Gerenciamento de Usuários"
+          entityName="Usuário"
+          entityNamePlural="Usuários"
+          columns={columns}
+          data={users}
+          loading={loading}
+          totalItems={totalItems}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onSearch={handleSearch}
+          onCreate={handleCreateUser}
+          onEdit={handleEditUser}
+          onDelete={handleDeleteUser}
+          onView={handleViewUser}
+          searchPlaceholder="Buscar usuários..."
+          createPermission="users.create"
+          editPermission="users.edit"
+          deletePermission="users.delete"
+          viewPermission="users.view"
         />
-      )}
 
-      {/* Barra de ações */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div className="flex w-full md:w-auto">
-          <div className="relative flex-grow">
-            <input
-              type="text"
-              placeholder="Buscar por nome, email..."
-              className="pl-10 pr-4 py-2 border border-slate-200 rounded-l-lg w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-primary-dark"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          </div>
-          <button 
-            onClick={handleSearch}
-            className="button-primary rounded-r-lg rounded-l-none"
-          >
-            Buscar
-          </button>
-        </div>
-        
-        <div className="flex gap-2 w-full md:w-auto">
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            className="button-secondary flex items-center gap-1 text-sm"
-          >
-            <Filter className="h-4 w-4" />
-            Filtros
-          </button>
-          
-          <label className="flex items-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors cursor-pointer">
-            <Upload className="h-4 w-4" />
-            Importar
-            <input
-              type="file"
-              accept=".csv,.xlsx"
-              onChange={handleImport}
-              className="hidden"
-            />
-          </label>
-          
-          <button 
-            onClick={handleExport}
-            className="button-secondary flex items-center gap-1 text-sm"
-          >
-            <Download className="h-4 w-4" />
-            Exportar
-          </button>
-          
-          <button 
-            onClick={handleCreateUser}
-            className="button-primary flex items-center gap-1 text-sm ml-2"
-          >
-            <Plus className="h-4 w-4" />
-            Novo Usuário
-          </button>
-        </div>
-      </div>
+        {showModal && (
+          <UserModal
+            show={showModal}
+            user={selectedUser ? convertToUserDto(selectedUser) : null}
+            onClose={() => {
+              setShowModal(false)
+              setSelectedUser(null)
+            }}
+            onSave={() => {
+              setShowModal(false)
+              setSelectedUser(null)
+              loadUsers()
+            }}
+          />
+        )}
 
-      {/* Painel de filtros */}
-      {showFilters && (
-        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-          <h3 className="font-semibold text-slate-800 mb-3">Filtros Avançados</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Função
-              </label>
-              <select
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                value={filters.role || ''}
-                onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-              >
-                <option value="">Todas</option>
-                {roles.map(role => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Instituição
-              </label>
-              <select
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                value={filters.school_id || ''}
-                onChange={(e) => setFilters({ ...filters, school_id: e.target.value })}
-              >
-                <option value="">Todas</option>
-                {institutions.map(inst => (
-                  <option key={inst.id} value={inst.id}>
-                    {inst.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Status
-              </label>
-              <select
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                value={filters.is_active === undefined ? '' : filters.is_active.toString()}
-                onChange={(e) => setFilters({ ...filters, is_active: e.target.value === '' ? undefined : e.target.value === 'true' })}
-              >
-                <option value="">Todos</option>
-                <option value="true">Ativo</option>
-                <option value="false">Inativo</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Ordenar por
-              </label>
-              <select
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-dark"
-                value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
-                  const [field, order] = e.target.value.split('-')
-                  setSortBy(field as any)
-                  setSortOrder(order as any)
-                }}
-              >
-                <option value="name-asc">Nome (A-Z)</option>
-                <option value="name-desc">Nome (Z-A)</option>
-                <option value="email-asc">Email (A-Z)</option>
-                <option value="email-desc">Email (Z-A)</option>
-                <option value="created_at-desc">Mais recentes</option>
-                <option value="created_at-asc">Mais antigos</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="flex justify-end gap-2 mt-4">
-            <button
-              onClick={handleClearFilters}
-              className="button-secondary text-sm"
-            >
-              Limpar Filtros
-            </button>
-            <button
-              onClick={handleApplyFilters}
-              className="button-primary text-sm"
-            >
-              Aplicar Filtros
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Tabela de usuários */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Usuário
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Função
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Instituição
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Cadastrado em
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-sm text-slate-500">
-                    <div className="flex justify-center items-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-dark"></div>
-                      <span className="ml-2">Carregando...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-sm text-slate-500">
-                    <div className="flex flex-col items-center justify-center py-8">
-                      <Users className="h-12 w-12 text-slate-300 mb-3" />
-                      <p className="text-lg font-medium text-slate-600 mb-1">Nenhum usuário encontrado</p>
-                      <p className="text-sm text-slate-500">Tente ajustar os filtros ou criar um novo usuário.</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          {user.avatar ? (
-                            <img 
-                              className="h-10 w-10 rounded-full object-cover" 
-                              src={user.avatar} 
-                              alt={user.name} 
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-primary-light flex items-center justify-center text-white font-medium">
-                              {user.name.substring(0, 2).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-slate-900">{user.name}</div>
-                          {user.username && (
-                            <div className="text-xs text-slate-500">@{user.username}</div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      <a href={`mailto:${user.email}`} className="hover:text-primary-dark">
-                        {user.email}
-                      </a>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(user.role_name)}`}>
-                        <Shield className="h-3 w-3 mr-1" />
-                        {user.role_name || 'Sem função'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {user.institution_name || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => handleToggleStatus(user)}
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full cursor-pointer transition-colors ${
-                          user.is_active 
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                            : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                        }`}
-                      >
-                        {user.is_active ? 'Ativo' : 'Inativo'}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {formatDate(user.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end items-center space-x-2">
-                        <button 
-                          onClick={() => handleEditUser(user)} 
-                          className="bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 p-2 rounded-lg shadow-sm"
-                          title="Editar"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleViewUser(user)} 
-                          className="bg-green-600 text-white hover:bg-green-700 transition-all duration-200 p-2 rounded-lg shadow-sm"
-                          title="Visualizar"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleResetPassword(user.id)} 
-                          className="bg-orange-600 text-white hover:bg-orange-700 transition-all duration-200 p-2 rounded-lg shadow-sm"
-                          title="Resetar senha"
-                        >
-                          <Key className="h-4 w-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteUser(user.id)} 
-                          className="bg-red-600 text-white hover:bg-red-700 transition-all duration-200 p-2 rounded-lg shadow-sm"
-                          title="Excluir"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Paginação */}
-        {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-slate-200 sm:px-6">
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-slate-700">
-                  Mostrando <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> a{' '}
-                  <span className="font-medium">
-                    {Math.min(currentPage * itemsPerPage, totalItems)}
-                  </span>{' '}
-                  de <span className="font-medium">{totalItems}</span> resultados
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className={`relative inline-flex items-center px-3 py-2 rounded-l-lg border-2 text-sm font-medium transition-all duration-200 ${
-                      currentPage === 1 
-                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' 
-                        : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white'
-                    }`}
-                  >
-                    <span className="sr-only">Anterior</span>
-                    &larr;
-                  </button>
-                  
-                  {/* Páginas */}
-                  {(() => {
-                    const pages = []
-                    const maxPagesToShow = 5
-                    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
-                    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
-                    
-                    if (endPage - startPage < maxPagesToShow - 1) {
-                      startPage = Math.max(1, endPage - maxPagesToShow + 1)
-                    }
-                    
-                    if (startPage > 1) {
-                      pages.push(
-                        <button
-                          key={1}
-                          onClick={() => setCurrentPage(1)}
-                          className="relative inline-flex items-center px-4 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50"
-                        >
-                          1
-                        </button>
-                      )
-                      if (startPage > 2) {
-                        pages.push(
-                          <span key="dots1" className="relative inline-flex items-center px-4 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-700">
-                            ...
-                          </span>
-                        )
-                      }
-                    }
-                    
-                    for (let i = startPage; i <= endPage; i++) {
-                      pages.push(
-                        <button
-                          key={i}
-                          onClick={() => setCurrentPage(i)}
-                          className={`relative inline-flex items-center px-4 py-2 border border-slate-300 bg-white text-sm font-medium ${
-                            i === currentPage 
-                              ? 'z-10 bg-primary-dark text-white border-primary-dark' 
-                              : 'text-slate-500 hover:bg-slate-50'
-                          }`}
-                        >
-                          {i}
-                        </button>
-                      )
-                    }
-                    
-                    if (endPage < totalPages) {
-                      if (endPage < totalPages - 1) {
-                        pages.push(
-                          <span key="dots2" className="relative inline-flex items-center px-4 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-700">
-                            ...
-                          </span>
-                        )
-                      }
-                      pages.push(
-                        <button
-                          key={totalPages}
-                          onClick={() => setCurrentPage(totalPages)}
-                          className="relative inline-flex items-center px-4 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50"
-                        >
-                          {totalPages}
-                        </button>
-                      )
-                    }
-                    
-                    return pages
-                  })()}
-                  
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className={`relative inline-flex items-center px-3 py-2 rounded-r-lg border-2 text-sm font-medium transition-all duration-200 ${
-                      currentPage === totalPages 
-                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' 
-                        : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white'
-                    }`}
-                  >
-                    <span className="sr-only">Próximo</span>
-                    &rarr;
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
+        {showDetailsModal && (
+          <UserDetailsModal
+            user={selectedUser}
+            onClose={() => {
+              setShowDetailsModal(false)
+              setSelectedUser(null)
+            }}
+          />
         )}
       </div>
-
-      {/* Modal de CRUD */}
-      {showModal && (
-        <UserModal
-          show={showModal}
-          user={selectedUser ? convertToUserDto(selectedUser) : null}
-          onClose={() => {
-            setShowModal(false)
-            setSelectedUser(null)
-          }}
-          onSave={() => {
-            setShowModal(false)
-            setSelectedUser(null)
-            loadUsers()
-          }}
-        />
-      )}
-
-      {/* Modal de Detalhes */}
-      {showDetailsModal && (
-        <UserDetailsModal
-          user={selectedUser}
-          onClose={() => {
-            setShowDetailsModal(false)
-            setSelectedUser(null)
-          }}
-        />
-      )}
-    </DashboardPageLayout>
+    </AuthenticatedLayout>
   )
 }

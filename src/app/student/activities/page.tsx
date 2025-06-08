@@ -8,7 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
 import { Button, ButtonGroup } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { motion } from 'framer-motion'
 

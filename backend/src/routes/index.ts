@@ -28,6 +28,8 @@ import dashboardRouter from './dashboard';
 import settingsRouter from './settings.routes';
 import queueRouter from './queue';
 import cacheRouter from './cache';
+import teachersRouter from './teachers';
+import studentsRouter from './students';
 
 const router = express.Router();
 
@@ -75,5 +77,7 @@ router.use('/aws', createAwsRoutes(db));
 router.use('/settings', settingsRouter);
 router.use('/queue', queueRouter);
 router.use('/cache', cacheRouter);
+router.use('/teachers', teachersRouter);
+router.use('/students', studentsRouter);
 
 export default router;

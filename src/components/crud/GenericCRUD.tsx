@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import Table from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
-import {Input} from '@/components/ui/Input'
+import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import { usePermissions } from '@/hooks/usePermissions'
 
@@ -195,7 +195,7 @@ export default function GenericCRUD<T extends { id: string | number }>({
           
           {onCreate && canCreate && (
             <Button
-              variant="primary"
+              variant="default"
               onClick={onCreate}
             >
               Novo {entityName}
@@ -244,7 +244,8 @@ export default function GenericCRUD<T extends { id: string | number }>({
               Cancelar
             </Button>
             <Button
-                onClick={confirmDelete}
+              variant="destructive"
+              onClick={confirmDelete}
             >
               Excluir
             </Button>

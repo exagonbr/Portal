@@ -611,3 +611,39 @@ export const deleteCourse = (id: string) => courseService.deleteCourse(id);
 export const getActiveCourses = () => courseService.getActiveCourses();
 export const getCoursesByInstitution = (institutionId: string) => courseService.getCoursesByInstitution(institutionId);
 export const searchCoursesByName = (name: string) => courseService.searchCoursesByName(name);
+
+/**
+ * Busca cursos onde o usuário é professor
+ */
+export const getCoursesByTeacher = async (teacherId: string): Promise<CourseResponseDto[]> => {
+  try {
+    const response = await apiClient.get<CourseResponseDto[]>(`/teachers/${teacherId}/courses`);
+    
+    if (!response.success || !response.data) {
+      return [];
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error(`Erro ao buscar cursos do professor ${teacherId}:`, error);
+    return [];
+  }
+};
+
+/**
+ * Busca cursos onde o usuário é aluno
+ */
+export const getCoursesByStudent = async (studentId: string): Promise<CourseResponseDto[]> => {
+  try {
+    const response = await apiClient.get<CourseResponseDto[]>(`/students/${studentId}/courses`);
+    
+    if (!response.success || !response.data) {
+      return [];
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error(`Erro ao buscar cursos do aluno ${studentId}:`, error);
+    return [];
+  }
+};

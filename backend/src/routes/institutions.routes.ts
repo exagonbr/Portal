@@ -6,31 +6,31 @@ import { validatePermission } from '../middleware/permission.middleware';
 const router = Router();
 
 /**
- * @route GET /api/institutions
- * @desc Get all institutions
+ * @route GET /api/institution
+ * @desc Get all institution
  * @access Private
  */
-router.get('/', authMiddleware, validatePermission('institutions:read'), async (req, res) => {
+router.get('/', authMiddleware, validatePermission('institution:read'), async (req, res) => {
   try {
-    const institutions = await db('institutions')
+    const institution = await db('institution')
       .select('*')
       .orderBy('name');
     
-    res.json(institutions);
+    res.json(institution);
   } catch (error) {
-    console.error('Error fetching institutions:', error);
+    console.error('Error fetching institution:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 /**
- * @route GET /api/institutions/:id
+ * @route GET /api/institution/:id
  * @desc Get institution by ID
  * @access Private
  */
-router.get('/:id', authMiddleware, validatePermission('institutions:read'), async (req, res) => {
+router.get('/:id', authMiddleware, validatePermission('institution:read'), async (req, res) => {
   try {
-    const institution = await db('institutions')
+    const institution = await db('institution')
       .where({ id: req.params.id })
       .first();
     
@@ -46,11 +46,11 @@ router.get('/:id', authMiddleware, validatePermission('institutions:read'), asyn
 });
 
 /**
- * @route POST /api/institutions
+ * @route POST /api/institution
  * @desc Create a new institution
  * @access Private
  */
-router.post('/', authMiddleware, validatePermission('institutions:create'), async (req, res) => {
+router.post('/', authMiddleware, validatePermission('institution:create'), async (req, res) => {
   try {
     const {
       name,
@@ -65,7 +65,7 @@ router.post('/', authMiddleware, validatePermission('institutions:create'), asyn
       website
     } = req.body;
 
-    const [institution] = await db('institutions')
+    const [institution] = await db('institution')
       .insert({
         name,
         code,
@@ -89,11 +89,11 @@ router.post('/', authMiddleware, validatePermission('institutions:create'), asyn
 });
 
 /**
- * @route PUT /api/institutions/:id
+ * @route PUT /api/institution/:id
  * @desc Update an institution
  * @access Private
  */
-router.put('/:id', authMiddleware, validatePermission('institutions:update'), async (req, res) => {
+router.put('/:id', authMiddleware, validatePermission('institution:update'), async (req, res) => {
   try {
     const {
       name,
@@ -109,7 +109,7 @@ router.put('/:id', authMiddleware, validatePermission('institutions:update'), as
       status
     } = req.body;
 
-    const [institution] = await db('institutions')
+    const [institution] = await db('institution')
       .where({ id: req.params.id })
       .update({
         name,
@@ -139,13 +139,13 @@ router.put('/:id', authMiddleware, validatePermission('institutions:update'), as
 });
 
 /**
- * @route DELETE /api/institutions/:id
+ * @route DELETE /api/institution/:id
  * @desc Delete an institution
  * @access Private
  */
-router.delete('/:id', authMiddleware, validatePermission('institutions:delete'), async (req, res) => {
+router.delete('/:id', authMiddleware, validatePermission('institution:delete'), async (req, res) => {
   try {
-    const deleted = await db('institutions')
+    const deleted = await db('institution')
       .where({ id: req.params.id })
       .delete();
 

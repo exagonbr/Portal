@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { DataTable } from '@/components/DataTable';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
-import { Select } from '@/components/Select';
+import GenericCRUD from '@/components/crud/GenericCRUD';
+import { Button } from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { CourseEditModal } from '@/components/CourseEditModal';
 import { toast } from 'react-hot-toast';
 import { courseService } from '@/services/courseService';
@@ -105,45 +105,35 @@ export default function CoursesPage() {
   };
 
   const columns = [
-    { header: 'Nome', accessorKey: 'name' },
-    { header: 'Nível', accessorKey: 'level' },
-    { header: 'Tipo', accessorKey: 'type' },
-    {
-      header: 'Instituição',
-      accessorKey: 'institution',
-      cell: ({ row }: any) => row.original.institution?.name || '-'
+    { 
+      key: 'name',
+      label: 'Nome',
+      render: (item: any) => item.name
+    },
+    { 
+      key: 'level',
+      label: 'Nível',
+      render: (item: any) => item.level
+    },
+    { 
+      key: 'type',
+      label: 'Tipo',
+      render: (item: any) => item.type
     },
     {
-      header: 'Status',
-      accessorKey: 'active',
-      cell: ({ row }: any) => (
+      key: 'institution',
+      label: 'Instituição',
+      render: (item: any) => item.institution?.name || '-'
+    },
+    {
+      key: 'active',
+      label: 'Status',
+      render: (item: any) => (
         <span className={`px-2 py-1 rounded-full text-xs ${
-          row.original.active ? 'bg-success-light text-success-dark' : 'bg-error-light text-error-dark'
+          item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
-          {row.original.active ? 'Ativo' : 'Inativo'}
+          {item.active ? 'Ativo' : 'Inativo'}
         </span>
-      )
-    },
-    {
-      header: 'Ações',
-      accessorKey: 'actions',
-      cell: ({ row }: any) => (
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handleEdit(row.original)}
-          >
-            Editar
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => handleDelete(row.original.id)}
-          >
-            Excluir
-          </Button>
-        </div>
       )
     }
   ];
@@ -152,7 +142,7 @@ export default function CoursesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Cursos</h1>
-        <Button variant="default" onClick={handleAdd}>Novo Curso</Button>
+        <Button onClick={handleAdd}>Novo Curso</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -195,10 +185,12 @@ export default function CoursesPage() {
         </Select>
       </div>
 
-      <DataTable
-        columns={columns}
+      <GenericCRUD
         data={courses}
-        isLoading={isLoading}
+        columns={columns}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        loading={isLoading}
         pagination={{
           currentPage,
           totalItems,
@@ -206,13 +198,13 @@ export default function CoursesPage() {
         }}
       />
 
-      <CourseEditModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        course={selectedCourse}
-        title={selectedCourse ? 'Editar Curso' : 'Novo Curso'}
-      />
+      {isModalOpen && (
+        <CourseEditModal
+          course={selectedCourse}
+          onSave={handleSave}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 } 

@@ -1,97 +1,245 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import BookList from '@/components/books/BookList';
-import { Book, mockBookList } from '../../constants/mockData';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/Input';;
-import { Search, BookOpen, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { bookService } from '@/services/bookService'
+import GenericCRUD, { CRUDColumn } from '@/components/crud/GenericCRUD'
+import { BookResponseDto } from '@/types/api'
+import { useToast } from '@/hooks/useToast'
+import { BookAddModal } from '@/components/BookAddModal'
+import { BookEditModal } from '@/components/BookEditModal'
+import { Badge } from '@/components/ui/Badge'
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 
 export default function BooksPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const [filteredBooks, setFilteredBooks] = useState<Book[]>(mockBookList);
-  
-  // Filtrar livros com base na busca e na aba ativa
+  const router = useRouter()
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [books, setBooks] = useState<BookResponseDto[]>([])
+  const [totalItems, setTotalItems] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(12)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedBook, setSelectedBook] = useState<BookResponseDto | null>(null)
+
+  const fetchBooks = async (page = 1, search = '') => {
+    setLoading(true)
+    try {
+      const response = await bookService.getBooks({
+        page,
+        limit: itemsPerPage,
+        filters: { search }
+      })
+      
+      setBooks(response.items || [])
+      setTotalItems(response.total || 0)
+      setCurrentPage(page)
+    } catch (error) {
+      toast({
+        title: "Erro ao carregar livros",
+        description: "Não foi possível carregar a lista de livros.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    let result = mockBookList;
-    
-    // Filtrar por termo de busca
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(book => 
-        book.title.toLowerCase().includes(term) || 
-        (book.author && book.author.toLowerCase().includes(term))
-      );
+    fetchBooks(currentPage, searchQuery)
+  }, [currentPage])
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(1)
+    fetchBooks(1, query)
+  }
+
+  const handleAddBook = () => {
+    setAddModalOpen(true)
+  }
+
+  const handleEditBook = (book: BookResponseDto) => {
+    setSelectedBook(book)
+    setEditModalOpen(true)
+  }
+
+  const handleDeleteBook = async (book: BookResponseDto) => {
+    try {
+      await bookService.deleteBook(book.id)
+      toast({
+        title: "Livro excluído",
+        description: "O livro foi excluído com sucesso.",
+        variant: "success"
+      })
+      fetchBooks(currentPage, searchQuery)
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir livro",
+        description: "Não foi possível excluir o livro.",
+        variant: "destructive"
+      })
     }
-    
-    // Filtrar por tipo de arquivo
-    if (activeTab !== 'all') {
-      result = result.filter(book => book.format.toLowerCase() === activeTab);
+  }
+
+  const handleSaveBook = async (data: any) => {
+    try {
+      if (selectedBook) {
+        await bookService.updateBook(selectedBook.id, data)
+        toast({
+          title: "Livro atualizado",
+          description: "O livro foi atualizado com sucesso.",
+          variant: "success"
+        })
+      } else {
+        await bookService.createBook(data)
+        toast({
+          title: "Livro criado",
+          description: "O livro foi criado com sucesso.",
+          variant: "success"
+        })
+      }
+      setAddModalOpen(false)
+      setEditModalOpen(false)
+      setSelectedBook(null)
+      fetchBooks(currentPage, searchQuery)
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar livro",
+        description: "Não foi possível salvar o livro.",
+        variant: "destructive"
+      })
     }
-    
-    setFilteredBooks(result);
-  }, [searchTerm, activeTab]);
-  
+  }
+
+  const handleViewBook = (book: BookResponseDto) => {
+    router.push(`/books/${book.id}`)
+  }
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'published': return 'success'
+      case 'draft': return 'warning'
+      case 'archived': return 'secondary'
+      default: return 'info'
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'published': return 'Publicado'
+      case 'draft': return 'Rascunho'
+      case 'archived': return 'Arquivado'
+      default: return status
+    }
+  }
+
+  const columns: CRUDColumn<BookResponseDto>[] = [
+    {
+      key: 'title',
+      label: 'Título',
+      sortable: true,
+      render: (book) => (
+        <div className="flex items-center space-x-3">
+          {book.cover_url && (
+            <img 
+              src={book.cover_url} 
+              alt={book.title}
+              className="w-12 h-16 object-cover rounded"
+            />
+          )}
+          <div>
+            <div className="font-medium text-gray-900">{book.title}</div>
+            {book.subtitle && (
+              <div className="text-sm text-gray-500">{book.subtitle}</div>
+            )}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'author',
+      label: 'Autor',
+      sortable: true
+    },
+    {
+      key: 'category',
+      label: 'Categoria',
+      sortable: true
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (book) => (
+        <Badge variant={getStatusBadgeVariant(book.status)}>
+          {getStatusLabel(book.status)}
+        </Badge>
+      )
+    },
+    {
+      key: 'pages',
+      label: 'Páginas',
+      sortable: true
+    },
+    {
+      key: 'published_date',
+      label: 'Publicação',
+      render: (book) => book.published_date 
+        ? new Date(book.published_date).toLocaleDateString('pt-BR')
+        : '-'
+    }
+  ]
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Biblioteca Digital</h1>
-      </div>
-      
-      <div className="mb-6">
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-          <Input
-            type="text"
-            placeholder="Buscar por título ou autor..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+    <AuthenticatedLayout>
+      <div className="container mx-auto py-8">
+        <GenericCRUD
+          title="Biblioteca Digital"
+          entityName="Livro"
+          entityNamePlural="Livros"
+          columns={columns}
+          data={books}
+          loading={loading}
+          totalItems={totalItems}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onSearch={handleSearch}
+          onCreate={handleAddBook}
+          onEdit={handleEditBook}
+          onDelete={handleDeleteBook}
+          onView={handleViewBook}
+          searchPlaceholder="Buscar livros por título, autor..."
+          createPermission="books.create"
+          editPermission="books.edit"
+          deletePermission="books.delete"
+          viewPermission="books.view"
+        />
+
+        {addModalOpen && (
+          <BookAddModal
+            isOpen={addModalOpen}
+            onClose={() => setAddModalOpen(false)}
+            onSave={handleSaveBook}
+            title="Adicionar Livro"
           />
-        </div>
-        
-        <Tabs defaultValue="all" onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="all" className="flex items-center">
-              <BookOpen className="mr-2 h-4 w-4" />
-              Todos
-            </TabsTrigger>
-            <TabsTrigger value="pdf" className="flex items-center">
-              <FileText className="mr-2 h-4 w-4" />
-              PDF
-            </TabsTrigger>
-            <TabsTrigger value="epub" className="flex items-center">
-              <BookOpen className="mr-2 h-4 w-4" />
-              EPUB
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all">
-            <BookList books={filteredBooks} showViewer={false} />
-          </TabsContent>
-          
-          <TabsContent value="pdf">
-            <BookList books={filteredBooks} showViewer={false} />
-          </TabsContent>
-          
-          <TabsContent value="epub">
-            <BookList books={filteredBooks} showViewer={false} />
-          </TabsContent>
-        </Tabs>
+        )}
+
+        {editModalOpen && selectedBook && (
+          <BookEditModal
+            isOpen={editModalOpen}
+            onClose={() => {
+              setEditModalOpen(false)
+              setSelectedBook(null)
+            }}
+            onSave={handleSaveBook}
+            book={selectedBook}
+            title="Editar Livro"
+          />
+        )}
       </div>
-      
-      {filteredBooks.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300 mb-2">
-            Nenhum livro encontrado
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Tente ajustar os filtros ou termos de busca.
-          </p>
-        </div>
-      )}
-    </div>
-  );
+    </AuthenticatedLayout>
+  )
 } 

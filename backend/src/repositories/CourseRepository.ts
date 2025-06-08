@@ -224,4 +224,28 @@ export class CourseRepository extends BaseRepository<Course> {
     const offset = (pagination.page - 1) * pagination.limit;
     return query.limit(pagination.limit).offset(offset);
   }
+
+  async getCoursesByTeacher(teacherId: string): Promise<any[]> {
+    return this.db('courses')
+      .select(
+        'courses.*',
+        'institutions.name as institution_name'
+      )
+      .leftJoin('institutions', 'courses.institution_id', 'institutions.id')
+      .leftJoin('course_teachers', 'courses.id', 'course_teachers.course_id')
+      .where('course_teachers.user_id', teacherId);
+  }
+
+  async getCoursesByStudent(studentId: string): Promise<any[]> {
+    return this.db('courses')
+      .select(
+        'courses.*',
+        'institutions.name as institution_name',
+        'course_students.progress',
+        'course_students.grades'
+      )
+      .leftJoin('institutions', 'courses.institution_id', 'institutions.id')
+      .leftJoin('course_students', 'courses.id', 'course_students.course_id')
+      .where('course_students.user_id', studentId);
+  }
 }

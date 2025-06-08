@@ -1,25 +1,23 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Modal } from './Modal';
-import { Button } from './Button';
-import { Input } from './Input';
-import { Select } from './Select';
-import { Textarea } from './Textarea';
-import { Switch } from './Switch';
+import Modal from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
+import { Switch } from '@/components/ui/Switch';
 import { toast } from 'react-hot-toast';
 import { UnitResponseDto, UnitCreateDto, UnitUpdateDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';
 
 interface UnitEditModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: UnitCreateDto | UnitUpdateDto) => Promise<void>;
   unit?: UnitResponseDto;
-  title: string;
+  onSave: (data: UnitCreateDto | UnitUpdateDto) => Promise<void>;
+  onClose: () => void;
 }
 
-export function UnitEditModal({ isOpen, onClose, onSave, unit, title }: UnitEditModalProps) {
+export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
   const [formData, setFormData] = useState<UnitCreateDto | UnitUpdateDto>({
     name: '',
     description: '',
@@ -80,7 +78,7 @@ export function UnitEditModal({ isOpen, onClose, onSave, unit, title }: UnitEdit
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Modal isOpen={true} onClose={onClose} title={unit ? 'Editar Unidade' : 'Nova Unidade'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Nome</label>
@@ -141,11 +139,11 @@ export function UnitEditModal({ isOpen, onClose, onSave, unit, title }: UnitEdit
         </div>
 
         <div className="flex justify-end space-x-3">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" isLoading={isLoading}>
-            Salvar
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Salvando...' : 'Salvar'}
           </Button>
         </div>
       </form>

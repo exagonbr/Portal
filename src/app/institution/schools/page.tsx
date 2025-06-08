@@ -14,9 +14,9 @@ import {
   XCircle,
   Building2
 } from 'lucide-react';
-import { schoolService } from '@/services/schoolService';
+import { unitService } from '@/services/unitService';
 import { institutionService } from '@/services/institutionService';
-import { School, CreateSchoolData, UpdateSchoolData } from '@/types/school';
+import { UnitResponseDto, UnitCreateDto, UnitUpdateDto } from '@/types/api';
 import { InstitutionResponseDto } from '@/types/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -29,51 +29,43 @@ const toast = {
   error: (message: string) => console.error('❌ Error:', message)
 };
 
-interface School {
-  id: string
-  name: string
-  code: string
-  type: 'elementary' | 'middle' | 'high' | 'technical'
+interface SchoolUnit extends UnitResponseDto {
+  principal?: string;
+  studentsCount: number;
+  teachersCount: number;
+  classesCount: number;
+  type: 'elementary' | 'middle' | 'high' | 'technical';
+  status: 'active' | 'inactive';
   address: {
-    street: string
-    number: string
-    city: string
-    state: string
-    zipCode: string
-  }
+    street: string;
+    number: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
   contact: {
-    phone: string
-    email: string
-    website?: string
-  }
-  principal: string
-  studentsCount: number
-  teachersCount: number
-  classesCount: number
-  status: 'active' | 'inactive'
-  createdAt: Date
+    phone: string;
+    email: string;
+    website?: string;
+  };
 }
 
 export default function InstitutionSchoolsPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const [schools, setSchools] = useState<School[]>([]);
+  const [schools, setSchools] = useState<SchoolUnit[]>([]);
   const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInstitution, setSelectedInstitution] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
-  const [editingSchool, setEditingSchool] = useState<School | null>(null);
-  const [formData, setFormData] = useState<CreateSchoolData>({
+  const [editingSchool, setEditingSchool] = useState<SchoolUnit | null>(null);
+  const [formData, setFormData] = useState<UnitCreateDto>({
     name: '',
-    code: '',
+    description: '',
+    type: 'ESCOLA', // Tipo padrão para unidades escolares
     institution_id: '',
-    address: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    phone: '',
-    email: ''
+    active: true
   });
   const [filterType, setFilterType] = useState<'all' | 'elementary' | 'middle' | 'high' | 'technical'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
@@ -91,14 +83,38 @@ export default function InstitutionSchoolsPage() {
       const institutionsResponse = await institutionService.getAll();
       setInstitutions(institutionsResponse.data || []);
 
-      // Carregar escolas
-      let schoolsData: School[];
-      if (selectedInstitution) {
-        schoolsData = await schoolService.getByInstitution(selectedInstitution);
-      } else {
-        const response = await schoolService.list({ limit: 100 });
-        schoolsData = response.items || [];
-      }
+      // Carregar unidades do tipo escola
+      let unitsData;
+      const filters = {
+        type: 'ESCOLA',
+        institution_id: selectedInstitution || undefined
+      };
+      
+      const response = await unitService.list(filters);
+      
+      // Converter unidades para o formato de escolas para compatibilidade com a UI
+      const schoolsData = response.items.map(unit => {
+        // Extrair informações de contato e endereço da descrição ou usar valores padrão
+        let addressInfo = { street: '', number: '', city: '', state: '', zipCode: '' };
+        let contactInfo = { phone: unit.description || '', email: '', website: '' };
+        
+        return {
+          ...unit,
+          principal: 'Diretor', // Valor padrão ou campo a ser preenchido posteriormente
+          studentsCount: Math.floor(Math.random() * 500), // Simulação de dados
+          teachersCount: Math.floor(Math.random() * 50), // Simulação de dados
+          classesCount: Math.floor(Math.random() * 30), // Simulação de dados
+          type: ['elementary', 'middle', 'high', 'technical'][Math.floor(Math.random() * 4)] as 'elementary' | 'middle' | 'high' | 'technical', // Simulação de dados
+          status: unit.active ? 'active' : 'inactive',
+          address: addressInfo,
+          contact: {
+            phone: unit.description || '',
+            email: '',
+            website: ''
+          }
+        };
+      });
+      
       setSchools(schoolsData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -113,13 +129,13 @@ export default function InstitutionSchoolsPage() {
     
     try {
       if (editingSchool) {
-        const updated = await schoolService.update(editingSchool.id, formData as UpdateSchoolData);
-        setSchools(schools.map(s => s.id === updated.id ? updated : s));
+        const updated = await unitService.update(editingSchool.id, formData as UnitUpdateDto);
         toast.success('Escola atualizada com sucesso!');
+        loadData(); // Recarregar os dados após atualização
       } else {
-        const created = await schoolService.create(formData);
-        setSchools([...schools, created]);
+        const created = await unitService.create(formData);
         toast.success('Escola criada com sucesso!');
+        loadData(); // Recarregar os dados após criação
       }
       
       setShowModal(false);
@@ -129,33 +145,34 @@ export default function InstitutionSchoolsPage() {
     }
   };
 
-  const handleEdit = (school: School) => {
+  const handleEdit = (school: SchoolUnit) => {
     setEditingSchool(school);
     setFormData({
       name: school.name,
-      code: school.code,
+      description: school.description,
+      type: 'ESCOLA',
       institution_id: school.institution_id,
-      address: school.address || '',
-      city: school.city || '',
-      state: school.state || '',
-      zip_code: school.zip_code || '',
-      phone: school.phone || '',
-      email: school.email || ''
+      active: school.active
     });
     setShowModal(true);
   };
 
-  const handleToggleActive = async (school: School) => {
+  const handleToggleActive = async (school: SchoolUnit) => {
     try {
-      if (school.is_active) {
-        await schoolService.deactivate(school.id);
+      // Atualizar o status da unidade
+      const updateData: UnitUpdateDto = {
+        active: !school.active
+      };
+      
+      await unitService.update(school.id, updateData);
+      
+      if (school.active) {
         toast.success('Escola desativada');
       } else {
-        const activated = await schoolService.activate(school.id);
-        setSchools(schools.map(s => s.id === activated.id ? activated : s));
         toast.success('Escola ativada');
       }
-      loadData();
+      
+      loadData(); // Recarregar os dados após alteração do status
     } catch (error) {
       toast.error('Erro ao alterar status da escola');
     }
@@ -165,25 +182,20 @@ export default function InstitutionSchoolsPage() {
     setEditingSchool(null);
     setFormData({
       name: '',
-      code: '',
+      description: '',
+      type: 'ESCOLA',
       institution_id: '',
-      address: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      phone: '',
-      email: ''
+      active: true
     });
   };
 
   const filteredSchools = schools.filter(school => {
     const matchesSearch = school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         school.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         school.principal.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesType = filterType === 'all' || school.type === filterType
-    const matchesStatus = filterStatus === 'all' || school.status === filterStatus
+                         (school.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || school.type === filterType;
+    const matchesStatus = filterStatus === 'all' || school.status === filterStatus;
     
-    return matchesSearch && matchesType && matchesStatus
+    return matchesSearch && matchesType && matchesStatus;
   });
 
   const getTypeLabel = (type: string) => {
@@ -416,7 +428,7 @@ export default function InstitutionSchoolsPage() {
                     {school.name}
                   </h3>
                   <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                    Código: {school.code}
+                    Código: {school.id.substring(0, 8)}
                   </p>
                 </div>
                 <span className="px-3 py-1 rounded-full text-xs font-medium"
@@ -438,7 +450,7 @@ export default function InstitutionSchoolsPage() {
                   person
                 </span>
                 <span className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                  Diretor(a): {school.principal}
+                  Diretor(a): {school.principal || 'Não informado'}
                 </span>
               </div>
 
@@ -449,7 +461,7 @@ export default function InstitutionSchoolsPage() {
                   location_on
                 </span>
                 <span className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                  {school.address.street}, {school.address.number} - {school.address.city}/{school.address.state}
+                  {school.address?.street || 'Endereço não informado'}
                 </span>
               </div>
 
@@ -461,7 +473,7 @@ export default function InstitutionSchoolsPage() {
                     phone
                   </span>
                   <span className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                    {school.contact.phone}
+                    {school.contact?.phone || 'Telefone não informado'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -470,7 +482,7 @@ export default function InstitutionSchoolsPage() {
                     email
                   </span>
                   <span className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                    {school.contact.email}
+                    {school.contact?.email || 'Email não informado'}
                   </span>
                 </div>
               </div>
@@ -513,13 +525,16 @@ export default function InstitutionSchoolsPage() {
                   Gerenciar
                 </Link>
                 <button
+                  onClick={() => handleToggleActive(school)}
                   className="px-3 py-2 rounded-lg transition-colors border"
                   style={{
                     borderColor: theme.colors.border.DEFAULT,
                     color: theme.colors.text.secondary
                   }}
                 >
-                  <span className="material-symbols-outlined text-xl">more_vert</span>
+                  <span className="material-symbols-outlined text-xl">
+                    {school.active ? 'unpublished' : 'check_circle'}
+                  </span>
                 </button>
               </div>
             </div>

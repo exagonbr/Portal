@@ -13,7 +13,7 @@ const importMap: Record<string, string> = {
   'Card': "import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';",
   // Named exports
   'Button': "import { Button, ButtonGroup } from '@/components/ui/Button';",
-  'Input': "import { Input } from '@/components/ui/Input';;",
+  'Input': "import Input from '@/components/ui/Input';;",
   'Textarea': "import { Textarea } from '@/components/ui/Textarea';;",
   'Select': "import { Select } from '@/components/ui/Select';;",
 };

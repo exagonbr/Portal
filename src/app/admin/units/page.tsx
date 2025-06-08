@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { DataTable } from '@/components/DataTable';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
-import { Select } from '@/components/Select';
+import { useAuth } from '@/contexts/AuthContext';
+import GenericCRUD from '@/components/crud/GenericCRUD';
+import { Button } from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { UnitEditModal } from '@/components/UnitEditModal';
 import { toast } from 'react-hot-toast';
 import { unitService, UnitFilters } from '@/services/unitService';
@@ -108,39 +108,30 @@ export default function AdminUnitsPage() {
   };
 
   const columns = [
-    { header: 'Nome', accessorKey: 'name' },
-    { header: 'Tipo', accessorKey: 'type' },
-    { header: 'Instituição', accessorKey: 'institution.name' },
     { 
-      header: 'Status', 
-      accessorKey: 'active',
-      cell: ({ row }: any) => (
-        <span className={`px-2 py-1 rounded-full text-xs ${
-          row.original.active ? 'bg-success-light text-success-dark' : 'bg-error-light text-error-dark'
-        }`}>
-          {row.original.active ? 'Ativo' : 'Inativo'}
-        </span>
-      )
+      key: 'name',
+      label: 'Nome',
+      render: (item: any) => item.name
     },
-    {
-      header: 'Ações',
-      cell: ({ row }: any) => (
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handleEdit(row.original)}
-          >
-            Editar
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => handleDelete(row.original.id)}
-          >
-            Excluir
-          </Button>
-        </div>
+    { 
+      key: 'type',
+      label: 'Tipo',
+      render: (item: any) => item.type
+    },
+    { 
+      key: 'institution',
+      label: 'Instituição',
+      render: (item: any) => item.institution?.name || '-'
+    },
+    { 
+      key: 'active',
+      label: 'Status',
+      render: (item: any) => (
+        <span className={`px-2 py-1 rounded-full text-xs ${
+          item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {item.active ? 'Ativo' : 'Inativo'}
+        </span>
       )
     }
   ];
@@ -190,33 +181,31 @@ export default function AdminUnitsPage() {
           </Select>
         </div>
 
-        <DataTable
-          columns={columns}
+        <GenericCRUD
           data={units}
-          isLoading={isLoading}
+          columns={columns}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          loading={isLoading}
           pagination={{
             currentPage,
             totalItems,
-            onPageChange: setCurrentPage,
-            itemsPerPage: 10
+            onPageChange: setCurrentPage
           }}
         />
       </div>
 
-      <UnitEditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSave}
-        unit={selectedUnit}
-        title="Editar Unidade"
-      />
-
-      <UnitEditModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSave={handleSave}
-        title="Nova Unidade"
-      />
+      {(isEditModalOpen || isAddModalOpen) && (
+        <UnitEditModal
+          unit={selectedUnit}
+          onSave={handleSave}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setIsAddModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
+

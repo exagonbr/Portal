@@ -5,7 +5,7 @@ export interface CreateUserDto {
   email: string;
   password: string;
   name: string;
-  role_id: string;
+  role_id?: string; // Agora opcional, será definido para TEACHER por padrão
   institution_id?: string;
   endereco?: string;
   telefone?: string;

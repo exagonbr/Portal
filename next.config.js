@@ -8,7 +8,6 @@ const withPWA = require('next-pwa')({
   skipWaiting: true,
   disable: isDev,
   buildExcludes: [/middleware-manifest\.json$/],
-  generateInDevMode: false,
   scope: '/',
   sw: 'sw.js',
   publicExcludes: ['!noprecache/**/*'],

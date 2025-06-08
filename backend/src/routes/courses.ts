@@ -1,7 +1,9 @@
 import express from 'express';
 import { validateJWT, requireRole, requireInstitution } from '../middleware/auth';
+import { CourseController } from '../controllers/CourseController';
 
 const router = express.Router();
+const courseController = new CourseController();
 
 /**
  * @swagger
@@ -31,7 +33,7 @@ const router = express.Router();
  *         description: Unauthorized
  */
 router.get('/', validateJWT, requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  return courseController.getAll(req, res);
 });
 
 /**
@@ -60,7 +62,7 @@ router.get('/', validateJWT, requireInstitution, async (req, res) => {
  *         description: Course not found
  */
 router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  return courseController.getById(req, res);
 });
 
 /**
@@ -100,7 +102,7 @@ router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
  *         description: Invalid input
  */
 router.post('/', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  return courseController.create(req, res);
 });
 
 /**
@@ -140,7 +142,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), requireInstitut
  *         description: Course not found
  */
 router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  return courseController.update(req, res);
 });
 
 /**
@@ -165,7 +167,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstit
  *         description: Course not found
  */
 router.delete('/:id', validateJWT, requireRole(['admin']), requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  return courseController.delete(req, res);
 });
 
 /**
@@ -196,7 +198,7 @@ router.delete('/:id', validateJWT, requireRole(['admin']), requireInstitution, a
  *         description: Course not found
  */
 router.get('/:id/modules', validateJWT, requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  return courseController.getModules(req, res);
 });
 
 /**
@@ -227,7 +229,7 @@ router.get('/:id/modules', validateJWT, requireInstitution, async (req, res) => 
  *         description: Course not found
  */
 router.get('/:id/books', validateJWT, requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  return courseController.getBooks(req, res);
 });
 
 /**
@@ -258,7 +260,205 @@ router.get('/:id/books', validateJWT, requireInstitution, async (req, res) => {
  *         description: Course not found
  */
 router.get('/:id/videos', validateJWT, requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  return courseController.getVideos(req, res);
+});
+
+/**
+ * @swagger
+ * /api/courses/{id}/teachers:
+ *   get:
+ *     summary: Get all teachers for a course
+ *     tags: [Courses, Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: List of teachers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       404:
+ *         description: Course not found
+ */
+router.get('/:id/teachers', validateJWT, requireInstitution, async (req, res) => {
+  return courseController.getTeachers(req, res);
+});
+
+/**
+ * @swagger
+ * /api/courses/{id}/students:
+ *   get:
+ *     summary: Get all students for a course
+ *     tags: [Courses, Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: List of students
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       404:
+ *         description: Course not found
+ */
+router.get('/:id/students', validateJWT, requireInstitution, async (req, res) => {
+  return courseController.getStudents(req, res);
+});
+
+/**
+ * @swagger
+ * /api/courses/{id}/teachers:
+ *   post:
+ *     summary: Add teacher to course
+ *     tags: [Courses, Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Teacher added to course
+ *       404:
+ *         description: Course or teacher not found
+ */
+router.post('/:id/teachers', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+  return courseController.addTeacher(req, res);
+});
+
+/**
+ * @swagger
+ * /api/courses/{id}/students:
+ *   post:
+ *     summary: Add student to course
+ *     tags: [Courses, Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: Student added to course
+ *       404:
+ *         description: Course or student not found
+ */
+router.post('/:id/students', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+  return courseController.addStudent(req, res);
+});
+
+/**
+ * @swagger
+ * /api/courses/{id}/teachers/{userId}:
+ *   delete:
+ *     summary: Remove teacher from course
+ *     tags: [Courses, Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Teacher removed from course
+ *       404:
+ *         description: Course or teacher not found
+ */
+router.delete('/:id/teachers/:userId', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+  return courseController.removeTeacher(req, res);
+});
+
+/**
+ * @swagger
+ * /api/courses/{id}/students/{userId}:
+ *   delete:
+ *     summary: Remove student from course
+ *     tags: [Courses, Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Student removed from course
+ *       404:
+ *         description: Course or student not found
+ */
+router.delete('/:id/students/:userId', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+  return courseController.removeStudent(req, res);
 });
 
 export default router;

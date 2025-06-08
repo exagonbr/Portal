@@ -1,26 +1,31 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Modal } from './Modal';
-import { Button } from './Button';
-import { Input } from './Input';
-import { Select } from './Select';
-import { Textarea } from './Textarea';
-import { Switch } from './Switch';
-import { toast } from 'react-hot-toast';
-import { CourseResponseDto, CourseCreateDto, CourseUpdateDto } from '@/types/api';
+import Modal from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Textarea } from '@/components/ui/Textarea';
+import { Switch } from '@/components/ui/Switch';
+import { CourseResponseDto, CourseUpdateDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';
+import { toast } from '@/hooks/useToast';
+
+interface Institution {
+  id: string;
+  name: string;
+}
 
 interface CourseEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: CourseCreateDto | CourseUpdateDto) => Promise<void>;
-  course?: CourseResponseDto;
+  onSave: (data: CourseUpdateDto) => Promise<void>;
+  course: CourseResponseDto;
   title: string;
 }
 
 export function CourseEditModal({ isOpen, onClose, onSave, course, title }: CourseEditModalProps) {
-  const [formData, setFormData] = useState<CourseCreateDto | CourseUpdateDto>({
+  const [formData, setFormData] = useState<CourseUpdateDto>({
     name: '',
     description: '',
     level: '',
@@ -28,8 +33,10 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
     institution_id: '',
     active: true
   });
-  const [institutions, setInstitutions] = useState<{ id: string; name: string }[]>([]);
+  
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (course) {
@@ -41,42 +48,105 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
         institution_id: course.institution_id,
         active: course.active
       });
-    } else {
-      setFormData({
-        name: '',
-        description: '',
-        level: '',
-        type: '',
-        institution_id: '',
-        active: true
-      });
     }
   }, [course]);
 
   useEffect(() => {
-    const loadInstitutions = async () => {
+    const fetchInstitutions = async () => {
       try {
-        const response = await institutionService.list();
-        setInstitutions(response.data.map(inst => ({
-          id: inst.id,
-          name: inst.name
-        })));
+        const response = await institutionService.getInstitutions();
+        if (response.success && response.data) {
+          setInstitutions(response.data.map(inst => ({
+            id: inst.id,
+            name: inst.name
+          })));
+        }
       } catch (error) {
-        toast.error('Erro ao carregar instituições');
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar as instituições",
+          variant: "destructive"
+        });
       }
     };
-    loadInstitutions();
-  }, []);
+
+    if (isOpen) {
+      fetchInstitutions();
+    }
+  }, [isOpen]);
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.name?.trim()) {
+      newErrors.name = "Nome do curso é obrigatório";
+    }
+    
+    if (!formData.description?.trim()) {
+      newErrors.description = "Descrição é obrigatória";
+    }
+    
+    if (!formData.level) {
+      newErrors.level = "Nível é obrigatório";
+    }
+    
+    if (!formData.type) {
+      newErrors.type = "Tipo é obrigatório";
+    }
+    
+    if (!formData.institution_id) {
+      newErrors.institution_id = "Instituição é obrigatória";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const handleSwitchChange = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      active: checked
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
     try {
       await onSave(formData);
+      toast({
+        title: "Sucesso",
+        description: "Curso atualizado com sucesso",
+        variant: "success"
+      });
       onClose();
-      toast.success('Curso salvo com sucesso!');
     } catch (error) {
-      toast.error('Erro ao salvar curso');
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o curso",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -86,85 +156,119 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Nome</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Nome <span className="text-red-500">*</span>
+          </label>
           <Input
-            type="text"
+            name="name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
+            onChange={handleInputChange}
+            error={errors.name}
+            placeholder="Nome do curso"
           />
+          {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Descrição</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Descrição <span className="text-red-500">*</span>
+          </label>
           <Textarea
+            name="description"
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            required
+            onChange={handleInputChange}
+            error={errors.description}
+            placeholder="Descrição do curso"
+            rows={4}
           />
+          {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nível <span className="text-red-500">*</span>
+            </label>
+            <Select
+              name="level"
+              value={formData.level}
+              onChange={handleInputChange}
+              error={errors.level}
+            >
+              <option value="">Selecione um nível</option>
+              <option value="FUNDAMENTAL">Ensino Fundamental</option>
+              <option value="MEDIO">Ensino Médio</option>
+              <option value="SUPERIOR">Ensino Superior</option>
+              <option value="POS_GRADUACAO">Pós-Graduação</option>
+              <option value="MESTRADO">Mestrado</option>
+              <option value="DOUTORADO">Doutorado</option>
+            </Select>
+            {errors.level && <p className="text-red-500 text-sm mt-1">{errors.level}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tipo <span className="text-red-500">*</span>
+            </label>
+            <Select
+              name="type"
+              value={formData.type}
+              onChange={handleInputChange}
+              error={errors.type}
+            >
+              <option value="">Selecione um tipo</option>
+              <option value="PRESENCIAL">Presencial</option>
+              <option value="EAD">EAD</option>
+              <option value="HIBRIDO">Híbrido</option>
+            </Select>
+            {errors.type && <p className="text-red-500 text-sm mt-1">{errors.type}</p>}
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Nível</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Instituição <span className="text-red-500">*</span>
+          </label>
           <Select
-            value={formData.level}
-            onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-            required
-          >
-            <option value="">Selecione um nível</option>
-            <option value="FUNDAMENTAL">Ensino Fundamental</option>
-            <option value="MEDIO">Ensino Médio</option>
-            <option value="SUPERIOR">Ensino Superior</option>
-            <option value="POS_GRADUACAO">Pós-Graduação</option>
-            <option value="MESTRADO">Mestrado</option>
-            <option value="DOUTORADO">Doutorado</option>
-          </Select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Tipo</label>
-          <Select
-            value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            required
-          >
-            <option value="">Selecione um tipo</option>
-            <option value="PRESENCIAL">Presencial</option>
-            <option value="EAD">EAD</option>
-            <option value="HIBRIDO">Híbrido</option>
-          </Select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Instituição</label>
-          <Select
+            name="institution_id"
             value={formData.institution_id}
-            onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
-            required
+            onChange={handleInputChange}
+            error={errors.institution_id}
           >
             <option value="">Selecione uma instituição</option>
-            {institutions.map((inst) => (
-              <option key={inst.id} value={inst.id}>
-                {inst.name}
+            {institutions.map(institution => (
+              <option key={institution.id} value={institution.id}>
+                {institution.name}
               </option>
             ))}
           </Select>
+          {errors.institution_id && <p className="text-red-500 text-sm mt-1">{errors.institution_id}</p>}
         </div>
 
         <div className="flex items-center">
-          <Switch
-            checked={formData.active}
-            onChange={(checked) => setFormData({ ...formData, active: checked })}
+          <Switch 
+            checked={formData.active || false} 
+            onCheckedChange={handleSwitchChange} 
+            id="active-status"
           />
-          <span className="ml-2 text-sm text-gray-700">Ativo</span>
+          <label htmlFor="active-status" className="ml-2 text-sm text-gray-700">
+            Ativo
+          </label>
         </div>
 
-        <div className="flex justify-end space-x-3">
-          <Button type="button" variant="secondary" onClick={onClose}>
+        <div className="flex justify-end space-x-3 pt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+          >
             Cancelar
           </Button>
-          <Button type="submit" isLoading={isLoading}>
-            Salvar
+          <Button 
+            type="submit" 
+            isLoading={isLoading}
+          >
+            Atualizar Curso
           </Button>
         </div>
       </form>

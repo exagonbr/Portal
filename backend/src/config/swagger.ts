@@ -532,7 +532,7 @@ A API utiliza JWT (JSON Web Tokens) para autenticação. Para acessar endpoints 
       description: '👥 Gestão de usuários e perfis',
     },
     {
-      name: 'Institutions',
+      name: 'Institution',
       description: '🏢 Gestão de instituições de ensino',
     },
     {

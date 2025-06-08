@@ -501,4 +501,24 @@ export class CourseController {
       });
     }
   }
+
+  async getCoursesByTeacher(teacherId: string): Promise<any[]> {
+    try {
+      const courses = await this.courseRepository.getCoursesByTeacher(teacherId);
+      return courses;
+    } catch (error) {
+      console.error(`Error retrieving teacher courses: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error('Failed to retrieve teacher courses');
+    }
+  }
+
+  async getCoursesByStudent(studentId: string): Promise<any[]> {
+    try {
+      const courses = await this.courseRepository.getCoursesByStudent(studentId);
+      return courses;
+    } catch (error) {
+      console.error(`Error retrieving student courses: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error('Failed to retrieve student courses');
+    }
+  }
 }

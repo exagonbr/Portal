@@ -54,7 +54,7 @@ const validateCodeParam = [
 /**
  * @swagger
  * tags:
- *   name: Institutions
+ *   name: institution
  *   description: Institution management
  */
 
@@ -140,10 +140,10 @@ const validateCodeParam = [
 
 /**
  * @swagger
- * /api/institutions:
+ * /api/institution:
  *   get:
- *     summary: Get all institutions with filters and pagination
- *     tags: [Institutions]
+ *     summary: Get all institution with filters and pagination
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -189,7 +189,7 @@ const validateCodeParam = [
  *         description: Sort order
  *     responses:
  *       200:
- *         description: List of institutions
+ *         description: List of institution
  *         content:
  *           application/json:
  *             schema:
@@ -214,10 +214,10 @@ router.get(
 
 /**
  * @swagger
- * /api/institutions/{id}:
+ * /api/institution/{id}:
  *   get:
  *     summary: Get institution by ID
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -237,10 +237,10 @@ router.get(
 
 /**
  * @swagger
- * /api/institutions/code/{code}:
+ * /api/institution/code/{code}:
  *   get:
  *     summary: Get institution by code
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -265,10 +265,10 @@ router.get(
 
 /**
  * @swagger
- * /api/institutions/{id}/stats:
+ * /api/institution/{id}/stats:
  *   get:
  *     summary: Get statistics for an institution
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -288,10 +288,10 @@ router.get(
 
 /**
  * @swagger
- * /api/institutions:
+ * /api/institution:
  *   post:
  *     summary: Create a new institution
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -315,10 +315,10 @@ router.post(
 
 /**
  * @swagger
- * /api/institutions/{id}:
+ * /api/institution/{id}:
  *   put:
  *     summary: Update an institution
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -346,10 +346,10 @@ router.put(
 
 /**
  * @swagger
- * /api/institutions/{id}:
+ * /api/institution/{id}:
  *   delete:
  *     summary: Delete an institution
- *     tags: [Institutions]
+ *     tags: [institution]
  *     security:
  *       - bearerAuth: []
  *     parameters:

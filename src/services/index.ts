@@ -70,7 +70,7 @@ export {
 // Serviços de instituições
 export { 
   institutionService,
-  getInstitutions,
+  getInstitution,
   getInstitutionById,
   createInstitution,
   updateInstitution,

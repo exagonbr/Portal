@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { DataTable } from '@/components/DataTable';
-import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
-import { Select } from '@/components/Select';
+import GenericCRUD from '@/components/crud/GenericCRUD';
+import { Button } from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { ClassEditModal } from '@/components/ClassEditModal';
 import { toast } from 'react-hot-toast';
 import { classService } from '@/services/classService';
@@ -116,54 +116,35 @@ export default function ClassesPage() {
   };
 
   const columns = [
-    { header: 'Nome', accessorKey: 'name' },
-    { header: 'Status', accessorKey: 'status' },
-    {
-      header: 'Curso',
-      accessorKey: 'course',
-      cell: ({ row }: any) => row.original.course?.name || '-'
+    { 
+      key: 'name',
+      label: 'Nome',
+      render: (item: any) => item.name
     },
-    {
-      header: 'Professor',
-      accessorKey: 'teacher',
-      cell: ({ row }: any) => row.original.teacher?.name || '-'
+    { 
+      key: 'course',
+      label: 'Curso',
+      render: (item: any) => item.course?.name || '-'
     },
-    {
-      header: 'Alunos',
-      accessorKey: 'students',
-      cell: ({ row }: any) => row.original.students?.length || 0
+    { 
+      key: 'teacher',
+      label: 'Professor',
+      render: (item: any) => item.teacher?.name || '-'
     },
-    {
-      header: 'Status',
-      accessorKey: 'active',
-      cell: ({ row }: any) => (
+    { 
+      key: 'students',
+      label: 'Alunos',
+      render: (item: any) => item.students?.length || 0
+    },
+    { 
+      key: 'active',
+      label: 'Status',
+      render: (item: any) => (
         <span className={`px-2 py-1 rounded-full text-xs ${
-          row.original.active ? 'bg-success-light text-success-dark' : 'bg-error-light text-error-dark'
+          item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
-          {row.original.active ? 'Ativo' : 'Inativo'}
+          {item.active ? 'Ativo' : 'Inativo'}
         </span>
-      )
-    },
-    {
-      header: 'Ações',
-      accessorKey: 'actions',
-      cell: ({ row }: any) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleEdit(row.original)}
-          >
-            Editar
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => handleDelete(row.original.id)}
-          >
-            Excluir
-          </Button>
-        </div>
       )
     }
   ];
@@ -172,7 +153,7 @@ export default function ClassesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Turmas</h1>
-        <Button variant="default" onClick={handleAdd}>Nova Turma</Button>
+        <Button onClick={handleAdd}>Nova Turma</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -204,21 +185,21 @@ export default function ClassesPage() {
           ))}
         </Select>
         <Select
-          value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          value={filters.active}
+          onChange={(e) => setFilters({ ...filters, active: e.target.value })}
         >
           <option value="">Todos os status</option>
-          <option value="PLANNED">Planejada</option>
-          <option value="IN_PROGRESS">Em Andamento</option>
-          <option value="COMPLETED">Concluída</option>
-          <option value="CANCELLED">Cancelada</option>
+          <option value="true">Ativo</option>
+          <option value="false">Inativo</option>
         </Select>
       </div>
 
-      <DataTable
-        columns={columns}
+      <GenericCRUD
         data={classes}
-        isLoading={isLoading}
+        columns={columns}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        loading={isLoading}
         pagination={{
           currentPage,
           totalItems,
@@ -226,13 +207,13 @@ export default function ClassesPage() {
         }}
       />
 
-      <ClassEditModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-        class={selectedClass}
-        title={selectedClass ? 'Editar Turma' : 'Nova Turma'}
-      />
+      {isModalOpen && (
+        <ClassEditModal
+          classData={selectedClass}
+          onSave={handleSave}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 } 

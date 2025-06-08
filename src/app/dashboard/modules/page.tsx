@@ -14,7 +14,7 @@ import { UserRole } from '@/types/roles'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Button, ButtonGroup } from '@/components/ui/Button';
 import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
+import Input from '@/components/ui/Input';
 
 interface Module {
   id: string

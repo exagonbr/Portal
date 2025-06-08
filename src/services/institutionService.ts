@@ -29,7 +29,21 @@ export interface PaginatedResponse<T> {
   };
 }
 
-export interface InstitutionQueryParams {
+export interface InstitutionFilters {
+  type?: string;
+  is_active?: boolean;
+  search?: string;
+}
+
+export interface InstitutionListOptions {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  filters?: InstitutionFilters;
+}
+
+export type InstitutionQueryParams = {
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -37,7 +51,7 @@ export interface InstitutionQueryParams {
   search?: string;
   type?: string;
   is_active?: boolean;
-}
+};
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
@@ -62,17 +76,23 @@ const getAuthHeaders = (): HeadersInit => {
 };
 
 export const institutionService = {
-  async getInstitutions(params: InstitutionQueryParams = {}): Promise<PaginatedResponse<Institution>> {
+  async getInstitutions(params: InstitutionListOptions = {}): Promise<PaginatedResponse<Institution>> {
     const queryParams = new URLSearchParams();
     
-    // Add query parameters if they exist
+    // Add pagination parameters if they exist
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
+    
+    // Add sorting parameters if they exist
     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-    if (params.search) queryParams.append('search', params.search);
-    if (params.type) queryParams.append('type', params.type);
-    if (params.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+    
+    // Add filter parameters if they exist
+    if (params.filters) {
+      if (params.filters.search) queryParams.append('search', params.filters.search);
+      if (params.filters.type) queryParams.append('type', params.filters.type);
+      if (params.filters.is_active !== undefined) queryParams.append('is_active', params.filters.is_active.toString());
+    }
 
     const response = await fetch(`${API_BASE_URL}/api/institutions?${queryParams.toString()}`, {
       headers: getAuthHeaders(),
@@ -159,4 +179,126 @@ export const institutionService = {
       throw new Error('Falha ao deletar instituição');
     }
   },
+
+  async getActiveInstitutions(): Promise<Institution[]> {
+    const response = await fetch(`${API_BASE_URL}/api/institutions/active`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
+      }
+      throw new Error('Falha ao buscar instituições ativas');
+    }
+
+    return response.json();
+  },
+
+  async searchInstitutionsByName(name: string): Promise<Institution[]> {
+    const queryParams = new URLSearchParams({
+      search: name,
+      is_active: 'true'
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/institutions/search?${queryParams.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
+      }
+      throw new Error('Falha ao buscar instituições por nome');
+    }
+
+    return response.json();
+  },
+
+  async canDeleteInstitution(id: string): Promise<{ canDelete: boolean; reason?: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}/can-delete`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
+      }
+      if (response.status === 404) {
+        throw new Error('Instituição não encontrada');
+      }
+      throw new Error('Falha ao verificar se a instituição pode ser excluída');
+    }
+
+    return response.json();
+  },
+
+  async toggleInstitutionStatus(id: string, isActive: boolean): Promise<Institution> {
+    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}/status`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ is_active: isActive }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
+      }
+      if (response.status === 404) {
+        throw new Error('Instituição não encontrada');
+      }
+      throw new Error('Falha ao alterar o status da instituição');
+    }
+
+    return response.json();
+  },
+
+  async exportInstitutions(filters?: InstitutionFilters): Promise<Blob> {
+    const queryParams = new URLSearchParams();
+    
+    if (filters) {
+      if (filters.search) queryParams.append('search', filters.search);
+      if (filters.type) queryParams.append('type', filters.type);
+      if (filters.is_active !== undefined) queryParams.append('is_active', filters.is_active.toString());
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/institutions/export?${queryParams.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
+      }
+      throw new Error('Falha ao exportar instituições');
+    }
+
+    return response.blob();
+  },
+
+  async importInstitutions(file: File): Promise<{ success: number; errors: string[] }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: HeadersInit = {};
+    const token = getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/institutions/import`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Não autorizado. Faça login novamente.');
+      }
+      throw new Error('Falha ao importar instituições');
+    }
+
+    return response.json();
+  }
 };

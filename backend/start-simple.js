@@ -239,7 +239,7 @@ app.listen(PORT, () => {
   console.log('  - GET /api/queue/next');
   console.log('  - GET /api/cache/get');
   console.log('  - GET /api/users');
-  console.log('  - GET /api/institutions');
+  console.log('  - GET /api/institution');
   console.log('  - E muitos outros...');
   console.log('');
   console.log('🔑 Para testar com autenticação, use:');

@@ -1,359 +1,345 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import StatCard from '@/components/ui/StatCard';
-import StandardTable from '@/components/ui/StandardTable';
+import { dashboardService } from '@/services/dashboardService';
+import AuthenticatedLayout from '@/components/AuthenticatedLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/hooks/useToast';
+import { 
+  BookOpen, 
+  Users, 
+  GraduationCap, 
+  Building2,
+  TrendingUp,
+  Calendar,
+  Clock,
+  Award,
+  Activity,
+  BarChart3
+} from 'lucide-react';
 
-interface RecentActivity {
-  id: number;
-  title: string;
-  type: string;
-  status: string;
-  lastActivity: string;
-  progress: string;
+interface DashboardStats {
+  totalUsers: number;
+  totalCourses: number;
+  totalBooks: number;
+  totalInstitutions: number;
+  activeStudents: number;
+  completedCourses: number;
+  averageProgress: number;
+  monthlyGrowth: number;
 }
 
-export default function DashboardOverview() {
+interface RecentActivity {
+  id: string;
+  type: 'course_completion' | 'new_user' | 'book_read' | 'assignment_submitted';
+  title: string;
+  description: string;
+  timestamp: string;
+  user?: string;
+}
+
+interface UpcomingEvent {
+  id: string;
+  title: string;
+  type: 'class' | 'exam' | 'assignment' | 'meeting';
+  date: string;
+  time: string;
+  location?: string;
+}
+
+export default function DashboardPage() {
   const { user } = useAuth();
-  const [dashboardData, setDashboardData] = useState({
-    stats: {
-      courses: 0,
-      activities: 0,
-      completedActivities: 0,
-      totalStudents: 0
-    },
-    recentActivities: [] as RecentActivity[],
-    loading: true
-  });
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
 
   useEffect(() => {
-    // Simular carregamento de dados
-    const loadDashboardData = async () => {
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Dados simulados baseados no tipo de usuário
-      const mockData = {
-        stats: {
-          courses: 12,
-          activities: 45,
-          completedActivities: 38,
-          totalStudents: user?.role === 'teacher' ? 156 : 1
-        },
-        recentActivities: [
-          {
-            id: 1,
-            title: 'Matemática Básica',
-            type: 'Curso',
-            status: 'Ativo',
-            lastActivity: '2024-01-15',
-            progress: '85%'
-          },
-          {
-            id: 2,
-            title: 'Avaliação Final',
-            type: 'Atividade',
-            status: 'Pendente',
-            lastActivity: '2024-01-14',
-            progress: '0%'
-          },
-          {
-            id: 3,
-            title: 'Projeto Integrador',
-            type: 'Projeto',
-            status: 'Em Progresso',
-            lastActivity: '2024-01-13',
-            progress: '60%'
-          }
-        ],
-        loading: false
-      };
+    fetchDashboardData();
+  }, []);
 
-      setDashboardData(mockData);
-    };
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const [statsData, activitiesData, eventsData] = await Promise.all([
+        dashboardService.getStats(),
+        dashboardService.getRecentActivities(),
+        dashboardService.getUpcomingEvents()
+      ]);
 
-    loadDashboardData();
-  }, [user?.role]);
-
-  const getStatCards = () => {
-    const { stats } = dashboardData;
-    
-    if (user?.role === 'student') {
-      return [
-        {
-          title: 'Cursos Matriculados',
-          value: stats.courses,
-          icon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 17.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          ),
-          color: 'blue',
-          change: { value: 8, trend: 'up' as const, period: 'desde o último mês' }
-        },
-        {
-          title: 'Atividades Pendentes',
-          value: stats.activities - stats.completedActivities,
-          icon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          ),
-          color: 'yellow'
-        },
-        {
-          title: 'Atividades Concluídas',
-          value: stats.completedActivities,
-          icon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          ),
-          color: 'green',
-          change: { value: 12, trend: 'up' as const, period: 'esta semana' }
-        },
-        {
-          title: 'Taxa de Conclusão',
-          value: `${Math.round((stats.completedActivities / stats.activities) * 100)}%`,
-          icon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          ),
-          color: 'purple',
-          change: { value: 5, trend: 'up' as const, period: 'este mês' }
-        }
-      ];
+      setStats(statsData);
+      setRecentActivities(activitiesData);
+      setUpcomingEvents(eventsData);
+    } catch (error) {
+      toast({
+        title: "Erro ao carregar dashboard",
+        description: "Não foi possível carregar os dados do dashboard.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // Para professores e outros roles
-    return [
-      {
-        title: 'Total de Estudantes',
-        value: stats.totalStudents,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-          </svg>
-        ),
-        color: 'blue',
-        change: { value: 12, trend: 'up' as const, period: 'desde o último mês' }
-      },
-      {
-        title: 'Cursos Ativos',
-        value: stats.courses,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 17.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        ),
-        color: 'green'
-      },
-      {
-        title: 'Atividades Criadas',
-        value: stats.activities,
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-        ),
-        color: 'purple'
-      },
-      {
-        title: 'Taxa de Engajamento',
-        value: '87%',
-        icon: (
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        ),
-        color: 'indigo',
-        change: { value: 3, trend: 'up' as const, period: 'esta semana' }
-      }
-    ];
   };
 
-  const tableColumns = [
-    {
-      key: 'title',
-      title: 'Título',
-      sortable: true
-    },
-    {
-      key: 'type',
-      title: 'Tipo',
-      sortable: true,
-      render: (value: string) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'Curso' ? 'bg-blue-100 text-blue-800' :
-          value === 'Atividade' ? 'bg-green-100 text-green-800' :
-          'bg-purple-100 text-purple-800'
-        }`}>
-          {value}
-        </span>
-      )
-    },
-    {
-      key: 'status',
-      title: 'Status',
-      sortable: true,
-      render: (value: string) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 'Ativo' ? 'bg-green-100 text-green-800' :
-          value === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-blue-100 text-blue-800'
-        }`}>
-          {value}
-        </span>
-      )
-    },
-    {
-      key: 'lastActivity',
-      title: 'Última Atividade',
-      sortable: true,
-      render: (value: string) => new Date(value).toLocaleDateString('pt-BR')
-    },
-    {
-      key: 'progress',
-      title: 'Progresso',
-      render: (value: string) => (
-        <div className="flex items-center">
-          <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full" 
-              style={{ width: value }}
-            ></div>
-          </div>
-          <span className="text-sm text-gray-600">{value}</span>
-        </div>
-      )
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bom dia';
+    if (hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'course_completion': return <Award className="h-4 w-4" />;
+      case 'new_user': return <Users className="h-4 w-4" />;
+      case 'book_read': return <BookOpen className="h-4 w-4" />;
+      case 'assignment_submitted': return <Clock className="h-4 w-4" />;
+      default: return <Activity className="h-4 w-4" />;
     }
-  ];
+  };
 
-  const getRightSidebarContent = () => (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Atividade Recente</h3>
-        <div className="space-y-3">
-          {[
-            { user: 'Ana Silva', action: 'concluiu', target: 'Matemática Básica', time: '2 horas atrás' },
-            { user: 'Carlos Santos', action: 'iniciou', target: 'Física Moderna', time: '4 horas atrás' },
-            { user: 'Maria Oliveira', action: 'enviou', target: 'Projeto Final', time: '6 horas atrás' }
-          ].map((activity, index) => (
-            <div key={index} className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-semibold text-sm">
-                  {activity.user.charAt(0)}
-                </span>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm">
-                  <span className="font-medium">{activity.user}</span> {activity.action}{' '}
-                  <span className="font-medium">{activity.target}</span>
-                </p>
-                <p className="text-xs text-gray-500">{activity.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+  const getEventTypeColor = (type: string) => {
+    switch (type) {
+      case 'class': return 'info';
+      case 'exam': return 'danger';
+      case 'assignment': return 'warning';
+      case 'meeting': return 'success';
+      default: return 'secondary';
+    }
+  };
 
-      <div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Próximos Eventos</h3>
-        <div className="space-y-3">
-          {[
-            { title: 'Reunião de Pais', date: 'Hoje, 15:00', type: 'meeting' },
-            { title: 'Avaliação Final', date: 'Amanhã, 09:00', type: 'exam' },
-            { title: 'Workshop de Inovação', date: 'Sex, 14:00', type: 'workshop' }
-          ].map((event, index) => (
-            <div key={index} className="border-l-4 border-blue-500 pl-3">
-              <p className="font-medium text-sm">{event.title}</p>
-              <p className="text-xs text-gray-500">{event.date}</p>
+  const getEventTypeLabel = (type: string) => {
+    switch (type) {
+      case 'class': return 'Aula';
+      case 'exam': return 'Prova';
+      case 'assignment': return 'Tarefa';
+      case 'meeting': return 'Reunião';
+      default: return type;
+    }
+  };
+
+  if (loading) {
+    return (
+      <AuthenticatedLayout>
+        <div className="container mx-auto py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              ))}
             </div>
-          ))}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="h-96 bg-gray-200 rounded"></div>
+              <div className="h-96 bg-gray-200 rounded"></div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  );
+      </AuthenticatedLayout>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Greeting Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-lg">
-        <h1 className="text-3xl font-bold">
-          Olá, {user?.name?.split(' ')[0] || 'Usuário'}! 👋
-        </h1>
-        <p className="text-blue-100 mt-2 text-lg">
-          Bem-vindo de volta ao Portal Educacional
-        </p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {getStatCards().map((stat, index) => (
-          <StatCard
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            color={stat.color as any}
-            change={stat.change}
-          />
-        ))}
-      </div>
-
-      {/* Recent Activities Table */}
-      <div className="space-y-4">
+    <AuthenticatedLayout>
+      <div className="container mx-auto py-8 space-y-8">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-700">
-            {user?.role === 'student' ? 'Minhas Atividades' : 'Atividades Recentes'}
-          </h2>
-          <div className="flex space-x-2">
-            <select className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <option>Esta semana</option>
-              <option>Este mês</option>
-              <option>Todos</option>
-            </select>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {getGreeting()}, {user?.name}!
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Aqui está um resumo das suas atividades hoje.
+            </p>
           </div>
+          <Button onClick={fetchDashboardData} variant="outline">
+            <Activity className="h-4 w-4 mr-2" />
+            Atualizar
+          </Button>
         </div>
 
-        <StandardTable
-          columns={tableColumns}
-          data={dashboardData.recentActivities}
-          loading={dashboardData.loading}
-          actions={{
-            title: 'Ações',
-            render: (record) => (
-              <div className="flex space-x-2">
-                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                  Ver
-                </button>
-                <button className="text-green-600 hover:text-green-800 text-sm font-medium">
-                  Continuar
-                </button>
-              </div>
-            )
-          }}
-        />
-      </div>
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  +{stats.monthlyGrowth}% este mês
+                </p>
+              </CardContent>
+            </Card>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { title: 'Novo Curso', icon: '📚', href: '/courses/new' },
-          { title: 'Nova Atividade', icon: '📝', href: '/assignments/new' },
-          { title: 'Relatórios', icon: '📊', href: '/reports' },
-          { title: 'Configurações', icon: '⚙️', href: '/settings' }
-        ].map((action, index) => (
-          <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer">
-            <div className="text-center">
-              <div className="text-2xl mb-2">{action.icon}</div>
-              <p className="text-sm font-medium text-gray-700">{action.title}</p>
-            </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Cursos Ativos</CardTitle>
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalCourses.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.activeStudents} alunos ativos
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Biblioteca</CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalBooks.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  Livros disponíveis
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Instituições</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalInstitutions.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  Parceiras ativas
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        ))}
+        )}
+
+        {/* Progress Overview */}
+        {stats && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="h-5 w-5 mr-2" />
+                Visão Geral do Progresso
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">
+                    {stats.averageProgress}%
+                  </div>
+                  <p className="text-sm text-gray-600">Progresso Médio</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">
+                    {stats.completedCourses}
+                  </div>
+                  <p className="text-sm text-gray-600">Cursos Concluídos</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-600">
+                    {stats.activeStudents}
+                  </div>
+                  <p className="text-sm text-gray-600">Alunos Ativos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Activities */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="h-5 w-5 mr-2" />
+                Atividades Recentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity) => (
+                    <div key={activity.id} className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-1">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">
+                          {activity.title}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {activity.description}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(activity.timestamp).toLocaleString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    Nenhuma atividade recente
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Events */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                Próximos Eventos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {upcomingEvents.length > 0 ? (
+                  upcomingEvents.map((event) => (
+                    <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h4 className="text-sm font-medium">{event.title}</h4>
+                          <Badge variant={getEventTypeColor(event.type)}>
+                            {getEventTypeLabel(event.type)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {new Date(event.date).toLocaleDateString('pt-BR')}
+                          </span>
+                          <span className="flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {event.time}
+                          </span>
+                        </div>
+                        {event.location && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            📍 {event.location}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    Nenhum evento próximo
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </AuthenticatedLayout>
   );
 }

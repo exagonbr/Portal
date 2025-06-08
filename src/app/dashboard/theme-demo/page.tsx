@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { UserRole } from '@/types/roles'
 import { ThemeSelector } from '@/components/ui/ThemeSelector'
 import Modal from '@/components/ui/Modal'
-import { Input } from '@/components/ui/Input';
+import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import Table from '@/components/ui/Table'

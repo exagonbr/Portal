@@ -71,7 +71,7 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
-  @Column()
+  @Column({ default: '35f57500-9a89-4318-bc9f-9acad28c2fb6' })
   role_id: string;
 
   @ManyToOne(() => Role, role => role.users)

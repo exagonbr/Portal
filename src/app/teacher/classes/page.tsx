@@ -13,7 +13,7 @@ import { UserRole } from '@/types/roles'
 import { useRouter } from 'next/navigation'
 import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
 import { Button, ButtonGroup } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import Input from '@/components/ui/Input';
 
 interface Class {
   id: string
