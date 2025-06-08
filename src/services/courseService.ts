@@ -3,7 +3,8 @@ import {
   CourseDto, 
   CreateCourseDto, 
   UpdateCourseDto,
-  PaginatedResponseDto 
+  PaginatedResponseDto,
+  CourseResponseDto 
 } from '../types/api';
 
 export interface CourseFilters {
@@ -22,12 +23,6 @@ export interface CourseListOptions {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   filters?: CourseFilters;
-}
-
-export interface CourseResponseDto extends CourseDto {
-  active?: boolean;
-  students_count?: number;
-  teachers_count?: number;
 }
 
 export class CourseService {

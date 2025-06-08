@@ -76,29 +76,17 @@ export default function ManageCourses() {
     try {
       if (selectedCourse) {
         await courseService.updateCourse(selectedCourse.id, data)
-        toast({
-          title: "Curso atualizado",
-          description: "O curso foi atualizado com sucesso.",
-          variant: "success"
-        })
+        showSuccess("Curso atualizado", "O curso foi atualizado com sucesso.")
       } else {
         await courseService.createCourse(data)
-        toast({
-          title: "Curso criado",
-          description: "O curso foi criado com sucesso.",
-          variant: "success"
-        })
+        showSuccess("Curso criado", "O curso foi criado com sucesso.")
       }
       setAddModalOpen(false)
       setEditModalOpen(false)
       setSelectedCourse(null)
       fetchCourses(currentPage, searchQuery)
     } catch (error) {
-      toast({
-        title: "Erro ao salvar curso",
-        description: "Não foi possível salvar o curso.",
-        variant: "destructive"
-      })
+      showError("Erro ao salvar curso", "Não foi possível salvar o curso.")
     }
   }
 
