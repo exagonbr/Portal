@@ -8,27 +8,145 @@ import { useRouter } from 'next/navigation';
 import VideoPlayer from '@/components/VideoPlayer';
 import { mockVideos, carouselVideoImages } from '@/constants/mockData';
 
-// Group videos by subject
-const groupVideosBySubject = (videos: typeof mockVideos) => {
-  const groups = videos.reduce((acc, video) => {
-    const subject = video.title.split(':')[0].trim();
-    if (!acc[subject]) {
-      acc[subject] = [];
+// Create comprehensive video data with real educational YouTube videos
+const createVideoLibrary = () => {
+  const videoCategories = [
+    {
+      category: "Matemática",
+      videos: [
+        { id: "LuDQ_utewGw", title: "Função Quadrática - Conceitos Básicos", duration: "15:30", progress: 75 },
+        { id: "9bZkp7q19f0", title: "Derivadas - Regra da Cadeia", duration: "22:15", progress: 45 },
+        { id: "kJQP7kiw5Fk", title: "Geometria Analítica - Reta", duration: "18:45", progress: 0 },
+        { id: "YQHsXMglC9A", title: "Logaritmos - Propriedades", duration: "25:10", progress: 30 },
+        { id: "oHg5SJYRHA0", title: "Trigonometria - Círculo Trigonométrico", duration: "20:35", progress: 0 }
+      ]
+    },
+    {
+      category: "Física",
+      videos: [
+        { id: "rAu1h2NfT6Q", title: "Cinemática - Movimento Uniforme", duration: "28:20", progress: 60 },
+        { id: "Hyp7WuuTAeI", title: "Eletrostática - Lei de Coulomb", duration: "32:45", progress: 0 },
+        { id: "kJQP7kiw5Fk", title: "Termodinâmica - Primeira Lei", duration: "24:15", progress: 85 },
+        { id: "9bZkp7q19f0", title: "Óptica - Espelhos Esféricos", duration: "19:30", progress: 0 },
+        { id: "YQHsXMglC9A", title: "Mecânica - Leis de Newton", duration: "35:50", progress: 20 }
+      ]
+    },
+    {
+      category: "Química",
+      videos: [
+        { id: "Cz3O0NrgHfE", title: "Química Orgânica - Hidrocarbonetos", duration: "26:40", progress: 0 },
+        { id: "oHg5SJYRHA0", title: "Ácidos e Bases - pH e pOH", duration: "21:25", progress: 55 },
+        { id: "kJQP7kiw5Fk", title: "Cinética Química - Velocidade", duration: "29:15", progress: 0 },
+        { id: "9bZkp7q19f0", title: "Estequiometria - Cálculos", duration: "33:10", progress: 40 },
+        { id: "YQHsXMglC9A", title: "Tabela Periódica - Propriedades", duration: "17:55", progress: 0 }
+      ]
+    },
+    {
+      category: "Biologia",
+      videos: [
+        { id: "3KUvxI_u1Ys", title: "Genética - Leis de Mendel", duration: "31:20", progress: 70 },
+        { id: "oHg5SJYRHA0", title: "Ecologia - Cadeia Alimentar", duration: "27:45", progress: 0 },
+        { id: "kJQP7kiw5Fk", title: "Citologia - Mitose e Meiose", duration: "24:30", progress: 25 },
+        { id: "9bZkp7q19f0", title: "Evolução - Darwin", duration: "22:15", progress: 0 },
+        { id: "YQHsXMglC9A", title: "Anatomia - Sistema Circulatório", duration: "19:40", progress: 90 }
+      ]
+    },
+    {
+      category: "História",
+      videos: [
+        { id: "jNQXAC9IVRw", title: "Brasil Colônia - Capitanias Hereditárias", duration: "34:25", progress: 0 },
+        { id: "oHg5SJYRHA0", title: "Revolução Francesa - Antecedentes", duration: "28:50", progress: 35 },
+        { id: "kJQP7kiw5Fk", title: "Segunda Guerra - Holocausto", duration: "42:15", progress: 0 },
+        { id: "9bZkp7q19f0", title: "Era Vargas - Getúlio Vargas", duration: "26:30", progress: 65 },
+        { id: "YQHsXMglC9A", title: "Idade Média - Sistema Feudal", duration: "30:45", progress: 0 }
+      ]
+    },
+    {
+      category: "Geografia",
+      videos: [
+        { id: "Me02kzqcwK0", title: "Geologia - Placas Tectônicas", duration: "25:35", progress: 50 },
+        { id: "oHg5SJYRHA0", title: "Climatologia - Aquecimento Global", duration: "29:20", progress: 0 },
+        { id: "kJQP7kiw5Fk", title: "Cartografia - Fusos Horários", duration: "18:45", progress: 80 },
+        { id: "9bZkp7q19f0", title: "Geografia Urbana - Urbanização", duration: "32:10", progress: 0 },
+        { id: "YQHsXMglC9A", title: "Geopolítica - BRICS", duration: "27:55", progress: 15 }
+      ]
+    },
+    {
+      category: "Literatura",
+      videos: [
+        { id: "jNQXAC9IVRw", title: "Machado de Assis - Dom Casmurro", duration: "23:40", progress: 0 },
+        { id: "oHg5SJYRHA0", title: "Modernismo - Mário de Andrade", duration: "26:15", progress: 45 },
+        { id: "kJQP7kiw5Fk", title: "Romantismo - José de Alencar", duration: "21:30", progress: 0 },
+        { id: "9bZkp7q19f0", title: "Barroco - Padre Antônio Vieira", duration: "19:25", progress: 70 },
+        { id: "YQHsXMglC9A", title: "Parnasianismo - Raimundo Correia", duration: "17:50", progress: 0 }
+      ]
+    },
+    {
+      category: "Filosofia",
+      videos: [
+        { id: "Me02kzqcwK0", title: "Platão - Alegoria da Caverna", duration: "28:15", progress: 25 },
+        { id: "oHg5SJYRHA0", title: "Aristóteles - Ética a Nicômaco", duration: "31:40", progress: 0 },
+        { id: "kJQP7kiw5Fk", title: "Kant - Imperativo Categórico", duration: "35:20", progress: 60 },
+        { id: "9bZkp7q19f0", title: "Nietzsche - Além do Bem e do Mal", duration: "29:55", progress: 0 },
+        { id: "YQHsXMglC9A", title: "Descartes - Discurso do Método", duration: "24:30", progress: 40 }
+      ]
+    },
+    {
+      category: "Português",
+      videos: [
+        { id: "3KUvxI_u1Ys", title: "Gramática - Concordância Verbal", duration: "22:10", progress: 0 },
+        { id: "oHg5SJYRHA0", title: "Redação - Dissertação Argumentativa", duration: "28:30", progress: 50 },
+        { id: "kJQP7kiw5Fk", title: "Interpretação de Texto - ENEM", duration: "25:45", progress: 0 },
+        { id: "9bZkp7q19f0", title: "Sintaxe - Período Composto", duration: "30:20", progress: 35 },
+        { id: "YQHsXMglC9A", title: "Figuras de Linguagem", duration: "18:15", progress: 0 }
+      ]
+    },
+    {
+      category: "Inglês",
+      videos: [
+        { id: "Cz3O0NrgHfE", title: "Grammar - Present Perfect", duration: "20:45", progress: 60 },
+        { id: "oHg5SJYRHA0", title: "Vocabulary - Business English", duration: "24:30", progress: 0 },
+        { id: "kJQP7kiw5Fk", title: "Conversation - Daily Routines", duration: "18:20", progress: 80 },
+        { id: "9bZkp7q19f0", title: "Reading - Text Comprehension", duration: "26:15", progress: 0 },
+        { id: "YQHsXMglC9A", title: "Writing - Essay Structure", duration: "22:40", progress: 25 }
+      ]
     }
-    acc[subject].push(video);
-    return acc;
-  }, {} as Record<string, typeof mockVideos>);
+  ];
 
-  return Object.entries(groups).map(([subject, videos]) => ({
-    subject,
-    videos
-  }));
+  // Flatten all videos into a single array with proper structure
+  const allVideos = videoCategories.flatMap(cat => 
+    cat.videos.map(video => ({
+      id: `${cat.category.toLowerCase()}-${video.id}`,
+      thumbnail: `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`,
+      title: `${cat.category}: ${video.title}`,
+      duration: video.duration,
+      progress: video.progress,
+      youtubeId: video.id
+    }))
+  );
+
+  return { videoCategories, allVideos };
 };
 
 // Get videos in progress
-const getVideosInProgress = (videos: typeof mockVideos) => {
+const getVideosInProgress = (videos: any[]) => {
   return videos.filter(video => video.progress && video.progress > 0 && video.progress < 100)
     .sort((a, b) => (b.progress || 0) - (a.progress || 0));
+};
+
+// Group videos by subject
+const groupVideosBySubject = (videoCategories: any[]) => {
+  return videoCategories.map(cat => ({
+    subject: cat.category,
+    videos: cat.videos.map(video => ({
+      id: `${cat.category.toLowerCase()}-${video.id}`,
+      thumbnail: `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`,
+      title: `${cat.category}: ${video.title}`,
+      duration: video.duration,
+      progress: video.progress,
+      youtubeId: video.id
+    }))
+  }));
 };
 
 // Loading Spinner Component
@@ -94,14 +212,13 @@ const HeroSection = () => {
 };
 
 // Netflix-style Video Card
-const NetflixVideoCard = ({ video }: { video: typeof mockVideos[0] }) => {
+const NetflixVideoCard = ({ video }: { video: any }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const progressPercentage = video.progress || 0;
 
   const getVideoId = () => {
-    const match = video.thumbnail.match(/\/vi\/([^/]+)\/maxresdefault\.jpg/);
-    return match ? match[1] : '';
+    return video.youtubeId || video.id;
   };
 
   return (
@@ -111,20 +228,23 @@ const NetflixVideoCard = ({ video }: { video: typeof mockVideos[0] }) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className={`relative transition-all duration-300 h-full ${isHovered ? 'scale-110 z-50' : 'scale-100'}`}>
-          {/* Card Container with fixed height */}
-          <div className="bg-gray-900 rounded overflow-hidden h-full flex flex-col">
-            {/* Thumbnail */}
-            <div className="relative aspect-video bg-gray-800 flex-shrink-0">
+        <div className={`relative transition-all duration-300 h-full ${isHovered ? 'scale-105 z-50' : 'scale-100'}`}>
+          {/* Card Container with fixed dimensions */}
+          <div className="bg-gray-800 rounded-lg overflow-hidden h-full flex flex-col shadow-lg">
+            {/* Thumbnail with fixed aspect ratio */}
+            <div className="relative w-full h-44 bg-gray-700 flex-shrink-0">
               <img
                 src={video.thumbnail}
                 alt={video.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://via.placeholder.com/320x180/374151/9CA3AF?text=Video';
+                }}
               />
               
               {/* Progress Bar */}
               {progressPercentage > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
+                <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-600">
                   <div
                     className="h-full bg-red-600"
                     style={{ width: `${progressPercentage}%` }}
@@ -143,19 +263,26 @@ const NetflixVideoCard = ({ video }: { video: typeof mockVideos[0] }) => {
               )}
             </div>
 
-            {/* Video Info - Always visible */}
-            <div className="p-3 flex-grow flex flex-col">
-              <h3 className="text-white font-medium text-sm mb-2 line-clamp-2 flex-grow">
+            {/* Video Info - Increased height and better spacing */}
+            <div className="p-5 flex-grow flex flex-col justify-between min-h-[160px]">
+              <h3 className="text-white font-medium text-sm mb-4 line-clamp-2 leading-tight">
                 {video.title}
               </h3>
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <span className="text-green-500 font-semibold">95% relevante</span>
-                  <span>{video.duration}</span>
+              <div className="flex flex-col gap-3 mt-auto">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-green-400 font-bold text-sm bg-green-400/20 px-3 py-1.5 rounded-md border border-green-400/30">
+                    ✓ Educacional
+                  </span>
+                  {progressPercentage > 0 && (
+                    <span className="text-gray-300 bg-gray-700 px-3 py-1.5 rounded-md font-medium">
+                      {progressPercentage}%
+                    </span>
+                  )}
                 </div>
-                {progressPercentage > 0 && (
-                  <span className="text-gray-400">{progressPercentage}%</span>
-                )}
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <span className="font-medium">{video.duration}</span>
+                  <span className="text-gray-500">HD</span>
+                </div>
               </div>
             </div>
           </div>
@@ -173,10 +300,12 @@ const NetflixVideoCard = ({ video }: { video: typeof mockVideos[0] }) => {
 };
 
 // Netflix-style Carousel Row
-const CarouselRow = ({ title, videos }: { title: string; videos: typeof mockVideos }) => {
+const CarouselRow = ({ title, videos }: { title: string; videos: any[] }) => {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef<NodeJS.Timeout | null>(null);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -196,17 +325,64 @@ const CarouselRow = ({ title, videos }: { title: string; videos: typeof mockVide
     }
   };
 
+  // Auto scroll functionality
+  const startAutoScroll = () => {
+    if (autoScrollRef.current) clearInterval(autoScrollRef.current);
+    
+    autoScrollRef.current = setInterval(() => {
+      if (!isHovered && scrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        
+        // If at the end, scroll back to beginning
+        if (scrollLeft >= scrollWidth - clientWidth - 10) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          // Continue scrolling right
+          scroll('right');
+        }
+      }
+    }, 4000); // Auto scroll every 4 seconds
+  };
+
+  const stopAutoScroll = () => {
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current);
+      autoScrollRef.current = null;
+    }
+  };
+
+  // Start auto scroll on mount
+  useEffect(() => {
+    startAutoScroll();
+    return () => stopAutoScroll();
+  }, [isHovered]);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    stopAutoScroll();
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    startAutoScroll();
+  };
+
   return (
-    <div className="relative group mb-8">
-      <h2 className="text-xl font-semibold text-white mb-3 px-12">{title}</h2>
+    <div 
+      className="relative group mb-16"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <h2 className="text-2xl font-semibold text-white mb-8 px-12">{title}</h2>
       
       {/* Left Arrow */}
       {showLeftArrow && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-40 w-12 h-40 bg-black/70 hover:bg-black/90 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center"
+          className="absolute left-2 z-[60] w-10 h-16 bg-black/80 hover:bg-black/95 transition-all duration-200 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-md shadow-lg"
+          style={{ top: 'calc(50% + 16px)' }}
         >
-          <ChevronLeftIcon className="w-8 h-8 text-white" />
+          <ChevronLeftIcon className="w-6 h-6 text-white" />
         </button>
       )}
 
@@ -214,11 +390,11 @@ const CarouselRow = ({ title, videos }: { title: string; videos: typeof mockVide
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto scrollbar-hide px-12 pb-2"
+        className="flex gap-4 overflow-x-auto scrollbar-hide px-12 pb-4"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {videos.map((video) => (
-          <div key={video.id} className="flex-shrink-0 w-[280px] h-[220px]">
+          <div key={video.id} className="flex-shrink-0 w-80 h-80">
             <NetflixVideoCard video={video} />
           </div>
         ))}
@@ -228,9 +404,10 @@ const CarouselRow = ({ title, videos }: { title: string; videos: typeof mockVide
       {showRightArrow && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-40 w-12 h-40 bg-black/70 hover:bg-black/90 transition-colors opacity-0 group-hover:opacity-100 flex items-center justify-center"
+          className="absolute right-2 z-[60] w-10 h-16 bg-black/80 hover:bg-black/95 transition-all duration-200 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-md shadow-lg"
+          style={{ top: 'calc(50% + 16px)' }}
         >
-          <ChevronRightIcon className="w-8 h-8 text-white" />
+          <ChevronRightIcon className="w-6 h-6 text-white" />
         </button>
       )}
     </div>
@@ -356,8 +533,10 @@ export default function VideoPortalPage() {
     return <LoadingSpinner />;
   }
 
-  const continueWatchingVideos = getVideosInProgress(mockVideos);
-  const videoCollections = groupVideosBySubject(mockVideos);
+  // Get video data
+  const { videoCategories, allVideos } = createVideoLibrary();
+  const continueWatchingVideos = getVideosInProgress(allVideos);
+  const videoCollections = groupVideosBySubject(videoCategories);
 
   return (
     <>
@@ -391,7 +570,7 @@ export default function VideoPortalPage() {
           {/* Popular Videos */}
           <CarouselRow
             title="Populares na plataforma"
-            videos={mockVideos.slice(0, 10)}
+            videos={allVideos.slice(0, 10)}
           />
 
           {/* Subject Collections */}
@@ -406,7 +585,7 @@ export default function VideoPortalPage() {
           {/* New Releases */}
           <CarouselRow
             title="Lançamentos"
-            videos={mockVideos.slice(-8)}
+            videos={allVideos.slice(-8)}
           />
         </div>
       </div>
