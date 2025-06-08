@@ -52,13 +52,13 @@ export async function GET(
     }
 
     // Verificar permissões de visualização
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canView = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
       (userRole === 'SCHOOL_MANAGER' && classData.school_id === session.user.school_id) ||
-      (userRole === 'TEACHER' && classData.teacher_id === session.user.id) ||
-      (userRole === 'STUDENT' && classData.students?.includes(session.user.id)) ||
+      (userRole === 'TEACHER' && classData.teacher_id === session.user?.id) ||
+      (userRole === 'STUDENT' && classData.students?.includes(session.user?.id)) ||
       (userRole === 'GUARDIAN' && classData.students?.some((studentId: string) => 
         session.user.dependents?.includes(studentId)
       ))
@@ -134,7 +134,7 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
@@ -163,7 +163,7 @@ export async function PUT(
       ...existingClass,
       ...updateData,
       updated_at: new Date().toISOString(),
-      updated_by: session.user.id
+      updated_by: session.user?.id
     }
 
     mockClasses.set(classId, updatedClass)
@@ -210,7 +210,7 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'SCHOOL_MANAGER' && existingClass.school_id === session.user.school_id)

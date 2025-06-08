@@ -76,12 +76,12 @@ export async function GET(request: NextRequest) {
     if (my_groups) {
       groups = groups.filter(group => {
         const members = mockGroupMembers.get(group.id) || []
-        return members.some((m: any) => m.user_id === session.user.id)
+        return members.some((m: any) => m.user_id === session.user?.id)
       })
     }
 
     // Aplicar filtros de visibilidade baseados no role
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'STUDENT') {
       groups = groups.filter(group => {
         // Aluno vê grupos públicos, da turma dele, ou que é membro
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
           return true // Implementar verificação real
         }
         const members = mockGroupMembers.get(group.id) || []
-        return members.some((m: any) => m.user_id === session.user.id)
+        return members.some((m: any) => m.user_id === session.user?.id)
       })
     }
 
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     // Adicionar informações de membros e status do usuário
     const groupsWithInfo = groups.map(group => {
       const members = mockGroupMembers.get(group.id) || []
-      const userMembership = members.find((m: any) => m.user_id === session.user.id)
+      const userMembership = members.find((m: any) => m.user_id === session.user?.id)
       
       return {
         ...group,
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
     const groupData = validationResult.data
 
     // Verificar permissões baseadas no tipo e visibilidade
-    const userRole = session.user.role
+    const userRole = session.user?.role
     
     // Estudantes só podem criar grupos públicos ou privados
     if (userRole === 'STUDENT' && ['CLASS_ONLY', 'INVITE_ONLY'].includes(groupData.visibility)) {
@@ -227,8 +227,8 @@ export async function POST(request: NextRequest) {
     const newGroup = {
       id: `group_${Date.now()}`,
       ...groupData,
-      creator_id: session.user.id,
-      creator_name: session.user.name,
+      creator_id: session.user?.id,
+      creator_name: session.user?.name,
       is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -239,8 +239,8 @@ export async function POST(request: NextRequest) {
 
     // Adicionar criador como líder do grupo
     const creatorMember = {
-      user_id: session.user.id,
-      user_name: session.user.name,
+      user_id: session.user?.id,
+      user_name: session.user?.name,
       role: 'LEADER',
       status: 'active',
       is_active: true,

@@ -86,8 +86,8 @@ export async function GET(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
-    const isCreator = quiz.created_by === session.user.id
+    const userRole = session.user?.role
+    const isCreator = quiz.created_by === session.user?.id
     const isAdmin = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
     const isTeacher = userRole === 'TEACHER'
     const isStudent = userRole === 'STUDENT'
@@ -101,7 +101,7 @@ export async function GET(
     }
 
     // Buscar tentativas do usuário
-    const userAttempts = mockQuizAttempts.get(`${quizId}_${session.user.id}`) || []
+    const userAttempts = mockQuizAttempts.get(`${quizId}_${session.user?.id}`) || []
     const bestAttempt = userAttempts.reduce((best: any, current: any) => 
       !best || current.score > best.score ? current : best, null
     )
@@ -218,11 +218,11 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
-      (userRole === 'TEACHER' && existingQuiz.created_by === session.user.id)
+      (userRole === 'TEACHER' && existingQuiz.created_by === session.user?.id)
 
     if (!canEdit) {
       return NextResponse.json(
@@ -279,7 +279,7 @@ export async function PUT(
       ...updateData,
       total_points: totalPoints,
       updated_at: new Date().toISOString(),
-      updated_by: session.user.id
+      updated_by: session.user?.id
     }
 
     mockQuizzes.set(quizId, updatedQuiz)
@@ -326,11 +326,11 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
-      (userRole === 'TEACHER' && existingQuiz.created_by === session.user.id)
+      (userRole === 'TEACHER' && existingQuiz.created_by === session.user?.id)
 
     if (!canDelete) {
       return NextResponse.json(

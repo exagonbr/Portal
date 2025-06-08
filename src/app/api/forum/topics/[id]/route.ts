@@ -54,12 +54,12 @@ export async function GET(
     }
 
     // Verificar permissões de visualização
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canView = 
       topic.visibility === 'PUBLIC' ||
       (topic.visibility === 'MEMBERS_ONLY' && session.user) ||
       (topic.visibility === 'CLASS_ONLY' && topic.class_id) || // Verificar se está na turma
-      (topic.visibility === 'PRIVATE' && (topic.author_id === session.user.id || userRole === 'SYSTEM_ADMIN'))
+      (topic.visibility === 'PRIVATE' && (topic.author_id === session.user?.id || userRole === 'SYSTEM_ADMIN'))
 
     if (!canView) {
       return NextResponse.json(
@@ -71,8 +71,8 @@ export async function GET(
     // Incrementar contador de visualizações
     topic.view_count = (topic.view_count || 0) + 1
     topic.unique_viewers = topic.unique_viewers || []
-    if (!topic.unique_viewers.includes(session.user.id)) {
-      topic.unique_viewers.push(session.user.id)
+    if (!topic.unique_viewers.includes(session.user?.id)) {
+      topic.unique_viewers.push(session.user?.id)
     }
     mockTopics.set(topicId, topic)
 
@@ -84,14 +84,14 @@ export async function GET(
       ...topic,
       category_name: category?.name || 'Geral',
       category_slug: category?.slug,
-      is_author: topic.author_id === session.user.id,
-      is_following: topic.followers?.includes(session.user.id) || false,
-      has_voted: topic.poll?.voters?.includes(session.user.id) || false,
-      can_edit: topic.author_id === session.user.id || ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole),
-      can_delete: topic.author_id === session.user.id || userRole === 'SYSTEM_ADMIN',
+      is_author: topic.author_id === session.user?.id,
+      is_following: topic.followers?.includes(session.user?.id) || false,
+      has_voted: topic.poll?.voters?.includes(session.user?.id) || false,
+      can_edit: topic.author_id === session.user?.id || ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole),
+      can_delete: topic.author_id === session.user?.id || userRole === 'SYSTEM_ADMIN',
       can_pin: ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole),
       can_lock: ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole),
-      can_mark_solved: topic.type === 'QUESTION' && (topic.author_id === session.user.id || ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole)),
+      can_mark_solved: topic.type === 'QUESTION' && (topic.author_id === session.user?.id || ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole)),
       time_ago: getTimeAgo(new Date(topic.created_at)),
       reading_time: Math.ceil(topic.content.split(' ').length / 200) // minutos
     }
@@ -105,7 +105,7 @@ export async function GET(
         percentage: totalVotes > 0 ? ((topic.poll.votes?.[index]?.count || 0) / totalVotes * 100).toFixed(1) : '0'
       }))
       topicWithDetails.poll.total_votes = totalVotes
-      topicWithDetails.poll.user_vote = topic.poll.user_votes?.[session.user.id] || null
+      topicWithDetails.poll.user_vote = topic.poll.user_votes?.[session.user?.id] || null
     }
 
     return NextResponse.json({
@@ -164,8 +164,8 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
-    const isAuthor = existingTopic.author_id === session.user.id
+    const userRole = session.user?.role
+    const isAuthor = existingTopic.author_id === session.user?.id
     const isAdmin = userRole === 'SYSTEM_ADMIN'
     const isTeacher = userRole === 'TEACHER'
 
@@ -209,7 +209,7 @@ export async function PUT(
       ...existingTopic,
       ...updateData,
       updated_at: new Date().toISOString(),
-      edited_by: session.user.id,
+      edited_by: session.user?.id,
       edited_at: new Date().toISOString(),
       edit_count: (existingTopic.edit_count || 0) + 1
     }
@@ -258,10 +258,10 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
-      (existingTopic.author_id === session.user.id && existingTopic.reply_count === 0)
+      (existingTopic.author_id === session.user?.id && existingTopic.reply_count === 0)
 
     if (!canDelete) {
       return NextResponse.json(

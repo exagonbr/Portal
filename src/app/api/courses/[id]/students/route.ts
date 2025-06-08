@@ -39,12 +39,12 @@ export async function GET(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canViewStudents = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && course.institution_id === session.user.institution_id) ||
       (userRole === 'SCHOOL_MANAGER' && course.institution_id === session.user.institution_id) ||
-      (userRole === 'TEACHER' && course.teachers?.includes(session.user.id))
+      (userRole === 'TEACHER' && course.teachers?.includes(session.user?.id))
 
     if (!canViewStudents) {
       return NextResponse.json(
@@ -149,7 +149,7 @@ export async function POST(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEnrollStudents = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && course.institution_id === session.user.institution_id) ||
@@ -192,7 +192,7 @@ export async function POST(
     }
     student.enrollments[courseId] = {
       enrolled_at: new Date().toISOString(),
-      enrolled_by: session.user.id
+      enrolled_by: session.user?.id
     }
 
     mockCourses.set(courseId, course)

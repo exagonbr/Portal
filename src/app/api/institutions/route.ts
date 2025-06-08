@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     let institutions = Array.from(mockInstitutions.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id) {
       // Admin de instituição vê apenas sua própria instituição
       institutions = institutions.filter(inst => inst.id === session.user.institution_id)
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apenas SYSTEM_ADMIN pode criar instituições
-    if (session.user.role !== 'SYSTEM_ADMIN') {
+    if (session.user?.role !== 'SYSTEM_ADMIN') {
       return NextResponse.json(
         { error: 'Sem permissão para criar instituições' },
         { status: 403 }
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
       schools: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      created_by: session.user.id
+      created_by: session.user?.id
     }
 
     mockInstitutions.set(newInstitution.id, newInstitution)

@@ -72,7 +72,7 @@ export async function GET(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canViewDetails = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
@@ -97,7 +97,7 @@ export async function GET(
     
     if (userRole === 'STUDENT') {
       // Buscar submissão do aluno
-      const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user.id)
+      const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user?.id)
       assignmentWithUserInfo.user_submission = userSubmission || null
       assignmentWithUserInfo.user_status = userSubmission ? (userSubmission.grade ? 'graded' : 'submitted') : 'pending'
       assignmentWithUserInfo.can_submit = !assignment.is_overdue || assignment.settings?.late_submission_allowed
@@ -167,11 +167,11 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
-      (userRole === 'TEACHER' && existingAssignment.created_by === session.user.id)
+      (userRole === 'TEACHER' && existingAssignment.created_by === session.user?.id)
 
     if (!canEdit) {
       return NextResponse.json(
@@ -212,7 +212,7 @@ export async function PUT(
       ...existingAssignment,
       ...updateData,
       updated_at: new Date().toISOString(),
-      updated_by: session.user.id
+      updated_by: session.user?.id
     }
 
     mockAssignments.set(assignmentId, updatedAssignment)
@@ -259,11 +259,11 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
-      (userRole === 'TEACHER' && existingAssignment.created_by === session.user.id)
+      (userRole === 'TEACHER' && existingAssignment.created_by === session.user?.id)
 
     if (!canDelete) {
       return NextResponse.json(

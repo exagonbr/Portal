@@ -60,13 +60,13 @@ export async function GET(request: NextRequest) {
     const to_date = searchParams.get('to_date')
 
     // Buscar notificações do usuário
-    const userNotificationIds = mockUserNotifications.get(session.user.id) || []
+    const userNotificationIds = mockUserNotifications.get(session.user?.id) || []
     let notifications = userNotificationIds.map((notifId: string) => {
       const notification = mockNotifications.get(notifId)
       if (!notification) return null
       
       // Adicionar status específico do usuário
-      const userStatus = notification.user_statuses?.[session.user.id] || {
+      const userStatus = notification.user_statuses?.[session.user?.id] || {
         read: false,
         read_at: null,
         archived: false,
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canSendNotifications = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'TEACHER'].includes(userRole)
     
     if (!canSendNotifications) {
@@ -238,8 +238,8 @@ export async function POST(request: NextRequest) {
     const newNotification = {
       id: `notif_${Date.now()}`,
       ...notificationData,
-      sender_id: session.user.id,
-      sender_name: session.user.name,
+      sender_id: session.user?.id,
+      sender_name: session.user?.name,
       recipient_count: recipientUserIds.length,
       user_statuses: {},
       created_at: new Date().toISOString(),

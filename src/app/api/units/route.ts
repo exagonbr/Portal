@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     let units = Array.from(mockUnits.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'TEACHER') {
       // Professor vê apenas unidades dos cursos que leciona
       // Implementar lógica de verificação
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para criar unidades' },
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
       lessons: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      created_by: session.user.id
+      created_by: session.user?.id
     }
 
     mockUnits.set(newUnit.id, newUnit)

@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     let assignments = Array.from(mockAssignments.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'TEACHER') {
       // Professor vê apenas tarefas das turmas que leciona
       // Implementar lógica de verificação
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     if (userRole === 'STUDENT' && status) {
       assignments = assignments.filter(assignment => {
         // Simular status baseado em submissões
-        const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user.id)
+        const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user?.id)
         if (status === 'pending' && !userSubmission) return true
         if (status === 'submitted' && userSubmission && !userSubmission.grade) return true
         if (status === 'graded' && userSubmission && userSubmission.grade) return true
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
 
       // Para alunos, adicionar informações pessoais
       if (userRole === 'STUDENT') {
-        const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user.id)
+        const userSubmission = assignment.submissions?.find((s: any) => s.student_id === session.user?.id)
         info.user_submission = userSubmission || null
         info.user_status = userSubmission ? (userSubmission.grade ? 'graded' : 'submitted') : 'pending'
       }
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para criar tarefas' },
@@ -274,7 +274,7 @@ export async function POST(request: NextRequest) {
       submissions: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      created_by: session.user.id
+      created_by: session.user?.id
     }
 
     mockAssignments.set(newAssignment.id, newAssignment)

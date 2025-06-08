@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     let schools = Array.from(mockSchools.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id) {
       schools = schools.filter(school => school.institution_id === session.user.institution_id)
     } else if (userRole === 'SCHOOL_MANAGER' && session.user.school_id) {
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para criar escolas' },
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
       ...schoolData,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      created_by: session.user.id
+      created_by: session.user?.id
     }
 
     mockSchools.set(newSchool.id, newSchool)

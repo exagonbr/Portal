@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     let courses = Array.from(mockCourses.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id) {
       courses = courses.filter(course => course.institution_id === session.user.institution_id)
     } else if (userRole === 'SCHOOL_MANAGER' && session.user.institution_id) {
@@ -53,12 +53,12 @@ export async function GET(request: NextRequest) {
     } else if (userRole === 'TEACHER') {
       // Professor vê apenas cursos onde leciona
       courses = courses.filter(course => 
-        course.teachers && course.teachers.includes(session.user.id)
+        course.teachers && course.teachers.includes(session.user?.id)
       )
     } else if (userRole === 'STUDENT') {
       // Aluno vê apenas cursos onde está matriculado
       courses = courses.filter(course => 
-        course.students && course.students.includes(session.user.id)
+        course.students && course.students.includes(session.user?.id)
       )
     }
 
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para criar cursos' },
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
       teachers: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      created_by: session.user.id
+      created_by: session.user?.id
     }
 
     mockCourses.set(newCourse.id, newCourse)

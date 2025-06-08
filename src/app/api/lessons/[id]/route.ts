@@ -75,7 +75,7 @@ export async function GET(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canViewDetails = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
@@ -164,11 +164,11 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
-      (userRole === 'TEACHER' && existingLesson.created_by === session.user.id)
+      (userRole === 'TEACHER' && existingLesson.created_by === session.user?.id)
 
     if (!canEdit) {
       return NextResponse.json(
@@ -216,7 +216,7 @@ export async function PUT(
       ...existingLesson,
       ...updateData,
       updated_at: new Date().toISOString(),
-      updated_by: session.user.id
+      updated_by: session.user?.id
     }
 
     mockLessons.set(lessonId, updatedLesson)
@@ -263,11 +263,11 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
-      (userRole === 'TEACHER' && existingLesson.created_by === session.user.id)
+      (userRole === 'TEACHER' && existingLesson.created_by === session.user?.id)
 
     if (!canDelete) {
       return NextResponse.json(

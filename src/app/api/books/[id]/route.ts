@@ -61,7 +61,7 @@ export async function GET(
     }
 
     // Verificar permissões de acesso
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canAccess = 
       book.access_type === 'FREE' ||
       userRole === 'SYSTEM_ADMIN' ||
@@ -153,12 +153,12 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||
       userRole === 'LIBRARIAN' ||
-      (userRole === 'TEACHER' && existingBook.created_by === session.user.id)
+      (userRole === 'TEACHER' && existingBook.created_by === session.user?.id)
 
     if (!canEdit) {
       return NextResponse.json(
@@ -172,7 +172,7 @@ export async function PUT(
       ...existingBook,
       ...updateData,
       updated_at: new Date().toISOString(),
-      updated_by: session.user.id
+      updated_by: session.user?.id
     }
 
     mockBooks.set(bookId, updatedBook)
@@ -219,7 +219,7 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||

@@ -73,10 +73,10 @@ export async function GET(
 
     // Buscar membros
     const members = mockGroupMembers.get(groupId) || []
-    const userMembership = members.find((m: any) => m.user_id === session.user.id)
+    const userMembership = members.find((m: any) => m.user_id === session.user?.id)
 
     // Verificar permissões de visualização
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canView = 
       group.visibility === 'PUBLIC' ||
       userRole === 'SYSTEM_ADMIN' ||
@@ -111,7 +111,7 @@ export async function GET(
       pending_requests: members.filter((m: any) => m.status === 'pending').length,
       can_join: !userMembership && members.length < group.max_members && group.is_active,
       can_edit: userMembership?.role === 'LEADER' || userRole === 'SYSTEM_ADMIN',
-      can_delete: group.creator_id === session.user.id || userRole === 'SYSTEM_ADMIN'
+      can_delete: group.creator_id === session.user?.id || userRole === 'SYSTEM_ADMIN'
     }
 
     // Se não for membro, remover informações sensíveis
@@ -177,8 +177,8 @@ export async function PUT(
 
     // Verificar permissões
     const members = mockGroupMembers.get(groupId) || []
-    const userMembership = members.find((m: any) => m.user_id === session.user.id)
-    const userRole = session.user.role
+    const userMembership = members.find((m: any) => m.user_id === session.user?.id)
+    const userRole = session.user?.role
     
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
@@ -252,10 +252,10 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
-      existingGroup.creator_id === session.user.id
+      existingGroup.creator_id === session.user?.id
 
     if (!canDelete) {
       return NextResponse.json(

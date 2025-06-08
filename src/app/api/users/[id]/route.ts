@@ -46,8 +46,8 @@ export async function GET(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
-    const isSelf = session.user.id === userId
+    const userRole = session.user?.role
+    const isSelf = session.user?.id === userId
     
     if (!isSelf && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
       return NextResponse.json(
@@ -115,8 +115,8 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
-    const isSelf = session.user.id === userId
+    const userRole = session.user?.role
+    const isSelf = session.user?.id === userId
     
     if (!isSelf && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
       return NextResponse.json(
@@ -182,7 +182,7 @@ export async function DELETE(
     }
 
     // Apenas SYSTEM_ADMIN pode deletar usuários
-    if (session.user.role !== 'SYSTEM_ADMIN') {
+    if (session.user?.role !== 'SYSTEM_ADMIN') {
       return NextResponse.json(
         { error: 'Sem permissão para deletar usuários' },
         { status: 403 }
@@ -201,7 +201,7 @@ export async function DELETE(
     }
 
     // Não permitir deletar a si mesmo
-    if (session.user.id === userId) {
+    if (session.user?.id === userId) {
       return NextResponse.json(
         { error: 'Você não pode deletar sua própria conta' },
         { status: 400 }

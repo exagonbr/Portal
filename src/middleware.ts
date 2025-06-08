@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { UserRole } from './types/roles';
 import { ROLE_DASHBOARD_MAP, getDashboardPath, isValidRole } from './utils/roleRedirect';
+import { getToken } from 'next-auth/jwt';
+import { applyRateLimit } from './middleware/rateLimit';
 
 // Configuration constants
 const CONFIG = {
@@ -384,6 +386,94 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   MiddlewareUtils.addSessionHeaders(response, sessionId, pathname);
   
+  // Aplicar CORS headers
+  const origin = request.headers.get('origin');
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+  }
+  
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  response.headers.set('Access-Control-Max-Age', '86400');
+
+  // Adicionar headers de segurança
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers: response.headers });
+  }
+
+  // Aplicar rate limiting para APIs
+  if (pathname.startsWith('/api/')) {
+    // Determinar tipo de rate limiting
+    let rateLimitType: 'public' | 'authenticated' | 'upload' | 'reports' = 'authenticated';
+    let limit = 30; // requisições por minuto
+
+    if (ROUTES.PUBLIC.some(route => pathname.startsWith(route))) {
+      rateLimitType = 'public';
+      limit = 10;
+    } else if (pathname.includes('/upload')) {
+      rateLimitType = 'upload';
+      limit = 5;
+    } else if (pathname.includes('/reports')) {
+      rateLimitType = 'reports';
+      limit = 10;
+    }
+
+    const rateLimitResponse = await applyRateLimit(request, rateLimitType, limit);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+  }
+
+  // Verificar autenticação para rotas protegidas
+  if (pathname.startsWith('/api/') && !ROUTES.PUBLIC.some(route => pathname.startsWith(route))) {
+    const token = await getToken({ req: request });
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      );
+    }
+
+    // Verificar roles para rotas específicas
+    for (const [route, allowedRoles] of Object.entries(ROUTES.ROLE_SPECIFIC)) {
+      if (pathname.startsWith(route)) {
+        const userRole = token.role as string;
+        
+        if (!allowedRoles.includes(userRole)) {
+          return NextResponse.json(
+            { error: 'Acesso negado. Permissão insuficiente.' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
+    // Adicionar informações do usuário aos headers para uso nas rotas
+    response.headers.set('X-User-Id', token.id as string);
+    response.headers.set('X-User-Role', token.role as string);
+    if (token.institution_id) {
+      response.headers.set('X-User-Institution', token.institution_id as string);
+    }
+    if (token.school_id) {
+      response.headers.set('X-User-School', token.school_id as string);
+    }
+  }
+
+  // Log de requisições (em produção, usar um serviço de logging apropriado)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[${new Date().toISOString()}] ${request.method} ${pathname}`);
+  }
+
   return response;
 }
 

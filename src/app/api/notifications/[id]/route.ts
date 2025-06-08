@@ -42,8 +42,8 @@ export async function GET(
     }
 
     // Verificar se o usuário é destinatário
-    const userStatus = notification.user_statuses?.[session.user.id]
-    if (!userStatus && notification.sender_id !== session.user.id) {
+    const userStatus = notification.user_statuses?.[session.user?.id]
+    if (!userStatus && notification.sender_id !== session.user?.id) {
       return NextResponse.json(
         { error: 'Sem permissão para visualizar esta notificação' },
         { status: 403 }
@@ -54,7 +54,7 @@ export async function GET(
     if (userStatus && !userStatus.read) {
       userStatus.read = true
       userStatus.read_at = new Date().toISOString()
-      notification.user_statuses[session.user.id] = userStatus
+      notification.user_statuses[session.user?.id] = userStatus
       mockNotifications.set(notificationId, notification)
     }
 
@@ -62,7 +62,7 @@ export async function GET(
     const notificationWithStatus = {
       ...notification,
       ...(userStatus || {}),
-      is_sender: notification.sender_id === session.user.id
+      is_sender: notification.sender_id === session.user?.id
     }
 
     // Remover informações sensíveis se não for o remetente
@@ -127,7 +127,7 @@ export async function PUT(
     }
 
     // Verificar se o usuário é destinatário
-    const userStatus = existingNotification.user_statuses?.[session.user.id]
+    const userStatus = existingNotification.user_statuses?.[session.user?.id]
     if (!userStatus) {
       return NextResponse.json(
         { error: 'Você não é destinatário desta notificação' },
@@ -159,7 +159,7 @@ export async function PUT(
     }
 
     // Salvar alterações
-    existingNotification.user_statuses[session.user.id] = userStatus
+    existingNotification.user_statuses[session.user?.id] = userStatus
     existingNotification.updated_at = new Date().toISOString()
     mockNotifications.set(notificationId, existingNotification)
 
@@ -210,7 +210,7 @@ export async function DELETE(
     // Verificar permissões - apenas remetente ou admin pode deletar
     const canDelete = 
       session.user.role === 'SYSTEM_ADMIN' ||
-      existingNotification.sender_id === session.user.id
+      existingNotification.sender_id === session.user?.id
 
     if (!canDelete) {
       return NextResponse.json(

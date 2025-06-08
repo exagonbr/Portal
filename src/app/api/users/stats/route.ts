@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apenas admins podem ver estatísticas
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para visualizar estatísticas' },

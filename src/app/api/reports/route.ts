@@ -80,19 +80,19 @@ export async function GET(request: NextRequest) {
     let reports = Array.from(mockReports.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     
     // Filtrar relatórios que o usuário pode ver
     reports = reports.filter(report => {
       // Criador sempre pode ver
-      if (report.created_by === session.user.id) return true
+      if (report.created_by === session.user?.id) return true
       
       // Admins podem ver todos
       if (['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) return true
       
       // Verificar visibilidade
       if (report.visibility === 'PUBLIC') return true
-      if (report.visibility === 'SHARED' && report.share_with?.includes(session.user.id)) return true
+      if (report.visibility === 'SHARED' && report.share_with?.includes(session.user?.id)) return true
       
       // Professores podem ver relatórios das suas turmas
       if (userRole === 'TEACHER' && report.filters?.class_id) {
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
 
     // Adicionar informações extras
     const reportsWithInfo = reports.map(report => {
-      const isOwner = report.created_by === session.user.id
+      const isOwner = report.created_by === session.user?.id
       const canEdit = isOwner || ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
       const canDelete = isOwner || userRole === 'SYSTEM_ADMIN'
       
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
     const reportData = validationResult.data
 
     // Verificar permissões baseadas no tipo de relatório
-    const userRole = session.user.role
+    const userRole = session.user?.role
     
     // Relatórios financeiros apenas para admins
     if (reportData.type === 'FINANCIAL' && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
       // Garantir que só pode ver dados próprios
       if (reportData.filters.student_ids && 
           reportData.filters.student_ids.length > 0 && 
-          !reportData.filters.student_ids.includes(session.user.id)) {
+          !reportData.filters.student_ids.includes(session.user?.id)) {
         return NextResponse.json(
           { error: 'Estudantes só podem gerar relatórios próprios' },
           { status: 403 }
@@ -286,8 +286,8 @@ export async function POST(request: NextRequest) {
     const newReport = {
       id: `report_${Date.now()}`,
       ...reportData,
-      created_by: session.user.id,
-      created_by_name: session.user.name,
+      created_by: session.user?.id,
+      created_by_name: session.user?.name,
       status: 'pending',
       progress: 0,
       created_at: new Date().toISOString(),

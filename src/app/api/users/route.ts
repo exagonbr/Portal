@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar permissões baseadas no role
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para listar usuários' },
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para criar usuários' },

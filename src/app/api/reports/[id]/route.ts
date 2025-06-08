@@ -47,8 +47,8 @@ export async function GET(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
-    const isOwner = report.created_by === session.user.id
+    const userRole = session.user?.role
+    const isOwner = report.created_by === session.user?.id
     const isAdmin = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
     
     // Verificar se pode visualizar
@@ -56,7 +56,7 @@ export async function GET(
       isOwner ||
       isAdmin ||
       report.visibility === 'PUBLIC' ||
-      (report.visibility === 'SHARED' && report.share_with?.includes(session.user.id))
+      (report.visibility === 'SHARED' && report.share_with?.includes(session.user?.id))
 
     if (!canView) {
       return NextResponse.json(
@@ -155,9 +155,9 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEdit = 
-      existingReport.created_by === session.user.id ||
+      existingReport.created_by === session.user?.id ||
       ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
 
     if (!canEdit) {
@@ -195,7 +195,7 @@ export async function PUT(
       ...existingReport,
       ...updateData,
       updated_at: new Date().toISOString(),
-      updated_by: session.user.id
+      updated_by: session.user?.id
     }
 
     mockReports.set(reportId, updatedReport)
@@ -242,9 +242,9 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
-      existingReport.created_by === session.user.id ||
+      existingReport.created_by === session.user?.id ||
       userRole === 'SYSTEM_ADMIN'
 
     if (!canDelete) {

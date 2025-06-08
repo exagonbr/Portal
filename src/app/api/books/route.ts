@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     let books = Array.from(mockBooks.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'STUDENT') {
       // Aluno vê apenas livros ativos e com acesso permitido
       books = books.filter(book => 
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER', 'LIBRARIAN'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para criar livros' },
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
       institution_id: session.user.institution_id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      created_by: session.user.id
+      created_by: session.user?.id
     }
 
     mockBooks.set(newBook.id, newBook)

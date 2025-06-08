@@ -58,16 +58,16 @@ export async function GET(request: NextRequest) {
     let classes = Array.from(mockClasses.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'SCHOOL_MANAGER' && session.user.school_id) {
       classes = classes.filter(cls => cls.school_id === session.user.school_id)
     } else if (userRole === 'TEACHER') {
       // Professor vê apenas suas turmas
-      classes = classes.filter(cls => cls.teacher_id === session.user.id)
+      classes = classes.filter(cls => cls.teacher_id === session.user?.id)
     } else if (userRole === 'STUDENT') {
       // Aluno vê apenas turmas onde está matriculado
       classes = classes.filter(cls => 
-        cls.students && cls.students.includes(session.user.id)
+        cls.students && cls.students.includes(session.user?.id)
       )
     }
 
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para criar turmas' },
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
       students: [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      created_by: session.user.id
+      created_by: session.user?.id
     }
 
     mockClasses.set(newClass.id, newClass)

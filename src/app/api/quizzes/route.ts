@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     let quizzes = Array.from(mockQuizzes.values())
 
     // Aplicar filtros baseados no role do usuário
-    const userRole = session.user.role
+    const userRole = session.user?.role
     if (userRole === 'STUDENT') {
       // Aluno vê apenas quizzes publicados das turmas matriculadas
       quizzes = quizzes.filter(quiz => 
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
 
     // Adicionar informações de tentativas do usuário
     const quizzesWithInfo = quizzes.map(quiz => {
-      const userAttempts = mockQuizAttempts.get(`${quiz.id}_${session.user.id}`) || []
+      const userAttempts = mockQuizAttempts.get(`${quiz.id}_${session.user?.id}`) || []
       const bestAttempt = userAttempts.reduce((best: any, current: any) => 
         !best || current.score > best.score ? current : best, null
       )
@@ -222,8 +222,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões
-    const userRole = session.user.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
+    const userRole = session.user?.role
+    if (!userRole || !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Sem permissão para criar quizzes' },
         { status: 403 }
@@ -291,7 +291,7 @@ export async function POST(request: NextRequest) {
       id: `quiz_${Date.now()}`,
       ...quizData,
       total_points: totalPoints,
-      created_by: session.user.id,
+      created_by: session.user?.id || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }

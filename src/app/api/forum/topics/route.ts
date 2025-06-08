@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     let topics = Array.from(mockTopics.values())
 
     // Aplicar filtros de visibilidade baseados no role
-    const userRole = session.user.role
+    const userRole = session.user?.role
     topics = topics.filter(topic => {
       if (topic.visibility === 'PUBLIC') return true
       if (topic.visibility === 'MEMBERS_ONLY' && session.user) return true
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         return true // Implementar verificação real
       }
       if (topic.visibility === 'PRIVATE') {
-        return topic.author_id === session.user.id || userRole === 'SYSTEM_ADMIN'
+        return topic.author_id === session.user?.id || userRole === 'SYSTEM_ADMIN'
       }
       return false
     })
@@ -117,11 +117,11 @@ export async function GET(request: NextRequest) {
     if (filter) {
       switch (filter) {
         case 'my_topics':
-          topics = topics.filter(topic => topic.author_id === session.user.id)
+          topics = topics.filter(topic => topic.author_id === session.user?.id)
           break
         case 'following':
           // Filtrar por tópicos seguidos
-          topics = topics.filter(topic => topic.followers?.includes(session.user.id))
+          topics = topics.filter(topic => topic.followers?.includes(session.user?.id))
           break
         case 'solved':
           topics = topics.filter(topic => topic.is_solved)
@@ -137,11 +137,11 @@ export async function GET(request: NextRequest) {
       ...topic,
       author_name: topic.author_name || 'Usuário',
       category_name: mockCategories.get(topic.category_id)?.name || 'Geral',
-      is_author: topic.author_id === session.user.id,
-      is_following: topic.followers?.includes(session.user.id) || false,
-      has_voted: topic.poll?.voters?.includes(session.user.id) || false,
-      can_edit: topic.author_id === session.user.id || ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole),
-      can_delete: topic.author_id === session.user.id || userRole === 'SYSTEM_ADMIN',
+      is_author: topic.author_id === session.user?.id,
+      is_following: topic.followers?.includes(session.user?.id) || false,
+      has_voted: topic.poll?.voters?.includes(session.user?.id) || false,
+      can_edit: topic.author_id === session.user?.id || ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole),
+      can_delete: topic.author_id === session.user?.id || userRole === 'SYSTEM_ADMIN',
       can_pin: ['SYSTEM_ADMIN', 'TEACHER'].includes(userRole),
       time_ago: getTimeAgo(new Date(topic.created_at))
     }))
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar permissões especiais
-    const userRole = session.user.role
+    const userRole = session.user?.role
     
     // Apenas professores e admins podem criar anúncios
     if (topicData.type === 'ANNOUNCEMENT' && !['SYSTEM_ADMIN', 'TEACHER'].includes(userRole)) {
@@ -264,13 +264,13 @@ export async function POST(request: NextRequest) {
     const newTopic = {
       id: `topic_${Date.now()}`,
       ...topicData,
-      author_id: session.user.id,
-      author_name: session.user.name,
-      author_avatar: session.user.image,
+      author_id: session.user?.id,
+      author_name: session.user?.name,
+      author_avatar: session.user?.image,
       view_count: 0,
       reply_count: 0,
       like_count: 0,
-      followers: [session.user.id], // Autor segue automaticamente
+      followers: [session.user?.id], // Autor segue automaticamente
       is_solved: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

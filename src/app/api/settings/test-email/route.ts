@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || session.user.role !== 'SYSTEM_ADMIN') {
+    if (!session || session.user?.role !== 'SYSTEM_ADMIN') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       // Enviar email de teste
       await transporter.sendMail({
         from: fromAddress || user,
-        to: session.user.email,
+        to: session.user?.email,
         subject: 'Teste de Configuração de Email - Portal Educacional',
         html: `
           <h2>Teste de Email Bem-sucedido!</h2>

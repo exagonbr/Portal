@@ -64,7 +64,7 @@ export async function GET(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canViewDetails = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && school.institution_id === session.user.institution_id) ||
@@ -143,7 +143,7 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && existingSchool.institution_id === session.user.institution_id) ||
@@ -191,7 +191,7 @@ export async function PUT(
       ...existingSchool,
       ...updateData,
       updated_at: new Date().toISOString(),
-      updated_by: session.user.id
+      updated_by: session.user?.id
     }
 
     mockSchools.set(schoolId, updatedSchool)
@@ -238,7 +238,7 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && existingSchool.institution_id === session.user.institution_id)

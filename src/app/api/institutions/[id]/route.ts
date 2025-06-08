@@ -60,7 +60,7 @@ export async function GET(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canViewDetails = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id === institutionId) ||
@@ -144,7 +144,7 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user.role
+    const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id === institutionId)
@@ -175,7 +175,7 @@ export async function PUT(
       ...existingInstitution,
       ...updateData,
       updated_at: new Date().toISOString(),
-      updated_by: session.user.id
+      updated_by: session.user?.id
     }
 
     mockInstitutions.set(institutionId, updatedInstitution)
@@ -211,7 +211,7 @@ export async function DELETE(
     }
 
     // Apenas SYSTEM_ADMIN pode deletar instituições
-    if (session.user.role !== 'SYSTEM_ADMIN') {
+    if (session.user?.role !== 'SYSTEM_ADMIN') {
       return NextResponse.json(
         { error: 'Sem permissão para deletar instituições' },
         { status: 403 }
