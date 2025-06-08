@@ -29,6 +29,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockBooks as importedMockBooks, carouselBookImages } from '@/constants/mockData';
+import BookReader from '@/components/reader/BookReader';
 import {
   Book,
   Plus,
@@ -173,6 +174,7 @@ interface BookItem {
   file_type: 'pdf' | 'epub' | 'mobi';
   is_favorite?: boolean;
   reading_progress?: number;
+  read_url: string;
 }
 
 interface BookCategory {
@@ -198,6 +200,12 @@ export default function PortalBooksPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterSubject, setFilterSubject] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('recent');
+  const [selectedBook, setSelectedBook] = useState<BookItem | null>(null);
+  const [showBookModal, setShowBookModal] = useState(false);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [showOnlyReading, setShowOnlyReading] = useState(false);
+  const [showReader, setShowReader] = useState(false);
+  const [readerBook, setReaderBook] = useState<BookItem | null>(null);
 
   useEffect(() => {
     loadBooks();
@@ -215,14 +223,14 @@ export default function PortalBooksPage() {
             title: 'Dom Casmurro',
             author: 'Machado de Assis',
             description: 'Um dos maiores clássicos da literatura brasileira, narra a história de Bentinho e Capitu.',
-            cover: 'https://via.placeholder.com/200x300/4F46E5/FFFFFF?text=Dom+Casmurro',
+            cover: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=400&fit=crop',
             category: 'Literatura Clássica',
             subject: 'Português',
             pages: 256,
             language: 'Português',
             year: 1899,
             isbn: '978-85-7232-406-7',
-            publisher: 'Editora Globo',
+            publisher: 'Domínio Público',
             uploaded_by: 'Biblioteca Digital',
             uploaded_at: '2024-01-15',
             downloads: 1234,
@@ -232,14 +240,15 @@ export default function PortalBooksPage() {
             file_size: '2.5 MB',
             file_type: 'pdf',
             is_favorite: true,
-            reading_progress: 45
+            reading_progress: 45,
+            read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
           },
           {
             id: '2',
             title: 'O Cortiço',
             author: 'Aluísio Azevedo',
             description: 'Romance naturalista que retrata a vida em um cortiço do Rio de Janeiro.',
-            cover: 'https://via.placeholder.com/200x300/10B981/FFFFFF?text=O+Cortiço',
+            cover: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop',
             category: 'Literatura Clássica',
             subject: 'Português',
             pages: 320,
@@ -254,72 +263,191 @@ export default function PortalBooksPage() {
             file_size: '3.1 MB',
             file_type: 'pdf',
             is_favorite: false,
-            reading_progress: 0
+            reading_progress: 0,
+            read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
           },
           {
             id: '3',
-            title: 'Matemática Básica - Volume 1',
-            author: 'João Silva',
-            description: 'Livro didático completo para o ensino fundamental de matemática.',
-            cover: 'https://via.placeholder.com/200x300/F59E0B/FFFFFF?text=Matemática',
-            category: 'Didático',
-            subject: 'Matemática',
-            pages: 450,
+            title: 'O Alienista',
+            author: 'Machado de Assis',
+            description: 'Novela satírica que narra a história do Dr. Simão Bacamarte e sua Casa Verde, questionando os limites entre razão e loucura na sociedade.',
+            cover: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
+            category: 'Literatura Clássica',
+            subject: 'Literatura Brasileira',
+            pages: 96,
             language: 'Português',
-            year: 2023,
-            publisher: 'Editora Educação',
-            uploaded_by: 'Prof. João Silva',
+            year: 1882,
+            isbn: '978-85-359-0123-4',
+            publisher: 'Domínio Público',
+            uploaded_by: 'Biblioteca Digital',
             uploaded_at: '2024-02-10',
-            downloads: 567,
-            views: 1890,
-            rating: 4.9,
-            reviews_count: 45,
-            file_size: '15.2 MB',
+            downloads: 2847,
+            views: 5690,
+            rating: 4.8,
+            reviews_count: 127,
+            file_size: '1.2 MB',
             file_type: 'pdf',
             is_favorite: true,
-            reading_progress: 78
+            reading_progress: 78,
+            read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
           },
           {
             id: '4',
-            title: 'História do Brasil Colonial',
-            author: 'Maria Santos',
-            description: 'Uma análise completa do período colonial brasileiro.',
-            cover: 'https://via.placeholder.com/200x300/EF4444/FFFFFF?text=História',
-            category: 'Didático',
-            subject: 'História',
-            pages: 380,
+            title: 'Iracema',
+            author: 'José de Alencar',
+            description: 'Romance indianista que narra a história de amor entre Iracema e Martim.',
+            cover: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300&h=400&fit=crop',
+            category: 'Literatura Clássica',
+            subject: 'Português',
+            pages: 180,
             language: 'Português',
-            year: 2022,
-            uploaded_by: 'Prof. Roberto Lima',
+            year: 1865,
+            uploaded_by: 'Biblioteca Digital',
             uploaded_at: '2024-02-15',
             downloads: 432,
             views: 1567,
             rating: 4.7,
             reviews_count: 34,
-            file_size: '8.7 MB',
+            file_size: '2.2 MB',
             file_type: 'epub',
-            is_favorite: false
+            is_favorite: false,
+            read_url: '#epub-content'
           },
           {
             id: '5',
-            title: 'Contos Infantis Brasileiros',
-            author: 'Vários Autores',
-            description: 'Coletânea de contos populares do folclore brasileiro.',
-            cover: 'https://via.placeholder.com/200x300/8B5CF6/FFFFFF?text=Contos',
-            category: 'Literatura Infantil',
+            title: 'A Moreninha',
+            author: 'Joaquim Manuel de Macedo',
+            description: 'Primeiro romance urbano brasileiro, retrata os costumes da sociedade carioca do século XIX.',
+            cover: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=300&h=400&fit=crop',
+            category: 'Literatura Clássica',
             subject: 'Português',
-            pages: 180,
+            pages: 200,
             language: 'Português',
-            year: 2024,
+            year: 1844,
             uploaded_by: 'Biblioteca Digital',
             uploaded_at: '2024-03-01',
             downloads: 789,
             views: 2134,
-            rating: 4.9,
+            rating: 4.5,
             reviews_count: 56,
-            file_size: '5.4 MB',
+            file_size: '2.8 MB',
             file_type: 'pdf',
-            is_favorite: true
+            is_favorite: true,
+            read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
+          },
+          {
+            id: '6',
+            title: 'O Guarani',
+            author: 'José de Alencar',
+            description: 'Romance indianista que conta a história de Peri e Ceci.',
+            cover: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop',
+            category: 'Literatura Clássica',
+            subject: 'Português',
+            pages: 350,
+            language: 'Português',
+            year: 1857,
+            uploaded_by: 'Biblioteca Digital',
+            uploaded_at: '2024-03-05',
+            downloads: 654,
+            views: 1876,
+            rating: 4.6,
+            reviews_count: 42,
+            file_size: '4.1 MB',
+            file_type: 'epub',
+            is_favorite: false,
+            read_url: '#epub-content'
+          },
+          {
+            id: '7',
+            title: 'Memórias Póstumas de Brás Cubas',
+            author: 'Machado de Assis',
+            description: 'Romance narrado por um defunto autor, marco do realismo brasileiro.',
+            cover: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=400&fit=crop',
+            category: 'Literatura Clássica',
+            subject: 'Português',
+            pages: 280,
+            language: 'Português',
+            year: 1881,
+            uploaded_by: 'Biblioteca Digital',
+            uploaded_at: '2024-03-10',
+            downloads: 1123,
+            views: 3245,
+            rating: 4.9,
+            reviews_count: 78,
+            file_size: '3.2 MB',
+            file_type: 'pdf',
+            is_favorite: true,
+            reading_progress: 23,
+            read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
+          },
+          {
+            id: '8',
+            title: 'Senhora',
+            author: 'José de Alencar',
+            description: 'Romance que narra a história de Aurélia Camargo, uma mulher que compra seu próprio marido para vingar-se de uma humilhação amorosa, explorando temas como amor, dinheiro e dignidade.',
+            cover: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
+            category: 'Literatura Clássica',
+            subject: 'Literatura Brasileira',
+            pages: 264,
+            language: 'Português',
+            year: 1875,
+            isbn: '978-85-359-0456-7',
+            publisher: 'Domínio Público',
+            uploaded_by: 'Biblioteca Digital',
+            uploaded_at: '2024-03-12',
+            downloads: 1834,
+            views: 3267,
+            rating: 4.6,
+            reviews_count: 89,
+            file_size: '3.1 MB',
+            file_type: 'epub',
+            is_favorite: false,
+            read_url: '#epub-content'
+          },
+          {
+            id: '9',
+            title: 'Quincas Borba',
+            author: 'Machado de Assis',
+            description: 'Romance que continua a filosofia do Humanitismo de Memórias Póstumas.',
+            cover: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300&h=400&fit=crop',
+            category: 'Literatura Clássica',
+            subject: 'Português',
+            pages: 300,
+            language: 'Português',
+            year: 1891,
+            uploaded_by: 'Biblioteca Digital',
+            uploaded_at: '2024-03-15',
+            downloads: 445,
+            views: 1234,
+            rating: 4.7,
+            reviews_count: 29,
+            file_size: '3.5 MB',
+            file_type: 'pdf',
+            is_favorite: true,
+            reading_progress: 67,
+            read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
+          },
+          {
+            id: '10',
+            title: 'Lucíola',
+            author: 'José de Alencar',
+            description: 'Romance urbano que aborda temas como prostituição e redenção.',
+            cover: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=300&h=400&fit=crop',
+            category: 'Literatura Clássica',
+            subject: 'Português',
+            pages: 220,
+            language: 'Português',
+            year: 1862,
+            uploaded_by: 'Biblioteca Digital',
+            uploaded_at: '2024-03-18',
+            downloads: 378,
+            views: 987,
+            rating: 4.3,
+            reviews_count: 25,
+            file_size: '2.6 MB',
+            file_type: 'pdf',
+            is_favorite: false,
+            read_url: 'https://d26a2wm7tuz2gu.cloudfront.net/upload/9fc386ff25ee851125340c47d6462a1f0f4bf3a02e4db6bbb741e9ac5458d431.pdf'
           }
         ]);
         setLoading(false);
@@ -347,10 +475,12 @@ export default function PortalBooksPage() {
                           book.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = filterCategory === 'all' || book.category === filterCategory;
       const matchesSubject = filterSubject === 'all' || book.subject === filterSubject;
+      const matchesFavorites = !showOnlyFavorites || book.is_favorite;
+      const matchesReading = !showOnlyReading || (book.reading_progress && book.reading_progress > 0);
       
-      return matchesSearch && matchesCategory && matchesSubject;
+      return matchesSearch && matchesCategory && matchesSubject && matchesFavorites && matchesReading;
     });
-  }, [searchTerm, filterCategory, filterSubject, books]);
+  }, [searchTerm, filterCategory, filterSubject, books, showOnlyFavorites, showOnlyReading]);
 
   const sortedBooks = useMemo(() => {
     return [...filteredBooks].sort((a, b) => {
@@ -358,7 +488,7 @@ export default function PortalBooksPage() {
         case 'recent':
           return new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime();
         case 'popular':
-          return b.downloads - a.downloads;
+          return b.views - a.views;
         case 'rating':
           return b.rating - a.rating;
         case 'title':
@@ -379,6 +509,32 @@ export default function PortalBooksPage() {
     ));
   };
 
+  const openBookModal = (book: BookItem) => {
+    setSelectedBook(book);
+    setShowBookModal(true);
+  };
+
+  const closeBookModal = () => {
+    setSelectedBook(null);
+    setShowBookModal(false);
+  };
+
+  const openBookReader = (book: BookItem) => {
+    setReaderBook(book);
+    setShowReader(true);
+  };
+
+  const closeReader = () => {
+    setShowReader(false);
+    setReaderBook(null);
+  };
+
+  const updateReadingProgress = (bookId: string, progress: number) => {
+    setBooks(books.map(book => 
+      book.id === bookId ? { ...book, reading_progress: progress } : book
+    ));
+  };
+
   const renderRatingStars = (rating: number) => {
     return (
       <div className="flex items-center gap-0.5">
@@ -395,7 +551,7 @@ export default function PortalBooksPage() {
   };
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.STUDENT, UserRole.TEACHER, UserRole.ACADEMIC_COORDINATOR]}>
+    <ProtectedRoute>
       <HeroSection />
       <PageLayout
         title="Biblioteca Digital"
@@ -413,9 +569,9 @@ export default function PortalBooksPage() {
             icon={<Book className="h-6 w-6 text-gray-600" />}
           />
           <StatCard
-            title="Downloads"
-            value={books.reduce((acc, b) => acc + b.downloads, 0).toString()}
-            icon={<Download className="h-6 w-6 text-blue-600" />}
+            title="Visualizações"
+            value={books.reduce((acc, b) => acc + b.views, 0).toString()}
+            icon={<Eye className="h-6 w-6 text-blue-600" />}
           />
           <StatCard
             title="Favoritos"
@@ -431,26 +587,56 @@ export default function PortalBooksPage() {
 
         {/* Quick Navigation */}
         <div className="flex flex-wrap gap-3 mb-6">
-          <Link href="/portal/books/favorites">
-            <Button variant="outline" leftIcon={<Heart className="w-4 h-4" />}>
-              Favoritos
-            </Button>
-          </Link>
-          <Link href="/portal/books/highlights">
-            <Button variant="outline" leftIcon={<Star className="w-4 h-4" />}>
-              Destaques
-            </Button>
-          </Link>
-          <Link href="/portal/books/annotations">
-            <Button variant="outline" leftIcon={<PencilSquareIcon className="w-4 h-4" />}>
-              Anotações
-            </Button>
-          </Link>
-          <Link href="/portal/books/content">
-            <Button variant="outline" leftIcon={<Bookmark className="w-4 h-4" />}>
-              Marcadores
-            </Button>
-          </Link>
+          <button
+            onClick={() => {
+              setShowOnlyFavorites(!showOnlyFavorites);
+              setShowOnlyReading(false);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              showOnlyFavorites ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <Heart className="w-4 h-4" />
+            Favoritos ({books.filter(b => b.is_favorite).length})
+          </button>
+          <button
+            onClick={() => {
+              setSortBy('rating');
+              setShowOnlyFavorites(false);
+              setShowOnlyReading(false);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              sortBy === 'rating' && !showOnlyFavorites && !showOnlyReading ? 'bg-yellow-50 border-yellow-200 text-yellow-700' : 'bg-white border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <Star className="w-4 h-4" />
+            Destaques
+          </button>
+          <button
+            onClick={() => {
+              setShowOnlyReading(!showOnlyReading);
+              setShowOnlyFavorites(false);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              showOnlyReading ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <PencilSquareIcon className="w-4 h-4" />
+            Em Leitura ({books.filter(b => b.reading_progress && b.reading_progress > 0).length})
+          </button>
+          <button
+            onClick={() => {
+              setSortBy('recent');
+              setShowOnlyFavorites(false);
+              setShowOnlyReading(false);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+              sortBy === 'recent' && !showOnlyFavorites && !showOnlyReading ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <Bookmark className="w-4 h-4" />
+            Recentes
+          </button>
         </div>
 
         {/* Filters and Search */}
@@ -574,15 +760,7 @@ export default function PortalBooksPage() {
                 Lista
               </button>
             </div>
-            {user?.role === 'TEACHER' && (
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="flex items-center gap-1 px-4 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors"
-              >
-                <Upload className="h-4 w-4" />
-                Enviar Livro
-              </button>
-            )}
+
           </div>
         </div>
 
@@ -600,7 +778,7 @@ export default function PortalBooksPage() {
                   onChange={(e) => setSortBy(e.target.value)}
                 >
                   <option value="recent">Mais Recentes</option>
-                  <option value="popular">Mais Baixados</option>
+                  <option value="popular">Mais Visualizados</option>
                   <option value="rating">Melhor Avaliados</option>
                   <option value="title">Título (A-Z)</option>
                 </select>
@@ -624,7 +802,7 @@ export default function PortalBooksPage() {
             ) : (
               sortedBooks.map((book) => (
                 <div key={book.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="relative">
+                  <div className="relative cursor-pointer" onClick={() => openBookReader(book)}>
                     <img
                       src={book.cover}
                       alt={book.title}
@@ -644,15 +822,23 @@ export default function PortalBooksPage() {
                       </div>
                     )}
                     <button
-                      onClick={() => toggleFavorite(book.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(book.id);
+                      }}
                       className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
                     >
                       <Heart className={`h-4 w-4 ${book.is_favorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
                     </button>
+                    <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                      <div className="opacity-0 hover:opacity-100 transition-opacity duration-300 bg-white rounded-full p-3">
+                        <Eye className="h-6 w-6 text-gray-700" />
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="p-4">
-                    <h3 className="font-semibold text-slate-800 line-clamp-2 mb-1">
+                    <h3 className="font-semibold text-slate-800 line-clamp-2 mb-1 cursor-pointer hover:text-primary-dark" onClick={() => openBookReader(book)}>
                       {book.title}
                     </h3>
                     <p className="text-sm text-slate-600 mb-2">{book.author}</p>
@@ -668,12 +854,18 @@ export default function PortalBooksPage() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors">
-                        <Download className="h-4 w-4" />
-                        Baixar
+                      <button 
+                        onClick={() => openBookReader(book)}
+                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Ler Agora
                       </button>
-                      <button className="flex items-center justify-center px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors">
-                        <Share2 className="h-4 w-4" />
+                      <button 
+                        onClick={() => openBookModal(book)}
+                        className="flex items-center justify-center px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+                      >
+                        <MoreVertical className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -696,15 +888,22 @@ export default function PortalBooksPage() {
               sortedBooks.map((book) => (
                 <div key={book.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                   <div className="flex gap-6">
-                    <img
-                      src={book.cover}
-                      alt={book.title}
-                      className="w-32 h-48 object-cover rounded-lg flex-shrink-0"
-                    />
+                    <div className="relative cursor-pointer" onClick={() => openBookReader(book)}>
+                      <img
+                        src={book.cover}
+                        alt={book.title}
+                        className="w-32 h-48 object-cover rounded-lg flex-shrink-0"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center rounded-lg">
+                        <div className="opacity-0 hover:opacity-100 transition-opacity duration-300 bg-white rounded-full p-2">
+                          <Eye className="h-5 w-5 text-gray-700" />
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="text-xl font-semibold text-slate-800 mb-1">
+                          <h3 className="text-xl font-semibold text-slate-800 mb-1 cursor-pointer hover:text-primary-dark" onClick={() => openBookReader(book)}>
                             {book.title}
                           </h3>
                           <p className="text-slate-600 mb-2">por {book.author}</p>
@@ -727,7 +926,7 @@ export default function PortalBooksPage() {
                           <span className="text-sm text-slate-500">({book.reviews_count} avaliações)</span>
                         </div>
                         <span className="text-sm text-slate-500">•</span>
-                        <span className="text-sm text-slate-500">{book.downloads} downloads</span>
+                        <span className="text-sm text-slate-500">{book.views} visualizações</span>
                       </div>
                       
                       <div className="flex flex-wrap gap-4 text-sm text-slate-600 mb-4">
@@ -754,13 +953,19 @@ export default function PortalBooksPage() {
                       )}
                       
                       <div className="flex gap-3">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors">
-                          <Download className="h-4 w-4" />
-                          Baixar ({book.file_size})
-                        </button>
-                        <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors">
+                        <button 
+                          onClick={() => openBookReader(book)}
+                          className="flex items-center gap-2 px-4 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors"
+                        >
                           <Eye className="h-4 w-4" />
-                          Ler Online
+                          Ler Agora
+                        </button>
+                        <button 
+                          onClick={() => openBookModal(book)}
+                          className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                          Detalhes
                         </button>
                         <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors">
                           <Share2 className="h-4 w-4" />
@@ -773,6 +978,145 @@ export default function PortalBooksPage() {
               ))
             )}
           </div>
+        )}
+
+        {/* Modal de Informações do Livro */}
+        {showBookModal && selectedBook && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-2xl font-bold text-slate-800">Informações do Livro</h2>
+                  <button
+                    onClick={closeBookModal}
+                    className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="flex gap-6 mb-6">
+                  <img
+                    src={selectedBook.cover}
+                    alt={selectedBook.title}
+                    className="w-48 h-72 object-cover rounded-lg flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-slate-800 mb-2">
+                      {selectedBook.title}
+                    </h3>
+                    <p className="text-lg text-slate-600 mb-3">por {selectedBook.author}</p>
+                    
+                    <div className="flex items-center gap-2 mb-4">
+                      {renderRatingStars(selectedBook.rating)}
+                      <span className="text-sm text-slate-500">({selectedBook.reviews_count} avaliações)</span>
+                    </div>
+
+                    <p className="text-slate-600 mb-4">{selectedBook.description}</p>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-slate-700">Categoria:</span>
+                        <p className="text-slate-600">{selectedBook.category}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-700">Disciplina:</span>
+                        <p className="text-slate-600">{selectedBook.subject}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-700">Páginas:</span>
+                        <p className="text-slate-600">{selectedBook.pages}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-700">Idioma:</span>
+                        <p className="text-slate-600">{selectedBook.language}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-700">Ano:</span>
+                        <p className="text-slate-600">{selectedBook.year}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-700">Formato:</span>
+                        <p className="text-slate-600">{selectedBook.file_type.toUpperCase()}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-700">Tamanho:</span>
+                        <p className="text-slate-600">{selectedBook.file_size}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-700">Visualizações:</span>
+                        <p className="text-slate-600">{selectedBook.views}</p>
+                      </div>
+                    </div>
+
+                    {selectedBook.isbn && (
+                      <div className="mt-4">
+                        <span className="font-medium text-slate-700">ISBN:</span>
+                        <p className="text-slate-600">{selectedBook.isbn}</p>
+                      </div>
+                    )}
+
+                    {selectedBook.publisher && (
+                      <div className="mt-2">
+                        <span className="font-medium text-slate-700">Editora:</span>
+                        <p className="text-slate-600">{selectedBook.publisher}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedBook.reading_progress && selectedBook.reading_progress > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="font-medium text-slate-700">Progresso de leitura</span>
+                      <span className="font-medium text-slate-800">{selectedBook.reading_progress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-3">
+                      <div 
+                        className="bg-green-500 h-3 rounded-full transition-all duration-300"
+                        style={{ width: `${selectedBook.reading_progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4 border-t border-slate-200">
+                  <button
+                    onClick={() => {
+                      openBookReader(selectedBook);
+                      closeBookModal();
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary-dark text-white rounded-lg hover:bg-primary-darker transition-colors"
+                  >
+                    <Eye className="h-5 w-5" />
+                    Ler Agora
+                  </button>
+                  <button
+                    onClick={() => toggleFavorite(selectedBook.id)}
+                    className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-colors ${
+                      selectedBook.is_favorite
+                        ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
+                        : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Heart className={`h-5 w-5 ${selectedBook.is_favorite ? 'fill-current' : ''}`} />
+                    {selectedBook.is_favorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Leitor Universal Integrado */}
+        {showReader && readerBook && (
+          <BookReader
+            book={readerBook}
+            onClose={closeReader}
+            onProgressUpdate={(progress) => updateReadingProgress(readerBook.id, progress)}
+          />
         )}
       </PageLayout>
     </ProtectedRoute>
