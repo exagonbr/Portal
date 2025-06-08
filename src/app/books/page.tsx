@@ -13,7 +13,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 
 export default function BooksPage() {
   const router = useRouter()
-  const { toast } = useToast()
+  const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
   const [books, setBooks] = useState<BookResponseDto[]>([])
   const [totalItems, setTotalItems] = useState(0)
@@ -37,11 +37,7 @@ export default function BooksPage() {
       setTotalItems(response.total || 0)
       setCurrentPage(page)
     } catch (error) {
-      toast({
-        title: "Erro ao carregar livros",
-        description: "Não foi possível carregar a lista de livros.",
-        variant: "destructive"
-      })
+      showError("Erro ao carregar livros", "Não foi possível carregar a lista de livros.");
     } finally {
       setLoading(false)
     }
@@ -69,18 +65,10 @@ export default function BooksPage() {
   const handleDeleteBook = async (book: BookResponseDto) => {
     try {
       await bookService.deleteBook(book.id)
-      toast({
-        title: "Livro excluído",
-        description: "O livro foi excluído com sucesso.",
-        variant: "success"
-      })
+      showSuccess("Livro excluído", "O livro foi excluído com sucesso.");
       fetchBooks(currentPage, searchQuery)
     } catch (error) {
-      toast({
-        title: "Erro ao excluir livro",
-        description: "Não foi possível excluir o livro.",
-        variant: "destructive"
-      })
+      showError("Erro ao excluir livro", "Não foi possível excluir o livro.");
     }
   }
 
@@ -88,29 +76,17 @@ export default function BooksPage() {
     try {
       if (selectedBook) {
         await bookService.updateBook(selectedBook.id, data)
-        toast({
-          title: "Livro atualizado",
-          description: "O livro foi atualizado com sucesso.",
-          variant: "success"
-        })
+        showSuccess("Livro atualizado", "O livro foi atualizado com sucesso.");
       } else {
         await bookService.createBook(data)
-        toast({
-          title: "Livro criado",
-          description: "O livro foi criado com sucesso.",
-          variant: "success"
-        })
+        showSuccess("Livro criado", "O livro foi criado com sucesso.");
       }
       setAddModalOpen(false)
       setEditModalOpen(false)
       setSelectedBook(null)
       fetchBooks(currentPage, searchQuery)
     } catch (error) {
-      toast({
-        title: "Erro ao salvar livro",
-        description: "Não foi possível salvar o livro.",
-        variant: "destructive"
-      })
+      showError("Erro ao salvar livro", "Não foi possível salvar o livro.");
     }
   }
 

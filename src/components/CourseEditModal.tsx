@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch';
 import { CourseResponseDto, CourseUpdateDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';
-import { toast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/useToast';
 
 interface Institution {
   id: string;
@@ -25,6 +25,7 @@ interface CourseEditModalProps {
 }
 
 export function CourseEditModal({ isOpen, onClose, onSave, course, title }: CourseEditModalProps) {
+  const { showSuccess, showError } = useToast();
   const [formData, setFormData] = useState<CourseUpdateDto>({
     name: '',
     description: '',
@@ -62,11 +63,7 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
           })));
         }
       } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar as instituições",
-          variant: "destructive"
-        });
+        showError("Erro", "Não foi possível carregar as instituições");
       }
     };
 
@@ -135,18 +132,10 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
     setIsLoading(true);
     try {
       await onSave(formData);
-      toast({
-        title: "Sucesso",
-        description: "Curso atualizado com sucesso",
-        variant: "success"
-      });
+      showSuccess("Sucesso", "Curso atualizado com sucesso");
       onClose();
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o curso",
-        variant: "destructive"
-      });
+      showError("Erro", "Não foi possível atualizar o curso");
     } finally {
       setIsLoading(false);
     }

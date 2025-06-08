@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch';
 import { CreateCourseDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';
-import { toast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/useToast';
 
 interface Institution {
   id: string;
@@ -24,6 +24,7 @@ interface CourseAddModalProps {
 }
 
 export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModalProps) {
+  const { showSuccess, showError } = useToast();
   const [formData, setFormData] = useState<CreateCourseDto>({
     name: '',
     description: '',
@@ -48,11 +49,7 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
           })));
         }
       } catch (error) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar as instituições",
-          variant: "destructive"
-        });
+        showError("Erro", "Não foi possível carregar as instituições");
       }
     };
 
@@ -121,18 +118,10 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
     setIsLoading(true);
     try {
       await onSave(formData);
-      toast({
-        title: "Sucesso",
-        description: "Curso criado com sucesso",
-        variant: "success"
-      });
+      showSuccess("Sucesso", "Curso criado com sucesso");
       onClose();
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o curso",
-        variant: "destructive"
-      });
+      showError("Erro", "Não foi possível criar o curso");
     } finally {
       setIsLoading(false);
     }

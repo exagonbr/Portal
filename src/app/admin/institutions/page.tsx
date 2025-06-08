@@ -14,7 +14,7 @@ import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react'
 
 export default function ManageInstitutions() {
   const router = useRouter()
-  const { toast } = useToast()
+  const { showSuccess, showError } = useToast()
   const [loading, setLoading] = useState(true)
   const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([])
   const [totalItems, setTotalItems] = useState(0)
@@ -54,11 +54,7 @@ export default function ManageInstitutions() {
       setTotalItems(response.pagination?.total || 0)
       setCurrentPage(page)
     } catch (error) {
-      toast({
-        title: "Erro ao carregar instituições",
-        description: "Não foi possível carregar a lista de instituições.",
-        variant: "destructive"
-      })
+      showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.")
     } finally {
       setLoading(false)
     }
@@ -90,18 +86,10 @@ export default function ManageInstitutions() {
 
     try {
       await institutionService.deleteInstitution(institution.id)
-      toast({
-        title: "Instituição excluída",
-        description: "A instituição foi excluída com sucesso.",
-        variant: "success"
-      })
+      showSuccess("Instituição excluída", "A instituição foi excluída com sucesso.")
       fetchInstitutions(currentPage, searchQuery)
     } catch (error) {
-      toast({
-        title: "Erro ao excluir instituição",
-        description: "Não foi possível excluir a instituição.",
-        variant: "destructive"
-      })
+      showError("Erro ao excluir instituição", "Não foi possível excluir a instituição.")
     }
   }
 
@@ -120,29 +108,17 @@ export default function ManageInstitutions() {
 
       if (selectedInstitution) {
         await institutionService.updateInstitution(selectedInstitution.id, institutionData)
-        toast({
-          title: "Instituição atualizada",
-          description: "A instituição foi atualizada com sucesso.",
-          variant: "success"
-        })
+        showSuccess("Instituição atualizada", "A instituição foi atualizada com sucesso.")
       } else {
         await institutionService.createInstitution(institutionData)
-        toast({
-          title: "Instituição criada",
-          description: "A instituição foi criada com sucesso.",
-          variant: "success"
-        })
+        showSuccess("Instituição criada", "A instituição foi criada com sucesso.")
       }
       setAddModalOpen(false)
       setEditModalOpen(false)
       setSelectedInstitution(null)
       fetchInstitutions(currentPage, searchQuery)
     } catch (error) {
-      toast({
-        title: "Erro ao salvar instituição",
-        description: "Não foi possível salvar a instituição.",
-        variant: "destructive"
-      })
+      showError("Erro ao salvar instituição", "Não foi possível salvar a instituição.")
     }
   }
 
