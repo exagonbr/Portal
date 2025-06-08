@@ -77,9 +77,9 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
       </button>
 
       {/* Main container with video and side menu */}
-      <div className="flex gap-4 w-full max-w-7xl h-[80vh]">
+      <div className="flex flex-col lg:flex-row gap-4 w-full max-w-7xl h-[80vh] lg:h-[80vh]">
         {/* Video container with loading state */}
-        <div className="relative flex-1 bg-black rounded-xl overflow-hidden shadow-2xl">
+        <div className="relative flex-1 bg-black rounded-xl overflow-hidden shadow-2xl min-h-[50vh] lg:min-h-0">
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
@@ -97,24 +97,24 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
         </div>
 
         {/* Side menu */}
-        <div className="w-80 bg-gray-900 rounded-xl shadow-2xl overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-gray-800">
-            <h2 className="text-xl font-bold text-white">Opções do Vídeo</h2>
+        <div className="w-full lg:w-80 bg-gray-900 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[30vh] lg:max-h-none">
+          <div className="p-4 lg:p-6 border-b border-gray-800">
+            <h2 className="text-lg lg:text-xl font-bold text-white">Opções do Vídeo</h2>
           </div>
           
           <div className="flex-1 overflow-y-auto">
             {/* Avaliação */}
-            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+            <div className="p-4 lg:p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Avaliação</h3>
-                  <p className="text-sm text-gray-400">Avalie este conteúdo</p>
+                  <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Avaliação</h3>
+                  <p className="text-xs lg:text-sm text-gray-400">Avalie este conteúdo</p>
                 </div>
                 <div className="flex items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <svg
                       key={star}
-                      className="w-5 h-5 text-yellow-400 hover:scale-110 transition-transform cursor-pointer"
+                      className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-400 hover:scale-110 transition-transform cursor-pointer"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -126,63 +126,63 @@ export default function VideoPlayer({ videoId, onClose }: VideoPlayerProps): JSX
             </div>
 
             {/* Última Nota */}
-            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+            <div className="p-4 lg:p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Última Nota</h3>
-                  <p className="text-sm text-gray-400">Sua última avaliação</p>
+                  <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Última Nota</h3>
+                  <p className="text-xs lg:text-sm text-gray-400">Sua última avaliação</p>
                 </div>
-                <div className="text-2xl font-bold text-green-400">8.5</div>
+                <div className="text-xl lg:text-2xl font-bold text-green-400">8.5</div>
               </div>
             </div>
 
             {/* Anotações */}
-            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+            <div className="p-4 lg:p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Anotações</h3>
-                  <p className="text-sm text-gray-400">Fazer anotações</p>
+                  <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Anotações</h3>
+                  <p className="text-xs lg:text-sm text-gray-400">Fazer anotações</p>
                 </div>
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
             </div>
 
             {/* Material Complementar */}
-            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+            <div className="p-4 lg:p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Material Complementar</h3>
-                  <p className="text-sm text-gray-400">Baixar PDFs e recursos</p>
+                  <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Material Complementar</h3>
+                  <p className="text-xs lg:text-sm text-gray-400">Baixar PDFs e recursos</p>
                 </div>
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
             </div>
 
             {/* Discussão */}
-            <div className="p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
+            <div className="p-4 lg:p-6 border-b border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Discussão</h3>
-                  <p className="text-sm text-gray-400">Participar do fórum</p>
+                  <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Discussão</h3>
+                  <p className="text-xs lg:text-sm text-gray-400">Participar do fórum</p>
                 </div>
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
             </div>
 
             {/* Certificado */}
-            <div className="p-6 hover:bg-gray-800 transition-colors cursor-pointer">
+            <div className="p-4 lg:p-6 hover:bg-gray-800 transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Certificado</h3>
-                  <p className="text-sm text-gray-400">Baixar certificado</p>
+                  <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Certificado</h3>
+                  <p className="text-xs lg:text-sm text-gray-400">Baixar certificado</p>
                 </div>
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
               </div>
