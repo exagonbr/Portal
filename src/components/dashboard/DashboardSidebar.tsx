@@ -288,6 +288,63 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: bool
   </motion.button>
 ));
 
+const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme }: { 
+  userRole: UserRole,
+  selectedRole: UserRole, 
+  onRoleChange: (role: UserRole) => void,
+  theme: any 
+}) => {
+  // Only show for system admin, but keep their actual role
+  if (userRole !== UserRole.SYSTEM_ADMIN) return null;
+
+  // Define role groups for better organization
+  const roleGroups = [
+    {
+      label: "Administração",
+      roles: [UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER]
+    },
+    {
+      label: "Acadêmico",
+      roles: [UserRole.ACADEMIC_COORDINATOR, UserRole.TEACHER]
+    },
+    {
+      label: "Usuários",
+      roles: [UserRole.STUDENT, UserRole.GUARDIAN]
+    }
+  ];
+
+  return (
+    <motion.div
+      className="px-4 py-2 border-b"
+      style={{ borderColor: theme.colors.sidebar.border }}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <select
+        className="w-full px-2 py-1 text-xs rounded-md bg-sidebar-hover text-sidebar-text border border-sidebar-border focus:outline-none focus:ring-2 focus:ring-primary"
+        value={selectedRole}
+        onChange={(e) => onRoleChange(e.target.value as UserRole)}
+        style={{
+          backgroundColor: theme.colors.sidebar.hover,
+          color: theme.colors.sidebar.text,
+          borderColor: theme.colors.sidebar.border
+        }}
+      >
+        {roleGroups.map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.roles.map((role) => (
+              <option key={role} value={role}>
+                {ROLE_LABELS[role]}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </motion.div>
+  );
+});
+
 export default function DashboardSidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
@@ -297,6 +354,23 @@ export default function DashboardSidebar() {
 
   // Get user role with fallback to STUDENT
   const userRole: UserRole = (user?.role || 'STUDENT') as UserRole;
+  const [selectedRole, setSelectedRole] = useState<UserRole>(userRole)
+
+  // Load persisted role on mount
+  useEffect(() => {
+    const persistedRole = localStorage.getItem('selectedRole');
+    if (persistedRole && userRole === UserRole.SYSTEM_ADMIN) {
+      setSelectedRole(persistedRole as UserRole);
+    }
+  }, [userRole]);
+
+  // Handle role change
+  const handleRoleChange = useCallback((newRole: UserRole) => {
+    setSelectedRole(newRole);
+    if (userRole === UserRole.SYSTEM_ADMIN) {
+      localStorage.setItem('selectedRole', newRole);
+    }
+  }, [userRole]);
 
   // Handle window resize
   useEffect(() => {
@@ -347,7 +421,7 @@ export default function DashboardSidebar() {
       return dashboardMap[role] || '/dashboard';
     };
 
-    const dashboardRoute = getDashboardRoute(userRole);
+    const dashboardRoute = getDashboardRoute(selectedRole);
 
     // Common items for all users
     const commonItems: NavSection[] = [
@@ -371,7 +445,7 @@ export default function DashboardSidebar() {
     // Role-specific sections
     let roleSpecificItems: NavSection[] = [];
 
-    switch (userRole) {
+    switch (selectedRole) {
       case UserRole.SYSTEM_ADMIN:
         // Usa o menu simplificado do SystemAdminMenu
         const adminMenuItems = getSystemAdminMenuItems();
@@ -813,7 +887,7 @@ export default function DashboardSidebar() {
     }
 
     return [...commonItems, ...roleSpecificItems];
-  }, [userRole]);
+  }, [selectedRole]);
 
   const navItems = getNavItems();
 
@@ -855,32 +929,39 @@ export default function DashboardSidebar() {
         </Link>
       </motion.div>
 
+      {/* Role Selector - Only visible for Admin */}
+      <RoleSelector 
+        userRole={userRole}
+        selectedRole={selectedRole}
+        onRoleChange={handleRoleChange}
+        theme={theme}
+      />
 
-          {/* User Info */}
-          <UserProfile user={user} isCollapsed={isCollapsed} theme={theme} />
+      {/* User Info */}
+      <UserProfile user={user} isCollapsed={isCollapsed} theme={theme} />
 
-          {/* Navigation */}
-          <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-hover scrollbar-track-transparent">
-            <div className="space-y-1">
-              {navItems.map((section, idx) => (
-                <NavSection
-                  key={idx}
-                  section={section.section}
-                  items={section.items}
-                  pathname={pathname}
-                  isCollapsed={isCollapsed}
-                  onItemClick={closeMobileSidebar}
-                  userRole={userRole}
-                  theme={theme}
-                />
-              ))}
-            </div>
-          </nav>
+      {/* Navigation */}
+      <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-hover scrollbar-track-transparent">
+        <div className="space-y-1">
+          {navItems.map((section, idx) => (
+            <NavSection
+              key={idx}
+              section={section.section}
+              items={section.items}
+              pathname={pathname}
+              isCollapsed={isCollapsed}
+              onItemClick={closeMobileSidebar}
+              userRole={selectedRole}
+              theme={theme}
+            />
+          ))}
+        </div>
+      </nav>
 
-          {/* Bottom Actions */}
-          <div className="p-1 border-t border-white/10 flex-shrink-0">
-                          <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} theme={theme} />
-          </div>
+      {/* Bottom Actions */}
+      <div className="p-1 border-t border-white/10 flex-shrink-0">
+        <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} theme={theme} />
+      </div>
     </motion.aside>
   )
 }

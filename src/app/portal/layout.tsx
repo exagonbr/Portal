@@ -10,8 +10,10 @@ export default function PortalLayout({
   children: React.ReactNode
 }) {
   return (
-    <RoleGuard allowedRoles={[UserRole.SYSTEM_ADMIN]}>
-      {children}
+    <RoleGuard allowedRoles={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR, UserRole.TEACHER, UserRole.STUDENT]}>
+      <DashboardPageLayout>
+        {children}
+      </DashboardPageLayout>
     </RoleGuard>
-    )
+  )
 } 
