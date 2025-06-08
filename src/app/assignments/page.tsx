@@ -200,16 +200,16 @@ export default function AssignmentsPage() {
 
       {/* Status Filters */}
       <div className="flex space-x-2 mb-6">
-        <button className="px-4 py-2 text-sm rounded-lg bg-primary/10 text-primary font-medium">
+        <button className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white font-medium shadow-md hover:bg-blue-700 transition-all duration-200">
           Todas (5)
         </button>
-        <button className="px-4 py-2 text-sm rounded-lg text-accent-yellow hover:bg-accent-yellow/10 transition-colors duration-200">
+        <button className="px-4 py-2 text-sm rounded-lg bg-white text-orange-600 border-2 border-orange-600 hover:bg-orange-600 hover:text-white transition-all duration-200">
           Pendentes (2)
         </button>
-        <button className="px-4 py-2 text-sm rounded-lg text-primary hover:bg-primary/10 transition-colors duration-200">
+        <button className="px-4 py-2 text-sm rounded-lg bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-200">
           Em Andamento (2)
         </button>
-        <button className="px-4 py-2 text-sm rounded-lg text-accent-green hover:bg-accent-green/10 transition-colors duration-200">
+        <button className="px-4 py-2 text-sm rounded-lg bg-white text-green-600 border-2 border-green-600 hover:bg-green-600 hover:text-white transition-all duration-200">
           Concluídas (1)
         </button>
       </div>

@@ -472,7 +472,7 @@ export default function GlobalUsersPage() {
           </div>
           <button 
             onClick={handleSearch}
-            className="bg-primary-dark text-white px-4 py-2 rounded-r-lg hover:bg-primary-darker transition-colors"
+            className="button-primary rounded-r-lg rounded-l-none"
           >
             Buscar
           </button>
@@ -481,7 +481,7 @@ export default function GlobalUsersPage() {
         <div className="flex gap-2 w-full md:w-auto">
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+            className="button-secondary flex items-center gap-1 text-sm"
           >
             <Filter className="h-4 w-4" />
             Filtros
@@ -500,7 +500,7 @@ export default function GlobalUsersPage() {
           
           <button 
             onClick={handleExport}
-            className="flex items-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+            className="button-secondary flex items-center gap-1 text-sm"
           >
             <Download className="h-4 w-4" />
             Exportar
@@ -508,7 +508,7 @@ export default function GlobalUsersPage() {
           
           <button 
             onClick={handleCreateUser}
-            className="flex items-center gap-1 px-3 py-2 bg-primary-dark text-white rounded-lg text-sm ml-2 hover:bg-primary-darker transition-colors"
+            className="button-primary flex items-center gap-1 text-sm ml-2"
           >
             <Plus className="h-4 w-4" />
             Novo Usuário
@@ -598,13 +598,13 @@ export default function GlobalUsersPage() {
           <div className="flex justify-end gap-2 mt-4">
             <button
               onClick={handleClearFilters}
-              className="px-4 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+              className="button-secondary text-sm"
             >
               Limpar Filtros
             </button>
             <button
               onClick={handleApplyFilters}
-              className="px-4 py-2 bg-primary-dark text-white rounded-lg text-sm hover:bg-primary-darker transition-colors"
+              className="button-primary text-sm"
             >
               Aplicar Filtros
             </button>
@@ -720,28 +720,28 @@ export default function GlobalUsersPage() {
                       <div className="flex justify-end items-center space-x-2">
                         <button 
                           onClick={() => handleEditUser(user)} 
-                          className="text-indigo-600 hover:text-indigo-900 transition-colors p-1 rounded hover:bg-indigo-50"
+                          className="bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 p-2 rounded-lg shadow-sm"
                           title="Editar"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button 
                           onClick={() => handleViewUser(user)} 
-                          className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded hover:bg-blue-50"
+                          className="bg-green-600 text-white hover:bg-green-700 transition-all duration-200 p-2 rounded-lg shadow-sm"
                           title="Visualizar"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button 
                           onClick={() => handleResetPassword(user.id)} 
-                          className="text-orange-600 hover:text-orange-900 transition-colors p-1 rounded hover:bg-orange-50"
+                          className="bg-orange-600 text-white hover:bg-orange-700 transition-all duration-200 p-2 rounded-lg shadow-sm"
                           title="Resetar senha"
                         >
                           <Key className="h-4 w-4" />
                         </button>
                         <button 
                           onClick={() => handleDeleteUser(user.id)} 
-                          className="text-red-600 hover:text-red-900 transition-colors p-1 rounded hover:bg-red-50"
+                          className="bg-red-600 text-white hover:bg-red-700 transition-all duration-200 p-2 rounded-lg shadow-sm"
                           title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -773,10 +773,10 @@ export default function GlobalUsersPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium ${
+                    className={`relative inline-flex items-center px-3 py-2 rounded-l-lg border-2 text-sm font-medium transition-all duration-200 ${
                       currentPage === 1 
-                        ? 'text-slate-300 cursor-not-allowed' 
-                        : 'text-slate-500 hover:bg-slate-50'
+                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' 
+                        : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white'
                     }`}
                   >
                     <span className="sr-only">Anterior</span>
@@ -854,10 +854,10 @@ export default function GlobalUsersPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium ${
+                    className={`relative inline-flex items-center px-3 py-2 rounded-r-lg border-2 text-sm font-medium transition-all duration-200 ${
                       currentPage === totalPages 
-                        ? 'text-slate-300 cursor-not-allowed' 
-                        : 'text-slate-500 hover:bg-slate-50'
+                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed' 
+                        : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white'
                     }`}
                   >
                     <span className="sr-only">Próximo</span>

@@ -131,9 +131,9 @@ export default function InstitutionCoursesPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <button className="text-primary hover:text-primary/80 mr-3 px-3 py-1 rounded transition-colors">Editar</button>
-                <button className="text-accent-blue hover:text-accent-blue/80 mr-3 px-3 py-1 rounded transition-colors">Detalhes</button>
-                <button className="text-error hover:text-error/80 px-3 py-1 rounded transition-colors">Desativar</button>
+                  <button className="bg-blue-600 text-white hover:bg-blue-700 mr-3 px-3 py-1 rounded-lg transition-all duration-200 shadow-sm">Editar</button>
+                  <button className="bg-green-600 text-white hover:bg-green-700 mr-3 px-3 py-1 rounded-lg transition-all duration-200 shadow-sm">Detalhes</button>
+                  <button className="bg-red-600 text-white hover:bg-red-700 px-3 py-1 rounded-lg transition-all duration-200 shadow-sm">Desativar</button>
                 </td>
               </tr>
             </tbody>
@@ -144,10 +144,10 @@ export default function InstitutionCoursesPage() {
         <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex-1 flex justify-between sm:hidden">
-              <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              <button className="button-secondary">
                 Anterior
               </button>
-              <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              <button className="button-secondary">
                 Próximo
               </button>
             </div>

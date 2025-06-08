@@ -65,17 +65,24 @@ const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
 </span>
 ));
 
-const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed: boolean, theme: any }) => (
+const UserProfile = memo(({ user, isCollapsed, theme, isSystemAdmin = false }: { 
+  user: any, 
+  isCollapsed: boolean, 
+  theme: any,
+  isSystemAdmin?: boolean 
+}) => (
   <motion.div
-    className="px-4 py-4 border-b"
+    className={`px-3 border-b ${isSystemAdmin ? 'py-1.5' : 'py-3'}`}
     style={{ borderColor: theme.colors.sidebar.border }}
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.3, delay: 0.2 }}
   >
-    <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+    <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-2'}`}>
       <motion.div
-        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+        className={`rounded-full flex items-center justify-center flex-shrink-0 ${
+          isSystemAdmin ? 'w-6 h-6' : 'w-8 h-8'
+        }`}
         style={{
           backgroundColor: theme.colors.primary.light || theme.colors.primary.DEFAULT + '40',
           color: theme.colors.sidebar.textActive || '#ffffff'
@@ -83,7 +90,11 @@ const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed
         whileHover={{ scale: 1.1 }}
         transition={{ duration: 0.2 }}
       >
-        <span className={`material-symbols-outlined ${isCollapsed ? 'text-[24px]' : 'text-[20px]'} font-medium`}>
+        <span className={`material-symbols-outlined font-medium ${
+          isCollapsed 
+            ? (isSystemAdmin ? 'text-[16px]' : 'text-[20px]')
+            : (isSystemAdmin ? 'text-[14px]' : 'text-[18px]')
+        }`}>
           person
         </span>
       </motion.div>
@@ -97,13 +108,17 @@ const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed
             transition={{ duration: 0.2 }}
           >
             <p
-              className="text-xs font-semibold truncate leading-tight"
+              className={`font-semibold truncate leading-tight ${
+                isSystemAdmin ? 'text-[9px]' : 'text-[11px]'
+              }`}
               style={{ color: theme.colors.sidebar.textActive }}
             >
               {user?.name}
             </p>
             <span
-              className="text-[10px] leading-tight"
+              className={`leading-tight opacity-80 ${
+                isSystemAdmin ? 'text-[7px]' : 'text-[9px]'
+              }`}
               style={{ color: theme.colors.sidebar.text }}
             >
               {user?.role && ROLE_LABELS[user.role as UserRole]}
@@ -115,25 +130,27 @@ const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed
   </motion.div>
 ));
 
-const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
+const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme, isSystemAdmin = false }: {
   item: NavItem,
   isActive: boolean,
   isCollapsed: boolean,
   onClick?: () => void,
-  theme: any
+  theme: any,
+  isSystemAdmin?: boolean
 }) => (
   <motion.div
     initial={{ opacity: 0, x: -20 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.2 }}
-    whileHover={{ x: 4 }}
+    whileHover={{ x: 2 }}
   >
     <Link
       href={item.href}
       prefetch={true}
       locale={false}
-      className={`flex items-center gap-2 px-2 py-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
-        ${isCollapsed ? 'justify-center' : ''}`}
+      className={`flex items-center gap-2 px-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
+        ${isCollapsed ? 'justify-center' : ''}
+        ${isSystemAdmin ? 'py-0.5' : 'py-1.5'}`}
       style={{
         backgroundColor: isActive ? theme.colors.sidebar.active : 'transparent',
         color: isActive ? theme.colors.sidebar.textActive : theme.colors.sidebar.text
@@ -154,9 +171,13 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
       }}
     >
       <motion.span
-        className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
+        className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${
+          isCollapsed 
+            ? (isSystemAdmin ? 'text-[12px]' : 'text-[16px]')
+            : (isSystemAdmin ? 'text-[10px]' : 'text-[14px]')
+        }`}
         aria-hidden="true"
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.2 }}
       >
         {item.icon}
@@ -165,7 +186,9 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
       <AnimatePresence>
         {!isCollapsed && (
           <motion.span
-            className="text-xs font-medium truncate leading-tight"
+            className={`font-medium truncate leading-tight ${
+              isSystemAdmin ? 'text-[9px]' : 'text-[11px]'
+            }`}
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: 'auto' }}
             exit={{ opacity: 0, width: 0 }}
@@ -216,14 +239,19 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
 
   if (filteredItems.length === 0) return null;
 
+  // Determine if this is SYSTEM_ADMIN to apply more compact styling
+  const isSystemAdmin = userRole === UserRole.SYSTEM_ADMIN;
+
   return (
-    <div className="mb-3">
+    <div className={isSystemAdmin ? "mb-0.5" : "mb-2"}>
       {!isCollapsed && (
-        <p className="px-2 py-1 text-[10px] font-bold text-sidebar-text uppercase tracking-wider opacity-75">
+        <p className={`px-2 text-[7px] font-bold text-sidebar-text uppercase tracking-wider opacity-70 ${
+          isSystemAdmin ? 'py-0 mb-0' : 'py-0.5 mb-1'
+        }`}>
           {section}
         </p>
       )}
-      <div className="space-y-0.5">
+      <div className="space-y-0">
         {filteredItems.map((item) => (
           <NavItem
             key={item.href}
@@ -232,6 +260,7 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
             isCollapsed={isCollapsed}
             onClick={onItemClick}
             theme={theme}
+            isSystemAdmin={isSystemAdmin}
           />
         ))}
       </div>
@@ -239,11 +268,17 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
   );
 });
 
-const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: boolean, onLogout: () => void, theme: any }) => (
+const LogoutButton = memo(({ isCollapsed, onLogout, theme, isSystemAdmin = false }: { 
+  isCollapsed: boolean, 
+  onLogout: () => void, 
+  theme: any,
+  isSystemAdmin?: boolean 
+}) => (
   <motion.button
     onClick={onLogout}
-    className={`flex items-center gap-2 px-2 py-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative w-full
-      ${isCollapsed ? 'justify-center' : ''}`}
+    className={`flex items-center gap-2 px-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative w-full
+      ${isCollapsed ? 'justify-center' : ''}
+      ${isSystemAdmin ? 'py-0.5' : 'py-2'}`}
     style={{
       color: theme.colors.sidebar.text
     }}
@@ -260,7 +295,11 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: bool
     aria-label="Sair da Plataforma"
   >
     <motion.span
-      className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}
+      className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${
+        isCollapsed 
+          ? (isSystemAdmin ? 'text-[14px]' : 'text-[18px]')
+          : (isSystemAdmin ? 'text-[12px]' : 'text-[16px]')
+      }`}
       aria-hidden="true"
       whileHover={{ rotate: -15 }}
       transition={{ duration: 0.2 }}
@@ -271,7 +310,9 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: bool
     <AnimatePresence>
       {!isCollapsed && (
         <motion.span
-          className="text-xs font-medium truncate leading-tight"
+          className={`font-medium truncate leading-tight ${
+            isSystemAdmin ? 'text-[9px]' : 'text-xs'
+          }`}
           initial={{ opacity: 0, width: 0 }}
           animate={{ opacity: 1, width: 'auto' }}
           exit={{ opacity: 0, width: 0 }}
@@ -304,11 +345,12 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: bool
   </motion.button>
 ));
 
-const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme }: { 
+const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme, isSystemAdmin = false }: { 
   userRole: UserRole,
   selectedRole: UserRole, 
   onRoleChange: (role: UserRole) => void,
-  theme: any 
+  theme: any,
+  isSystemAdmin?: boolean
 }) => {
   // Only show for system admin, but keep their actual role
   if (userRole !== UserRole.SYSTEM_ADMIN) return null;
@@ -331,14 +373,16 @@ const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme }: {
 
   return (
     <motion.div
-      className="px-4 py-2 border-b"
+      className={`px-3 border-b ${isSystemAdmin ? 'py-1' : 'py-2'}`}
       style={{ borderColor: theme.colors.sidebar.border }}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       <select
-        className="w-full px-2 py-1 text-xs rounded-md bg-sidebar-hover text-sidebar-text border border-sidebar-border focus:outline-none focus:ring-2 focus:ring-primary"
+        className={`w-full px-2 py-0.5 rounded-md bg-sidebar-hover text-sidebar-text border border-sidebar-border focus:outline-none focus:ring-1 focus:ring-primary ${
+          isSystemAdmin ? 'text-[8px]' : 'text-[10px]'
+        }`}
         value={selectedRole}
         onChange={(e) => onRoleChange(e.target.value as UserRole)}
         style={{
@@ -372,6 +416,9 @@ function DashboardSidebarComponent() {
   // Get user role with fallback to STUDENT
   const userRole: UserRole = (user?.role || 'STUDENT') as UserRole;
   const [selectedRole, setSelectedRole] = useState<UserRole>(userRole)
+
+  // Check if current role is SYSTEM_ADMIN for compact styling
+  const isSystemAdmin = selectedRole === UserRole.SYSTEM_ADMIN;
 
   // Load persisted role on mount
   useEffect(() => {
@@ -955,7 +1002,7 @@ function DashboardSidebarComponent() {
     >
       {/* Logo */}
       <motion.div
-        className="p-6 border-b"
+        className={`border-b flex-shrink-0 ${isSystemAdmin ? 'p-2' : 'p-4'}`}
         style={{ borderColor: theme.colors.sidebar.border }}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -964,14 +1011,14 @@ function DashboardSidebarComponent() {
         <Link href="/" className="flex items-center justify-center group">
           <motion.div
             className="table transition-transform duration-200"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
             <Image
               src="/sabercon-logo-white.png"
               alt="Logo"
-              width={250}
-              height={100}
+              width={isSystemAdmin ? 160 : 200}
+              height={isSystemAdmin ? 60 : 80}
               className="object-contain group-hover:brightness-110 transition-all duration-200"
               priority
             />
@@ -980,19 +1027,50 @@ function DashboardSidebarComponent() {
       </motion.div>
 
       {/* Role Selector - Only visible for Admin */}
-      <RoleSelector 
-        userRole={userRole}
-        selectedRole={selectedRole}
-        onRoleChange={handleRoleChange}
-        theme={theme}
-      />
+      <div className="flex-shrink-0">
+        <RoleSelector 
+          userRole={userRole}
+          selectedRole={selectedRole}
+          onRoleChange={handleRoleChange}
+          theme={theme}
+          isSystemAdmin={isSystemAdmin}
+        />
+      </div>
 
       {/* User Info */}
-      <UserProfile user={user} isCollapsed={isCollapsed} theme={theme} />
+      <div className="flex-shrink-0">
+        <UserProfile 
+          user={user} 
+          isCollapsed={isCollapsed} 
+          theme={theme} 
+          isSystemAdmin={isSystemAdmin}
+        />
+      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-1 py-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-sidebar-hover scrollbar-track-transparent">
-        <div className="space-y-1">
+      {/* Navigation - Scrollable Area */}
+      <nav className={`flex-1 px-1 overflow-y-auto overflow-x-hidden ${
+        isSystemAdmin ? 'py-0 min-h-[450px]' : 'py-1 min-h-0'
+      }`} 
+           style={{
+             scrollbarWidth: 'thin',
+             scrollbarColor: `${theme.colors.sidebar.hover} transparent`
+           }}>
+        <style jsx>{`
+          nav::-webkit-scrollbar {
+            width: 2px;
+          }
+          nav::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          nav::-webkit-scrollbar-thumb {
+            background: ${theme.colors.sidebar.hover};
+            border-radius: 1px;
+          }
+          nav::-webkit-scrollbar-thumb:hover {
+            background: ${theme.colors.sidebar.border};
+          }
+        `}</style>
+        <div className={`${isSystemAdmin ? 'space-y-0 pb-1' : 'space-y-0.5 pb-2'}`}>
           {navItems.map((section, idx) => (
             <NavSection
               key={idx}
@@ -1009,8 +1087,13 @@ function DashboardSidebarComponent() {
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-1 border-t border-white/10 flex-shrink-0">
-        <LogoutButton isCollapsed={isCollapsed} onLogout={handleLogout} theme={theme} />
+      <div className={`border-t flex-shrink-0 ${isSystemAdmin ? 'p-0.5' : 'p-1'}`} style={{ borderColor: theme.colors.sidebar.border }}>
+        <LogoutButton 
+          isCollapsed={isCollapsed} 
+          onLogout={handleLogout} 
+          theme={theme} 
+          isSystemAdmin={isSystemAdmin}
+        />
       </div>
     </motion.aside>
   )

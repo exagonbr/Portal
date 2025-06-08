@@ -124,14 +124,14 @@ export default function GuardianPaymentsPage() {
                 
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <p className="text-xl font-bold text-primary">{formatCurrency(payment.amount)}</p>
+                    <p className="text-xl font-bold text-blue-600">{formatCurrency(payment.amount)}</p>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}>
                       {getStatusText(payment.status)}
                     </span>
                   </div>
                   
                   {payment.status === 'pending' && (
-                    <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors">
+                    <button className="button-primary">
                       Pagar
                     </button>
                   )}

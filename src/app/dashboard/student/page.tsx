@@ -419,11 +419,11 @@ function StudentDashboardContent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('overview')}
-            className={`px-4 py-2 rounded-lg transition-colors`}
-            style={{
-              backgroundColor: selectedView === 'overview' ? theme.colors.primary.DEFAULT : theme.colors.background.secondary,
-              color: selectedView === 'overview' ? 'white' : theme.colors.text.primary
-            }}
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+              selectedView === 'overview' 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white'
+            }`}
           >
             Visão Geral
           </motion.button>
@@ -431,11 +431,11 @@ function StudentDashboardContent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('academic')}
-            className={`px-4 py-2 rounded-lg transition-colors`}
-            style={{
-              backgroundColor: selectedView === 'academic' ? theme.colors.primary.DEFAULT : theme.colors.background.secondary,
-              color: selectedView === 'academic' ? 'white' : theme.colors.text.primary
-            }}
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+              selectedView === 'academic' 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white'
+            }`}
           >
             Acadêmico
           </motion.button>
@@ -443,11 +443,11 @@ function StudentDashboardContent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('activities')}
-            className={`px-4 py-2 rounded-lg transition-colors`}
-            style={{
-              backgroundColor: selectedView === 'activities' ? theme.colors.primary.DEFAULT : theme.colors.background.secondary,
-              color: selectedView === 'activities' ? 'white' : theme.colors.text.primary
-            }}
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+              selectedView === 'activities' 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white'
+            }`}
           >
             Atividades
           </motion.button>
@@ -455,11 +455,11 @@ function StudentDashboardContent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('calendar')}
-            className={`px-4 py-2 rounded-lg transition-colors`}
-            style={{
-              backgroundColor: selectedView === 'calendar' ? theme.colors.primary.DEFAULT : theme.colors.background.secondary,
-              color: selectedView === 'calendar' ? 'white' : theme.colors.text.primary
-            }}
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+              selectedView === 'calendar' 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white'
+            }`}
           >
             Calendário
           </motion.button>

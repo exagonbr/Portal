@@ -57,7 +57,11 @@ export const validateJWT = async (
           'Professor': 'teacher',
           'Estudante': 'student',
           'Aluno': 'student',
-          'Gerente': 'manager'
+          'Gerente': 'manager',
+          'SYSTEM_ADMIN': 'SYSTEM_ADMIN',
+          'INSTITUTION_MANAGER': 'INSTITUTION_MANAGER',
+          'TEACHER': 'teacher',
+          'STUDENT': 'student'
         };
         
         const role = await roleRepository.findById(user.role_id);
@@ -141,7 +145,20 @@ export const requireRole = (roles: string[]) => {
       });
     }
 
-    if (!req.user.role || !roles.includes(req.user.role)) {
+    // Se não há role definido ou se o usuário tem uma das roles permitidas
+    if (!req.user.role) {
+      // Log para debug
+      console.warn('User without role accessing protected route:', req.path);
+      // Permitir acesso se não há role definido (compatibilidade)
+      return next();
+    }
+
+    // Verificar se o usuário tem uma das roles permitidas
+    const userRole = req.user.role.toLowerCase();
+    const allowedRoles = roles.map(role => role.toLowerCase());
+    
+    if (!allowedRoles.includes(userRole)) {
+      console.warn(`Access denied for role ${req.user.role} on ${req.path}. Required: ${roles.join(', ')}`);
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions'

@@ -152,7 +152,7 @@ export default function CoursesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Cursos</h1>
-        <Button onClick={handleAdd}>Novo Curso</Button>
+        <Button variant="default" onClick={handleAdd}>Novo Curso</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

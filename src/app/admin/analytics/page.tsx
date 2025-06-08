@@ -147,13 +147,13 @@ export default function AdminAnalyticsPage() {
           <div className="space-y-6">
             {/* Header Actions */}
             <div className="flex justify-end space-x-4">
-              <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+              <button className="button-secondary">
                 Exportar Dados
               </button>
               <button 
                 onClick={fetchAnalytics}
                 disabled={isLoading}
-                className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 transition-colors duration-200 disabled:opacity-50"
+                className="button-primary disabled:opacity-50"
               >
                 {isLoading ? 'Atualizando...' : 'Atualizar'}
               </button>

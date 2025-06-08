@@ -6,17 +6,7 @@ import morgan from 'morgan';
 import * as dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
-// import testDatabaseConnection from "./config/database";
 import { testRedisConnection } from './config/redis';
-import { requestDeduplication } from './middleware/requestDeduplication';
-import { 
-  responseTimeMiddleware, 
-  slowRequestLogger, 
-  errorLogger, 
-  duplicateRequestLogger,
-  devLogFormat,
-  prodLogFormat 
-} from './middleware/logging';
 import apiRoutes from './routes';
 
 // Carrega variáveis de ambiente
@@ -57,29 +47,47 @@ app.use(cors({
     'Access-Control-Allow-Origin',
     'Access-Control-Allow-Headers',
     'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Credentials'
+    'Access-Control-Allow-Credentials',
+    'X-Response-Time'
   ]
 }));
 
 // Compressão
 app.use(compression());
 
-// Response time tracking
-app.use(responseTimeMiddleware);
-
-// Logging
-const logFormat = process.env.NODE_ENV === 'production' ? prodLogFormat : devLogFormat;
-app.use(morgan(logFormat));
-
-// Slow request detection
-app.use(slowRequestLogger(2000)); // Log requests taking more than 2 seconds
-
-// Duplicate request detection
-app.use(duplicateRequestLogger());
+// Logging simples
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Middleware simples para tempo de resposta
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  // Interceptar apenas uma vez
+  const originalSend = res.send;
+  let intercepted = false;
+  
+  res.send = function(body: any) {
+    if (!intercepted) {
+      intercepted = true;
+      const duration = Date.now() - start;
+      if (!res.headersSent) {
+        res.setHeader('X-Response-Time', `${duration}ms`);
+      }
+      
+      // Log requisições lentas
+      if (duration > 2000) {
+        console.warn(`🐌 Slow request: ${req.method} ${req.originalUrl} took ${duration}ms`);
+      }
+    }
+    return originalSend.call(this, body);
+  };
+  
+  next();
+});
 
 // Health check
 app.get('/health', (_, res) => {
@@ -105,8 +113,8 @@ app.get('/backend', (_, res) => {
   res.redirect('/backend/docs');
 });
 
-// Mount API Routes with deduplication
-app.use('/api', requestDeduplication, apiRoutes);
+// Mount API Routes
+app.use('/api', apiRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -117,25 +125,26 @@ app.use('*', (req, res) => {
   });
 });
 
-app.use(function (req, res, next) {
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://images.unsplash.com; script-src 'self' https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/ 'sha256-INJfZVfoUd61ITRFLf63g+S/NJAfswGDl15oK0iXgYM='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css; frame-src 'self' https://www.youtube.com https://youtube.com;"
-  );
-  next();
-});
-
 // Error handler
-app.use(errorLogger);
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('🚨 Error occurred:', {
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.originalUrl,
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+  
   const status = err.status || err.statusCode || 500;
   const message = err.message || 'Erro interno do servidor';
   
-  res.status(status).json({
-    success: false,
-    message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
+  if (!res.headersSent) {
+    res.status(status).json({
+      success: false,
+      message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+  }
 });
 
 // Função para inicializar o servidor
@@ -145,11 +154,6 @@ async function startServer() {
     
     // Testa conexões
     console.log('📊 Testando conexões...');
-    
-    // const dbConnected = await testDatabaseConnection();
-    // if (!dbConnected) {
-    //   throw new Error('Falha na conexão com PostgreSQL');
-    // }
     
     const redisConnected = await testRedisConnection();
     if (!redisConnected) {
@@ -162,6 +166,7 @@ async function startServer() {
       console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
       console.log(`📋 Health check: http://localhost:${PORT}/health`);
       console.log(`🔗 API: http://localhost:${PORT}/api`);
+      console.log(`📚 Docs: http://localhost:${PORT}/backend/docs`);
     });
     
   } catch (error) {
@@ -186,4 +191,4 @@ if (require.main === module) {
   startServer();
 }
 
-export default app;
+export default app; 

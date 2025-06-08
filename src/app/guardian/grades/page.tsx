@@ -329,10 +329,10 @@ export default function GuardianGradesPage() {
               </div>
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button className="px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors">
+                <button className="button-secondary">
                   Contatar Professor
                 </button>
-                <button className="px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-accent-green/80 transition-colors">
+                <button className="button-success">
                   Baixar Relatório
                 </button>
               </div>

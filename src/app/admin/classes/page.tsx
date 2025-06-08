@@ -150,14 +150,14 @@ export default function ClassesPage() {
       cell: ({ row }: any) => (
         <div className="flex gap-2">
           <Button
-            variant="secondary"
+            variant="outline"
             size="sm"
             onClick={() => handleEdit(row.original)}
           >
             Editar
           </Button>
           <Button
-            variant="danger"
+            variant="destructive"
             size="sm"
             onClick={() => handleDelete(row.original.id)}
           >
@@ -172,7 +172,7 @@ export default function ClassesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Turmas</h1>
-        <Button onClick={handleAdd}>Nova Turma</Button>
+        <Button variant="default" onClick={handleAdd}>Nova Turma</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

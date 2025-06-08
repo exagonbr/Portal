@@ -26,6 +26,8 @@ import authRouter from './auth';
 import sessionsRouter from './sessions';
 import dashboardRouter from './dashboard';
 import settingsRouter from './settings.routes';
+import queueRouter from './queue';
+import cacheRouter from './cache';
 
 const router = express.Router();
 
@@ -71,5 +73,7 @@ router.use('/sessions', sessionsRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/aws', createAwsRoutes(db));
 router.use('/settings', settingsRouter);
+router.use('/queue', queueRouter);
+router.use('/cache', cacheRouter);
 
 export default router;

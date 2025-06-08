@@ -2,6 +2,7 @@ import { Course } from '../types/education';
 import { ForumThread, ForumTagCategory, ChatMessage } from '../types/communication';
 import { User } from '../types/auth';
 import { Annotation, Highlight } from '../components/books/BookViewer/types';
+import { Collection } from '../types/collection';
 
 // Interfaces
 export interface Book {
@@ -320,3 +321,121 @@ export const mockCourses = [
     students: ['s2']
   }
 ];
+
+// Mock Content Collections
+export const mockContentCollections: Collection[] = [
+  {
+    id: 'collection_1',
+    name: 'Matemática Fundamental',
+    synopsis: 'Coleção completa de matemática para ensino fundamental com conceitos básicos e exercícios práticos.',
+    coverImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=450&fit=crop',
+    supportMaterial: '/materials/matematica-fundamental.pdf',
+    totalDuration: 7200, // 2 horas em segundos
+    subject: 'Matemática',
+    modules: [
+      {
+        id: 'module_1',
+        name: 'Números e Operações',
+        description: 'Introdução aos números naturais e operações básicas',
+        coverImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&h=450&fit=crop',
+        videoIds: ['video-1', 'video-2'],
+        order: 1,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: new Date('2024-01-15')
+      },
+      {
+        id: 'module_2',
+        name: 'Geometria Básica',
+        description: 'Formas geométricas e suas propriedades',
+        coverImage: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=800&h=450&fit=crop',
+        videoIds: ['video-3', 'video-4'],
+        order: 2,
+        createdAt: new Date('2024-01-16'),
+        updatedAt: new Date('2024-01-16')
+      }
+    ],
+    tags: ['matemática', 'fundamental', 'básico'],
+    createdBy: 'admin1',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  {
+    id: 'collection_2',
+    name: 'Ciências da Natureza',
+    synopsis: 'Exploração do mundo natural através de experimentos e observações científicas.',
+    coverImage: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=450&fit=crop',
+    supportMaterial: '/materials/ciencias-natureza.pdf',
+    totalDuration: 5400, // 1.5 horas em segundos
+    subject: 'Ciências',
+    modules: [
+      {
+        id: 'module_3',
+        name: 'O Corpo Humano',
+        description: 'Sistemas do corpo humano e suas funções',
+        coverImage: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?w=800&h=450&fit=crop',
+        videoIds: ['video-5', 'video-6'],
+        order: 1,
+        createdAt: new Date('2024-01-17'),
+        updatedAt: new Date('2024-01-17')
+      }
+    ],
+    tags: ['ciências', 'biologia', 'corpo humano'],
+    createdBy: 'admin1',
+    createdAt: new Date('2024-01-17'),
+    updatedAt: new Date('2024-01-17')
+  },
+  {
+    id: 'collection_3',
+    name: 'História do Brasil',
+    synopsis: 'Jornada através da história brasileira desde o descobrimento até os dias atuais.',
+    coverImage: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=450&fit=crop',
+    supportMaterial: '/materials/historia-brasil.pdf',
+    totalDuration: 9000, // 2.5 horas em segundos
+    subject: 'História',
+    modules: [
+      {
+        id: 'module_4',
+        name: 'Brasil Colônia',
+        description: 'O período colonial brasileiro e suas características',
+        coverImage: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=450&fit=crop',
+        videoIds: ['video-7', 'video-8'],
+        order: 1,
+        createdAt: new Date('2024-01-18'),
+        updatedAt: new Date('2024-01-18')
+      },
+      {
+        id: 'module_5',
+        name: 'Independência',
+        description: 'O processo de independência do Brasil',
+        coverImage: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&h=450&fit=crop',
+        videoIds: ['video-9', 'video-10'],
+        order: 2,
+        createdAt: new Date('2024-01-19'),
+        updatedAt: new Date('2024-01-19')
+      }
+    ],
+    tags: ['história', 'brasil', 'colonial'],
+    createdBy: 'admin1',
+    createdAt: new Date('2024-01-18'),
+    updatedAt: new Date('2024-01-18')
+  }
+];
+
+// Mock Module Collection (for ModuleManager)
+export const mockModuleCollection: Collection = mockContentCollections[0];
+
+// Mock Content Videos (for ModuleManager)
+export const mockContentVideos = mockVideos.map(video => ({
+  id: video.id,
+  name: video.title,
+  moduleId: '',
+  videoUrl: `/videos/${video.id}.mp4`,
+  duration: parseInt(video.duration.split(':')[0]) * 60 + parseInt(video.duration.split(':')[1]),
+  authors: ['Prof. Exemplo'],
+  educationCycle: {
+    level: 'FUNDAMENTAL' as const,
+    cycle: 'ANOS_INICIAIS'
+  },
+  createdAt: new Date(),
+  updatedAt: new Date()
+}));

@@ -98,10 +98,10 @@ export default function CollectionManager() {
   const handleTagAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim()) {
       e.preventDefault();
-      if (!newCollection.tags.includes(tagInput.trim())) {
+      if (!newCollection.tags?.includes(tagInput.trim())) {
         setNewCollection(prev => ({
           ...prev,
-          tags: [...prev.tags, tagInput.trim()]
+          tags: [...(prev.tags || []), tagInput.trim()]
         }));
       }
       setTagInput('');
@@ -111,7 +111,7 @@ export default function CollectionManager() {
   const removeTag = (tagToRemove: string) => {
     setNewCollection(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: (prev.tags || []).filter(tag => tag !== tagToRemove)
     }));
   };
 
@@ -172,18 +172,18 @@ export default function CollectionManager() {
                 </p>
                 
                 <div className="flex flex-wrap gap-1">
-                  {collection.tags.map(tag => (
+                  {collection.tags?.map(tag => (
                     <span
                       key={tag}
                       className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full"
                     >
                       {tag}
                     </span>
-                  ))}
+                  )) || []}
                 </div>
 
                 <div className="flex justify-between text-sm text-gray-500">
-                  <span>{collection.modules.length} módulos</span>
+                  <span>{collection.modules?.length || 0} módulos</span>
                   <span>{new Date(collection.createdAt).toLocaleDateString('pt-BR')}</span>
                 </div>
 
@@ -307,7 +307,7 @@ export default function CollectionManager() {
                   Tags
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {newCollection.tags.map(tag => (
+                  {newCollection.tags?.map(tag => (
                     <span
                       key={tag}
                       className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full flex items-center"
@@ -320,7 +320,7 @@ export default function CollectionManager() {
                         ×
                       </button>
                     </span>
-                  ))}
+                  )) || []}
                 </div>
                 <input
                   type="text"

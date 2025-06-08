@@ -41,7 +41,7 @@ const userRepository = new UserRepository();
  *       403:
  *         description: Forbidden
  */
-router.get('/', validateJWT, requireRole(['admin']), async (req, res) => {
+router.get('/', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
   try {
     const { institution_id, role } = req.query;
     
