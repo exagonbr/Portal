@@ -11,6 +11,8 @@ import {
   RolePermissionGroupDto} from '../dto/RoleDto';
 import { ServiceResult } from '../types/common';
 import db from '../config/database';
+import { getRedisClient, TTL } from '../config/redis';
+import { Logger } from '../utils/Logger';
 
 interface RoleEntity {
   id: string;
@@ -24,6 +26,9 @@ interface RoleEntity {
 }
 
 export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRoleDto> {
+  
+  private readonly redis = getRedisClient();
+  protected readonly logger = new Logger('RoleService');
   
   // Mapeamento das permissões do banco para o formato do frontend
   private readonly PERMISSION_MAPPING: { [key: string]: string } = {
@@ -163,7 +168,29 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
    */
   async findRolesWithFilters(filters: RoleFilterDto): Promise<ServiceResult<{ roles: RoleResponseDto[], pagination: any }>> {
     try {
-      const { page = 1, limit = 10, type, status, search, sortBy = 'name', sortOrder = 'asc' } = filters;
+      const { page = 1, limit = 10, type, status, search, sortBy = 'name', sortOrder = 'asc', active } = filters;
+      
+      // Gerar chave de cache baseada nos filtros
+      const cacheKey = `portal_sabercon:roles:list:${JSON.stringify(filters)}`;
+      
+      // Tentar obter do cache primeiro
+      try {
+        const cachedData = await this.redis.get(cacheKey);
+        if (cachedData) {
+          this.logger.info(`Cache hit para roles: ${cacheKey}`);
+          const parsedData = JSON.parse(cachedData);
+          return {
+            success: true,
+            data: parsedData
+          };
+        }
+        this.logger.info(`Cache miss para roles: ${cacheKey}`);
+      } catch (error) {
+        const cacheError = error as Error;
+        this.logger.error(`Erro ao acessar cache para roles: ${cacheError.message}`, { filters }, cacheError);
+      }
+      
+      // Continuar com a consulta ao banco de dados
       const offset = (page - 1) * limit;
 
       let query = db('roles as r')
@@ -181,6 +208,10 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
 
       if (status) {
         query = query.where('r.status', status);
+      } else if (active !== undefined) {
+        // Se active está definido, use-o para filtrar (true = 'active', false = 'inactive')
+        const statusValue = active === true ? 'active' : 'inactive';
+        query = query.where('r.status', statusValue);
       }
 
       if (search) {
@@ -193,7 +224,12 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
       // Contar total
       const countQuery = db('roles').count('* as count');
       if (type) countQuery.where('type', type);
-      if (status) countQuery.where('status', status);
+      if (status) {
+        countQuery.where('status', status);
+      } else if (active !== undefined) {
+        const statusValue = active === true ? 'active' : 'inactive';
+        countQuery.where('status', statusValue);
+      }
       if (search) {
         countQuery.where(function() {
           this.where('name', 'ilike', `%${search}%`)
@@ -231,27 +267,43 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
       );
 
       const totalPages = Math.ceil(total / limit);
+      
+      const result = {
+        roles,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages
+        }
+      };
+      
+      // Armazenar resultado no cache
+      try {
+        await this.redis.set(cacheKey, JSON.stringify(result), 'EX', TTL.CACHE);
+        this.logger.info(`Dados de roles armazenados no cache: ${cacheKey}`);
+        
+        // Se forem roles ativos, armazenar também em uma chave específica
+        if (active === true && !type && !search && sortBy === 'name' && sortOrder === 'asc') {
+          const activeRolesKey = 'portal_sabercon:roles:active';
+          await this.redis.set(activeRolesKey, JSON.stringify(result), 'EX', TTL.CACHE);
+          this.logger.info(`Dados de roles ativos armazenados no cache: ${activeRolesKey}`);
+        }
+      } catch (error) {
+        const cacheError = error as Error;
+        this.logger.error(`Erro ao armazenar dados de roles no cache: ${cacheError.message}`, { filters }, cacheError);
+      }
 
       return {
         success: true,
-        data: {
-          roles,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages,
-            hasNext: page < totalPages,
-            hasPrev: page > 1
-          }
-        }
+        data: result
       };
-
     } catch (error) {
-      this.logger.error('Error finding roles with filters', error as Error);
+      const err = error as Error;
+      this.logger.error(`Erro ao buscar roles com filtros: ${err.message}`, { filters }, err);
       return {
         success: false,
-        error: 'Failed to find roles'
+        error: 'Failed to retrieve roles'
       };
     }
   }
@@ -475,18 +527,24 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
   // Métodos auxiliares privados
 
   private async getPermissionsForRole(roleId: string): Promise<any[]> {
-    const permissions = await db('permissions as p')
-      .select(['p.*'])
-      .join('role_permissions as rp', 'rp.permission_id', 'p.id')
-      .where('rp.role_id', roleId);
+    try {
+      const permissions = await db('permissions as p')
+        .select(['p.*'])
+        .join('role_permissions as rp', 'rp.permission_id', 'p.id')
+        .where('rp.role_id', roleId);
 
-    return permissions.map(p => ({
-      id: p.id,
-      name: p.name,
-      resource: p.resource,
-      action: p.action,
-      description: p.description
-    }));
+      return permissions.map(p => ({
+        id: p.id,
+        name: p.name,
+        resource: p.resource,
+        action: p.action,
+        description: p.description
+      }));
+    } catch (error) {
+      this.logger.error(`Error getting permissions for role ${roleId}:`, error as Error);
+      // Em caso de erro, retorna array vazio ao invés de propagar o erro
+      return [];
+    }
   }
 
   private convertPermissionsToFrontendFormat(permissions: any[]): { [key: string]: boolean } {
@@ -506,5 +564,57 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
     });
 
     return frontendPermissions;
+  }
+
+  /**
+   * Invalida o cache para roles quando ocorrem alterações
+   */
+  private async invalidateRolesCache(): Promise<void> {
+    try {
+      // Buscar todas as chaves relacionadas a roles
+      const keys = await this.redis.keys('portal_sabercon:roles:*');
+      
+      if (keys.length > 0) {
+        // Deletar todas as chaves
+        await this.redis.del(...keys);
+        this.logger.info(`Cache de roles invalidado: ${keys.length} chaves removidas`);
+      }
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Erro ao invalidar cache de roles: ${err.message}`, null, err);
+    }
+  }
+  
+  /**
+   * Sobrescreve o método create para invalidar o cache
+   */
+  async create(data: CreateRoleDto, userId?: string): Promise<ServiceResult<any>> {
+    const result = await super.create(data, userId);
+    if (result.success) {
+      await this.invalidateRolesCache();
+    }
+    return result;
+  }
+  
+  /**
+   * Sobrescreve o método update para invalidar o cache
+   */
+  async update(id: string, data: UpdateRoleDto, userId?: string): Promise<ServiceResult<any>> {
+    const result = await super.update(id, data, userId);
+    if (result.success) {
+      await this.invalidateRolesCache();
+    }
+    return result;
+  }
+  
+  /**
+   * Sobrescreve o método delete para invalidar o cache
+   */
+  async delete(id: string, userId?: string): Promise<ServiceResult<any>> {
+    const result = await super.delete(id, userId);
+    if (result.success) {
+      await this.invalidateRolesCache();
+    }
+    return result;
   }
 } 

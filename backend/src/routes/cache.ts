@@ -1,8 +1,12 @@
 import express from 'express';
 import { validateJWT, requireRole } from '../middleware/auth';
-import { getRedisClient } from '../config/redis';
+import { getRedisClient, TTL } from '../config/redis';
+import { RoleService } from '../services/RoleService';
+import { Logger } from '../utils/Logger';
 
 const router = express.Router();
+const logger = new Logger('CacheRoutes');
+const roleService = new RoleService();
 
 /**
  * @swagger
@@ -36,25 +40,104 @@ router.get('/get', validateJWT, async (req, res) => {
       });
     }
 
+    // Log detalhado da requisição de cache
+    logger.info(`Cache request for key: ${key}`, { userId: req.user?.id });
+
     const redis = getRedisClient();
     const value = await redis.get(key);
 
     if (value) {
       try {
         const jsonValue = JSON.parse(value);
+        logger.info(`Cache hit for key: ${key}`, { userId: req.user?.id });
         return res.json({
           success: true,
           data: jsonValue,
-          exists: true
+          exists: true,
+          from_cache: true
         });
       } catch (e) {
+        logger.info(`Cache hit for key: ${key} (non-JSON value)`, { userId: req.user?.id });
         return res.json({
           success: true,
           data: value,
-          exists: true
+          exists: true,
+          from_cache: true
         });
       }
     } else {
+      // Implementação de fallback para chaves específicas
+      logger.warn(`Cache miss for key: ${key}`, { userId: req.user?.id });
+      
+      // Verificar se a chave está relacionada a roles
+      if (key.startsWith('portal_sabercon:roles:')) {
+        logger.info(`Attempting fallback for roles cache: ${key}`, { userId: req.user?.id });
+        
+        try {
+          // Extrair os parâmetros da chave
+          let params = {};
+          
+          if (key.includes('list:')) {
+            // Extrair parâmetros da lista de roles
+            const paramsString = key.split('list:')[1];
+            if (paramsString) {
+              try {
+                params = JSON.parse(paramsString);
+                logger.info('Parsed params for roles list:', params);
+              } catch (e) {
+                logger.error(`Error parsing role list params: ${e.message}`, { userId: req.user?.id });
+              }
+            }
+            
+            // Buscar roles diretamente do banco
+            const result = await roleService.findRolesWithFilters(params);
+            
+            if (result.success && result.data) {
+              // Armazenar no cache para futuras requisições
+              await redis.set(key, JSON.stringify(result.data), 'EX', TTL.CACHE);
+              logger.info(`Data fetched from database and stored in cache: ${key}`, { userId: req.user?.id });
+              
+              return res.json({
+                success: true,
+                data: result.data,
+                exists: true,
+                from_cache: false,
+                fallback_used: true
+              });
+            }
+          } else if (key.includes(':active')) {
+            // Buscar roles ativos
+            const result = await roleService.findRolesWithFilters({ 
+              active: true, 
+              page: 1, 
+              limit: 100,
+              sortBy: 'name',
+              sortOrder: 'asc'
+            });
+            
+            if (result.success && result.data) {
+              // Armazenar no cache para futuras requisições
+              await redis.set(key, JSON.stringify(result.data), 'EX', TTL.CACHE);
+              logger.info(`Active roles fetched from database and stored in cache: ${key}`, { userId: req.user?.id });
+              
+              return res.json({
+                success: true,
+                data: result.data,
+                exists: true,
+                from_cache: false,
+                fallback_used: true
+              });
+            }
+          }
+        } catch (fallbackError) {
+          logger.error(`Fallback error for key ${key}: ${fallbackError.message}`, { 
+            userId: req.user?.id,
+            stack: fallbackError.stack
+          });
+        }
+      }
+      
+      // Se chegou aqui, não foi possível implementar fallback
       return res.status(404).json({
         success: false,
         message: 'Cache key not found',
@@ -62,7 +145,12 @@ router.get('/get', validateJWT, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Error getting cache value:', error);
+    logger.error(`Error getting cache value: ${error.message}`, { 
+      userId: req.user?.id,
+      stack: error.stack,
+      key: req.query.key
+    });
+    
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

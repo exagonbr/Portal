@@ -214,6 +214,18 @@ export class ApiClient {
           this.clearAuth();
         }
         
+        // Caso especial para "Cache key not found" - tratamos como um indicador de que o recurso não existe
+        // em vez de um erro de servidor, facilitando a verificação de existência de recursos
+        if ((responseData.message === "Cache key not found" || 
+            (responseData.message && responseData.message.includes("not found"))) && 
+            responseData.success === false) {
+          console.log("[API Client] Tratando resposta 'not found' como recurso inexistente");
+          return {
+            ...responseData,
+            exists: false
+          } as ApiResponse<T>;
+        }
+        
         throw new ApiClientError(
           responseData.message || `HTTP ${response.status}: ${response.statusText}`,
           response.status,
@@ -384,6 +396,30 @@ export const handleApiError = (error: unknown): string => {
 // Função helper para verificar se é erro de autenticação
 export const isAuthError = (error: unknown): boolean => {
   return error instanceof ApiClientError && (error.status === 401 || error.status === 403);
+};
+
+// Função helper para verificar se um recurso existe com base na resposta da API
+export const resourceExists = <T>(response: ApiResponse<T>): boolean => {
+  // Se a resposta tiver a propriedade exists explicitamente definida como false, o recurso não existe
+  if (response.exists === false) {
+    return false;
+  }
+  
+  // Se a resposta for bem-sucedida, o recurso existe
+  if (response.success === true) {
+    return true;
+  }
+  
+  // Se a mensagem indicar "not found", o recurso não existe
+  if (response.message && (
+    response.message === "Cache key not found" || 
+    response.message.includes("not found")
+  )) {
+    return false;
+  }
+  
+  // Por padrão, consideramos que o recurso existe se a resposta não for explicitamente negativa
+  return true;
 };
 
 // Função helper para retry automático

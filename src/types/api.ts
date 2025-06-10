@@ -5,6 +5,7 @@ export interface ApiResponse<T> {
   message?: string;
   errors?: string[];
   pagination?: PaginationResult;
+  exists?: boolean;
 }
 
 export interface PaginationResult {

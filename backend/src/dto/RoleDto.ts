@@ -16,6 +16,7 @@ export interface UpdateRoleDto {
 export interface RoleFilterDto {
   type?: 'system' | 'custom';
   status?: 'active' | 'inactive';
+  active?: boolean;
   search?: string;
   page?: number;
   limit?: number;

@@ -18,12 +18,15 @@ import {
   prodLogFormat 
 } from './middleware/logging';
 import apiRoutes from './routes';
+import { CacheWarmupService } from './services/CacheWarmupService';
+import { Logger } from './utils/Logger';
 
 // Carrega variáveis de ambiente
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const logger = new Logger('ServerStartup');
 
 // Middlewares de segurança
 app.use(helmet({
@@ -141,10 +144,10 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 // Função para inicializar o servidor
 async function startServer() {
   try {
-    console.log('🚀 Iniciando Portal Sabercon Backend...');
+    logger.info('🚀 Iniciando Portal Sabercon Backend...');
     
     // Testa conexões
-    console.log('📊 Testando conexões...');
+    logger.info('📊 Testando conexões...');
     
     // const dbConnected = await testDatabaseConnection();
     // if (!dbConnected) {
@@ -153,31 +156,40 @@ async function startServer() {
     
     const redisConnected = await testRedisConnection();
     if (!redisConnected) {
-      console.warn('⚠️  Redis não conectado - algumas funcionalidades podem não funcionar');
+      logger.warn('⚠️  Redis não conectado - algumas funcionalidades podem não funcionar');
+    } else {
+      // Se o Redis estiver conectado, executa o warmup do cache
+      logger.info('🔥 Iniciando warmup do cache...');
+      try {
+        await CacheWarmupService.warmupCache();
+        logger.info('✅ Warmup do cache concluído com sucesso');
+      } catch (warmupError) {
+        logger.error(`❌ Erro durante o warmup do cache: ${warmupError.message}`, null, warmupError);
+      }
     }
     
     // Inicia o servidor
     app.listen(PORT, () => {
-      console.log(`✅ Servidor rodando na porta ${PORT}`);
-      console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📋 Health check: http://localhost:${PORT}/health`);
-      console.log(`🔗 API: http://localhost:${PORT}/api`);
+      logger.info(`✅ Servidor rodando na porta ${PORT}`);
+      logger.info(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`📋 Health check: http://localhost:${PORT}/health`);
+      logger.info(`🔗 API: http://localhost:${PORT}/api`);
     });
     
   } catch (error) {
-    console.error('❌ Erro ao iniciar servidor:', error);
+    logger.error(`❌ Erro ao iniciar servidor: ${error.message}`, null, error);
     process.exit(1);
   }
 }
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM recebido, encerrando servidor...');
+  logger.info('🛑 SIGTERM recebido, encerrando servidor...');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 SIGINT recebido, encerrando servidor...');
+  logger.info('🛑 SIGINT recebido, encerrando servidor...');
   process.exit(0);
 });
 

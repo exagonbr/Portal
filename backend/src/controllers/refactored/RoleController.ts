@@ -31,6 +31,12 @@ export class RoleController extends BaseController {
       sortOrder: req.query.sortOrder as any
     };
 
+    // Verificar se o parâmetro active existe na query
+    if (req.query.active !== undefined) {
+      // Converter o parâmetro string para booleano
+      filters.active = req.query.active === 'true';
+    }
+
     const result = await this.roleService.findRolesWithFilters(filters);
 
     if (!result.success) {
