@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { dashboardService } from '@/services/dashboardService';
 import AuthenticatedLayout from '@/components/AuthenticatedLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import Card, { CardHeader, CardBody as CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ToastManager';
@@ -163,7 +163,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
+                <h3 className="text-sm font-medium">Total de Usuários</h3>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -176,7 +176,7 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Cursos Ativos</CardTitle>
+                <h3 className="text-sm font-medium">Cursos Ativos</h3>
                 <GraduationCap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Biblioteca</CardTitle>
+                <h3 className="text-sm font-medium">Biblioteca</h3>
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Instituições</CardTitle>
+                <h3 className="text-sm font-medium">Instituições</h3>
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -219,10 +219,10 @@ export default function DashboardPage() {
         {stats && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <h3 className="flex items-center">
                 <BarChart3 className="h-5 w-5 mr-2" />
                 Visão Geral do Progresso
-              </CardTitle>
+              </h3>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -253,10 +253,10 @@ export default function DashboardPage() {
           {/* Recent Activities */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <h3 className="flex items-center">
                 <Activity className="h-5 w-5 mr-2" />
                 Atividades Recentes
-              </CardTitle>
+              </h3>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -291,10 +291,10 @@ export default function DashboardPage() {
           {/* Upcoming Events */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <h3 className="flex items-center">
                 <Calendar className="h-5 w-5 mr-2" />
                 Próximos Eventos
-              </CardTitle>
+              </h3>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

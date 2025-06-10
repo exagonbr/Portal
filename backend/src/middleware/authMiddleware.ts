@@ -1,8 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { AuthService } from '../services/AuthService';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
 
 export const authenticateToken = async (
   req: Request,

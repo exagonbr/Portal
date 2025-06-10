@@ -6,7 +6,7 @@ import { Role, UserRole } from '../entities/Role';
 import { CreateUserDto, LoginDto, AuthResponseDto } from '../dto/AuthDto';
 import { AuthTokenPayload } from '../types/express';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
+const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
 const JWT_EXPIRES_IN = '24h';
 
 // Redis session service import

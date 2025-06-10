@@ -100,7 +100,7 @@ export class SessionService {
   /**
    * Valida e retorna dados da sessão
    */
-  static async validateSession(sessionId: string): Promise<SessionData | null> {
+  static async validateSession(sessionId: string, userId?: any): Promise<SessionData | null> {
     try {
       const sessionDataStr = await this.redis.get(`${this.SESSION_PREFIX}${sessionId}`);
       

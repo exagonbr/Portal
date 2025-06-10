@@ -1,4 +1,4 @@
-import { apiClient, handleApiError } from './api';
+import apiClient, { handleApiError } from './api';
 import { 
   Class, 
   CreateClassData, 
@@ -19,7 +19,7 @@ interface ClassFilters {
 
 export const classService = {
   // Listar turmas com paginação
-  async list(filter?: ClassFilter): Promise<PaginatedResponseDto<Class>> {
+  async list(filter?: ClassFilter): Promise<PaginatedResponseDto<ClassResponseDto>> {
     const params = new URLSearchParams();
     
     if (filter) {
@@ -30,18 +30,18 @@ export const classService = {
       });
     }
 
-    const response = await apiClient.get<PaginatedResponseDto<Class>>(`/classes?${params.toString()}`);
+    const response = await apiClient.get<PaginatedResponseDto<ClassResponseDto>>(`/classes?${params.toString()}`);
     return response.data!;
   },
 
   // Buscar todas as turmas sem paginação
-  async getAll(): Promise<{ data: Class[] }> {
-    const response = await apiClient.get<{ data: Class[] }>('/classes/all');
+  async getAll(): Promise<{ data: ClassResponseDto[] }> {
+    const response = await apiClient.get<{ data: ClassResponseDto[] }>('/classes/all');
     return response.data!;
   },
 
   // Buscar turma por ID
-  async getById(id: string): Promise<Class> {
+  async getById(id: string): Promise<ClassResponseDto> {
     try {
       const response = await apiClient.get<ClassResponseDto>(`/classes/${id}`);
       return response.data!;
@@ -51,8 +51,8 @@ export const classService = {
   },
 
   // Buscar turmas por escola
-  async getBySchool(schoolId: string): Promise<Class[]> {
-    const response = await apiClient.get<Class[]>(`/classes/school/${schoolId}`);
+  async getBySchool(schoolId: string): Promise<ClassResponseDto[]> {
+    const response = await apiClient.get<ClassResponseDto[]>(`/classes/school/${schoolId}`);
     return response.data!;
   },
 
@@ -63,7 +63,7 @@ export const classService = {
   },
 
   // Criar nova turma
-  async create(data: ClassCreateDto): Promise<Class> {
+  async create(data: ClassCreateDto): Promise<ClassResponseDto> {
     try {
       const response = await apiClient.post<ClassResponseDto>('/classes', data);
       return response.data!;
@@ -73,7 +73,7 @@ export const classService = {
   },
 
   // Atualizar turma
-  async update(id: string, data: ClassUpdateDto): Promise<Class> {
+  async update(id: string, data: ClassUpdateDto): Promise<ClassResponseDto> {
     try {
       const response = await apiClient.put<ClassResponseDto>(`/classes/${id}`, data);
       return response.data!;
@@ -88,8 +88,8 @@ export const classService = {
   },
 
   // Ativar turma
-  async activate(id: string): Promise<Class> {
-    const response = await apiClient.post<Class>(`/classes/${id}/activate`);
+  async activate(id: string): Promise<ClassResponseDto> {
+    const response = await apiClient.post<ClassResponseDto>(`/classes/${id}/activate`);
     return response.data!;
   },
 

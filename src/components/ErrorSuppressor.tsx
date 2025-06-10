@@ -11,10 +11,12 @@ export default function ErrorSuppressor() {
       if (
         args.length > 0 &&
         typeof args[0] === 'string' &&
+        // Non-Error promise rejection was suppressed here.
+        // It is better to let these errors surface so that the root cause
+        // (an unhandled promise rejection) can be found and fixed.
         (args[0].includes('ResizeObserver loop completed with undelivered notifications') ||
          args[0].includes('ResizeObserver loop limit exceeded') ||
-         args[0].includes('Script error') ||
-         args[0].includes('Non-Error promise rejection captured'))
+         args[0].includes('Script error'))
       ) {
         // Ignorar este erro específico - é um problema conhecido e benigno
         return;
@@ -29,8 +31,7 @@ export default function ErrorSuppressor() {
         event.message &&
         (event.message.includes('ResizeObserver loop completed with undelivered notifications') ||
          event.message.includes('ResizeObserver loop limit exceeded') ||
-         event.message.includes('Script error') ||
-         event.message.includes('Non-Error promise rejection captured'))
+         event.message.includes('Script error'))
       ) {
         // Prevenir que o erro apareça no console
         event.preventDefault();

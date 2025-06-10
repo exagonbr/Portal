@@ -63,7 +63,7 @@ const SessionsAdminPage: React.FC = () => {
               <strong>TTL:</strong> As sessões expiram automaticamente após 24 horas de inatividade.
             </p>
             <p>
-              <strong>Limpeza:</strong> Sessões expiradas são limpas automaticamente, mas você pode forçar a limpeza usando o botão "Limpar Expiradas".
+              <strong>Limpeza:</strong> Sessões expiradas são limpas automaticamente, mas você pode forçar a limpeza usando o botão &quot;Limpar Expiradas&quot;.
             </p>
             <p>
               <strong>Segurança:</strong> Cada sessão é única e contém informações sobre IP, dispositivo e última atividade.

@@ -73,7 +73,17 @@ class MiddlewareUtils {
   }
 
   static createRedirectResponse(url: string, request: NextRequest): NextResponse {
-    return NextResponse.redirect(new URL(url, request.url));
+    const response = NextResponse.redirect(new URL(url, request.url), {
+      // Definir status 303 para garantir que o navegador siga o redirecionamento mesmo após POST
+      status: 303
+    });
+    
+    // Adicionar headers para garantir que o redirecionamento funcione corretamente
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    
+    return response;
   }
 
   static createRedirectWithClearCookies(url: string, request: NextRequest): NextResponse {
@@ -113,19 +123,29 @@ class SessionValidator {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
 
+      console.log('Middleware: Validando token...');
+      
       const response = await fetch(`${CONFIG.BASE_URL}/api/auth/validate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store'
+        },
         body: JSON.stringify({ token }),
         signal: controller.signal,
+        // Adicionar opções para evitar cache
+        cache: 'no-store'
       });
 
       clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Middleware: Token validado com sucesso');
         return { valid: data.valid, user: data.user };
       }
+      
+      console.log('❌ Middleware: Token inválido ou expirado');
       return { valid: false };
     } catch (error) {
       if (error instanceof Error) {
@@ -137,18 +157,31 @@ class SessionValidator {
           return { valid: true, user: null };
         }
       }
-      console.error('❌ Erro ao validar token:', error);
+      console.error('❌ Middleware: Erro ao validar token:', error);
       return { valid: false };
     }
   }
 
   static async isAuthenticated(token: string | undefined): Promise<{ authenticated: boolean; user?: any }> {
     if (!token) {
+      console.log('❌ Middleware: Token não encontrado');
       return { authenticated: false };
     }
 
-    const validation = await this.validateToken(token);
-    return { authenticated: validation.valid, user: validation.user };
+    try {
+      const validation = await this.validateToken(token);
+      
+      if (validation.valid) {
+        console.log('✅ Middleware: Usuário autenticado com sucesso');
+      } else {
+        console.log('❌ Middleware: Falha na autenticação');
+      }
+      
+      return { authenticated: validation.valid, user: validation.user };
+    } catch (error) {
+      console.error('❌ Middleware: Erro durante verificação de autenticação:', error);
+      return { authenticated: false };
+    }
   }
 }
 
@@ -231,10 +264,24 @@ class RoleAccessControl {
   }
 
   static getCorrectDashboardForRole(userRole: string | undefined): string | null {
-    if (!userRole) return null;
+    if (!userRole) {
+      console.log('❌ Role não definida, não é possível determinar dashboard');
+      return null;
+    }
+    
     // Normaliza a role para lowercase
     const normalizedRole = userRole.toLowerCase();
-    return getDashboardPath(normalizedRole);
+    
+    // Obter caminho do dashboard
+    const dashboardPath = getDashboardPath(normalizedRole);
+    
+    if (!dashboardPath) {
+      console.log(`❌ Dashboard não encontrado para role: ${normalizedRole}`);
+      return null;
+    }
+    
+    console.log(`✅ Dashboard para role ${normalizedRole}: ${dashboardPath}`);
+    return dashboardPath;
   }
 }
 
@@ -318,16 +365,22 @@ export async function middleware(request: NextRequest) {
 
   // 4. Handle authenticated users trying to access auth pages
   if (isAuthPath && token) {
+    console.log('👤 Usuário autenticado tentando acessar página de login/registro');
+    
     if (userDataCookie) {
       const userData = MiddlewareUtils.parseUserData(userDataCookie);
       if (userData) {
+        console.log(`🔍 Usuário identificado: ${userData.name} (${userData.role})`);
         const dashboardPath = RoleAccessControl.getCorrectDashboardForRole(userData.role);
         if (dashboardPath) {
+          console.log(`🔄 Redirecionando usuário autenticado de ${pathname} para ${dashboardPath}`);
           return MiddlewareUtils.createRedirectResponse(dashboardPath, request);
         }
       }
     }
+    
     // Fallback to portal if role determination fails
+    console.log('⚠️ Não foi possível determinar o dashboard correto, redirecionando para portal');
     return MiddlewareUtils.createRedirectResponse('/portal/videos', request);
   }
 
@@ -350,10 +403,22 @@ export async function middleware(request: NextRequest) {
 
     // Redirect generic dashboard to role-specific dashboard PRIMEIRO
     if (pathname === '/dashboard') {
+      console.log(`📊 Usuário ${userData.name} acessando dashboard genérico, determinando dashboard específico`);
+      
       const specificDashboard = RoleAccessControl.getCorrectDashboardForRole(userData.role);
       if (specificDashboard) {
-        console.log(`Redirecionando ${userData.name} (${userData.role}) de /dashboard para ${specificDashboard}`);
-        return MiddlewareUtils.createRedirectResponse(specificDashboard, request);
+        console.log(`🔄 Redirecionando ${userData.name} (${userData.role}) de /dashboard para ${specificDashboard}`);
+        
+        // Criar resposta com redirecionamento 303 See Other para garantir que o navegador realize o redirecionamento
+        const response = MiddlewareUtils.createRedirectResponse(specificDashboard, request);
+        
+        // Adicionar headers que podem ajudar em navegadores problemáticos
+        response.headers.set('X-Redirect-From', '/dashboard');
+        response.headers.set('X-Redirect-To', specificDashboard);
+        
+        return response;
+      } else {
+        console.log(`⚠️ Não foi possível determinar dashboard específico para ${userData.role}, mantendo no dashboard genérico`);
       }
     }
 
@@ -445,17 +510,28 @@ export async function middleware(request: NextRequest) {
     }
 
     // Verificar roles para rotas específicas
-    for (const [route, allowedRoles] of Object.entries(ROUTES.ROLE_SPECIFIC)) {
-      if (pathname.startsWith(route)) {
-        const userRole = token.role as string;
-        
-        if (!allowedRoles.includes(userRole)) {
-          return NextResponse.json(
-            { error: 'Acesso negado. Permissão insuficiente.' },
-            { status: 403 }
-          );
+    // The original loop had flawed logic. This is a corrected version.
+    const userRole = token.role as UserRole;
+
+    // Find which role's dashboard path matches the current API path
+    let requiredRole: UserRole | null = null;
+    for (const [role, paths] of Object.entries(ROUTES.ROLE_SPECIFIC)) {
+        const apiPaths = (paths as readonly string[]).map(p => `/api${p}`);
+        if (apiPaths.some(p => pathname.startsWith(p))) {
+            requiredRole = role as UserRole;
+            break;
         }
-      }
+    }
+
+    // If the path is a known role-specific path, check permissions
+    if (requiredRole) {
+        // Allow SYSTEM_ADMIN and the required role
+        if (userRole !== requiredRole && userRole !== UserRole.SYSTEM_ADMIN) {
+            return NextResponse.json(
+                { error: 'Acesso negado. Permissão insuficiente.' },
+                { status: 403 }
+            );
+        }
     }
 
     // Adicionar informações do usuário aos headers para uso nas rotas

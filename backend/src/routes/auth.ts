@@ -2,6 +2,9 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { AuthService } from '../services/auth';
 import { validateJWT } from '../middleware/auth';
+import { SessionService } from '../services/SessionService';
+import { extractClientInfo, AuthenticatedRequest } from '../middleware/sessionMiddleware';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -142,11 +145,13 @@ router.post(
  */
 router.post(
   '/login',
+  extractClientInfo,
   [
     body('email').isEmail().normalizeEmail(),
     body('password').notEmpty(),
+    body('remember').optional().isBoolean(),
   ],
-  async (req: express.Request, res: express.Response) => {
+  async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -156,24 +161,69 @@ router.post(
         });
       }
 
-      const { email, password } = req.body;
+      const { email, password, remember = false } = req.body;
+      
+      // Use the basic AuthService for user validation
       const result = await AuthService.login(email, password);
+      
+      // Create Redis session for compatibility with session middleware
+      try {
+        const { sessionId, refreshToken } = await SessionService.createSession(
+          result.user,
+          req.clientInfo!,
+          remember
+        );
 
-      return res.json({
-        success: true,
-        ...result,
-      });
+        // Generate new JWT with sessionId included
+        const tokenWithSession = jwt.sign(
+          {
+            userId: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            role: (result.user as any).role,
+            institutionId: result.user.institution_id,
+            permissions: (result.user as any).permissions || [],
+            sessionId
+          },
+          process.env.JWT_SECRET || 'ExagonTech',
+          { expiresIn: remember ? '7d' : '24h' }
+        );
+
+        return res.json({
+          success: true,
+          token: tokenWithSession,
+          refreshToken,
+          sessionId,
+          user: result.user,
+          expiresAt: new Date(Date.now() + (remember ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()
+        });
+      } catch (sessionError) {
+        // If Redis session creation fails, fall back to basic JWT
+        console.warn('Failed to create Redis session, falling back to basic JWT:', sessionError);
+        return res.json({
+          success: true,
+          ...result,
+        });
+      }
     } catch (error: any) {
-      if (error.message === 'Invalid credentials') {
+      if (error.message === 'Credenciais inválidas' || error.message === 'Invalid credentials') {
+        return res.status(401).json({
+          success: false,
+          message: 'Credenciais inválidas',
+        });
+      }
+
+      if (error.message === 'Usuário inativo') {
         return res.status(401).json({
           success: false,
           message: error.message,
         });
       }
 
+      console.error('Erro no login:', error);
       return res.status(500).json({
         success: false,
-        message: 'Error logging in',
+        message: 'Erro ao fazer login',
       });
     }
   }
@@ -302,6 +352,111 @@ router.post('/logout', validateJWT, async (req: express.Request, res: express.Re
     return res.status(500).json({
       success: false,
       message: 'Erro ao fazer logout',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/validate-session:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Validate token and session
+ *     description: Validates both JWT token and Redis session
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *               sessionId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token and session are valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 valid:
+ *                   type: boolean
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Invalid token or session
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/validate-session', async (req: express.Request, res: express.Response) => {
+  try {
+    const { token } = req.body;
+    const sessionId = req.body.sessionId; // Optional sessionId for future Redis integration
+
+    if (!token) {
+      return res.status(401).json({
+        valid: false,
+        message: 'Token não fornecido'
+      });
+    }
+
+    // 1. Validate JWT token
+    let decoded;
+    try {
+      const jwt = require('jsonwebtoken');
+      const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
+      decoded = jwt.verify(token, JWT_SECRET) as any;
+    } catch (error) {
+      return res.status(401).json({
+        valid: false,
+        message: 'Token JWT inválido'
+      });
+    }
+
+    // 2. Get user from database
+    const user = await AuthService.getUserById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({
+        valid: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    // 3. Optional: Validate Redis session if sessionId is provided and SessionService is available
+    if (sessionId) {
+      try {
+        const sessionModule = await import('../services/SessionService');
+        const SessionService = sessionModule.SessionService;
+        
+        const sessionValid = await SessionService.validateSession(sessionId);
+        if (!sessionValid) {
+          return res.status(401).json({
+            valid: false,
+            message: 'Sessão inválida ou expirada'
+          });
+        }
+      } catch (importError) {
+        // SessionService not available, continue with JWT-only validation
+        console.log('SessionService não disponível, validando apenas JWT');
+      }
+    }
+
+    return res.json({
+      valid: true,
+      user: user
+    });
+
+  } catch (error) {
+    console.error('Erro ao validar sessão:', error);
+    return res.status(500).json({
+      valid: false,
+      message: 'Erro interno do servidor'
     });
   }
 });

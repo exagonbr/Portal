@@ -130,7 +130,7 @@ router.post(
           permissions: user.role?.permissions || [],
           sessionId
         },
-        process.env.JWT_SECRET || 'default-secret-key',
+        process.env.JWT_SECRET || 'ExagonTech',
         { expiresIn: remember ? '7d' : '24h' }
       );
 
@@ -366,7 +366,7 @@ router.post(
           permissions: sessionData.permissions,
           sessionId
         },
-        process.env.JWT_SECRET || 'default-secret-key',
+        process.env.JWT_SECRET || 'ExagonTech',
         { expiresIn: '24h' }
       );
 
@@ -500,7 +500,7 @@ router.delete('/destroy/:sessionId', validateJWTAndSession, async (req: Authenti
     const { sessionId } = req.params;
 
     // Verifica se a sessão pertence ao usuário
-    const sessionData = await SessionService.validateSession(sessionId);
+    const sessionData = await SessionService.validateSession(sessionId, req.user!.userId);
     if (!sessionData || sessionData.userId !== req.user!.userId) {
       return res.status(404).json({
         success: false,

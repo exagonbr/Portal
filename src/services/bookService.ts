@@ -1,5 +1,5 @@
-import { api } from './api'
-import { BookResponseDto, BookCreateDto, BookUpdateDto, PaginatedResponse } from '@/types/api'
+import api from './api'
+import { CourseResponseDto as BookResponseDto, CourseCreateDto as BookCreateDto, CourseUpdateDto as BookUpdateDto, PaginatedResponseDto as PaginatedResponse } from '@/types/api'
 
 interface BookFilters {
   search?: string
@@ -33,7 +33,7 @@ export const bookService = {
         items: [
           {
             id: '1',
-            title: 'Introdução à Programação',
+            name: 'Introdução à Programação',
             subtitle: 'Conceitos básicos e práticos',
             author: 'João Silva',
             category: 'Tecnologia',
@@ -46,7 +46,7 @@ export const bookService = {
           },
           {
             id: '2',
-            title: 'Matemática Avançada',
+            name: 'Matemática Avançada',
             subtitle: 'Cálculo e álgebra linear',
             author: 'Maria Santos',
             category: 'Matemática',

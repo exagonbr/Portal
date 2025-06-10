@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import {
   Users,
   Plus,
@@ -132,10 +133,12 @@ const UserDetailsModal = ({
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
               {user.avatar ? (
-                <img 
+                <Image 
                   className="h-16 w-16 rounded-full object-cover border-2 border-white" 
                   src={user.avatar} 
                   alt={user.name} 
+                  width={64}
+                  height={64}
                 />
               ) : (
                 <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold">
@@ -371,31 +374,17 @@ const UserHistoryModal = ({
 const UserPermissionsModal = ({
   user,
   onClose,
-  onSave
+  onSave,
+  permissions,
+  handlePermissionChange,
 }: {
   user: ExtendedUserResponseDto | null;
   onClose: () => void;
   onSave?: () => void;
+  permissions: any;
+  handlePermissionChange: (module: string, action: string, value: boolean) => void;
 }) => {
   if (!user) return null
-
-  // Mock data para permissões - substituir por dados reais da API
-  const [permissions, setPermissions] = useState({
-    users: { create: true, read: true, update: false, delete: false },
-    courses: { create: false, read: true, update: false, delete: false },
-    reports: { create: false, read: true, update: false, delete: false },
-    settings: { create: false, read: false, update: false, delete: false }
-  })
-
-  const handlePermissionChange = (module: string, action: string, value: boolean) => {
-    setPermissions(prev => ({
-      ...prev,
-      [module]: {
-        ...prev[module as keyof typeof prev],
-        [action]: value
-      }
-    }))
-  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -421,11 +410,11 @@ const UserPermissionsModal = ({
               <div key={module} className="border border-slate-200 rounded-lg p-4">
                 <h3 className="font-semibold text-slate-800 mb-3 capitalize">{module}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.entries(actions).map(([action, enabled]) => (
+                  {Object.entries(actions as any).map(([action, enabled]) => (
                     <label key={action} className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={enabled}
+                        checked={enabled as boolean}
                         onChange={(e) => handlePermissionChange(module, action, e.target.checked)}
                         className="rounded border-slate-300"
                       />
@@ -531,18 +520,14 @@ const UserReportsModal = ({
 // Modal de Notificações do Usuário
 const UserNotificationsModal = ({
   user,
-  onClose
+  onClose,
+  notifications,
 }: {
   user: ExtendedUserResponseDto | null;
   onClose: () => void;
+  notifications: any[];
 }) => {
   if (!user) return null
-
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Bem-vindo ao sistema', message: 'Sua conta foi criada com sucesso', date: '2024-01-15', read: true },
-    { id: 2, title: 'Novo curso disponível', message: 'Matemática Avançada está disponível', date: '2024-01-14', read: false },
-    { id: 3, title: 'Certificado gerado', message: 'Seu certificado de Matemática Básica está pronto', date: '2024-01-13', read: true }
-  ])
 
   const handleSendNotification = () => {
     // Implementar envio de notificação
@@ -554,8 +539,6 @@ const UserNotificationsModal = ({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <Bell className="h-6 w-6" />
               <div>
                 <h2 className="text-xl font-bold">Notificações</h2>
                 <p className="text-orange-100">{user.name}</p>
@@ -565,7 +548,6 @@ const UserNotificationsModal = ({
               <X className="h-6 w-6" />
             </button>
           </div>
-        </div>
 
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
@@ -724,7 +706,28 @@ export default function ManageUsers() {
   const [showPermissionsModal, setShowPermissionsModal] = useState(false)
   const [showReportsModal, setShowReportsModal] = useState(false)
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [permissions, setPermissions] = useState({
+    users: { create: true, read: true, update: false, delete: false },
+    courses: { create: false, read: true, update: false, delete: false },
+    reports: { create: false, read: true, update: false, delete: false },
+    settings: { create: false, read: false, update: false, delete: false }
+  });
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'Bem-vindo ao sistema', message: 'Sua conta foi criada com sucesso', date: '2024-01-15', read: true },
+    { id: 2, title: 'Novo curso disponível', message: 'Matemática Avançada está disponível', date: '2024-01-14', read: false },
+    { id: 3, title: 'Certificado gerado', message: 'Seu certificado de Matemática Básica está pronto', date: '2024-01-13', read: true }
+  ]);
+
+  const handlePermissionChange = (module: string, action: string, value: boolean) => {
+    setPermissions(prev => ({
+      ...prev,
+      [module]: {
+        ...(prev[module as keyof typeof prev] || {}),
+        [action]: value
+      }
+    }))
+  }
 
 
   // Função para converter ExtendedUserResponseDto para UserDto
@@ -767,60 +770,61 @@ export default function ManageUsers() {
 
   // Carregar usuários
   const loadUsers = useCallback(async (showLoadingIndicator = true) => {
+    if (showLoadingIndicator) setLoading(true);
+
     try {
-      if (showLoadingIndicator) setLoading(true)
-      
-      // Criamos um objeto de filtro com todos os parâmetros necessários
-      const filterParams: ExtendedUserFilterDto = {
+      const params: ExtendedUserFilterDto = {
         page: currentPage,
         limit: itemsPerPage,
-        search: searchTerm || undefined,
         sortBy,
         sortOrder,
-        ...filters
-      }
-      
-      // Log para debug
-      console.log('Carregando usuários com parâmetros:', filterParams)
-      
-      const response = await userService.getUsers(filterParams)
-      
-      // Enriquecer os dados com role_name e institution_name se não estiverem presentes
+        ...filters,
+      };
+
+      const response = searchTerm
+        ? await userService.searchUsers(searchTerm, params)
+        : await userService.getUsers(params);
+
+      console.log('Resposta da API:', response);
+
       const enrichedUsers = response.items.map(user => {
-        const extendedUser = user as ExtendedUserResponseDto
-        const role = roles.find(r => r.id === user.role_id)
-        const institution = institutions.find(i => i.id === user.institution_id)
-        
+        const role = roles.find(r => r.id === user.role_id);
+        const institution = institutions.find(i => i.id === user.institution_id);
         return {
-          ...extendedUser,
-          role_name: extendedUser.role_name || role?.name || 'Não definida',
-          institution_name: extendedUser.institution_name || institution?.name || 'Não vinculada'
-        } as ExtendedUserResponseDto
-      })
-      
-      setUsers(enrichedUsers || [])
-      setTotalPages(response.pagination?.totalPages || 1)
-      setTotalItems(response.pagination?.total || 0)
-      
-      // Log para debug
-      console.log(`Carregados ${response.items?.length} usuários de ${response.pagination?.total}`)
-      console.log('Primeiro usuário:', enrichedUsers[0])
+          ...user,
+          role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
+          institution_name: (user as ExtendedUserResponseDto).institution_name || institution?.name || 'Não vinculada',
+        } as ExtendedUserResponseDto;
+      });
+
+      console.log('Dados enriquecidos:', enrichedUsers);
+
+      setUsers(enrichedUsers);
+      setTotalPages(response.pagination?.totalPages || 1);
+      setTotalItems(response.pagination?.total || 0);
+
     } catch (error: any) {
-      console.error('Erro ao carregar usuários:', error)
-      showNotification(error.message || 'Erro ao carregar usuários', 'error')
+      console.error('Erro ao carregar usuários:', error);
+      showError(error.message || 'Erro ao carregar usuários');
+      // Em caso de erro, limpa a lista para evitar exibir dados incorretos
+      setUsers([]);
+      setTotalPages(1);
+      setTotalItems(0);
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      setLoading(false);
+      setRefreshing(false);
     }
-  }, [currentPage, searchTerm, filters, sortBy, sortOrder, itemsPerPage, roles, institutions])
+  }, [currentPage, searchTerm, filters, sortBy, sortOrder, itemsPerPage, roles, institutions, showError]);
 
   useEffect(() => {
-    loadAuxiliaryData()
-  }, [])
+    loadAuxiliaryData();
+  }, []);
 
   useEffect(() => {
-    loadUsers()
-  }, [loadUsers])
+    if (roles.length > 0 || institutions.length > 0) {
+      loadUsers();
+    }
+  }, [loadUsers, roles, institutions]);
 
   // Função de busca
   const handleSearch = () => {
@@ -1109,6 +1113,19 @@ export default function ManageUsers() {
 
   const columns: CRUDColumn<ExtendedUserResponseDto>[] = [
     {
+      key: 'id',
+      label: 'ID',
+      sortable: true,
+      render: (user) => {
+        if (!user) return '-'
+        return (
+          <div className="text-xs text-slate-600 truncate max-w-[120px]" title={user.id}>
+            {user.id}
+          </div>
+        )
+      }
+    },
+    {
       key: 'name',
       label: 'Nome',
       sortable: true,
@@ -1117,10 +1134,12 @@ export default function ManageUsers() {
         return (
           <div className="flex items-center gap-3">
             {user.avatar ? (
-              <img
+              <Image
                 className="h-10 w-10 rounded-full object-cover border-2 border-primary-light shadow-sm"
                 src={user.avatar}
                 alt={user.name}
+                width={40}
+                height={40}
               />
             ) : (
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-DEFAULT to-primary-dark flex items-center justify-center text-white text-sm font-bold shadow-sm">
@@ -1147,6 +1166,20 @@ export default function ManageUsers() {
             <a href={`mailto:${user.email}`} className="text-blue-600 hover:text-blue-800 hover:underline">
               {user.email}
             </a>
+          </div>
+        )
+      }
+    },
+    {
+      key: 'endereco',
+      label: 'Endereço',
+      render: (user) => {
+        if (!user) return '-'
+        return (
+          <div className="text-slate-700">
+            {user.endereco === undefined || user.endereco === '' || user.endereco === null
+              ? 'Não informado'
+              : user.endereco}
           </div>
         )
       }
@@ -1572,9 +1605,11 @@ export default function ManageUsers() {
           deletePermission="users.delete"
           viewPermission="users.view"
           showSearch={false}
+          emptyMessage="Nenhum usuário encontrado. Verifique os filtros aplicados ou adicione novos usuários."
         />
+      
         
-        <Pagination 
+        <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
@@ -1593,7 +1628,7 @@ export default function ManageUsers() {
 
         <div className="flex justify-center mt-3 items-center gap-2">
           <span className="text-sm text-slate-600">Itens por página:</span>
-          <select 
+          <select
             value={itemsPerPage}
             onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
             className="text-sm border rounded px-2 py-1 bg-white"
@@ -1720,6 +1755,8 @@ export default function ManageUsers() {
               setSelectedUser(null)
               showSuccess('Permissões atualizadas com sucesso!')
             }}
+            permissions={permissions}
+            handlePermissionChange={handlePermissionChange}
           />
         )}
 
@@ -1742,6 +1779,7 @@ export default function ManageUsers() {
               setShowNotificationsModal(false)
               setSelectedUser(null)
             }}
+            notifications={notifications}
           />
         )}
       </div>

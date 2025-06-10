@@ -1,4 +1,5 @@
-import knex, { Knex } from 'knex'
+import knex, { Knex } from 'knex';
+import { Model } from 'objection';
 
 interface DBConfig {
   client: string
@@ -36,9 +37,10 @@ const config: DBConfig = {
 
 export function getDatabase(): Knex {
   if (!db) {
-    db = knex(config)
+    db = knex(config);
+    Model.knex(db);
   }
-  return db
+  return db;
 }
 
 export async function closeDatabase(): Promise<void> {

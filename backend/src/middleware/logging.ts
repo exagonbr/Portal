@@ -3,7 +3,7 @@ import morgan from 'morgan';
 
 // Custom token for user ID
 morgan.token('user-id', (req: Request) => {
-  return req.user?.userId || 'anonymous';
+  return req.user?.email || 'anonymous';
 });
 
 // Custom token for response time in a more readable format
@@ -73,7 +73,7 @@ export const errorLogger = (err: any, req: Request, res: Response, next: NextFun
     method: req.method,
     url: req.originalUrl,
     userAgent: req.get('User-Agent'),
-    userId: req.user?.userId || 'anonymous',
+    email: req.user?.email || 'anonymous',
     ip: req.ip,
     error: {
       message: err.message,

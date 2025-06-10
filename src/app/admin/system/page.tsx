@@ -149,7 +149,6 @@ export default function AdminSystemPage() {
             </button>
           </nav>
         </div>
-      </div>
 
       {/* Overview Tab */}
       {selectedTab === 'overview' && (

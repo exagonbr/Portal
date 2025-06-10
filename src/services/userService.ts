@@ -33,62 +33,30 @@ export class UserService {
    */
   async getUsers(filters?: UserFilterDto): Promise<ListResponse<UserResponseDto>> {
     try {
-      // Certificar-se de que filters não é undefined para evitar problemas
-      const filterParams = filters || {};
-      
-      // Garantir que page e limit estão definidos
-      if (!filterParams.page) filterParams.page = 1;
-      if (!filterParams.limit) filterParams.limit = 10;
-      
-      // Gera chave de cache baseada nos filtros
+      const filterParams = {
+        page: 1,
+        limit: 10,
+        ...filters,
+      };
+
       const cacheKey = CacheKeys.USER_LIST(JSON.stringify(filterParams));
       
-      // Desativar cache temporariamente para debug
+      // O cache está desativado para debug, mas a estrutura está aqui
       // return await withCache(cacheKey, async () => {
       
-      // Log para debug
-      console.log('Enviando request com parâmetros:', filterParams);
+      console.log('Buscando usuários com parâmetros:', filterParams);
       
       const response = await withRetry(() =>
-        apiClient.get<UserResponseDto[]>(this.baseEndpoint, filterParams as Record<string, string | number | boolean>)
+        apiClient.get<ListResponse<UserResponseDto>>(this.baseEndpoint, filterParams as Record<string, string | number | boolean>)
       );
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha ao buscar usuários');
       }
 
-      // Log para debug
-      console.log('Resposta da API:', {
-        total: response.data.length,
-        pagination: response.pagination
-      });
+      console.log(`Recebidos ${response.data.items.length} usuários de um total de ${response.data.pagination?.total}`);
       
-      // Alerta quando há muitos itens sem paginação
-      if (!response.pagination && response.data.length > 100) {
-        console.warn(`Atenção: API retornou ${response.data.length} itens sem paginação. Isso pode causar problemas de performance.`);
-      }
-      
-      // Limita o número de itens retornados quando não há paginação para evitar problemas de performance
-      const MAX_ITEMS_WITHOUT_PAGINATION = 100;
-      let itemsToReturn = response.data;
-      let totalItems = response.data.length;
-      
-      if (!response.pagination && response.data.length > MAX_ITEMS_WITHOUT_PAGINATION) {
-        console.warn(`Limitando retorno para ${MAX_ITEMS_WITHOUT_PAGINATION} itens dos ${response.data.length} retornados pela API.`);
-        itemsToReturn = response.data.slice(0, MAX_ITEMS_WITHOUT_PAGINATION);
-      }
-
-      return {
-        items: itemsToReturn,
-        pagination: response.pagination || {
-          page: filterParams.page || 1,
-          limit: filterParams.limit || 10,
-          total: totalItems,
-          totalPages: Math.ceil(totalItems / (filterParams.limit || 10)),
-          hasNext: totalItems > MAX_ITEMS_WITHOUT_PAGINATION,
-          hasPrev: (filterParams.page || 1) > 1
-        }
-      };
+      return response.data;
       // }, CacheTTL.MEDIUM);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
@@ -291,43 +259,18 @@ export class UserService {
     try {
       const searchParams = {
         q: query,
-        ...filters
+        ...filters,
       };
-
+  
       const response = await withRetry(() =>
-        apiClient.get<UserResponseDto[]>(`${this.baseEndpoint}/search`, searchParams as Record<string, string | number | boolean>)
+        apiClient.get<ListResponse<UserResponseDto>>(`${this.baseEndpoint}/search`, searchParams as Record<string, string | number | boolean>)
       );
-
+  
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha na busca de usuários');
       }
-      
-      // Alerta quando há muitos itens sem paginação
-      if (!response.pagination && response.data.length > 100) {
-        console.warn(`Atenção: API de busca retornou ${response.data.length} itens sem paginação. Isso pode causar problemas de performance.`);
-      }
-      
-      // Limita o número de itens retornados quando não há paginação para evitar problemas de performance
-      const MAX_ITEMS_WITHOUT_PAGINATION = 100;
-      let itemsToReturn = response.data;
-      let totalItems = response.data.length;
-      
-      if (!response.pagination && response.data.length > MAX_ITEMS_WITHOUT_PAGINATION) {
-        console.warn(`Limitando retorno de busca para ${MAX_ITEMS_WITHOUT_PAGINATION} itens dos ${response.data.length} retornados pela API.`);
-        itemsToReturn = response.data.slice(0, MAX_ITEMS_WITHOUT_PAGINATION);
-      }
-
-      return {
-        items: itemsToReturn,
-        pagination: response.pagination || {
-          page: filters?.page || 1,
-          limit: filters?.limit || 10,
-          total: totalItems,
-          totalPages: Math.ceil(totalItems / (filters?.limit || 10)),
-          hasNext: totalItems > MAX_ITEMS_WITHOUT_PAGINATION,
-          hasPrev: (filters?.page || 1) > 1
-        }
-      };
+  
+      return response.data;
     } catch (error) {
       console.error('Erro na busca de usuários:', error);
       throw new Error(handleApiError(error));

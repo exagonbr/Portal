@@ -1,8 +1,4 @@
-import { Course, CourseLevel } from '../models/Course';
-import { User } from '../models/User'; // Para tipos de professor/aluno
-import { Module } from '../models/Module'; // Para tipo de módulo
-import { Book } from '../models/Book'; // Para tipo de livro
-import { Video } from '../models/Video'; // Para tipo de vídeo
+import { Course } from '../models/Course';
 
 import { CourseRepository } from '../repositories/CourseRepository';
 import { UserRepository } from '../repositories/UserRepository'; // Para buscar detalhes de usuários

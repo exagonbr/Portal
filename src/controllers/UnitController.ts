@@ -1,7 +1,17 @@
 import { Request, Response } from 'express';
 import { Unit } from '../models/Unit';
 
-export class UnitController {
+class UnitController {
+  async getAllUnits(req: Request, res: Response) {
+    try {
+      const units = await Unit.query().orderBy('name');
+      return res.json(units);
+    } catch (error) {
+      console.error('Erro ao listar unidades:', error);
+      return res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  }
+
   async list(req: Request, res: Response) {
     try {
       const units = await Unit.query()
@@ -108,36 +118,31 @@ export class UnitController {
       }
 
       if (type) {
-        queryBuilder = queryBuilder.where('type', type);
+        queryBuilder = queryBuilder.where('type', type as string);
       }
 
       if (institution_id) {
-        queryBuilder = queryBuilder.where('institution_id', institution_id);
+        queryBuilder = queryBuilder.where('institution_id', institution_id as string);
       }
 
       if (active !== undefined) {
         queryBuilder = queryBuilder.where('active', active === 'true');
       }
 
-      const [units, total] = await Promise.all([
-        queryBuilder
-          .withGraphFetched('institution')
-          .orderBy('name')
-          .limit(limit)
-          .offset(offset),
-        queryBuilder.resultSize()
-      ]);
+      const units = await queryBuilder.page(page - 1, limit);
 
       return res.json({
-        data: units,
-        total,
+        data: units.results,
+        total: units.total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(units.total / limit)
       });
     } catch (error) {
       console.error('Erro ao buscar unidades:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
-} 
+}
+
+export default new UnitController();

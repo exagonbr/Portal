@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../config/database';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
+const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
 const JWT_EXPIRES_IN = '24h';
 
 interface User {

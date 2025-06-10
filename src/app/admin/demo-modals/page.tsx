@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState } from 'react';
-import CourseEditModal from '@/components/CourseEditModal';
-import CourseAddModal from '@/components/CourseAddModal';
+import { CourseEditModal } from '@/components/CourseEditModal';
+import { CourseAddModal } from '@/components/CourseAddModal';
 import StudentEditModal from '@/components/StudentEditModal';
 import StudentAddModal from '@/components/StudentAddModal';
 import RoleEditModal from '@/components/RoleEditModal';
@@ -32,40 +32,13 @@ export default function DemoModalsPage() {
   const sampleCourse = {
     id: '1',
     name: 'Matemática Avançada',
-    code: 'MAT-401',
     description: 'Curso avançado de matemática com foco em cálculo diferencial e integral',
-    category: 'Exatas' as const,
-    level: 'Avançado' as const,
-    duration: '120 horas',
-    credits: 6,
-    status: 'Ativo' as const,
-    startDate: '2025-02-01',
-    endDate: '2025-07-15',
-    maxStudents: 30,
-    currentStudents: 25,
-    teacherId: 'teacher-1',
-    teacherName: 'Prof. João Silva',
-    institutionId: 'inst-1',
-    institutionName: 'Universidade Federal',
-    price: 1500.00,
-    createdAt: '2025-01-01T00:00:00Z',
-    studentCount: 25,
-    teacherCount: 3,
-    rating: 4.8,
-    certificateAvailable: true,
-    modules: [
-      { id: '1', name: 'Limites e Continuidade', order: 1, duration: 20 },
-      { id: '2', name: 'Derivadas', order: 2, duration: 25 },
-      { id: '3', name: 'Integrais', order: 3, duration: 30 }
-    ],
-    students: [
-      { id: '1', name: 'Ana Silva', email: 'ana@email.com', status: 'Ativo' },
-      { id: '2', name: 'Pedro Santos', email: 'pedro@email.com', status: 'Ativo' }
-    ],
-    evaluations: [
-      { id: '1', name: 'Prova 1', type: 'Prova', weight: 30, date: '2025-03-15' },
-      { id: '2', name: 'Trabalho Final', type: 'Trabalho', weight: 40, date: '2025-06-20' }
-    ]
+    level: 'Avançado',
+    type: 'PRESENCIAL',
+    active: true,
+    institution_id: 'inst-1',
+    created_at: '2025-01-01T00:00:00Z',
+    updated_at: '2025-01-01T00:00:00Z'
   };
 
   const sampleStudent = {
@@ -314,11 +287,15 @@ export default function DemoModalsPage() {
         isOpen={modals.courseEdit}
         onClose={() => closeModal('courseEdit')}
         course={sampleCourse}
+        onSave={async (data) => { console.log(data) }}
+        title="Editar Curso"
       />
 
       <CourseAddModal
         isOpen={modals.courseAdd}
         onClose={() => closeModal('courseAdd')}
+        onSave={async (data) => { console.log(data) }}
+        title="Adicionar Novo Curso"
       />
 
       <StudentEditModal

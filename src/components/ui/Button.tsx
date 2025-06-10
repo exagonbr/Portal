@@ -75,4 +75,33 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 )
 Button.displayName = "Button"
 
-export { Button, buttonVariants }
+const ButtonGroup = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "inline-flex items-center justify-center gap-2",
+      className
+    )}
+    {...props}
+  />
+));
+ButtonGroup.displayName = "ButtonGroup";
+
+const FAB = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, ...props }, ref) => (
+    <Button
+      ref={ref}
+      className={cn(
+        "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg",
+        className
+      )}
+      {...props}
+    />
+  )
+);
+FAB.displayName = "FAB";
+
+export { Button, buttonVariants, ButtonGroup, FAB };

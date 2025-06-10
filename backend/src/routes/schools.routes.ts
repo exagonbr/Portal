@@ -22,10 +22,10 @@ router.get('/', authMiddleware, validatePermission('schools:read'), async (req, 
     }
 
     const schools = await query;
-    res.json(schools);
+    return res.json(schools);
   } catch (error) {
     console.error('Error fetching schools:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -49,10 +49,10 @@ router.get('/:id', authMiddleware, validatePermission('schools:read'), async (re
       return res.status(404).json({ error: 'School not found' });
     }
 
-    res.json(school);
+    return res.json(school);
   } catch (error) {
     console.error('Error fetching school:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -97,10 +97,10 @@ router.post('/', authMiddleware, validatePermission('schools:create'), async (re
       })
       .returning('*');
 
-    res.status(201).json(school);
+    return res.status(201).json(school);
   } catch (error) {
     console.error('Error creating school:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -151,10 +151,10 @@ router.put('/:id', authMiddleware, validatePermission('schools:update'), async (
       return res.status(404).json({ error: 'School not found' });
     }
 
-    res.json(school);
+    return res.json(school);
   } catch (error) {
     console.error('Error updating school:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -178,10 +178,10 @@ router.delete('/:id', authMiddleware, validatePermission('schools:delete'), asyn
       return res.status(404).json({ error: 'School not found' });
     }
 
-    res.json({ message: 'School deleted successfully' });
+    return res.json({ message: 'School deleted successfully' });
   } catch (error) {
     console.error('Error deleting school:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

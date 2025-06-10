@@ -1,7 +1,27 @@
 import { ApiResponse, ApiError } from '../types/api';
 
 // Configuração base da API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Função para garantir que a URL base da API esteja correta
+const getApiBaseUrl = (): string => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // Se a variável de ambiente não estiver definida, usa o padrão.
+  if (!envUrl) {
+    return 'http://localhost:3001/api';
+  }
+
+  // Remove barras no final, se houver.
+  const cleanedUrl = envUrl.replace(/\/+$/, '');
+
+  // Garante que a URL termina com /api.
+  if (cleanedUrl.endsWith('/api')) {
+    return cleanedUrl;
+  }
+
+  return `${cleanedUrl}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Nota: Para que o CORS funcione corretamente, o servidor deve enviar os seguintes headers:
 // Access-Control-Allow-Origin: *
@@ -12,12 +32,19 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/a
 const normalizeEndpoint = (endpoint: string): string => {
   // Remove barras duplicadas
   let normalized = endpoint.replace(/\/+/g, '/');
-  
-  // Remove barra inicial se existir
+
+  // Remove /api/ do início para evitar duplicação, pois a baseURL já contém /api
+  if (normalized.startsWith('/api/')) {
+    normalized = normalized.substring(5);
+  } else if (normalized.startsWith('api/')) {
+    normalized = normalized.substring(4);
+  }
+
+  // Remove a barra inicial restante, se houver, para garantir que a junção com a baseURL seja correta.
   if (normalized.startsWith('/')) {
     normalized = normalized.substring(1);
   }
-  
+
   return normalized;
 };
 
@@ -36,7 +63,7 @@ export class ApiClientError extends Error {
 
 // Interface para opções de requisição
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
   headers?: Record<string, string>;
   body?: any;
   params?: Record<string, string | number | boolean>;
@@ -79,7 +106,9 @@ export class ApiClient {
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
     const normalizedEndpoint = normalizeEndpoint(endpoint);
-    const url = new URL(normalizedEndpoint, this.baseURL);
+    // Garante que a baseURL termina com uma barra para a junção correta
+    const base = this.baseURL.endsWith('/') ? this.baseURL : `${this.baseURL}/`;
+    const url = new URL(normalizedEndpoint, base);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -138,10 +167,14 @@ export class ApiClient {
       const requestOptions: RequestInit = {
         method,
         headers,
-        body: body instanceof FormData ? body : JSON.stringify(body),
         credentials: 'same-origin', // Alterado para permitir Access-Control-Allow-Origin: *
         mode: 'cors' // Explicitamente indica que é uma requisição CORS
       };
+
+      // Requisições GET/HEAD não podem ter corpo
+      if (method !== 'GET' && method !== 'HEAD' && body !== undefined) {
+        requestOptions.body = body instanceof FormData ? body : JSON.stringify(body);
+      }
 
       // Implementa timeout
       const controller = new AbortController();
@@ -165,11 +198,12 @@ export class ApiClient {
         responseData = await response.json();
         console.log('[API Response Data]', responseData);
       } else {
+        const responseText = await response.text();
         // Para respostas não-JSON, cria uma resposta padrão
         responseData = {
           success: response.ok,
-          data: (await response.text()) as any,
-          message: response.ok ? 'Success' : 'Request failed'
+          data: responseText as any,
+          message: response.ok ? 'Success' : (responseText || 'Request failed')
         };
       }
 

@@ -78,8 +78,8 @@ export const validateJWTAndSession = async (
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
-    const decoded = jwt.verify(token, secret) as any;
+    const secret = process.env.JWT_SECRET || 'ExagonTech';
+        const decoded = jwt.verify(token, secret) as any;
     
     if (typeof decoded === 'string' || !isValidAuthTokenPayload(decoded)) {
       return res.status(401).json({
@@ -105,14 +105,38 @@ export const validateJWTAndSession = async (
     if (userAuth.sessionId) {
       const sessionValid = await SessionService.validateSession(userAuth.sessionId);
       if (!sessionValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Sessão inválida ou expirada'
-        });
+        // Se a sessão não existe mas o JWT é válido, criar uma nova sessão
+        console.log('⚠️ Sessão não encontrada, criando nova sessão para compatibilidade');
+        try {
+          const { sessionId: newSessionId } = await SessionService.createSession(
+            {
+              id: userAuth.userId,
+              email: userAuth.email,
+              name: userAuth.name,
+              role_name: userAuth.role,
+              institution_id: userAuth.institutionId,
+              permissions: userAuth.permissions
+            },
+            req.clientInfo || {
+              ipAddress: req.ip || 'unknown',
+              userAgent: req.headers['user-agent'] || 'unknown'
+            },
+            false
+          );
+          userAuth.sessionId = newSessionId;
+          req.sessionId = newSessionId;
+        } catch (sessionError) {
+          console.error('Erro ao criar sessão de compatibilidade:', sessionError);
+          return res.status(401).json({
+            success: false,
+            message: 'Sessão inválida ou expirada'
+          });
+        }
       }
     }
 
     req.user = userAuth;
+    req.sessionId = userAuth.sessionId;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -160,8 +184,8 @@ export const validateJWTOnly = async (
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
-    const decoded = jwt.verify(token, secret) as any;
+    const secret = process.env.JWT_SECRET || 'ExagonTech';
+        const decoded = jwt.verify(token, secret) as any;
     
     if (typeof decoded === 'string' || !isValidAuthTokenPayload(decoded)) {
       return res.status(401).json({
@@ -314,8 +338,8 @@ export const optionalAuth = async (
       const token = authHeader.substring(7);
       
       if (token) {
-        const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
-        const decoded = jwt.verify(token, secret);
+    const secret = process.env.JWT_SECRET || 'ExagonTech';
+            const decoded = jwt.verify(token, secret);
         
         if (typeof decoded !== 'string' && isValidAuthTokenPayload(decoded)) {
           const userAuth: AuthTokenPayload = {

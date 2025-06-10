@@ -27,50 +27,58 @@ export class AuthService {
    */
   async login(email: string, password: string): Promise<LoginResponse> {
     try {
-      const loginData: LoginDto = { email, password };
+      console.log('🔍 Iniciando login para:', email);
       
-      const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/login`, loginData);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (!response.success || !response.data) {
+      const data = await response.json();
+      console.log('📡 Resposta do login:', { status: response.status, success: data.success });
+
+      if (!response.ok || !data.success) {
         return {
           success: false,
-          message: response.message || 'Falha na autenticação'
+          message: data.message || 'Falha na autenticação'
         };
       }
 
-      const { user, token, expires_at } = response.data;
+      // Extrair dados do usuário da resposta
+      const user = data.user;
+      if (!user) {
+        return {
+          success: false,
+          message: 'Dados do usuário não encontrados na resposta'
+        };
+      }
 
-      // Salva o token e dados do usuário
-      this.saveAuthData(token, user, expires_at);
-
-      // Converte UserResponseDto para User (compatibilidade)
+      // Converte para formato compatível
       const compatibleUser = this.convertToCompatibleUser(user);
+      
+      // Salvar dados no localStorage também para acesso rápido
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(compatibleUser));
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+        }
+      }
 
+      console.log('✅ Login realizado com sucesso para:', compatibleUser.name);
+      
       return {
         success: true,
         user: compatibleUser
       };
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.error('❌ Erro no login:', error);
       
-      if (error instanceof ApiClientError) {
-        if (error.status === 401) {
-          return {
-            success: false,
-            message: 'Email ou senha incorretos'
-          };
-        }
-        if (error.status === 400) {
-          return {
-            success: false,
-            message: error.errors?.join(', ') || 'Dados inválidos'
-          };
-        }
-      }
-
       return {
         success: false,
-        message: handleApiError(error)
+        message: 'Erro de conexão. Tente novamente.'
       };
     }
   }
@@ -152,33 +160,56 @@ export class AuthService {
    */
   async getCurrentUser(): Promise<User | null> {
     try {
-      // Verifica se há token válido
-      if (!this.isAuthenticated()) {
-        return null;
+      // Primeiro tenta buscar do localStorage
+      if (typeof window !== 'undefined') {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          try {
+            const userData = JSON.parse(userStr);
+            if (userData.id && userData.email) {
+              console.log('✅ Usuário encontrado no localStorage:', userData.name);
+              return this.convertToCompatibleUser(userData);
+            }
+          } catch (error) {
+            console.error('Erro ao parsear dados do usuário:', error);
+          }
+        }
       }
 
-      const response = await apiClient.get<UserWithRoleDto>('/users/me');
+      // Se não encontrou no localStorage, tenta validar com o backend
+      const response = await fetch('/api/auth/validate', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (!response.success || !response.data) {
-        // Token pode estar expirado, limpa dados
+      if (!response.ok) {
+        console.log('❌ Validação falhou, limpando dados');
         this.clearAuthData();
         return null;
       }
 
-      const user = this.convertToCompatibleUser(response.data);
+      const data = await response.json();
+      
+      if (!data.valid || !data.user) {
+        console.log('❌ Token inválido, limpando dados');
+        this.clearAuthData();
+        return null;
+      }
+
+      const user = this.convertToCompatibleUser(data.user);
       
       // Atualiza dados do usuário no storage
       this.saveUserData(user);
-
+      
+      console.log('✅ Usuário validado com sucesso:', user.name);
       return user;
     } catch (error) {
-      console.error('Erro ao buscar usuário atual:', error);
+      console.error('❌ Erro ao buscar usuário atual:', error);
       
-      // Se for erro de autenticação, limpa dados
-      if (isAuthError(error)) {
-        this.clearAuthData();
-      }
-
+      // Em caso de erro, limpa dados
+      this.clearAuthData();
       return null;
     }
   }
@@ -188,14 +219,30 @@ export class AuthService {
    */
   async logout(): Promise<void> {
     try {
-      // Tenta fazer logout no servidor
-      await apiClient.post('/auth/logout');
+      console.log('🔄 AuthService: Iniciando logout...');
+      
+      // Fazer logout diretamente usando o endpoint da API Next.js
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Não é necessário enviar o token aqui, pois ele será obtido dos cookies pelo servidor
+      });
+      
+      if (response.ok) {
+        console.log('✅ AuthService: Logout realizado com sucesso no servidor');
+      } else {
+        console.warn(`⚠️ AuthService: Resposta inesperada no logout: ${response.status}`);
+        // Continuamos com o processo de logout local de qualquer forma
+      }
     } catch (error) {
-      console.error('Erro no logout do servidor:', error);
-      // Continua com logout local mesmo se houver erro no servidor
+      console.error('❌ AuthService: Erro ao fazer logout no servidor:', error);
+      // Continuamos com o processo de logout local mesmo em caso de erro
     } finally {
-      // Sempre limpa dados locais
+      // Sempre limpa dados locais, independentemente do resultado da chamada à API
       this.clearAuthData();
+      console.log('✅ AuthService: Dados locais limpos com sucesso');
     }
   }
 
@@ -333,21 +380,70 @@ export class AuthService {
   private clearAuthData(): void {
     if (typeof window === 'undefined') return;
 
-    // Limpa API client
-    apiClient.clearAuth();
-    
-    // Limpa localStorage
-    localStorage.removeItem('auth_expires_at');
-    localStorage.removeItem('user');
-    localStorage.removeItem('session_id');
-    
-    // Limpa cookies
-    const cookiesToClear = ['auth_token', 'user_data', 'session_id'];
-    cookiesToClear.forEach(cookieName => {
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
-    });
+    console.log('🧹 AuthService: Limpando dados de autenticação...');
+
+    try {
+      // Limpa API client
+      try {
+        apiClient.clearAuth();
+        console.log('✅ AuthService: API client limpo');
+      } catch (e) {
+        console.error('⚠️ AuthService: Erro ao limpar API client:', e);
+      }
+      
+      // Limpa localStorage
+      try {
+        const keysToRemove = [
+          'auth_token', 
+          'auth_expires_at', 
+          'user', 
+          'session_id', 
+          'refresh_token'
+        ];
+        
+        keysToRemove.forEach(key => {
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {
+            console.warn(`⚠️ AuthService: Erro ao remover ${key} do localStorage:`, e);
+          }
+        });
+        console.log('✅ AuthService: localStorage limpo');
+      } catch (e) {
+        console.error('⚠️ AuthService: Erro ao limpar localStorage:', e);
+      }
+      
+      // Limpa cookies
+      try {
+        const cookiesToClear = ['auth_token', 'user_data', 'session_id', 'refresh_token'];
+        
+        cookiesToClear.forEach(cookieName => {
+          try {
+            document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+            document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+            document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
+          } catch (e) {
+            console.warn(`⚠️ AuthService: Erro ao remover cookie ${cookieName}:`, e);
+          }
+        });
+        console.log('✅ AuthService: Cookies limpos');
+      } catch (e) {
+        console.error('⚠️ AuthService: Erro ao limpar cookies:', e);
+      }
+
+      console.log('✅ AuthService: Todos os dados de autenticação foram limpos');
+    } catch (error) {
+      console.error('❌ AuthService: Erro crítico ao limpar dados de autenticação:', error);
+      // Mesmo com erro, tentamos garantir o mínimo de limpeza
+      try {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        document.cookie = 'auth_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+        document.cookie = 'user_data=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      } catch (e) {
+        console.error('❌ AuthService: Falha na limpeza de emergência:', e);
+      }
+    }
   }
 
   private getStoredToken(): string | null {
@@ -366,33 +462,70 @@ export class AuthService {
     return cookieToken || null;
   }
 
-  private convertToCompatibleUser(apiUser: UserResponseDto): User {
-    // Mapear role_id para role baseado no UserWithRoleDto se disponível
+  private convertToCompatibleUser(apiUser: any): User {
+    // Mapear role para formato compatível
     let role: UserRole = 'student'; // default
-    if ('role_name' in apiUser) {
+    
+    // Verificar diferentes formatos de role
+    if (apiUser.role_name) {
       const roleMapping: Record<string, UserRole> = {
         'Aluno': 'student',
         'Professor': 'teacher',
         'Gestor': 'manager',
         'Administrador': 'admin',
+        'SYSTEM_ADMIN': 'system_admin',
+        'TEACHER': 'teacher',
+        'STUDENT': 'student',
+        'INSTITUTION_MANAGER': 'institution_manager',
+        'ACADEMIC_COORDINATOR': 'academic_coordinator',
+        'GUARDIAN': 'guardian',
         'Coordenador Acadêmico': 'academic_coordinator',
         'Responsável': 'guardian'
       };
-      role = roleMapping[(apiUser as UserWithRoleDto).role_name] || 'student';
+      role = roleMapping[apiUser.role_name] || 'student';
+    } else if (apiUser.role) {
+      // Se já tem role como string
+      if (typeof apiUser.role === 'string') {
+        role = apiUser.role.toLowerCase() as UserRole;
+      } else if (apiUser.role.name) {
+        // Se role é um objeto com name
+        const roleMapping: Record<string, UserRole> = {
+          'Aluno': 'student',
+          'Professor': 'teacher',
+          'Gestor': 'manager',
+          'Administrador': 'admin',
+          'SYSTEM_ADMIN': 'system_admin',
+          'TEACHER': 'teacher',
+          'STUDENT': 'student',
+          'INSTITUTION_MANAGER': 'institution_manager',
+          'ACADEMIC_COORDINATOR': 'academic_coordinator',
+          'GUARDIAN': 'guardian'
+        };
+        role = roleMapping[apiUser.role.name] || 'student';
+      }
+    }
+
+    // Extrair permissões
+    let permissions: string[] = [];
+    if (apiUser.permissions) {
+      permissions = Array.isArray(apiUser.permissions) ? apiUser.permissions : [];
+    } else if (apiUser.role && apiUser.role.permissions) {
+      permissions = Array.isArray(apiUser.role.permissions) ? apiUser.role.permissions : [];
     }
 
     return {
       id: apiUser.id,
-      name: apiUser.name,
-      email: apiUser.email,
+      name: apiUser.name || '',
+      email: apiUser.email || '',
       role: role,
+      permissions: permissions,
       endereco: apiUser.endereco,
       telefone: apiUser.telefone,
       institution_id: apiUser.institution_id,
       school_id: apiUser.school_id,
-      is_active: apiUser.is_active,
-      created_at: new Date(apiUser.created_at),
-      updated_at: new Date(apiUser.updated_at),
+      is_active: apiUser.is_active !== false, // default true se não especificado
+      created_at: apiUser.created_at ? new Date(apiUser.created_at) : new Date(),
+      updated_at: apiUser.updated_at ? new Date(apiUser.updated_at) : new Date(),
       courses: [] // Será preenchido quando necessário
     };
   }

@@ -43,9 +43,9 @@ export default function ProfilePage() {
       const userData = {
         name: user.name || '',
         email: user.email || '',
-        phone: user.contact?.phone || user.telefone || '',
-        address: user.contact?.address || user.endereco || '',
-        educationUnit: user.contact?.educationUnit || user.unidadeEnsino || ''
+        phone: (user as User).contact?.phone || (user as User).telefone || '',
+        address: (user as User).contact?.address || (user as User).endereco || '',
+        educationUnit: (user as User).contact?.educationUnit || (user as User).unidadeEnsino || ''
       }
       setFormData(userData)
       setOriginalData(userData)
@@ -108,7 +108,7 @@ export default function ProfilePage() {
       'student': 'Estudante',
       'teacher': 'Professor',
       'admin': 'Administrador',
-      'system_admin': 'Administrador do Sistema',
+      'SYSTEM_ADMIN': 'Administrador do Sistema',
       'institution_manager': 'Gestor de Instituição',
       'academic_coordinator': 'Coordenador Acadêmico',
       'manager': 'Gestor',
@@ -424,7 +424,7 @@ export default function ProfilePage() {
                       {user.id}
                     </p>
                   </div>
-                  {user.institution_name && (
+                  {(user as User).institution_name && (
                     <div>
                       <p
                         className="text-sm font-medium"
@@ -436,7 +436,7 @@ export default function ProfilePage() {
                         className="text-sm"
                         style={{ color: theme.colors.text.primary }}
                       >
-                        {user.institution_name}
+                        {(user as User).institution_name}
                       </p>
                     </div>
                   )}

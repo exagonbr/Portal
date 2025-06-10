@@ -27,7 +27,7 @@ export const validateJWT = async (
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'default-secret-key-for-development';
+    const secret = process.env.JWT_SECRET || 'ExagonTech';
     const decoded = jwt.verify(token, secret) as any;
     
     if (typeof decoded === 'string' || !isAuthTokenPayload(decoded)) {

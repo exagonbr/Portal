@@ -439,3 +439,50 @@ export const mockContentVideos = mockVideos.map(video => ({
   createdAt: new Date(),
   updatedAt: new Date()
 }));
+
+export const mockAnnotations: { [bookId: string]: Annotation[] } = {
+  'local-epub-1': [
+    {
+      id: 'anno-1',
+      pageNumber: 15,
+      content: 'Este é um ponto crucial para a trama principal.',
+      position: { x: 100, y: 250 },
+      createdAt: '2024-01-20T10:30:00Z'
+    },
+    {
+      id: 'anno-2',
+      pageNumber: 42,
+      content: 'Achei a descrição do personagem muito detalhada aqui.',
+      position: { x: 50, y: 150 },
+      createdAt: '2024-01-22T15:00:00Z'
+    }
+  ]
+};
+
+export const mockHighlights: { [bookId: string]: Highlight[] } = {
+  'local-epub-1': [
+    {
+      id: 1,
+      pageNumber: 25,
+      content: 'O sol se punha no horizonte, pintando o céu com cores de fogo e ouro.',
+      color: 'yellow',
+      createdAt: '2024-01-21T18:00:00Z'
+    },
+    {
+      id: 2,
+      pageNumber: 25,
+      content: 'Uma brisa suave soprava do leste, trazendo consigo o cheiro do mar.',
+      color: 'blue',
+      createdAt: '2024-01-21T18:05:00Z'
+    }
+  ],
+  'local-epub-2': [
+    {
+      id: 3,
+      pageNumber: 10,
+      content: 'A decisão foi tomada. Não havia mais volta.',
+      color: 'green',
+      createdAt: '2024-01-23T11:45:00Z'
+    }
+  ]
+};

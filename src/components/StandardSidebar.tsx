@@ -229,8 +229,9 @@ export default function StandardSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   
-  // Get user role with fallback to STUDENT
-  const userRole: UserRole = (user?.role || 'STUDENT') as UserRole;
+  // Get user role with fallback to STUDENT - garantindo que sempre será uppercase
+  const normalizedRole = user?.role ? user.role.toUpperCase() : 'STUDENT';
+  const userRole: UserRole = (normalizedRole as UserRole) || UserRole.STUDENT;
 
   // Handle window resize
   useEffect(() => {
@@ -302,10 +303,8 @@ export default function StandardSidebar() {
 
     switch (userRole) {
       case UserRole.SYSTEM_ADMIN:
-        // Usa o menu simplificado do SystemAdminMenu
-        const adminMenuItems = getSystemAdminMenuItems();
-        // Remove a seção "Principal" pois já está nos commonItems
-        roleSpecificItems = adminMenuItems.filter(section => section.section !== 'Principal');
+        // Usa o menu completo do SystemAdminMenu
+        roleSpecificItems = getSystemAdminMenuItems();
         break;
 
       case UserRole.INSTITUTION_MANAGER:
@@ -692,7 +691,10 @@ export default function StandardSidebar() {
     return [...commonItems, ...roleSpecificItems];
   }, [userRole]);
 
-  const navItems = getNavItems();
+  // Para o SYSTEM_ADMIN, apenas usamos os itens específicos do papel, sem adicionar os itens comuns
+  const navItems = userRole === UserRole.SYSTEM_ADMIN 
+    ? getSystemAdminMenuItems() 
+    : getNavItems();
 
   return (
     <>

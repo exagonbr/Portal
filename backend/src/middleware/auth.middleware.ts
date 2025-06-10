@@ -14,7 +14,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as AuthTokenPayload;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as AuthTokenPayload;
 
     // Get user from database
     const user = await db('User')

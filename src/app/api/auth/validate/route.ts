@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const cookieStore = cookies();
     const authToken = cookieStore.get('auth_token')?.value;
+    const sessionId = cookieStore.get('session_id')?.value;
 
     if (!authToken) {
       return NextResponse.json(
@@ -15,17 +16,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validar token com o backend
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      method: 'GET',
+    // Validar token e sessão com o backend
+    const response = await fetch(`${BACKEND_URL}/api/auth/validate-session`, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${authToken}`,
       },
+      body: JSON.stringify({
+        token: authToken,
+        sessionId: sessionId
+      }),
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { valid: false, message: 'Token inválido' },
+        { valid: false, message: 'Token ou sessão inválida' },
         { status: 401 }
       );
     }
@@ -49,6 +55,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { token } = body;
+    const cookieStore = cookies();
+    const sessionId = cookieStore.get('session_id')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -57,17 +65,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar token com o backend
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-      method: 'GET',
+    // Validar token e sessão com o backend
+    const response = await fetch(`${BACKEND_URL}/api/auth/validate-session`, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
+      body: JSON.stringify({
+        token: token,
+        sessionId: sessionId
+      }),
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { valid: false, message: 'Token inválido' },
+        { valid: false, message: 'Token ou sessão inválida' },
         { status: 401 }
       );
     }

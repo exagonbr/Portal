@@ -40,10 +40,10 @@ router.get('/settings', authMiddleware, async (req: Request, res: Response) => {
       return acc;
     }, {} as Record<string, any>);
 
-    res.json(settingsByCategory);
+    return res.json(settingsByCategory);
   } catch (error) {
     console.error('Erro ao buscar configurações:', error);
-    res.status(500).json({ error: 'Erro ao buscar configurações' });
+    return res.status(500).json({ error: 'Erro ao buscar configurações' });
   }
 });
 
@@ -69,10 +69,10 @@ router.put('/settings', authMiddleware, async (req: Request, res: Response) => {
 
     await Promise.all(updatePromises);
 
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
     console.error('Erro ao atualizar configurações:', error);
-    res.status(500).json({ error: 'Erro ao atualizar configurações' });
+    return res.status(500).json({ error: 'Erro ao atualizar configurações' });
   }
 });
 
@@ -106,21 +106,21 @@ router.post('/settings/test-aws', authMiddleware, async (req: Request, res: Resp
       
       const buckets = response.Buckets?.map(bucket => bucket.Name) || [];
 
-      res.json({
+      return res.json({
         success: true,
         buckets,
         message: 'Conexão AWS estabelecida com sucesso!'
       });
     } catch (awsError: any) {
       console.error('Erro AWS:', awsError);
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: `Erro ao conectar com AWS: ${awsError.message || 'Verifique as credenciais'}`
       });
     }
   } catch (error) {
     console.error('Erro ao testar conexão AWS:', error);
-    res.status(500).json({ error: 'Erro ao testar conexão AWS' });
+    return res.status(500).json({ error: 'Erro ao testar conexão AWS' });
   }
 });
 
@@ -167,20 +167,20 @@ router.post('/settings/test-email', authMiddleware, async (req: Request, res: Re
         `
       });
 
-      res.json({
+      return res.json({
         success: true,
         message: 'Email de teste enviado com sucesso!'
       });
     } catch (emailError: any) {
       console.error('Erro ao enviar email:', emailError);
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: `Erro ao enviar email: ${emailError.message || 'Verifique as configurações'}`
       });
     }
   } catch (error) {
     console.error('Erro ao testar email:', error);
-    res.status(500).json({ error: 'Erro ao testar configuração de email' });
+    return res.status(500).json({ error: 'Erro ao testar configuração de email' });
   }
 });
 

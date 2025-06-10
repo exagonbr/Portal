@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     // Configurar cookies com os tokens recebidos do backend
     const cookieStore = cookies();
     
-    // Token de acesso
+    // Token de acesso - configurado para ser acessível pelo middleware
     cookieStore.set('auth_token', data.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
       permissions: data.user.permissions || [],
     };
 
-    cookieStore.set('user_data', encodeURIComponent(JSON.stringify(userData)), {
+    // Cookie não httpOnly para acesso pelo cliente JavaScript
+    cookieStore.set('user_data', JSON.stringify(userData), {
       httpOnly: false, // Permitir acesso via JavaScript
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -80,11 +81,22 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    return NextResponse.json({
+    // Certificando-se de que os cabeçalhos de resposta incluam os cookies corretamente
+    const jsonResponse = NextResponse.json({
       success: true,
       user: userData,
       token: data.token,
     });
+
+    // Adicionando headers para melhorar a compatibilidade com certos navegadores
+    jsonResponse.headers.set('Cache-Control', 'no-store, max-age=0');
+    jsonResponse.headers.set('X-Auth-Success', 'true');
+    
+    // Registrar o sucesso da operação
+    console.log(`✅ Login bem-sucedido para ${userData.name} (${userData.role})`);
+    console.log(`✅ Cookies configurados: auth_token, user_data, ${data.sessionId ? 'session_id, ' : ''}${data.refreshToken ? 'refresh_token' : ''}`);
+    
+    return jsonResponse;
   } catch (error) {
     console.error('❌ Erro detalhado no login:', error);
     console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');

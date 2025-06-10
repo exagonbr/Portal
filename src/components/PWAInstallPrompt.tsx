@@ -196,13 +196,20 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
             : 'bottom-6 right-6' // Desktop: canto inferior direito
         }`}>
           <div className={`
-            relative bg-gradient-to-r from-green-500 to-emerald-600 
+            relative bg-gradient-to-r from-green-500 via-emerald-600 to-green-500 
             text-white rounded-2xl shadow-2xl overflow-hidden
             transform transition-all duration-300 hover:scale-105
+            border border-white/20 backdrop-blur-sm
             ${platform === 'ios' || platform === 'android' ? 'w-full' : 'max-w-sm'}
           `}>
             {/* Efeito de brilho animado */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-shimmer" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-shimmer" />
+            
+            {/* Efeito de onda na parte inferior */}
+            <div className="absolute bottom-0 left-0 right-0 h-12 opacity-20">
+              <div className="absolute inset-0 bg-white rounded-t-full translate-y-6 animate-wave-slow"></div>
+              <div className="absolute inset-0 bg-white rounded-t-full translate-y-6 translate-x-8 animate-wave-fast"></div>
+            </div>
             
             {/* Botão de fechar */}
             <button
@@ -213,27 +220,30 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
               <FaTimes className="text-sm" />
             </button>
 
-            <div className="p-4 pr-10 relative">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm animate-pulse">
-                  <FaDownload className="text-2xl" />
+            <div className="p-5 pr-10 relative">
+              <div className="flex items-center gap-4 mb-3">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm animate-pulse relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+                  <FaDownload className="text-2xl relative z-10" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">Instale nosso App!</h3>
-                  <p className="text-sm opacity-90">
+                  <h3 className="font-bold text-xl text-white">Instale nosso App!</h3>
+                  <p className="text-sm opacity-90 text-white">
                     Acesso rápido e offline disponível
                   </p>
                 </div>
               </div>
-
               <button
                 onClick={handleInstallClick}
-                className="w-full mt-3 px-4 py-3 bg-white text-green-600 font-bold 
+                className="w-full mt-2 px-4 py-3 bg-white text-green-600 font-bold 
                          rounded-xl hover:bg-gray-50 transition-all duration-300 
                          transform hover:scale-[1.02] active:scale-[0.98]
-                         shadow-lg hover:shadow-xl"
+                         shadow-lg hover:shadow-xl relative overflow-hidden group"
               >
-                <span className="flex items-center justify-center gap-2">
+                {/* Efeito de brilho no hover */}
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-green-100 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                
+                <span className="flex items-center justify-center gap-3 relative z-10">
                   <FaDownload className="text-lg" />
                   Instalar Agora
                 </span>
@@ -248,9 +258,11 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  {instructions.icon}
+                  <div className="p-2 bg-green-100 dark:bg-green-800 rounded-lg">
+                    {instructions.icon}
+                  </div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                     {instructions.title}
                   </h2>
@@ -264,22 +276,22 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
               </div>
 
               {!isHttps && (
-                <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg border border-yellow-300 dark:border-yellow-700">
+                <div className="mb-5 p-4 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg border border-yellow-300 dark:border-yellow-700">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200">
                     ⚠️ Instalação de PWA requer HTTPS. Configure um certificado SSL para habilitar a instalação automática.
                   </p>
                 </div>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {instructions.steps.map((step, index) => (
-                  <div key={index} className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-semibold text-green-600">
+                  <div key={index} className="flex gap-4 items-start">
+                    <div className="flex-shrink-0 w-9 h-9 bg-green-100 dark:bg-green-800/40 rounded-full flex items-center justify-center mt-0.5">
+                      <span className="text-sm font-semibold text-green-600 dark:text-green-400">
                         {index + 1}
                       </span>
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 text-sm pt-1">
+                    <p className="text-gray-700 dark:text-gray-300 pt-1">
                       {step}
                     </p>
                   </div>

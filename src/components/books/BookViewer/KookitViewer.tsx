@@ -18,7 +18,6 @@ import {
   MessageCircle,
   Volume2,
   Globe,
-  Translate
 } from 'lucide-react';
 import { Book } from '@/constants/mockData';
 
@@ -48,31 +47,12 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
   // Estado para acompanhar o objeto Kookit
   const kookitRef = useRef<any>(null);
   
-  useEffect(() => {
-    // Verificar se a biblioteca Kookit está disponível no escopo global
-    if (typeof window !== 'undefined' && (window as any).Kookit) {
-      initializeKookit();
-    } else {
-      // Carregar script se não estiver disponível
-      const script = document.createElement('script');
-      script.src = '/kookit/kookit.min.js';
-      script.async = true;
-      script.onload = initializeKookit;
-      script.onerror = () => setError('Falha ao carregar a biblioteca Kookit');
-      document.body.appendChild(script);
-      
-      return () => {
-        document.body.removeChild(script);
-      };
-    }
-  }, []);
-  
   // Estado para seleção de texto
   const [selectedText, setSelectedText] = useState('');
   const [showTextMenu, setShowTextMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [highlightColor, setHighlightColor] = useState<'yellow' | 'green' | 'blue'>('yellow');
-  
+
   const initializeKookit = async () => {
     try {
       setIsLoading(true);
@@ -126,79 +106,100 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
       // Guardar referência
       kookitRef.current = renderer;
       
-              // Renderizar no elemento page-area
-        if (pageAreaRef.current) {
-          await renderer.renderTo(pageAreaRef.current);
-          
-          // Adicionar listeners para eventos
-          renderer.on('relocated', (location: any) => {
-            if (location && location.start) {
-              setCurrentPage(location.start.index + 1);
-              setTotalPages(location.total || 1);
-            }
-          });
-          
-          renderer.on('rendered', () => {
-            setIsLoading(false);
-            console.log('Livro renderizado com sucesso!');
-            
-            // Configurar o handler para seleção de texto
-            setupTextSelectionHandlers(pageAreaRef.current);
-          });
-          
-          renderer.on('error', (error: any) => {
-            console.error('Erro ao renderizar:', error);
-            setError('Erro ao renderizar o livro');
-            setIsLoading(false);
-          });
-        }
-      }
-      
-      // Configurar handlers para seleção de texto
-      const setupTextSelectionHandlers = (container: HTMLElement) => {
-        if (!container) return;
+      // Renderizar no elemento page-area
+      if (pageAreaRef.current) {
+        await renderer.renderTo(pageAreaRef.current);
         
-        const handleSelection = () => {
-          const selection = window.getSelection();
-          const text = selection?.toString().trim();
-          
-          if (text && text.length > 0) {
-            setSelectedText(text);
-            
-            // Posicionar o menu próximo à seleção
-            if (selection && selection.rangeCount > 0) {
-              const range = selection.getRangeAt(0);
-              const rect = range.getBoundingClientRect();
-              
-              setMenuPosition({
-                x: rect.left + (rect.width / 2),
-                y: rect.bottom + 10
-              });
-              
-              setShowTextMenu(true);
-            }
-          } else {
-            setShowTextMenu(false);
-          }
-        };
-        
-        // Adicionar listener para capturar seleção de texto
-        container.addEventListener('mouseup', handleSelection);
-        
-        // Adicionar listener para clicks fora do menu
-        document.addEventListener('mousedown', (e) => {
-          const target = e.target as Node;
-          const menu = document.getElementById('text-selection-menu');
-          
-          if (menu && !menu.contains(target)) {
-            setShowTextMenu(false);
+        // Adicionar listeners para eventos
+        renderer.on('relocated', (location: any) => {
+          if (location && location.start) {
+            setCurrentPage(location.start.index + 1);
+            setTotalPages(location.total || 1);
           }
         });
+        
+        renderer.on('rendered', () => {
+          setIsLoading(false);
+          console.log('Livro renderizado com sucesso!');
+          
+          // Configurar o handler para seleção de texto
+          if (pageAreaRef.current) {
+            setupTextSelectionHandlers(pageAreaRef.current);
+          }
+        });
+        
+        renderer.on('error', (error: any) => {
+          console.error('Erro ao renderizar:', error);
+          setError('Erro ao renderizar o livro');
+          setIsLoading(false);
+        });
+      }
     } catch (err) {
       console.error('Erro ao inicializar Kookit:', err);
       setError(`Falha ao inicializar o visualizador: ${err instanceof Error ? err.message : String(err)}`);
       setIsLoading(false);
     }
+  };
+  
+  useEffect(() => {
+    // Verificar se a biblioteca Kookit está disponível no escopo global
+    if (typeof window !== 'undefined' && (window as any).Kookit) {
+      initializeKookit();
+    } else {
+      // Carregar script se não estiver disponível
+      const script = document.createElement('script');
+      script.src = '/kookit/kookit.min.js';
+      script.async = true;
+      script.onload = initializeKookit;
+      script.onerror = () => setError('Falha ao carregar a biblioteca Kookit');
+      document.body.appendChild(script);
+      
+      return () => {
+        document.body.removeChild(script);
+      };
+    }
+  }, []);
+  
+  // Configurar handlers para seleção de texto
+  const setupTextSelectionHandlers = (container: HTMLElement) => {
+    if (!container) return;
+    
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      const text = selection?.toString().trim();
+      
+      if (text && text.length > 0) {
+        setSelectedText(text);
+        
+        // Posicionar o menu próximo à seleção
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          
+          setMenuPosition({
+            x: rect.left + (rect.width / 2),
+            y: rect.bottom + 10
+          });
+          
+          setShowTextMenu(true);
+        }
+      } else {
+        setShowTextMenu(false);
+      }
+    };
+    
+    // Adicionar listener para capturar seleção de texto
+    container.addEventListener('mouseup', handleSelection);
+    
+    // Adicionar listener para clicks fora do menu
+    document.addEventListener('mousedown', (e) => {
+      const target = e.target as Node;
+      const menu = document.getElementById('text-selection-menu');
+      
+      if (menu && !menu.contains(target)) {
+        setShowTextMenu(false);
+      }
+    });
   };
   
   const goToPage = (page: number) => {
@@ -425,87 +426,87 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
           )}
           
           {/* Área de renderização do Kookit */}
-                <div 
-        id="page-area" 
-        ref={pageAreaRef}
-        className="w-full h-full"
-        style={{ 
-          maxWidth: '100%',
-          height: '100%',
-          minHeight: '500px',
-          visibility: isLoading || error ? 'hidden' : 'visible'
-        }}
-      ></div>
+          <div 
+            id="page-area" 
+            ref={pageAreaRef}
+            className="w-full h-full"
+            style={{ 
+              maxWidth: '100%',
+              height: '100%',
+              minHeight: '500px',
+              visibility: isLoading || error ? 'hidden' : 'visible'
+            }}
+          ></div>
       
-      {/* Menu de seleção de texto */}
-      {showTextMenu && selectedText && (
-        <div 
-          id="text-selection-menu"
-          className="fixed bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
-          style={{
-            left: `${menuPosition.x}px`,
-            top: `${menuPosition.y}px`,
-            transform: 'translateX(-50%)'
-          }}
-        >
-          <div className="flex space-x-2 px-3 mb-2">
-            <button 
-              onClick={() => setHighlightColor('yellow')}
-              className={`w-6 h-6 rounded-full bg-yellow-200 border ${highlightColor === 'yellow' ? 'border-yellow-500 ring-2 ring-yellow-300' : 'border-gray-300'}`}
-              title="Amarelo"
-            />
-            <button 
-              onClick={() => setHighlightColor('green')}
-              className={`w-6 h-6 rounded-full bg-green-200 border ${highlightColor === 'green' ? 'border-green-500 ring-2 ring-green-300' : 'border-gray-300'}`}
-              title="Verde"
-            />
-            <button 
-              onClick={() => setHighlightColor('blue')}
-              className={`w-6 h-6 rounded-full bg-blue-200 border ${highlightColor === 'blue' ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'}`}
-              title="Azul"
-            />
-          </div>
-          
-          <div className="flex flex-col divide-y divide-gray-100">
-            <button 
-              onClick={() => handleTextAction('highlight')}
-              className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
+          {/* Menu de seleção de texto */}
+          {showTextMenu && selectedText && (
+            <div 
+              id="text-selection-menu"
+              className="fixed bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
+              style={{
+                left: `${menuPosition.x}px`,
+                top: `${menuPosition.y}px`,
+                transform: 'translateX(-50%)'
+              }}
             >
-              <Highlighter className="w-4 h-4 mr-2 text-yellow-500" /> Destacar
-            </button>
-            <button 
-              onClick={() => handleTextAction('note')}
-              className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
-            >
-              <MessageCircle className="w-4 h-4 mr-2 text-blue-500" /> Adicionar nota
-            </button>
-            <button 
-              onClick={() => handleTextAction('search')}
-              className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
-            >
-              <Search className="w-4 h-4 mr-2 text-gray-500" /> Buscar no documento
-            </button>
-            <button 
-              onClick={() => handleTextAction('translate')}
-              className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
-            >
-              <Translate className="w-4 h-4 mr-2 text-green-500" /> Traduzir
-            </button>
-            <button 
-              onClick={() => handleTextAction('listen')}
-              className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
-            >
-              <Volume2 className="w-4 h-4 mr-2 text-purple-500" /> Ouvir
-            </button>
-            <button 
-              onClick={() => handleTextAction('google')}
-              className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
-            >
-              <Globe className="w-4 h-4 mr-2 text-red-500" /> Buscar no Google
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="flex space-x-2 px-3 mb-2">
+                <button 
+                  onClick={() => setHighlightColor('yellow')}
+                  className={`w-6 h-6 rounded-full bg-yellow-200 border ${highlightColor === 'yellow' ? 'border-yellow-500 ring-2 ring-yellow-300' : 'border-gray-300'}`}
+                  title="Amarelo"
+                />
+                <button 
+                  onClick={() => setHighlightColor('green')}
+                  className={`w-6 h-6 rounded-full bg-green-200 border ${highlightColor === 'green' ? 'border-green-500 ring-2 ring-green-300' : 'border-gray-300'}`}
+                  title="Verde"
+                />
+                <button 
+                  onClick={() => setHighlightColor('blue')}
+                  className={`w-6 h-6 rounded-full bg-blue-200 border ${highlightColor === 'blue' ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-300'}`}
+                  title="Azul"
+                />
+              </div>
+              
+              <div className="flex flex-col divide-y divide-gray-100">
+                <button 
+                  onClick={() => handleTextAction('highlight')}
+                  className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
+                >
+                  <Highlighter className="w-4 h-4 mr-2 text-yellow-500" /> Destacar
+                </button>
+                <button 
+                  onClick={() => handleTextAction('note')}
+                  className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2 text-blue-500" /> Adicionar nota
+                </button>
+                <button 
+                  onClick={() => handleTextAction('search')}
+                  className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
+                >
+                  <Search className="w-4 h-4 mr-2 text-gray-500" /> Buscar no documento
+                </button>
+                <button 
+                  onClick={() => handleTextAction('translate')}
+                  className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
+                >
+                  <Globe className="w-4 h-4 mr-2 text-green-500" /> Traduzir
+                </button>
+                <button 
+                  onClick={() => handleTextAction('listen')}
+                  className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
+                >
+                  <Volume2 className="w-4 h-4 mr-2 text-purple-500" /> Ouvir
+                </button>
+                <button 
+                  onClick={() => handleTextAction('google')}
+                  className="flex items-center px-4 py-2 text-sm text-left hover:bg-gray-100"
+                >
+                  <Globe className="w-4 h-4 mr-2 text-red-500" /> Buscar no Google
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -552,4 +553,4 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
   );
 };
 
-export default KookitViewer; 
+export default KookitViewer;

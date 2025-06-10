@@ -544,10 +544,8 @@ function DashboardSidebarComponent() {
 
     switch (selectedRole) {
       case UserRole.SYSTEM_ADMIN:
-        // Usa o menu simplificado do SystemAdminMenu
-        const adminMenuItems = getSystemAdminMenuItems();
-        // Remove a seção "Principal" pois já está nos commonItems
-        roleSpecificItems = adminMenuItems.filter(section => section.section !== 'Principal');
+        // Usa o menu completo do SystemAdminMenu
+        roleSpecificItems = getSystemAdminMenuItems();
         break;
 
       case UserRole.INSTITUTION_MANAGER:
@@ -986,7 +984,10 @@ function DashboardSidebarComponent() {
     return [...commonItems, ...roleSpecificItems];
   }, [selectedRole]);
 
-  const navItems = getNavItems();
+      // Para o SYSTEM_ADMIN, apenas usamos os itens específicos do papel, sem adicionar os itens comuns
+    const navItems = selectedRole === UserRole.SYSTEM_ADMIN 
+      ? getSystemAdminMenuItems() 
+      : getNavItems();
 
   return (
     <motion.aside

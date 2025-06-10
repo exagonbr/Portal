@@ -150,12 +150,12 @@ export default function StudentLessonsPage() {
           })
         }
 
-        const module = moduleMap.get(lesson.moduleId)!
-        module.lessons.push(lesson)
-        module.totalDuration += lesson.duration
-        module.totalLessons++
+        const moduleData = moduleMap.get(lesson.moduleId)!
+        moduleData.lessons.push(lesson)
+        moduleData.totalDuration += lesson.duration
+        moduleData.totalLessons++
         if (lesson.completed) {
-          module.completedLessons++
+          moduleData.completedLessons++
         }
       })
 

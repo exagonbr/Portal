@@ -1,8 +1,7 @@
 import { BaseRepository } from './BaseRepository';
 import { 
-  Notification, 
-  CreateNotificationData, 
-  UpdateNotificationData, 
+  Notification,
+  CreateNotificationData,
   NotificationFilters,
   NotificationWithSender,
   NotificationStats

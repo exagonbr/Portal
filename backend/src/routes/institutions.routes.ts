@@ -16,10 +16,10 @@ router.get('/', authMiddleware, validatePermission('institution:read'), async (r
       .select('*')
       .orderBy('name');
     
-    res.json(institution);
+    return res.json(institution);
   } catch (error) {
     console.error('Error fetching institution:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -38,10 +38,10 @@ router.get('/:id', authMiddleware, validatePermission('institution:read'), async
       return res.status(404).json({ error: 'Institution not found' });
     }
     
-    res.json(institution);
+    return res.json(institution);
   } catch (error) {
     console.error('Error fetching institution:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -81,10 +81,10 @@ router.post('/', authMiddleware, validatePermission('institution:create'), async
       })
       .returning('*');
 
-    res.status(201).json(institution);
+    return res.status(201).json(institution);
   } catch (error) {
     console.error('Error creating institution:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -131,10 +131,10 @@ router.put('/:id', authMiddleware, validatePermission('institution:update'), asy
       return res.status(404).json({ error: 'Institution not found' });
     }
 
-    res.json(institution);
+    return res.json(institution);
   } catch (error) {
     console.error('Error updating institution:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -153,10 +153,10 @@ router.delete('/:id', authMiddleware, validatePermission('institution:delete'), 
       return res.status(404).json({ error: 'Institution not found' });
     }
 
-    res.json({ message: 'Institution deleted successfully' });
+    return res.json({ message: 'Institution deleted successfully' });
   } catch (error) {
     console.error('Error deleting institution:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

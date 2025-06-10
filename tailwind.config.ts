@@ -121,7 +121,10 @@ const config: Config = {
   		animation: {
   			'fade-in': 'fadeIn 0.3s ease-in-out',
   			'slide-up': 'slideUp 0.3s ease-out',
-  			'slide-down': 'slideDown 0.3s ease-out'
+  			'slide-down': 'slideDown 0.3s ease-out',
+  			'shimmer': 'shimmer 3s ease-in-out infinite',
+  			'wave-slow': 'wave 8s ease-in-out infinite',
+  			'wave-fast': 'wave 6s ease-in-out infinite 0.5s'
   		},
   		keyframes: {
   			fadeIn: {
@@ -150,6 +153,28 @@ const config: Config = {
   				'100%': {
   					transform: 'translateY(0)',
   					opacity: '1'
+  				}
+  			},
+  			shimmer: {
+  				'0%': {
+  					transform: 'translateX(-100%) skewX(-15deg)'
+  				},
+  				'50%': {
+  					transform: 'translateX(100%) skewX(-15deg)'
+  				},
+  				'100%': {
+  					transform: 'translateX(100%) skewX(-15deg)'
+  				}
+  			},
+  			wave: {
+  				'0%': {
+  					transform: 'translateY(10%) translateX(-5%) scaleY(0.5)'
+  				},
+  				'50%': {
+  					transform: 'translateY(10%) translateX(5%) scaleY(0.7)'
+  				},
+  				'100%': {
+  					transform: 'translateY(10%) translateX(-5%) scaleY(0.5)'
   				}
   			}
   		},
