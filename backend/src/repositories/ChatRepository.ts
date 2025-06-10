@@ -57,10 +57,10 @@ export class ChatRepository extends BaseRepository<Chat> {
     return this.db('chat_messages')
       .select(
         'chat_messages.*',
-        'users.name as sender_name',
-        'users.usuario as sender_username'
+        'User.name as sender_name',
+        'User.usuario as sender_username'
       )
-      .leftJoin('users', 'chat_messages.sender_id', 'users.id')
+      .leftJoin('User', 'chat_messages.sender_id', 'User.id')
       .where('chat_messages.chat_id', chatId)
       .orderBy('chat_messages.created_at', 'desc')
       .limit(limit)

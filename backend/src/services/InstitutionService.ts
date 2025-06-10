@@ -229,12 +229,8 @@ export class InstitutionService extends BaseService<Institution, CreateInstituti
     // if (institution.website !== undefined) dto.website = institution.website; // Modelo não possui website
     // if (institution.logo_url !== undefined) dto.logo_url = institution.logo_url; // Modelo não possui logo_url
     
-    // O modelo Institution não possui 'is_active'. Se for necessário, deve ser adicionado ao modelo.
-    // Por ora, se o DTO tem is_active como opcional, podemos não definir ou definir com base em alguma lógica.
-    // Como is_active é opcional no DTO agora, não precisamos definir explicitamente se não houver fonte.
-    // Se 'is_active' viesse do banco, seria algo como:
-    // if ((institution as any).is_active !== undefined) dto.is_active = (institution as any).is_active;
-
+    // O modelo Institution possui 'is_active', então incluímos no DTO
+    dto.is_active = institution.is_active;
 
     return dto;
   }

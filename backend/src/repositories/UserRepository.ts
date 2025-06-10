@@ -3,7 +3,7 @@ import { User, CreateUserData, UpdateUserData, UserWithoutPassword } from '../mo
 
 export class UserRepository extends BaseRepository<User> {
   constructor() {
-    super('users');
+    super('User');
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -66,44 +66,44 @@ export class UserRepository extends BaseRepository<User> {
   async getUsersWithRoleAndInstitution(): Promise<any[]> {
     return this.db(this.tableName)
       .select(
-        'users.id',
-        'users.email',
-        'users.name',
-        'users.endereco',
-        'users.telefone',
-        'users.school_id',
-        'users.is_active',
-        'users.created_at',
-        'users.updated_at',
+        `${this.tableName}.id`,
+        `${this.tableName}.email`,
+        `${this.tableName}.name`,
+        `${this.tableName}.endereco`,
+        `${this.tableName}.telefone`,
+        `${this.tableName}.school_id`,
+        `${this.tableName}.is_active`,
+        `${this.tableName}.created_at`,
+        `${this.tableName}.updated_at`,
         'roles.name as role_name',
         'institutions.name as institution_name',
         'schools.name as school_name'
       )
-      .leftJoin('roles', 'users.role_id', 'roles.id')
-      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-      .leftJoin('schools', 'users.school_id', 'schools.id');
+      .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
+      .leftJoin('institutions', `${this.tableName}.institution_id`, 'institutions.id')
+      .leftJoin('schools', `${this.tableName}.school_id`, 'schools.id');
   }
 
   async getUserWithRoleAndInstitution(id: string): Promise<User | null> {
     const result = await this.db(this.tableName)
       .select(
-        'users.id',
-        'users.email',
-        'users.name',
-        'users.endereco',
-        'users.telefone',
-        'users.school_id',
-        'users.is_active',
-        'users.created_at',
-        'users.updated_at',
+        `${this.tableName}.id`,
+        `${this.tableName}.email`,
+        `${this.tableName}.name`,
+        `${this.tableName}.endereco`,
+        `${this.tableName}.telefone`,
+        `${this.tableName}.school_id`,
+        `${this.tableName}.is_active`,
+        `${this.tableName}.created_at`,
+        `${this.tableName}.updated_at`,
         'roles.name as role_name',
         'institutions.name as institution_name',
         'schools.name as school_name'
       )
-      .leftJoin('roles', 'users.role_id', 'roles.id')
-      .leftJoin('institutions', 'users.institution_id', 'institutions.id')
-      .leftJoin('schools', 'users.school_id', 'schools.id')
-      .where('users.id', id)
+      .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
+      .leftJoin('institutions', `${this.tableName}.institution_id`, 'institutions.id')
+      .leftJoin('schools', `${this.tableName}.school_id`, 'schools.id')
+      .where(`${this.tableName}.id`, id)
       .first();
 
     return result || null;

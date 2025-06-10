@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { mockInstitutions, findInstitutionByEmail, findInstitutionByCNPJ } from './mockDatabase'
 
 // Schema de validação para criação de instituição
 const createInstitutionSchema = z.object({
@@ -21,7 +22,7 @@ const createInstitutionSchema = z.object({
   website: z.string().url().optional(),
   logo: z.string().url().optional(),
   type: z.enum(['PRIVATE', 'PUBLIC', 'MIXED']),
-  is_active: z.boolean().default(true),
+  active: z.boolean().default(true),
   settings: z.object({
     allowStudentRegistration: z.boolean().default(false),
     requireEmailVerification: z.boolean().default(true),
@@ -29,9 +30,6 @@ const createInstitutionSchema = z.object({
     maxUsersPerSchool: z.number().int().positive().default(1000)
   }).optional()
 })
-
-// Mock database - substituir por Prisma/banco real
-const mockInstitutions = new Map()
 
 // GET - Listar instituições
 export async function GET(request: NextRequest) {
@@ -50,7 +48,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
-    const is_active = searchParams.get('is_active')
+    const active = searchParams.get('active')
     const type = searchParams.get('type')
 
     // Buscar instituições (substituir por query real)
@@ -63,7 +61,7 @@ export async function GET(request: NextRequest) {
       institutions = institutions.filter(inst => inst.id === session.user.institution_id)
     } else if (!['SYSTEM_ADMIN'].includes(userRole)) {
       // Outros usuários veem apenas instituições ativas
-      institutions = institutions.filter(inst => inst.is_active)
+      institutions = institutions.filter(inst => inst.active)
     }
 
     // Aplicar filtros de busca
@@ -76,8 +74,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    if (is_active !== null) {
-      institutions = institutions.filter(inst => inst.is_active === (is_active === 'true'))
+    if (active !== null) {
+      institutions = institutions.filter(inst => inst.active === (active === 'true'))
     }
 
     if (type) {
@@ -159,9 +157,7 @@ export async function POST(request: NextRequest) {
     const institutionData = validationResult.data
 
     // Verificar se CNPJ já existe
-    const existingCNPJ = Array.from(mockInstitutions.values()).find(
-      inst => inst.cnpj === institutionData.cnpj
-    )
+    const existingCNPJ = findInstitutionByCNPJ(institutionData.cnpj)
 
     if (existingCNPJ) {
       return NextResponse.json(
@@ -171,9 +167,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se email já existe
-    const existingEmail = Array.from(mockInstitutions.values()).find(
-      inst => inst.email === institutionData.email
-    )
+    const existingEmail = findInstitutionByEmail(institutionData.email)
 
     if (existingEmail) {
       return NextResponse.json(
@@ -207,4 +201,25 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}
+
+// PUT - Atualizar instituição (redireciona para o endpoint correto)
+export async function PUT(request: NextRequest) {
+  try {
+    // Para atualizar uma instituição, o ID deve estar na URL
+    return NextResponse.json(
+      {
+        error: 'Método não permitido neste endpoint',
+        message: 'Para atualizar uma instituição, use PUT /api/institutions/{id}',
+        example: 'PUT /api/institutions/inst_123456'
+      },
+      { status: 405 }
+    )
+  } catch (error) {
+    console.error('Erro ao processar requisição PUT:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
+  }
+}

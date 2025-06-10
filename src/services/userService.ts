@@ -33,23 +33,63 @@ export class UserService {
    */
   async getUsers(filters?: UserFilterDto): Promise<ListResponse<UserResponseDto>> {
     try {
-      // Gera chave de cache baseada nos filtros
-      const cacheKey = CacheKeys.USER_LIST(JSON.stringify(filters || {}));
+      // Certificar-se de que filters não é undefined para evitar problemas
+      const filterParams = filters || {};
       
-      return await withCache(cacheKey, async () => {
-        const response = await withRetry(() =>
-          apiClient.get<UserResponseDto[]>(this.baseEndpoint, filters as Record<string, string | number | boolean>)
-        );
+      // Garantir que page e limit estão definidos
+      if (!filterParams.page) filterParams.page = 1;
+      if (!filterParams.limit) filterParams.limit = 10;
+      
+      // Gera chave de cache baseada nos filtros
+      const cacheKey = CacheKeys.USER_LIST(JSON.stringify(filterParams));
+      
+      // Desativar cache temporariamente para debug
+      // return await withCache(cacheKey, async () => {
+      
+      // Log para debug
+      console.log('Enviando request com parâmetros:', filterParams);
+      
+      const response = await withRetry(() =>
+        apiClient.get<UserResponseDto[]>(this.baseEndpoint, filterParams as Record<string, string | number | boolean>)
+      );
 
-        if (!response.success || !response.data) {
-          throw new Error(response.message || 'Falha ao buscar usuários');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Falha ao buscar usuários');
+      }
+
+      // Log para debug
+      console.log('Resposta da API:', {
+        total: response.data.length,
+        pagination: response.pagination
+      });
+      
+      // Alerta quando há muitos itens sem paginação
+      if (!response.pagination && response.data.length > 100) {
+        console.warn(`Atenção: API retornou ${response.data.length} itens sem paginação. Isso pode causar problemas de performance.`);
+      }
+      
+      // Limita o número de itens retornados quando não há paginação para evitar problemas de performance
+      const MAX_ITEMS_WITHOUT_PAGINATION = 100;
+      let itemsToReturn = response.data;
+      let totalItems = response.data.length;
+      
+      if (!response.pagination && response.data.length > MAX_ITEMS_WITHOUT_PAGINATION) {
+        console.warn(`Limitando retorno para ${MAX_ITEMS_WITHOUT_PAGINATION} itens dos ${response.data.length} retornados pela API.`);
+        itemsToReturn = response.data.slice(0, MAX_ITEMS_WITHOUT_PAGINATION);
+      }
+
+      return {
+        items: itemsToReturn,
+        pagination: response.pagination || {
+          page: filterParams.page || 1,
+          limit: filterParams.limit || 10,
+          total: totalItems,
+          totalPages: Math.ceil(totalItems / (filterParams.limit || 10)),
+          hasNext: totalItems > MAX_ITEMS_WITHOUT_PAGINATION,
+          hasPrev: (filterParams.page || 1) > 1
         }
-
-        return {
-          items: response.data,
-          pagination: response.pagination!
-        };
-      }, CacheTTL.MEDIUM);
+      };
+      // }, CacheTTL.MEDIUM);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
       throw new Error(handleApiError(error));
@@ -261,10 +301,32 @@ export class UserService {
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha na busca de usuários');
       }
+      
+      // Alerta quando há muitos itens sem paginação
+      if (!response.pagination && response.data.length > 100) {
+        console.warn(`Atenção: API de busca retornou ${response.data.length} itens sem paginação. Isso pode causar problemas de performance.`);
+      }
+      
+      // Limita o número de itens retornados quando não há paginação para evitar problemas de performance
+      const MAX_ITEMS_WITHOUT_PAGINATION = 100;
+      let itemsToReturn = response.data;
+      let totalItems = response.data.length;
+      
+      if (!response.pagination && response.data.length > MAX_ITEMS_WITHOUT_PAGINATION) {
+        console.warn(`Limitando retorno de busca para ${MAX_ITEMS_WITHOUT_PAGINATION} itens dos ${response.data.length} retornados pela API.`);
+        itemsToReturn = response.data.slice(0, MAX_ITEMS_WITHOUT_PAGINATION);
+      }
 
       return {
-        items: response.data,
-        pagination: response.pagination!
+        items: itemsToReturn,
+        pagination: response.pagination || {
+          page: filters?.page || 1,
+          limit: filters?.limit || 10,
+          total: totalItems,
+          totalPages: Math.ceil(totalItems / (filters?.limit || 10)),
+          hasNext: totalItems > MAX_ITEMS_WITHOUT_PAGINATION,
+          hasPrev: (filters?.page || 1) > 1
+        }
       };
     } catch (error) {
       console.error('Erro na busca de usuários:', error);
@@ -444,10 +506,37 @@ export class UserService {
         query: params.query || undefined
       } as Record<string, string | number | boolean>;
 
-      const response = await apiClient.get<ListResponse<UserResponseDto>>('/api/users', { params: queryParams });
+      const response = await apiClient.get<ListResponse<UserResponseDto>>('/api/users', queryParams);
       if (!response.success || !response.data?.items) {
         throw new Error(response.message || 'Falha ao buscar usuários');
       }
+      
+      // Ensure pagination is defined
+      if (!response.data.pagination) {
+        // Alerta quando há muitos itens sem paginação
+        if (response.data.items.length > 100) {
+          console.warn(`Atenção: API global retornou ${response.data.items.length} itens sem paginação. Isso pode causar problemas de performance.`);
+        }
+        
+        // Limita o número de itens retornados quando não há paginação
+        const MAX_ITEMS_WITHOUT_PAGINATION = 100;
+        let totalItems = response.data.items.length;
+        
+        if (response.data.items.length > MAX_ITEMS_WITHOUT_PAGINATION) {
+          console.warn(`Limitando retorno global para ${MAX_ITEMS_WITHOUT_PAGINATION} itens dos ${response.data.items.length} retornados pela API.`);
+          response.data.items = response.data.items.slice(0, MAX_ITEMS_WITHOUT_PAGINATION);
+        }
+        
+        response.data.pagination = {
+          page: params.page || 1,
+          limit: params.limit || 10,
+          total: totalItems,
+          totalPages: Math.ceil(totalItems / (params.limit || 10)),
+          hasNext: totalItems > MAX_ITEMS_WITHOUT_PAGINATION,
+          hasPrev: (params.page || 1) > 1
+        };
+      }
+      
       return response.data;
     } catch (error) {
       // Para fins de desenvolvimento, retornamos dados simulados em caso de erro
@@ -523,6 +612,22 @@ export class UserService {
       updated_at: new Date().toISOString()
     };
   }
+
+  /**
+   * Solicita reset de senha para um usuário
+   */
+  async resetPassword(userId: string): Promise<void> {
+    try {
+      const response = await apiClient.post<{ success: boolean }>(`${this.baseEndpoint}/${userId}/reset-password`, {});
+
+      if (!response.success) {
+        throw new Error(response.message || 'Falha ao resetar senha do usuário');
+      }
+    } catch (error) {
+      console.error(`Erro ao resetar senha do usuário ${userId}:`, error);
+      throw new Error(handleApiError(error));
+    }
+  }
 }
 
 // Instância singleton do serviço de usuários
@@ -538,3 +643,4 @@ export const getUserProfile = () => userService.getProfile();
 export const updateUserProfile = (userData: UpdateProfileDto) => userService.updateProfile(userData);
 export const changeUserPassword = (passwordData: ChangePasswordDto) => userService.changePassword(passwordData);
 export const searchUsers = (query: string, filters?: Partial<UserFilterDto>) => userService.searchUsers(query, filters);
+export const resetUserPassword = (userId: string) => userService.resetPassword(userId);

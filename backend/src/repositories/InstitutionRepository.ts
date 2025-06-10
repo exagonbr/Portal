@@ -19,11 +19,29 @@ export class InstitutionRepository extends BaseRepository<Institution> {
   }
 
   async createInstitution(data: CreateInstitutionData): Promise<Institution> {
-    return this.create(data);
+    // Map is_active to status
+    const dbData: any = { ...data };
+    if (dbData.is_active !== undefined) {
+      dbData.status = dbData.is_active ? 'active' : 'inactive';
+      delete dbData.is_active;
+    }
+    
+    const result = await this.create(dbData);
+    // Map status back to is_active in the result
+    return this.mapToModel(result);
   }
 
   async updateInstitution(id: string, data: UpdateInstitutionData): Promise<Institution | null> {
-    return this.update(id, data);
+    // Map is_active to status
+    const dbData: any = { ...data };
+    if (dbData.is_active !== undefined) {
+      dbData.status = dbData.is_active ? 'active' : 'inactive';
+      delete dbData.is_active;
+    }
+    
+    const result = await this.update(id, dbData);
+    // Map status back to is_active in the result
+    return result ? this.mapToModel(result) : null;
   }
 
   async deleteInstitution(id: string): Promise<boolean> {
@@ -57,7 +75,9 @@ export class InstitutionRepository extends BaseRepository<Institution> {
     }
 
     if (filters.is_active !== undefined) {
-      query.where('is_active', filters.is_active);
+      // Map is_active boolean to status string
+      const status = filters.is_active ? 'active' : 'inactive';
+      query.where('status', status);
     }
 
     if (pagination) {
@@ -70,7 +90,56 @@ export class InstitutionRepository extends BaseRepository<Institution> {
       query.orderBy('created_at', 'desc'); // Default sort order
     }
 
-    return query.select('*');
+    const results = await query.select('*');
+    // Map each result from DB format to model format
+    return results.map(this.mapToModel);
+  }
+
+  // Helper method to map database record to model
+  private mapToModel(record: any): Institution {
+    if (!record) return record;
+    
+    const model: any = { ...record };
+    // Map status to is_active
+    if (record.status !== undefined) {
+      model.is_active = record.status === 'active';
+      delete model.status;
+    }
+    
+    return model as Institution;
+  }
+
+  // Override the base methods to handle the mapping
+  async findById(id: string): Promise<Institution | null> {
+    const result = await super.findById(id);
+    return result ? this.mapToModel(result) : null;
+  }
+
+  async findOne(filters: Partial<Institution>): Promise<Institution | null> {
+    // Map is_active to status in filters if present
+    const dbFilters: any = { ...filters };
+    if (dbFilters.is_active !== undefined) {
+      dbFilters.status = dbFilters.is_active ? 'active' : 'inactive';
+      delete dbFilters.is_active;
+    }
+    
+    const result = await super.findOne(dbFilters);
+    return result ? this.mapToModel(result) : null;
+  }
+
+  async findAll(filters?: Partial<Institution>, pagination?: { page: number; limit: number }): Promise<Institution[]> {
+    // Map is_active to status in filters if present
+    let dbFilters: any = undefined;
+    if (filters) {
+      dbFilters = { ...filters };
+      if (dbFilters.is_active !== undefined) {
+        dbFilters.status = dbFilters.is_active ? 'active' : 'inactive';
+        delete dbFilters.is_active;
+      }
+    }
+    
+    const results = await super.findAll(dbFilters, pagination);
+    return results.map(this.mapToModel);
   }
 
   // Renomeado de getInstitutionStats e tipo de retorno ajustado

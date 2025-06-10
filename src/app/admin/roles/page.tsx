@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { 
   Key, 
   Plus,
@@ -12,122 +12,153 @@ import {
   Shield,
   Save,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Search,
+  Filter,
+  Users,
+  RefreshCw
 } from 'lucide-react'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
+import { roleService, RoleFilters } from '@/services/roleService'
+import { userService } from '@/services/userService'
+import { PERMISSION_GROUPS } from '@/types/roleManagement'
+import { RoleResponseDto } from '@/types/api'
+import { UserRole, ROLE_LABELS } from '@/types/roles'
 
 export default function RolesPermissionsPage() {
-  const [selectedRole, setSelectedRole] = useState<string | null>('admin')
+  const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [loadingRoles, setLoadingRoles] = useState(true)
+  const [loadingPermissions, setLoadingPermissions] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [roles, setRoles] = useState<RoleResponseDto[]>([])
+  const [error, setError] = useState<string | null>(null)
   
-  // Dados simulados - em um ambiente real, seriam carregados da API
-  const roles = [
-    { id: 'admin', name: 'Administrador do Sistema', description: 'Acesso completo ao sistema', userCount: 5 },
-    { id: 'manager', name: 'Gestor Institucional', description: 'Gerencia uma instituição de ensino', userCount: 12 },
-    { id: 'coordinator', name: 'Coordenador Acadêmico', description: 'Coordena departamentos acadêmicos', userCount: 24 },
-    { id: 'teacher', name: 'Professor', description: 'Ministra aulas e avalia alunos', userCount: 145 },
-    { id: 'student', name: 'Aluno', description: 'Participa de cursos e atividades', userCount: 2500 },
-    { id: 'guardian', name: 'Responsável', description: 'Acompanha alunos sob sua responsabilidade', userCount: 1850 }
-  ]
+  // Filtros
+  const [roleFilter, setRoleFilter] = useState<string>('')
+  const [userFilter, setUserFilter] = useState<string>('')
+  const [permissionFilter, setPermissionFilter] = useState<string>('')
+  const [showFilters, setShowFilters] = useState(false)
   
-  // Grupos de permissões simulados
-  const permissionGroups = [
-    {
-      id: 'system',
-      name: 'Sistema',
-      permissions: [
-        { id: 'system.view', name: 'Visualizar Dashboard', description: 'Acesso ao dashboard do sistema' },
-        { id: 'system.settings', name: 'Configurações do Sistema', description: 'Alterar configurações globais' },
-        { id: 'system.maintenance', name: 'Manutenção', description: 'Executar tarefas de manutenção' },
-        { id: 'system.logs', name: 'Logs do Sistema', description: 'Ver logs do sistema' }
-      ]
-    },
-    {
-      id: 'users',
-      name: 'Usuários',
-      permissions: [
-        { id: 'users.view', name: 'Visualizar Usuários', description: 'Ver lista de usuários' },
-        { id: 'users.create', name: 'Criar Usuários', description: 'Adicionar novos usuários' },
-        { id: 'users.edit', name: 'Editar Usuários', description: 'Modificar dados de usuários' },
-        { id: 'users.delete', name: 'Excluir Usuários', description: 'Remover usuários do sistema' }
-      ]
-    },
-    {
-      id: 'institutions',
-      name: 'Instituições',
-      permissions: [
-        { id: 'institutions.view', name: 'Visualizar Instituições', description: 'Ver lista de instituições' },
-        { id: 'institutions.create', name: 'Criar Instituições', description: 'Adicionar novas instituições' },
-        { id: 'institutions.edit', name: 'Editar Instituições', description: 'Modificar dados de instituições' },
-        { id: 'institutions.delete', name: 'Excluir Instituições', description: 'Remover instituições do sistema' }
-      ]
-    },
-    {
-      id: 'courses',
-      name: 'Cursos',
-      permissions: [
-        { id: 'courses.view', name: 'Visualizar Cursos', description: 'Ver lista de cursos' },
-        { id: 'courses.create', name: 'Criar Cursos', description: 'Adicionar novos cursos' },
-        { id: 'courses.edit', name: 'Editar Cursos', description: 'Modificar dados de cursos' },
-        { id: 'courses.delete', name: 'Excluir Cursos', description: 'Remover cursos do sistema' },
-        { id: 'courses.enroll', name: 'Matricular Alunos', description: 'Matricular alunos em cursos' }
-      ]
-    },
-    {
-      id: 'content',
-      name: 'Conteúdo',
-      permissions: [
-        { id: 'content.view', name: 'Visualizar Conteúdo', description: 'Ver conteúdo do sistema' },
-        { id: 'content.create', name: 'Criar Conteúdo', description: 'Adicionar novo conteúdo' },
-        { id: 'content.edit', name: 'Editar Conteúdo', description: 'Modificar conteúdo existente' },
-        { id: 'content.delete', name: 'Excluir Conteúdo', description: 'Remover conteúdo do sistema' }
-      ]
-    },
-    {
-      id: 'reports',
-      name: 'Relatórios',
-      permissions: [
-        { id: 'reports.view', name: 'Visualizar Relatórios', description: 'Acessar relatórios do sistema' },
-        { id: 'reports.export', name: 'Exportar Relatórios', description: 'Exportar relatórios para outros formatos' },
-        { id: 'reports.create', name: 'Criar Relatórios', description: 'Criar novos relatórios personalizados' }
-      ]
-    }
-  ]
-
   // Estados para controlar quais grupos estão expandidos
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
-    permissionGroups.reduce((acc, group) => ({ ...acc, [group.id]: true }), {})
+    PERMISSION_GROUPS.reduce((acc, group) => ({ ...acc, [group.id]: true }), {})
   )
 
   // Estado para armazenar as permissões selecionadas para o papel atual
-  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, boolean>>({
-    // Simulação - em um ambiente real, seriam carregadas da API
-    'system.view': true,
-    'system.settings': true,
-    'system.maintenance': true,
-    'system.logs': true,
-    'users.view': true,
-    'users.create': true,
-    'users.edit': true,
-    'users.delete': true,
-    'institutions.view': true,
-    'institutions.create': true,
-    'institutions.edit': true,
-    'institutions.delete': true,
-    'courses.view': true,
-    'courses.create': true,
-    'courses.edit': true,
-    'courses.delete': true,
-    'courses.enroll': true,
-    'content.view': true,
-    'content.create': true,
-    'content.edit': true,
-    'content.delete': true,
-    'reports.view': true,
-    'reports.export': true,
-    'reports.create': true
-  })
+  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, boolean>>({})
+  
+  // Carregar roles do banco de dados
+  useEffect(() => {
+    const fetchRoles = async () => {
+      setLoadingRoles(true)
+      try {
+        const filters: RoleFilters = {}
+        if (roleFilter) {
+          filters.search = roleFilter
+        }
+        
+        const response = await roleService.getRoles({
+          filters,
+          sortBy: 'name',
+          sortOrder: 'asc'
+        })
+        
+        // Filtrar roles por usuário se houver um filtro de usuário
+        let filteredRoles = response.items
+        
+        if (userFilter && userFilter.trim() !== '') {
+          // Buscar usuários que correspondem ao filtro
+          try {
+            const usersResponse = await userService.searchUsers(userFilter)
+            
+            if (usersResponse.items.length > 0) {
+              // Obter os IDs de roles dos usuários encontrados
+              const roleIds = usersResponse.items.map(user => user.role_id)
+              
+              // Filtrar as roles para incluir apenas aquelas que têm usuários correspondentes
+              filteredRoles = filteredRoles.filter(role => roleIds.includes(role.id))
+            } else {
+              // Se nenhum usuário for encontrado, não mostrar nenhuma role
+              filteredRoles = []
+            }
+          } catch (error) {
+            console.error('Erro ao buscar usuários:', error)
+            // Em caso de erro, continuar com as roles não filtradas
+          }
+        }
+        
+        setRoles(filteredRoles)
+        
+        // Se não houver role selecionada e temos roles, seleciona a primeira
+        if (!selectedRole && filteredRoles.length > 0) {
+          setSelectedRole(filteredRoles[0].id)
+        }
+      } catch (err) {
+        console.error('Erro ao carregar roles:', err)
+        setError('Não foi possível carregar as funções. Tente novamente mais tarde.')
+      } finally {
+        setLoadingRoles(false)
+      }
+    }
+    
+    fetchRoles()
+  }, [roleFilter, userFilter, selectedRole])
+  
+  // Carregar permissões da role selecionada
+  useEffect(() => {
+    const fetchRolePermissions = async () => {
+      if (!selectedRole) return
+      
+      setLoadingPermissions(true)
+      try {
+        const roleData = await roleService.getRoleById(selectedRole)
+        
+        // Inicializar todas as permissões como false
+        const permissionsMap: Record<string, boolean> = {}
+        
+        // Inicializar todas as permissões possíveis como false
+        PERMISSION_GROUPS.forEach(group => {
+          group.permissions.forEach(permission => {
+            permissionsMap[permission.key] = false
+          })
+        })
+        
+        // Marcar como true as permissões que o papel possui
+        if (roleData.permissions && Array.isArray(roleData.permissions)) {
+          roleData.permissions.forEach(permissionKey => {
+            permissionsMap[permissionKey] = true
+          })
+        }
+        
+        setSelectedPermissions(permissionsMap)
+      } catch (err) {
+        console.error('Erro ao carregar permissões:', err)
+        setError('Não foi possível carregar as permissões. Tente novamente mais tarde.')
+      } finally {
+        setLoadingPermissions(false)
+      }
+    }
+    
+    fetchRolePermissions()
+  }, [selectedRole])
+  
+  // Filtrar permissões com base no filtro de permissão
+  const filteredPermissionGroups = useMemo(() => {
+    if (!permissionFilter) return PERMISSION_GROUPS
+    
+    return PERMISSION_GROUPS.map(group => {
+      const filteredPermissions = group.permissions.filter(permission => 
+        permission.name.toLowerCase().includes(permissionFilter.toLowerCase()) ||
+        permission.description.toLowerCase().includes(permissionFilter.toLowerCase())
+      )
+      
+      return {
+        ...group,
+        permissions: filteredPermissions
+      }
+    }).filter(group => group.permissions.length > 0)
+  }, [permissionFilter])
   
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => ({
@@ -136,62 +167,109 @@ export default function RolesPermissionsPage() {
     }))
   }
   
-  const togglePermission = (permissionId: string) => {
+  const togglePermission = (permissionKey: string) => {
     setSelectedPermissions(prev => ({
       ...prev,
-      [permissionId]: !prev[permissionId]
+      [permissionKey]: !prev[permissionKey]
     }))
   }
   
   const toggleAllInGroup = (groupId: string, value: boolean) => {
-    const group = permissionGroups.find(g => g.id === groupId)
+    const group = PERMISSION_GROUPS.find(g => g.id === groupId)
     if (!group) return
     
     const newPermissions = { ...selectedPermissions }
     group.permissions.forEach(permission => {
-      newPermissions[permission.id] = value
+      newPermissions[permission.key] = value
     })
     
     setSelectedPermissions(newPermissions)
   }
   
   const handleSavePermissions = async () => {
-    setLoading(true)
+    if (!selectedRole) return
     
-    // Simulação de salvamento
+    setLoading(true)
+    setError(null)
+    
     try {
-      // Em um ambiente real, faríamos uma chamada para a API aqui
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Converter o objeto de permissões para um array de strings
+      // Incluir apenas as permissões que estão habilitadas (true)
+      const permissionsArray = Object.entries(selectedPermissions)
+        .filter(([_, value]) => value === true)
+        .map(([key, _]) => key)
+      
+      // Preparar dados para enviar à API
+      await roleService.updateRole(selectedRole, {
+        permissions: permissionsArray
+      })
+      
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    } catch (error) {
-      console.error('Erro ao salvar permissões:', error)
+    } catch (err) {
+      console.error('Erro ao salvar permissões:', err)
+      setError('Não foi possível salvar as permissões. Tente novamente mais tarde.')
     } finally {
       setLoading(false)
     }
   }
   
   const isAllGroupSelected = (groupId: string) => {
-    const group = permissionGroups.find(g => g.id === groupId)
+    const group = PERMISSION_GROUPS.find(g => g.id === groupId)
     if (!group) return false
     
-    return group.permissions.every(permission => selectedPermissions[permission.id])
+    return group.permissions.every(permission => selectedPermissions[permission.key])
   }
   
   const isAnyGroupSelected = (groupId: string) => {
-    const group = permissionGroups.find(g => g.id === groupId)
+    const group = PERMISSION_GROUPS.find(g => g.id === groupId)
     if (!group) return false
     
-    return group.permissions.some(permission => selectedPermissions[permission.id])
+    return group.permissions.some(permission => selectedPermissions[permission.key])
   }
-
+  
+  const handleCreateRole = () => {
+    // Implementar lógica para criar nova role
+    console.log('Criar nova role')
+  }
+  
+  const refreshRoles = async () => {
+    setLoadingRoles(true)
+    try {
+      const response = await roleService.getRoles()
+      setRoles(response.items)
+    } catch (err) {
+      console.error('Erro ao atualizar roles:', err)
+      setError('Não foi possível atualizar as funções. Tente novamente mais tarde.')
+    } finally {
+      setLoadingRoles(false)
+    }
+  }
+  
   const headerActions = (
     <div className="flex items-center gap-2">
       <button
+        onClick={() => setShowFilters(!showFilters)}
+        className="px-3 py-2 rounded-lg flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700"
+      >
+        <Filter className="h-4 w-4" />
+        Filtros
+      </button>
+      
+      <button
+        onClick={refreshRoles}
+        disabled={loadingRoles}
+        className="px-3 py-2 rounded-lg flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700"
+      >
+        <RefreshCw className={`h-4 w-4 ${loadingRoles ? 'animate-spin' : ''}`} />
+        Atualizar
+      </button>
+      
+      <button
         onClick={handleSavePermissions}
-        disabled={loading}
+        disabled={loading || !selectedRole}
         className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-          loading 
+          loading || !selectedRole
             ? 'bg-gray-400 cursor-not-allowed' 
             : saved 
             ? 'bg-green-600 hover:bg-green-700' 
@@ -209,13 +287,89 @@ export default function RolesPermissionsPage() {
       </button>
     </div>
   )
-
+  
   return (
     <DashboardPageLayout
       title="Gerenciar Permissões"
       subtitle="Configure os papéis e permissões de acesso ao sistema"
       actions={headerActions}
     >
+      {/* Área de filtros */}
+      {showFilters && (
+        <div className="mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <h3 className="text-sm font-medium text-slate-700 mb-3">Filtros</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="roleFilter" className="block text-xs text-slate-500 mb-1">
+                Filtrar por função
+              </label>
+              <div className="relative">
+                <input
+                  id="roleFilter"
+                  type="text"
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  placeholder="Nome da função..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <Search className="absolute right-3 top-2.5 h-4 w-4 text-slate-400" />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="userFilter" className="block text-xs text-slate-500 mb-1">
+                Filtrar por usuário
+              </label>
+              <div className="relative">
+                <input
+                  id="userFilter"
+                  type="text"
+                  value={userFilter}
+                  onChange={(e) => setUserFilter(e.target.value)}
+                  placeholder="Nome do usuário..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <Users className="absolute right-3 top-2.5 h-4 w-4 text-slate-400" />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="permissionFilter" className="block text-xs text-slate-500 mb-1">
+                Filtrar por permissão
+              </label>
+              <div className="relative">
+                <input
+                  id="permissionFilter"
+                  type="text"
+                  value={permissionFilter}
+                  onChange={(e) => setPermissionFilter(e.target.value)}
+                  placeholder="Nome da permissão..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <Key className="absolute right-3 top-2.5 h-4 w-4 text-slate-400" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mensagens de erro */}
+      {error && (
+        <div className="mb-6 bg-red-50 p-4 rounded-md border border-red-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800">
+                {error}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feedback de salvamento */}
       {saved && (
@@ -251,30 +405,41 @@ export default function RolesPermissionsPage() {
             
             <div className="p-2">
               <button 
+                onClick={handleCreateRole}
                 className="w-full flex justify-between items-center p-3 text-left rounded-md hover:bg-indigo-50 transition-colors"
               >
                 <span className="font-medium text-indigo-600">+ Novo Papel</span>
               </button>
               
-              <div className="mt-2 space-y-1">
-                {roles.map(role => (
-                  <button
-                    key={role.id}
-                    onClick={() => setSelectedRole(role.id)}
-                    className={`w-full flex justify-between items-center p-3 text-left rounded-md ${
-                      selectedRole === role.id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-medium">{role.name}</div>
-                      <div className="text-xs text-slate-500">{role.description}</div>
-                    </div>
-                    <div className="text-xs text-slate-500 whitespace-nowrap">
-                      {role.userCount} usuários
-                    </div>
-                  </button>
-                ))}
-              </div>
+              {loadingRoles ? (
+                <div className="flex justify-center items-center p-6">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              ) : roles.length === 0 ? (
+                <div className="p-6 text-center text-slate-500">
+                  Nenhum papel encontrado
+                </div>
+              ) : (
+                <div className="mt-2 space-y-1">
+                  {roles.map(role => (
+                    <button
+                      key={role.id}
+                      onClick={() => setSelectedRole(role.id)}
+                      className={`w-full flex justify-between items-center p-3 text-left rounded-md ${
+                        selectedRole === role.id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium">{role.name}</div>
+                        <div className="text-xs text-slate-500">{role.description}</div>
+                      </div>
+                      <div className="text-xs text-slate-500 whitespace-nowrap">
+                        {role.users_count || 0} usuários
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -291,61 +456,69 @@ export default function RolesPermissionsPage() {
               </p>
             </div>
             
-            <div className="p-4">
-              {permissionGroups.map(group => (
-                <div key={group.id} className="mb-4 border border-slate-200 rounded-md overflow-hidden">
-                  <div 
-                    className="flex items-center justify-between p-3 bg-slate-50 cursor-pointer"
-                    onClick={() => toggleGroup(group.id)}
-                  >
-                    <div className="flex items-center">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          toggleAllInGroup(group.id, !isAllGroupSelected(group.id))
-                        }}
-                        className={`w-5 h-5 rounded border ${
-                          isAllGroupSelected(group.id) 
-                            ? 'bg-indigo-600 border-indigo-600 text-white' 
-                            : isAnyGroupSelected(group.id)
-                              ? 'bg-indigo-200 border-indigo-400'
-                              : 'border-slate-300'
-                        } flex items-center justify-center mr-3`}
-                      >
-                        {isAllGroupSelected(group.id) && <Check className="h-3 w-3" />}
-                      </button>
-                      <span className="font-medium">{group.name}</span>
-                    </div>
-                    {expandedGroups[group.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </div>
-                  
-                  {expandedGroups[group.id] && (
-                    <div className="p-3 border-t border-slate-200">
-                      {group.permissions.map(permission => (
-                        <div key={permission.id} className="flex items-center py-2">
-                          <button 
-                            onClick={() => togglePermission(permission.id)}
-                            className={`w-5 h-5 rounded border ${
-                              selectedPermissions[permission.id] 
-                                ? 'bg-indigo-600 border-indigo-600 text-white' 
+            {loadingPermissions ? (
+              <div className="flex justify-center items-center p-12">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : !selectedRole ? (
+              <div className="p-8 text-center text-slate-500">
+                Selecione um papel para configurar suas permissões
+              </div>
+            ) : (
+              <div className="p-4">
+                {filteredPermissionGroups.map(group => (
+                  <div key={group.id} className="mb-4 border border-slate-200 rounded-md overflow-hidden">
+                    <div 
+                      className="flex items-center justify-between p-3 bg-slate-50 cursor-pointer"
+                      onClick={() => toggleGroup(group.id)}
+                    >
+                      <div className="flex items-center">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleAllInGroup(group.id, !isAllGroupSelected(group.id))
+                          }}
+                          className={`w-5 h-5 rounded border ${
+                            isAllGroupSelected(group.id) 
+                              ? 'bg-indigo-600 border-indigo-600 text-white' 
+                              : isAnyGroupSelected(group.id)
+                                ? 'bg-indigo-200 border-indigo-400'
                                 : 'border-slate-300'
-                            } flex items-center justify-center mr-3`}
-                          >
-                            {selectedPermissions[permission.id] && <Check className="h-3 w-3" />}
-                          </button>
-                          <div>
-                            <div className="text-sm font-medium">{permission.name}</div>
-                            <div className="text-xs text-slate-500">{permission.description}</div>
-                          </div>
-                        </div>
-                      ))}
+                          } flex items-center justify-center mr-3`}
+                        >
+                          {isAllGroupSelected(group.id) && <Check className="h-3 w-3" />}
+                        </button>
+                        <span className="font-medium">{group.name}</span>
+                      </div>
+                      {expandedGroups[group.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </div>
-                  )}
-                </div>
-              ))}
-              
-
-            </div>
+                    
+                    {expandedGroups[group.id] && (
+                      <div className="p-3 border-t border-slate-200">
+                        {group.permissions.map(permission => (
+                          <div key={permission.key} className="flex items-center py-2">
+                            <button 
+                              onClick={() => togglePermission(permission.key)}
+                              className={`w-5 h-5 rounded border ${
+                                selectedPermissions[permission.key] 
+                                  ? 'bg-indigo-600 border-indigo-600 text-white' 
+                                  : 'border-slate-300'
+                              } flex items-center justify-center mr-3`}
+                            >
+                              {selectedPermissions[permission.key] && <Check className="h-3 w-3" />}
+                            </button>
+                            <div>
+                              <div className="text-sm font-medium">{permission.name}</div>
+                              <div className="text-xs text-slate-500">{permission.description}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

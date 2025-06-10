@@ -29,45 +29,24 @@ export class AuthService {
     return bcrypt.compare(password, hashedPassword);
   }
 
-  static async generateToken(user: Partial<User>): Promise<string> {
-    // Buscar a role do usuário pelo role_id
-    const role = await db('roles')
-      .where('id', user.role_id)
-      .first();
-    
-    let permissions: string[] = [];
-    let roleName = '';
-    
-    // Se encontrou a role, buscar as permissões associadas
-    if (role) {
-      roleName = role.name;
-      
-      // Buscar as permissões da role através da tabela de junção
-      const rolePermissions = await db('role_permissions')
-        .join('permissions', 'role_permissions.permission_id', 'permissions.id')
-        .where('role_permissions.role_id', role.id)
-        .select('permissions.name');
-      
-      permissions = rolePermissions.map(p => p.name);
-    }
-    
+  static async generateToken(user: Partial<User>, roleName: string, permissions: string[]): Promise<string> {
     return jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        name: user.name,
-        role: roleName,
-        permissions: permissions,
-        institutionId: user.institution_id
-      },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+        {
+            userId: user.id,
+            email: user.email,
+            name: user.name,
+            role: roleName,
+            permissions: permissions,
+            institutionId: user.institution_id
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
     );
-  }
+}
 
   static async register(userData: Partial<User>): Promise<AuthResponse> {
     // Check if user already exists
-    const existingUser = await db('users')
+    const existingUser = await db('User')
       .where('email', userData.email)
       .first();
 
@@ -79,7 +58,7 @@ export class AuthService {
     const hashedPassword = await this.hashPassword(userData.password!);
 
     // Create new user
-    const [user] = await db('users')
+    const [user] = await db('User')
       .insert({
         ...userData,
         password: hashedPassword
@@ -108,7 +87,7 @@ export class AuthService {
     }
 
     // Generate token
-    const token = await this.generateToken(user);
+    const token = await this.generateToken(user, roleName, permissions);
 
     // Remove password from response
     const { password, ...userWithoutPassword } = user;
@@ -126,45 +105,27 @@ export class AuthService {
     };
   }
 
-  static async login(email: string, password: string): Promise<AuthResponse> {
-    // Find user
-    const user = await db('users')
-      .where('email', email)
-      .first();
-
+  static async validateUser(email: string, password?: string) {
+    const user = await db('User').where('email', email).first();
     if (!user) {
-      throw new Error('Invalid credentials');
+        throw new Error('User not found');
     }
+    if (password) {
+        const isValidPassword = await this.comparePasswords(password, user.password);
+        if (!isValidPassword) {
+            throw new Error('Invalid credentials');
+        }
+    }
+    return user;
+}
 
-    // Verify password
-    const isValidPassword = await this.comparePasswords(password, user.password);
-    if (!isValidPassword) {
-      throw new Error('Invalid credentials');
-    }
+  static async login(email: string, password: string): Promise<AuthResponse> {
+    const user = await this.validateUser(email, password);
 
-    // Buscar a role do usuário pelo role_id
-    const role = await db('roles')
-      .where('id', user.role_id)
-      .first();
-    
-    let permissions: string[] = [];
-    let roleName = '';
-    
-    // Se encontrou a role, buscar as permissões associadas
-    if (role) {
-      roleName = role.name;
-      
-      // Buscar as permissões da role através da tabela de junção
-      const rolePermissions = await db('role_permissions')
-        .join('permissions', 'role_permissions.permission_id', 'permissions.id')
-        .where('role_permissions.role_id', role.id)
-        .select('permissions.name');
-      
-      permissions = rolePermissions.map(p => p.name);
-    }
+    const { roleName, permissions } = await this.getRoleAndPermissions(user.role_id);
 
     // Generate token
-    const token = await this.generateToken(user);
+    const token = await this.generateToken(user, roleName, permissions);
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
@@ -173,7 +134,8 @@ export class AuthService {
     const userWithPermissions = {
       ...userWithoutPassword,
       role: roleName,
-      permissions
+      permissions,
+      institution_id: user.institution_id
     };
 
     return {
@@ -182,8 +144,27 @@ export class AuthService {
     };
   }
 
+  static async getRoleAndPermissions(roleId: string | null) {
+    if (!roleId) {
+        return { roleName: 'user', permissions: [] };
+    }
+
+    const role = await db('roles').where('id', roleId).first();
+    if (!role) {
+        return { roleName: 'user', permissions: [] };
+    }
+
+    const rolePermissions = await db('role_permissions')
+        .join('permissions', 'role_permissions.permission_id', 'permissions.id')
+        .where('role_permissions.role_id', role.id)
+        .select('permissions.name');
+
+    const permissions = rolePermissions.map(p => p.name);
+    return { roleName: role.name, permissions };
+}
+
   static async getUserById(userId: string): Promise<Omit<User, 'password'> | null> {
-    const user = await db('users')
+    const user = await db('User')
       .where('id', userId)
       .first();
 
@@ -191,26 +172,7 @@ export class AuthService {
       return null;
     }
 
-    // Buscar a role do usuário pelo role_id
-    const role = await db('roles')
-      .where('id', user.role_id)
-      .first();
-    
-    let permissions: string[] = [];
-    let roleName = '';
-    
-    // Se encontrou a role, buscar as permissões associadas
-    if (role) {
-      roleName = role.name;
-      
-      // Buscar as permissões da role através da tabela de junção
-      const rolePermissions = await db('role_permissions')
-        .join('permissions', 'role_permissions.permission_id', 'permissions.id')
-        .where('role_permissions.role_id', role.id)
-        .select('permissions.name');
-      
-      permissions = rolePermissions.map(p => p.name);
-    }
+    const { roleName, permissions } = await this.getRoleAndPermissions(user.role_id);
 
     // Remove password from response
     const { password, ...userWithoutPassword } = user;

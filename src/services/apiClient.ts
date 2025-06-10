@@ -3,6 +3,24 @@ import { ApiResponse, ApiError } from '../types/api';
 // Configuração base da API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+// Nota: Para que o CORS funcione corretamente, o servidor deve enviar os seguintes headers:
+// Access-Control-Allow-Origin: *
+// Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
+// Access-Control-Allow-Headers: Content-Type, Authorization
+
+// Função para validar e normalizar URLs
+const normalizeEndpoint = (endpoint: string): string => {
+  // Remove barras duplicadas
+  let normalized = endpoint.replace(/\/+/g, '/');
+  
+  // Remove barra inicial se existir
+  if (normalized.startsWith('/')) {
+    normalized = normalized.substring(1);
+  }
+  
+  return normalized;
+};
+
 // Classe para erros da API
 export class ApiClientError extends Error {
   public status: number;
@@ -33,11 +51,7 @@ export class ApiClient {
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
     this.defaultHeaders = {
-      'Content-Type': 'application/json', 
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Credentials': 'true'
+      'Content-Type': 'application/json'
     };
   }
 
@@ -64,7 +78,8 @@ export class ApiClient {
    * Constrói a URL completa com parâmetros de query
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
-    const url = new URL(endpoint, this.baseURL);
+    const normalizedEndpoint = normalizeEndpoint(endpoint);
+    const url = new URL(normalizedEndpoint, this.baseURL);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -82,12 +97,6 @@ export class ApiClient {
    */
   private prepareHeaders(customHeaders?: Record<string, string>): Record<string, string> {
     const headers = { ...this.defaultHeaders, ...customHeaders };
-
-    // Mantém os headers de CORS
-    headers['Access-Control-Allow-Origin'] = 'https://portal.sabercon.com.br';
-    headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS';
-    headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
-    headers['Access-Control-Allow-Credentials'] = 'true';
 
     // Adiciona token de autenticação se disponível
     const token = this.getAuthToken();
@@ -117,6 +126,10 @@ export class ApiClient {
       const url = this.buildURL(endpoint, params);
       const headers = this.prepareHeaders(customHeaders);
 
+      // Log para debug
+      console.log(`[API Request] ${method} ${url}`);
+      console.log('[API Headers]', headers);
+
       // Remove Content-Type para FormData
       if (body instanceof FormData) {
         delete headers['Content-Type'];
@@ -126,6 +139,8 @@ export class ApiClient {
         method,
         headers,
         body: body instanceof FormData ? body : JSON.stringify(body),
+        credentials: 'same-origin', // Alterado para permitir Access-Control-Allow-Origin: *
+        mode: 'cors' // Explicitamente indica que é uma requisição CORS
       };
 
       // Implementa timeout
@@ -139,12 +154,16 @@ export class ApiClient {
 
       clearTimeout(timeoutId);
 
+      // Log da resposta para debug
+      console.log(`[API Response] ${response.status} ${response.statusText}`);
+
       // Parse da resposta
       let responseData: ApiResponse<T>;
       const contentType = response.headers.get('content-type');
       
       if (contentType && contentType.includes('application/json')) {
         responseData = await response.json();
+        console.log('[API Response Data]', responseData);
       } else {
         // Para respostas não-JSON, cria uma resposta padrão
         responseData = {
@@ -156,6 +175,11 @@ export class ApiClient {
 
       // Verifica se a resposta foi bem-sucedida
       if (!response.ok) {
+        // Se for erro de autenticação, limpa o token
+        if (response.status === 401) {
+          this.clearAuth();
+        }
+        
         throw new ApiClientError(
           responseData.message || `HTTP ${response.status}: ${response.statusText}`,
           response.status,
@@ -165,6 +189,8 @@ export class ApiClient {
 
       return responseData;
     } catch (error) {
+      console.error('[API Error]', error);
+      
       if (error instanceof ApiClientError) {
         throw error;
       }
@@ -230,7 +256,11 @@ export class ApiClient {
       const url = this.buildURL(endpoint);
       const headers = this.prepareHeaders();
 
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, {
+        headers,
+        credentials: 'same-origin',
+        mode: 'cors'
+      });
 
       if (!response.ok) {
         throw new ApiClientError(`Download failed: ${response.statusText}`, response.status);

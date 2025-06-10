@@ -1,6 +1,6 @@
 import express from 'express';
 import { validateJWT, requireRole } from '../middleware/auth';
-// import { getRedisClient } from '../config/redis';
+import { getRedisClient } from '../config/redis';
 
 const router = express.Router();
 
@@ -36,12 +36,31 @@ router.get('/get', validateJWT, async (req, res) => {
       });
     }
 
-    // Simular resposta de cache vazio para evitar erro 404
-    return res.status(404).json({
-      success: false,
-      message: 'Cache key not found',
-      exists: false
-    });
+    const redis = getRedisClient();
+    const value = await redis.get(key);
+
+    if (value) {
+      try {
+        const jsonValue = JSON.parse(value);
+        return res.json({
+          success: true,
+          data: jsonValue,
+          exists: true
+        });
+      } catch (e) {
+        return res.json({
+          success: true,
+          data: value,
+          exists: true
+        });
+      }
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: 'Cache key not found',
+        exists: false
+      });
+    }
   } catch (error) {
     console.error('Error getting cache value:', error);
     return res.status(500).json({

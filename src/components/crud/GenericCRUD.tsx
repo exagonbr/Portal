@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
 import Table from '@/components/ui/Table'
-import { Button } from '@/components/ui/Button'
+import { Button, buttonVariants } from '@/components/ui/Button'
+import type { VariantProps } from 'class-variance-authority'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -19,10 +20,11 @@ export interface CRUDColumn<T> {
 
 export interface CRUDAction<T> {
   label: string
-  icon: string
+  icon: React.ReactNode
   onClick: (item: T) => void
-  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'warning'
+  variant?: VariantProps<typeof buttonVariants>['variant']
   permission?: string
+  className?: string | ((item: T) => string)
 }
 
 interface GenericCRUDProps<T> {
@@ -159,9 +161,12 @@ export default function GenericCRUD<T extends { id: string | number }>({
               <Button
                 key={index}
                 size="sm"
+                variant={action.variant || "ghost"}
                 onClick={() => action.onClick(item)}
+                title={action.label}
+                className={typeof action.className === 'function' ? action.className(item) : action.className}
               >
-                <span className="material-symbols-outlined text-base">{action.icon}</span>
+                {action.icon}
               </Button>
             )
           ))}

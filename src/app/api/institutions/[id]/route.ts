@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { mockInstitutions, findInstitutionByEmail } from '../mockDatabase'
 
 // Schema de validação para atualização de instituição
 const updateInstitutionSchema = z.object({
@@ -20,7 +21,7 @@ const updateInstitutionSchema = z.object({
   website: z.string().url().optional(),
   logo: z.string().url().optional(),
   type: z.enum(['PRIVATE', 'PUBLIC', 'MIXED']).optional(),
-  is_active: z.boolean().optional(),
+  active: z.boolean().optional(),
   settings: z.object({
     allowStudentRegistration: z.boolean().optional(),
     requireEmailVerification: z.boolean().optional(),
@@ -28,9 +29,6 @@ const updateInstitutionSchema = z.object({
     maxUsersPerSchool: z.number().int().positive().optional()
   }).optional()
 })
-
-// Mock database - substituir por Prisma/banco real
-const mockInstitutions = new Map()
 
 // GET - Buscar instituição por ID
 export async function GET(
@@ -64,7 +62,7 @@ export async function GET(
     const canViewDetails = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id === institutionId) ||
-      (institution.is_active && session.user.institution_id === institutionId)
+      (institution.active && session.user.institution_id === institutionId)
 
     if (!canViewDetails) {
       // Retornar apenas informações básicas
@@ -158,9 +156,7 @@ export async function PUT(
 
     // Se está alterando email, verificar duplicação
     if (updateData.email && updateData.email !== existingInstitution.email) {
-      const duplicateEmail = Array.from(mockInstitutions.values()).find(
-        inst => inst.email === updateData.email && inst.id !== institutionId
-      )
+      const duplicateEmail = findInstitutionByEmail(updateData.email, institutionId)
 
       if (duplicateEmail) {
         return NextResponse.json(

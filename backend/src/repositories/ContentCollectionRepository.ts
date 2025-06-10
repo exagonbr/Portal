@@ -63,10 +63,10 @@ export class ContentCollectionRepository extends BaseRepository<ContentCollectio
     return this.db(this.tableName)
       .select(
         'content_collections.*',
-        'users.name as creator_name',
-        'users.usuario as creator_username'
+        'User.name as creator_name',
+        'User.usuario as creator_username'
       )
-      .leftJoin('users', 'content_collections.created_by', 'users.id')
+      .leftJoin('User', 'content_collections.created_by', 'User.id')
       .orderBy('content_collections.created_at', 'desc');
   }
 

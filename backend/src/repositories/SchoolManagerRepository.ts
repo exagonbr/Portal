@@ -138,14 +138,14 @@ export class SchoolManagerRepository extends BaseRepository<SchoolManager> {
     const result = await this.db(this.tableName)
       .select(
         'school_managers.*',
-        'users.name as user_name',
-        'users.email as user_email',
+        'User.name as user_name',
+        'User.email as user_email',
         'schools.name as school_name',
         'schools.code as school_code',
         'institutions.name as institution_name',
         'institutions.id as institution_id'
       )
-      .join('users', 'school_managers.user_id', 'users.id')
+      .join('User', 'school_managers.user_id', 'User.id')
       .join('schools', 'school_managers.school_id', 'schools.id')
       .join('institutions', 'schools.institution_id', 'institutions.id')
       .where('school_managers.id', managerId)
@@ -167,10 +167,10 @@ export class SchoolManagerRepository extends BaseRepository<SchoolManager> {
     const managers = await this.db(this.tableName)
       .select(
         'school_managers.*',
-        'users.name as user_name',
-        'users.email as user_email'
+        'User.name as user_name',
+        'User.email as user_email'
       )
-      .join('users', 'school_managers.user_id', 'users.id')
+      .join('User', 'school_managers.user_id', 'User.id')
       .where('school_managers.school_id', schoolId)
       .where('school_managers.is_active', true)
       .orderBy('school_managers.position');
@@ -224,7 +224,7 @@ export class SchoolManagerRepository extends BaseRepository<SchoolManager> {
   }
 
   async getManagerHistory(userId: string): Promise<ManagerHistoryDto> {
-    const userInfo = await this.db('users')
+    const userInfo = await this.db('User')
       .where({ id: userId })
       .first();
 

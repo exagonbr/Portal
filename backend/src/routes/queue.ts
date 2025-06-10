@@ -11,8 +11,6 @@ const router = express.Router();
  *   get:
  *     summary: Get next jobs from queue
  *     tags: [Queue]
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Next jobs in queue
@@ -22,12 +20,13 @@ const router = express.Router();
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/QueueJob'
- *       404:
- *         description: No jobs available
  */
 router.get('/next', validateJWT, async (req, res) => {
   try {
-    // Retorna uma lista vazia se não há jobs, evitando erro 404
+    const user = req.user || { userId: 'anonymous' };
+    console.log(`Processing queue/next request for user: ${user.userId}`);
+    
+    // Retorna uma lista vazia se não há jobs, com código 200
     res.json({
       success: true,
       data: [],

@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { 
-  Users, 
+import {
+  Users,
   Plus,
   Edit,
   Eye,
@@ -23,10 +23,20 @@ import {
   Calendar,
   UserCheck,
   UserX,
-  Key
+  Key,
+  History,
+  Settings,
+  BarChart3,
+  Bell,
+  FileText,
+  Award,
+  Clock,
+  Activity,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { userService } from '@/services/userService'
+import { userService, resetUserPassword } from '@/services/userService'
 import { roleService } from '@/services/roleService'
 import { institutionService } from '@/services/institutionService'
 import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto, UserWithRoleDto } from '@/types/api'
@@ -35,9 +45,11 @@ import UserModal from '@/components/modals/UserModal'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ToastManager'
-import GenericCRUD, { CRUDColumn } from '@/components/crud/GenericCRUD'
+import GenericCRUD, { CRUDColumn, CRUDAction } from '@/components/crud/GenericCRUD'
 import { Badge } from '@/components/ui/Badge'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import Modal from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
 
 // Estendendo o tipo UserResponseDto para incluir campos adicionais
 interface ExtendedUserResponseDto extends UserResponseDto {
@@ -50,6 +62,17 @@ interface ExtendedUserResponseDto extends UserResponseDto {
   updated_at: string
   role_name?: string
   institution_name?: string
+}
+
+// Estendendo a interface UserFilterDto para incluir as propriedades adicionais de filtro
+interface ExtendedUserFilterDto extends UserFilterDto {
+  name?: string;
+  email?: string;
+  role_id?: string;
+  institution_id?: string;
+  is_active?: boolean;
+  created_after?: string;
+  created_before?: string;
 }
 
 // Interface para o UserDto usado no modal
@@ -87,7 +110,19 @@ const Notification = ({ message, type, onClose }: { message: string; type: 'succ
 }
 
 // Componente de modal de detalhes do usuário
-const UserDetailsModal = ({ user, onClose }: { user: ExtendedUserResponseDto | null; onClose: () => void }) => {
+const UserDetailsModal = ({ 
+  user, 
+  onClose,
+  onEdit,
+  onToggleStatus,
+  onResetPassword
+}: { 
+  user: ExtendedUserResponseDto | null; 
+  onClose: () => void;
+  onEdit?: (user: ExtendedUserResponseDto) => void;
+  onToggleStatus?: (user: ExtendedUserResponseDto) => void;
+  onResetPassword?: (user: ExtendedUserResponseDto) => void;
+}) => {
   if (!user) return null
 
   return (
@@ -204,19 +239,463 @@ const UserDetailsModal = ({ user, onClose }: { user: ExtendedUserResponseDto | n
         </div>
 
         <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
-          <div className="flex justify-end">
-            <button
+          <div className="flex flex-wrap justify-between items-center">
+            <div className="flex space-x-2">
+              {onEdit && (
+                <Button
+                  variant="secondary"
+                  onClick={() => onEdit(user)}
+                  className="flex items-center gap-1"
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Editar</span>
+                </Button>
+              )}
+              
+              {onToggleStatus && (
+                <Button
+                  variant={user.is_active ? "destructive" : "success"}
+                  onClick={() => onToggleStatus(user)}
+                  className="flex items-center gap-1"
+                >
+                  {user.is_active ? (
+                    <>
+                      <UserX className="h-4 w-4" />
+                      <span>Desativar</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="h-4 w-4" />
+                      <span>Ativar</span>
+                    </>
+                  )}
+                </Button>
+              )}
+              
+              {onResetPassword && (
+                <Button
+                  variant="warning"
+                  onClick={() => onResetPassword(user)}
+                  className="flex items-center gap-1"
+                >
+                  <Key className="h-4 w-4" />
+                  <span>Resetar Senha</span>
+                </Button>
+              )}
+            </div>
+            
+            <Button
+              variant="default"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
             >
               Fechar
-            </button>
+            </Button>
           </div>
         </div>
       </div>
     </div>
   )
 }
+
+// Modal de Histórico do Usuário
+const UserHistoryModal = ({
+  user,
+  onClose
+}: {
+  user: ExtendedUserResponseDto | null;
+  onClose: () => void;
+}) => {
+  if (!user) return null
+
+  // Mock data para histórico - substituir por dados reais da API
+  const historyData = [
+    { date: '2024-01-15', action: 'Login realizado', details: 'IP: 192.168.1.1' },
+    { date: '2024-01-14', action: 'Perfil atualizado', details: 'Email alterado' },
+    { date: '2024-01-13', action: 'Senha alterada', details: 'Alteração via perfil' },
+    { date: '2024-01-12', action: 'Curso concluído', details: 'Matemática Básica' },
+    { date: '2024-01-11', action: 'Login realizado', details: 'IP: 192.168.1.2' }
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <History className="h-6 w-6" />
+              <div>
+                <h2 className="text-xl font-bold">Histórico de Atividades</h2>
+                <p className="text-blue-100">{user.name}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-white hover:text-blue-200">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-96">
+          <div className="space-y-4">
+            {historyData.map((item, index) => (
+              <div key={index} className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg">
+                <div className="flex-shrink-0">
+                  <Activity className="h-5 w-5 text-blue-500 mt-1" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium text-slate-800">{item.action}</h4>
+                      <p className="text-sm text-slate-600">{item.details}</p>
+                    </div>
+                    <span className="text-xs text-slate-500">{formatDate(item.date)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
+          <div className="flex justify-end">
+            <Button variant="default" onClick={onClose}>
+              Fechar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Modal de Permissões do Usuário
+const UserPermissionsModal = ({
+  user,
+  onClose,
+  onSave
+}: {
+  user: ExtendedUserResponseDto | null;
+  onClose: () => void;
+  onSave?: () => void;
+}) => {
+  if (!user) return null
+
+  // Mock data para permissões - substituir por dados reais da API
+  const [permissions, setPermissions] = useState({
+    users: { create: true, read: true, update: false, delete: false },
+    courses: { create: false, read: true, update: false, delete: false },
+    reports: { create: false, read: true, update: false, delete: false },
+    settings: { create: false, read: false, update: false, delete: false }
+  })
+
+  const handlePermissionChange = (module: string, action: string, value: boolean) => {
+    setPermissions(prev => ({
+      ...prev,
+      [module]: {
+        ...prev[module as keyof typeof prev],
+        [action]: value
+      }
+    }))
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Shield className="h-6 w-6" />
+              <div>
+                <h2 className="text-xl font-bold">Gerenciar Permissões</h2>
+                <p className="text-purple-100">{user.name}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-white hover:text-purple-200">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-96">
+          <div className="space-y-6">
+            {Object.entries(permissions).map(([module, actions]) => (
+              <div key={module} className="border border-slate-200 rounded-lg p-4">
+                <h3 className="font-semibold text-slate-800 mb-3 capitalize">{module}</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(actions).map(([action, enabled]) => (
+                    <label key={action} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={enabled}
+                        onChange={(e) => handlePermissionChange(module, action, e.target.checked)}
+                        className="rounded border-slate-300"
+                      />
+                      <span className="text-sm capitalize">{action}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button variant="default" onClick={onSave}>
+              Salvar Permissões
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Modal de Relatórios do Usuário
+const UserReportsModal = ({
+  user,
+  onClose
+}: {
+  user: ExtendedUserResponseDto | null;
+  onClose: () => void;
+}) => {
+  if (!user) return null
+
+  const reportTypes = [
+    { id: 'activity', name: 'Relatório de Atividades', description: 'Histórico completo de ações do usuário' },
+    { id: 'performance', name: 'Relatório de Performance', description: 'Desempenho em cursos e atividades' },
+    { id: 'attendance', name: 'Relatório de Frequência', description: 'Presença em aulas e eventos' },
+    { id: 'certificates', name: 'Relatório de Certificados', description: 'Certificados obtidos pelo usuário' }
+  ]
+
+  const handleGenerateReport = (reportType: string) => {
+    // Implementar geração de relatório
+    console.log(`Gerando relatório ${reportType} para usuário ${user.id}`)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-6 w-6" />
+              <div>
+                <h2 className="text-xl font-bold">Relatórios do Usuário</h2>
+                <p className="text-green-100">{user.name}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-white hover:text-green-200">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="grid gap-4">
+            {reportTypes.map((report) => (
+              <div key={report.id} className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-slate-800">{report.name}</h3>
+                    <p className="text-sm text-slate-600">{report.description}</p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleGenerateReport(report.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Gerar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
+          <div className="flex justify-end">
+            <Button variant="default" onClick={onClose}>
+              Fechar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Modal de Notificações do Usuário
+const UserNotificationsModal = ({
+  user,
+  onClose
+}: {
+  user: ExtendedUserResponseDto | null;
+  onClose: () => void;
+}) => {
+  if (!user) return null
+
+  const [notifications, setNotifications] = useState([
+    { id: 1, title: 'Bem-vindo ao sistema', message: 'Sua conta foi criada com sucesso', date: '2024-01-15', read: true },
+    { id: 2, title: 'Novo curso disponível', message: 'Matemática Avançada está disponível', date: '2024-01-14', read: false },
+    { id: 3, title: 'Certificado gerado', message: 'Seu certificado de Matemática Básica está pronto', date: '2024-01-13', read: true }
+  ])
+
+  const handleSendNotification = () => {
+    // Implementar envio de notificação
+    console.log(`Enviando notificação para usuário ${user.id}`)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Bell className="h-6 w-6" />
+              <div>
+                <h2 className="text-xl font-bold">Notificações</h2>
+                <p className="text-orange-100">{user.name}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-white hover:text-orange-200">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Histórico de Notificações</h3>
+            <Button
+              variant="default"
+              onClick={handleSendNotification}
+              className="flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              Enviar Notificação
+            </Button>
+          </div>
+
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {notifications.map((notification) => (
+              <div key={notification.id} className={`p-4 rounded-lg border ${notification.read ? 'bg-slate-50' : 'bg-blue-50 border-blue-200'}`}>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-slate-800">{notification.title}</h4>
+                    <p className="text-sm text-slate-600 mt-1">{notification.message}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-slate-500">{formatDate(notification.date)}</span>
+                    {!notification.read && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-auto"></div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
+          <div className="flex justify-end">
+            <Button variant="default" onClick={onClose}>
+              Fechar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Componente de Paginação
+const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) => {
+  const getPageNumbers = () => {
+    const maxPagesToShow = 5;
+    let pages: (number | string)[] = [];
+    
+    if (totalPages <= maxPagesToShow) {
+      // Se o número total de páginas for menor ou igual ao máximo, mostre todas
+      pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    } else {
+      // Se o número total de páginas for maior que o máximo
+      const firstPage = 1;
+      const lastPage = totalPages;
+      
+      if (currentPage <= 3) {
+        // Se estiver nas primeiras páginas
+        pages = [1, 2, 3, 4, '...', lastPage];
+      } else if (currentPage >= lastPage - 2) {
+        // Se estiver nas últimas páginas
+        pages = [firstPage, '...', lastPage - 3, lastPage - 2, lastPage - 1, lastPage];
+      } else {
+        // Se estiver em algum lugar no meio
+        pages = [firstPage, '...', currentPage - 1, currentPage, currentPage + 1, '...', lastPage];
+      }
+    }
+    
+    return pages;
+  };
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center mt-6 gap-1">
+      <button
+        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1}
+        className={`p-2 rounded-md border ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-slate-100'}`}
+        aria-label="Página anterior"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      
+      {getPageNumbers().map((page, index) => (
+        page === '...' ? (
+          <span key={`ellipsis-${index}`} className="px-3 py-2">...</span>
+        ) : (
+          <button
+            key={`page-${page}`}
+            onClick={() => onPageChange(page as number)}
+            className={`w-9 h-9 rounded-md ${currentPage === page 
+              ? 'bg-primary-DEFAULT text-white' 
+              : 'hover:bg-slate-100'}`}
+          >
+            {page}
+          </button>
+        )
+      ))}
+      
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages}
+        className={`p-2 rounded-md border ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'hover:bg-slate-100'}`}
+        aria-label="Próxima página"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+};
+
+// Criar um componente de filtro com indicador de carregamento
+const FilterLoading = () => (
+  <div className="flex justify-center items-center h-8">
+    <div className="animate-spin w-4 h-4 border-2 border-primary-DEFAULT border-t-transparent rounded-full"></div>
+  </div>
+);
 
 export default function ManageUsers() {
   const router = useRouter()
@@ -235,11 +714,17 @@ export default function ManageUsers() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
-  const [filters, setFilters] = useState<UserFilterDto>({})
-  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState<ExtendedUserFilterDto>({})
+  const [showFilters, setShowFilters] = useState(true)
   const [sortBy, setSortBy] = useState<'name' | 'email' | 'created_at'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const itemsPerPage = 10
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false)
+  const [showStatusChangeModal, setShowStatusChangeModal] = useState(false)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false)
+  const [showReportsModal, setShowReportsModal] = useState(false)
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
 
   // Função para converter ExtendedUserResponseDto para UserDto
@@ -285,18 +770,41 @@ export default function ManageUsers() {
     try {
       if (showLoadingIndicator) setLoading(true)
       
-      const response = await userService.getUsers({
+      // Criamos um objeto de filtro com todos os parâmetros necessários
+      const filterParams: ExtendedUserFilterDto = {
         page: currentPage,
         limit: itemsPerPage,
         search: searchTerm || undefined,
         sortBy,
         sortOrder,
         ...filters
+      }
+      
+      // Log para debug
+      console.log('Carregando usuários com parâmetros:', filterParams)
+      
+      const response = await userService.getUsers(filterParams)
+      
+      // Enriquecer os dados com role_name e institution_name se não estiverem presentes
+      const enrichedUsers = response.items.map(user => {
+        const extendedUser = user as ExtendedUserResponseDto
+        const role = roles.find(r => r.id === user.role_id)
+        const institution = institutions.find(i => i.id === user.institution_id)
+        
+        return {
+          ...extendedUser,
+          role_name: extendedUser.role_name || role?.name || 'Não definida',
+          institution_name: extendedUser.institution_name || institution?.name || 'Não vinculada'
+        } as ExtendedUserResponseDto
       })
       
-      setUsers(response.items || [])
+      setUsers(enrichedUsers || [])
       setTotalPages(response.pagination?.totalPages || 1)
       setTotalItems(response.pagination?.total || 0)
+      
+      // Log para debug
+      console.log(`Carregados ${response.items?.length} usuários de ${response.pagination?.total}`)
+      console.log('Primeiro usuário:', enrichedUsers[0])
     } catch (error: any) {
       console.error('Erro ao carregar usuários:', error)
       showNotification(error.message || 'Erro ao carregar usuários', 'error')
@@ -304,7 +812,7 @@ export default function ManageUsers() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [currentPage, searchTerm, filters, sortBy, sortOrder])
+  }, [currentPage, searchTerm, filters, sortBy, sortOrder, itemsPerPage, roles, institutions])
 
   useEffect(() => {
     loadAuxiliaryData()
@@ -362,10 +870,19 @@ export default function ManageUsers() {
 
   // Alternar status do usuário
   const handleToggleStatus = async (user: ExtendedUserResponseDto) => {
+    setSelectedUser(user)
+    setShowStatusChangeModal(true)
+  }
+
+  // Confirmar alteração de status
+  const confirmStatusChange = async () => {
+    if (!selectedUser) return
+
     try {
-      const newStatus = !user.is_active
-      await userService.updateUser(user.id, { is_active: newStatus })
+      const newStatus = !selectedUser.is_active
+      await userService.updateUser(selectedUser.id, { is_active: newStatus })
       showSuccess(`Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso!`)
+      setShowStatusChangeModal(false)
       loadUsers()
     } catch (error: any) {
       console.error('Erro ao alterar status:', error)
@@ -374,18 +891,48 @@ export default function ManageUsers() {
   }
 
   // Resetar senha do usuário
-  const handleResetPassword = async (userId: string) => {
-    if (!window.confirm('Tem certeza que deseja resetar a senha deste usuário?')) {
-      return
-    }
+  const handleResetPassword = async (user: ExtendedUserResponseDto) => {
+    setSelectedUser(user)
+    setShowResetPasswordModal(true)
+  }
+
+  // Confirmar reset de senha
+  const confirmResetPassword = async () => {
+    if (!selectedUser) return
 
     try {
       // Implementar lógica de reset de senha quando disponível na API
-      showNotification('Funcionalidade de reset de senha será implementada em breve', 'info')
+      await resetUserPassword(selectedUser.id)
+      showSuccess('Senha resetada com sucesso! Um email foi enviado ao usuário.')
+      setShowResetPasswordModal(false)
     } catch (error: any) {
       console.error('Erro ao resetar senha:', error)
       showError(error.message || 'Erro ao resetar senha')
     }
+  }
+
+  // Visualizar histórico do usuário
+  const handleViewHistory = (user: ExtendedUserResponseDto) => {
+    setSelectedUser(user)
+    setShowHistoryModal(true)
+  }
+
+  // Gerenciar permissões do usuário
+  const handleManagePermissions = (user: ExtendedUserResponseDto) => {
+    setSelectedUser(user)
+    setShowPermissionsModal(true)
+  }
+
+  // Visualizar relatórios do usuário
+  const handleViewReports = (user: ExtendedUserResponseDto) => {
+    setSelectedUser(user)
+    setShowReportsModal(true)
+  }
+
+  // Visualizar notificações do usuário
+  const handleViewNotifications = (user: ExtendedUserResponseDto) => {
+    setSelectedUser(user)
+    setShowNotificationsModal(true)
   }
 
   // Exportar usuários
@@ -414,6 +961,33 @@ export default function ManageUsers() {
     }
   }
 
+  // Função para atualizar um filtro específico
+  const updateFilter = (key: string, value: any) => {
+    setFilters(prev => {
+      // Se o valor for vazio, remova a propriedade do objeto
+      if (value === '' || value === undefined) {
+        const newFilters = { ...prev }
+        delete newFilters[key as keyof ExtendedUserFilterDto]
+        return newFilters
+      }
+      
+      // Caso contrário, atualize com o novo valor
+      return {
+        ...prev,
+        [key]: value
+      }
+    })
+  }
+
+  // Vamos adicionar um efeito para carregar os dados quando os filtros mudarem
+  useEffect(() => {
+    // Aplicar filtros imediatamente e resetar para a primeira página
+    if (Object.keys(filters).length > 0) {
+      setCurrentPage(1)
+      loadUsers()
+    }
+  }, [filters.role_id, filters.institution_id, filters.is_active]) // Apenas os filtros principais que devem atualizar imediatamente
+
   // Aplicar filtros
   const handleApplyFilters = () => {
     setCurrentPage(1)
@@ -431,6 +1005,22 @@ export default function ManageUsers() {
     setShowFilters(false)
     loadUsers()
   }
+
+  // Função para mudar de página
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    // Rolagem suave para o topo da lista quando mudar de página
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Verificar se há filtros ativos
+  const hasActiveFilters = () => {
+    return Object.keys(filters).length > 0 && 
+      Object.values(filters).some(value => 
+        value !== undefined && value !== '' && 
+        (typeof value !== 'object' || Object.keys(value).length > 0)
+      );
+  };
 
   // Função para obter cor do role
   const getRoleColor = (role?: string) => {
@@ -450,6 +1040,13 @@ export default function ManageUsers() {
     }
   }
 
+  // Função para alterar o número de itens por página
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value)
+    setCurrentPage(1)
+    loadUsers()
+  }
+
   const headerActions = (
     <div className="flex items-center gap-2">
       <span className="text-sm text-slate-500">
@@ -462,16 +1059,41 @@ export default function ManageUsers() {
       >
         <RefreshCw className="h-4 w-4" />
       </button>
+      <button
+        onClick={() => setShowFilters(!showFilters)}
+        className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-1 ${
+          hasActiveFilters() ? 'bg-blue-50 border-blue-200 text-blue-600' : ''
+        }`}
+        title="Filtros"
+      >
+        <Filter className="h-4 w-4" />
+        <span className="hidden sm:inline text-sm">Filtros</span>
+        {hasActiveFilters() && (
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
+            {Object.keys(filters).length}
+          </span>
+        )}
+      </button>
     </div>
   )
 
   const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin': return 'danger'
-      case 'teacher': return 'warning'
-      case 'student': return 'info'
-      case 'coordinator': return 'success'
-      default: return 'secondary'
+    switch (role?.toLowerCase()) {
+      case 'admin':
+      case 'administrador':
+        return 'danger'
+      case 'teacher':
+      case 'professor':
+        return 'warning'
+      case 'student':
+      case 'aluno':
+      case 'estudante':
+        return 'info'
+      case 'coordinator':
+      case 'coordenador':
+        return 'success'
+      default:
+        return 'secondary'
     }
   }
 
@@ -489,21 +1111,56 @@ export default function ManageUsers() {
     {
       key: 'name',
       label: 'Nome',
-      sortable: true
+      sortable: true,
+      render: (user) => {
+        if (!user) return '-'
+        return (
+          <div className="flex items-center gap-3">
+            {user.avatar ? (
+              <img
+                className="h-10 w-10 rounded-full object-cover border-2 border-primary-light shadow-sm"
+                src={user.avatar}
+                alt={user.name}
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-DEFAULT to-primary-dark flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                {user.name ? user.name.substring(0, 2).toUpperCase() : '??'}
+              </div>
+            )}
+            <div>
+              <span className="font-semibold text-slate-800 block">{user.name || 'Sem nome'}</span>
+              {user.username && <span className="text-xs text-slate-500 block">@{user.username}</span>}
+            </div>
+          </div>
+        )
+      }
     },
     {
       key: 'email',
       label: 'Email',
-      sortable: true
+      sortable: true,
+      render: (user) => {
+        if (!user || !user.email) return '-'
+        return (
+          <div className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-blue-500" />
+            <a href={`mailto:${user.email}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+              {user.email}
+            </a>
+          </div>
+        )
+      }
     },
     {
-      key: 'role',
+      key: 'role_name',
       label: 'Função',
+      sortable: true,
       render: (user) => {
-        const roleName = user?.role_name || ''
+        if (!user) return '-'
+        const roleName = user.role_name || 'Não definida'
         return (
-          <Badge variant={getRoleBadgeVariant(roleName)}>
-            {getRoleLabel(roleName) || 'Sem função'}
+          <Badge variant={getRoleBadgeVariant(roleName)} className="px-3 py-1 font-medium shadow-sm">
+            {roleName}
           </Badge>
         )
       }
@@ -512,21 +1169,121 @@ export default function ManageUsers() {
       key: 'institution_name',
       label: 'Instituição',
       sortable: true,
-      render: (user) => user?.institution_name || 'Não definida'
+      render: (user) => {
+        if (!user) return '-'
+        return (
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-purple-500" />
+            <span className="text-slate-700 font-medium">
+              {user.institution_name || 'Não vinculada'}
+            </span>
+          </div>
+        )
+      }
     },
     {
-      key: 'active',
+      key: 'is_active',
       label: 'Status',
-      render: (user) => (
-        <Badge variant={user?.is_active ? "success" : "danger"}>
-          {user?.is_active ? "Ativo" : "Inativo"}
-        </Badge>
-      )
+      render: (user) => {
+        if (!user) return '-'
+        const isActive = user.is_active === true
+        return (
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${
+            isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
+            <div className={`h-2.5 w-2.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+            <span className="text-sm font-semibold">
+              {isActive ? "Ativo" : "Inativo"}
+            </span>
+          </div>
+        )
+      }
     },
     {
       key: 'created_at',
       label: 'Cadastrado em',
-      render: (user) => user?.created_at ? formatDate(user.created_at) : 'Nunca'
+      sortable: true,
+      render: (user) => {
+        if (!user || !user.created_at) return '-'
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-orange-500" />
+            <span className="text-sm font-medium text-slate-700">
+              {formatDate(user.created_at)}
+            </span>
+          </div>
+        )
+      }
+    }
+  ]
+
+  // Definir ações personalizadas para o GenericCRUD
+  const customActions: CRUDAction<ExtendedUserResponseDto>[] = [
+    {
+      label: 'Visualizar',
+      icon: <Eye className="h-4 w-4" />,
+      onClick: handleViewUser,
+      variant: 'default',
+      className: 'bg-blue-500 hover:bg-blue-600 text-white',
+      permission: 'users.view'
+    },
+    {
+      label: 'Editar',
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEditUser,
+      variant: 'default',
+      className: 'bg-amber-500 hover:bg-amber-600 text-white',
+      permission: 'users.edit'
+    },
+    {
+      label: 'Histórico',
+      icon: <History className="h-4 w-4" />,
+      onClick: handleViewHistory,
+      variant: 'outline',
+      className: 'border-blue-300 text-blue-700 hover:bg-blue-50',
+      permission: 'users.view'
+    },
+    {
+      label: 'Permissões',
+      icon: <Shield className="h-4 w-4" />,
+      onClick: handleManagePermissions,
+      variant: 'outline',
+      className: 'border-purple-300 text-purple-700 hover:bg-purple-50',
+      permission: 'users.permissions'
+    },
+    {
+      label: 'Relatórios',
+      icon: <BarChart3 className="h-4 w-4" />,
+      onClick: handleViewReports,
+      variant: 'outline',
+      className: 'border-green-300 text-green-700 hover:bg-green-50',
+      permission: 'users.reports'
+    },
+    {
+      label: 'Notificações',
+      icon: <Bell className="h-4 w-4" />,
+      onClick: handleViewNotifications,
+      variant: 'outline',
+      className: 'border-orange-300 text-orange-700 hover:bg-orange-50',
+      permission: 'users.notifications'
+    },
+    {
+      label: 'Resetar senha',
+      icon: <Key className="h-4 w-4" />,
+      onClick: handleResetPassword,
+      variant: 'outline',
+      className: 'border-yellow-300 text-yellow-700 hover:bg-yellow-50',
+      permission: 'users.reset_password'
+    },
+    {
+      label: 'Alternar status',
+      icon: <Activity className="h-4 w-4" />,
+      onClick: handleToggleStatus,
+      variant: 'outline',
+      className: (user) => user?.is_active
+        ? 'border-red-300 text-red-700 hover:bg-red-50'
+        : 'border-green-300 text-green-700 hover:bg-green-50',
+      permission: 'users.edit'
     }
   ]
 
@@ -541,8 +1298,261 @@ export default function ManageUsers() {
           />
         )}
         
+        {loading && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50">
+            <div className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-3">
+              <div className="animate-spin w-5 h-5 border-2 border-primary-DEFAULT border-t-transparent rounded-full"></div>
+              <span>Carregando...</span>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold text-slate-800">Gerenciamento de Usuários</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">
+              Total: {totalItems} usuários
+            </span>
+            <button
+              onClick={handleRefresh}
+              className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${refreshing ? 'animate-spin' : ''}`}
+              title="Atualizar lista"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-1 ${
+                hasActiveFilters() ? 'bg-blue-50 border-blue-200 text-blue-600' : ''
+              }`}
+              title="Filtros"
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline text-sm">Filtros</span>
+              {hasActiveFilters() && (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
+                  {Object.keys(filters).length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+        
+        {/* Seção de filtros expostos */}
+        {showFilters && (
+          <div className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-md">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
+                  <Filter className="h-5 w-5 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-blue-800">Filtros Avançados</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                {loading && (
+                  <span className="text-sm text-slate-600 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-sm">
+                    <div className="animate-spin w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    Atualizando...
+                  </span>
+                )}
+                {hasActiveFilters() && (
+                  <Button
+                    variant="secondary"
+                    onClick={handleClearFilters}
+                    className="flex items-center gap-2 bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                    disabled={loading}
+                  >
+                    <X className="h-4 w-4" />
+                    Limpar filtros
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {/* Filtro por Nome */}
+              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  Nome
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={filters.name || ''}
+                    onChange={(e) => updateFilter('name', e.target.value)}
+                    placeholder="Buscar por nome (parcial)"
+                    className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400" />
+                </div>
+              </div>
+
+              {/* Filtro por Email */}
+              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                  <Mail className="h-4 w-4 text-blue-500" />
+                  Email
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={filters.email || ''}
+                    onChange={(e) => updateFilter('email', e.target.value)}
+                    placeholder="Buscar por email (parcial)"
+                    className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400" />
+                </div>
+              </div>
+
+              {/* Filtro por Role */}
+              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                  <Shield className="h-4 w-4 text-purple-500" />
+                  Função
+                </label>
+                <select
+                  value={filters.role_id || ''}
+                  onChange={(e) => updateFilter('role_id', e.target.value)}
+                  className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Todas as funções</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtro por Instituição */}
+              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                  <Building2 className="h-4 w-4 text-purple-500" />
+                  Instituição
+                </label>
+                <select
+                  value={filters.institution_id || ''}
+                  onChange={(e) => updateFilter('institution_id', e.target.value)}
+                  className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Todas as instituições</option>
+                  {institutions.map((institution) => (
+                    <option key={institution.id} value={institution.id}>
+                      {institution.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtro por Status */}
+              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                  <Activity className="h-4 w-4 text-green-500" />
+                  Status
+                </label>
+                <select
+                  value={filters.is_active === undefined ? '' : filters.is_active ? 'true' : 'false'}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      updateFilter('is_active', undefined);
+                    } else {
+                      updateFilter('is_active', value === 'true');
+                    }
+                  }}
+                  className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Qualquer status</option>
+                  <option value="true">✅ Ativo</option>
+                  <option value="false">❌ Inativo</option>
+                </select>
+              </div>
+              
+              {/* Data de Criação - De */}
+              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                  <Calendar className="h-4 w-4 text-orange-500" />
+                  Cadastrado de
+                </label>
+                <input
+                  type="date"
+                  value={filters.created_after || ''}
+                  onChange={(e) => updateFilter('created_after', e.target.value)}
+                  className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                />
+              </div>
+              
+              {/* Data de Criação - Até */}
+              <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-blue-100">
+                <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
+                  <Calendar className="h-4 w-4 text-orange-500" />
+                  Cadastrado até
+                </label>
+                <input
+                  type="date"
+                  value={filters.created_before || ''}
+                  onChange={(e) => updateFilter('created_before', e.target.value)}
+                  className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-between items-center pt-4 border-t border-blue-200">
+              <div className="text-sm text-slate-600">
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    <span>Carregando resultados...</span>
+                  </div>
+                ) : hasActiveFilters() ? (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span>Exibindo <strong>{totalItems}</strong> usuários filtrados</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-blue-600" />
+                    <span>Use os filtros acima para refinar sua busca</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="default"
+                  onClick={handleExport}
+                  className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white"
+                  disabled={loading}
+                >
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx"
+                    onChange={handleImport}
+                    className="hidden"
+                    disabled={loading}
+                  />
+                  <Button
+                    variant="default"
+                    className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white"
+                    disabled={loading}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Importar
+                  </Button>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <GenericCRUD
-          title="Gerenciamento de Usuários"
+          title=""
           entityName="Usuário"
           entityNamePlural="Usuários"
           columns={columns}
@@ -551,18 +1561,50 @@ export default function ManageUsers() {
           totalItems={totalItems}
           currentPage={currentPage}
           itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onSearch={handleSearch}
+          onPageChange={handlePageChange}
           onCreate={handleCreateUser}
           onEdit={handleEditUser}
           onDelete={handleDeleteUser}
           onView={handleViewUser}
-          searchPlaceholder="Buscar usuários..."
+          customActions={customActions}
           createPermission="users.create"
           editPermission="users.edit"
           deletePermission="users.delete"
           viewPermission="users.view"
+          showSearch={false}
         />
+        
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+        
+        <div className="text-center text-sm text-slate-500 mt-3">
+          {loading ? (
+            <div className="flex justify-center items-center gap-2">
+              <div className="animate-spin w-3 h-3 border-2 border-primary-DEFAULT border-t-transparent rounded-full"></div>
+              <span>Carregando...</span>
+            </div>
+          ) : (
+            `Exibindo ${users.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - ${Math.min(currentPage * itemsPerPage, totalItems)} de ${totalItems} usuários`
+          )}
+        </div>
+
+        <div className="flex justify-center mt-3 items-center gap-2">
+          <span className="text-sm text-slate-600">Itens por página:</span>
+          <select 
+            value={itemsPerPage}
+            onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+            className="text-sm border rounded px-2 py-1 bg-white"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
 
         {showModal && (
           <UserModal
@@ -585,6 +1627,119 @@ export default function ManageUsers() {
             user={selectedUser}
             onClose={() => {
               setShowDetailsModal(false)
+              setSelectedUser(null)
+            }}
+            onEdit={handleEditUser}
+            onToggleStatus={handleToggleStatus}
+            onResetPassword={handleResetPassword}
+          />
+        )}
+
+        {/* Modal de Confirmação de Reset de Senha */}
+        <Modal
+          isOpen={showResetPasswordModal}
+          onClose={() => setShowResetPasswordModal(false)}
+          title="Resetar Senha"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-slate-600">
+              Tem certeza que deseja resetar a senha de <strong>{selectedUser?.name}</strong>? 
+              Uma nova senha será gerada e enviada para o email do usuário.
+            </p>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="secondary"
+                onClick={() => setShowResetPasswordModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="default"
+                onClick={confirmResetPassword}
+              >
+                Confirmar
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Modal de Confirmação de Alteração de Status */}
+        <Modal
+          isOpen={showStatusChangeModal}
+          onClose={() => setShowStatusChangeModal(false)}
+          title="Alternar Status do Usuário"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-slate-600">
+              {selectedUser?.is_active 
+                ? `Tem certeza que deseja desativar o usuário ${selectedUser?.name}?` 
+                : `Tem certeza que deseja ativar o usuário ${selectedUser?.name}?`}
+            </p>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="secondary"
+                onClick={() => setShowStatusChangeModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant={selectedUser?.is_active ? "destructive" : "success"}
+                onClick={confirmStatusChange}
+              >
+                {selectedUser?.is_active ? 'Desativar' : 'Ativar'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Modal de Histórico */}
+        {showHistoryModal && (
+          <UserHistoryModal
+            user={selectedUser}
+            onClose={() => {
+              setShowHistoryModal(false)
+              setSelectedUser(null)
+            }}
+          />
+        )}
+
+        {/* Modal de Permissões */}
+        {showPermissionsModal && (
+          <UserPermissionsModal
+            user={selectedUser}
+            onClose={() => {
+              setShowPermissionsModal(false)
+              setSelectedUser(null)
+            }}
+            onSave={() => {
+              setShowPermissionsModal(false)
+              setSelectedUser(null)
+              showSuccess('Permissões atualizadas com sucesso!')
+            }}
+          />
+        )}
+
+        {/* Modal de Relatórios */}
+        {showReportsModal && (
+          <UserReportsModal
+            user={selectedUser}
+            onClose={() => {
+              setShowReportsModal(false)
+              setSelectedUser(null)
+            }}
+          />
+        )}
+
+        {/* Modal de Notificações */}
+        {showNotificationsModal && (
+          <UserNotificationsModal
+            user={selectedUser}
+            onClose={() => {
+              setShowNotificationsModal(false)
               setSelectedUser(null)
             }}
           />

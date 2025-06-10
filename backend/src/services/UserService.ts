@@ -47,10 +47,50 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
         users = await this.userRepository.getUsersWithRoleAndInstitution();
       }
 
+      // Aplicar filtros adicionais no resultado
+      if (filters.name) {
+        users = users.filter(user => 
+          user.name.toLowerCase().includes(filters.name!.toLowerCase())
+        );
+      }
+      
+      if (filters.email) {
+        users = users.filter(user => 
+          user.email.toLowerCase().includes(filters.email!.toLowerCase())
+        );
+      }
+      
+      if (filters.role_id) {
+        users = users.filter(user => user.role_id === filters.role_id);
+      }
+      
+      if (filters.is_active !== undefined) {
+        users = users.filter(user => user.is_active === filters.is_active);
+      }
+      
+      // Ordenar os resultados
+      if (filters.sortBy) {
+        const sortField = filters.sortBy;
+        const sortDir = filters.sortOrder === 'desc' ? -1 : 1;
+        
+        users.sort((a, b) => {
+          if (a[sortField] < b[sortField]) return -1 * sortDir;
+          if (a[sortField] > b[sortField]) return 1 * sortDir;
+          return 0;
+        });
+      }
+
       // Sanitizar dados sensíveis
       const sanitizedUsers = users.map(user => this.sanitizeData(user)) as UserResponseDto[];
 
       const total = sanitizedUsers.length;
+      
+      // Aplicar paginação após a filtragem
+      const paginatedUsers = sanitizedUsers.slice(
+        pagination.offset, 
+        pagination.offset + pagination.limit
+      );
+      
       const paginationResult = {
         page: pagination.page,
         limit: pagination.limit,
@@ -60,12 +100,12 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
         hasPrev: pagination.page > 1
       };
 
-      this.logger.info(`Found ${sanitizedUsers.length} users with filters`);
+      this.logger.info(`Found ${paginatedUsers.length} users of total ${total} with filters`);
 
       return {
         success: true,
         data: {
-          users: sanitizedUsers,
+          users: paginatedUsers,
           pagination: paginationResult
         }
       };

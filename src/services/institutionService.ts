@@ -14,7 +14,7 @@ export interface Institution {
   email?: string;
   website?: string;
   logo_url?: string;
-  is_active: boolean;
+  active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -31,7 +31,7 @@ export interface PaginatedResponse<T> {
 
 export interface InstitutionFilters {
   type?: string;
-  is_active?: boolean;
+  active?: boolean;
   search?: string;
 }
 
@@ -50,7 +50,7 @@ export type InstitutionQueryParams = {
   sortOrder?: 'asc' | 'desc';
   search?: string;
   type?: string;
-  is_active?: boolean;
+  active?: boolean;
 };
 
 // Helper function to get auth token
@@ -91,7 +91,7 @@ export const institutionService = {
     if (params.filters) {
       if (params.filters.search) queryParams.append('search', params.filters.search);
       if (params.filters.type) queryParams.append('type', params.filters.type);
-      if (params.filters.is_active !== undefined) queryParams.append('is_active', params.filters.is_active.toString());
+      if (params.filters.active !== undefined) queryParams.append('active', params.filters.active.toString());
     }
 
     const response = await fetch(`${API_BASE_URL}/api/institutions?${queryParams.toString()}`, {
@@ -181,7 +181,13 @@ export const institutionService = {
   },
 
   async getActiveInstitutions(): Promise<Institution[]> {
-    const response = await fetch(`${API_BASE_URL}/api/institutions/active`, {
+    // Use the main institutions endpoint with a filter for active institutions
+    const queryParams = new URLSearchParams({
+      active: 'true',
+      limit: '100' // Set a high limit to get all active institutions
+    });
+    
+    const response = await fetch(`${API_BASE_URL}/api/institutions?${queryParams.toString()}`, {
       headers: getAuthHeaders(),
     });
 
@@ -192,13 +198,15 @@ export const institutionService = {
       throw new Error('Falha ao buscar instituições ativas');
     }
 
-    return response.json();
+    const result = await response.json();
+    // Return just the items array from the paginated response
+    return result.data.items;
   },
 
   async searchInstitutionsByName(name: string): Promise<Institution[]> {
     const queryParams = new URLSearchParams({
       search: name,
-      is_active: 'true'
+      active: 'true'
     });
 
     const response = await fetch(`${API_BASE_URL}/api/institutions/search?${queryParams.toString()}`, {
@@ -237,7 +245,7 @@ export const institutionService = {
     const response = await fetch(`${API_BASE_URL}/api/institutions/${id}/status`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ is_active: isActive }),
+      body: JSON.stringify({ active: isActive }),
     });
 
     if (!response.ok) {
@@ -259,7 +267,7 @@ export const institutionService = {
     if (filters) {
       if (filters.search) queryParams.append('search', filters.search);
       if (filters.type) queryParams.append('type', filters.type);
-      if (filters.is_active !== undefined) queryParams.append('is_active', filters.is_active.toString());
+      if (filters.active !== undefined) queryParams.append('active', filters.active.toString());
     }
 
     const response = await fetch(`${API_BASE_URL}/api/institutions/export?${queryParams.toString()}`, {

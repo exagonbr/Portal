@@ -83,26 +83,26 @@ export class CourseRepository extends BaseRepository<Course> {
   async getCourseTeachers(courseId: string): Promise<any[]> {
     return this.db('course_teachers')
       .select(
-        'users.id',
-        'users.name',
-        'users.email',
-        'users.usuario'
+        'User.id',
+        'User.name',
+        'User.email',
+        'User.usuario'
       )
-      .leftJoin('users', 'course_teachers.user_id', 'users.id')
+      .leftJoin('User', 'course_teachers.user_id', 'User.id')
       .where('course_teachers.course_id', courseId);
   }
 
   async getCourseStudents(courseId: string): Promise<any[]> {
     return this.db('course_students')
       .select(
-        'users.id',
-        'users.name',
-        'users.email',
-        'users.usuario',
+        'User.id',
+        'User.name',
+        'User.email',
+        'User.usuario',
         'course_students.progress',
         'course_students.grades'
       )
-      .leftJoin('users', 'course_students.user_id', 'users.id')
+      .leftJoin('User', 'course_students.user_id', 'User.id')
       .where('course_students.course_id', courseId);
   }
 
