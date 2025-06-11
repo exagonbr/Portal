@@ -1,52 +1,7 @@
 import { ApiResponse, ApiError } from '../types/api';
 
 // Configuração base da API
-// Função para garantir que a URL base da API esteja correta
-const getApiBaseUrl = (): string => {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  // Se a variável de ambiente não estiver definida, usa o padrão.
-  if (!envUrl) {
-    return 'http://localhost:3001/api';
-  }
-
-  // Remove barras no final, se houver.
-  const cleanedUrl = envUrl.replace(/\/+$/, '');
-
-  // Garante que a URL termina com /api.
-  if (cleanedUrl.endsWith('/api')) {
-    return cleanedUrl;
-  }
-
-  return `${cleanedUrl}/api`;
-};
-
-const API_BASE_URL = getApiBaseUrl();
-
-// Nota: Para que o CORS funcione corretamente, o servidor deve enviar os seguintes headers:
-// Access-Control-Allow-Origin: *
-// Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
-// Access-Control-Allow-Headers: Content-Type, Authorization
-
-// Função para validar e normalizar URLs
-const normalizeEndpoint = (endpoint: string): string => {
-  // Remove barras duplicadas
-  let normalized = endpoint.replace(/\/+/g, '/');
-
-  // Remove /api/ do início para evitar duplicação, pois a baseURL já contém /api
-  if (normalized.startsWith('/api/')) {
-    normalized = normalized.substring(5);
-  } else if (normalized.startsWith('api/')) {
-    normalized = normalized.substring(4);
-  }
-
-  // Remove a barra inicial restante, se houver, para garantir que a junção com a baseURL seja correta.
-  if (normalized.startsWith('/')) {
-    normalized = normalized.substring(1);
-  }
-
-  return normalized;
-};
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 // Classe para erros da API
 export class ApiClientError extends Error {
@@ -63,7 +18,7 @@ export class ApiClientError extends Error {
 
 // Interface para opções de requisição
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;
   body?: any;
   params?: Record<string, string | number | boolean>;
@@ -78,7 +33,11 @@ export class ApiClient {
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
     this.defaultHeaders = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json', 
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true'
     };
   }
 
@@ -105,10 +64,7 @@ export class ApiClient {
    * Constrói a URL completa com parâmetros de query
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
-    const normalizedEndpoint = normalizeEndpoint(endpoint);
-    // Garante que a baseURL termina com uma barra para a junção correta
-    const base = this.baseURL.endsWith('/') ? this.baseURL : `${this.baseURL}/`;
-    const url = new URL(normalizedEndpoint, base);
+    const url = new URL(endpoint, this.baseURL);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -126,6 +82,12 @@ export class ApiClient {
    */
   private prepareHeaders(customHeaders?: Record<string, string>): Record<string, string> {
     const headers = { ...this.defaultHeaders, ...customHeaders };
+
+    // Mantém os headers de CORS
+    headers['Access-Control-Allow-Origin'] = 'https://portal.sabercon.com.br';
+    headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS';
+    headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+    headers['Access-Control-Allow-Credentials'] = 'true';
 
     // Adiciona token de autenticação se disponível
     const token = this.getAuthToken();
@@ -155,13 +117,6 @@ export class ApiClient {
       const url = this.buildURL(endpoint, params);
       const headers = this.prepareHeaders(customHeaders);
 
-      // Log detalhado para debug
-      console.log(`[API Request] ${method} ${url}`, {
-        headers,
-        params,
-        body: body instanceof FormData ? '[FormData]' : body
-      });
-
       // Remove Content-Type para FormData
       if (body instanceof FormData) {
         delete headers['Content-Type'];
@@ -170,21 +125,12 @@ export class ApiClient {
       const requestOptions: RequestInit = {
         method,
         headers,
-        credentials: 'include',
-        mode: 'cors'
+        body: body instanceof FormData ? body : JSON.stringify(body),
       };
 
-      // Requisições GET/HEAD não podem ter corpo
-      if (method !== 'GET' && method !== 'HEAD' && body !== undefined) {
-        requestOptions.body = body instanceof FormData ? body : JSON.stringify(body);
-      }
-
-      // Implementa timeout com mensagem mais descritiva
+      // Implementa timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-        console.error(`[API Timeout] Request to ${url} timed out after ${timeout}ms`);
-      }, timeout);
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
       const response = await fetch(url, {
         ...requestOptions,
@@ -193,64 +139,23 @@ export class ApiClient {
 
       clearTimeout(timeoutId);
 
-      // Log detalhado da resposta
-      console.log(`[API Response] ${response.status} ${response.statusText}`, {
-        headers: Object.fromEntries(response.headers.entries()),
-        url: response.url
-      });
-
-      // Parse da resposta com melhor tratamento de erros
+      // Parse da resposta
       let responseData: ApiResponse<T>;
       const contentType = response.headers.get('content-type');
       
-      try {
-        if (contentType && contentType.includes('application/json')) {
-          responseData = await response.json();
-          console.log('[API Response Data]', responseData);
-        } else {
-          const responseText = await response.text();
-          console.log('[API Non-JSON Response]', responseText);
-          responseData = {
-            success: response.ok,
-            data: responseText as any,
-            message: response.ok ? 'Success' : (responseText || 'Request failed')
-          };
-        }
-      } catch (parseError) {
-        console.error('[API Parse Error]', parseError);
-        throw new ApiClientError(
-          'Failed to parse response',
-          response.status,
-          ['Invalid response format']
-        );
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        // Para respostas não-JSON, cria uma resposta padrão
+        responseData = {
+          success: response.ok,
+          data: (await response.text()) as any,
+          message: response.ok ? 'Success' : 'Request failed'
+        };
       }
 
       // Verifica se a resposta foi bem-sucedida
       if (!response.ok) {
-        // Se for erro de autenticação, limpa o token e loga
-        if (response.status === 401) {
-          console.log('[API Auth Error] Token inválido ou expirado');
-          this.clearAuth();
-        }
-        
-        // Caso especial para "not found"
-        if ((responseData.message === "Cache key not found" || 
-            (responseData.message && responseData.message.includes("not found"))) && 
-            responseData.success === false) {
-          console.log("[API Client] Tratando resposta 'not found' como recurso inexistente");
-          return {
-            ...responseData,
-            exists: false
-          } as ApiResponse<T>;
-        }
-        
-        // Log detalhado do erro
-        console.error('[API Error Response]', {
-          status: response.status,
-          message: responseData.message,
-          errors: responseData.errors
-        });
-        
         throw new ApiClientError(
           responseData.message || `HTTP ${response.status}: ${response.statusText}`,
           response.status,
@@ -260,20 +165,13 @@ export class ApiClient {
 
       return responseData;
     } catch (error) {
-      console.error('[API Error]', {
-        error,
-        endpoint,
-        method,
-        params
-      });
-      
       if (error instanceof ApiClientError) {
         throw error;
       }
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          throw new ApiClientError(`Request timeout after ${timeout}ms`, 408);
+          throw new ApiClientError('Request timeout', 408);
         }
         throw new ApiClientError(error.message, 0);
       }
@@ -332,11 +230,7 @@ export class ApiClient {
       const url = this.buildURL(endpoint);
       const headers = this.prepareHeaders();
 
-      const response = await fetch(url, {
-        headers,
-        credentials: 'same-origin',
-        mode: 'cors'
-      });
+      const response = await fetch(url, { headers });
 
       if (!response.ok) {
         throw new ApiClientError(`Download failed: ${response.statusText}`, response.status);
@@ -426,30 +320,6 @@ export const handleApiError = (error: unknown): string => {
 // Função helper para verificar se é erro de autenticação
 export const isAuthError = (error: unknown): boolean => {
   return error instanceof ApiClientError && (error.status === 401 || error.status === 403);
-};
-
-// Função helper para verificar se um recurso existe com base na resposta da API
-export const resourceExists = <T>(response: ApiResponse<T>): boolean => {
-  // Se a resposta tiver a propriedade exists explicitamente definida como false, o recurso não existe
-  if (response.exists === false) {
-    return false;
-  }
-  
-  // Se a resposta for bem-sucedida, o recurso existe
-  if (response.success === true) {
-    return true;
-  }
-  
-  // Se a mensagem indicar "not found", o recurso não existe
-  if (response.message && (
-    response.message === "Cache key not found" || 
-    response.message.includes("not found")
-  )) {
-    return false;
-  }
-  
-  // Por padrão, consideramos que o recurso existe se a resposta não for explicitamente negativa
-  return true;
 };
 
 // Função helper para retry automático
