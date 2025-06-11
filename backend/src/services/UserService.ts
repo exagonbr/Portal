@@ -18,7 +18,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
 
   constructor() {
     const userRepository = new UserRepository();
-    super(userRepository, 'User');
+    super(userRepository, 'users');
     this.userRepository = userRepository;
   }
 

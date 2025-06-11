@@ -16,10 +16,10 @@ export async function getUserFromRequest(req: Request): Promise<User | null> {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
         
-        const user = await db('User')
-            .leftJoin('roles', 'User.role_id', 'roles.id')
-            .where('User.id', decoded.userId)
-            .select('User.id', 'User.email', 'User.name', 'roles.name as role')
+        const user = await db('users')
+            .leftJoin('roles', 'users.role_id', 'roles.id')
+            .where('users.id', decoded.userId)
+            .select('users.id', 'users.email', 'users.name', 'roles.name as role')
             .first();
 
         return user || null;

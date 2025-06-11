@@ -46,7 +46,7 @@ export class AuthService {
 
   static async register(userData: Partial<User>): Promise<AuthResponse> {
     // Check if user already exists
-    const existingUser = await db('User')
+    const existingUser = await db('users')
       .where('email', userData.email)
       .first();
 
@@ -58,7 +58,7 @@ export class AuthService {
     const hashedPassword = await this.hashPassword(userData.password!);
 
     // Create new user
-    const [user] = await db('User')
+    const [user] = await db('users')
       .insert({
         ...userData,
         password: hashedPassword
@@ -106,7 +106,7 @@ export class AuthService {
   }
 
   static async validateUser(email: string, password?: string) {
-    const user = await db('User').where('email', email).first();
+    const user = await db('users').where('email', email).first();
     if (!user) {
         throw new Error('User not found');
     }
@@ -164,7 +164,7 @@ export class AuthService {
 }
 
   static async getUserById(userId: string): Promise<Omit<User, 'password'> | null> {
-    const user = await db('User')
+    const user = await db('users')
       .where('id', userId)
       .first();
 

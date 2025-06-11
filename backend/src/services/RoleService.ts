@@ -387,7 +387,7 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
         db('roles').where({ type: 'custom' }).count('* as count'),
         db('roles').where({ status: 'active' }).count('* as count'),
         db('roles').where({ status: 'inactive' }).count('* as count'),
-        db('User').count('* as count')
+        db('users').count('* as count')
       ]);
 
       const stats: RoleStatsDto = {
@@ -510,12 +510,12 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
       }
 
       // Buscar usuários sem role
-      const usersWithoutRole = await trx('User').whereNull('role_id');
+      const usersWithoutRole = await trx('users').whereNull('role_id');
 
       let updatedCount = 0;
 
       if (usersWithoutRole.length > 0) {
-        updatedCount = await trx('User')
+        updatedCount = await trx('users')
           .whereNull('role_id')
           .update({
             role_id: teacherRole.id,

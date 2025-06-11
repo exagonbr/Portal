@@ -3,7 +3,7 @@ import { User, CreateUserData, UpdateUserData, UserWithoutPassword } from '../mo
 
 export class UserRepository extends BaseRepository<User> {
   constructor() {
-    super('User');
+    super('users');
   }
 
   async findByEmail(email: string): Promise<User | null> {
