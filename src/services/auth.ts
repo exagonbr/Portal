@@ -19,10 +19,12 @@ export interface RegisterResponse {
 
 // Configuration constants
 const AUTH_CONFIG = {
+  API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
   COOKIES: {
     AUTH_TOKEN: 'auth_token',
     SESSION_ID: 'session_id',
-    USER_DATA: 'user_data'
+    USER_DATA: 'user_data',
+    REFRESH_TOKEN: 'refresh_token'
   },
   STORAGE_KEYS: {
     AUTH_TOKEN: 'auth_token',
@@ -126,11 +128,12 @@ class StorageManager {
 // User management functions - Backend API integration
 export const listUsers = async (): Promise<User[]> => {
   try {
-    const response = await fetch('/api/users', {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/users`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -147,12 +150,13 @@ export const listUsers = async (): Promise<User[]> => {
 
 export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
   try {
-    const response = await fetch('/api/users', {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(userData),
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -169,12 +173,13 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
 
 export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
   try {
-    const response = await fetch(`/api/users/${id}`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/users/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(userData),
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -207,11 +212,12 @@ export const extractUserEssentials = (user: User): UserEssentials => {
 
 export const deleteUser = async (id: string): Promise<boolean> => {
   try {
-    const response = await fetch(`/api/users/${id}`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/users/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -231,12 +237,13 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 // Authentication functions
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, password }),
+      credentials: 'include',
     });
 
     const data = await response.json();
@@ -278,7 +285,7 @@ export const register = async (
     type: 'student' | 'teacher'
 ): Promise<RegisterResponse> => {
   try {
-    const response = await fetch('/api/auth/register', {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -289,6 +296,7 @@ export const register = async (
         password,
         role: type
       }),
+      credentials: 'include',
     });
 
     const data = await response.json();
@@ -376,11 +384,12 @@ export const logout = async (): Promise<void> => {
   
   try {
     // 1. Chamar API de logout
-    const response = await fetch('/api/auth/logout', {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -435,13 +444,18 @@ export const isAuthenticated = async (): Promise<boolean> => {
       const hasCookie = document.cookie.includes(`${AUTH_CONFIG.COOKIES.AUTH_TOKEN}=`);
       if (!hasCookie) return false;
     }
+    
+    // Se não temos token, não estamos autenticados
+    if (!token) return false;
 
     // Validar token com o backend
-    const response = await fetch('/api/auth/validate', {
-      method: 'GET',
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/validate-session`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ token }),
+      credentials: 'include',
     });
 
     if (response.ok) {
@@ -517,14 +531,33 @@ export const refreshToken = async (): Promise<boolean> => {
     isRefreshingToken = true;
     lastRefreshAttempt = now;
     
+    // Obter o refresh token do cookie
+    let refreshToken = null;
+    if (typeof window !== 'undefined') {
+      const cookies = document.cookie.split(';');
+      const refreshTokenCookie = cookies.find(cookie => cookie.trim().startsWith(`${AUTH_CONFIG.COOKIES.REFRESH_TOKEN}=`));
+      if (refreshTokenCookie) {
+        refreshToken = refreshTokenCookie.split('=')[1];
+      }
+    }
+    
+    // Se não temos refresh token, não podemos renovar o token
+    if (!refreshToken) {
+      console.warn('Refresh token não encontrado, não é possível renovar token');
+      return false;
+    }
+    
     refreshPromise = new Promise(async (resolve) => {
       try {
         // Fazer requisição para o endpoint de refresh
-        const response = await fetch('/api/auth/refresh', {
+        const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/refresh-token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({ 
+            refreshToken
+          }),
           credentials: 'include',
           cache: 'no-store'
         });
