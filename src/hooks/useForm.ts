@@ -104,6 +104,12 @@ export function useForm<T extends { [key: string]: any }>({
     [onSubmit, validateForm, values, isSubmitting]
   );
 
+  const resetForm = useCallback(() => {
+    setValues(initialValues);
+    setErrors({});
+    setTouched({});
+  }, [initialValues]);
+
   return {
     values,
     errors,
@@ -111,6 +117,7 @@ export function useForm<T extends { [key: string]: any }>({
     isSubmitting,
     handleChange,
     handleBlur,
-    handleSubmit
+    handleSubmit,
+    resetForm
   };
 }
