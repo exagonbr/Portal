@@ -119,7 +119,7 @@ export class ApiClient {
       if(url.startsWith('http://localhost')) {
         console.warn('Atenção: Você está fazendo uma requisição para o ambiente de desenvolvimento local. Verifique se isso é intencional.');
         url = url.replace('http://localhost', 'https://portal.sabercon.com.br');
-        url = url.replace('https://portal.sabercon.com.br:3001', 'https://portal.sabercon.com.br');
+        url = url.replace('https://portal.sabercon.com.br:3001', 'https://portal.sabercon.com.br/api');
       }
       const headers = this.prepareHeaders(customHeaders);
 
