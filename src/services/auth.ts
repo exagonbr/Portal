@@ -484,7 +484,93 @@ export const isTokenExpired = (): boolean => {
   }
 };
 
-export function refreshToken() {
-  throw new Error('Function not implemented.');
-}
+/**
+ * Flag para controlar tentativas de refresh e evitar loops
+ */
+let isRefreshingToken = false;
+let refreshPromise: Promise<boolean> | null = null;
+let lastRefreshAttempt = 0;
+const REFRESH_THROTTLE_MS = 5000; // 5 segundos entre tentativas
+
+/**
+ * Renova o token de autenticação
+ */
+export const refreshToken = async (): Promise<boolean> => {
+  // Evitar chamadas simultâneas ou muito frequentes
+  const now = Date.now();
+  if (isRefreshingToken) {
+    console.log('Refresh já em andamento, aguardando...');
+    if (refreshPromise) {
+      return refreshPromise;
+    }
+    return false;
+  }
+  
+  // Limitar frequência de tentativas
+  if (now - lastRefreshAttempt < REFRESH_THROTTLE_MS) {
+    console.log(`Muitas tentativas de refresh em curto período (${now - lastRefreshAttempt}ms), aguardando...`);
+    return false;
+  }
+  
+  try {
+    console.log('Iniciando refresh do token...');
+    isRefreshingToken = true;
+    lastRefreshAttempt = now;
+    
+    refreshPromise = new Promise(async (resolve) => {
+      try {
+        // Fazer requisição para o endpoint de refresh
+        const response = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        
+        if (!response.ok) {
+          console.error('Erro na resposta do refresh token:', response.status);
+          resolve(false);
+          return;
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          console.error('Falha no refresh token:', data.message);
+          resolve(false);
+          return;
+        }
+        
+        // Atualizar dados no localStorage
+        if (data.data?.token) {
+          StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.data.token);
+          
+          if (data.data.expires_at) {
+            const expiresAtMs = typeof data.data.expires_at === 'string' 
+              ? Date.parse(data.data.expires_at) 
+              : data.data.expires_at;
+            
+            StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_EXPIRES_AT, String(expiresAtMs));
+          }
+        }
+        
+        console.log('Token renovado com sucesso');
+        resolve(true);
+      } catch (error) {
+        console.error('Erro durante refresh do token:', error);
+        resolve(false);
+      }
+    });
+    
+    return await refreshPromise;
+  } catch (error) {
+    console.error('Erro não tratado durante refresh:', error);
+    return false;
+  } finally {
+    isRefreshingToken = false;
+    refreshPromise = null;
+  }
+};
 

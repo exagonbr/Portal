@@ -50,6 +50,13 @@ export function LoginForm() {
     }
   }, [retryAfter]);
 
+  // Flag para rastrear se estamos em processo de login
+  const [loginAttemptInProgress, setLoginAttemptInProgress] = useState(false);
+  
+  // Throttle para evitar múltiplos envios em curto período
+  const lastLoginAttemptRef = useRef<number>(0);
+  const MIN_LOGIN_INTERVAL_MS = 2000; // 2 segundos entre tentativas
+  
   const {
     values,
     errors,
@@ -57,25 +64,79 @@ export function LoginForm() {
     isSubmitting,
     handleChange,
     handleBlur,
-    handleSubmit
+    handleSubmit,
+    resetForm
   } = useForm<LoginFormData>({
     initialValues,
     validationRules,
     onSubmit: useCallback(async (formValues) => {
       try {
-        setSubmitError('');
-        await login(formValues.email, formValues.password);
-      } catch (error: any) {
-        console.error('Erro durante o login:', error);
-        if (error.message && error.message.includes('Too Many Requests')) {
-          const retrySeconds = 60;
-          setRetryAfter(retrySeconds);
-          setSubmitError(`Muitas tentativas de login. Tente novamente em ${retrySeconds} segundos.`);
-        } else {
-          setSubmitError(error.message || 'Email ou senha incorretos. Por favor, tente novamente.');
+        // Verificar se já está em andamento
+        if (loginAttemptInProgress) {
+          console.log('Tentativa de login já em andamento, ignorando requisição duplicada');
+          return;
         }
+        
+        // Verificar throttle
+        const now = Date.now();
+        const timeSinceLastAttempt = now - lastLoginAttemptRef.current;
+        if (timeSinceLastAttempt < MIN_LOGIN_INTERVAL_MS) {
+          console.log(`Muitas tentativas rápidas. Aguarde ${((MIN_LOGIN_INTERVAL_MS - timeSinceLastAttempt) / 1000).toFixed(1)}s`);
+          setSubmitError(`Por favor, aguarde alguns segundos antes de tentar novamente.`);
+          return;
+        }
+        
+        // Marcar início da tentativa
+        setLoginAttemptInProgress(true);
+        lastLoginAttemptRef.current = now;
+        setSubmitError('');
+        
+        // Limitar tempo máximo de tentativa
+        const timeoutId = setTimeout(() => {
+          if (loginAttemptInProgress) {
+            setLoginAttemptInProgress(false);
+            setSubmitError('Tempo limite de login excedido. Por favor, tente novamente.');
+          }
+        }, 15000); // 15 segundos
+        
+        try {
+          await login(formValues.email, formValues.password);
+          clearTimeout(timeoutId);
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          console.error('Erro durante o login:', error);
+          
+          // Verificar se é erro de rate limit
+          if (error.message && error.message.includes('Too Many Requests')) {
+            // Tentar extrair o tempo de retry do erro, ou usar valor padrão
+            let retrySeconds = 60;
+            try {
+              const retryMatch = error.message.match(/(\d+)\s*segundo/);
+              if (retryMatch && retryMatch[1]) {
+                retrySeconds = parseInt(retryMatch[1], 10);
+              } else if (error.retryAfter) {
+                retrySeconds = parseInt(error.retryAfter, 10);
+              }
+            } catch (e) {
+              console.error('Erro ao extrair tempo de retry:', e);
+            }
+            
+            setRetryAfter(retrySeconds);
+            setSubmitError(`Muitas tentativas de login. Tente novamente em ${retrySeconds} segundos.`);
+            // Limpar o formulário para evitar novas tentativas com os mesmos dados
+            resetForm();
+          } else {
+            setSubmitError(error.message || 'Email ou senha incorretos. Por favor, tente novamente.');
+          }
+        } finally {
+          setLoginAttemptInProgress(false);
+        }
+      } catch (outerError) {
+        console.error('Erro externo durante processo de login:', outerError);
+        setSubmitError('Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.');
+        setLoginAttemptInProgress(false);
       }
-    }, [login])
+    }, [login, loginAttemptInProgress, resetForm])
   });
 
   const handleGoogleLogin = async () => {
@@ -294,7 +355,7 @@ export function LoginForm() {
           >
             <button
               type="submit"
-              disabled={isSubmitting || retryAfter > 0}
+              disabled={isSubmitting || loginAttemptInProgress || retryAfter > 0}
               className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               style={{
                 backgroundColor: theme.colors.primary.DEFAULT,
@@ -302,7 +363,7 @@ export function LoginForm() {
                 boxShadow: theme.shadows.md
               }}
             >
-              {isSubmitting ? (
+              {isSubmitting || loginAttemptInProgress ? (
                 <>
                   <motion.span
                     animate={{ rotate: 360 }}
