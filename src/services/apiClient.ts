@@ -1,4 +1,4 @@
-import { ApiResponse } from '@/types/api';
+import { ApiResponse, ApiError } from '../types/api';
 
 // Configuração base da API
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -34,7 +34,7 @@ export class ApiClient {
     this.baseURL = baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://portal.sabercon.com.br',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Allow-Credentials': 'true'
@@ -53,9 +53,9 @@ export class ApiClient {
 
     // Fallback para cookies
     const cookieToken = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('auth_token='))
-        ?.split('=')[1];
+      .split('; ')
+      .find(row => row.startsWith('auth_token='))
+      ?.split('=')[1];
 
     return cookieToken || null;
   }
@@ -65,7 +65,7 @@ export class ApiClient {
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
     const url = new URL(endpoint, this.baseURL);
-
+    
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -102,8 +102,8 @@ export class ApiClient {
    * Faz uma requisição HTTP
    */
   private async makeRequest<T>(
-      endpoint: string,
-      options: RequestOptions = {}
+    endpoint: string,
+    options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const {
       method = 'GET',
@@ -142,7 +142,7 @@ export class ApiClient {
       // Parse da resposta
       let responseData: ApiResponse<T>;
       const contentType = response.headers.get('content-type');
-
+      
       if (contentType && contentType.includes('application/json')) {
         responseData = await response.json();
       } else {
@@ -157,9 +157,9 @@ export class ApiClient {
       // Verifica se a resposta foi bem-sucedida
       if (!response.ok) {
         throw new ApiClientError(
-            responseData.message || `HTTP ${response.status}: ${response.statusText}`,
-            response.status,
-            responseData.errors
+          responseData.message || `HTTP ${response.status}: ${response.statusText}`,
+          response.status,
+          responseData.errors
         );
       }
 
@@ -238,14 +238,14 @@ export class ApiClient {
 
       const blob = await response.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
-
+      
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.download = filename || 'download';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
+      
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       if (error instanceof ApiClientError) {
@@ -276,7 +276,7 @@ export class ApiClient {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-
+      
       // Remove cookies
       document.cookie = 'auth_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
       document.cookie = 'user_data=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
@@ -289,7 +289,7 @@ export class ApiClient {
   setAuthToken(token: string): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', token);
-
+      
       // Também salva em cookie para SSR
       const expires = new Date();
       expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
@@ -324,9 +324,9 @@ export const isAuthError = (error: unknown): boolean => {
 
 // Função helper para retry automático
 export const withRetry = async <T>(
-    operation: () => Promise<T>,
-    maxRetries: number = 3,
-    delay: number = 1000
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
 ): Promise<T> => {
   let lastError: unknown;
 
@@ -335,7 +335,7 @@ export const withRetry = async <T>(
       return await operation();
     } catch (error) {
       lastError = error;
-
+      
       // Não faz retry para erros de autenticação ou validação
       if (error instanceof ApiClientError && (error.status === 401 || error.status === 400)) {
         throw error;
