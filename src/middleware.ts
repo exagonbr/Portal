@@ -22,6 +22,7 @@ const CONFIG = {
 const ROUTES = {
   // Public routes that bypass all authentication
   PUBLIC: [
+    '/api/auth',
     '/test-reader',
     '/books',
     '/test-simple',
@@ -485,7 +486,7 @@ export async function middleware(request: NextRequest) {
 
     if (ROUTES.PUBLIC.some(route => pathname.startsWith(route))) {
       rateLimitType = 'public';
-      limit = 10;
+      limit = 20;
     } else if (pathname.includes('/upload')) {
       rateLimitType = 'upload';
       limit = 5;
@@ -564,6 +565,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
