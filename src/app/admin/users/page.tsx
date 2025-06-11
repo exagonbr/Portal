@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import debounce from 'lodash/debounce'
 import Image from 'next/image'
 import {
   Users,
@@ -948,6 +949,7 @@ export default function ManageUsers() {
     }
   }, [currentPage, searchTerm, filters, sortBy, sortOrder, itemsPerPage, roles, institutions, showError]);
 
+
   // Verificar conexão com o backend
   const checkBackendConnection = async () => {
     try {
@@ -1120,49 +1122,74 @@ export default function ManageUsers() {
     }
   }
 
-  // Função para atualizar um filtro específico
-  const updateFilter = (key: string, value: any) => {
-    setCurrentPage(1); // Reset page to 1 when any filter changes
-    setFilters(prev => {
-      // Se o valor for vazio, remova a propriedade do objeto
-      if (value === '' || value === undefined) {
-        const newFilters = { ...prev }
-        delete newFilters[key as keyof ExtendedUserFilterDto]
+  // Função para atualizar um filtro específico com debounce
+  const updateFilter = useCallback(
+    debounce((key: string, value: any) => {
+      setCurrentPage(1); // Reset page to 1 when any filter changes
+      setFilters(prev => {
+        // Se o valor for vazio, remova a propriedade do objeto
+        if (value === '' || value === undefined) {
+          const newFilters = { ...prev }
+          delete newFilters[key as keyof ExtendedUserFilterDto]
+          return newFilters
+        }
+        
+        // Caso contrário, atualize com o novo valor
+        const newFilters = {
+          ...prev,
+          [key]: value
+        }
+        
+        // Atualiza a lista automaticamente
+        loadUsers();
+        
         return newFilters
-      }
-      
-      // Caso contrário, atualize com o novo valor
-      return {
-        ...prev,
-        [key]: value
-      }
-    })
-  }
+      })
+    }, 500), // 500ms delay
+    [loadUsers]
+  )
 
-  // Aplicar filtros
-  const handleApplyFilters = () => {
+
+  // Aplicar filtros (agora automático com debounce)
+  const handleApplyFilters = useCallback(() => {
     setCurrentPage(1)
     setShowFilters(false)
     loadUsers()
-  }
+  }, [loadUsers])
 
-  // Limpar filtros
-  const handleClearFilters = () => {
+
+  // Limpar filtros com feedback visual
+  const handleClearFilters = useCallback(() => {
     setFilters({})
     setSearchTerm('')
     setCurrentPage(1)
     setSortBy('name')
     setSortOrder('asc')
     setShowFilters(false)
+    
+    // Feedback visual
+    showSuccess('Filtros limpos com sucesso')
+    
+    // Recarrega a lista
     loadUsers()
-  }
+  }, [loadUsers, showSuccess])
 
-  // Função para mudar de página
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    // Rolagem suave para o topo da lista quando mudar de página
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+  // Função para mudar de página com tratamento de erro
+  const handlePageChange = useCallback(async (page: number) => {
+    try {
+      setLoading(true)
+      setCurrentPage(page)
+      // Rolagem suave para o topo da lista quando mudar de página
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      await loadUsers();
+    } catch (error) {
+      console.error('Erro ao mudar de página:', error);
+      showError('Erro ao carregar a página. Tente novamente.');
+    } finally {
+      setLoading(false)
+    }
+  }, [loadUsers, showError])
+
 
   // Verificar se há filtros ativos
   const hasActiveFilters = () => {
@@ -1197,6 +1224,7 @@ export default function ManageUsers() {
     setCurrentPage(1)
     loadUsers()
   }
+
 
   const headerActions = (
     <div className="flex items-center gap-2">
