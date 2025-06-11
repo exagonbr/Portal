@@ -42,7 +42,7 @@ export const initializeNotificationQueue = () => {
       const userIds = data.notification.recipients.specific || [];
       
       // Send push notification through API
-      await apiClient.post('/api/push-notifications/send', {
+      await apiClient.post('/push-notifications/send', {
         title,
         message,
         userIds,
@@ -100,7 +100,7 @@ if (typeof window !== 'undefined') {
   queueService.registerHandler(JobTypes.NOTIFICATION_CLEANUP, async (data: { olderThan?: string }) => {
     try {
       const params = data.olderThan ? { olderThan: data.olderThan } : {};
-      await apiClient.post('/api/notifications/cleanup', params);
+      await apiClient.post('/notifications/cleanup', params);
       console.log('Notification cleanup completed');
     } catch (error) {
       console.error('Error during notification cleanup:', error);

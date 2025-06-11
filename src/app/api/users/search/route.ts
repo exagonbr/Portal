@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api'
 
 // GET - Buscar usuários
 export async function GET(request: NextRequest) {
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     if (is_active !== null) params.append('is_active', is_active)
 
     // Buscar usuários da API
-    const response = await fetch(`${BACKEND_URL}/api/users/search?${params.toString()}`, {
+    const response = await fetch(`${BACKEND_URL}/users/search?${params.toString()}`, {
       headers: {
         'Authorization': `Bearer ${session.user?.id}`,
         'Content-Type': 'application/json'

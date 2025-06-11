@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (authToken) {
       try {
         console.log('🔄 API: Notificando backend sobre logout');
-        const response = await fetch(`${BACKEND_URL}/api/auth/logout`, {
+        const response = await fetch(`${BACKEND_URL}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

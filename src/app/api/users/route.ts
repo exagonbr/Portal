@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api'
 
 // Schema de validação para criação de usuário
 const createUserSchema = z.object({
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Encaminha todos os parâmetros de query para o backend
     const { searchParams } = new URL(request.url)
-    const backendUrl = `${BACKEND_URL}/api/users?${searchParams.toString()}`
+    const backendUrl = `${BACKEND_URL}/users?${searchParams.toString()}`
 
     const response = await fetch(backendUrl, {
       headers: {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const backendUrl = `${BACKEND_URL}/api/users`
+    const backendUrl = `${BACKEND_URL}/users`
     const response = await fetch(backendUrl, {
         method: 'POST',
         headers: {
