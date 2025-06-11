@@ -1,6 +1,5 @@
-import {User, UserEssentials, TokenPayload, Permission, UserRole} from '../types/auth';
+import {User, UserEssentials, Permission, UserRole} from '../types/auth';
 import {getSession, signOut} from 'next-auth/react';
-import {MOCK_USERS} from '../constants/mockData';
 
 export interface LoginResponse {
   success: boolean;
@@ -72,7 +71,7 @@ class CookieManager {
     // Remove each cookie
     cookies.forEach(cookie => {
       const eqPos = cookie.indexOf('=');
-      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
       if (name) {
         this.remove(name);
       }
@@ -123,60 +122,73 @@ class StorageManager {
   }
 }
 
-// Session management
-class SessionManager {
-  static async invalidateRedisSession(sessionId: string): Promise<boolean> {
-    try {
-      const response = await fetch('/api/sessions/invalidate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
-      });
-      return response.ok;
-    } catch (error) {
-      console.error('Error invalidating Redis session:', error);
-      return false;
-    }
-  }
-
-  static getSessionId(): string | null {
-    if (typeof window === 'undefined') return null;
-    
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === AUTH_CONFIG.COOKIES.SESSION_ID) {
-        return value;
-      }
-    }
-    return null;
-  }
-}
-
-// User management functions
+// User management functions - Backend API integration
 export const listUsers = async (): Promise<User[]> => {
-  return Object.values(MOCK_USERS);
+  try {
+    const response = await fetch('/api/users', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch users');
+    }
+
+    const data = await response.json();
+    return data.users || [];
+  } catch (error) {
+    console.error('Error listing users:', error);
+    throw error;
+  }
 };
 
 export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
-  const newUser: User = {
-    ...userData,
-    id: Math.random().toString(36).substr(2, 9),
-    name: userData.name || '',
-    email: userData.email || '',
-    role: (userData.role as UserRole) || 'student'
-  };
-  MOCK_USERS[userData.email] = newUser;
-  return newUser;
+  try {
+    const response = await fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create user');
+    }
+
+    const data = await response.json();
+    return data.user;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
 };
 
 export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
-  const user = Object.values(MOCK_USERS).find(u => u.id === id);
-  if (!user) return null;
+  try {
+    const response = await fetch(`/api/users/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
 
-  const updatedUser: User = { ...user, ...userData };
-  MOCK_USERS[user.email] = updatedUser;
-  return updatedUser;
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error('Failed to update user');
+    }
+
+    const data = await response.json();
+    return data.user;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
 };
 
 /**
@@ -187,17 +199,32 @@ export const extractUserEssentials = (user: User): UserEssentials => {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: (user.role as UserRole),
-    permissions: (user.permissions as Permission[])
+    role: user.role,
+    permissions: user.permissions || []
   };
 };
 
 export const deleteUser = async (id: string): Promise<boolean> => {
-  const user = Object.values(MOCK_USERS).find(u => u.id === id);
-  if (!user) return false;
+  try {
+    const response = await fetch(`/api/users/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-  delete MOCK_USERS[user.email];
-  return true;
+    if (!response.ok) {
+      if (response.status === 404) {
+        return false;
+      }
+      throw new Error('Failed to delete user');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
 };
 
 // Authentication functions
@@ -291,19 +318,7 @@ export const register = async (
 };
 
 export const getCurrentUser = async (): Promise<UserEssentials | null> => {
-  // First try to get user from NextAuth session
-  const session = await getSession();
-  if (session?.user) {
-    return {
-      id: Math.random().toString(36).substr(2, 9), // Generate random ID for Google users
-      name: session.user.name || '',
-      email: session.user.email || '',
-      role: 'teacher' as UserRole,
-      permissions: []
-    };
-  }
-
-  // If no NextAuth session, try local storage
+  // First try local storage to avoid triggering NextAuth session calls
   const userStr = StorageManager.get(AUTH_CONFIG.STORAGE_KEYS.USER);
   if (userStr) {
     try {
@@ -318,12 +333,34 @@ export const getCurrentUser = async (): Promise<UserEssentials | null> => {
           permissions: (userData.permissions as Permission[]) || []
         };
       }
-      return null;
     } catch (error) {
       console.error('Error parsing user data:', error);
-      return null;
+      // Clear invalid data
+      StorageManager.remove(AUTH_CONFIG.STORAGE_KEYS.USER);
     }
   }
+
+  // Only try NextAuth session as fallback and avoid infinite loops
+  try {
+    const session = await getSession();
+    if (session?.user) {
+      const userEssentials: UserEssentials = {
+        id: Math.random().toString(36).substring(2, 11), // Generate random ID for Google users
+        name: session.user.name || '',
+        email: session.user.email || '',
+        role: 'teacher' as UserRole,
+        permissions: []
+      };
+      
+      // Store in localStorage for future calls
+      StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.USER, JSON.stringify(userEssentials));
+      
+      return userEssentials;
+    }
+  } catch (error) {
+    console.error('Error getting NextAuth session:', error);
+  }
+
   return null;
 };
 

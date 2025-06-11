@@ -3,12 +3,64 @@ import { cookies } from 'next/headers';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api';
 
+// Simple rate limiting to prevent login loops
+const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_ATTEMPTS = 5; // Max 5 attempts per minute per IP
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const attempts = loginAttempts.get(ip);
+  
+  if (!attempts) {
+    loginAttempts.set(ip, { count: 1, lastAttempt: now });
+    return true;
+  }
+  
+  // Reset if window has passed
+  if (now - attempts.lastAttempt > RATE_LIMIT_WINDOW) {
+    loginAttempts.set(ip, { count: 1, lastAttempt: now });
+    return true;
+  }
+  
+  // Check if under limit
+  if (attempts.count < MAX_ATTEMPTS) {
+    attempts.count++;
+    attempts.lastAttempt = now;
+    return true;
+  }
+  
+  return false;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password } = body;
+    
+    // Get client IP for rate limiting
+    const ip = request.headers.get('x-forwarded-for') ||
+               request.headers.get('x-real-ip') ||
+               'unknown';
 
-    console.log('🔍 Login attempt:', { email, BACKEND_URL });
+    console.log('🔍 Login attempt:', {
+      email,
+      BACKEND_URL,
+      ip,
+      userAgent: request.headers.get('user-agent'),
+      referer: request.headers.get('referer'),
+      origin: request.headers.get('origin'),
+      timestamp: new Date().toISOString()
+    });
+
+    // Check rate limit
+    if (!checkRateLimit(ip)) {
+      console.warn(`🚫 Rate limit exceeded for IP: ${ip}`);
+      return NextResponse.json(
+        { success: false, message: 'Muitas tentativas de login. Tente novamente em 1 minuto.' },
+        { status: 429 }
+      );
+    }
 
     // Fazer requisição para o backend
     const response = await fetch(`${BACKEND_URL}/auth/login`, {
