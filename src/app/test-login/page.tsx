@@ -1,28 +1,39 @@
 'use client';
 
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
+ 
 export default function TestLoginPage() {
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
-
-  const testLogin = async (email: string, password: string) => {
+  const [retryAfter, setRetryAfter] = useState(0);
+ 
+  useEffect(() => {
+    if (retryAfter > 0) {
+      const timer = setTimeout(() => setRetryAfter(retryAfter - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [retryAfter]);
+ 
+  const testLogin = async (email: string, password:string) => {
     setLoading(true);
     setResult('');
-    
+ 
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+ 
       const data = await response.json();
-      
+ 
       if (response.ok) {
         setResult(`✅ Login bem-sucedido!\nUsuário: ${data.user?.name}\nRole: ${data.user?.role_name}`);
+      } else if (response.status === 429) {
+        const retryHeader = response.headers.get('Retry-After');
+        const retrySeconds = retryHeader ? parseInt(retryHeader, 10) : 60;
+        setRetryAfter(retrySeconds);
+        setResult(`❌ Erro: Muitas tentativas de login. Tente novamente em ${retrySeconds} segundos.`);
       } else {
         setResult(`❌ Erro: ${data.message || 'Falha no login'}`);
       }
@@ -52,7 +63,7 @@ export default function TestLoginPage() {
             <button
               key={index}
               onClick={() => testLogin(cred.email, cred.password)}
-              disabled={loading}
+              disabled={loading || retryAfter > 0}
               className="p-4 border rounded-lg hover:bg-blue-50 disabled:opacity-50 text-left"
             >
               <div className="font-medium text-blue-600">{cred.role}</div>
@@ -71,7 +82,10 @@ export default function TestLoginPage() {
 
         {result && (
           <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-            <pre className="whitespace-pre-wrap text-sm">{result}</pre>
+            <pre className="whitespace-pre-wrap text-sm">
+              {result}
+              {retryAfter > 0 && `\n\nAguarde ${retryAfter}s...`}
+            </pre>
           </div>
         )}
 

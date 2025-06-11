@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
@@ -58,11 +58,19 @@ export function LoginForm() {
   const router = useRouter();
   const { theme } = useTheme();
   const [submitError, setSubmitError] = useState<string>('');
+  const [retryAfter, setRetryAfter] = useState(0);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchFormKey, setSearchFormKey] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
-
+ 
+  useEffect(() => {
+    if (retryAfter > 0) {
+      const timer = setTimeout(() => setRetryAfter(retryAfter - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [retryAfter]);
+ 
   const {
     values,
     errors,
@@ -78,9 +86,16 @@ export function LoginForm() {
       try {
         setSubmitError('');
         await login(formValues.email, formValues.password);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro durante o login:', error);
-        setSubmitError('Email ou senha incorretos. Por favor, tente novamente.');
+        if (error.message && error.message.includes('Too Many Requests')) {
+          // Extrair o tempo do cabeçalho se disponível, ou usar um padrão
+          const retrySeconds = 60;
+          setRetryAfter(retrySeconds);
+          setSubmitError(`Muitas tentativas de login. Tente novamente em ${retrySeconds} segundos.`);
+        } else {
+          setSubmitError(error.message || 'Email ou senha incorretos. Por favor, tente novamente.');
+        }
       }
     }
   });
@@ -330,6 +345,11 @@ export function LoginForm() {
               <div className="flex-1">
                 <h3 className="text-sm font-medium" style={{ color: theme.colors.status.error }}>
                   {submitError}
+                  {retryAfter > 0 && (
+                    <span className="block mt-1 text-xs">
+                      Aguarde {retryAfter}s...
+                    </span>
+                  )}
                 </h3>
               </div>
             </motion.div>
@@ -342,7 +362,7 @@ export function LoginForm() {
           >
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || retryAfter > 0}
               className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               style={{
                 backgroundColor: theme.colors.primary.DEFAULT,
