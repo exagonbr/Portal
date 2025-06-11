@@ -33,12 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       const currentUser = await authService.getCurrentUser();
-      
-      // Garante que a role está em uppercase
-      if (currentUser && currentUser.role) {
-        currentUser.role = currentUser.role.toUpperCase() as any;
-      }
-      
       setUser(currentUser);
       setError(null);
     } catch (err) {
@@ -60,40 +54,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 AuthContext: Iniciando login para:', email);
-      
       const response = await authService.login(email, password);
       
       if (response.success && response.user) {
-        // Garante que a role está em uppercase
-        if (response.user && response.user.role) {
-          response.user.role = response.user.role.toUpperCase() as any;
-        }
-        
-        console.log('✅ AuthContext: Login bem-sucedido, definindo usuário:', response.user.name);
         setUser(response.user);
         
-        // Redirecionar para o dashboard apropriado
-        const dashboardPath = getDashboardPath(response.user.role);
-        console.log('🔄 AuthContext: Redirecionando para:', dashboardPath || '/dashboard');
+        // Normaliza a role para lowercase
+        const normalizedRole = response.user.role?.toLowerCase();
         
-        // Aguarda um breve momento para garantir que os cookies sejam definidos corretamente
-        setTimeout(() => {
-          if (dashboardPath) {
-            router.push(dashboardPath);
-          } else {
-            router.push('/dashboard');
-          }
-          // Força uma navegação completa para garantir que o middleware seja acionado
-          router.refresh();
-        }, 300);
-      } else {
-        console.error('❌ AuthContext: Login falhou:', response.message);
-        setError(response.message || 'Erro ao fazer login');
-        throw new Error(response.message || 'Erro ao fazer login');
+        // Redirecionar para o dashboard apropriado
+        const dashboardPath = getDashboardPath(normalizedRole || response.user.role);
+        if (dashboardPath) {
+          router.push(dashboardPath);
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (err: any) {
-      console.error('❌ AuthContext: Erro no login:', err);
+      console.error('Erro no login:', err);
       setError(err.message || 'Erro ao fazer login');
       throw err;
     } finally {
@@ -110,26 +88,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await authService.register(name, email, password, type);
       
       if (response.success && response.user) {
-        // Garante que a role está em uppercase
-        if (response.user && response.user.role) {
-          response.user.role = response.user.role.toUpperCase() as any;
-        }
-        
         setUser(response.user);
         
-        // Redirecionar para o dashboard apropriado
-        const dashboardPath = getDashboardPath(response.user.role);
+        // Normaliza a role para lowercase
+        const normalizedRole = response.user.role?.toLowerCase();
         
-        // Aguarda um breve momento para garantir que os cookies sejam definidos corretamente
-        setTimeout(() => {
-          if (dashboardPath) {
-            router.push(dashboardPath);
-          } else {
-            router.push('/dashboard');
-          }
-          // Força uma navegação completa para garantir que o middleware seja acionado
-          router.refresh();
-        }, 300);
+        // Redirecionar para o dashboard apropriado
+        const dashboardPath = getDashboardPath(normalizedRole || response.user.role);
+        if (dashboardPath) {
+          router.push(dashboardPath);
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (err: any) {
       console.error('Erro no registro:', err);
@@ -144,50 +114,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       setLoading(true);
-      console.log('🔄 AuthContext: Iniciando logout...');
       
-      // Primeiro limpar dados locais para garantir que a UI reflita o estado desconectado
-      try {
-        console.log('🧹 AuthContext: Limpando dados locais primeiro...');
-        await clearAllDataForUnauthorized();
-        console.log('✅ AuthContext: Dados locais limpos com sucesso');
-      } catch (clearError) {
-        console.error('⚠️ AuthContext: Erro ao limpar dados locais:', clearError);
-        // Continuar mesmo com erro na limpeza
-      }
+      // Limpar todos os dados antes do logout
+      await clearAllDataForUnauthorized();
       
-      // Depois chamar a API de logout
-      try {
-        console.log('🔄 AuthContext: Fazendo logout no servidor...');
-        await authService.logout();
-        console.log('✅ AuthContext: Logout no servidor concluído');
-      } catch (logoutError) {
-        console.error('⚠️ AuthContext: Erro durante logout no servidor:', logoutError);
-        // Continuar mesmo com erro no logout do servidor
-      }
-      
-      // Atualizar o estado independentemente do resultado das operações anteriores
+      await authService.logout();
       setUser(null);
       setError(null);
-      
-      console.log('✅ AuthContext: Logout concluído, redirecionando para login');
-      // Aguardar um momento para garantir que a UI seja atualizada
-      setTimeout(() => {
-        router.push('/login');
-        router.refresh(); // Forçar atualização completa da página
-      }, 100);
+      router.push('/login');
     } catch (err: any) {
-      console.error('❌ AuthContext: Erro crítico no processo de logout:', err);
-      setError('Ocorreu um erro durante o logout, mas você será redirecionado.');
+      console.error('Erro no logout:', err);
+      setError(err.message || 'Erro ao fazer logout');
       
-      // Mesmo com erro crítico, fazer o máximo para limpar dados e redirecionar
+      // Mesmo com erro, tentar limpar dados e redirecionar
+      try {
+        await clearAllDataForUnauthorized();
+      } catch (clearError) {
+        console.error('Erro ao limpar dados durante logout:', clearError);
+      }
+      
       setUser(null);
-      
-      // Ainda tentar redirecionar para login
-      setTimeout(() => {
-        router.push('/login');
-        router.refresh();
-      }, 100);
+      router.push('/login');
     } finally {
       setLoading(false);
     }
@@ -269,12 +216,12 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
 
   useEffect(() => {
     if (!loading && user) {
-      // Normaliza as roles para uppercase para comparação
-      const userRoleUppercase = user.role.toUpperCase();
-      const normalizedAllowedRoles = allowedRoles.map(r => r.toUpperCase());
+      // Normaliza a role para lowercase para comparação
+      const normalizedRole = user.role?.toLowerCase();
+      const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
       
-      if (!normalizedAllowedRoles.includes(userRoleUppercase)) {
-        const dashboardPath = getDashboardPath(userRoleUppercase);
+      if (!normalizedAllowedRoles.includes(normalizedRole)) {
+        const dashboardPath = getDashboardPath(normalizedRole);
         router.push(dashboardPath || redirectTo);
       }
     }
@@ -283,6 +230,6 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
   return {
     user,
     loading,
-    hasRole: user ? allowedRoles.map(r => r.toUpperCase()).includes(user.role.toUpperCase()) : false
+    hasRole: user ? allowedRoles.map(r => r.toLowerCase()).includes(user.role.toLowerCase()) : false
   };
 }
