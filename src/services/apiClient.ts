@@ -114,13 +114,7 @@ export class ApiClient {
     } = options;
 
     try {
-      let url = this.buildURL(endpoint, params);
-      
-      if(url.startsWith('http://localhost')) {
-        console.warn('Atenção: Você está fazendo uma requisição para o ambiente de desenvolvimento local. Verifique se isso é intencional.');
-        url = url.replace('http://localhost', 'https://portal.sabercon.com.br');
-        url = url.replace('https://portal.sabercon.com.br:3001', 'https://portal.sabercon.com.br/api');
-      }
+      const url = this.buildURL(endpoint, params);
       const headers = this.prepareHeaders(customHeaders);
 
       // Remove Content-Type para FormData
