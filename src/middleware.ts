@@ -8,7 +8,7 @@ import { applyRateLimit } from './middleware/rateLimit';
 // Configuration constants
 const CONFIG = {
   BASE_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
-  BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:3001',
+  BACKEND_URL: process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api',
   API_VERSION: process.env.API_VERSION || 'v1',
   COOKIES: {
     AUTH_TOKEN: 'auth_token',
@@ -125,10 +125,11 @@ class SessionValidator {
 
       console.log('Middleware: Validando token...');
       
-      const response = await fetch(`https://portal.sabercon.com.br/api/auth/validate`, {
+      const response = await fetch(`${CONFIG.BACKEND_URL}/auth/validate-session`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
           'Cache-Control': 'no-cache, no-store'
         },
         body: JSON.stringify({ token }),
