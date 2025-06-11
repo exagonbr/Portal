@@ -170,8 +170,8 @@ export class ApiClient {
       const requestOptions: RequestInit = {
         method,
         headers,
-        credentials: 'same-origin',
-        mode: 'no-cors'
+        credentials: 'include',
+        mode: 'cors'
       };
 
       // Requisições GET/HEAD não podem ter corpo

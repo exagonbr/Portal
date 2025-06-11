@@ -7,32 +7,8 @@ import { connection } from './config/database';
 
 const app = express();
 
-// CORS
-app.use(cors({
-  origin: ['*', 'https://sabercon.com.br', 'https://www.sabercon.com.br', 'https://portal.sabercon.com.br',
-  'https://www.portal.sabercon.com.br', 'http://localhost:3000', 'http://localhost:3001'],
-  credentials: process.env.CORS_CREDENTIALS === 'true',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Credentials',
-    'Accept',
-    'Origin'
-  ],
-  exposedHeaders: [
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Credentials'
-  ]
-}));
-
 // Middlewares
+app.use(cors());
 app.use(helmet());
 app.use(compression());
 app.use(express.json());

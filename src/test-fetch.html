@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Fetch</title>
+</head>
+<body>
+    <h1>Testing Fetch Request</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="result"></div>
+
+    <script>
+        async function testLogin() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const controller = new AbortController();
+                const url = 'http://localhost:3001/api/auth/login';
+                const requestOptions = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@sabercon.edu.br',
+                        password: 'password123'
+                    }),
+                    credentials: 'include',
+                    mode: 'cors'
+                };
+
+                const response = await fetch(url, {
+                    ...requestOptions,
+                    signal: controller.signal,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<h3>Success!</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<h3>Error: ${response.status}</h3><p>${response.statusText}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<h3>Fetch Error:</h3><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
