@@ -31,19 +31,7 @@ export class FileService {
     }
   }
 
-  // Verificar referências no banco de dados
-  static async checkDatabaseReferences(category: 'literario' | 'professor' | 'aluno'): Promise<S3FileInfo[]> {
-    try {
-      const response = await fetch(`${API_BASE}/check-references?category=${category}`)
-      if (!response.ok) {
-        throw new Error('Erro ao verificar referências')
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Erro ao verificar referências:', error)
-      throw error
-    }
-  }
+  // Método removido: checkDatabaseReferences
 
   // Upload de arquivo
   static async uploadFile(uploadData: FileUploadRequest): Promise<FileRecord> {

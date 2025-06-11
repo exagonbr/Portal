@@ -16,6 +16,9 @@ export interface S3StorageInfo {
   lastModified: Date
   monthlyCost: number
   fileTypeDistribution?: S3FileTypeDistribution[]
+  uploadRate?: number
+  downloadCount?: number
+  costSavings?: number
 }
 
 export interface SystemAnalytics {
@@ -107,12 +110,19 @@ class AwsService {
     await new Promise(resolve => setTimeout(resolve, 400))
 
     const sizeInGB = Math.random() * 5 + 2
+    const objectCount = Math.floor(Math.random() * 500 + 1000)
+    const growthRate = Math.random() * 5 + 2 // 2-7% de crescimento
+    
     return {
       bucketSize: sizeInGB,
-      objectCount: Math.floor(Math.random() * 500 + 1000),
+      objectCount: objectCount,
       lastModified: new Date(Date.now() - Math.random() * 86400000), // Último dia
       monthlyCost: sizeInGB * 0.023, // Custo aproximado do S3
-      fileTypeDistribution: await this.getS3FileTypeDistribution()
+      fileTypeDistribution: await this.getS3FileTypeDistribution(),
+      // Novos campos
+      uploadRate: sizeInGB * (growthRate / 100), // Taxa de upload diária baseada no crescimento
+      downloadCount: Math.floor(objectCount * (Math.random() * 0.1 + 0.05)), // 5-15% dos objetos por dia
+      costSavings: Math.random() * 10 + 5 // 5-15% de economia potencial
     }
   }
 

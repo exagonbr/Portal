@@ -318,17 +318,36 @@ export default function AdminAnalyticsPage() {
               </div>
 
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-600 mb-4">S3 Storage Analytics</h3>
+                <h3 className="text-lg font-semibold text-gray-600 mb-1">S3 Storage Analytics</h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Análise de armazenamento e custos do bucket {settings.s3BucketName || 'S3'}
+                </p>
+                
                 {isLoading ? (
                   <div className="space-y-4">
                     <div className="animate-pulse">
                       <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-                      <div className="h-6 bg-gray-200 rounded w-16"></div>
+                      <div className="h-6 bg-gray-200 rounded w-16 mb-4"></div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="h-16 bg-gray-200 rounded"></div>
+                        <div className="h-16 bg-gray-200 rounded"></div>
+                      </div>
+                      <div className="h-32 bg-gray-200 rounded mt-4"></div>
+                    </div>
+                  </div>
+                ) : error ? (
+                  <div className="bg-error/20 border border-error/30 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <div className="text-error mr-3">❌</div>
+                      <div>
+                        <h3 className="text-lg font-medium text-error">Erro ao Carregar Dados do S3</h3>
+                        <p className="text-gray-600">Verifique as configurações do bucket S3 e tente novamente.</p>
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <S3StorageAnalytics 
-                    data={s3Info} 
+                  <S3StorageAnalytics
+                    data={s3Info}
                     bucketName={settings.s3BucketName}
                     region={settings.region}
                   />
