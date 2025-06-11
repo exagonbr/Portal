@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
@@ -82,14 +82,13 @@ export function LoginForm() {
   } = useForm<LoginFormData>({
     initialValues,
     validationRules,
-    onSubmit: async (formValues) => {
+    onSubmit: useCallback(async (formValues) => {
       try {
         setSubmitError('');
         await login(formValues.email, formValues.password);
       } catch (error: any) {
         console.error('Erro durante o login:', error);
         if (error.message && error.message.includes('Too Many Requests')) {
-          // Extrair o tempo do cabeçalho se disponível, ou usar um padrão
           const retrySeconds = 60;
           setRetryAfter(retrySeconds);
           setSubmitError(`Muitas tentativas de login. Tente novamente em ${retrySeconds} segundos.`);
@@ -97,7 +96,7 @@ export function LoginForm() {
           setSubmitError(error.message || 'Email ou senha incorretos. Por favor, tente novamente.');
         }
       }
-    }
+    }, [login])
   });
 
   const {
