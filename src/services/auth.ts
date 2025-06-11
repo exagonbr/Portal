@@ -26,7 +26,8 @@ const AUTH_CONFIG = {
   },
   STORAGE_KEYS: {
     AUTH_TOKEN: 'auth_token',
-    USER: 'user'
+    USER: 'user',
+    AUTH_EXPIRES_AT: 'auth_expires_at'
   },
   DEFAULT_COOKIE_DAYS: 7
 } as const;
@@ -253,6 +254,9 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       if (data.token) {
         StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.token);
       }
+      if (data.expiresAt) {
+        StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_EXPIRES_AT, String(data.expiresAt));
+      }
     }
 
     return {
@@ -301,6 +305,9 @@ export const register = async (
       StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.USER, JSON.stringify(userEssentials));
       if (data.token) {
         StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.token);
+      }
+      if (data.expiresAt) {
+        StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_EXPIRES_AT, String(data.expiresAt));
       }
     }
 
@@ -448,3 +455,36 @@ export const isAuthenticated = async (): Promise<boolean> => {
     return false;
   }
 };
+export const isTokenExpired = (): boolean => {
+  if (typeof window === 'undefined') {
+    return true; // Assume expired on server-side
+  }
+
+  const expiresAtStr = StorageManager.get(AUTH_CONFIG.STORAGE_KEYS.AUTH_EXPIRES_AT);
+  if (!expiresAtStr) {
+    // If there's no expiration date, but there is a token, we can't be sure.
+    // For safety, let's check if a token exists. If not, it's "expired".
+    return !StorageManager.get(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN);
+  }
+
+  try {
+    const expiresAt = parseInt(expiresAtStr, 10);
+    if (isNaN(expiresAt)) {
+      return true; // Invalid data
+    }
+
+    // Check if expiresAt is in seconds or milliseconds.
+    // A common way is to check its magnitude. Timestamps in seconds are usually 10 digits, ms are 13.
+    const expirationTimeInMs = expiresAt > 1000000000000 ? expiresAt : expiresAt * 1000;
+
+    return Date.now() >= expirationTimeInMs;
+  } catch (error) {
+    console.error('Error parsing token expiration date:', error);
+    return true; // Assume expired if parsing fails
+  }
+};
+
+export function refreshToken() {
+  throw new Error('Function not implemented.');
+}
+

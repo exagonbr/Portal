@@ -101,6 +101,81 @@ export class ApiClient {
   /**
    * Faz uma requisição HTTP
    */
+  // Controla tentativas de refresh do token para evitar loops
+  private isRefreshing = false;
+  private refreshPromise: Promise<boolean> | null = null;
+  private refreshAttempts = 0;
+  private maxRefreshAttempts = 2;
+
+  /**
+   * Realiza o refresh do token de autenticação
+   */
+  private async refreshAuthToken(): Promise<boolean> {
+    if (this.refreshAttempts >= this.maxRefreshAttempts) {
+      console.error('Máximo de tentativas de refresh atingido');
+      return false;
+    }
+
+    // Se já estiver em processo de refresh, retorna a Promise existente
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.isRefreshing = true;
+    this.refreshAttempts += 1;
+
+    try {
+      console.log('ApiClient: Tentando renovar token...');
+      this.refreshPromise = new Promise<boolean>(async (resolve) => {
+        try {
+          // Usar fetch diretamente para evitar loop
+          const response = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+            credentials: 'include',
+          });
+
+          if (!response.ok) {
+            console.error('Erro na resposta do refresh token:', response.status);
+            resolve(false);
+            return;
+          }
+
+          const data = await response.json();
+          
+          if (!data.success) {
+            console.error('Falha no refresh token:', data.message);
+            resolve(false);
+            return;
+          }
+
+          // Atualiza token no localStorage
+          if (data.data.token) {
+            localStorage.setItem('auth_token', data.data.token);
+            if (data.data.expires_at) {
+              localStorage.setItem('auth_expires_at', data.data.expires_at);
+            }
+          }
+
+          console.log('Token renovado com sucesso via ApiClient');
+          resolve(true);
+        } catch (error) {
+          console.error('Erro no refresh token:', error);
+          resolve(false);
+        }
+      });
+
+      const result = await this.refreshPromise;
+      return result;
+    } finally {
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+    }
+  }
+
   private async makeRequest<T>(
     endpoint: string,
     options: RequestOptions = {}
@@ -126,6 +201,7 @@ export class ApiClient {
         method,
         headers,
         body: body instanceof FormData ? body : JSON.stringify(body),
+        credentials: 'include', // Importante para enviar cookies em requisições cross-origin
       };
 
       // Implementa timeout
@@ -154,7 +230,29 @@ export class ApiClient {
         };
       }
 
-      // Verifica se a resposta foi bem-sucedida
+      // Verifica se é erro de autenticação (401)
+      if (response.status === 401 && endpoint !== '/auth/login' && endpoint !== '/auth/refresh-token') {
+        console.log('Token expirado, tentando renovar...');
+        
+        // Tenta renovar o token
+        const refreshed = await this.refreshAuthToken();
+        
+        if (refreshed) {
+          console.log('Token renovado, tentando requisição novamente');
+          // Refaz a requisição com o novo token
+          return this.makeRequest<T>(endpoint, options);
+        } else {
+          // Se falhou no refresh, limpa os dados de autenticação
+          this.clearAuth();
+          
+          throw new ApiClientError(
+            'Sessão expirada. Por favor, faça login novamente.',
+            401
+          );
+        }
+      }
+
+      // Verifica se a resposta foi bem-sucedida para outros erros
       if (!response.ok) {
         throw new ApiClientError(
           responseData.message || `HTTP ${response.status}: ${response.statusText}`,
@@ -163,6 +261,8 @@ export class ApiClient {
         );
       }
 
+      // Reset contador de tentativas de refresh após sucesso
+      this.refreshAttempts = 0;
       return responseData;
     } catch (error) {
       if (error instanceof ApiClientError) {

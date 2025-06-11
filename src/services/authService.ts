@@ -209,16 +209,57 @@ export class AuthService {
     if (!token) return false;
 
     // Verifica se token não expirou
+    if (this.isTokenExpired()) {
+      return false;
+    }
+
+    return true;
+  }
+  
+  /**
+   * Verifica se o token está expirado
+   */
+  isTokenExpired(): boolean {
+    if (typeof window === 'undefined') return true;
+    
+    const token = this.getStoredToken();
+    if (!token) return true;
+    
+    // Verificar data de expiração no localStorage
     const expiresAt = localStorage.getItem('auth_expires_at');
     if (expiresAt) {
       const expirationDate = new Date(expiresAt);
       if (expirationDate <= new Date()) {
-        this.clearAuthData();
-        return false;
+        return true;
+      }
+      
+      // Verificar se está próximo de expirar (menos de 5 minutos)
+      const fiveMinutes = 5 * 60 * 1000;
+      if (expirationDate.getTime() - Date.now() < fiveMinutes) {
+        return true; // Considera expirado se faltar menos de 5 minutos
+      }
+    } else {
+      // Se não tiver data de expiração, tenta decodificar o token
+      try {
+        // Decodificar JWT (sem verificação de assinatura)
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const { exp } = JSON.parse(jsonPayload);
+        
+        if (exp) {
+          const expDate = new Date(exp * 1000);
+          return expDate <= new Date();
+        }
+      } catch (error) {
+        console.error('Erro ao decodificar token:', error);
       }
     }
-
-    return true;
+    
+    return false;
   }
 
   /**
@@ -226,24 +267,78 @@ export class AuthService {
    */
   async refreshToken(): Promise<boolean> {
     try {
-      const response = await apiClient.post<AuthResponseDto>('/auth/refresh');
+      console.log('Tentando renovar token de autenticação...');
+      
+      // Verifica se temos um refresh token
+      let refreshToken = null;
+      
+      if (typeof window !== 'undefined') {
+        // Tenta obter do cookie
+        refreshToken = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('refresh_token='))
+          ?.split('=')[1];
+      }
+      
+      if (!refreshToken) {
+        console.warn('Refresh token não encontrado, não é possível renovar a sessão');
+        return false;
+      }
+      
+      // Evitar loop infinito - verificar se já tentou refresh recentemente
+      const lastRefreshAttempt = localStorage.getItem('last_refresh_attempt');
+      const now = Date.now();
+      
+      if (lastRefreshAttempt) {
+        const timeSinceLastAttempt = now - parseInt(lastRefreshAttempt);
+        if (timeSinceLastAttempt < 10000) { // 10 segundos
+          console.warn('Muitas tentativas de refresh em curto período, aguardando...');
+          return false;
+        }
+      }
+      
+      // Marcar tentativa de refresh
+      localStorage.setItem('last_refresh_attempt', now.toString());
+      
+      // Chamar endpoint específico para refresh
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+        credentials: 'include',
+      });
 
-      if (!response.success || !response.data) {
+      if (!response.ok) {
+        console.error('Erro na resposta do refresh token:', response.status);
+        if (response.status === 401) {
+          this.clearAuthData();
+        }
+        return false;
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        console.error('Falha no refresh token:', data.message);
         this.clearAuthData();
         return false;
       }
 
-      const { token, expires_at } = response.data;
-      
-      // Atualiza token
+      // Atualiza token no apiClient para futuras requisições
+      const { token } = data.data;
       apiClient.setAuthToken(token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_expires_at', expires_at);
-      }
-
+      
+      console.log('Token renovado com sucesso');
       return true;
     } catch (error) {
       console.error('Erro ao renovar token:', error);
+      // Não limpar dados em caso de erro de rede
+      if (error instanceof Error && error.message.includes('fetch failed')) {
+        console.warn('Erro de rede ao renovar token, tentando manter sessão atual');
+        return true;
+      }
       this.clearAuthData();
       return false;
     }
@@ -408,6 +503,8 @@ export const register = (name: string, email: string, password: string, type: 's
 export const getCurrentUser = () => authService.getCurrentUser();
 export const logout = () => authService.logout();
 export const isAuthenticated = () => authService.isAuthenticated();
+export const isTokenExpired = () => authService.isTokenExpired();
+export const refreshToken = () => authService.refreshToken();
 
 // Funções de gerenciamento de usuários (mantidas para compatibilidade)
 export const listUsers = async (): Promise<User[]> => {

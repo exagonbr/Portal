@@ -32,6 +32,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchCurrentUser = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Verificar se há token expirado e tentar refresh
+      if (authService.isTokenExpired() && !authService.isAuthenticated()) {
+        console.log('🔄 Token expirado, tentando renovar...');
+        await authService.refreshToken();
+        
+        if (!authService.isAuthenticated()) {
+          console.log('❌ Falha ao renovar token, redirecionando para login');
+          setUser(null);
+          setError('Sessão expirada. Por favor, faça login novamente.');
+          setLoading(false);
+          return;
+        }
+        
+        console.log('✅ Token renovado com sucesso');
+      }
+      
       const currentUser = await authService.getCurrentUser();
       setUser(currentUser);
       setError(null);

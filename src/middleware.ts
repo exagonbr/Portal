@@ -119,13 +119,26 @@ class MiddlewareUtils {
 
 // Session validation
 class SessionValidator {
+  // Rastreia últimas validações para evitar loops
+  private static validationCache = new Map<string, { valid: boolean; timestamp: number; user?: any }>();
+  private static CACHE_TTL = 5000; // 5 segundos em milissegundos
+
   static async validateToken(token: string): Promise<{ valid: boolean; user?: any }> {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
-
+      // Verificar cache para evitar múltiplas validações do mesmo token em curto período
+      const cachedValidation = this.validationCache.get(token);
+      const now = Date.now();
+      
+      if (cachedValidation && (now - cachedValidation.timestamp < this.CACHE_TTL)) {
+        console.log('✅ Middleware: Usando resultado de validação em cache');
+        return { valid: cachedValidation.valid, user: cachedValidation.user };
+      }
+      
       console.log('Middleware: Validando token...');
       
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos timeout (reduzido)
+
       const response = await fetch(`${CONFIG.BACKEND_URL}/auth/validate-session`, {
         method: 'POST',
         headers: {
@@ -135,7 +148,6 @@ class SessionValidator {
         },
         body: JSON.stringify({ token }),
         signal: controller.signal,
-        // Adicionar opções para evitar cache
         cache: 'no-store'
       });
 
@@ -144,10 +156,22 @@ class SessionValidator {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Middleware: Token validado com sucesso');
+        
+        // Salvar no cache
+        this.validationCache.set(token, { 
+          valid: data.valid, 
+          user: data.user, 
+          timestamp: now 
+        });
+        
         return { valid: data.valid, user: data.user };
       }
       
-      console.log('❌ Middleware: Token inválido ou expirado');
+      console.log(`❌ Middleware: Token inválido ou expirado (status: ${response.status})`);
+      
+      // Salvar no cache mesmo se for inválido para evitar chamadas repetidas
+      this.validationCache.set(token, { valid: false, timestamp: now });
+      
       return { valid: false };
     } catch (error) {
       if (error instanceof Error) {
@@ -155,7 +179,6 @@ class SessionValidator {
         if (error.name === 'AbortError' || error.message.includes('fetch failed')) {
           console.warn('⚠️ Middleware: Backend não disponível, permitindo acesso limitado');
           // Em modo offline/degradado, considera o token válido se existe
-          // Isso permite que a aplicação funcione sem backend
           return { valid: true, user: null };
         }
       }
@@ -171,6 +194,12 @@ class SessionValidator {
     }
 
     try {
+      // Verificar formato do token para evitar validação de tokens claramente inválidos
+      if (token.length < 10 || !token.includes('.')) {
+        console.log('❌ Middleware: Formato de token inválido');
+        return { authenticated: false };
+      }
+      
       const validation = await this.validateToken(token);
       
       if (validation.valid) {
@@ -307,23 +336,57 @@ export async function middleware(request: NextRequest) {
 
   // 4. Handle protected paths - authentication check
   if (isProtectedPath) {
+    // Verificar se estamos em um ciclo de redirecionamento
+    const redirectCount = request.cookies.get('redirect_count')?.value;
+    const redirectCountInt = redirectCount ? parseInt(redirectCount) : 0;
+
+    // Se já redirecionamos demais vezes (potencial loop), permitir acesso temporário
+    // ou redirecionar para página de erro específica
+    if (redirectCountInt > 3) {
+      console.warn(`⚠️ Middleware: Detectado potencial loop de redirecionamento em ${pathname}`);
+      
+      // Opção 1: Redirecionar para página de erro específica
+      return MiddlewareUtils.createRedirectResponse('/auth-error?type=redirect_loop', request);
+      
+      // Opção 2: Permitir acesso temporário (comentado)
+      // const tempResponse = NextResponse.next();
+      // tempResponse.cookies.delete('redirect_count');
+      // return tempResponse;
+    }
+
     const authResult = await SessionValidator.isAuthenticated(token);
     
     if (!authResult.authenticated) {
       console.log(`Middleware: Usuário não autenticado tentando acessar ${pathname}`);
-      return MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
+      
+      // Incrementar contador de redirecionamentos
+      const response = MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
+      response.cookies.set('redirect_count', (redirectCountInt + 1).toString(), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60, // 1 minuto apenas
+        path: '/',
+      });
+      
+      return response;
     }
+
+    // Limpar contador de redirecionamentos se autenticação bem-sucedida
+    const response = NextResponse.next();
+    response.cookies.delete('redirect_count');
 
     // Atualizar dados do usuário se necessário
     if (authResult.user && !userDataCookie) {
       console.log(`Middleware: Atualizando dados do usuário ${authResult.user.name}`);
-      const response = NextResponse.next();
+      
       const userData = {
         id: authResult.user.id,
         name: authResult.user.name,
         email: authResult.user.email,
         role: authResult.user.role,
       };
+      
       response.cookies.set(CONFIG.COOKIES.USER_DATA, encodeURIComponent(JSON.stringify(userData)), {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
@@ -331,8 +394,9 @@ export async function middleware(request: NextRequest) {
         maxAge: 60 * 60 * 24,
         path: '/',
       });
-      return response;
     }
+    
+    return response;
   }
 
   // 4.5. Handle portal paths with degraded access when backend is unavailable
