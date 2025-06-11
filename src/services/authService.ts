@@ -29,26 +29,18 @@ export class AuthService {
     try {
       console.log('🔍 Iniciando login para:', email);
       
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await apiClient.post<AuthResponseDto>('/auth/login', { email, password });
+      console.log('📡 Resposta do login:', { success: response.success });
 
-      const data = await response.json();
-      console.log('📡 Resposta do login:', { status: response.status, success: data.success });
-
-      if (!response.ok || !data.success) {
+      if (!response.success || !response.data) {
         return {
           success: false,
-          message: data.message || 'Falha na autenticação'
+          message: response.message || 'Falha na autenticação'
         };
       }
 
       // Extrair dados do usuário da resposta
-      const user = data.user;
+      const { user, token, expires_at } = response.data;
       if (!user) {
         return {
           success: false,
@@ -56,16 +48,11 @@ export class AuthService {
         };
       }
 
+      // Salva o token e dados do usuário
+      this.saveAuthData(token, user, expires_at);
+
       // Converte para formato compatível
       const compatibleUser = this.convertToCompatibleUser(user);
-      
-      // Salvar dados no localStorage também para acesso rápido
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(compatibleUser));
-        if (data.token) {
-          localStorage.setItem('auth_token', data.token);
-        }
-      }
 
       console.log('✅ Login realizado com sucesso para:', compatibleUser.name);
       
@@ -76,9 +63,24 @@ export class AuthService {
     } catch (error) {
       console.error('❌ Erro no login:', error);
       
+      if (error instanceof ApiClientError) {
+        if (error.status === 401) {
+          return {
+            success: false,
+            message: 'Email ou senha incorretos'
+          };
+        }
+        if (error.status === 400) {
+          return {
+            success: false,
+            message: error.errors?.join(', ') || 'Dados inválidos'
+          };
+        }
+      }
+
       return {
         success: false,
-        message: 'Erro de conexão. Tente novamente.'
+        message: handleApiError(error)
       };
     }
   }
