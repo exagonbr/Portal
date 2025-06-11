@@ -64,7 +64,7 @@ export class ApiClient {
    * Constrói a URL completa com parâmetros de query
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
-    const url = new URL(endpoint, this.baseURL + '/api');
+    const url = new URL(endpoint + '/api', this.baseURL);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
