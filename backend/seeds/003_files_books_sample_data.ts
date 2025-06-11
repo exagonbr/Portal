@@ -1,5 +1,44 @@
 export async function seed(knex: any): Promise<void> {
   console.log('🌱 Populando dados de exemplo para arquivos e livros...');
+// Garantir que a função link_file_to_book exista
+  await knex.raw(`
+    CREATE OR REPLACE FUNCTION link_file_to_book(
+        p_file_id UUID,
+        p_book_id UUID
+    )
+    RETURNS BOOLEAN AS $$
+    DECLARE
+        file_exists BOOLEAN := false;
+        book_exists BOOLEAN := false;
+    BEGIN
+        SELECT EXISTS(SELECT 1 FROM files WHERE id = p_file_id AND is_active = true) INTO file_exists;
+        SELECT EXISTS(SELECT 1 FROM books WHERE id = p_book_id) INTO book_exists;
+        
+        IF NOT file_exists THEN
+            RAISE EXCEPTION 'Arquivo não encontrado ou não está ativo';
+        END IF;
+        
+        IF NOT book_exists THEN
+            RAISE EXCEPTION 'Livro não encontrado';
+        END IF;
+        
+        UPDATE files 
+        SET 
+            linked_book_id = p_book_id,
+            linked_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = p_file_id;
+        
+        UPDATE books 
+        SET 
+            file_id = p_file_id,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = p_book_id;
+        
+        RETURN true;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
 
   // Buscar uma instituição existente
   const institution = await knex('institutions').where('status', 'active').first();
