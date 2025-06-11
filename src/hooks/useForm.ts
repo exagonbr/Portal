@@ -36,12 +36,14 @@ export function useForm<T extends { [key: string]: any }>({
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const { name, value } = event.target;
-      const newValues = {
-        ...values,
-        [name]: value
-      };
-      setValues(newValues);
-      validateField(name as keyof T, newValues);
+      setValues(prevValues => {
+        const newValues = {
+          ...prevValues,
+          [name]: value
+        };
+        validateField(name as keyof T, newValues);
+        return newValues;
+      });
     },
     [validateField]
   );
