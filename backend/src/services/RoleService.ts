@@ -216,7 +216,7 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
           'r.*',
           db.raw('COUNT(DISTINCT u.id) as user_count')
         ])
-        .leftJoin('User as u', 'u.role_id', 'r.id')
+        .leftJoin('users as u', 'u.role_id', 'r.id')
         .groupBy('r.id');
 
       // Aplicar filtros
@@ -340,7 +340,7 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
         };
       }
 
-      const [{ count }] = await db('User').where({ role_id: id }).count('* as count');
+      const [{ count }] = await db('users').where({ role_id: id }).count('* as count');
       const permissions = await this.getPermissionsForRole(id);
 
       const roleDto: RoleResponseDto = {
