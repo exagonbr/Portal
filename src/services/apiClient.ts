@@ -1,7 +1,7 @@
 import { ApiResponse, ApiError } from '../types/api';
 
 // Configuração base da API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = 'https://portal.sabercon.com.br/api';
 
 // Classe para erros da API
 export class ApiClientError extends Error {
