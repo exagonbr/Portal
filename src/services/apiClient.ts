@@ -171,7 +171,7 @@ export class ApiClient {
         method,
         headers,
         credentials: 'same-origin',
-        mode: 'cors'
+        mode: 'no-cors'
       };
 
       // Requisições GET/HEAD não podem ter corpo

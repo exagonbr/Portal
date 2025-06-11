@@ -42,7 +42,8 @@ app.use(helmet({
 
 // CORS
 app.use(cors({
-  origin: '*',
+  origin: ['*', 'https://sabercon.com.br', 'https://www.sabercon.com.br', 'https://portal.sabercon.com.br',
+  'https://www.portal.sabercon.com.br', 'http://localhost:3000', 'http://localhost:3001'],
   credentials: process.env.CORS_CREDENTIALS === 'true',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [

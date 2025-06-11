@@ -453,8 +453,9 @@ export async function middleware(request: NextRequest) {
   
   // Aplicar CORS headers
   const origin = request.headers.get('origin');
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
-  
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*', 'https://sabercon.com.br', 'https://www.sabercon.com.br', 'https://portal.sabercon.com.br',
+  'https://www.portal.sabercon.com.br', 'http://localhost:3000', 'http://localhost:3001'];
+
   if (origin && allowedOrigins.includes(origin)) {
     response.headers.set('Access-Control-Allow-Origin', origin);
   }
