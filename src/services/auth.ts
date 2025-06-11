@@ -19,7 +19,9 @@ export interface RegisterResponse {
 
 // Configuration constants
 const AUTH_CONFIG = {
-  API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
+  // Use primeiro a variável de ambiente, depois fallback para o proxy local
+  API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
+  BACKEND_URL: 'https://portal.sabercon.com.br/api',
   COOKIES: {
     AUTH_TOKEN: 'auth_token',
     SESSION_ID: 'session_id',
@@ -237,44 +239,115 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 // Authentication functions
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include',
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Erro ao fazer login');
-    }
-
-    // Extrair apenas os campos essenciais do usuário
-    const userEssentials = data.user ? extractUserEssentials(data.user) : undefined;
+    console.log(`Tentando login no endpoint: ${AUTH_CONFIG.API_URL}/auth/login`);
     
-    // Armazenar dados do usuário no localStorage para acesso rápido
-    if (userEssentials) {
-      StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.USER, JSON.stringify(userEssentials));
-      if (data.token) {
-        StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.token);
-      }
-      if (data.expiresAt) {
-        StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_EXPIRES_AT, String(data.expiresAt));
-      }
-    }
+    // Adicione um timeout para evitar espera infinita
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
+    
+    // Primeiro, tente usar o proxy local
+    try {
+      const response = await fetch(`/api/auth/login`, {
+        signal: controller.signal,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include',
+      });
 
-    return {
-      success: true,
-      user: userEssentials,
-      token: data.token,
-      expiresAt: data.expiresAt
-    };
+      const data = await response.json();
+
+      // Limpar o timeout
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao fazer login');
+      }
+
+      // Extrair apenas os campos essenciais do usuário
+      const userEssentials = data.user ? extractUserEssentials(data.user) : undefined;
+      
+      // Armazenar dados do usuário no localStorage para acesso rápido
+      if (userEssentials) {
+        StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.USER, JSON.stringify(userEssentials));
+        if (data.token) {
+          StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN, data.token);
+        }
+        if (data.expiresAt) {
+          StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_EXPIRES_AT, String(data.expiresAt));
+        }
+      }
+
+      return {
+        success: true,
+        user: userEssentials,
+        token: data.token,
+        expiresAt: data.expiresAt
+      };
+      
+    } catch (proxyError) {
+      console.warn('Falha ao usar proxy local, tentando conexão direta:', proxyError);
+      
+      // Limpar o timeout antes de tentar a próxima chamada
+      clearTimeout(timeoutId);
+      
+      // Criar um novo timeout para a chamada direta
+      const directController = new AbortController();
+      const directTimeoutId = setTimeout(() => directController.abort(), 10000); // 10 segundos
+      
+      // Se falhar, tente conexão direta ao backend
+      const directResponse = await fetch(`${AUTH_CONFIG.BACKEND_URL}/auth/login`, {
+        signal: directController.signal,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': window.location.origin,
+        },
+        body: JSON.stringify({ email, password }),
+        mode: 'cors',
+        credentials: 'include',
+      });
+      
+      const directData = await directResponse.json();
+      
+      if (!directResponse.ok) {
+        throw new Error(directData.message || 'Erro ao fazer login');
+      }
+      
+      // Extrair apenas os campos essenciais do usuário
+      const userEssentials = directData.user ? extractUserEssentials(directData.user) : undefined;
+      
+      // Armazenar dados do usuário no localStorage para acesso rápido
+      if (userEssentials) {
+        StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.USER, JSON.stringify(userEssentials));
+        if (directData.token) {
+          StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN, directData.token);
+        }
+        if (directData.expiresAt) {
+          StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.AUTH_EXPIRES_AT, String(directData.expiresAt));
+        }
+      }
+      
+      // Limpar o timeout
+      clearTimeout(directTimeoutId);
+      
+      return {
+        success: true,
+        user: userEssentials,
+        token: directData.token,
+        expiresAt: directData.expiresAt
+      };
+    }
   } catch (error) {
     console.error('Erro no login:', error);
-    throw error;
+    // Fornecer mensagem de erro mais detalhada
+    if (error instanceof Error) {
+      throw new Error(`Erro ao fazer login: ${error.message}`);
+    } else {
+      throw new Error('Erro desconhecido ao fazer login');
+    }
   }
 };
 
