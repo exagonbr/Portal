@@ -679,6 +679,47 @@ const FilterLoading = () => (
   </div>
 );
 
+// Componente para estado vazio
+const EmptyState = ({
+  onClearFilters,
+  onCreateUser,
+  hasFilters
+}: {
+  onClearFilters: () => void;
+  onCreateUser: () => void;
+  hasFilters: boolean;
+}) => {
+  return (
+    <div className="text-center py-16 px-6 bg-white rounded-lg shadow-md border border-slate-200 mt-4">
+      <Users className="mx-auto h-12 w-12 text-slate-400" />
+      <h3 className="mt-4 text-xl font-bold text-slate-800">Nenhum usuário encontrado</h3>
+      <p className="mt-2 text-base text-slate-600 max-w-md mx-auto">
+        {hasFilters
+          ? "Tente ajustar seus filtros de busca ou limpar todos os filtros para ver mais resultados."
+          : "Parece que não há usuários cadastrados ainda. Que tal adicionar o primeiro?"}
+      </p>
+      <div className="mt-6 flex justify-center items-center gap-3">
+        {hasFilters && (
+          <Button
+            variant="outline"
+            onClick={onClearFilters}
+            className="flex items-center gap-2"
+          >
+            <X className="h-4 w-4" />
+            Limpar Filtros
+          </Button>
+        )}
+        <Button
+          onClick={onCreateUser}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Adicionar Novo Usuário
+        </Button>
+      </div>
+    </div>
+  );
+};
 export default function ManageUsers() {
   const router = useRouter()
   const { showSuccess, showError } = useToast()
@@ -707,6 +748,7 @@ export default function ManageUsers() {
   const [showReportsModal, setShowReportsModal] = useState(false)
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [permissions, setPermissions] = useState({
     users: { create: true, read: true, update: false, delete: false },
     courses: { create: false, read: true, update: false, delete: false },
@@ -718,6 +760,7 @@ export default function ManageUsers() {
     { id: 2, title: 'Novo curso disponível', message: 'Matemática Avançada está disponível', date: '2024-01-14', read: false },
     { id: 3, title: 'Certificado gerado', message: 'Seu certificado de Matemática Básica está pronto', date: '2024-01-13', read: true }
   ]);
+  const [auxiliaryDataLoaded, setAuxiliaryDataLoaded] = useState(false);
 
   const handlePermissionChange = (module: string, action: string, value: boolean) => {
     setPermissions(prev => ({
@@ -760,11 +803,49 @@ export default function ManageUsers() {
       const [rolesResponse, institutionsResponse] = await Promise.all([
         roleService.getActiveRoles(),
         institutionService.getActiveInstitutions()
-      ])
-      setRoles(rolesResponse || [])
-      setInstitutions(institutionsResponse || [])
+      ]);
+
+      // Popula roles com dados da API ou mock
+      if (rolesResponse && rolesResponse.length > 0) {
+        setRoles(rolesResponse);
+      } else {
+        console.warn('API de roles não retornou dados. Usando mock.');
+        const now = new Date().toISOString();
+        setRoles([
+          { id: 'd9a8b7c6-e5f4-3210-a1b2-c3d4e5f6a7b8', name: 'Administrador', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
+          { id: 'c8b7a6d5-f4e3-2109-b2c3-d4e5f6a7b8c9', name: 'Professor', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
+          { id: 'b7a6d5c4-e3f2-1098-c3d4-e5f6a7b8c9d0', name: 'Aluno', description: 'Acessa os cursos e materiais', created_at: now, updated_at: now },
+          { id: 'a6d5c4b3-f2e1-0987-d4e5-f6a7b8c9d0e1', name: 'Coordenador', description: 'Coordena professores e turmas', created_at: now, updated_at: now },
+        ]);
+      }
+
+      // Popula instituições com dados da API ou mock
+      if (institutionsResponse && institutionsResponse.length > 0) {
+        setInstitutions(institutionsResponse);
+      } else {
+        console.warn('API de instituições não retornou dados. Usando mock.');
+        const now = new Date().toISOString();
+        setInstitutions([
+          { id: 'e1f2a3b4-c5d6-7890-e1f2-a3b4c5d6e7f8', name: 'Escola SaberCon Digital', code: 'SABERCON', created_at: now, updated_at: now },
+          { id: 'f2a3b4c5-d6e7-8901-f2a3-b4c5d6e7f8a9', name: 'Colégio Exagon Inovação', code: 'EXAGON', created_at: now, updated_at: now },
+          { id: 'a3b4c5d6-e7f8-9012-a3b4-c5d6e7f8a9b0', name: 'Centro Educacional DevStrade', code: 'DEVSTRADE', created_at: now, updated_at: now },
+        ]);
+      }
+
     } catch (error) {
-      console.error('Erro ao carregar dados auxiliares:', error)
+      console.error('Erro ao carregar dados auxiliares:', error);
+      showError('Falha ao carregar dados de apoio. Usando valores padrão.');
+      const now = new Date().toISOString();
+      // Em caso de erro na API, usa os mocks
+      setRoles([
+        { id: 'd9a8b7c6-e5f4-3210-a1b2-c3d4e5f6a7b8', name: 'Administrador (Mock)', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
+        { id: 'c8b7a6d5-f4e3-2109-b2c3-d4e5f6a7b8c9', name: 'Professor (Mock)', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
+      ]);
+      setInstitutions([
+        { id: 'e1f2a3b4-c5d6-7890-e1f2-a3b4c5d6e7f8', name: 'Escola SaberCon (Mock)', code: 'SABERCON_MOCK', created_at: now, updated_at: now },
+      ]);
+    } finally {
+      setAuxiliaryDataLoaded(true);
     }
   }
 
@@ -781,15 +862,38 @@ export default function ManageUsers() {
         ...filters,
       };
 
+      console.log('🔍 Iniciando busca de usuários com parâmetros:', params);
+
       const response = searchTerm
         ? await userService.searchUsers(searchTerm, params)
         : await userService.getUsers(params);
 
-      console.log('Resposta da API:', response);
+      console.log('✅ Resposta da API recebida:', {
+        totalItems: response.items?.length || 0,
+        pagination: response.pagination,
+        primeiroUsuario: response.items?.[0] || 'Nenhum usuário'
+      });
+
+      // Verifica se a resposta tem a estrutura esperada
+      if (!response || !response.items) {
+        console.error('❌ Resposta da API inválida:', response);
+        showError('A resposta da API não contém dados válidos');
+        setUsers([]);
+        setTotalPages(1);
+        setTotalItems(0);
+        return;
+      }
 
       const enrichedUsers = response.items.map(user => {
         const role = roles.find(r => r.id === user.role_id);
         const institution = institutions.find(i => i.id === user.institution_id);
+        
+        // Log detalhado para debug
+        const extendedUser = user as ExtendedUserResponseDto;
+        if (!extendedUser.role_name && !role) {
+          console.warn(`⚠️ Usuário ${user.name} (${user.id}) sem role definida`);
+        }
+        
         return {
           ...user,
           role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
@@ -797,15 +901,43 @@ export default function ManageUsers() {
         } as ExtendedUserResponseDto;
       });
 
-      console.log('Dados enriquecidos:', enrichedUsers);
+      console.log('📊 Dados processados:', {
+        totalUsuarios: enrichedUsers.length,
+        usuariosComRole: enrichedUsers.filter(u => u.role_name !== 'Não definida').length,
+        usuariosComInstituicao: enrichedUsers.filter(u => u.institution_name !== 'Não vinculada').length
+      });
 
       setUsers(enrichedUsers);
       setTotalPages(response.pagination?.totalPages || 1);
       setTotalItems(response.pagination?.total || 0);
 
+      // Notificação de sucesso apenas se houver usuários
+      if (enrichedUsers.length > 0) {
+        console.log(`✅ ${enrichedUsers.length} usuários carregados com sucesso`);
+      } else {
+        console.warn('⚠️ Nenhum usuário encontrado com os filtros aplicados');
+      }
+
     } catch (error: any) {
-      console.error('Erro ao carregar usuários:', error);
-      showError(error.message || 'Erro ao carregar usuários');
+      console.error('❌ Erro ao carregar usuários:', error);
+      console.error('Stack trace:', error.stack);
+      
+      // Mensagem de erro mais específica
+      let errorMessage = 'Erro ao carregar usuários';
+      if (error.message) {
+        if (error.message.includes('Network')) {
+          errorMessage = 'Erro de conexão com o servidor. Verifique se o backend está rodando.';
+        } else if (error.message.includes('401') || error.message.includes('403')) {
+          errorMessage = 'Erro de autenticação. Faça login novamente.';
+        } else if (error.message.includes('500')) {
+          errorMessage = 'Erro interno do servidor. Contate o suporte.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      showError(errorMessage);
+      
       // Em caso de erro, limpa a lista para evitar exibir dados incorretos
       setUsers([]);
       setTotalPages(1);
@@ -816,15 +948,38 @@ export default function ManageUsers() {
     }
   }, [currentPage, searchTerm, filters, sortBy, sortOrder, itemsPerPage, roles, institutions, showError]);
 
+  // Verificar conexão com o backend
+  const checkBackendConnection = async () => {
+    try {
+      setConnectionStatus('checking');
+      console.log('🔌 Verificando conexão com o backend...');
+      // Faz uma chamada simples para verificar se o backend está respondendo
+      const testResponse = await userService.getUsers({ limit: 1 });
+      console.log('✅ Backend conectado com sucesso');
+      setConnectionStatus('connected');
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao conectar com o backend:', error);
+      setConnectionStatus('error');
+      showError('Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
+      return false;
+    }
+  };
+
   useEffect(() => {
-    loadAuxiliaryData();
+    // Primeiro verifica a conexão, depois carrega os dados auxiliares
+    checkBackendConnection().then(isConnected => {
+      if (isConnected) {
+        loadAuxiliaryData();
+      }
+    });
   }, []);
 
   useEffect(() => {
-    if (roles.length > 0 || institutions.length > 0) {
+    if (auxiliaryDataLoaded) {
       loadUsers();
     }
-  }, [loadUsers, roles, institutions]);
+  }, [loadUsers, auxiliaryDataLoaded]);
 
   // Função de busca
   const handleSearch = () => {
@@ -967,6 +1122,7 @@ export default function ManageUsers() {
 
   // Função para atualizar um filtro específico
   const updateFilter = (key: string, value: any) => {
+    setCurrentPage(1); // Reset page to 1 when any filter changes
     setFilters(prev => {
       // Se o valor for vazio, remova a propriedade do objeto
       if (value === '' || value === undefined) {
@@ -982,15 +1138,6 @@ export default function ManageUsers() {
       }
     })
   }
-
-  // Vamos adicionar um efeito para carregar os dados quando os filtros mudarem
-  useEffect(() => {
-    // Aplicar filtros imediatamente e resetar para a primeira página
-    if (Object.keys(filters).length > 0) {
-      setCurrentPage(1)
-      loadUsers()
-    }
-  }, [filters.role_id, filters.institution_id, filters.is_active]) // Apenas os filtros principais que devem atualizar imediatamente
 
   // Aplicar filtros
   const handleApplyFilters = () => {
@@ -1335,6 +1482,26 @@ export default function ManageUsers() {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-slate-800">Gerenciamento de Usuários</h1>
           <div className="flex items-center gap-2">
+            {/* Indicador de status de conexão */}
+            {connectionStatus === 'checking' && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                <div className="animate-spin w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full"></div>
+                <span>Conectando...</span>
+              </div>
+            )}
+            {connectionStatus === 'error' && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                <AlertCircle className="h-4 w-4" />
+                <span>Offline</span>
+              </div>
+            )}
+            {connectionStatus === 'connected' && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                <CheckCircle className="h-4 w-4" />
+                <span>Online</span>
+              </div>
+            )}
+            
             <span className="text-sm text-slate-500">
               Total: {totalItems} usuários
             </span>
@@ -1342,6 +1509,7 @@ export default function ManageUsers() {
               onClick={handleRefresh}
               className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${refreshing ? 'animate-spin' : ''}`}
               title="Atualizar lista"
+              disabled={connectionStatus === 'error'}
             >
               <RefreshCw className="h-4 w-4" />
             </button>
@@ -1576,29 +1744,42 @@ export default function ManageUsers() {
           </div>
         )}
         
-        <GenericCRUD
-          title=""
-          entityName="Usuário"
-          entityNamePlural="Usuários"
-          columns={columns}
-          data={users}
-          loading={loading}
-          totalItems={totalItems}
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          onPageChange={handlePageChange}
-          onCreate={handleCreateUser}
-          onEdit={handleEditUser}
-          onDelete={handleDeleteUser}
-          onView={handleViewUser}
-          customActions={customActions}
-          createPermission="users.create"
-          editPermission="users.edit"
-          deletePermission="users.delete"
-          viewPermission="users.view"
-          showSearch={false}
-          emptyMessage="Nenhum usuário encontrado. Verifique os filtros aplicados ou adicione novos usuários."
-        />
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="animate-spin w-8 h-8 border-4 border-primary-DEFAULT border-t-transparent rounded-full mx-auto"></div>
+            <p className="mt-4 text-slate-600">Carregando usuários...</p>
+          </div>
+        ) : users.length === 0 ? (
+          <EmptyState
+            onClearFilters={handleClearFilters}
+            onCreateUser={handleCreateUser}
+            hasFilters={hasActiveFilters()}
+          />
+        ) : (
+          <GenericCRUD
+            title=""
+            entityName="Usuário"
+            entityNamePlural="Usuários"
+            columns={columns}
+            data={users}
+            loading={loading}
+            totalItems={totalItems}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onCreate={handleCreateUser}
+            onEdit={handleEditUser}
+            onDelete={handleDeleteUser}
+            onView={handleViewUser}
+            customActions={customActions}
+            createPermission="users.create"
+            editPermission="users.edit"
+            deletePermission="users.delete"
+            viewPermission="users.view"
+            showSearch={false}
+            emptyMessage=""
+          />
+        )}
       
         
         <Pagination

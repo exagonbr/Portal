@@ -66,13 +66,8 @@ export default function AdminSettingsPage() {
   // Sincronizar configurações carregadas com estado local
   useEffect(() => {
     if (settings) {
-      const flatSettings: any = {}
-      Object.entries(settings).forEach(([category, categorySettings]) => {
-        Object.entries(categorySettings).forEach(([key, setting]: [string, any]) => {
-          flatSettings[key] = setting.value
-        })
-      })
-      setLocalSettings(flatSettings)
+      // Settings já é um objeto plano, então apenas copiamos
+      setLocalSettings({ ...settings })
     }
   }, [settings])
 

@@ -54,12 +54,47 @@ export class UserService {
         throw new Error(response.message || 'Falha ao buscar usuários');
       }
 
+      // Log detalhado da resposta para debug
+      console.log('Resposta da API:', JSON.stringify(response.data, null, 2));
+
+      // Verifica se items existe e inicializa como array vazio se não existir
+      if (!response.data.items) {
+        console.warn('A resposta da API não contém a propriedade "items". Inicializando como array vazio.');
+        response.data.items = [];
+        
+        // Adiciona paginação se não existir
+        if (!response.data.pagination) {
+          response.data.pagination = {
+            page: filterParams.page,
+            limit: filterParams.limit,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: filterParams.page > 1
+          };
+        }
+      }
+
       console.log(`Recebidos ${response.data.items.length} usuários de um total de ${response.data.pagination?.total}`);
       
       return response.data;
       // }, CacheTTL.MEDIUM);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
+      
+      // Se o erro for específico sobre a estrutura da resposta, tenta usar dados simulados
+      if (error instanceof Error &&
+          (error.message.includes('lista de usuários esperada') ||
+           error.message.includes('não contém') ||
+           error.message.includes('undefined'))) {
+        console.warn('Erro na estrutura da resposta. Retornando dados simulados para desenvolvimento.');
+        return this.mockUserList({
+          page: filters?.page || 1,
+          limit: filters?.limit || 10
+          // Não passamos query pois não existe em UserFilterDto
+        });
+      }
+      
       throw new Error(handleApiError(error));
     }
   }
