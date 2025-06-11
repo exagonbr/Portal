@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserEssentials, Permission } from '@/types/auth';
-import { authService } from '@/services/authService';
+import * as authService from '@/services/auth';
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
