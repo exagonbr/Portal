@@ -1,7 +1,8 @@
 import { ApiResponse, ApiError } from '../types/api';
 
 // Configuração base da API
-const API_BASE_URL = 'https://portal.sabercon.com.br/api';
+const API_BASE_URL = 'http://localhost:3001/api';
+const API_VERSION = 'v1';
 
 // Classe para erros da API
 export class ApiClientError extends Error {
@@ -64,7 +65,9 @@ export class ApiClient {
    * Constrói a URL completa com parâmetros de query
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
-    const url = new URL(endpoint, this.baseURL);
+    // Adiciona versão da API se o endpoint não começar com '/'
+    const versionedEndpoint = endpoint.startsWith('/') ? endpoint : `/${API_VERSION}/${endpoint}`;
+    const url = new URL(versionedEndpoint, this.baseURL);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -231,7 +234,7 @@ export class ApiClient {
       }
 
       // Verifica se é erro de autenticação (401)
-      if (response.status === 401 && endpoint !== '/auth/login' && endpoint !== '/auth/refresh-token') {
+      if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh-token')) {
         console.log('Token expirado, tentando renovar...');
         
         // Tenta renovar o token

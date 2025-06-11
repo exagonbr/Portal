@@ -170,7 +170,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Fazer requisição para o backend
-    const response = await fetch(`${BACKEND_URL}/auth/login`, {
+    // Corrigindo o endpoint para v1/auth/login como mostrado no log
+    const response = await fetch(`${BACKEND_URL}/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
