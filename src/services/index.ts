@@ -68,15 +68,8 @@ export {
 } from './roleService';
 
 // Serviços de instituições
-export { 
-  institutionService,
-  getInstitution,
-  getInstitutionById,
-  createInstitution,
-  updateInstitution,
-  deleteInstitution,
-  getActiveInstitutions,
-  searchInstitutionsByName
+export {
+  institutionService
 } from './institutionService';
 
 // Serviços de cursos
@@ -110,8 +103,7 @@ export type {
 
 export type {
   CourseFilters,
-  CourseListOptions,
-  CourseResponseDto
+  CourseListOptions
 } from './courseService';
 
 // Tipos de cache e filas
@@ -288,7 +280,7 @@ export const warmupCache = async () => {
       },
       {
         key: CacheKeys.ACTIVE_INSTITUTIONS,
-        fetcher: () => services.institution.getActiveInstitutions(),
+        fetcher: () => institutionService.getActiveInstitutions(),
         ttl: CacheTTL.LONG
       },
       {
@@ -357,7 +349,7 @@ export const devUtils = {
 // Configuração padrão para desenvolvimento
 export const setupDevelopmentConfig = () => {
   configureServices({
-    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
     timeout: 30000,
     retryAttempts: 3,
     retryDelay: 1000,
@@ -386,7 +378,7 @@ export const setupDevelopmentConfig = () => {
 // Configuração padrão para produção
 export const setupProductionConfig = () => {
   configureServices({
-    baseURL: process.env.REACT_APP_API_URL || '/api',
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
     timeout: 15000,
     retryAttempts: 2,
     retryDelay: 2000,

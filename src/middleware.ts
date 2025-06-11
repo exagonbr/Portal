@@ -125,7 +125,7 @@ class SessionValidator {
 
       console.log('Middleware: Validando token...');
       
-      const response = await fetch(`${CONFIG.BASE_URL}/api/auth/validate`, {
+      const response = await fetch(`https://portal.sabercon.com.br/api/auth/validate`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

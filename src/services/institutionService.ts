@@ -94,7 +94,7 @@ export const institutionService = {
       if (params.filters.active !== undefined) queryParams.append('active', params.filters.active.toString());
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/institutions?${queryParams.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
       headers: getAuthHeaders(),
     });
 
@@ -109,7 +109,7 @@ export const institutionService = {
   },
 
   async getInstitutionById(id: string): Promise<Institution> {
-    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/institutions/${id}`, {
       headers: getAuthHeaders(),
     });
 
@@ -127,7 +127,7 @@ export const institutionService = {
   },
 
   async createInstitution(data: Partial<Institution>): Promise<Institution> {
-    const response = await fetch(`${API_BASE_URL}/api/institutions`, {
+    const response = await fetch(`${API_BASE_URL}/institutions`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -144,7 +144,7 @@ export const institutionService = {
   },
 
   async updateInstitution(id: string, data: Partial<Institution>): Promise<Institution> {
-    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/institutions/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -164,7 +164,7 @@ export const institutionService = {
   },
 
   async deleteInstitution(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/institutions/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -187,7 +187,7 @@ export const institutionService = {
       limit: '100' // Set a high limit to get all active institutions
     });
     
-    const response = await fetch(`${API_BASE_URL}/api/institutions?${queryParams.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
       headers: getAuthHeaders(),
     });
 
@@ -209,7 +209,7 @@ export const institutionService = {
       active: 'true'
     });
 
-    const response = await fetch(`${API_BASE_URL}/api/institutions/search?${queryParams.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/institutions/search?${queryParams.toString()}`, {
       headers: getAuthHeaders(),
     });
 
@@ -224,7 +224,7 @@ export const institutionService = {
   },
 
   async canDeleteInstitution(id: string): Promise<{ canDelete: boolean; reason?: string }> {
-    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}/can-delete`, {
+    const response = await fetch(`${API_BASE_URL}/institutions/${id}/can-delete`, {
       headers: getAuthHeaders(),
     });
 
@@ -242,7 +242,7 @@ export const institutionService = {
   },
 
   async toggleInstitutionStatus(id: string, isActive: boolean): Promise<Institution> {
-    const response = await fetch(`${API_BASE_URL}/api/institutions/${id}/status`, {
+    const response = await fetch(`${API_BASE_URL}/institutions/${id}/status`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
       body: JSON.stringify({ active: isActive }),
@@ -270,7 +270,7 @@ export const institutionService = {
       if (filters.active !== undefined) queryParams.append('active', filters.active.toString());
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/institutions/export?${queryParams.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/institutions/export?${queryParams.toString()}`, {
       headers: getAuthHeaders(),
     });
 
@@ -294,7 +294,7 @@ export const institutionService = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/institutions/import`, {
+    const response = await fetch(`${API_BASE_URL}/institutions/import`, {
       method: 'POST',
       headers,
       body: formData,

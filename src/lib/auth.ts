@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }: { token: JWT; user: any }) {
       if (user) {
-        token.role = 'student'; // Default role for Google login
+        token.role = 'STUDENT'; // Default role for Google login
         // Adicionar permissões padrão para estudantes
         token.permissions = [
           'students.communicate',
