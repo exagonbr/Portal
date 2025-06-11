@@ -130,14 +130,32 @@ app.use(function (req, res, next) {
 
 // Error handler
 app.use(errorLogger);
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  const status = err.status || err.statusCode || 500;
-  const message = err.message || 'Erro interno do servidor';
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  let status = 500;
+  let message = 'Erro interno do servidor';
+  let stack: string | undefined = undefined;
+  
+  if (err && typeof err === 'object') {
+    // Verifica se o objeto tem as propriedades esperadas
+    if ('status' in err && typeof err.status === 'number') {
+      status = err.status;
+    } else if ('statusCode' in err && typeof err.statusCode === 'number') {
+      status = err.statusCode;
+    }
+    
+    if ('message' in err && typeof err.message === 'string') {
+      message = err.message;
+    }
+    
+    if (process.env.NODE_ENV === 'development' && 'stack' in err && typeof err.stack === 'string') {
+      stack = err.stack;
+    }
+  }
   
   res.status(status).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(stack && { stack })
   });
 });
 
@@ -164,7 +182,11 @@ async function startServer() {
         await CacheWarmupService.warmupCache();
         logger.info('✅ Warmup do cache concluído com sucesso');
       } catch (warmupError) {
-        logger.error(`❌ Erro durante o warmup do cache: ${warmupError.message}`, null, warmupError);
+        const errorMessage = warmupError instanceof Error
+          ? warmupError.message
+          : 'Erro desconhecido';
+        
+        logger.error(`❌ Erro durante o warmup do cache: ${errorMessage}`, warmupError);
       }
     }
     
@@ -177,7 +199,11 @@ async function startServer() {
     });
     
   } catch (error) {
-    logger.error(`❌ Erro ao iniciar servidor: ${error.message}`, null, error);
+    const errorMessage = error instanceof Error
+      ? error.message
+      : 'Erro desconhecido';
+    
+    logger.error(`❌ Erro ao iniciar servidor: ${errorMessage}`, error);
     process.exit(1);
   }
 }

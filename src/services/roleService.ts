@@ -11,15 +11,20 @@ import {
   RoleResponseDto,
   RoleCreateDto,
   RoleUpdateDto,
+  RoleFilterDto,
   PaginatedResponseDto,
   ApiResponse
 } from '../types/api';
+import { Logger } from '../utils/Logger';
+import { ServiceResult } from '../types/common';
 
 export interface RoleFilters {
   name?: string;
   description?: string;
   active?: boolean;
+  status?: 'active' | 'inactive';
   search?: string;
+  type?: string;
 }
 
 export interface RoleListOptions {
@@ -32,9 +37,18 @@ export interface RoleListOptions {
 
 export class RoleService {
   private readonly baseEndpoint = '/roles';
+  private readonly logger: Logger;
 
+  constructor() {
+    this.logger = new Logger('RoleService');
+  }
+
+  
   /**
    * Busca todas as roles com paginação e filtros
+   * @param options Opções de paginação, ordenação e filtros
+   * @returns Promise<PaginatedResponseDto<RoleResponseDto>> Lista paginada de roles
+   * @throws Error se houver falha ao buscar roles
    */
   async getRoles(options: RoleListOptions = {}): Promise<PaginatedResponseDto<RoleResponseDto>> {
     try {
@@ -45,6 +59,16 @@ export class RoleService {
         sortOrder = 'asc',
         filters = {}
       } = options;
+
+      // Validação dos parâmetros
+      if (page < 1) throw new Error('Página deve ser maior que 0');
+      if (limit < 1 || limit > 100) throw new Error('Limite deve estar entre 1 e 100');
+      if (!['name', 'created_at', 'updated_at', 'user_count'].includes(sortBy)) {
+        throw new Error('Campo de ordenação inválido');
+      }
+      if (!['asc', 'desc'].includes(sortOrder)) {
+        throw new Error('Ordem de classificação inválida');
+      }
 
       // Gera chave de cache baseada nos parâmetros
       const cacheKey = CacheKeys.ROLE_LIST(JSON.stringify({ page, limit, sortBy, sortOrder, filters }));
@@ -65,20 +89,64 @@ export class RoleService {
           }
         });
 
-        const response = await apiClient.get<PaginatedResponseDto<RoleResponseDto>>(
+        const response = await apiClient.get<ApiResponse<PaginatedResponseDto<RoleResponseDto>>>(
           this.baseEndpoint,
           searchParams
         );
 
-        if (!response.success) {
+        if (!response.success || !response.data) {
           throw new Error(response.message || 'Falha ao buscar roles');
         }
 
-        return response.data!;
+        // Garante que a resposta tem a estrutura correta
+        const paginatedResponse: PaginatedResponseDto<RoleResponseDto> = {
+          items: response.data.data?.items || [],
+          pagination: {
+            page: response.data.data?.page || page,
+            limit: response.data.data?.limit || limit,
+            total: response.data.data?.total || 0,
+            totalPages: response.data.data?.totalPages || Math.ceil((response.data.data?.total || 0) / limit),
+            hasNext: response.data.data?.hasNext || false,
+            hasPrev: response.data.data?.hasPrev || false
+          },
+          total: response.data.data?.total || 0,
+          page: response.data.data?.page || page,
+          limit: response.data.data?.limit || limit,
+          totalPages: response.data.data?.totalPages || Math.ceil((response.data.data?.total || 0) / limit),
+          hasNext: response.data.data?.hasNext || false,
+          hasPrev: response.data.data?.hasPrev || false
+        };
+
+        // Validação adicional da resposta
+        if (!Array.isArray(paginatedResponse.items)) {
+          this.logger.warn('Resposta inválida: items não é um array');
+          paginatedResponse.items = [];
+        }
+
+        return paginatedResponse;
       }, CacheTTL.MEDIUM);
     } catch (error) {
-      console.error('Erro ao buscar roles:', error);
-      throw new Error(handleApiError(error));
+      this.logger.error('Erro ao buscar roles:', error);
+      
+      if (error instanceof ApiClientError) {
+        if (error.status === 401) {
+          throw new Error('Não autorizado a buscar roles');
+        }
+        if (error.status === 403) {
+          throw new Error('Sem permissão para buscar roles');
+        }
+        if (error.status === 400) {
+          throw new Error(error.errors?.join(', ') || 'Parâmetros inválidos');
+        }
+      }
+      
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage === 'Failed to retrieve roles') {
+        throw new Error('Falha ao buscar roles');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -87,25 +155,51 @@ export class RoleService {
    */
   async getRoleById(id: string): Promise<RoleResponseDto> {
     try {
+      if (!id?.trim()) {
+        throw new Error('ID da role é obrigatório');
+      }
+
       const cacheKey = CacheKeys.ROLE_BY_ID(id);
 
       return await withCache(cacheKey, async () => {
-        const response = await apiClient.get<RoleResponseDto>(`${this.baseEndpoint}/${id}`);
+        const response = await apiClient.get<ApiResponse<RoleResponseDto>>(`${this.baseEndpoint}/${id}`);
 
         if (!response.success || !response.data) {
           throw new Error(response.message || 'Role não encontrada');
         }
 
-        return response.data;
+        // Garante que todos os campos obrigatórios estão presentes
+        const role: RoleResponseDto = {
+          id: response.data.data?.id || '',
+          name: response.data.data?.name || '',
+          description: response.data.data?.description,
+          active: response.data.data?.active ?? true,
+          users_count: response.data.data?.users_count || 0,
+          created_at: response.data.data?.created_at || new Date().toISOString(),
+          updated_at: response.data.data?.updated_at || new Date().toISOString()
+        };
+
+        return role;
       }, CacheTTL.MEDIUM);
     } catch (error) {
       console.error(`Erro ao buscar role ${id}:`, error);
       
-      if (error instanceof ApiClientError && error.status === 404) {
-        throw new Error('Role não encontrada');
+      if (error instanceof ApiClientError) {
+        if (error.status === 404) {
+          throw new Error('Role não encontrada');
+        }
+        if (error.status === 400) {
+          throw new Error('ID da role inválido');
+        }
       }
       
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage === 'Failed to retrieve role') {
+        throw new Error('Falha ao buscar role');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -141,7 +235,13 @@ export class RoleService {
         }
       }
       
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage.includes('Failed to')) {
+        throw new Error('Falha ao criar role');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -175,7 +275,13 @@ export class RoleService {
         }
       }
       
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage.includes('Failed to')) {
+        throw new Error('Falha ao atualizar role');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -204,30 +310,63 @@ export class RoleService {
         }
       }
       
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage.includes('Failed to')) {
+        throw new Error('Falha ao deletar role');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
   /**
    * Busca roles ativas (para dropdowns e seletores)
+   * @returns Promise<RoleResponseDto[]> Lista de roles ativas ordenadas por nome
+   * @throws Error se houver falha ao buscar roles
    */
   async getActiveRoles(): Promise<RoleResponseDto[]> {
     try {
       const cacheKey = CacheKeys.ACTIVE_ROLES;
 
       return await withCache(cacheKey, async () => {
-        const response = await this.getRoles({
-          filters: { active: true },
-          limit: 100, // Busca muitas roles ativas
-          sortBy: 'name',
-          sortOrder: 'asc'
-        });
+        try {
+          const response = await this.getRoles({
+            filters: { 
+              active: true,
+              status: 'active'
+            },
+            limit: 100,
+            sortBy: 'name',
+            sortOrder: 'asc'
+          });
 
-        return response.items;
+          if (!response?.items || !Array.isArray(response.items)) {
+            this.logger.warn('Resposta inválida ao buscar roles ativas');
+            return [];
+          }
+
+          return response.items.filter(role => role.active !== false);
+        } catch (innerError) {
+          this.logger.error('Erro interno ao buscar roles ativas:', innerError);
+          // Garantindo que a mensagem de erro está em português
+          throw new Error('Falha ao recuperar roles');
+        }
       }, CacheTTL.LONG);
     } catch (error) {
-      console.error('Erro ao buscar roles ativas:', error);
-      throw new Error(handleApiError(error));
+      this.logger.error('Erro ao buscar roles ativas:', error);
+      
+      if (error instanceof ApiClientError) {
+        if (error.status === 401) {
+          throw new Error('Não autorizado a buscar roles');
+        }
+        if (error.status === 403) {
+          throw new Error('Sem permissão para buscar roles');
+        }
+      }
+      
+      // Garantindo que a mensagem de erro está em português
+      throw new Error('Falha ao recuperar roles');
     }
   }
 
@@ -276,7 +415,13 @@ export class RoleService {
         throw new Error('Role não encontrada');
       }
       
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage.includes('Failed to')) {
+        throw new Error('Falha ao alterar status da role');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -308,7 +453,13 @@ export class RoleService {
       }, CacheTTL.STATS);
     } catch (error) {
       console.error('Erro ao buscar estatísticas das roles:', error);
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage.includes('Failed to')) {
+        throw new Error('Falha ao buscar estatísticas das roles');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -363,7 +514,13 @@ export class RoleService {
         }
       }
       
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage.includes('Failed to')) {
+        throw new Error('Falha ao duplicar role');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -386,7 +543,13 @@ export class RoleService {
       return { jobId };
     } catch (error) {
       console.error('Erro ao exportar roles:', error);
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage.includes('Failed to')) {
+        throw new Error('Falha ao exportar roles');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
   }
 
@@ -412,7 +575,92 @@ export class RoleService {
       return { jobId };
     } catch (error) {
       console.error('Erro ao importar roles:', error);
-      throw new Error(handleApiError(error));
+      // Traduz a mensagem de erro para português
+      const errorMessage = handleApiError(error);
+      if (errorMessage.includes('Failed to')) {
+        throw new Error('Falha ao importar roles');
+      } else {
+        throw new Error(errorMessage);
+      }
+    }
+  }
+
+  /**
+   * Busca permissões de uma role
+   */
+  async getPermissionsForRole(roleId: string): Promise<any[]> {
+    try {
+      const cacheKey = CacheKeys.ROLE_PERMISSIONS(roleId);
+      
+      return await withCache(cacheKey, async () => {
+        const response = await apiClient.get<any[]>(`${this.baseEndpoint}/${roleId}/permissions`);
+        
+        if (!response.success || !response.data) {
+          this.logger.warn(`Permissões não encontradas para role ${roleId}`);
+          return [];
+        }
+        
+        return response.data;
+      }, CacheTTL.MEDIUM);
+    } catch (error) {
+      this.logger.error(`Erro ao buscar permissões para role ${roleId}`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Busca todos os roles com filtros e paginação
+   */
+  async findRolesWithFilters(filters: RoleFilterDto): Promise<ServiceResult<{ roles: RoleResponseDto[], pagination: any }>> {
+    try {
+      const { page = 1, limit = 10, type, status, search, sortBy = 'name', sortOrder = 'asc', active } = filters;
+
+      this.logger.debug('findRolesWithFilters - Filtros recebidos:', { filters });
+
+      // Construir parâmetros da query
+      const queryParams: Record<string, any> = {
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      };
+
+      if (type) queryParams.type = type;
+      if (status) queryParams.status = status;
+      if (active !== undefined) queryParams.active = active;
+      if (search) queryParams.search = search;
+
+      // Fazer chamada à API
+      const response = await apiClient.get<PaginatedResponseDto<RoleResponseDto>>(
+        `${this.baseEndpoint}/search`,
+        queryParams
+      );
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Falha ao buscar roles');
+      }
+
+      return {
+        success: true,
+        data: {
+          roles: response.data.items,
+          pagination: {
+            page: response.data.page,
+            limit: response.data.limit,
+            total: response.data.total,
+            totalPages: response.data.totalPages,
+            hasNext: response.data.hasNext,
+            hasPrev: response.data.hasPrev
+          }
+        }
+      };
+
+    } catch (error) {
+      this.logger.error('Erro ao buscar roles com filtros', error as Error);
+      return {
+        success: false,
+        error: 'Falha ao buscar roles'
+      };
     }
   }
 }

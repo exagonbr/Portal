@@ -40,10 +40,15 @@ export class RoleController extends BaseController {
     const result = await this.roleService.findRolesWithFilters(filters);
 
     if (!result.success) {
-      return this.error(res, result.error || 'Failed to retrieve roles');
+      // Se o erro for relacionado à validação, retornar 400
+      if (result.error?.includes('Campo de ordenação inválido') || 
+          result.error?.includes('Ordem de ordenação inválida')) {
+        return this.error(res, result.error, 400);
+      }
+      return this.error(res, result.error || 'Falha ao recuperar roles');
     }
 
-    return this.success(res, result.data!.roles, 'Roles retrieved successfully', 200, result.data!.pagination);
+    return this.success(res, result.data!.roles, 'Roles recuperadas com sucesso', 200, result.data!.pagination);
   });
 
   /**

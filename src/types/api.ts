@@ -270,6 +270,12 @@ export interface BaseFilterDto {
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface RoleFilterDto extends BaseFilterDto {
+  type?: string;
+  status?: string;
+  active?: boolean;
+}
+
 // Tipos de resposta de lista
 export interface ListResponse<T> {
   items: T[];

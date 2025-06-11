@@ -170,6 +170,24 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
     try {
       const { page = 1, limit = 10, type, status, search, sortBy = 'name', sortOrder = 'asc', active } = filters;
       
+      // Validar parâmetros de ordenação
+      const validSortFields = ['name', 'created_at', 'updated_at', 'user_count'];
+      const validSortOrders = ['asc', 'desc'];
+      
+      if (!validSortFields.includes(sortBy)) {
+        return {
+          success: false,
+          error: `Campo de ordenação inválido. Valores permitidos: ${validSortFields.join(', ')}`
+        };
+      }
+      
+      if (!validSortOrders.includes(sortOrder)) {
+        return {
+          success: false,
+          error: `Ordem de ordenação inválida. Valores permitidos: ${validSortOrders.join(', ')}`
+        };
+      }
+      
       // Gerar chave de cache baseada nos filtros
       const cacheKey = `portal_sabercon:roles:list:${JSON.stringify(filters)}`;
       
@@ -198,7 +216,7 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
           'r.*',
           db.raw('COUNT(DISTINCT u.id) as user_count')
         ])
-        .leftJoin('users as u', 'u.role_id', 'r.id')
+        .leftJoin('User as u', 'u.role_id', 'r.id')
         .groupBy('r.id');
 
       // Aplicar filtros
@@ -322,7 +340,7 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
         };
       }
 
-      const [{ count }] = await db('users').where({ role_id: id }).count('* as count');
+      const [{ count }] = await db('User').where({ role_id: id }).count('* as count');
       const permissions = await this.getPermissionsForRole(id);
 
       const roleDto: RoleResponseDto = {
@@ -369,7 +387,7 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
         db('roles').where({ type: 'custom' }).count('* as count'),
         db('roles').where({ status: 'active' }).count('* as count'),
         db('roles').where({ status: 'inactive' }).count('* as count'),
-        db('users').count('* as count')
+        db('User').count('* as count')
       ]);
 
       const stats: RoleStatsDto = {
@@ -492,12 +510,12 @@ export class RoleService extends BaseService<RoleEntity, CreateRoleDto, UpdateRo
       }
 
       // Buscar usuários sem role
-      const usersWithoutRole = await trx('users').whereNull('role_id');
+      const usersWithoutRole = await trx('User').whereNull('role_id');
 
       let updatedCount = 0;
 
       if (usersWithoutRole.length > 0) {
-        updatedCount = await trx('users')
+        updatedCount = await trx('User')
           .whereNull('role_id')
           .update({
             role_id: teacherRole.id,

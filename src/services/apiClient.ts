@@ -155,9 +155,12 @@ export class ApiClient {
       const url = this.buildURL(endpoint, params);
       const headers = this.prepareHeaders(customHeaders);
 
-      // Log para debug
-      console.log(`[API Request] ${method} ${url}`);
-      console.log('[API Headers]', headers);
+      // Log detalhado para debug
+      console.log(`[API Request] ${method} ${url}`, {
+        headers,
+        params,
+        body: body instanceof FormData ? '[FormData]' : body
+      });
 
       // Remove Content-Type para FormData
       if (body instanceof FormData) {
@@ -167,8 +170,8 @@ export class ApiClient {
       const requestOptions: RequestInit = {
         method,
         headers,
-        credentials: 'same-origin', // Alterado para permitir Access-Control-Allow-Origin: *
-        mode: 'cors' // Explicitamente indica que é uma requisição CORS
+        credentials: 'same-origin',
+        mode: 'cors'
       };
 
       // Requisições GET/HEAD não podem ter corpo
@@ -176,9 +179,12 @@ export class ApiClient {
         requestOptions.body = body instanceof FormData ? body : JSON.stringify(body);
       }
 
-      // Implementa timeout
+      // Implementa timeout com mensagem mais descritiva
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.error(`[API Timeout] Request to ${url} timed out after ${timeout}ms`);
+      }, timeout);
 
       const response = await fetch(url, {
         ...requestOptions,
@@ -187,35 +193,47 @@ export class ApiClient {
 
       clearTimeout(timeoutId);
 
-      // Log da resposta para debug
-      console.log(`[API Response] ${response.status} ${response.statusText}`);
+      // Log detalhado da resposta
+      console.log(`[API Response] ${response.status} ${response.statusText}`, {
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url
+      });
 
-      // Parse da resposta
+      // Parse da resposta com melhor tratamento de erros
       let responseData: ApiResponse<T>;
       const contentType = response.headers.get('content-type');
       
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await response.json();
-        console.log('[API Response Data]', responseData);
-      } else {
-        const responseText = await response.text();
-        // Para respostas não-JSON, cria uma resposta padrão
-        responseData = {
-          success: response.ok,
-          data: responseText as any,
-          message: response.ok ? 'Success' : (responseText || 'Request failed')
-        };
+      try {
+        if (contentType && contentType.includes('application/json')) {
+          responseData = await response.json();
+          console.log('[API Response Data]', responseData);
+        } else {
+          const responseText = await response.text();
+          console.log('[API Non-JSON Response]', responseText);
+          responseData = {
+            success: response.ok,
+            data: responseText as any,
+            message: response.ok ? 'Success' : (responseText || 'Request failed')
+          };
+        }
+      } catch (parseError) {
+        console.error('[API Parse Error]', parseError);
+        throw new ApiClientError(
+          'Failed to parse response',
+          response.status,
+          ['Invalid response format']
+        );
       }
 
       // Verifica se a resposta foi bem-sucedida
       if (!response.ok) {
-        // Se for erro de autenticação, limpa o token
+        // Se for erro de autenticação, limpa o token e loga
         if (response.status === 401) {
+          console.log('[API Auth Error] Token inválido ou expirado');
           this.clearAuth();
         }
         
-        // Caso especial para "Cache key not found" - tratamos como um indicador de que o recurso não existe
-        // em vez de um erro de servidor, facilitando a verificação de existência de recursos
+        // Caso especial para "not found"
         if ((responseData.message === "Cache key not found" || 
             (responseData.message && responseData.message.includes("not found"))) && 
             responseData.success === false) {
@@ -226,6 +244,13 @@ export class ApiClient {
           } as ApiResponse<T>;
         }
         
+        // Log detalhado do erro
+        console.error('[API Error Response]', {
+          status: response.status,
+          message: responseData.message,
+          errors: responseData.errors
+        });
+        
         throw new ApiClientError(
           responseData.message || `HTTP ${response.status}: ${response.statusText}`,
           response.status,
@@ -235,7 +260,12 @@ export class ApiClient {
 
       return responseData;
     } catch (error) {
-      console.error('[API Error]', error);
+      console.error('[API Error]', {
+        error,
+        endpoint,
+        method,
+        params
+      });
       
       if (error instanceof ApiClientError) {
         throw error;
@@ -243,7 +273,7 @@ export class ApiClient {
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          throw new ApiClientError('Request timeout', 408);
+          throw new ApiClientError(`Request timeout after ${timeout}ms`, 408);
         }
         throw new ApiClientError(error.message, 0);
       }

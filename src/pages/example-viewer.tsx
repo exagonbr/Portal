@@ -1,15 +1,22 @@
-'use client';
-
 import React, { useState } from 'react';
 import BookViewer from '../components/books/BookViewer';
-import { Button } from '../components/ui/button';
+import { Button } from '../components/ui/Button';
 
 export default function ExemploVisualizador() {
   const [showViewer, setShowViewer] = useState(false);
   
-  // URL do livro no formato solicitado
-  const exampleBookUrl = 'https://d1hxtyafwtqtm4.cloudfront.net/upload/1747056985879';
-  const bookTitle = 'A Invenção de Morel';
+  // Criando um objeto Book com as propriedades necessárias
+  const exampleBook = {
+    id: '1747056985879',
+    title: 'A Invenção de Morel',
+    author: 'Adolfo Bioy Casares',
+    publisher: 'Editora',
+    synopsis: 'Um clássico da literatura argentina.',
+    duration: '2h',
+    format: 'pdf',
+    filePath: 'https://d1hxtyafwtqtm4.cloudfront.net/upload/1747056985879',
+    thumbnail: '',
+  };
   
   return (
     <div className="container mx-auto py-8 px-4">
@@ -44,10 +51,18 @@ export default function ExemploVisualizador() {
         <pre className="text-xs bg-black text-green-400 p-4 rounded">
 {`// Carregar PDF do Cloudfront
 <BookViewer
-  bookUrl="https://d1hxtyafwtqtm4.cloudfront.net/upload/1747056985879"
-  bookTitle="A Invenção de Morel"
-  bookType="pdf"
-  onClose={() => setShowViewer(false)}
+  book={{
+    id: '1747056985879',
+    title: 'A Invenção de Morel',
+    author: 'Adolfo Bioy Casares',
+    publisher: 'Editora',
+    synopsis: 'Um clássico da literatura argentina.',
+    duration: '2h',
+    format: 'pdf',
+    filePath: 'https://d1hxtyafwtqtm4.cloudfront.net/upload/1747056985879',
+    thumbnail: ''
+  }}
+  onBack={() => setShowViewer(false)}
 />`}
         </pre>
       </div>
@@ -63,10 +78,8 @@ export default function ExemploVisualizador() {
       
       {showViewer && (
         <BookViewer
-          bookUrl={exampleBookUrl}
-          bookTitle={bookTitle}
-          bookType="pdf"
-          onClose={() => setShowViewer(false)}
+          book={exampleBook}
+          onBack={() => setShowViewer(false)}
         />
       )}
     </div>

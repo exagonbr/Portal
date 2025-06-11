@@ -55,3 +55,13 @@ export const STATUS_COLORS: Record<Status, string> = {
   pending: 'yellow',
   suspended: 'red'
 };
+
+/**
+ * Interface genérica para resultados de serviços
+ */
+export interface ServiceResult<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}

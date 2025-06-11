@@ -157,19 +157,41 @@ const nextConfig = {
     if (isServer) {
       config.externals.push('oracledb');
     } else {
+      // No lado do cliente, adicionar fallbacks para módulos de servidor
       config.resolve.fallback = {
         ...config.resolve.fallback,
         'oracledb': false,
         'fs': false,
         'net': false,
         'tls': false,
+        'pg': false,
+        'pg-native': false,
+        'pg-query-stream': false,
+      };
+      
+      // Adicionar alias para módulos relacionados ao PostgreSQL no cliente
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'pg-cloudflare': false,
+        'knex': false,
+        'objection': false,
       };
     }
 
-    config.plugins.push(new webpack.IgnorePlugin({
-      resourceRegExp: /^(cardinal|encoding)$/,
-      contextRegExp: /./,
-    }));
+    // Ignorar módulos específicos que causam problemas
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^(cardinal|encoding|pg-cloudflare)$/,
+        contextRegExp: /./,
+      })
+    );
+
+    // Adicionar plugin para lidar com o esquema cloudflare:sockets
+    config.module.rules.push({
+      test: /cloudflare:sockets/,
+      use: 'null-loader',
+      include: /node_modules/,
+    });
 
     return config;
   },

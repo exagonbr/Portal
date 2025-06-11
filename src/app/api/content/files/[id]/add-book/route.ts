@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/lib/database'
 
 export async function POST(
   request: NextRequest,

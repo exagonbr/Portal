@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
-    "dev:https": "node scripts/dev-https.js",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -13,7 +12,8 @@
     "test:redis": "node scripts/test-redis.js",
     "generate:vapid": "node scripts/generate-vapid-keys.js",
     "test:push": "node scripts/test-push-notifications.js",
-    "database:fresh": "cd backend && npm run database:fresh"
+    "database:fresh": "cd backend && npm run database:fresh",
+    "generate:certificates": "node scripts/generate-certificates.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.825.0",
@@ -69,6 +69,9 @@
   },
   "devDependencies": {
     "@prisma/client": "^6.9.0",
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/helmet": "^0.0.48",
     "@types/node": "^20.19.0",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
@@ -82,6 +85,7 @@
     "glob": "^11.0.2",
     "https-localhost": "^4.7.1",
     "lighthouse": "^11.3.0",
+    "null-loader": "^4.0.1",
     "postcss": "^8.4.32",
     "prisma": "^6.9.0",
     "puppeteer": "^21.6.1",

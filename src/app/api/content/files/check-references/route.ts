@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDatabase } from '@/lib/database'
 
 // Para agora, vou usar uma versão simplificada sem AWS SDK até que as dependências sejam instaladas
 export async function GET(request: NextRequest) {

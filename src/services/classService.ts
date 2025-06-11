@@ -111,7 +111,10 @@ export const classService = {
 
   async search(query: string, filters?: ClassFilters) {
     try {
-      const response = await apiClient.get<{ data: ClassResponseDto[]; total: number }>('/classes/search', {
+      const response = await apiClient.get<{
+        items(items: any): unknown;
+        pagination: any; data: ClassResponseDto[]; total: number 
+}>('/classes/search', {
         params: {
           query,
           ...filters

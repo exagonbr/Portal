@@ -10,7 +10,7 @@ import { useToast } from '@/components/ToastManager';
 import { classService } from '@/services/classService';
 import { courseService } from '@/services/courseService';
 import { userService } from '@/services/userService';
-import { ClassResponseDto } from '@/types/api';
+import { ClassResponseDto, ClassCreateDto, ClassUpdateDto } from '@/types/api';
 
 export default function ClassesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,24 +37,26 @@ export default function ClassesPage() {
     loadClasses();
   }, [currentPage, filters]);
 
+  const { showSuccess, showError } = useToast();
+  
   const loadData = async () => {
     try {
       const [coursesResponse, teachersResponse] = await Promise.all([
-        courseService.list(),
-        userService.list({ role: 'TEACHER' })
+        courseService.getCourses(),
+        userService.getUsers({ role: 'TEACHER' })
       ]);
 
-      setCourses(coursesResponse.map(course => ({
+      setCourses(coursesResponse.items.map(course => ({
         id: course.id,
         name: course.name
       })));
 
-      setTeachers(teachersResponse.data.map(teacher => ({
+      setTeachers(teachersResponse.items.map(teacher => ({
         id: teacher.id,
         name: teacher.name
       })));
     } catch (error) {
-      toast.error('Erro ao carregar dados');
+      showError('Erro ao carregar dados');
     }
   };
 
@@ -68,10 +70,17 @@ export default function ClassesPage() {
         status: filters.status || undefined,
         active: filters.active ? filters.active === 'true' : undefined
       });
-      setClasses(response.data);
-      setTotalItems(response.total);
+      // Tratando response.items de forma segura para evitar erros de tipo
+      // Convertendo para unknown primeiro para evitar erro de tipo
+      const items = response.items;
+      if (Array.isArray(items)) {
+        setClasses(items as unknown as ClassResponseDto[]);
+      } else {
+        setClasses([]);
+      }
+      setTotalItems(response.pagination?.total || 0);
     } catch (error) {
-      toast.error('Erro ao carregar turmas');
+      showError('Erro ao carregar turmas');
     } finally {
       setIsLoading(false);
     }
@@ -82,64 +91,73 @@ export default function ClassesPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (classData: ClassResponseDto) => {
-    setSelectedClass(classData);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta turma?')) return;
-
-    try {
-      await classService.delete(id);
-      toast.success('Turma excluída com sucesso!');
-      loadClasses();
-    } catch (error) {
-      toast.error('Erro ao excluir turma');
+  const handleEdit = (item: { id: string | number }) => {
+    // Encontrar a classe completa pelo ID
+    const classData = classes.find(c => c.id === item.id);
+    if (classData) {
+      setSelectedClass(classData);
+      setIsModalOpen(true);
+    } else {
+      showError('Classe não encontrada');
     }
   };
 
-  const handleSave = async (data: any) => {
+  const handleDelete = async (item: { id: string | number }) => {
+    const id = String(item.id);
+    if (!confirm('Tem certeza que deseja excluir esta turma?')) return;
+
+    try {
+      await classService.deactivate(id);
+      showSuccess('Turma excluída com sucesso!');
+      loadClasses();
+    } catch (error) {
+      showError('Erro ao excluir turma');
+    }
+  };
+
+  const handleSave = async (data: ClassCreateDto | ClassUpdateDto) => {
     try {
       if (selectedClass) {
-        await classService.update(selectedClass.id, data);
-        toast.success('Turma atualizada com sucesso!');
+        // Para atualização, usamos o tipo ClassUpdateDto
+        await classService.update(selectedClass.id, data as ClassUpdateDto);
+        showSuccess('Turma atualizada com sucesso!');
       } else {
-        await classService.create(data);
-        toast.success('Turma criada com sucesso!');
+        // Para criação, garantimos que data seja tratado como ClassCreateDto
+        await classService.create(data as ClassCreateDto);
+        showSuccess('Turma criada com sucesso!');
       }
       loadClasses();
     } catch (error) {
-      toast.error('Erro ao salvar turma');
+      showError('Erro ao salvar turma');
       throw error;
     }
   };
 
   const columns = [
-    { 
+    {
       key: 'name',
       label: 'Nome',
-      render: (item: any) => item.name
+      render: (item: ClassResponseDto) => item.name
     },
-    { 
+    {
       key: 'course',
       label: 'Curso',
-      render: (item: any) => item.course?.name || '-'
+      render: (item: ClassResponseDto) => item.course?.name || '-'
     },
-    { 
+    {
       key: 'teacher',
       label: 'Professor',
-      render: (item: any) => item.teacher?.name || '-'
+      render: (item: ClassResponseDto) => item.teacher?.name || '-'
     },
-    { 
+    {
       key: 'students',
       label: 'Alunos',
-      render: (item: any) => item.students?.length || 0
+      render: (item: ClassResponseDto) => item.students?.length || 0
     },
-    { 
+    {
       key: 'active',
       label: 'Status',
-      render: (item: any) => (
+      render: (item: ClassResponseDto) => (
         <span className={`px-2 py-1 rounded-full text-xs ${
           item.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
@@ -162,7 +180,8 @@ export default function ClassesPage() {
           value={filters.search}
           onChange={(e) => setFilters({ ...filters, search: e.target.value })}
         />
-        <Select
+        <select
+          className="p-2 border rounded-md"
           value={filters.course_id}
           onChange={(e) => setFilters({ ...filters, course_id: e.target.value })}
         >
@@ -172,8 +191,9 @@ export default function ClassesPage() {
               {course.name}
             </option>
           ))}
-        </Select>
-        <Select
+        </select>
+        <select
+          className="p-2 border rounded-md"
           value={filters.teacher_id}
           onChange={(e) => setFilters({ ...filters, teacher_id: e.target.value })}
         >
@@ -183,28 +203,29 @@ export default function ClassesPage() {
               {teacher.name}
             </option>
           ))}
-        </Select>
-        <Select
+        </select>
+        <select
+          className="p-2 border rounded-md"
           value={filters.active}
           onChange={(e) => setFilters({ ...filters, active: e.target.value })}
         >
           <option value="">Todos os status</option>
           <option value="true">Ativo</option>
           <option value="false">Inativo</option>
-        </Select>
+        </select>
       </div>
 
       <GenericCRUD
+        title="Turmas"
+        entityName="Turma"
         data={classes}
         columns={columns}
         onEdit={handleEdit}
         onDelete={handleDelete}
         loading={isLoading}
-        pagination={{
-          currentPage,
-          totalItems,
-          onPageChange: setCurrentPage
-        }}
+        totalItems={totalItems}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
       />
 
       {isModalOpen && (

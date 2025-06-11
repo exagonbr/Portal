@@ -41,7 +41,7 @@ router.get('/get', validateJWT, async (req, res) => {
     }
 
     // Log detalhado da requisição de cache
-    logger.info(`Cache request for key: ${key}`, { userId: req.user?.id });
+    logger.info(`Cache request for key: ${key}`, { userId: req.user?.email });
 
     const redis = getRedisClient();
     const value = await redis.get(key);
@@ -49,7 +49,7 @@ router.get('/get', validateJWT, async (req, res) => {
     if (value) {
       try {
         const jsonValue = JSON.parse(value);
-        logger.info(`Cache hit for key: ${key}`, { userId: req.user?.id });
+        logger.info(`Cache hit for key: ${key}`, { userId: req.user?.email });
         return res.json({
           success: true,
           data: jsonValue,
@@ -57,7 +57,7 @@ router.get('/get', validateJWT, async (req, res) => {
           from_cache: true
         });
       } catch (e) {
-        logger.info(`Cache hit for key: ${key} (non-JSON value)`, { userId: req.user?.id });
+        logger.info(`Cache hit for key: ${key} (non-JSON value)`, { userId: req.user?.email });
         return res.json({
           success: true,
           data: value,
@@ -67,11 +67,11 @@ router.get('/get', validateJWT, async (req, res) => {
       }
     } else {
       // Implementação de fallback para chaves específicas
-      logger.warn(`Cache miss for key: ${key}`, { userId: req.user?.id });
+      logger.warn(`Cache miss for key: ${key}`, { userId: req.user?.email });
       
       // Verificar se a chave está relacionada a roles
       if (key.startsWith('portal_sabercon:roles:')) {
-        logger.info(`Attempting fallback for roles cache: ${key}`, { userId: req.user?.id });
+        logger.info(`Attempting fallback for roles cache: ${key}`, { userId: req.user?.email });
         
         try {
           // Extrair os parâmetros da chave
@@ -85,7 +85,8 @@ router.get('/get', validateJWT, async (req, res) => {
                 params = JSON.parse(paramsString);
                 logger.info('Parsed params for roles list:', params);
               } catch (e) {
-                logger.error(`Error parsing role list params: ${e.message}`, { userId: req.user?.id });
+                const errorMessage = e instanceof Error ? e.message : String(e);
+                logger.error(`Error parsing role list params: ${errorMessage}`, { userId: req.user?.email });
               }
             }
             
@@ -95,7 +96,7 @@ router.get('/get', validateJWT, async (req, res) => {
             if (result.success && result.data) {
               // Armazenar no cache para futuras requisições
               await redis.set(key, JSON.stringify(result.data), 'EX', TTL.CACHE);
-              logger.info(`Data fetched from database and stored in cache: ${key}`, { userId: req.user?.id });
+              logger.info(`Data fetched from database and stored in cache: ${key}`, { userId: req.user?.email });
               
               return res.json({
                 success: true,
@@ -118,7 +119,7 @@ router.get('/get', validateJWT, async (req, res) => {
             if (result.success && result.data) {
               // Armazenar no cache para futuras requisições
               await redis.set(key, JSON.stringify(result.data), 'EX', TTL.CACHE);
-              logger.info(`Active roles fetched from database and stored in cache: ${key}`, { userId: req.user?.id });
+              logger.info(`Active roles fetched from database and stored in cache: ${key}`, { userId: req.user?.email });
               
               return res.json({
                 success: true,
@@ -130,9 +131,12 @@ router.get('/get', validateJWT, async (req, res) => {
             }
           }
         } catch (fallbackError) {
-          logger.error(`Fallback error for key ${key}: ${fallbackError.message}`, { 
-            userId: req.user?.id,
-            stack: fallbackError.stack
+          const errorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+          const errorStack = fallbackError instanceof Error ? fallbackError.stack : undefined;
+          
+          logger.error(`Fallback error for key ${key}: ${errorMessage}`, {
+            userId: req.user?.email,
+            stack: errorStack
           });
         }
       }
@@ -145,9 +149,12 @@ router.get('/get', validateJWT, async (req, res) => {
       });
     }
   } catch (error) {
-    logger.error(`Error getting cache value: ${error.message}`, { 
-      userId: req.user?.id,
-      stack: error.stack,
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    logger.error(`Error getting cache value: ${errorMessage}`, {
+      userId: req.user?.email,
+      stack: errorStack,
       key: req.query.key
     });
     
@@ -200,7 +207,8 @@ router.post('/set', validateJWT, async (req, res) => {
       message: 'Value cached successfully'
     });
   } catch (error) {
-    console.error('Error setting cache value:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error setting cache value:', errorMessage);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -243,7 +251,8 @@ router.delete('/delete', validateJWT, async (req, res) => {
       message: 'Cache value deleted'
     });
   } catch (error) {
-    console.error('Error deleting cache value:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error deleting cache value:', errorMessage);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -270,7 +279,8 @@ router.post('/clear', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async
       message: 'Cache cleared successfully'
     });
   } catch (error) {
-    console.error('Error clearing cache:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error clearing cache:', errorMessage);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -305,7 +315,8 @@ router.get('/stats', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async 
       data: stats
     });
   } catch (error) {
-    console.error('Error getting cache stats:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error getting cache stats:', errorMessage);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

@@ -30,7 +30,8 @@ export class CacheWarmupService {
       
       this.logger.info('Warmup do cache concluído com sucesso');
     } catch (error) {
-      this.logger.error(`Erro durante o warmup do cache: ${error.message}`, null, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Erro durante o warmup do cache: ${errorMessage}`, null, error instanceof Error ? error : undefined);
     }
   }
   
@@ -42,12 +43,12 @@ export class CacheWarmupService {
     
     try {
       // 1. Buscar roles ativos
-      const activeRolesParams = { 
-        active: true, 
-        page: 1, 
+      const activeRolesParams = {
+        active: true,
+        page: 1,
         limit: 100,
-        sortBy: 'name',
-        sortOrder: 'asc'
+        sortBy: "name" as "name" | "created_at" | "updated_at" | "user_count" | undefined,
+        sortOrder: "asc" as "asc" | "desc" | undefined
       };
       
       const activeRolesResult = await this.roleService.findRolesWithFilters(activeRolesParams);
@@ -66,11 +67,11 @@ export class CacheWarmupService {
       }
       
       // 2. Buscar todos os roles
-      const allRolesParams = { 
-        page: 1, 
+      const allRolesParams = {
+        page: 1,
         limit: 100,
-        sortBy: 'name',
-        sortOrder: 'asc'
+        sortBy: "name" as "name" | "created_at" | "updated_at" | "user_count" | undefined,
+        sortOrder: "asc" as "asc" | "desc" | undefined
       };
       
       const allRolesResult = await this.roleService.findRolesWithFilters(allRolesParams);
@@ -86,20 +87,20 @@ export class CacheWarmupService {
       }
       
       // 3. Buscar roles de sistema e personalizados
-      const systemRolesParams = { 
-        type: 'system',
-        page: 1, 
+      const systemRolesParams = {
+        type: "system" as "system" | "custom" | undefined,
+        page: 1,
         limit: 100,
-        sortBy: 'name',
-        sortOrder: 'asc'
+        sortBy: "name" as "name" | "created_at" | "updated_at" | "user_count" | undefined,
+        sortOrder: "asc" as "asc" | "desc" | undefined
       };
       
-      const customRolesParams = { 
-        type: 'custom',
-        page: 1, 
+      const customRolesParams = {
+        type: "custom" as "system" | "custom" | undefined,
+        page: 1,
         limit: 100,
-        sortBy: 'name',
-        sortOrder: 'asc'
+        sortBy: "name" as "name" | "created_at" | "updated_at" | "user_count" | undefined,
+        sortOrder: "asc" as "asc" | "desc" | undefined
       };
       
       const systemRolesResult = await this.roleService.findRolesWithFilters(systemRolesParams);
@@ -119,7 +120,8 @@ export class CacheWarmupService {
       
       this.logger.info('Warmup do cache para roles concluído com sucesso');
     } catch (error) {
-      this.logger.error(`Erro durante o warmup do cache para roles: ${error.message}`, null, error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Erro durante o warmup do cache para roles: ${errorMessage}`, null, error instanceof Error ? error : undefined);
     }
   }
 } 

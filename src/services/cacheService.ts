@@ -318,6 +318,7 @@ export const CacheKeys = {
   // Roles
   ROLE_BY_ID: (id: string) => `role:${id}`,
   ROLE_LIST: (filters: string) => `roles:list:${filters}`,
+  ROLE_PERMISSIONS: (roleId: string) => `role:permissions:${roleId}`,
   ACTIVE_ROLES: 'roles:active',
   ROLE_STATS: 'roles:stats',
 

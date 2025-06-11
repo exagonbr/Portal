@@ -1331,14 +1331,6 @@ export default function ManageUsers() {
           />
         )}
         
-        {loading && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50">
-            <div className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-3">
-              <div className="animate-spin w-5 h-5 border-2 border-primary-DEFAULT border-t-transparent rounded-full"></div>
-              <span>Carregando...</span>
-            </div>
-          </div>
-        )}
         
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-slate-800">Gerenciamento de Usuários</h1>
@@ -1617,9 +1609,8 @@ export default function ManageUsers() {
         
         <div className="text-center text-sm text-slate-500 mt-3">
           {loading ? (
-            <div className="flex justify-center items-center gap-2">
+            <div className="flex justify-center items-center">
               <div className="animate-spin w-3 h-3 border-2 border-primary-DEFAULT border-t-transparent rounded-full"></div>
-              <span>Carregando...</span>
             </div>
           ) : (
             `Exibindo ${users.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - ${Math.min(currentPage * itemsPerPage, totalItems)} de ${totalItems} usuários`
