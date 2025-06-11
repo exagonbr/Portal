@@ -215,14 +215,14 @@ export async function seed(knex: any): Promise<void> {
   const domCasmurroBook = insertedBooks.find((b: any) => b.title === 'Dom Casmurro');
   
   if (domCasmurroFile && domCasmurroBook) {
-    await knex.raw('SELECT link_file_to_book(?, ?)', [domCasmurroFile.id, domCasmurroBook.id]);
+    await knex.raw('SELECT link_file_to_book(?::uuid, ?::uuid)', [domCasmurroFile.id, domCasmurroBook.id]);
   }
 
   const corticoFile = insertedFiles.find((f: any) => f.name === 'O Cortiço.epub');
   const corticoBook = insertedBooks.find((b: any) => b.title === 'O Cortiço');
   
   if (corticoFile && corticoBook) {
-    await knex.raw('SELECT link_file_to_book(?, ?)', [corticoFile.id, corticoBook.id]);
+    await knex.raw('SELECT link_file_to_book(?::uuid, ?::uuid)', [corticoFile.id, corticoBook.id]);
   }
 
   console.log('✅ Dados de exemplo inseridos com sucesso!');

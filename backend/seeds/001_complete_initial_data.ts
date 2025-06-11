@@ -230,8 +230,6 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Administrador do Sistema Sabercon',
       role_id: roleLookup['SYSTEM_ADMIN'],
       institution_id: institutions[0].id,
-      endereco: 'Rua da Administração, 100',
-      telefone: '(11) 99999-0001',
       is_active: true
     },
     {
@@ -240,8 +238,6 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Marina Silva Santos - Gestora Institucional',
       role_id: roleLookup['INSTITUTION_MANAGER'],
       institution_id: institutions[0].id,
-      endereco: 'Av. dos Gestores, 200',
-      telefone: '(11) 99999-0002',
       is_active: true
     },
     {
@@ -250,8 +246,6 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Luciana Lima Costa - Coordenadora Acadêmica',
       role_id: roleLookup['ACADEMIC_COORDINATOR'],
       institution_id: institutions[0].id,
-      endereco: 'Av. da Coordenação, 300',
-      telefone: '(11) 99999-0003',
       is_active: true
     },
     {
@@ -260,8 +254,6 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Ricardo Santos Oliveira - Professor',
       role_id: roleLookup['TEACHER'],
       institution_id: institutions[0].id,
-      endereco: 'Rua dos Professores, 400',
-      telefone: '(11) 99999-0004',
       is_active: true
     },
     {
@@ -270,8 +262,6 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Julia Costa Ferreira - Estudante IFSP',
       role_id: roleLookup['STUDENT'],
       institution_id: institutions[1].id,
-      endereco: 'Rua dos Estudantes, 500',
-      telefone: '(11) 99999-0005',
       is_active: true
     },
     {
@@ -280,8 +270,6 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Renato Oliveira Silva - Responsável',
       role_id: roleLookup['GUARDIAN'],
       institution_id: institutions[0].id,
-      endereco: 'Rua dos Responsáveis, 600',
-      telefone: '(11) 99999-0006',
       is_active: true
     },
     // Usuários de backup do sistema para testes
@@ -291,8 +279,6 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Admin Backup Portal',
       role_id: roleLookup['SYSTEM_ADMIN'],
       institution_id: institutions[0].id,
-      endereco: 'Av. Federal, 100',
-      telefone: '(21) 99999-1001',
       is_active: true
     },
     {
@@ -301,8 +287,6 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Carlos Alberto Professor - IFSP',
       role_id: roleLookup['TEACHER'],
       institution_id: institutions[1].id,
-      endereco: 'Rua dos Docentes, 200',
-      telefone: '(21) 99999-1002',
       is_active: true
     }
   ]).returning('*');
