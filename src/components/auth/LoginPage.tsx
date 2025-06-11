@@ -65,10 +65,10 @@ export function LoginPage() {
       );
     }
 
-    const { loginBackground } = settings;
+    const { background_type, main_background } = settings;
 
     // Sempre usar o vídeo como padrão se não houver configuração
-    if (!loginBackground || !loginBackground.type) {
+    if (!background_type || !main_background) {
       return (
         <video
           autoPlay
@@ -84,7 +84,7 @@ export function LoginPage() {
       );
     }
 
-    switch (loginBackground.type) {
+    switch (background_type) {
       case 'video':
         return (
           <video
@@ -95,13 +95,13 @@ export function LoginPage() {
             className="absolute min-w-full min-h-full object-cover opacity-100"
             preload="auto"
           >
-            <source src={loginBackground.value || '/back_video4.mp4'} type="video/mp4" />
+            <source src={main_background || '/back_video4.mp4'} type="video/mp4" />
             Seu navegador não suporta a tag de vídeo.
           </video>
         );
 
-      case 'url':
-        const isVideo = loginBackground.value.match(/\.(mp4|webm|ogg)$/i);
+      case 'image':
+        const isVideo = main_background.match(/\.(mp4|webm|ogg)$/i);
         
         if (isVideo) {
           return (
@@ -113,7 +113,7 @@ export function LoginPage() {
               className="absolute min-w-full min-h-full object-cover opacity-100"
               preload="auto"
             >
-              <source src={loginBackground.value} type="video/mp4" />
+              <source src={main_background} type="video/mp4" />
               Seu navegador não suporta a tag de vídeo.
             </video>
           );
@@ -122,8 +122,8 @@ export function LoginPage() {
             <div
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{
-                backgroundImage: `url(${loginBackground.value})`,
-                opacity: (loginBackground.opacity || 100) / 100
+                backgroundImage: `url(${main_background})`,
+                opacity: 1
               }}
             />
           );
@@ -134,8 +134,8 @@ export function LoginPage() {
           <div
             className="absolute inset-0"
             style={{
-              backgroundColor: loginBackground.value,
-              opacity: (loginBackground.opacity || 100) / 100
+              backgroundColor: main_background,
+              opacity: 1
             }}
           />
         );
@@ -184,7 +184,7 @@ export function LoginPage() {
       <div className="absolute inset-0 w-full h-full overflow-hidden" aria-hidden="true">
         {renderBackground()}
         {/* Overlay opcional para melhor legibilidade */}
-        {settings?.loginBackground?.overlay && (
+        {settings?.background_type === 'video' && (
           <div className="absolute inset-0 bg-black/20" />
         )}
       </div>
