@@ -74,7 +74,7 @@ export class ApiClient {
       });
     }
 
-    return url.toString();
+    return url.toString() + '/api';
   }
 
   /**
