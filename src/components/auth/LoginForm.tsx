@@ -57,6 +57,9 @@ export function LoginForm() {
   const lastLoginAttemptRef = useRef<number>(0);
   const MIN_LOGIN_INTERVAL_MS = 2000; // 2 segundos entre tentativas
   
+  // Função para resetar o formulário - será conectada depois
+  const resetFormRef = useRef<() => void>(() => {});
+  
   const {
     values,
     errors,
@@ -124,7 +127,7 @@ export function LoginForm() {
             setRetryAfter(retrySeconds);
             setSubmitError(`Muitas tentativas de login. Tente novamente em ${retrySeconds} segundos.`);
             // Limpar o formulário para evitar novas tentativas com os mesmos dados
-            resetForm();
+            resetFormRef.current();
           } else {
             setSubmitError(error.message || 'Email ou senha incorretos. Por favor, tente novamente.');
           }
@@ -136,9 +139,14 @@ export function LoginForm() {
         setSubmitError('Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.');
         setLoginAttemptInProgress(false);
       }
-    }, [login, loginAttemptInProgress, resetForm])
+    }, [login, loginAttemptInProgress])
   });
 
+  // Atualizar a referência à função resetForm após a inicialização do formulário
+  useEffect(() => {
+    resetFormRef.current = resetForm;
+  }, [resetForm]);
+  
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
