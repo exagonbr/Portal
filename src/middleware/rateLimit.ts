@@ -64,7 +64,7 @@ export const rateLimiters = {
 export async function applyRateLimit(
   request: NextRequest,
   type: keyof typeof rateLimiters = 'authenticated',
-  limit: number = 10
+  limit: number = 20
 ): Promise<NextResponse | null> {
   try {
     const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? 'anonymous'
