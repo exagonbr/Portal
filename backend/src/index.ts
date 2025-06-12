@@ -42,9 +42,8 @@ app.use(helmet({
 
 // CORS
 app.use(cors({
-  origin: ['*', 'https://sabercon.com.br', 'https://www.sabercon.com.br', 'https://portal.sabercon.com.br',
-  'https://www.portal.sabercon.com.br', 'http://localhost:3000', 'http://localhost:3001'],
-  credentials: process.env.CORS_CREDENTIALS === 'true',
+  origin: true,
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type', 
@@ -64,6 +63,22 @@ app.use(cors({
     'Access-Control-Allow-Credentials'
   ]
 }));
+
+// Middleware adicional para garantir cabeçalhos CORS
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  return next();
+});
 
 // Compressão
 app.use(compression());

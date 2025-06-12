@@ -116,10 +116,22 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   productionBrowserSourceMaps: false,
-    eslint: {
+  eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
+  },
+  // Configuração para garantir que as rotas de API funcionem corretamente
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Garantir que as rotas de API não sejam reescritas
+        {
+          source: '/api/v1/:path*',
+          destination: '/api/v1/:path*',
+        },
+      ],
+    };
   },
   images: {
     remotePatterns: [

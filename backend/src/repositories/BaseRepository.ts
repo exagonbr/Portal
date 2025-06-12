@@ -11,7 +11,7 @@ export abstract class BaseRepository<T> {
   }
 
   async findAll(filters?: Partial<T>, pagination?: { page: number; limit: number }): Promise<T[]> {
-    let query = this.db.queryBuilder().from(this.tableName);
+    let query = this.db(this.tableName);
 
     if (filters) {
       query = query.where(filters);
@@ -26,32 +26,28 @@ export abstract class BaseRepository<T> {
   }
 
   async findById(id: string): Promise<T | null> {
-    const result = await this.db.queryBuilder()
-      .from(this.tableName)
+    const result = await this.db(this.tableName)
       .where('id', id)
       .first();
     return result || null;
   }
 
   async findOne(filters: Partial<T>): Promise<T | null> {
-    const result = await this.db.queryBuilder()
-      .from(this.tableName)
+    const result = await this.db(this.tableName)
       .where(filters)
       .first();
     return result || null;
   }
 
   async create(data: Partial<T>): Promise<T> {
-    const [result] = await this.db.queryBuilder()
-      .from(this.tableName)
+    const [result] = await this.db(this.tableName)
       .insert(data)
       .returning('*');
     return result;
   }
 
   async update(id: string, data: Partial<T>): Promise<T | null> {
-    const [result] = await this.db.queryBuilder()
-      .from(this.tableName)
+    const [result] = await this.db(this.tableName)
       .where('id', id)
       .update({ ...data, updated_at: new Date() })
       .returning('*');
@@ -59,15 +55,14 @@ export abstract class BaseRepository<T> {
   }
 
   async delete(id: string): Promise<boolean> {
-    const deletedRows = await this.db.queryBuilder()
-      .from(this.tableName)
+    const deletedRows = await this.db(this.tableName)
       .where('id', id)
       .del();
     return deletedRows > 0;
   }
 
   async count(filters?: Partial<T>): Promise<number> {
-    let query = this.db.queryBuilder().from(this.tableName);
+    let query = this.db(this.tableName);
 
     if (filters) {
       query = query.where(filters);

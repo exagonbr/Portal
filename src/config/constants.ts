@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api';
+export const API_BASE_URL = 'http://localhost:3001/api';
 
 // Pagination defaults
 export const DEFAULT_PAGE_SIZE = 10;

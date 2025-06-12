@@ -149,7 +149,6 @@ router.post(
   [
     body('email').isEmail().normalizeEmail(),
     body('password').notEmpty(),
-    body('remember').optional().isBoolean(),
   ],
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {

@@ -349,7 +349,7 @@ export const devUtils = {
 // Configuração padrão para desenvolvimento
 export const setupDevelopmentConfig = () => {
   configureServices({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
+    baseURL: 'http://localhost:3000',
     timeout: 30000,
     retryAttempts: 3,
     retryDelay: 1000,
@@ -378,7 +378,7 @@ export const setupDevelopmentConfig = () => {
 // Configuração padrão para produção
 export const setupProductionConfig = () => {
   configureServices({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
+    baseURL: 'http://localhost:3000',
     timeout: 15000,
     retryAttempts: 2,
     retryDelay: 2000,

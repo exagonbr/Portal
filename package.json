@@ -13,7 +13,8 @@
     "generate:vapid": "node scripts/generate-vapid-keys.js",
     "test:push": "node scripts/test-push-notifications.js",
     "database:fresh": "cd backend && npm run database:fresh",
-    "generate:certificates": "node scripts/generate-certificates.js"
+    "generate:certificates": "node scripts/generate-certificates.js",
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.825.0",
@@ -42,6 +43,7 @@
     "knex": "^3.1.0",
     "lru-cache": "^11.1.0",
     "lucide-react": "^0.511.0",
+    "mysql2": "^3.9.1",
     "next": "14.0.4",
     "next-auth": "^4.24.11",
     "next-pwa": "^5.6.0",

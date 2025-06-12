@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api';
+const BACKEND_URL = 'http://localhost:3001/api';
 
 // Advanced rate limiting to prevent login loops
 const loginAttempts = new Map<string, { 
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
 
     // Fazer requisição para o backend
     // Corrigindo o endpoint para v1/auth/login como mostrado no log
-    const response = await fetch(`${BACKEND_URL}/v1/auth/login`, {
+    const response = await fetch(`${BACKEND_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

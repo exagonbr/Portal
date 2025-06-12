@@ -21,7 +21,7 @@ export interface RegisterResponse {
 const AUTH_CONFIG = {
   // Use primeiro a variável de ambiente, depois fallback para o proxy local
   API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
-  BACKEND_URL: 'https://portal.sabercon.com.br/api',
+  BACKEND_URL: 'http://localhost:3001/api',
   API_VERSION: 'v1', // Adicionando versão da API
   COOKIES: {
     AUTH_TOKEN: 'auth_token',
@@ -131,7 +131,7 @@ class StorageManager {
 // User management functions - Backend API integration
 export const listUsers = async (): Promise<User[]> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/users`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/users`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -153,7 +153,7 @@ export const listUsers = async (): Promise<User[]> => {
 
 export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/users`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -176,7 +176,7 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
 
 export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/users/${id}`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/users/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -215,7 +215,7 @@ export const extractUserEssentials = (user: User): UserEssentials => {
 
 export const deleteUser = async (id: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/users/${id}`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/users/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -240,7 +240,9 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 // Authentication functions
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   try {
-    console.log(`Tentando login no endpoint: ${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/auth/login`);
+    // Determinar dinamicamente a porta correta
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    console.log(`Tentando login no endpoint: ${baseUrl}/api/v1/auth/login`);
     
     // Adicione um timeout para evitar espera infinita
     const controller = new AbortController();
@@ -248,7 +250,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     
     // Primeiro, tente usar o proxy local
     try {
-      const response = await fetch(`/api/auth/login`, {
+      const response = await fetch(`${baseUrl}/api/auth/login`, {
         signal: controller.signal,
         method: 'POST',
         headers: {
@@ -299,7 +301,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       const directTimeoutId = setTimeout(() => directController.abort(), 10000); // 10 segundos
       
       // Se falhar, tente conexão direta ao backend
-      const directResponse = await fetch(`${AUTH_CONFIG.BACKEND_URL}/${AUTH_CONFIG.API_VERSION}/auth/login`, {
+      const directResponse = await fetch(`${AUTH_CONFIG.BACKEND_URL}/auth/login`, {
         signal: directController.signal,
         method: 'POST',
         headers: {
@@ -359,7 +361,7 @@ export const register = async (
     type: 'student' | 'teacher'
 ): Promise<RegisterResponse> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/auth/register`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -458,7 +460,7 @@ export const logout = async (): Promise<void> => {
   
   try {
     // 1. Chamar API de logout
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/auth/logout`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -523,7 +525,7 @@ export const isAuthenticated = async (): Promise<boolean> => {
     if (!token) return false;
 
     // Validar token com o backend
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/auth/validate-session`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/validate-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -623,8 +625,11 @@ export const refreshToken = async (): Promise<boolean> => {
     
     refreshPromise = new Promise(async (resolve) => {
       try {
+        // Determinar dinamicamente a porta correta
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+        
         // Fazer requisição para o endpoint de refresh
-        const response = await fetch(`${AUTH_CONFIG.API_URL}/${AUTH_CONFIG.API_VERSION}/auth/refresh-token`, {
+        const response = await fetch(`${baseUrl}/api/v1/auth/refresh`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
