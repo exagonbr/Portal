@@ -44,7 +44,7 @@ export class UserService {
       // O cache está desativado para debug, mas a estrutura está aqui
       // return await withCache(cacheKey, async () => {
       
-      console.log('Buscando usuários com parâmetros:', filterParams);
+      console.log('🔍 Buscando usuários com parâmetros:', filterParams);
       
       const response = await withRetry(() =>
         apiClient.get<ListResponse<UserResponseDto>>(this.baseEndpoint, filterParams as Record<string, string | number | boolean>)
@@ -55,48 +55,156 @@ export class UserService {
       }
 
       // Log detalhado da resposta para debug
-      console.log('Resposta da API no userService:', JSON.stringify(response, null, 2));
+      console.log('📥 Resposta bruta da API no userService:', {
+        success: response.success,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+        dataLength: Array.isArray(response.data) ? response.data.length : 'N/A',
+        hasItems: !!(response.data as any)?.items,
+        hasPagination: !!(response.data as any)?.pagination || !!response.pagination,
+        responseKeys: Object.keys(response.data || {}),
+        paginationInfo: (response.data as any)?.pagination || response.pagination
+      });
 
-      // A API retorna no formato: { success: true, data: [...], pagination: {...} }
-      // Precisamos converter para o formato esperado: { items: [...], pagination: {...} }
+      // Verifica se a resposta já está no formato correto { items: [...], pagination: {...} }
+      if (response.data && typeof response.data === 'object' && 'items' in response.data && 'pagination' in response.data) {
+        console.log('✅ Resposta já no formato correto');
+        return response.data as ListResponse<UserResponseDto>;
+      }
+
+      // Se response.data é um array direto, a API retornou todos os usuários sem paginação
+      if (Array.isArray(response.data)) {
+        console.log('⚠️ API retornou array direto sem paginação. Implementando paginação do lado do cliente.');
+        
+        const allUsers = response.data as UserResponseDto[];
+        const page = filterParams.page;
+        const limit = filterParams.limit;
+        
+        // Aplicar filtros do lado do cliente se necessário
+        let filteredUsers = [...allUsers];
+        
+        // Filtro por nome
+        if (filters?.name) {
+          const nameQuery = filters.name.toLowerCase();
+          filteredUsers = filteredUsers.filter(user => 
+            user.name.toLowerCase().includes(nameQuery)
+          );
+        }
+        
+        // Filtro por email
+        if (filters?.email) {
+          const emailQuery = filters.email.toLowerCase();
+          filteredUsers = filteredUsers.filter(user => 
+            user.email.toLowerCase().includes(emailQuery)
+          );
+        }
+        
+        // Filtro por role_id
+        if (filters?.role_id) {
+          filteredUsers = filteredUsers.filter(user => 
+            user.role_id === filters.role_id
+          );
+        }
+        
+        // Filtro por institution_id
+        if (filters?.institution_id) {
+          filteredUsers = filteredUsers.filter(user => 
+            user.institution_id === filters.institution_id
+          );
+        }
+        
+        // Filtro por status ativo
+        if (filters?.is_active !== undefined) {
+          filteredUsers = filteredUsers.filter(user => 
+            user.is_active === filters.is_active
+          );
+        }
+        
+        // Filtro por data de criação
+        if (filters?.created_after) {
+          const afterDate = new Date(filters.created_after);
+          filteredUsers = filteredUsers.filter(user => 
+            new Date(user.created_at) >= afterDate
+          );
+        }
+        
+        if (filters?.created_before) {
+          const beforeDate = new Date(filters.created_before);
+          filteredUsers = filteredUsers.filter(user => 
+            new Date(user.created_at) <= beforeDate
+          );
+        }
+        
+        // Ordenação
+        if (filters?.sortBy) {
+          filteredUsers.sort((a, b) => {
+            let aValue: any = a[filters.sortBy as keyof UserResponseDto];
+            let bValue: any = b[filters.sortBy as keyof UserResponseDto];
+            
+            // Tratamento especial para datas
+            if (filters.sortBy === 'created_at' || filters.sortBy === 'updated_at') {
+              aValue = new Date(aValue).getTime();
+              bValue = new Date(bValue).getTime();
+            } else if (typeof aValue === 'string') {
+              aValue = aValue.toLowerCase();
+              bValue = bValue.toLowerCase();
+            }
+            
+            if (aValue < bValue) return filters.sortOrder === 'desc' ? 1 : -1;
+            if (aValue > bValue) return filters.sortOrder === 'desc' ? -1 : 1;
+            return 0;
+          });
+        }
+        
+        // Paginação do lado do cliente
+        const total = filteredUsers.length;
+        const totalPages = Math.ceil(total / limit);
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+        
+        console.log('📊 Paginação do lado do cliente:', {
+          totalUsuarios: total,
+          paginaAtual: page,
+          itensPorPagina: limit,
+          totalPaginas: totalPages,
+          indiceInicio: startIndex,
+          indiceFim: endIndex,
+          usuariosPaginados: paginatedUsers.length
+        });
+        
+        const convertedResponse: ListResponse<UserResponseDto> = {
+          items: paginatedUsers,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1
+          }
+        };
+        
+        console.log('✅ Resposta convertida com paginação do lado do cliente');
+        return convertedResponse;
+      }
       
-      if (response.success && response.data) {
-        console.log('🔄 Convertendo resposta da API para formato esperado');
+      // Se response.data tem a estrutura { data: [...] } (formato alternativo da API)
+      if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+        console.log('🔄 Convertendo formato { data: [...] } para { items: [...] }');
         
-        // Se response.data é um array, é a lista de usuários
-        if (Array.isArray(response.data)) {
-          const convertedResponse = {
-            items: response.data,
-            pagination: response.pagination || {
-              page: filterParams.page,
-              limit: filterParams.limit,
-              total: response.data.length,
-              totalPages: Math.ceil(response.data.length / filterParams.limit),
-              hasNext: false,
-              hasPrev: filterParams.page > 1
-            }
-          };
-          
-          console.log('✅ Resposta convertida:', convertedResponse);
-          return convertedResponse;
-        }
-        
-        // Se response.data tem a estrutura { items: [...] } ou { data: [...] }
-        if (response.data.items) {
-          return response.data;
-        } else if (response.data.data) {
-          return {
-            items: response.data.data,
-            pagination: response.data.pagination || response.pagination || {
-              page: filterParams.page,
-              limit: filterParams.limit,
-              total: response.data.data.length,
-              totalPages: Math.ceil(response.data.data.length / filterParams.limit),
-              hasNext: false,
-              hasPrev: filterParams.page > 1
-            }
-          };
-        }
+        const apiData = response.data as any;
+        return {
+          items: apiData.data || [],
+          pagination: apiData.pagination || response.pagination || {
+            page: filterParams.page,
+            limit: filterParams.limit,
+            total: apiData.total || apiData.data?.length || 0,
+            totalPages: Math.ceil((apiData.total || apiData.data?.length || 0) / filterParams.limit),
+            hasNext: false,
+            hasPrev: filterParams.page > 1
+          }
+        };
       }
       
       // Fallback para resposta vazia
@@ -114,7 +222,7 @@ export class UserService {
       };
       // }, CacheTTL.MEDIUM);
     } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
+      console.error('❌ Erro ao buscar usuários:', error);
       
       // Se o erro for específico sobre a estrutura da resposta, tenta usar dados simulados
       if (error instanceof Error &&
@@ -328,8 +436,12 @@ export class UserService {
     try {
       const searchParams = {
         q: query,
+        page: 1,
+        limit: 10,
         ...filters,
       };
+  
+      console.log('🔍 Buscando usuários com termo:', query, 'e parâmetros:', searchParams);
   
       const response = await withRetry(() =>
         apiClient.get<ApiResponse<UserResponseDto[]>>(`${this.baseEndpoint}/search`, searchParams as Record<string, string | number | boolean>)
@@ -339,31 +451,127 @@ export class UserService {
         throw new Error(response.message || 'Falha na busca de usuários');
       }
 
-      console.log('Resposta da busca de usuários:', response);
+      console.log('📥 Resposta da busca de usuários:', {
+        success: response.success,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+        dataLength: Array.isArray(response.data) ? response.data.length : 'N/A',
+        hasItems: !!(response.data as any)?.items,
+        hasPagination: !!(response.data as any)?.pagination || !!response.pagination
+      });
 
-      // Converter resposta da API para formato esperado
+      // Verifica se a resposta já está no formato correto { items: [...], pagination: {...} }
+      if (response.data && typeof response.data === 'object' && 'items' in response.data && 'pagination' in response.data) {
+        console.log('✅ Resposta da busca já no formato correto');
+        return response.data as ListResponse<UserResponseDto>;
+      }
+
+      // Se response.data é um array direto, implementa paginação do lado do cliente
       if (Array.isArray(response.data)) {
+        console.log('⚠️ API de busca retornou array direto sem paginação. Implementando paginação do lado do cliente.');
+        
+        const allUsers = response.data as UserResponseDto[];
+        const page = (filters?.page as number) || 1;
+        const limit = (filters?.limit as number) || 10;
+        
+        // Aplicar filtros adicionais do lado do cliente se necessário
+        let filteredUsers = [...allUsers];
+        
+        // Filtro por role_id
+        if (filters?.role_id) {
+          filteredUsers = filteredUsers.filter(user => 
+            user.role_id === filters.role_id
+          );
+        }
+        
+        // Filtro por institution_id
+        if (filters?.institution_id) {
+          filteredUsers = filteredUsers.filter(user => 
+            user.institution_id === filters.institution_id
+          );
+        }
+        
+        // Filtro por status ativo
+        if (filters?.is_active !== undefined) {
+          filteredUsers = filteredUsers.filter(user => 
+            user.is_active === filters.is_active
+          );
+        }
+        
+        // Ordenação
+        if (filters?.sortBy) {
+          filteredUsers.sort((a, b) => {
+            let aValue: any = a[filters.sortBy as keyof UserResponseDto];
+            let bValue: any = b[filters.sortBy as keyof UserResponseDto];
+            
+            // Tratamento especial para datas
+            if (filters.sortBy === 'created_at' || filters.sortBy === 'updated_at') {
+              aValue = new Date(aValue).getTime();
+              bValue = new Date(bValue).getTime();
+            } else if (typeof aValue === 'string') {
+              aValue = aValue.toLowerCase();
+              bValue = bValue.toLowerCase();
+            }
+            
+            if (aValue < bValue) return filters.sortOrder === 'desc' ? 1 : -1;
+            if (aValue > bValue) return filters.sortOrder === 'desc' ? -1 : 1;
+            return 0;
+          });
+        }
+        
+        // Paginação do lado do cliente
+        const total = filteredUsers.length;
+        const totalPages = Math.ceil(total / limit);
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+        
+        console.log('📊 Paginação da busca do lado do cliente:', {
+          termoBusca: query,
+          totalUsuarios: total,
+          paginaAtual: page,
+          itensPorPagina: limit,
+          totalPaginas: totalPages,
+          usuariosPaginados: paginatedUsers.length
+        });
+        
         return {
-          items: response.data,
-          pagination: response.pagination || {
-            page: (filters?.page as number) || 1,
-            limit: (filters?.limit as number) || 10,
-            total: response.data.length,
-            totalPages: Math.ceil(response.data.length / ((filters?.limit as number) || 10)),
-            hasNext: false,
-            hasPrev: ((filters?.page as number) || 1) > 1
+          items: paginatedUsers,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1
           }
         };
       }
 
-      // Se já está no formato correto
-      if (response.data && typeof response.data === 'object' && 'items' in response.data) {
-        return response.data as ListResponse<UserResponseDto>;
+      // Se response.data tem a estrutura { data: [...] } (formato alternativo da API)
+      if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+        console.log('🔄 Convertendo formato de busca { data: [...] } para { items: [...] }');
+        
+        const apiData = response.data as any;
+        const page = (filters?.page as number) || 1;
+        const limit = (filters?.limit as number) || 10;
+        
+        return {
+          items: apiData.data || [],
+          pagination: apiData.pagination || response.pagination || {
+            page,
+            limit,
+            total: apiData.total || apiData.data?.length || 0,
+            totalPages: Math.ceil((apiData.total || apiData.data?.length || 0) / limit),
+            hasNext: false,
+            hasPrev: page > 1
+          }
+        };
       }
 
       throw new Error('Formato de resposta inválido');
     } catch (error) {
-      console.error('Erro na busca de usuários:', error);
+      console.error('❌ Erro na busca de usuários:', error);
       throw new Error(handleApiError(error));
     }
   }

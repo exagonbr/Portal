@@ -81,8 +81,15 @@ export interface UserWithRoleDto extends UserResponseDto {
 
 export interface UserFilterDto {
   search?: string;
+  name?: string;
+  email?: string;
   role?: string;
+  role_id?: string;
+  institution_id?: string;
   school_id?: string;
+  is_active?: boolean;
+  created_after?: string;
+  created_before?: string;
   page?: number;
   limit?: number;
   sortBy?: 'name' | 'email' | 'created_at' | 'updated_at';

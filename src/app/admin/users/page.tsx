@@ -859,86 +859,76 @@ export default function ManageUsers() {
         ...filters,
       };
 
-          console.log('🔍 Iniciando busca de usuários com parâmetros:', params);
+      console.log('🔍 Iniciando busca de usuários com parâmetros:', params);
+      console.log('📊 Estado atual da paginação:', {
+        currentPage,
+        itemsPerPage,
+        totalPages,
+        totalItems,
+        hasFilters: hasActiveFilters()
+      });
 
-    const response = searchTerm
-      ? await userService.searchUsers(searchTerm, params)
-      : await userService.getUsers(params);
+      const response = searchTerm
+        ? await userService.searchUsers(searchTerm, params)
+        : await userService.getUsers(params);
 
-    console.log('🔍 Resposta bruta da API:', response);
+      console.log('📥 Resposta recebida do userService:', {
+        items: response.items?.length || 0,
+        pagination: response.pagination,
+        primeiroUsuario: response.items?.[0]?.name || 'Nenhum',
+        ultimoUsuario: response.items?.[response.items?.length - 1]?.name || 'Nenhum'
+      });
 
-          console.log('✅ Resposta da API recebida:', {
-      totalItems: (response as any).items?.length || (response as any).data?.length || 0,
-      pagination: (response as any).pagination,
-      primeiroUsuario: (response as any).items?.[0] || (response as any).data?.[0] || 'Nenhum usuário',
-      estruturaCompleta: response
-    });
-
-    // Verifica se a resposta tem a estrutura esperada
-    // A API pode retornar tanto { items: [...], pagination: {...} } quanto { data: [...], total: number }
-    let users = (response as any).items || (response as any).data || [];
-    let total = (response as any).pagination?.total || (response as any).total || 0;
-    let totalPages = (response as any).pagination?.totalPages || Math.ceil(total / itemsPerPage);
-
-    console.log('🔍 Dados extraídos:', {
-      users: users,
-      usersLength: users.length,
-      total: total,
-      totalPages: totalPages,
-      responseKeys: Object.keys(response),
-      responseItemsExists: !!(response as any).items,
-      responseDataExists: !!(response as any).data,
-      responsePaginationExists: !!(response as any).pagination
-    });
-
-    if (!response || (!(response as any).items && !(response as any).data)) {
-      console.error('❌ Resposta da API inválida:', response);
-      showError('A resposta da API não contém dados válidos');
-      setUsers([]);
-      setTotalPages(1);
-      setTotalItems(0);
-      return;
-    }
-
-    if (!Array.isArray(users)) {
-      console.error('❌ Os dados de usuários não são um array:', users);
-      showError('Formato de dados inválido recebido da API');
-      setUsers([]);
-      setTotalPages(1);
-      setTotalItems(0);
-      return;
-    }
-
-          const enrichedUsers = users.map(user => {
-      const role = roles.find(r => r.id === user.role_id);
-      const institution = institutions.find(i => i.id === user.institution_id);
-      
-      // Log detalhado para debug
-      const extendedUser = user as ExtendedUserResponseDto;
-      if (!extendedUser.role_name && !role) {
-        console.warn(`⚠️ Usuário ${user.name} (${user.id}) sem role definida`);
+      // Verifica se a resposta tem a estrutura esperada
+      if (!response || !response.items || !Array.isArray(response.items)) {
+        console.error('❌ Resposta inválida do userService:', response);
+        showError('Formato de resposta inválido do servidor');
+        setUsers([]);
+        setTotalPages(1);
+        setTotalItems(0);
+        return;
       }
-      
-      return {
-        ...user,
-        role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
-        institution_name: (user as ExtendedUserResponseDto).institution_name || institution?.name || 'Não vinculada',
-      } as ExtendedUserResponseDto;
-    });
 
-    console.log('📊 Dados processados:', {
-      totalUsuarios: enrichedUsers.length,
-      usuariosComRole: enrichedUsers.filter(u => u.role_name !== 'Não definida').length,
-      usuariosComInstituicao: enrichedUsers.filter(u => u.institution_name !== 'Não vinculada').length
-    });
+      // Verifica se há informações de paginação
+      if (!response.pagination) {
+        console.warn('⚠️ Resposta sem informações de paginação');
+        response.pagination = {
+          page: currentPage,
+          limit: itemsPerPage,
+          total: response.items.length,
+          totalPages: Math.ceil(response.items.length / itemsPerPage),
+          hasNext: false,
+          hasPrev: currentPage > 1
+        };
+      }
 
-    setUsers(enrichedUsers);
-    setTotalPages(totalPages);
-    setTotalItems(total);
+      const enrichedUsers = response.items.map(user => {
+        const role = roles.find(r => r.id === user.role_id);
+        const institution = institutions.find(i => i.id === user.institution_id);
+        
+        return {
+          ...user,
+          role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
+          institution_name: (user as ExtendedUserResponseDto).institution_name || institution?.name || 'Não vinculada',
+        } as ExtendedUserResponseDto;
+      });
 
-      // Notificação de sucesso apenas se houver usuários
+      console.log('📊 Dados processados:', {
+        totalUsuarios: enrichedUsers.length,
+        paginaAtual: response.pagination.page,
+        totalPaginas: response.pagination.totalPages,
+        totalItens: response.pagination.total,
+        temProxima: response.pagination.hasNext,
+        temAnterior: response.pagination.hasPrev
+      });
+
+      setUsers(enrichedUsers);
+      setTotalPages(response.pagination.totalPages);
+      setTotalItems(response.pagination.total);
+
+      // Log de sucesso
       if (enrichedUsers.length > 0) {
-        console.log(`✅ ${enrichedUsers.length} usuários carregados com sucesso`);
+        console.log(`✅ ${enrichedUsers.length} usuários carregados com sucesso (página ${response.pagination.page} de ${response.pagination.totalPages})`);
       } else {
         console.warn('⚠️ Nenhum usuário encontrado com os filtros aplicados');
       }
