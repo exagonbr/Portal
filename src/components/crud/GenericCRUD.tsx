@@ -115,6 +115,9 @@ export default function GenericCRUD<T extends { id: string | number }>({
   const canDelete = (item: T) => !deletePermission || true // hasPermission(deletePermission as any)
   const canView = (item: T) => !viewPermission || true // hasPermission(viewPermission as any)
 
+  // Verifica se deve mostrar o cabeçalho
+  const shouldShowHeader = title || (showSearch && onSearch) || (onCreate && canCreate)
+
   const tableColumns = [
     ...columns.map(col => ({
       key: col.key as string,
@@ -150,37 +153,41 @@ export default function GenericCRUD<T extends { id: string | number }>({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 
-          className="text-2xl font-bold"
-          style={{ color: theme.colors.text.primary }}
-        >
-          {title}
-        </h1>
-        
-        <div className="flex items-center gap-3">
-          {showSearch && onSearch && (
-            <Input
-              type="search"
-              placeholder={searchPlaceholder || `Buscar ${plural}...`}
-              value={searchQuery}
-              onChange={(e: { target: { value: string } }) => handleSearch(e.target.value)}
-              leftIcon="search"
-              className="w-64"
-            />
+      {/* Header - só renderiza se necessário */}
+      {shouldShowHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {title && (
+            <h1 
+              className="text-2xl font-bold"
+              style={{ color: theme.colors.text.primary }}
+            >
+              {title}
+            </h1>
           )}
           
-          {onCreate && canCreate && (
-            <Button
-              variant="default"
-              onClick={onCreate}
-            >
-              Novo {entityName}
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            {showSearch && onSearch && (
+              <Input
+                type="search"
+                placeholder={searchPlaceholder || `Buscar ${plural}...`}
+                value={searchQuery}
+                onChange={(e: { target: { value: string } }) => handleSearch(e.target.value)}
+                leftIcon="search"
+                className="w-64"
+              />
+            )}
+            
+            {onCreate && canCreate && (
+              <Button
+                variant="default"
+                onClick={onCreate}
+              >
+                Novo {entityName}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Table */}
       <motion.div

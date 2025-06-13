@@ -17,6 +17,7 @@ import {
 import { Book } from '@/constants/mockData';
 import { useKookit } from '@/hooks/useKookit';
 import KookitLoader from './KookitLoader';
+import { EnhancedLoadingState, EnhancedErrorState } from '@/components/ui/LoadingStates';
 
 interface KookitBookViewerProps {
   book: Book;
@@ -27,6 +28,8 @@ const KookitBookViewer: React.FC<KookitBookViewerProps> = ({ book, onClose }) =>
   const [zoom, setZoom] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showToc, setShowToc] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   // Determinar URL e tipo do arquivo
   const fileUrl = book.filePath || `/books/${book.id}.${book.format.toLowerCase()}`;
@@ -34,8 +37,6 @@ const KookitBookViewer: React.FC<KookitBookViewerProps> = ({ book, onClose }) =>
 
   // Usar hook do Kookit
   const {
-    isLoading,
-    error,
     isReady,
     currentPage,
     totalPages,
@@ -66,34 +67,31 @@ const KookitBookViewer: React.FC<KookitBookViewerProps> = ({ book, onClose }) =>
   };
 
   const ViewerContent = () => (
-    <div 
-      className={`flex flex-col w-full h-full min-h-[90vh] bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden ${
-        isFullscreen ? 'fixed inset-0 z-50' : 'relative'
-      }`}
-    >
-      {/* Barra superior */}
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+      {/* Cabeçalho */}
       <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            aria-label="Fechar"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          </button>
-          
-          <div className="flex items-center space-x-2">
-            <BookOpen className="w-5 h-5 text-blue-600" />
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-xs">
-              {book.title}
-            </h3>
-          </div>
-          
-          {book.author && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
-              por {book.author}
-            </span>
+          {onClose && (
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              aria-label="Fechar"
+            >
+              <X className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+            </button>
           )}
+          
+          <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="flex flex-col">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate max-w-xs">
+              {book.title}
+            </h2>
+            {book.author && (
+              <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+                por {book.author}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center space-x-1">
@@ -153,53 +151,35 @@ const KookitBookViewer: React.FC<KookitBookViewerProps> = ({ book, onClose }) =>
         <div className="flex-1 min-h-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900 relative">
           {/* Estados de carregamento e erro */}
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/90 dark:bg-gray-900/90 z-10">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Carregando {fileType.toUpperCase()}...
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                  Powered by Kookit
-                </p>
-              </div>
+            <div className="absolute inset-0 z-10">
+              <EnhancedLoadingState
+                message={`Carregando ${fileType.toUpperCase()}...`}
+                submessage="Powered by Kookit"
+                timeout={60}
+                onTimeout={() => setError('Tempo limite excedido ao carregar o arquivo')}
+                onCancel={onClose}
+                cancelText="Fechar"
+              />
             </div>
           )}
           
           {error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/90 dark:bg-gray-900/90 z-10">
-              <div className="text-center max-w-md p-6">
-                <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-2">
-                  Erro ao carregar livro
-                </h3>
-                <p className="text-red-600 dark:text-red-300 text-sm mb-4">
-                  {error}
-                </p>
-                
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
-                  <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                    💡 Verifique se o arquivo existe e está no formato correto
-                  </p>
-                </div>
-                
-                <div className="flex justify-center space-x-2">
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                  >
-                    🔄 Recarregar
-                  </button>
-                  {onClose && (
-                    <button 
-                      onClick={onClose}
-                      className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
-                    >
-                      ← Voltar
-                    </button>
-                  )}
-                </div>
-              </div>
+            <div className="absolute inset-0 z-10">
+              <EnhancedErrorState
+                title="Erro ao carregar livro"
+                message={error}
+                onRetry={() => {
+                  setError('');
+                  setIsLoading(true);
+                  // Recarregar o componente sem refresh da página
+                  window.location.reload();
+                }}
+                onCancel={onClose}
+                retryText="🔄 Recarregar"
+                cancelText="← Voltar"
+                showRefresh={true}
+                details="💡 Verifique se o arquivo existe e está no formato correto"
+              />
             </div>
           )}
           

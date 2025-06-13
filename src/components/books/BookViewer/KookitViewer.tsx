@@ -20,6 +20,8 @@ import {
   Globe,
 } from 'lucide-react';
 import { Book } from '@/constants/mockData';
+import { useSmartRefresh } from '@/hooks/useSmartRefresh';
+import { EnhancedErrorState } from '@/components/ui/LoadingStates';
 
 interface KookitViewerProps {
   book: Book | {
@@ -52,6 +54,22 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
   const [showTextMenu, setShowTextMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [highlightColor, setHighlightColor] = useState<'yellow' | 'green' | 'blue'>('yellow');
+
+  const smartRefresh = useSmartRefresh({
+    maxAttempts: 3,
+    retryDelay: 2000,
+    fallbackUrl: '/portal/books',
+    onSuccess: () => {
+      setError(null);
+      setIsLoading(true);
+    },
+    onError: (error) => {
+      console.error('Erro no refresh inteligente:', error);
+    },
+    onMaxAttemptsReached: () => {
+      setError('Não foi possível recarregar o livro após várias tentativas. Tente novamente mais tarde.');
+    }
+  });
 
   const initializeKookit = async () => {
     try {
@@ -295,6 +313,19 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
     }
   };
   
+  const handleRetry = async () => {
+    setError(null);
+    setIsLoading(true);
+    
+    try {
+      // Tentar recarregar o Kookit
+      await initializeKookit();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      setError(errorMessage);
+    }
+  };
+  
   // Cleanup na desmontagem
   useEffect(() => {
     return () => {
@@ -401,27 +432,16 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
           
           {error && (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-              <X className="w-16 h-16 text-red-500 mb-4" />
-              <h3 className="text-xl font-semibold text-red-700 dark:text-red-400 mb-2">
-                Erro ao carregar arquivo
-              </h3>
-              <p className="text-red-600 dark:text-red-300 max-w-md mb-6">
-                {error}
-              </p>
-              <button 
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark mr-2"
-              >
-                Tentar novamente
-              </button>
-              {onClose && (
-                <button 
-                  onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 ml-2"
-                >
-                  Voltar
-                </button>
-              )}
+              <EnhancedErrorState
+                title="Erro ao carregar arquivo"
+                message={error}
+                onRetry={handleRetry}
+                onCancel={onClose}
+                retryText="Tentar novamente"
+                cancelText="Voltar"
+                showRefresh={true}
+                details={`Tentativas de refresh: ${smartRefresh.attempts}/3`}
+              />
             </div>
           )}
           

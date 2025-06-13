@@ -52,6 +52,7 @@ import { Badge } from '@/components/ui/Badge'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import Modal from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
+import { UserCreateModal } from '@/components/UserCreateModal'
 
 // Estendendo o tipo UserResponseDto para incluir campos adicionais
 interface ExtendedUserResponseDto extends UserResponseDto {
@@ -744,6 +745,7 @@ export default function ManageUsers() {
   const [showPermissionsModal, setShowPermissionsModal] = useState(false)
   const [showReportsModal, setShowReportsModal] = useState(false)
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [permissions, setPermissions] = useState({
@@ -795,54 +797,129 @@ export default function ManageUsers() {
   }
 
   // Carregar dados auxiliares (roles e instituições)
+  // Esta função foi otimizada para:
+  // 1. Fazer chamadas paralelas para roles e instituições
+  // 2. Tratar erros individualmente sem falhar completamente
+  // 3. Usar dados mock como fallback quando a API falha
+  // 4. Fornecer logs detalhados para debug
+  // 5. Garantir que os filtros só funcionem após o carregamento
   const loadAuxiliaryData = async () => {
     try {
-      const [rolesResponse, institutionsResponse] = await Promise.all([
+      console.log('🔄 Carregando dados auxiliares (roles e instituições)...');
+      
+      // Carrega roles e instituições em paralelo
+      const [rolesResult, institutionsResult] = await Promise.allSettled([
         roleService.getActiveRoles(),
         institutionService.getActiveInstitutions()
       ]);
 
-      // Popula roles com dados da API ou mock
-      if (rolesResponse && rolesResponse.length > 0) {
-        setRoles(rolesResponse);
+      // Processa resultado das roles
+      let rolesData: RoleResponseDto[] = [];
+      if (rolesResult.status === 'fulfilled') {
+        console.log('🎭 Resultado das roles:', {
+          status: rolesResult.status,
+          value: rolesResult.value,
+          isArray: Array.isArray(rolesResult.value),
+          length: Array.isArray(rolesResult.value) ? rolesResult.value.length : 'N/A'
+        });
+        
+        if (rolesResult.value && Array.isArray(rolesResult.value)) {
+          rolesData = rolesResult.value;
+          console.log('✅ Roles carregadas da API:', rolesData.map(r => ({ id: r.id, name: r.name })));
+        } else {
+          console.warn('⚠️ Roles retornadas não são um array válido:', rolesResult.value);
+        }
       } else {
-        console.warn('API de roles não retornou dados. Usando mock.');
+        console.error('❌ Erro ao carregar roles da API:', rolesResult.reason);
+      }
+      
+      // Se não conseguiu carregar roles da API, usa dados mock
+      if (rolesData.length === 0) {
+        console.log('🔧 Usando roles mock como fallback...');
         const now = new Date().toISOString();
-        setRoles([
-          { id: 'd9a8b7c6-e5f4-3210-a1b2-c3d4e5f6a7b8', name: 'Administrador', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
-          { id: 'c8b7a6d5-f4e3-2109-b2c3-d4e5f6a7b8c9', name: 'Professor', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
-          { id: 'b7a6d5c4-e3f2-1098-c3d4-e5f6a7b8c9d0', name: 'Aluno', description: 'Acessa os cursos e materiais', created_at: now, updated_at: now },
-          { id: 'a6d5c4b3-f2e1-0987-d4e5-f6a7b8c9d0e1', name: 'Coordenador', description: 'Coordena professores e turmas', created_at: now, updated_at: now },
-        ]);
+        rolesData = [
+          { id: 'role-admin', name: 'Administrador', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
+          { id: 'role-teacher', name: 'Professor', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
+          { id: 'role-student', name: 'Estudante', description: 'Acessa os cursos e materiais', created_at: now, updated_at: now },
+          { id: 'role-coordinator', name: 'Coordenador', description: 'Coordena professores e turmas', created_at: now, updated_at: now },
+          { id: 'role-manager', name: 'Gerente', description: 'Gerencia instituição', created_at: now, updated_at: now },
+          { id: 'role-guardian', name: 'Responsável', description: 'Responsável por estudante', created_at: now, updated_at: now },
+        ];
+        console.log('🔧 Roles mock criadas:', rolesData.map(r => ({ id: r.id, name: r.name })));
       }
 
-      // Popula instituições com dados da API ou mock
-      if (institutionsResponse && institutionsResponse.length > 0) {
-        setInstitutions(institutionsResponse);
+      // Processa resultado das instituições
+      let institutionsData: InstitutionResponseDto[] = [];
+      if (institutionsResult.status === 'fulfilled') {
+        console.log('🏢 Resultado das instituições:', {
+          status: institutionsResult.status,
+          value: institutionsResult.value,
+          isArray: Array.isArray(institutionsResult.value),
+          length: Array.isArray(institutionsResult.value) ? institutionsResult.value.length : 'N/A'
+        });
+        
+        if (institutionsResult.value && Array.isArray(institutionsResult.value)) {
+          institutionsData = institutionsResult.value;
+          console.log('✅ Instituições carregadas da API:', institutionsData.map(i => ({ id: i.id, name: i.name })));
+        } else {
+          console.warn('⚠️ Instituições retornadas não são um array válido:', institutionsResult.value);
+        }
       } else {
-        console.warn('API de instituições não retornou dados. Usando mock.');
-        const now = new Date().toISOString();
-        setInstitutions([
-          { id: 'e1f2a3b4-c5d6-7890-e1f2-a3b4c5d6e7f8', name: 'Escola SaberCon Digital', code: 'SABERCON', created_at: now, updated_at: now },
-          { id: 'f2a3b4c5-d6e7-8901-f2a3-b4c5d6e7f8a9', name: 'Colégio Exagon Inovação', code: 'EXAGON', created_at: now, updated_at: now },
-          { id: 'a3b4c5d6-e7f8-9012-a3b4-c5d6e7f8a9b0', name: 'Centro Educacional DevStrade', code: 'DEVSTRADE', created_at: now, updated_at: now },
-        ]);
+        console.error('❌ Erro ao carregar instituições da API:', institutionsResult.reason);
       }
+      
+      // Se não conseguiu carregar instituições da API, usa dados mock
+      if (institutionsData.length === 0) {
+        console.log('🔧 Usando instituições mock como fallback...');
+        const now = new Date().toISOString();
+        institutionsData = [
+          { id: 'inst-sabercon', name: 'Escola SaberCon Digital', code: 'SABERCON', created_at: now, updated_at: now },
+          { id: 'inst-exagon', name: 'Colégio Exagon Inovação', code: 'EXAGON', created_at: now, updated_at: now },
+          { id: 'inst-devstrade', name: 'Centro Educacional DevStrade', code: 'DEVSTRADE', created_at: now, updated_at: now },
+          { id: 'inst-unifesp', name: 'Universidade Federal de São Paulo', code: 'UNIFESP', created_at: now, updated_at: now },
+          { id: 'inst-usp', name: 'Universidade de São Paulo', code: 'USP', created_at: now, updated_at: now },
+        ];
+        console.log('🔧 Instituições mock criadas:', institutionsData.map(i => ({ id: i.id, name: i.name })));
+      }
+
+      // Atualiza os estados
+      setRoles(rolesData);
+      setInstitutions(institutionsData);
+
+      console.log('📊 Dados auxiliares finais carregados:', {
+        roles: {
+          count: rolesData.length,
+          items: rolesData.map(r => ({ id: r.id, name: r.name }))
+        },
+        institutions: {
+          count: institutionsData.length,
+          items: institutionsData.map(i => ({ id: i.id, name: i.name }))
+        }
+      });
+
+      console.log('✅ Dados auxiliares carregados com sucesso');
 
     } catch (error) {
-      console.error('Erro ao carregar dados auxiliares:', error);
+      console.error('❌ Erro crítico ao carregar dados auxiliares:', error);
       showError('Falha ao carregar dados de apoio. Usando valores padrão.');
+      
+      // Em caso de erro crítico, usa os mocks
       const now = new Date().toISOString();
-      // Em caso de erro na API, usa os mocks
-      setRoles([
-        { id: 'd9a8b7c6-e5f4-3210-a1b2-c3d4e5f6a7b8', name: 'Administrador (Mock)', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
-        { id: 'c8b7a6d5-f4e3-2109-b2c3-d4e5f6a7b8c9', name: 'Professor (Mock)', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
-      ]);
-      setInstitutions([
-        { id: 'e1f2a3b4-c5d6-7890-e1f2-a3b4c5d6e7f8', name: 'Escola SaberCon (Mock)', code: 'SABERCON_MOCK', created_at: now, updated_at: now },
-      ]);
+      const fallbackRoles = [
+        { id: 'fallback-admin', name: 'Administrador (Fallback)', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
+        { id: 'fallback-teacher', name: 'Professor (Fallback)', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
+        { id: 'fallback-student', name: 'Estudante (Fallback)', description: 'Acessa os cursos e materiais', created_at: now, updated_at: now },
+      ];
+      const fallbackInstitutions = [
+        { id: 'fallback-inst', name: 'Escola SaberCon (Fallback)', code: 'SABERCON_FALLBACK', created_at: now, updated_at: now },
+      ];
+      
+      setRoles(fallbackRoles);
+      setInstitutions(fallbackInstitutions);
+      console.log('🆘 Usando dados de fallback');
     } finally {
       setAuxiliaryDataLoaded(true);
+      console.log('🏁 Carregamento de dados auxiliares finalizado');
     }
   }
 
@@ -906,11 +983,13 @@ export default function ManageUsers() {
         const role = roles.find(r => r.id === user.role_id);
         const institution = institutions.find(i => i.id === user.institution_id);
         
-        return {
+        const enrichedUser = {
           ...user,
           role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
           institution_name: (user as ExtendedUserResponseDto).institution_name || institution?.name || 'Não vinculada',
         } as ExtendedUserResponseDto;
+
+        return enrichedUser;
       });
 
       console.log('📊 Dados processados:', {
@@ -993,6 +1072,7 @@ export default function ManageUsers() {
 
   useEffect(() => {
     if (auxiliaryDataLoaded) {
+      console.log('🔄 Dados auxiliares carregados, iniciando carregamento de usuários...');
       loadUsers();
     }
   }, [loadUsers, auxiliaryDataLoaded]);
@@ -1000,7 +1080,15 @@ export default function ManageUsers() {
   // Recarregar dados quando filtros, página ou ordenação mudarem
   useEffect(() => {
     if (auxiliaryDataLoaded) {
+      console.log('🔄 Filtros/paginação alterados, recarregando usuários...', {
+        currentPage,
+        hasFilters: hasActiveFilters(),
+        filters: Object.keys(filters),
+        searchTerm: searchTerm || 'nenhum'
+      });
       loadUsers();
+    } else {
+      console.log('⏳ Aguardando dados auxiliares para aplicar filtros...');
     }
   }, [currentPage, filters, sortBy, sortOrder, searchTerm, auxiliaryDataLoaded, loadUsers]);
 
@@ -1018,8 +1106,12 @@ export default function ManageUsers() {
 
   // Criar novo usuário
   const handleCreateUser = () => {
-    setSelectedUser(null)
-    setShowModal(true)
+    setShowCreateModal(true)
+  }
+
+  const handleCreateUserSuccess = () => {
+    loadUsers() // Recarrega a lista de usuários
+    setShowCreateModal(false)
   }
 
   // Editar usuário
@@ -1146,23 +1238,41 @@ export default function ManageUsers() {
   // Função para atualizar um filtro específico com debounce
   const updateFilter = useCallback(
     debounce((key: string, value: any) => {
+      console.log(`🔧 Atualizando filtro: ${key} = ${value}`);
+      
       setCurrentPage(1); // Reset page to 1 when any filter changes
       setFilters(prev => {
         // Se o valor for vazio, remova a propriedade do objeto
-        if (value === '' || value === undefined) {
+        if (value === '' || value === undefined || value === null) {
           const newFilters = { ...prev }
           delete newFilters[key as keyof ExtendedUserFilterDto]
+          console.log(`🗑️ Removendo filtro ${key}. Filtros restantes:`, Object.keys(newFilters));
           return newFilters
         }
         
         // Caso contrário, atualize com o novo valor
-        return {
+        const newFilters = {
           ...prev,
           [key]: value
+        };
+        
+        console.log(`✅ Filtro ${key} atualizado. Filtros ativos:`, Object.keys(newFilters));
+        
+        // Log específico para filtros de role e instituição
+        if (key === 'role_id') {
+          const roleName = roles.find(r => r.id === value)?.name || 'Desconhecida';
+          console.log(`🎭 Filtro de role aplicado: ${roleName} (ID: ${value})`);
         }
+        
+        if (key === 'institution_id') {
+          const institutionName = institutions.find(i => i.id === value)?.name || 'Desconhecida';
+          console.log(`🏢 Filtro de instituição aplicado: ${institutionName} (ID: ${value})`);
+        }
+        
+        return newFilters;
       })
     }, 500), // 500ms delay
-    []
+    [roles, institutions]
   )
 
 
@@ -1334,34 +1444,22 @@ export default function ManageUsers() {
   const columns: CRUDColumn<ExtendedUserResponseDto>[] = [
     {
       key: 'name',
-      label: 'Nome',
+      label: 'Usuário',
       sortable: true,
-      width: '250px',
+      width: '260px',
       render: (value, user, index) => {
         if (!user) return '-'
         return (
-          <div className="flex items-center gap-3">
-            <div>
-              <span className="font-semibold text-slate-800 block">{user.name || 'Sem nome'}</span>
-              {user.username && <span className="text-xs text-slate-500 block">@{user.username}</span>}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-slate-800 truncate">{user.name || 'Sem nome'}</div>
+              <div className="flex items-center gap-1 text-xs text-slate-500">
+                <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                <a href={`mailto:${user.email}`} className="text-blue-600 hover:text-blue-800 hover:underline truncate">
+                  {user.email}
+                </a>
+              </div>
             </div>
-          </div>
-        )
-      }
-    },
-    {
-      key: 'email',
-      label: 'Email',
-      sortable: true,
-      width: '200px',
-      render: (value, user, index) => {
-        if (!user || !user.email) return '-'
-        return (
-          <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4 text-blue-500" />
-            <a href={`mailto:${user.email}`} className="text-blue-600 hover:text-blue-800 hover:underline truncate">
-              {user.email}
-            </a>
           </div>
         )
       }
@@ -1370,12 +1468,12 @@ export default function ManageUsers() {
       key: 'role_name',
       label: 'Função',
       sortable: true,
-      width: '150px',
+      width: '120px',
       render: (value, user, index) => {
         if (!user) return '-'
         const roleName = user.role_name || 'Não definida'
         return (
-          <Badge variant={getRoleBadgeVariant(roleName)} className="px-3 py-1 font-medium shadow-sm">
+          <Badge variant={getRoleBadgeVariant(roleName)} className="px-2 py-1 text-xs font-medium shadow-sm">
             {translateRole(roleName)}
           </Badge>
         )
@@ -1385,14 +1483,15 @@ export default function ManageUsers() {
       key: 'institution_name',
       label: 'Instituição',
       sortable: true,
-      width: '180px',
+      width: '150px',
       render: (value, user, index) => {
         if (!user) return '-'
+        const institutionName = user.institution_name || 'Não vinculada'
         return (
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-purple-500" />
-            <span className="text-slate-700 font-medium truncate">
-              {user.institution_name || 'Não vinculada'}
+          <div className="flex items-center gap-2 min-w-0">
+            <Building2 className="h-4 w-4 text-purple-500 flex-shrink-0" />
+            <span className="text-slate-700 text-sm font-medium truncate" title={institutionName}>
+              {institutionName}
             </span>
           </div>
         )
@@ -1401,34 +1500,38 @@ export default function ManageUsers() {
     {
       key: 'is_active',
       label: 'Status',
-      width: '120px',
+      width: '90px',
       render: (value, user, index) => {
         if (!user) return '-'
         const isActive = user.is_active === true
         return (
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${
+          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
             isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
           }`}>
-            <div className={`h-2.5 w-2.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-            <span className="text-sm font-semibold">
-              {isActive ? "Ativo" : "Inativo"}
-            </span>
+            <div className={`h-2 w-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+            {isActive ? "Ativo" : "Inativo"}
           </div>
         )
       }
     },
     {
       key: 'created_at',
-      label: 'Cadastrado em',
+      label: 'Cadastro',
       sortable: true,
-      width: '150px',
+      width: '110px',
       render: (value, user, index) => {
         if (!user || !user.created_at) return '-'
+        const date = new Date(user.created_at)
+        const formattedDate = date.toLocaleDateString('pt-BR', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: '2-digit' 
+        })
         return (
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-orange-500" />
-            <span className="text-sm font-medium text-slate-700">
-              {formatDate(user.created_at)}
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3 text-orange-500 flex-shrink-0" />
+            <span className="text-xs font-medium text-slate-700" title={formatDate(user.created_at)}>
+              {formattedDate}
             </span>
           </div>
         )
@@ -1436,44 +1539,28 @@ export default function ManageUsers() {
     }
   ]
 
-  // Definir ações personalizadas para o GenericCRUD
+  // Definir ações personalizadas para o GenericCRUD (compactas)
   const customActions: CRUDAction<ExtendedUserResponseDto>[] = [
     {
-      label: 'Visualizar',
-      icon: <Eye className="h-4 w-4" />,
+      label: 'Ver',
+      icon: <Eye className="h-3 w-3" />,
       onClick: handleViewUser,
       variant: 'ghost',
-      className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
+      className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 text-xs'
     },
     {
       label: 'Editar',
-      icon: <Edit className="h-4 w-4" />,
+      icon: <Edit className="h-3 w-3" />,
       onClick: handleEditUser,
       variant: 'ghost',
-      className: 'text-amber-600 hover:text-amber-800 hover:bg-amber-50'
+      className: 'text-amber-600 hover:text-amber-800 hover:bg-amber-50 px-2 py-1 text-xs'
     },
     {
-      label: 'Histórico',
-      icon: <History className="h-4 w-4" />,
-      onClick: handleViewHistory,
-      variant: 'ghost',
-      className: 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
-    },
-    {
-      label: 'Resetar senha',
-      icon: <Key className="h-4 w-4" />,
+      label: 'Senha',
+      icon: <Key className="h-3 w-3" />,
       onClick: handleResetPassword,
       variant: 'ghost',
-      className: 'text-orange-600 hover:text-orange-800 hover:bg-orange-50'
-    },
-    {
-      label: 'Alternar status',
-      icon: <Activity className="h-4 w-4" />,
-      onClick: handleToggleStatus,
-      variant: 'ghost',
-      className: (user) => user?.is_active
-        ? 'text-red-600 hover:text-red-800 hover:bg-red-50'
-        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+      className: 'text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-2 py-1 text-xs'
     }
   ]
 
@@ -1570,12 +1657,12 @@ export default function ManageUsers() {
               )}
               {filters.role_id && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Função: {roles.find(r => r.id === filters.role_id)?.name || 'Desconhecida'}
+                  Função: {roles.find(r => r.id === filters.role_id)?.name || `ID: ${filters.role_id}`}
                 </span>
               )}
               {filters.institution_id && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Instituição: {institutions.find(i => i.id === filters.institution_id)?.name || 'Desconhecida'}
+                  Instituição: {institutions.find(i => i.id === filters.institution_id)?.name || `ID: ${filters.institution_id}`}
                 </span>
               )}
               {filters.is_active !== undefined && (
@@ -1606,7 +1693,15 @@ export default function ManageUsers() {
                 <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
                   <Filter className="h-5 w-5 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-blue-800">Filtros Avançados</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-blue-800">Filtros Avançados</h2>
+                  {!auxiliaryDataLoaded && (
+                    <p className="text-sm text-blue-600 flex items-center gap-2">
+                      <div className="animate-spin w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                      Carregando opções de filtro...
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 {loading && (
@@ -1624,6 +1719,38 @@ export default function ManageUsers() {
                   >
                     <X className="h-4 w-4" />
                     Limpar filtros
+                  </Button>
+                )}
+                {/* Debug button - remover em produção */}
+                {process.env.NODE_ENV === 'development' && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      console.log('🔍 DEBUG - Estado atual:', {
+                        auxiliaryDataLoaded,
+                        roles: {
+                          count: roles.length,
+                          items: roles.map(r => ({ id: r.id, name: r.name }))
+                        },
+                        institutions: {
+                          count: institutions.length,
+                          items: institutions.map(i => ({ id: i.id, name: i.name, code: i.code }))
+                        },
+                        filters,
+                        users: users.length,
+                        totalItems,
+                        currentPage,
+                        totalPages,
+                        connectionStatus
+                      });
+                      
+                      // Testa o carregamento novamente
+                      console.log('🔄 Recarregando dados auxiliares...');
+                      loadAuxiliaryData();
+                    }}
+                    className="flex items-center gap-2 bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+                  >
+                    🐛 Debug & Reload
                   </Button>
                 )}
               </div>
@@ -1671,19 +1798,40 @@ export default function ManageUsers() {
                 <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
                   <Shield className="h-4 w-4 text-purple-500" />
                   Função
+                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {roles.length} disponíveis
+                  </span>
                 </label>
-                <select
-                  value={filters.role_id || ''}
-                  onChange={(e) => updateFilter('role_id', e.target.value)}
-                  className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
-                >
-                  <option value="">Todas as funções</option>
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
+                {!auxiliaryDataLoaded ? (
+                  <FilterLoading />
+                ) : (
+                  <select
+                    value={filters.role_id || ''}
+                    onChange={(e) => {
+                      console.log('🎭 Selecionando role:', e.target.value);
+                      updateFilter('role_id', e.target.value);
+                    }}
+                    className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                    disabled={loading}
+                  >
+                    <option value="">🔍 Todas as funções ({roles.length})</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        👤 {role.name} {role.description && `- ${role.description}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {auxiliaryDataLoaded && roles.length === 0 && (
+                  <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                    ⚠️ Nenhuma função disponível
+                  </div>
+                )}
+                {auxiliaryDataLoaded && roles.length > 0 && (
+                  <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                    ✅ {roles.length} funções carregadas
+                  </div>
+                )}
               </div>
 
               {/* Filtro por Instituição */}
@@ -1691,19 +1839,40 @@ export default function ManageUsers() {
                 <label className="flex items-center gap-2 text-sm font-semibold text-blue-700">
                   <Building2 className="h-4 w-4 text-purple-500" />
                   Instituição
+                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {institutions.length} disponíveis
+                  </span>
                 </label>
-                <select
-                  value={filters.institution_id || ''}
-                  onChange={(e) => updateFilter('institution_id', e.target.value)}
-                  className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
-                >
-                  <option value="">Todas as instituições</option>
-                  {institutions.map((institution) => (
-                    <option key={institution.id} value={institution.id}>
-                      {institution.name}
-                    </option>
-                  ))}
-                </select>
+                {!auxiliaryDataLoaded ? (
+                  <FilterLoading />
+                ) : (
+                  <select
+                    value={filters.institution_id || ''}
+                    onChange={(e) => {
+                      console.log('🏢 Selecionando instituição:', e.target.value);
+                      updateFilter('institution_id', e.target.value);
+                    }}
+                    className="w-full rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
+                    disabled={loading}
+                  >
+                    <option value="">🔍 Todas as instituições ({institutions.length})</option>
+                    {institutions.map((institution) => (
+                      <option key={institution.id} value={institution.id}>
+                        🏢 {institution.name} {institution.code && `(${institution.code})`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {auxiliaryDataLoaded && institutions.length === 0 && (
+                  <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                    ⚠️ Nenhuma instituição disponível
+                  </div>
+                )}
+                {auxiliaryDataLoaded && institutions.length > 0 && (
+                  <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                    ✅ {institutions.length} instituições carregadas
+                  </div>
+                )}
               </div>
 
               {/* Filtro por Status */}
@@ -1839,27 +2008,32 @@ export default function ManageUsers() {
               </div>
             )}
             
-            <GenericCRUD
-              title=""
-              entityName="Usuário"
-              entityNamePlural="Usuários"
-              columns={columns}
-              data={users}
-              loading={loading}
-              totalItems={totalItems}
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onCreate={handleCreateUser}
-              onEdit={handleEditUser}
-              onDelete={handleDeleteUser}
-              onView={handleViewUser}
-              customActions={customActions}
-              showSearch={false}
-              showPagination={false}
-              showActions={true}
-              emptyMessage=""
-            />
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <div className="min-w-[780px]" style={{ fontSize: '0.875rem' }}>
+                  <GenericCRUD
+                    title=""
+                    entityName="Usuário"
+                    entityNamePlural="Usuários"
+                    columns={columns}
+                    data={users}
+                    loading={loading}
+                    totalItems={totalItems}
+                    currentPage={currentPage}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={handlePageChange}
+                    onEdit={handleEditUser}
+                    onDelete={handleDeleteUser}
+                    onView={handleViewUser}
+                    customActions={customActions}
+                    showSearch={false}
+                    showPagination={false}
+                    showActions={true}
+                    emptyMessage=""
+                  />
+                </div>
+              </div>
+            </div>
             
             {/* Paginação customizada */}
             <div className="mt-6 bg-white rounded-lg shadow-sm border border-slate-200">
@@ -2053,6 +2227,14 @@ export default function ManageUsers() {
               setSelectedUser(null)
             }}
             notifications={notifications}
+          />
+        )}
+
+        {/* Modal de Criação de Usuário */}
+        {showCreateModal && (
+          <UserCreateModal
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={handleCreateUserSuccess}
           />
         )}
       </div>

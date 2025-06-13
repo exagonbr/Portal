@@ -327,32 +327,67 @@ export class RoleService {
    */
   async getActiveRoles(): Promise<RoleResponseDto[]> {
     try {
-      const cacheKey = CacheKeys.ACTIVE_ROLES;
+      this.logger.debug('Buscando roles ativas...');
 
-      return await withCache(cacheKey, async () => {
-        try {
-          const response = await this.getRoles({
-            filters: { 
-              active: true,
-              status: 'active'
-            },
-            limit: 100,
-            sortBy: 'name',
-            sortOrder: 'asc'
-          });
+      // Fazer chamada direta à API sem cache para debug
+      const response = await apiClient.get<any>(this.baseEndpoint, {
+        active: true,
+        status: 'active',
+        limit: 100,
+        sortBy: 'name',
+        sortOrder: 'asc'
+      });
 
-          if (!response?.items || !Array.isArray(response.items)) {
-            this.logger.warn('Resposta inválida ao buscar roles ativas');
-            return [];
-          }
+      this.logger.debug('Resposta da API de roles:', {
+        success: response.success,
+        dataType: typeof response.data,
+        dataKeys: response.data ? Object.keys(response.data) : [],
+        hasItems: !!(response.data?.items || response.data?.data?.items),
+        responseStructure: response.data
+      });
 
-          return response.items.filter(role => role.active !== false);
-        } catch (innerError) {
-          this.logger.error('Erro interno ao buscar roles ativas:', innerError);
-          // Garantindo que a mensagem de erro está em português
-          throw new Error('Falha ao recuperar roles');
-        }
-      }, CacheTTL.LONG);
+      if (!response.success) {
+        this.logger.error('API retornou erro:', response.message);
+        throw new Error(response.message || 'Falha ao buscar roles');
+      }
+
+      // Tentar diferentes estruturas de resposta
+      let roles: RoleResponseDto[] = [];
+      
+      if (response.data?.items && Array.isArray(response.data.items)) {
+        // Estrutura: { items: [...] }
+        roles = response.data.items;
+        this.logger.debug('Usando estrutura response.data.items');
+      } else if (response.data?.data?.items && Array.isArray(response.data.data.items)) {
+        // Estrutura: { data: { items: [...] } }
+        roles = response.data.data.items;
+        this.logger.debug('Usando estrutura response.data.data.items');
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        // Estrutura: { data: [...] }
+        roles = response.data.data;
+        this.logger.debug('Usando estrutura response.data.data (array direto)');
+      } else if (Array.isArray(response.data)) {
+        // Estrutura: [...] (array direto)
+        roles = response.data;
+        this.logger.debug('Usando estrutura response.data (array direto)');
+      } else {
+        this.logger.warn('Estrutura de resposta não reconhecida:', response.data);
+        return [];
+      }
+
+      // Filtrar apenas roles ativas
+      const activeRoles = roles.filter(role => {
+        // Verificar diferentes campos que podem indicar se a role está ativa
+        const isActive = role.active !== false && 
+                         role.status !== 'inactive' && 
+                         role.status !== 'disabled';
+        return isActive;
+      });
+
+      this.logger.debug(`Encontradas ${activeRoles.length} roles ativas de ${roles.length} total`);
+      
+      return activeRoles;
+
     } catch (error) {
       this.logger.error('Erro ao buscar roles ativas:', error);
       

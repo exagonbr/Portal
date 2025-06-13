@@ -181,26 +181,57 @@ export const institutionService = {
   },
 
   async getActiveInstitutions(): Promise<Institution[]> {
-    // Use the main institutions endpoint with a filter for active institutions
-    const queryParams = new URLSearchParams({
-      active: 'true',
-      limit: '100' // Set a high limit to get all active institutions
-    });
-    
-    const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
-      headers: getAuthHeaders(),
-    });
+    try {
+      console.log('🔍 Buscando instituições ativas...');
+      
+      // Use the main institutions endpoint with a filter for active institutions
+      const queryParams = new URLSearchParams({
+        active: 'true',
+        limit: '100' // Set a high limit to get all active institutions
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
+        headers: getAuthHeaders(),
+      });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
+      if (!response.ok) {
+        console.error(`❌ Erro HTTP ${response.status} ao buscar instituições ativas`);
+        if (response.status === 401) {
+          throw new Error('Não autorizado. Faça login novamente.');
+        }
+        throw new Error(`Falha ao buscar instituições ativas (HTTP ${response.status})`);
       }
-      throw new Error('Falha ao buscar instituições ativas');
-    }
 
-    const result = await response.json();
-    // Return just the items array from the paginated response
-    return result.data.items;
+      const result = await response.json();
+      console.log('📥 Resposta da API de instituições:', result);
+      
+      // Check different possible response structures
+      let institutions: Institution[] = [];
+      
+      if (result.items && Array.isArray(result.items)) {
+        // Direct items array
+        institutions = result.items;
+      } else if (result.data && result.data.items && Array.isArray(result.data.items)) {
+        // Nested data.items structure
+        institutions = result.data.items;
+      } else if (result.data && Array.isArray(result.data)) {
+        // Direct data array
+        institutions = result.data;
+      } else if (Array.isArray(result)) {
+        // Direct array response
+        institutions = result;
+      } else {
+        console.warn('⚠️ Estrutura de resposta não reconhecida:', result);
+        return [];
+      }
+
+      console.log(`✅ ${institutions.length} instituições ativas encontradas`);
+      return institutions.filter(inst => inst.active !== false);
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar instituições ativas:', error);
+      throw error;
+    }
   },
 
   async searchInstitutionsByName(name: string): Promise<Institution[]> {

@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
 import { getDefaultDashboard } from '@/utils/rolePermissions';
+import { EnhancedLoadingState, EnhancedRedirectState, EnhancedErrorState } from '@/components/ui/LoadingStates';
 
 export default function DashboardRedirect() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [error, setError] = useState<string>('');
   const [redirecting, setRedirecting] = useState(false);
+  const [destination, setDestination] = useState<string>('');
   const redirectAttempts = useRef(0);
   const maxRedirectAttempts = 3;
 
@@ -26,8 +28,8 @@ export default function DashboardRedirect() {
 
         if (!user) {
           console.log('🔄 DashboardRedirect: Usuário não autenticado, redirecionando para login');
+          setDestination('/login?error=unauthorized');
           setRedirecting(true);
-          router.push('/login?error=unauthorized');
           return;
         }
 
@@ -39,14 +41,6 @@ export default function DashboardRedirect() {
         if (!userRole) {
           console.error('❌ DashboardRedirect: Perfil de usuário não identificado');
           setError('Perfil de usuário não identificado. Por favor, faça login novamente.');
-          
-          // Aguarda 3 segundos antes de redirecionar para login
-          setTimeout(() => {
-            if (!redirecting) {
-              setRedirecting(true);
-              router.push('/login?error=invalid_role');
-            }
-          }, 3000);
           return;
         }
 
@@ -66,80 +60,69 @@ export default function DashboardRedirect() {
         }
 
         console.log(`✅ DashboardRedirect: Redirecionando para: ${defaultRoute}`);
+        setDestination(defaultRoute);
         setRedirecting(true);
-        router.push(defaultRoute);
 
       } catch (err) {
         console.error('❌ DashboardRedirect: Erro no redirecionamento:', err);
         setError('Erro interno. Por favor, tente novamente ou entre em contato com o suporte.');
-        
-        // Se houve erro, tenta redirecionar para login após um tempo
-        setTimeout(() => {
-          if (!redirecting) {
-            setRedirecting(true);
-            router.push('/login?error=redirect_error');
-          }
-        }, 5000);
       }
     }
   }, [user, loading, router, redirecting]);
 
-  // Renderização condicional baseada no estado
+  const handleRetry = () => {
+    setError('');
+    setRedirecting(false);
+    redirectAttempts.current = 0;
+    // Força uma nova verificação
+    window.location.reload();
+  };
+
+  const handleCancelRedirect = () => {
+    setRedirecting(false);
+    redirectAttempts.current = 0;
+    router.push('/login');
+  };
+
+  // Estado de erro
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6 text-center">
-          <div className="mb-4">
-            <svg className="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.966-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Erro de Redirecionamento</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => {
-              setError('');
-              setRedirecting(false);
-              redirectAttempts.current = 0;
-              router.push('/login');
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
-          >
-            Voltar ao Login
-          </button>
-        </div>
-      </div>
+      <EnhancedErrorState
+        title="Erro de Redirecionamento"
+        message={error}
+        onRetry={handleRetry}
+        onCancel={() => router.push('/login')}
+        retryText="Tentar Novamente"
+        cancelText="Voltar ao Login"
+        details={`Tentativas: ${redirectAttempts.current}/${maxRedirectAttempts}`}
+      />
     );
   }
 
-  // Estado de carregamento/redirecionamento
+  // Estado de redirecionamento
+  if (redirecting && destination) {
+    return (
+      <EnhancedRedirectState
+        destination={destination}
+        message="Redirecionando para seu dashboard"
+        countdown={3}
+        onCancel={handleCancelRedirect}
+        autoRedirect={true}
+      />
+    );
+  }
+
+  // Estado de carregamento
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="loading-spinner mb-4 mx-auto h-8 w-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          {loading ? 'Carregando...' : 'Redirecionando...'}
-        </h2>
-        <p className="text-gray-600">
-          {loading ? 'Verificando suas credenciais...' : 'Direcionando você para sua área personalizada...'}
-        </p>
-        
-        {/* Botão de fallback caso o redirecionamento demore muito */}
-        {redirecting && (
-          <div className="mt-6">
-            <button
-              onClick={() => {
-                setRedirecting(false);
-                redirectAttempts.current = 0;
-                router.push('/login');
-              }}
-              className="text-blue-600 hover:text-blue-700 text-sm underline"
-            >
-              Cancelar e voltar ao login
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+    <EnhancedLoadingState
+      message={loading ? 'Carregando...' : 'Preparando redirecionamento...'}
+      submessage={loading ? 'Verificando suas credenciais...' : 'Identificando sua área personalizada...'}
+      timeout={30}
+      onTimeout={() => {
+        setError('Tempo limite excedido. Tente fazer login novamente.');
+      }}
+      onCancel={handleCancelRedirect}
+      cancelText="Cancelar e voltar ao login"
+    />
   );
 }

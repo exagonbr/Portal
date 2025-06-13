@@ -1,12 +1,12 @@
+import { EnhancedLoadingState } from '@/components/ui/LoadingStates';
+
 export default function Loading() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm z-50">
-      <div className="flex flex-col items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
-        <span className="mt-4 text-text-secondary font-medium">Carregando...</span>
-      </div>
-    </div>
-  )
+    <EnhancedLoadingState 
+      message="Carregando..."
+      submessage="Aguarde enquanto preparamos tudo para você"
+    />
+  );
 }
 
 export function LoadingSpinner({ size = 'medium' }: { size?: 'small' | 'medium' | 'large' }) {
@@ -100,3 +100,34 @@ export function LoadingGrid({ count = 6 }: { count?: number }) {
     </div>
   )
 }
+
+// Componente de loading inteligente com retry automático
+export function SmartLoadingSpinner({ 
+  message = 'Carregando...', 
+  timeout = 30000,
+  onTimeout,
+  onRetry 
+}: { 
+  message?: string;
+  timeout?: number;
+  onTimeout?: () => void;
+  onRetry?: () => void;
+}) {
+  return (
+    <EnhancedLoadingState
+      message={message}
+      timeout={timeout / 1000}
+      onTimeout={onTimeout}
+      onCancel={onRetry}
+      cancelText="Tentar novamente"
+    />
+  );
+}
+
+// Re-exportar os novos componentes para facilitar o uso
+export { 
+  EnhancedLoadingState, 
+  EnhancedRedirectState, 
+  EnhancedErrorState,
+  useLoadingState 
+} from '@/components/ui/LoadingStates';
