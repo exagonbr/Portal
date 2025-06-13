@@ -27,6 +27,11 @@ const roleController = new RoleController();
  *           enum: [active, inactive]
  *         description: Filter roles by status
  *       - in: query
+ *         name: active
+ *         schema:
+ *           type: boolean
+ *         description: Filter roles by active status
+ *       - in: query
  *         name: search
  *         schema:
  *           type: string
@@ -41,6 +46,17 @@ const roleController = new RoleController();
  *         schema:
  *           type: integer
  *         description: Items per page
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order
  *     responses:
  *       200:
  *         description: List of roles
@@ -56,6 +72,84 @@ const roleController = new RoleController();
  *         description: Forbidden
  */
 router.get('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getAll);
+
+/**
+ * @swagger
+ * /api/roles/search:
+ *   get:
+ *     summary: Search roles with filters and pagination
+ *     tags: [Roles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [system, custom]
+ *         description: Filter roles by type
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, inactive]
+ *         description: Filter roles by status
+ *       - in: query
+ *         name: active
+ *         schema:
+ *           type: boolean
+ *         description: Filter roles by active status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search in role name and description
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Items per page
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order
+ *     responses:
+ *       200:
+ *         description: List of roles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Role'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ */
+router.get('/search', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.search);
 
 /**
  * @swagger

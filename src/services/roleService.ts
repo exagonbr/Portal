@@ -36,7 +36,7 @@ export interface RoleListOptions {
 }
 
 export class RoleService {
-  private readonly baseEndpoint = '/roles';
+  private readonly baseEndpoint = '/api/roles';
   private readonly logger: Logger;
 
   constructor() {
@@ -90,7 +90,7 @@ export class RoleService {
         });
 
         const response = await apiClient.get<ApiResponse<PaginatedResponseDto<RoleResponseDto>>>(
-          this.baseEndpoint,
+          `${this.baseEndpoint}/search`,
           searchParams
         );
 

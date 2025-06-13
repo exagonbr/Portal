@@ -192,7 +192,7 @@ router.get('/get', validateJWT, async (req, res) => {
  */
 router.post('/set', validateJWT, async (req, res) => {
   try {
-    const { key } = req.body;
+    const { key, value, ttl } = req.body;
     
     if (!key) {
       return res.status(400).json({
@@ -201,14 +201,57 @@ router.post('/set', validateJWT, async (req, res) => {
       });
     }
 
-    // Simular sucesso no cache
-    return res.json({
-      success: true,
-      message: 'Value cached successfully'
-    });
+    if (value === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cache value is required'
+      });
+    }
+
+    try {
+      const redis = getRedisClient();
+      const serializedValue = JSON.stringify(value);
+      const cacheTTL = ttl || TTL.CACHE;
+
+      // Salvar no Redis com TTL
+      if (cacheTTL > 0) {
+        await redis.set(key, serializedValue, 'EX', cacheTTL);
+      } else {
+        await redis.set(key, serializedValue);
+      }
+
+      logger.info(`Cache set for key: ${key}`, { 
+        userId: req.user?.email,
+        ttl: cacheTTL,
+        valueSize: serializedValue.length
+      });
+
+      return res.json({
+        success: true,
+        message: 'Value cached successfully',
+        key,
+        ttl: cacheTTL
+      });
+    } catch (redisError) {
+      const errorMessage = redisError instanceof Error ? redisError.message : String(redisError);
+      logger.error(`Redis error setting cache: ${errorMessage}`, {
+        userId: req.user?.email,
+        key,
+        stack: redisError instanceof Error ? redisError.stack : undefined
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao salvar no cache Redis'
+      });
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error setting cache value:', errorMessage);
+    logger.error(`Error setting cache value: ${errorMessage}`, {
+      userId: req.user?.email,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -219,40 +262,153 @@ router.post('/set', validateJWT, async (req, res) => {
 /**
  * @swagger
  * /api/cache/delete:
- *   delete:
+ *   post:
  *     summary: Delete value from cache
  *     tags: [Cache]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: key
- *         required: true
- *         schema:
- *           type: string
- *         description: Cache key
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               key:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Cache value deleted
  */
-router.delete('/delete', validateJWT, async (req, res) => {
+router.post('/delete', validateJWT, async (req, res) => {
   try {
-    const { key } = req.query;
+    const { key } = req.body;
     
-    if (!key || typeof key !== 'string') {
+    if (!key) {
       return res.status(400).json({
         success: false,
         message: 'Cache key is required'
       });
     }
 
-    return res.json({
-      success: true,
-      message: 'Cache value deleted'
-    });
+    try {
+      const redis = getRedisClient();
+      const result = await redis.del(key);
+
+      logger.info(`Cache delete for key: ${key}`, { 
+        userId: req.user?.email,
+        deleted: result > 0
+      });
+
+      return res.json({
+        success: true,
+        message: 'Cache value deleted successfully',
+        key,
+        deleted: result > 0
+      });
+    } catch (redisError) {
+      const errorMessage = redisError instanceof Error ? redisError.message : String(redisError);
+      logger.error(`Redis error deleting cache: ${errorMessage}`, {
+        userId: req.user?.email,
+        key,
+        stack: redisError instanceof Error ? redisError.stack : undefined
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao deletar do cache Redis'
+      });
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error deleting cache value:', errorMessage);
+    logger.error(`Error deleting cache value: ${errorMessage}`, {
+      userId: req.user?.email,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/cache/invalidate:
+ *   post:
+ *     summary: Invalidate cache by pattern
+ *     tags: [Cache]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pattern:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cache pattern invalidated successfully
+ */
+router.post('/invalidate', validateJWT, async (req, res) => {
+  try {
+    const { pattern } = req.body;
+    
+    if (!pattern) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pattern is required'
+      });
+    }
+
+    try {
+      const redis = getRedisClient();
+      
+      // Buscar chaves que correspondem ao padrão
+      const keys = await redis.keys(pattern);
+      
+      let deletedCount = 0;
+      if (keys.length > 0) {
+        deletedCount = await redis.del(...keys);
+      }
+
+      logger.info(`Cache invalidate pattern: ${pattern}`, { 
+        userId: req.user?.email,
+        keysFound: keys.length,
+        deletedCount
+      });
+
+      return res.json({
+        success: true,
+        message: 'Cache pattern invalidated successfully',
+        pattern,
+        keysFound: keys.length,
+        deletedCount
+      });
+    } catch (redisError) {
+      const errorMessage = redisError instanceof Error ? redisError.message : String(redisError);
+      logger.error(`Redis error invalidating pattern: ${errorMessage}`, {
+        userId: req.user?.email,
+        pattern,
+        stack: redisError instanceof Error ? redisError.stack : undefined
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao invalidar padrão no cache Redis'
+      });
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`Error invalidating cache pattern: ${errorMessage}`, {
+      userId: req.user?.email,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -268,20 +424,69 @@ router.delete('/delete', validateJWT, async (req, res) => {
  *     tags: [Cache]
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pattern:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Cache cleared successfully
  */
-router.post('/clear', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.post('/clear', validateJWT, requireRole(['SYSTEM_ADMIN']), async (req, res) => {
   try {
-    res.json({
-      success: true,
-      message: 'Cache cleared successfully'
-    });
+    const { pattern } = req.body;
+    
+    try {
+      const redis = getRedisClient();
+      const searchPattern = pattern || '*';
+      
+      // Buscar chaves que correspondem ao padrão
+      const keys = await redis.keys(searchPattern);
+      
+      let deletedCount = 0;
+      if (keys.length > 0) {
+        deletedCount = await redis.del(...keys);
+      }
+
+      logger.info(`Cache clear with pattern: ${searchPattern}`, { 
+        userId: req.user?.email,
+        keysFound: keys.length,
+        deletedCount
+      });
+
+      return res.json({
+        success: true,
+        message: 'Cache cleared successfully',
+        pattern: searchPattern,
+        keysFound: keys.length,
+        deletedCount
+      });
+    } catch (redisError) {
+      const errorMessage = redisError instanceof Error ? redisError.message : String(redisError);
+      logger.error(`Redis error clearing cache: ${errorMessage}`, {
+        userId: req.user?.email,
+        pattern,
+        stack: redisError instanceof Error ? redisError.stack : undefined
+      });
+
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao limpar cache Redis'
+      });
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error clearing cache:', errorMessage);
-    res.status(500).json({
+    logger.error(`Error clearing cache: ${errorMessage}`, {
+      userId: req.user?.email,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });

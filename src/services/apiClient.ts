@@ -65,9 +65,9 @@ export class ApiClient {
    * Constrói a URL completa com parâmetros de query
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
-    // Adiciona versão da API se o endpoint não começar com '/'
-    const versionedEndpoint = `${endpoint}`;
-    const url = new URL(versionedEndpoint, this.baseURL);
+    // Remove a barra inicial se existir para garantir que seja tratado como relativo
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const url = new URL(cleanEndpoint, this.baseURL);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {

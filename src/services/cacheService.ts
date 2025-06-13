@@ -210,8 +210,19 @@ export class CacheService {
 
   private async getFromRedis<T>(key: string): Promise<T | null> {
     try {
+      // Verificar se há token de autenticação antes de tentar acessar o Redis
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token') || 
+                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
+        
+        if (!token) {
+          console.debug('No auth token available, skipping Redis cache');
+          return null;
+        }
+      }
+
       const response = await apiClient.get<{ value: T; exists: boolean }>(
-        '/cache/get',
+        '/api/cache/get',
         { key }
       );
 
@@ -227,41 +238,89 @@ export class CacheService {
 
   private async setInRedis<T>(key: string, value: T, ttl: number): Promise<void> {
     try {
-      await apiClient.post('/cache/set', {
+      // Verificar se há token de autenticação antes de tentar acessar o Redis
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token') || 
+                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
+        
+        if (!token) {
+          console.debug('No auth token available, skipping Redis cache set');
+          return;
+        }
+      }
+
+      await apiClient.post('/api/cache/set', {
         key,
         value,
         ttl
       });
     } catch (error) {
       console.debug('Redis set failed:', error);
-      throw error;
+      // Não fazer throw do erro para não quebrar a aplicação
+      // throw error;
     }
   }
 
   private async deleteFromRedis(key: string): Promise<void> {
     try {
-      await apiClient.post('/cache/delete', { key });
+      // Verificar se há token de autenticação antes de tentar acessar o Redis
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token') || 
+                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
+        
+        if (!token) {
+          console.debug('No auth token available, skipping Redis cache delete');
+          return;
+        }
+      }
+
+      await apiClient.post('/api/cache/delete', { key });
     } catch (error) {
       console.debug('Redis delete failed:', error);
-      throw error;
+      // Não fazer throw do erro para não quebrar a aplicação
+      // throw error;
     }
   }
 
   private async clearRedis(): Promise<void> {
     try {
-      await apiClient.post('/cache/clear', { pattern: this.keyPrefix + '*' });
+      // Verificar se há token de autenticação antes de tentar acessar o Redis
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token') || 
+                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
+        
+        if (!token) {
+          console.debug('No auth token available, skipping Redis cache clear');
+          return;
+        }
+      }
+
+      await apiClient.post('/api/cache/clear', { pattern: this.keyPrefix + '*' });
     } catch (error) {
       console.debug('Redis clear failed:', error);
-      throw error;
+      // Não fazer throw do erro para não quebrar a aplicação
+      // throw error;
     }
   }
 
   private async invalidateRedisPattern(pattern: string): Promise<void> {
     try {
-      await apiClient.post('/cache/invalidate', { pattern });
+      // Verificar se há token de autenticação antes de tentar acessar o Redis
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token') || 
+                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
+        
+        if (!token) {
+          console.debug('No auth token available, skipping Redis cache invalidate');
+          return;
+        }
+      }
+
+      await apiClient.post('/api/cache/invalidate', { pattern });
     } catch (error) {
       console.debug('Redis invalidate pattern failed:', error);
-      throw error;
+      // Não fazer throw do erro para não quebrar a aplicação
+      // throw error;
     }
   }
 

@@ -52,6 +52,55 @@ export class RoleController extends BaseController {
   });
 
   /**
+   * GET /api/roles/search
+   * Busca roles com filtros e paginação (endpoint compatível com frontend)
+   */
+  search = this.asyncHandler(async (req: Request, res: Response) => {
+    this.logger.apiRequest('GET', '/api/roles/search', this.getUserId(req) || undefined, req.query);
+
+    const filters: RoleFilterDto = {
+      search: req.query.search as string,
+      type: req.query.type as 'system' | 'custom',
+      status: req.query.status as 'active' | 'inactive',
+      page: parseInt(req.query.page as string) || 1,
+      limit: parseInt(req.query.limit as string) || 10,
+      sortBy: req.query.sortBy as any,
+      sortOrder: req.query.sortOrder as any
+    };
+
+    // Verificar se o parâmetro active existe na query
+    if (req.query.active !== undefined) {
+      // Converter o parâmetro string para booleano
+      filters.active = req.query.active === 'true';
+    }
+
+    const result = await this.roleService.findRolesWithFilters(filters);
+
+    if (!result.success) {
+      // Se o erro for relacionado à validação, retornar 400
+      if (result.error?.includes('Campo de ordenação inválido') || 
+          result.error?.includes('Ordem de ordenação inválida')) {
+        return this.error(res, result.error, 400);
+      }
+      return this.error(res, result.error || 'Falha ao recuperar roles');
+    }
+
+    // Formatar a resposta para o formato esperado pelo frontend
+    const formattedResponse = {
+      items: result.data!.roles,
+      pagination: result.data!.pagination,
+      page: result.data!.pagination.page,
+      limit: result.data!.pagination.limit,
+      total: result.data!.pagination.total,
+      totalPages: result.data!.pagination.totalPages,
+      hasNext: result.data!.pagination.hasNext,
+      hasPrev: result.data!.pagination.hasPrev
+    };
+
+    return this.success(res, formattedResponse, 'Roles recuperadas com sucesso');
+  });
+
+  /**
    * GET /api/roles/:id
    * Busca role por ID
    */

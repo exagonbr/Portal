@@ -55,29 +55,63 @@ export class UserService {
       }
 
       // Log detalhado da resposta para debug
-      console.log('Resposta da API:', JSON.stringify(response.data, null, 2));
+      console.log('Resposta da API no userService:', JSON.stringify(response, null, 2));
 
-      // Verifica se items existe e inicializa como array vazio se não existir
-      if (!response.data.items) {
-        console.warn('A resposta da API não contém a propriedade "items". Inicializando como array vazio.');
-        response.data.items = [];
+      // A API retorna no formato: { success: true, data: [...], pagination: {...} }
+      // Precisamos converter para o formato esperado: { items: [...], pagination: {...} }
+      
+      if (response.success && response.data) {
+        console.log('🔄 Convertendo resposta da API para formato esperado');
         
-        // Adiciona paginação se não existir
-        if (!response.data.pagination) {
-          response.data.pagination = {
-            page: filterParams.page,
-            limit: filterParams.limit,
-            total: 0,
-            totalPages: 0,
-            hasNext: false,
-            hasPrev: filterParams.page > 1
+        // Se response.data é um array, é a lista de usuários
+        if (Array.isArray(response.data)) {
+          const convertedResponse = {
+            items: response.data,
+            pagination: response.pagination || {
+              page: filterParams.page,
+              limit: filterParams.limit,
+              total: response.data.length,
+              totalPages: Math.ceil(response.data.length / filterParams.limit),
+              hasNext: false,
+              hasPrev: filterParams.page > 1
+            }
+          };
+          
+          console.log('✅ Resposta convertida:', convertedResponse);
+          return convertedResponse;
+        }
+        
+        // Se response.data tem a estrutura { items: [...] } ou { data: [...] }
+        if (response.data.items) {
+          return response.data;
+        } else if (response.data.data) {
+          return {
+            items: response.data.data,
+            pagination: response.data.pagination || response.pagination || {
+              page: filterParams.page,
+              limit: filterParams.limit,
+              total: response.data.data.length,
+              totalPages: Math.ceil(response.data.data.length / filterParams.limit),
+              hasNext: false,
+              hasPrev: filterParams.page > 1
+            }
           };
         }
       }
-
-      console.log(`Recebidos ${response.data.items.length} usuários de um total de ${response.data.pagination?.total}`);
       
-      return response.data;
+      // Fallback para resposta vazia
+      console.warn('⚠️ Resposta da API não reconhecida, retornando estrutura vazia');
+      return {
+        items: [],
+        pagination: {
+          page: filterParams.page,
+          limit: filterParams.limit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: filterParams.page > 1
+        }
+      };
       // }, CacheTTL.MEDIUM);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
@@ -298,14 +332,36 @@ export class UserService {
       };
   
       const response = await withRetry(() =>
-        apiClient.get<ListResponse<UserResponseDto>>(`${this.baseEndpoint}/search`, searchParams as Record<string, string | number | boolean>)
+        apiClient.get<ApiResponse<UserResponseDto[]>>(`${this.baseEndpoint}/search`, searchParams as Record<string, string | number | boolean>)
       );
   
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha na busca de usuários');
       }
-  
-      return response.data;
+
+      console.log('Resposta da busca de usuários:', response);
+
+      // Converter resposta da API para formato esperado
+      if (Array.isArray(response.data)) {
+        return {
+          items: response.data,
+          pagination: response.pagination || {
+            page: (filters?.page as number) || 1,
+            limit: (filters?.limit as number) || 10,
+            total: response.data.length,
+            totalPages: Math.ceil(response.data.length / ((filters?.limit as number) || 10)),
+            hasNext: false,
+            hasPrev: ((filters?.page as number) || 1) > 1
+          }
+        };
+      }
+
+      // Se já está no formato correto
+      if (response.data && typeof response.data === 'object' && 'items' in response.data) {
+        return response.data as ListResponse<UserResponseDto>;
+      }
+
+      throw new Error('Formato de resposta inválido');
     } catch (error) {
       console.error('Erro na busca de usuários:', error);
       throw new Error(handleApiError(error));

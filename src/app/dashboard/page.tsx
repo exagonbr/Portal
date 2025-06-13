@@ -1,341 +1,145 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { dashboardService } from '@/services/dashboardService';
-import AuthenticatedLayout from '@/components/AuthenticatedLayout';
-import Card, { CardHeader, CardBody as CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { useToast } from '@/components/ToastManager';
-import { 
-  BookOpen, 
-  Users, 
-  GraduationCap, 
-  Building2,
-  TrendingUp,
-  Calendar,
-  Clock,
-  Award,
-  Activity,
-  BarChart3
-} from 'lucide-react';
+import { UserRole } from '@/types/roles';
+import { getDefaultDashboard } from '@/utils/rolePermissions';
 
-interface DashboardStats {
-  totalUsers: number;
-  totalCourses: number;
-  totalBooks: number;
-  totalInstitutions: number;
-  activeStudents: number;
-  completedCourses: number;
-  averageProgress: number;
-  monthlyGrowth: number;
-}
-
-interface RecentActivity {
-  id: string;
-  type: 'course_completion' | 'new_user' | 'book_read' | 'assignment_submitted';
-  title: string;
-  description: string;
-  timestamp: string;
-  user?: string;
-}
-
-interface UpcomingEvent {
-  id: string;
-  title: string;
-  type: 'class' | 'exam' | 'assignment' | 'meeting';
-  date: string;
-  time: string;
-  location?: string;
-}
-
-export default function DashboardPage() {
-  const { user } = useAuth();
-  const { showError } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+export default function DashboardRedirect() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+  const [error, setError] = useState<string>('');
+  const [redirecting, setRedirecting] = useState(false);
+  const redirectAttempts = useRef(0);
+  const maxRedirectAttempts = 3;
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      const [statsData, activitiesData, eventsData] = await Promise.all([
-        dashboardService.getStats(),
-        dashboardService.getRecentActivities(),
-        dashboardService.getUpcomingEvents()
-      ]);
-
-      setStats(statsData);
-      setRecentActivities(activitiesData);
-      setUpcomingEvents(eventsData);
-    } catch (error) {
-      showError("Erro ao carregar dashboard", "Não foi possível carregar os dados do dashboard.");
-    } finally {
-      setLoading(false);
+    // Evita múltiplos redirecionamentos
+    if (redirecting || redirectAttempts.current >= maxRedirectAttempts) {
+      return;
     }
-  };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  };
+    if (!loading) {
+      try {
+        redirectAttempts.current++;
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'course_completion': return <Award className="h-4 w-4" />;
-      case 'new_user': return <Users className="h-4 w-4" />;
-      case 'book_read': return <BookOpen className="h-4 w-4" />;
-      case 'assignment_submitted': return <Clock className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
+        if (!user) {
+          console.log('🔄 DashboardRedirect: Usuário não autenticado, redirecionando para login');
+          setRedirecting(true);
+          router.push('/login?error=unauthorized');
+          return;
+        }
+
+        console.log(`🔍 DashboardRedirect: Processando usuário ${user.name} com role ${user.role}`);
+
+        // Usar o utilitário para obter o dashboard padrão
+        const userRole = user.role as UserRole;
+        
+        if (!userRole) {
+          console.error('❌ DashboardRedirect: Perfil de usuário não identificado');
+          setError('Perfil de usuário não identificado. Por favor, faça login novamente.');
+          
+          // Aguarda 3 segundos antes de redirecionar para login
+          setTimeout(() => {
+            if (!redirecting) {
+              setRedirecting(true);
+              router.push('/login?error=invalid_role');
+            }
+          }, 3000);
+          return;
+        }
+
+        const defaultRoute = getDefaultDashboard(userRole);
+        
+        if (!defaultRoute) {
+          console.error('❌ DashboardRedirect: Dashboard não encontrado para o perfil');
+          setError('Erro interno: dashboard não encontrado para seu perfil. Entre em contato com o suporte.');
+          return;
+        }
+
+        // Evita redirecionamento circular
+        if (defaultRoute === '/dashboard') {
+          console.warn('⚠️ DashboardRedirect: Dashboard genérico retornado, possível problema de configuração');
+          setError('Erro de configuração do sistema. Entre em contato com o suporte.');
+          return;
+        }
+
+        console.log(`✅ DashboardRedirect: Redirecionando para: ${defaultRoute}`);
+        setRedirecting(true);
+        router.push(defaultRoute);
+
+      } catch (err) {
+        console.error('❌ DashboardRedirect: Erro no redirecionamento:', err);
+        setError('Erro interno. Por favor, tente novamente ou entre em contato com o suporte.');
+        
+        // Se houve erro, tenta redirecionar para login após um tempo
+        setTimeout(() => {
+          if (!redirecting) {
+            setRedirecting(true);
+            router.push('/login?error=redirect_error');
+          }
+        }, 5000);
+      }
     }
-  };
+  }, [user, loading, router, redirecting]);
 
-  const getEventTypeColor = (type: string) => {
-    switch (type) {
-      case 'class': return 'info';
-      case 'exam': return 'danger';
-      case 'assignment': return 'warning';
-      case 'meeting': return 'success';
-      default: return 'secondary';
-    }
-  };
-
-  const getEventTypeLabel = (type: string) => {
-    switch (type) {
-      case 'class': return 'Aula';
-      case 'exam': return 'Prova';
-      case 'assignment': return 'Tarefa';
-      case 'meeting': return 'Reunião';
-      default: return type;
-    }
-  };
-
-  if (loading) {
+  // Renderização condicional baseada no estado
+  if (error) {
     return (
-      <AuthenticatedLayout>
-        <div className="container mx-auto py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-96 bg-gray-200 rounded"></div>
-              <div className="h-96 bg-gray-200 rounded"></div>
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6 text-center">
+          <div className="mb-4">
+            <svg className="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.966-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
           </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Erro de Redirecionamento</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => {
+              setError('');
+              setRedirecting(false);
+              redirectAttempts.current = 0;
+              router.push('/login');
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+          >
+            Voltar ao Login
+          </button>
         </div>
-      </AuthenticatedLayout>
+      </div>
     );
   }
 
+  // Estado de carregamento/redirecionamento
   return (
-    <AuthenticatedLayout>
-      <div className="container mx-auto py-8 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {getGreeting()}, {user?.name}!
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Aqui está um resumo das suas atividades hoje.
-            </p>
-          </div>
-          <Button onClick={fetchDashboardData} variant="outline">
-            <Activity className="h-4 w-4 mr-2" />
-            Atualizar
-          </Button>
-        </div>
-
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <h3 className="text-sm font-medium">Total de Usuários</h3>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  +{stats.monthlyGrowth}% este mês
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <h3 className="text-sm font-medium">Cursos Ativos</h3>
-                <GraduationCap className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalCourses.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats.activeStudents} alunos ativos
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <h3 className="text-sm font-medium">Biblioteca</h3>
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalBooks.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  Livros disponíveis
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <h3 className="text-sm font-medium">Instituições</h3>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalInstitutions.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  Parceiras ativas
-                </p>
-              </CardContent>
-            </Card>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="loading-spinner mb-4 mx-auto h-8 w-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          {loading ? 'Carregando...' : 'Redirecionando...'}
+        </h2>
+        <p className="text-gray-600">
+          {loading ? 'Verificando suas credenciais...' : 'Direcionando você para sua área personalizada...'}
+        </p>
+        
+        {/* Botão de fallback caso o redirecionamento demore muito */}
+        {redirecting && (
+          <div className="mt-6">
+            <button
+              onClick={() => {
+                setRedirecting(false);
+                redirectAttempts.current = 0;
+                router.push('/login');
+              }}
+              className="text-blue-600 hover:text-blue-700 text-sm underline"
+            >
+              Cancelar e voltar ao login
+            </button>
           </div>
         )}
-
-        {/* Progress Overview */}
-        {stats && (
-          <Card>
-            <CardHeader>
-              <h3 className="flex items-center">
-                <BarChart3 className="h-5 w-5 mr-2" />
-                Visão Geral do Progresso
-              </h3>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">
-                    {stats.averageProgress}%
-                  </div>
-                  <p className="text-sm text-gray-600">Progresso Médio</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">
-                    {stats.completedCourses}
-                  </div>
-                  <p className="text-sm text-gray-600">Cursos Concluídos</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600">
-                    {stats.activeStudents}
-                  </div>
-                  <p className="text-sm text-gray-600">Alunos Ativos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activities */}
-          <Card>
-            <CardHeader>
-              <h3 className="flex items-center">
-                <Activity className="h-5 w-5 mr-2" />
-                Atividades Recentes
-              </h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivities.length > 0 ? (
-                  recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 mt-1">
-                        {getActivityIcon(activity.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">
-                          {activity.title}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {activity.description}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {new Date(activity.timestamp).toLocaleString('pt-BR')}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    Nenhuma atividade recente
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Upcoming Events */}
-          <Card>
-            <CardHeader>
-              <h3 className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                Próximos Eventos
-              </h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {upcomingEvents.length > 0 ? (
-                  upcomingEvents.map((event) => (
-                    <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-sm font-medium">{event.title}</h4>
-                          <Badge variant={getEventTypeColor(event.type)}>
-                            {getEventTypeLabel(event.type)}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                          <span className="flex items-center">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {new Date(event.date).toLocaleDateString('pt-BR')}
-                          </span>
-                          <span className="flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {event.time}
-                          </span>
-                        </div>
-                        {event.location && (
-                          <p className="text-xs text-gray-400 mt-1">
-                            📍 {event.location}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    Nenhum evento próximo
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
-    </AuthenticatedLayout>
+    </div>
   );
 }

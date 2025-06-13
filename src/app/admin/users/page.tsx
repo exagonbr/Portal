@@ -540,6 +540,8 @@ const UserNotificationsModal = ({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
           <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Bell className="h-6 w-6" />
               <div>
                 <h2 className="text-xl font-bold">Notificações</h2>
                 <p className="text-orange-100">{user.name}</p>
@@ -549,6 +551,7 @@ const UserNotificationsModal = ({
               <X className="h-6 w-6" />
             </button>
           </div>
+        </div>
 
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
@@ -710,13 +713,6 @@ const EmptyState = ({
             Limpar Filtros
           </Button>
         )}
-        <Button
-          onClick={onCreateUser}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Adicionar Novo Usuário
-        </Button>
       </div>
     </div>
   );
@@ -863,54 +859,82 @@ export default function ManageUsers() {
         ...filters,
       };
 
-      console.log('🔍 Iniciando busca de usuários com parâmetros:', params);
+          console.log('🔍 Iniciando busca de usuários com parâmetros:', params);
 
-      const response = searchTerm
-        ? await userService.searchUsers(searchTerm, params)
-        : await userService.getUsers(params);
+    const response = searchTerm
+      ? await userService.searchUsers(searchTerm, params)
+      : await userService.getUsers(params);
 
-      console.log('✅ Resposta da API recebida:', {
-        totalItems: response.items?.length || 0,
-        pagination: response.pagination,
-        primeiroUsuario: response.items?.[0] || 'Nenhum usuário'
-      });
+    console.log('🔍 Resposta bruta da API:', response);
 
-      // Verifica se a resposta tem a estrutura esperada
-      if (!response || !response.items) {
-        console.error('❌ Resposta da API inválida:', response);
-        showError('A resposta da API não contém dados válidos');
-        setUsers([]);
-        setTotalPages(1);
-        setTotalItems(0);
-        return;
+          console.log('✅ Resposta da API recebida:', {
+      totalItems: (response as any).items?.length || (response as any).data?.length || 0,
+      pagination: (response as any).pagination,
+      primeiroUsuario: (response as any).items?.[0] || (response as any).data?.[0] || 'Nenhum usuário',
+      estruturaCompleta: response
+    });
+
+    // Verifica se a resposta tem a estrutura esperada
+    // A API pode retornar tanto { items: [...], pagination: {...} } quanto { data: [...], total: number }
+    let users = (response as any).items || (response as any).data || [];
+    let total = (response as any).pagination?.total || (response as any).total || 0;
+    let totalPages = (response as any).pagination?.totalPages || Math.ceil(total / itemsPerPage);
+
+    console.log('🔍 Dados extraídos:', {
+      users: users,
+      usersLength: users.length,
+      total: total,
+      totalPages: totalPages,
+      responseKeys: Object.keys(response),
+      responseItemsExists: !!(response as any).items,
+      responseDataExists: !!(response as any).data,
+      responsePaginationExists: !!(response as any).pagination
+    });
+
+    if (!response || (!(response as any).items && !(response as any).data)) {
+      console.error('❌ Resposta da API inválida:', response);
+      showError('A resposta da API não contém dados válidos');
+      setUsers([]);
+      setTotalPages(1);
+      setTotalItems(0);
+      return;
+    }
+
+    if (!Array.isArray(users)) {
+      console.error('❌ Os dados de usuários não são um array:', users);
+      showError('Formato de dados inválido recebido da API');
+      setUsers([]);
+      setTotalPages(1);
+      setTotalItems(0);
+      return;
+    }
+
+          const enrichedUsers = users.map(user => {
+      const role = roles.find(r => r.id === user.role_id);
+      const institution = institutions.find(i => i.id === user.institution_id);
+      
+      // Log detalhado para debug
+      const extendedUser = user as ExtendedUserResponseDto;
+      if (!extendedUser.role_name && !role) {
+        console.warn(`⚠️ Usuário ${user.name} (${user.id}) sem role definida`);
       }
+      
+      return {
+        ...user,
+        role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
+        institution_name: (user as ExtendedUserResponseDto).institution_name || institution?.name || 'Não vinculada',
+      } as ExtendedUserResponseDto;
+    });
 
-      const enrichedUsers = response.items.map(user => {
-        const role = roles.find(r => r.id === user.role_id);
-        const institution = institutions.find(i => i.id === user.institution_id);
-        
-        // Log detalhado para debug
-        const extendedUser = user as ExtendedUserResponseDto;
-        if (!extendedUser.role_name && !role) {
-          console.warn(`⚠️ Usuário ${user.name} (${user.id}) sem role definida`);
-        }
-        
-        return {
-          ...user,
-          role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
-          institution_name: (user as ExtendedUserResponseDto).institution_name || institution?.name || 'Não vinculada',
-        } as ExtendedUserResponseDto;
-      });
+    console.log('📊 Dados processados:', {
+      totalUsuarios: enrichedUsers.length,
+      usuariosComRole: enrichedUsers.filter(u => u.role_name !== 'Não definida').length,
+      usuariosComInstituicao: enrichedUsers.filter(u => u.institution_name !== 'Não vinculada').length
+    });
 
-      console.log('📊 Dados processados:', {
-        totalUsuarios: enrichedUsers.length,
-        usuariosComRole: enrichedUsers.filter(u => u.role_name !== 'Não definida').length,
-        usuariosComInstituicao: enrichedUsers.filter(u => u.institution_name !== 'Não vinculada').length
-      });
-
-      setUsers(enrichedUsers);
-      setTotalPages(response.pagination?.totalPages || 1);
-      setTotalItems(response.pagination?.total || 0);
+    setUsers(enrichedUsers);
+    setTotalPages(totalPages);
+    setTotalItems(total);
 
       // Notificação de sucesso apenas se houver usuários
       if (enrichedUsers.length > 0) {
@@ -983,11 +1007,18 @@ export default function ManageUsers() {
     }
   }, [loadUsers, auxiliaryDataLoaded]);
 
+  // Recarregar dados quando filtros, página ou ordenação mudarem
+  useEffect(() => {
+    if (auxiliaryDataLoaded) {
+      loadUsers();
+    }
+  }, [currentPage, filters, sortBy, sortOrder, searchTerm, auxiliaryDataLoaded, loadUsers]);
+
   // Função de busca
-  const handleSearch = () => {
+  const handleSearch = useCallback((query: string) => {
+    setSearchTerm(query)
     setCurrentPage(1)
-    loadUsers()
-  }
+  }, [])
 
   // Função para atualizar lista
   const handleRefresh = () => {
@@ -1135,18 +1166,13 @@ export default function ManageUsers() {
         }
         
         // Caso contrário, atualize com o novo valor
-        const newFilters = {
+        return {
           ...prev,
           [key]: value
         }
-        
-        // Atualiza a lista automaticamente
-        loadUsers();
-        
-        return newFilters
       })
     }, 500), // 500ms delay
-    [loadUsers]
+    []
   )
 
 
@@ -1177,18 +1203,14 @@ export default function ManageUsers() {
   // Função para mudar de página com tratamento de erro
   const handlePageChange = useCallback(async (page: number) => {
     try {
-      setLoading(true)
       setCurrentPage(page)
       // Rolagem suave para o topo da lista quando mudar de página
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      await loadUsers();
     } catch (error) {
       console.error('Erro ao mudar de página:', error);
       showError('Erro ao carregar a página. Tente novamente.');
-    } finally {
-      setLoading(false)
     }
-  }, [loadUsers, showError])
+  }, [showError])
 
 
   // Verificar se há filtros ativos
@@ -1225,6 +1247,39 @@ export default function ManageUsers() {
     loadUsers()
   }
 
+  const getRoleLabel = (role: string) => {
+    switch (role?.toUpperCase()) {
+      case 'SYSTEM_ADMIN':
+      case 'ADMIN':
+      case 'ADMINISTRADOR':
+        return 'Administrador'
+      case 'TEACHER':
+      case 'PROFESSOR':
+        return 'Professor'
+      case 'STUDENT':
+      case 'ALUNO':
+      case 'ESTUDANTE':
+        return 'Estudante'
+      case 'COORDINATOR':
+      case 'COORDENADOR':
+      case 'ACADEMIC_COORDINATOR':
+        return 'Coordenador'
+      case 'INSTITUTION_MANAGER':
+      case 'MANAGER':
+      case 'GERENTE':
+        return 'Gerente'
+      case 'GUARDIAN':
+      case 'RESPONSAVEL':
+        return 'Responsável'
+      default:
+        return role || 'Não definida'
+    }
+  }
+
+  // Função para traduzir roles nos badges
+  const translateRole = (roleName: string) => {
+    return getRoleLabel(roleName)
+  }
 
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -1257,70 +1312,45 @@ export default function ManageUsers() {
   )
 
   const getRoleBadgeVariant = (role: string) => {
-    switch (role?.toLowerCase()) {
-      case 'admin':
-      case 'administrador':
+    const normalizedRole = role?.toUpperCase()
+    switch (normalizedRole) {
+      case 'SYSTEM_ADMIN':
+      case 'ADMIN':
+      case 'ADMINISTRADOR':
         return 'danger'
-      case 'teacher':
-      case 'professor':
+      case 'TEACHER':
+      case 'PROFESSOR':
         return 'warning'
-      case 'student':
-      case 'aluno':
-      case 'estudante':
+      case 'STUDENT':
+      case 'ALUNO':
+      case 'ESTUDANTE':
         return 'info'
-      case 'coordinator':
-      case 'coordenador':
+      case 'COORDINATOR':
+      case 'COORDENADOR':
+      case 'ACADEMIC_COORDINATOR':
         return 'success'
+      case 'INSTITUTION_MANAGER':
+      case 'MANAGER':
+      case 'GERENTE':
+        return 'primary'
+      case 'GUARDIAN':
+      case 'RESPONSAVEL':
+        return 'secondary'
       default:
         return 'secondary'
     }
   }
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin': return 'Administrador'
-      case 'teacher': return 'Professor'
-      case 'student': return 'Aluno'
-      case 'coordinator': return 'Coordenador'
-      default: return role
-    }
-  }
-
   const columns: CRUDColumn<ExtendedUserResponseDto>[] = [
-    {
-      key: 'id',
-      label: 'ID',
-      sortable: true,
-      render: (user) => {
-        if (!user) return '-'
-        return (
-          <div className="text-xs text-slate-600 truncate max-w-[120px]" title={user.id}>
-            {user.id}
-          </div>
-        )
-      }
-    },
     {
       key: 'name',
       label: 'Nome',
       sortable: true,
-      render: (user) => {
+      width: '250px',
+      render: (value, user, index) => {
         if (!user) return '-'
         return (
           <div className="flex items-center gap-3">
-            {user.avatar ? (
-              <Image
-                className="h-10 w-10 rounded-full object-cover border-2 border-primary-light shadow-sm"
-                src={user.avatar}
-                alt={user.name}
-                width={40}
-                height={40}
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-DEFAULT to-primary-dark flex items-center justify-center text-white text-sm font-bold shadow-sm">
-                {user.name ? user.name.substring(0, 2).toUpperCase() : '??'}
-              </div>
-            )}
             <div>
               <span className="font-semibold text-slate-800 block">{user.name || 'Sem nome'}</span>
               {user.username && <span className="text-xs text-slate-500 block">@{user.username}</span>}
@@ -1333,28 +1363,15 @@ export default function ManageUsers() {
       key: 'email',
       label: 'Email',
       sortable: true,
-      render: (user) => {
+      width: '200px',
+      render: (value, user, index) => {
         if (!user || !user.email) return '-'
         return (
           <div className="flex items-center gap-2">
             <Mail className="h-4 w-4 text-blue-500" />
-            <a href={`mailto:${user.email}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+            <a href={`mailto:${user.email}`} className="text-blue-600 hover:text-blue-800 hover:underline truncate">
               {user.email}
             </a>
-          </div>
-        )
-      }
-    },
-    {
-      key: 'endereco',
-      label: 'Endereço',
-      render: (user) => {
-        if (!user) return '-'
-        return (
-          <div className="text-slate-700">
-            {user.endereco === undefined || user.endereco === '' || user.endereco === null
-              ? 'Não informado'
-              : user.endereco}
           </div>
         )
       }
@@ -1363,12 +1380,13 @@ export default function ManageUsers() {
       key: 'role_name',
       label: 'Função',
       sortable: true,
-      render: (user) => {
+      width: '150px',
+      render: (value, user, index) => {
         if (!user) return '-'
         const roleName = user.role_name || 'Não definida'
         return (
           <Badge variant={getRoleBadgeVariant(roleName)} className="px-3 py-1 font-medium shadow-sm">
-            {roleName}
+            {translateRole(roleName)}
           </Badge>
         )
       }
@@ -1377,12 +1395,13 @@ export default function ManageUsers() {
       key: 'institution_name',
       label: 'Instituição',
       sortable: true,
-      render: (user) => {
+      width: '180px',
+      render: (value, user, index) => {
         if (!user) return '-'
         return (
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-purple-500" />
-            <span className="text-slate-700 font-medium">
+            <span className="text-slate-700 font-medium truncate">
               {user.institution_name || 'Não vinculada'}
             </span>
           </div>
@@ -1392,7 +1411,8 @@ export default function ManageUsers() {
     {
       key: 'is_active',
       label: 'Status',
-      render: (user) => {
+      width: '120px',
+      render: (value, user, index) => {
         if (!user) return '-'
         const isActive = user.is_active === true
         return (
@@ -1411,7 +1431,8 @@ export default function ManageUsers() {
       key: 'created_at',
       label: 'Cadastrado em',
       sortable: true,
-      render: (user) => {
+      width: '150px',
+      render: (value, user, index) => {
         if (!user || !user.created_at) return '-'
         return (
           <div className="flex items-center gap-2">
@@ -1431,67 +1452,38 @@ export default function ManageUsers() {
       label: 'Visualizar',
       icon: <Eye className="h-4 w-4" />,
       onClick: handleViewUser,
-      variant: 'default',
-      className: 'bg-blue-500 hover:bg-blue-600 text-white',
-      permission: 'users.view'
+      variant: 'ghost',
+      className: 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
     },
     {
       label: 'Editar',
       icon: <Edit className="h-4 w-4" />,
       onClick: handleEditUser,
-      variant: 'default',
-      className: 'bg-amber-500 hover:bg-amber-600 text-white',
-      permission: 'users.edit'
+      variant: 'ghost',
+      className: 'text-amber-600 hover:text-amber-800 hover:bg-amber-50'
     },
     {
       label: 'Histórico',
       icon: <History className="h-4 w-4" />,
       onClick: handleViewHistory,
-      variant: 'outline',
-      className: 'border-blue-300 text-blue-700 hover:bg-blue-50',
-      permission: 'users.view'
-    },
-    {
-      label: 'Permissões',
-      icon: <Shield className="h-4 w-4" />,
-      onClick: handleManagePermissions,
-      variant: 'outline',
-      className: 'border-purple-300 text-purple-700 hover:bg-purple-50',
-      permission: 'users.permissions'
-    },
-    {
-      label: 'Relatórios',
-      icon: <BarChart3 className="h-4 w-4" />,
-      onClick: handleViewReports,
-      variant: 'outline',
-      className: 'border-green-300 text-green-700 hover:bg-green-50',
-      permission: 'users.reports'
-    },
-    {
-      label: 'Notificações',
-      icon: <Bell className="h-4 w-4" />,
-      onClick: handleViewNotifications,
-      variant: 'outline',
-      className: 'border-orange-300 text-orange-700 hover:bg-orange-50',
-      permission: 'users.notifications'
+      variant: 'ghost',
+      className: 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
     },
     {
       label: 'Resetar senha',
       icon: <Key className="h-4 w-4" />,
       onClick: handleResetPassword,
-      variant: 'outline',
-      className: 'border-yellow-300 text-yellow-700 hover:bg-yellow-50',
-      permission: 'users.reset_password'
+      variant: 'ghost',
+      className: 'text-orange-600 hover:text-orange-800 hover:bg-orange-50'
     },
     {
       label: 'Alternar status',
       icon: <Activity className="h-4 w-4" />,
       onClick: handleToggleStatus,
-      variant: 'outline',
+      variant: 'ghost',
       className: (user) => user?.is_active
-        ? 'border-red-300 text-red-700 hover:bg-red-50'
-        : 'border-green-300 text-green-700 hover:bg-green-50',
-      permission: 'users.edit'
+        ? 'text-red-600 hover:text-red-800 hover:bg-red-50'
+        : 'text-green-600 hover:text-green-800 hover:bg-green-50'
     }
   ]
 
@@ -1507,58 +1499,115 @@ export default function ManageUsers() {
         )}
         
         
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold text-slate-800">Gerenciamento de Usuários</h1>
-          <div className="flex items-center gap-2">
-            {/* Indicador de status de conexão */}
-            {connectionStatus === 'checking' && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                <div className="animate-spin w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full"></div>
-                <span>Conectando...</span>
-              </div>
-            )}
-            {connectionStatus === 'error' && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
-                <AlertCircle className="h-4 w-4" />
-                <span>Offline</span>
-              </div>
-            )}
-            {connectionStatus === 'connected' && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                <CheckCircle className="h-4 w-4" />
-                <span>Online</span>
-              </div>
-            )}
-            
-            <span className="text-sm text-slate-500">
-              Total: {totalItems} usuários
-            </span>
-            <button
-              onClick={handleRefresh}
-              className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${refreshing ? 'animate-spin' : ''}`}
-              title="Atualizar lista"
-              disabled={connectionStatus === 'error'}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-1 ${
-                hasActiveFilters() ? 'bg-blue-50 border-blue-200 text-blue-600' : ''
-              }`}
-              title="Filtros"
-            >
-              <Filter className="h-4 w-4" />
-              <span className="hidden sm:inline text-sm">Filtros</span>
-              {hasActiveFilters() && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
-                  {Object.keys(filters).length}
-                </span>
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-slate-800">Gerenciamento de Usuários</h1>
+            <div className="flex items-center gap-2">
+              {/* Indicador de status de conexão */}
+              {connectionStatus === 'checking' && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                  <div className="animate-spin w-3 h-3 border-2 border-yellow-600 border-t-transparent rounded-full"></div>
+                  <span>Conectando...</span>
+                </div>
               )}
-            </button>
+              {connectionStatus === 'error' && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Offline</span>
+                </div>
+              )}
+              {connectionStatus === 'connected' && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Online</span>
+                </div>
+              )}
+              
+              <span className="text-sm text-slate-500">
+                Total: {totalItems} usuários
+              </span>
+              <button
+                onClick={handleRefresh}
+                className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${refreshing ? 'animate-spin' : ''}`}
+                title="Atualizar lista"
+                disabled={connectionStatus === 'error'}
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-1 ${
+                  hasActiveFilters() ? 'bg-blue-50 border-blue-200 text-blue-600' : ''
+                }`}
+                title="Filtros"
+              >
+                <Filter className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Filtros</span>
+                {hasActiveFilters() && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white">
+                    {Object.keys(filters).length}
+                  </span>
+                )}
+              </button>
+              <Button
+                onClick={handleCreateUser}
+                className="flex items-center gap-2"
+                disabled={loading}
+              >
+                <Plus className="h-4 w-4" />
+                Novo Usuário
+              </Button>
+            </div>
           </div>
+          
+
         </div>
         
+        {/* Resumo dos filtros ativos */}
+        {!showFilters && hasActiveFilters() && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-blue-800">Filtros ativos:</span>
+              {filters.name && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  Nome: {filters.name}
+                </span>
+              )}
+              {filters.email && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  Email: {filters.email}
+                </span>
+              )}
+              {filters.role_id && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  Função: {roles.find(r => r.id === filters.role_id)?.name || 'Desconhecida'}
+                </span>
+              )}
+              {filters.institution_id && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  Instituição: {institutions.find(i => i.id === filters.institution_id)?.name || 'Desconhecida'}
+                </span>
+              )}
+              {filters.is_active !== undefined && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  Status: {filters.is_active ? 'Ativo' : 'Inativo'}
+                </span>
+              )}
+              {searchTerm && (
+                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                  Busca: "{searchTerm}"
+                </span>
+              )}
+              <button
+                onClick={handleClearFilters}
+                className="ml-2 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs hover:bg-red-200 transition-colors"
+              >
+                Limpar todos
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Seção de filtros expostos */}
         {showFilters && (
           <div className="mb-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-md">
@@ -1772,10 +1821,15 @@ export default function ManageUsers() {
           </div>
         )}
         
-        {loading ? (
-          <div className="text-center py-16">
-            <div className="animate-spin w-8 h-8 border-4 border-primary-DEFAULT border-t-transparent rounded-full mx-auto"></div>
-            <p className="mt-4 text-slate-600">Carregando usuários...</p>
+        {loading && users.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+            <div className="text-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-primary-DEFAULT border-t-transparent rounded-full mx-auto"></div>
+              <p className="mt-4 text-slate-600">Carregando usuários...</p>
+              <p className="mt-2 text-sm text-slate-500">
+                {connectionStatus === 'checking' ? 'Conectando ao servidor...' : 'Buscando dados...'}
+              </p>
+            </div>
           </div>
         ) : users.length === 0 ? (
           <EmptyState
@@ -1784,63 +1838,92 @@ export default function ManageUsers() {
             hasFilters={hasActiveFilters()}
           />
         ) : (
-          <GenericCRUD
-            title=""
-            entityName="Usuário"
-            entityNamePlural="Usuários"
-            columns={columns}
-            data={users}
-            loading={loading}
-            totalItems={totalItems}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            onPageChange={handlePageChange}
-            onCreate={handleCreateUser}
-            onEdit={handleEditUser}
-            onDelete={handleDeleteUser}
-            onView={handleViewUser}
-            customActions={customActions}
-            createPermission="users.create"
-            editPermission="users.edit"
-            deletePermission="users.delete"
-            viewPermission="users.view"
-            showSearch={false}
-            emptyMessage=""
-          />
+          <>
+            {/* Indicador de carregamento quando há dados */}
+            {loading && users.length > 0 && (
+              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  <span className="text-sm font-medium">Atualizando dados...</span>
+                </div>
+              </div>
+            )}
+            
+            <GenericCRUD
+              title=""
+              entityName="Usuário"
+              entityNamePlural="Usuários"
+              columns={columns}
+              data={users}
+              loading={loading}
+              totalItems={totalItems}
+              currentPage={currentPage}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onCreate={handleCreateUser}
+              onEdit={handleEditUser}
+              onDelete={handleDeleteUser}
+              onView={handleViewUser}
+              customActions={customActions}
+              showSearch={false}
+              showPagination={false}
+              showActions={true}
+              emptyMessage=""
+            />
+            
+            {/* Paginação customizada */}
+            <div className="mt-6 bg-white rounded-lg shadow-sm border border-slate-200">
+              {/* Informações e controles */}
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-b border-slate-200">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-slate-600">Itens por página:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="text-sm border rounded px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT focus:border-primary-DEFAULT"
+                    disabled={loading}
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+                
+                <div className="text-sm text-slate-600">
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin w-4 h-4 border-2 border-primary-DEFAULT border-t-transparent rounded-full"></div>
+                      <span>Carregando...</span>
+                    </div>
+                  ) : (
+                    <span>
+                      Exibindo {users.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} usuários
+                      {hasActiveFilters() && (
+                        <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                          Filtrado
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Controles de paginação */}
+              {totalPages > 1 && (
+                <div className="p-4">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
+            </div>
+          </>
         )}
       
-        
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-        
-        <div className="text-center text-sm text-slate-500 mt-3">
-          {loading ? (
-            <div className="flex justify-center items-center">
-              <div className="animate-spin w-3 h-3 border-2 border-primary-DEFAULT border-t-transparent rounded-full"></div>
-            </div>
-          ) : (
-            `Exibindo ${users.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - ${Math.min(currentPage * itemsPerPage, totalItems)} de ${totalItems} usuários`
-          )}
-        </div>
-
-        <div className="flex justify-center mt-3 items-center gap-2">
-          <span className="text-sm text-slate-600">Itens por página:</span>
-          <select
-            value={itemsPerPage}
-            onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-            className="text-sm border rounded px-2 py-1 bg-white"
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-        </div>
-
         {showModal && (
           <UserModal
             show={showModal}
