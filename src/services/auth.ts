@@ -21,7 +21,7 @@ export interface RegisterResponse {
 const AUTH_CONFIG = {
   // Use primeiro a variável de ambiente, depois fallback para o proxy local
   API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
-  BACKEND_URL: 'http://localhost:3001/api',
+  BACKEND_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
   API_VERSION: 'v1', // Adicionando versão da API
   COOKIES: {
     AUTH_TOKEN: 'auth_token',
