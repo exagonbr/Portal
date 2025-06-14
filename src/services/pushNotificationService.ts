@@ -108,7 +108,7 @@ class PushNotificationService {
     }
     
     try {
-      const response = await apiClient.post('/push-subscriptions', subscription.toJSON());
+      const response = await apiClient.post('/api/push-subscriptions', subscription.toJSON());
       
       if (response.success) {
         console.log('Push subscription saved successfully');
