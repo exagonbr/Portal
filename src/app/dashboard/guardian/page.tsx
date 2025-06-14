@@ -51,7 +51,8 @@ import {
   MessageCircle,
   Share2,
   Printer,
-  FileDown
+  FileDown,
+  Send
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
@@ -147,6 +148,34 @@ interface ParentEngagement {
   score: number;
 }
 
+interface PhotoPost {
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  teacherAvatar?: string;
+  studentIds: string[];
+  studentNames: string[];
+  imageUrl: string;
+  caption: string;
+  location?: string;
+  activity: string;
+  timestamp: Date;
+  likes: number;
+  comments: PhotoComment[];
+  tags: string[];
+  isLikedByParent: boolean;
+}
+
+interface PhotoComment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorType: 'parent' | 'teacher' | 'admin';
+  content: string;
+  timestamp: Date;
+  likes: number;
+}
+
 interface StudentPerformance {
   studentId: string;
   studentName: string;
@@ -232,7 +261,7 @@ export default function GuardianDashboardPage() {
   const [messages, setMessages] = useState<TeacherMessage[]>([]);
   const [behaviorReports, setBehaviorReports] = useState<BehaviorReport[]>([]);
   const [financialInfo, setFinancialInfo] = useState<FinancialInfo[]>([]);
-  const [selectedView, setSelectedView] = useState<'overview' | 'academic' | 'communication' | 'financial' | 'analytics'>('overview');
+  const [selectedView, setSelectedView] = useState<'overview' | 'academic' | 'communication' | 'financial' | 'analytics' | 'photos'>('overview');
   
   // Novos estados para dados enriquecidos
   const [subjectPerformances, setSubjectPerformances] = useState<{[studentId: string]: SubjectPerformance[]}>({});
@@ -242,6 +271,10 @@ export default function GuardianDashboardPage() {
   const [disciplinaryRecords, setDisciplinaryRecords] = useState<DisciplinaryRecord[]>([]);
   const [parentEngagement, setParentEngagement] = useState<ParentEngagement | null>(null);
   const [timeFilter, setTimeFilter] = useState<'week' | 'month' | 'semester' | 'year'>('month');
+  
+  // Estados para o feed de fotos
+  const [photoPosts, setPhotoPosts] = useState<PhotoPost[]>([]);
+  const [photoFilter, setPhotoFilter] = useState<'all' | 'my-children'>('all');
 
   useEffect(() => {
     loadDashboardData();
@@ -506,6 +539,190 @@ export default function GuardianDashboardPage() {
         score: 92
       });
 
+      // Feed de fotos dos eventos
+      setPhotoPosts([
+        {
+          id: '1',
+          teacherId: 'teacher1',
+          teacherName: 'Prof. Ana Silva',
+          teacherAvatar: '👩‍🏫',
+          studentIds: ['1', '2'],
+          studentNames: ['João Silva', 'Maria Silva'],
+          imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&h=500&fit=crop',
+          caption: 'Projeto de robótica em andamento! Os alunos estão construindo seus próprios robôs e aprendendo programação básica. 🤖✨',
+          location: 'Laboratório de Ciências',
+          activity: 'Robótica',
+          timestamp: new Date(Date.now() - 86400000 * 1), // 1 dia atrás
+          likes: 24,
+          comments: [
+            {
+              id: 'c1',
+              authorId: 'parent1',
+              authorName: 'Pai do João',
+              authorType: 'parent',
+              content: 'Que orgulho! João chegou em casa super animado falando do projeto! 🥰',
+              timestamp: new Date(Date.now() - 86400000 * 1 + 3600000),
+              likes: 5
+            },
+            {
+              id: 'c2',
+              authorId: 'teacher1',
+              authorName: 'Prof. Ana Silva',
+              authorType: 'teacher',
+              content: 'Ele realmente se destacou hoje! Muito criativo na programação! 👏',
+              timestamp: new Date(Date.now() - 86400000 * 1 + 7200000),
+              likes: 3
+            }
+          ],
+          tags: ['#robótica', '#ciências', '#tecnologia', '#aprendizado'],
+          isLikedByParent: true
+        },
+        {
+          id: '2',
+          teacherId: 'teacher2',
+          teacherName: 'Prof. Sandra Costa',
+          teacherAvatar: '👩‍🎨',
+          studentIds: ['2'],
+          studentNames: ['Maria Silva'],
+          imageUrl: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=500&h=500&fit=crop',
+          caption: 'Exposição de arte da turma! Maria criou uma obra incrível sobre a natureza. Cores vibrantes e muita criatividade! 🎨🌿',
+          location: 'Sala de Artes',
+          activity: 'Artes Visuais',
+          timestamp: new Date(Date.now() - 86400000 * 2),
+          likes: 31,
+          comments: [
+            {
+              id: 'c3',
+              authorId: 'parent2',
+              authorName: 'Mãe da Maria',
+              authorType: 'parent',
+              content: 'Linda demais! Ela tem muito talento mesmo! ❤️',
+              timestamp: new Date(Date.now() - 86400000 * 2 + 1800000),
+              likes: 8
+            }
+          ],
+          tags: ['#arte', '#criatividade', '#exposição', '#natureza'],
+          isLikedByParent: true
+        },
+        {
+          id: '3',
+          teacherId: 'teacher3',
+          teacherName: 'Prof. Carlos Santos',
+          teacherAvatar: '👨‍🏫',
+          studentIds: ['1'],
+          studentNames: ['João Silva'],
+          imageUrl: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500&h=500&fit=crop',
+          caption: 'Aula de campo no parque! Estudando a biodiversidade local e coletando amostras para nosso projeto de ciências. 🌱🔬',
+          location: 'Parque Municipal',
+          activity: 'Ciências Naturais',
+          timestamp: new Date(Date.now() - 86400000 * 3),
+          likes: 18,
+          comments: [
+            {
+              id: 'c4',
+              authorId: 'parent3',
+              authorName: 'Pai da Ana',
+              authorType: 'parent',
+              content: 'Que experiência rica! Aprender na prática é muito melhor! 🌿',
+              timestamp: new Date(Date.now() - 86400000 * 3 + 3600000),
+              likes: 4
+            }
+          ],
+          tags: ['#ciências', '#natureza', '#auladecampo', '#biodiversidade'],
+          isLikedByParent: false
+        },
+        {
+          id: '4',
+          teacherId: 'teacher4',
+          teacherName: 'Prof. Roberto Lima',
+          teacherAvatar: '👨‍🏫',
+          studentIds: ['1', '2'],
+          studentNames: ['João Silva', 'Maria Silva'],
+          imageUrl: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=500&h=500&fit=crop',
+          caption: 'Competição de matemática! Nossos alunos se saíram muito bem resolvendo problemas em equipe. Parabéns a todos! 🏆📊',
+          location: 'Auditório',
+          activity: 'Matemática',
+          timestamp: new Date(Date.now() - 86400000 * 4),
+          likes: 42,
+          comments: [
+            {
+              id: 'c5',
+              authorId: 'parent1',
+              authorName: 'Pai do João',
+              authorType: 'parent',
+              content: 'João adorou a competição! Já está pedindo mais desafios! 🤓',
+              timestamp: new Date(Date.now() - 86400000 * 4 + 1800000),
+              likes: 6
+            },
+            {
+              id: 'c6',
+              authorId: 'parent2',
+              authorName: 'Mãe da Maria',
+              authorType: 'parent',
+              content: 'Maria disse que trabalhar em equipe foi o melhor! 👥',
+              timestamp: new Date(Date.now() - 86400000 * 4 + 3600000),
+              likes: 4
+            }
+          ],
+          tags: ['#matemática', '#competição', '#trabalhoequipe', '#desafio'],
+          isLikedByParent: true
+        },
+        {
+          id: '5',
+          teacherId: 'teacher5',
+          teacherName: 'Prof. Lucia Fernandes',
+          teacherAvatar: '👩‍🏫',
+          studentIds: ['2'],
+          studentNames: ['Maria Silva'],
+          imageUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&h=500&fit=crop',
+          caption: 'Apresentação de poesia! Maria recitou um poema lindo sobre amizade. A turma toda ficou emocionada! 📚💕',
+          location: 'Biblioteca',
+          activity: 'Português',
+          timestamp: new Date(Date.now() - 86400000 * 5),
+          likes: 28,
+          comments: [
+            {
+              id: 'c7',
+              authorId: 'parent2',
+              authorName: 'Mãe da Maria',
+              authorType: 'parent',
+              content: 'Ela treinou tanto em casa! Que orgulho! 🥺❤️',
+              timestamp: new Date(Date.now() - 86400000 * 5 + 900000),
+              likes: 12
+            }
+          ],
+          tags: ['#poesia', '#português', '#apresentação', '#amizade'],
+          isLikedByParent: true
+        },
+        {
+          id: '6',
+          teacherId: 'teacher6',
+          teacherName: 'Prof. Maria Oliveira',
+          teacherAvatar: '👩‍🔬',
+          studentIds: ['1'],
+          studentNames: ['João Silva'],
+          imageUrl: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&h=500&fit=crop',
+          caption: 'Experimento de vulcão! Os alunos aprenderam sobre reações químicas de forma super divertida! 🌋⚗️',
+          location: 'Laboratório',
+          activity: 'Química',
+          timestamp: new Date(Date.now() - 86400000 * 6),
+          likes: 35,
+          comments: [
+            {
+              id: 'c8',
+              authorId: 'parent1',
+              authorName: 'Pai do João',
+              authorType: 'parent',
+              content: 'João não parava de falar sobre o vulcão! Quer fazer em casa agora! 😄',
+              timestamp: new Date(Date.now() - 86400000 * 6 + 2700000),
+              likes: 7
+            }
+          ],
+          tags: ['#química', '#experimento', '#vulcão', '#ciência'],
+          isLikedByParent: true
+        }
+      ]);
+
       // Eventos acadêmicos
       setEvents([
         {
@@ -653,6 +870,34 @@ export default function GuardianDashboardPage() {
     }
   };
 
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Agora mesmo';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}min`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d`;
+    
+    return date.toLocaleDateString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit' 
+    });
+  };
+
+  const handleLikePost = (postId: string) => {
+    setPhotoPosts(prev => prev.map(post => {
+      if (post.id === postId) {
+        return {
+          ...post,
+          isLikedByParent: !post.isLikedByParent,
+          likes: post.isLikedByParent ? post.likes - 1 : post.likes + 1
+        };
+      }
+      return post;
+    }));
+  };
+
   const getFinancialStatusColor = (status: FinancialInfo['status']) => {
     switch (status) {
       case 'paid': return 'text-accent-green bg-green-100';
@@ -773,6 +1018,7 @@ export default function GuardianDashboardPage() {
                   { key: 'overview', label: 'Visão Geral', icon: BarChart3 },
                   { key: 'academic', label: 'Desempenho', icon: GraduationCap },
                   { key: 'analytics', label: 'Análises', icon: LineChart },
+                  { key: 'photos', label: 'Momentos', icon: Camera },
                   { key: 'communication', label: 'Comunicação', icon: MessageSquare },
                   { key: 'financial', label: 'Financeiro', icon: DollarSign }
                 ].map(tab => (
@@ -1129,6 +1375,184 @@ export default function GuardianDashboardPage() {
                         );
                       })}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedView === 'photos' && (
+                <div className="space-y-6">
+                  {/* Header do Feed */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-3">
+                      <Camera className="w-6 h-6 text-pink-600" />
+                      <h2 className="text-2xl font-bold text-gray-800">📸 Momentos Especiais</h2>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <select 
+                        value={photoFilter} 
+                        onChange={(e) => setPhotoFilter(e.target.value as any)}
+                        className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500"
+                      >
+                        <option value="all">Todas as fotos</option>
+                        <option value="my-children">Apenas meus filhos</option>
+                      </select>
+                      <button className="flex items-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                        <Filter className="w-4 h-4" />
+                        Filtrar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Feed de Fotos estilo Instagram */}
+                  <div className="space-y-6">
+                    {photoPosts
+                      .filter(post => photoFilter === 'all' || post.studentIds.some(id => students.some(s => s.id === id)))
+                      .map(post => (
+                      <div key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                        {/* Header do Post */}
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-lg">
+                              {post.teacherAvatar || post.teacherName.charAt(0)}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-800">{post.teacherName}</h3>
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <MapPin className="w-3 h-3" />
+                                <span>{post.location}</span>
+                                <span>•</span>
+                                <span>{post.activity}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {formatTimeAgo(post.timestamp)}
+                          </div>
+                        </div>
+
+                        {/* Imagem do Post */}
+                        <div className="relative">
+                          <img 
+                            src={post.imageUrl} 
+                            alt={post.caption}
+                            className="w-full h-80 object-cover"
+                          />
+                          {/* Tags dos Estudantes */}
+                          <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                            {post.studentNames.map(name => (
+                              <span key={name} className="bg-black bg-opacity-50 text-white px-2 py-1 rounded-full text-xs">
+                                👤 {name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Ações do Post */}
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-4">
+                              <button 
+                                className={`flex items-center gap-2 transition-colors ${
+                                  post.isLikedByParent ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                                }`}
+                                onClick={() => handleLikePost(post.id)}
+                              >
+                                <Heart className={`w-5 h-5 ${post.isLikedByParent ? 'fill-current' : ''}`} />
+                                <span className="text-sm font-medium">{post.likes}</span>
+                              </button>
+                              <button className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors">
+                                <MessageCircle className="w-5 h-5" />
+                                <span className="text-sm font-medium">{post.comments.length}</span>
+                              </button>
+                              <button className="flex items-center gap-2 text-gray-500 hover:text-green-500 transition-colors">
+                                <Share2 className="w-5 h-5" />
+                                <span className="text-sm font-medium">Compartilhar</span>
+                              </button>
+                            </div>
+                            <button className="text-gray-500 hover:text-gray-700 transition-colors">
+                              <Bookmark className="w-5 h-5" />
+                            </button>
+                          </div>
+
+                          {/* Caption */}
+                          <div className="mb-3">
+                            <p className="text-gray-800 leading-relaxed">{post.caption}</p>
+                          </div>
+
+                          {/* Tags */}
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {post.tags.map(tag => (
+                              <span key={tag} className="text-blue-600 text-sm hover:text-blue-800 cursor-pointer">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* Comentários */}
+                          {post.comments.length > 0 && (
+                            <div className="space-y-3 border-t border-gray-100 pt-3">
+                              <div className="text-sm font-medium text-gray-600">
+                                {post.comments.length} comentário{post.comments.length !== 1 ? 's' : ''}
+                              </div>
+                              {post.comments.slice(0, 2).map(comment => (
+                                <div key={comment.id} className="flex items-start gap-3">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                                    comment.authorType === 'parent' ? 'bg-blue-100 text-blue-700' :
+                                    comment.authorType === 'teacher' ? 'bg-green-100 text-green-700' :
+                                    'bg-purple-100 text-purple-700'
+                                  }`}>
+                                    {comment.authorType === 'parent' ? '👨‍👩‍👧‍👦' :
+                                     comment.authorType === 'teacher' ? '👩‍🏫' : '👤'}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-medium text-gray-800 text-sm">{comment.authorName}</span>
+                                      <span className="text-xs text-gray-500">{formatTimeAgo(comment.timestamp)}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700">{comment.content}</p>
+                                    <div className="flex items-center gap-3 mt-1">
+                                      <button className="text-xs text-gray-500 hover:text-red-500 transition-colors">
+                                        ❤️ {comment.likes}
+                                      </button>
+                                      <button className="text-xs text-gray-500 hover:text-blue-500 transition-colors">
+                                        Responder
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              {post.comments.length > 2 && (
+                                <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                                  Ver todos os {post.comments.length} comentários
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Adicionar Comentário */}
+                          <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-100">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                              👨‍👩‍👧‍👦
+                            </div>
+                            <input 
+                              type="text" 
+                              placeholder="Adicione um comentário..."
+                              className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                            />
+                            <button className="text-pink-600 hover:text-pink-700 transition-colors">
+                              <Send className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Botão para carregar mais */}
+                  <div className="text-center">
+                    <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 rounded-full hover:from-pink-600 hover:to-purple-700 transition-all hover:scale-105 shadow-lg">
+                      📸 Carregar mais momentos
+                    </button>
                   </div>
                 </div>
               )}
