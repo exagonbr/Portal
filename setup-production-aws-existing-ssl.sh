@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # Script de Configuração Produção AWS - Portal Sabercon
+# Para usar com certificados SSL existentes da AWS
 # Domínio: https://portal.sabercon.com.br
 # Frontend: porta 3000 | Backend: porta 3001
-# Execute como root: sudo bash setup-production-aws.sh
+# Execute como root: sudo bash setup-production-aws-existing-ssl.sh
 
 set -e
 
@@ -21,8 +22,12 @@ NC='\033[0m'
 DOMAIN="portal.sabercon.com.br"
 FRONTEND_PORT="3000"
 BACKEND_PORT="3001"
-EMAIL="admin@sabercon.com.br"
 NODE_ENV="production"
+
+# Caminhos dos certificados SSL (ajuste conforme necessário)
+SSL_CERT_PATH="/etc/ssl/certs/portal.sabercon.com.br.crt"
+SSL_KEY_PATH="/etc/ssl/private/portal.sabercon.com.br.key"
+SSL_CHAIN_PATH="/etc/ssl/certs/portal.sabercon.com.br-chain.crt"
 
 # Função para log
 log() {
@@ -49,20 +54,47 @@ print_header() {
 
 # Header principal
 clear
-print_header "PORTAL SABERCON - CONFIGURAÇÃO PRODUÇÃO AWS"
+print_header "PORTAL SABERCON - CONFIGURAÇÃO PRODUÇÃO AWS (SSL EXISTENTE)"
 echo ""
 echo -e "${CYAN}🌐 Domínio:     https://$DOMAIN${NC}"
 echo -e "${CYAN}📱 Frontend:    https://$DOMAIN/ → localhost:$FRONTEND_PORT${NC}"
 echo -e "${CYAN}🔧 Backend API: https://$DOMAIN/api/ → localhost:$BACKEND_PORT/api/${NC}"
 echo -e "${CYAN}🔧 Backend:     https://$DOMAIN/backend/ → localhost:$BACKEND_PORT/${NC}"
-echo -e "${CYAN}📧 Email SSL:   $EMAIL${NC}"
 echo -e "${CYAN}🏗️  Ambiente:    $NODE_ENV${NC}"
+echo -e "${CYAN}🔒 SSL:         Certificados AWS existentes${NC}"
 echo ""
 
 # Verificar root
 if [ "$EUID" -ne 0 ]; then
-    log_error "Execute como root: sudo bash setup-production-aws.sh"
+    log_error "Execute como root: sudo bash setup-production-aws-existing-ssl.sh"
     exit 1
+fi
+
+# Verificar se os certificados existem
+log "🔍 Verificando certificados SSL..."
+if [ ! -f "$SSL_CERT_PATH" ]; then
+    log_warning "Certificado não encontrado em: $SSL_CERT_PATH"
+    echo ""
+    echo "Por favor, coloque seus certificados AWS nos seguintes locais:"
+    echo "  📄 Certificado: $SSL_CERT_PATH"
+    echo "  🔑 Chave privada: $SSL_KEY_PATH"
+    echo "  🔗 Chain (opcional): $SSL_CHAIN_PATH"
+    echo ""
+    echo "Ou informe os caminhos corretos editando este script."
+    read -p "Continuar mesmo assim? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log "Configuração cancelada"
+        exit 1
+    fi
+else
+    log_success "Certificado encontrado: $SSL_CERT_PATH"
+fi
+
+if [ ! -f "$SSL_KEY_PATH" ]; then
+    log_warning "Chave privada não encontrada em: $SSL_KEY_PATH"
+else
+    log_success "Chave privada encontrada: $SSL_KEY_PATH"
 fi
 
 # Verificar conectividade
@@ -125,7 +157,7 @@ log_success "Backup criado em $BACKUP_DIR"
 # Atualizar sistema
 log "📦 Atualizando sistema e instalando dependências..."
 apt update -qq
-apt install -y nginx certbot python3-certbot-nginx curl wget net-tools ufw software-properties-common htop
+apt install -y nginx curl wget net-tools ufw software-properties-common htop
 
 # Configurar firewall para produção
 log "🔥 Configurando firewall UFW para produção..."
@@ -157,8 +189,13 @@ log "⏹️  Parando serviços..."
 systemctl stop nginx 2>/dev/null || true
 systemctl stop apache2 2>/dev/null || true
 
+# Criar diretórios SSL se não existirem
+mkdir -p /etc/ssl/certs
+mkdir -p /etc/ssl/private
+chmod 700 /etc/ssl/private
+
 # Configuração otimizada do Nginx para produção
-log "⚙️ Configurando Nginx para produção..."
+log "⚙️ Configurando Nginx para produção com SSL existente..."
 
 # Configuração principal otimizada para produção
 cat > /etc/nginx/nginx.conf << 'EOL'
@@ -222,11 +259,6 @@ http {
         image/svg+xml
         image/x-icon;
     
-    # Brotli Compression (se disponível)
-    # brotli on;
-    # brotli_comp_level 6;
-    # brotli_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-    
     # Rate Limiting para produção
     limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
     limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
@@ -256,9 +288,9 @@ http {
 }
 EOL
 
-# Configuração do site para produção
+# Configuração do site para produção com SSL existente
 cat > /etc/nginx/sites-available/default << EOF
-# Portal Sabercon - Configuração Produção AWS
+# Portal Sabercon - Configuração Produção AWS com SSL Existente
 # Domínio: $DOMAIN
 # Frontend: localhost:$FRONTEND_PORT | Backend: localhost:$BACKEND_PORT
 
@@ -267,23 +299,36 @@ server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
     
-    # Permitir apenas Let's Encrypt challenge
-    location /.well-known/acme-challenge/ {
-        root /var/www/html;
-    }
-    
-    # Redirecionar todo o resto para HTTPS
-    location / {
-        return 301 https://\$server_name\$request_uri;
-    }
+    # Redirecionar todo tráfego para HTTPS
+    return 301 https://\$server_name\$request_uri;
 }
 
-# Configuração HTTPS principal (será configurada pelo Certbot)
-# server {
-#     listen 443 ssl http2;
-#     server_name $DOMAIN www.$DOMAIN;
-#     
-#     # Configurações SSL (serão adicionadas pelo Certbot)
+# Configuração HTTPS principal
+server {
+    listen 443 ssl http2;
+    server_name $DOMAIN www.$DOMAIN;
+    
+    # Configurações SSL com certificados existentes
+    ssl_certificate $SSL_CERT_PATH;
+    ssl_certificate_key $SSL_KEY_PATH;
+EOF
+
+# Adicionar chain se existir
+if [ -f "$SSL_CHAIN_PATH" ]; then
+    echo "    ssl_trusted_certificate $SSL_CHAIN_PATH;" >> /etc/nginx/sites-available/default
+fi
+
+cat >> /etc/nginx/sites-available/default << 'EOF'
+    
+    # Configurações SSL otimizadas
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+    ssl_stapling on;
+    ssl_stapling_verify on;
     
     # Security Headers
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
@@ -297,22 +342,22 @@ server {
     limit_conn conn_limit_per_ip 20;
     limit_conn conn_limit_per_server 1000;
     
-    # Frontend (raiz do site) → localhost:$FRONTEND_PORT
+    # Frontend (raiz do site) → localhost:3000
     location / {
         # Rate limiting suave para frontend
         limit_req zone=general burst=10 nodelay;
         
         proxy_pass http://frontend_backend;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header X-Forwarded-Host \$host;
-        proxy_set_header X-Forwarded-Port \$server_port;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_cache_bypass $http_upgrade;
         
         # Timeouts otimizados
         proxy_connect_timeout 30s;
@@ -332,7 +377,7 @@ server {
             proxy_cache_valid 200 1y;
             proxy_cache_valid 404 1m;
             add_header Cache-Control "public, immutable";
-            add_header X-Cache-Status \$upstream_cache_status;
+            add_header X-Cache-Status $upstream_cache_status;
             expires 1y;
         }
         
@@ -343,39 +388,39 @@ server {
             proxy_cache_valid 200 7d;
             proxy_cache_valid 404 1m;
             add_header Cache-Control "public, max-age=604800";
-            add_header X-Cache-Status \$upstream_cache_status;
+            add_header X-Cache-Status $upstream_cache_status;
             expires 7d;
         }
     }
     
-    # Backend API → localhost:$BACKEND_PORT/api/
+    # Backend API → localhost:3001/api/
     location /api/ {
         # Rate limiting mais rigoroso para API
         limit_req zone=api burst=50 nodelay;
         
         proxy_pass http://api_backend/api/;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header X-Forwarded-Host \$host;
-        proxy_set_header X-Forwarded-Port \$server_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
         
         # Headers específicos para API
-        proxy_set_header Content-Type \$content_type;
+        proxy_set_header Content-Type $content_type;
         proxy_set_header Accept application/json;
         
         # CORS headers para produção
-        add_header Access-Control-Allow-Origin "https://$DOMAIN" always;
+        add_header Access-Control-Allow-Origin "https://portal.sabercon.com.br" always;
         add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH" always;
         add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, X-CSRF-Token" always;
         add_header Access-Control-Allow-Credentials true always;
         add_header Access-Control-Max-Age 86400 always;
         
         # Preflight requests
-        if (\$request_method = 'OPTIONS') {
-            add_header Access-Control-Allow-Origin "https://$DOMAIN" always;
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin "https://portal.sabercon.com.br" always;
             add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH" always;
             add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, X-CSRF-Token" always;
             add_header Access-Control-Max-Age 86400 always;
@@ -401,10 +446,10 @@ server {
         
         proxy_pass http://api_backend/api/auth/login;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         
         # Timeouts para login
         proxy_connect_timeout 30s;
@@ -412,14 +457,14 @@ server {
         proxy_read_timeout 60s;
     }
     
-    # Backend direto → localhost:$BACKEND_PORT/
+    # Backend direto → localhost:3001/
     location /backend/ {
         proxy_pass http://api_backend/;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         
         # Timeout padrão
         proxy_connect_timeout 30s;
@@ -454,7 +499,7 @@ server {
         access_log off;
         log_not_found off;
     }
-# }
+}
 EOF
 
 # Criar diretório de cache
@@ -483,53 +528,6 @@ else
     log_error "Nginx não está ativo"
     systemctl status nginx
     exit 1
-fi
-
-# Obter certificado SSL Let's Encrypt
-log "🔒 Obtendo certificado SSL Let's Encrypt para $DOMAIN..."
-echo "Este processo pode demorar alguns minutos..."
-
-# Criar diretório para challenge
-mkdir -p /var/www/html/.well-known/acme-challenge
-chown -R www-data:www-data /var/www/html
-
-if certbot --nginx --non-interactive --agree-tos --email $EMAIL -d $DOMAIN -d www.$DOMAIN --redirect; then
-    log_success "Certificado SSL obtido com sucesso!"
-    
-    # Verificar certificado
-    if certbot certificates | grep -q $DOMAIN; then
-        log_success "Certificado verificado"
-    else
-        log_warning "Certificado pode não estar configurado corretamente"
-    fi
-    
-else
-    log_error "Falha ao obter certificado SSL"
-    echo ""
-    echo "Possíveis causas:"
-    echo "  • DNS não está apontando para este servidor"
-    echo "  • Firewall está bloqueando portas 80/443"
-    echo "  • Domínio não está propagado"
-    echo "  • Rate limit do Let's Encrypt atingido"
-    echo ""
-    echo "Para diagnosticar:"
-    echo "  dig $DOMAIN"
-    echo "  curl -I http://$DOMAIN"
-    echo "  systemctl status nginx"
-    echo "  tail -f /var/log/nginx/error.log"
-    exit 1
-fi
-
-# Configurar renovação automática
-log "🔄 Configurando renovação automática SSL..."
-systemctl enable certbot.timer
-systemctl start certbot.timer
-
-# Teste de renovação
-if certbot renew --dry-run > /dev/null 2>&1; then
-    log_success "Teste de renovação passou"
-else
-    log_warning "Teste de renovação falhou - verificar logs"
 fi
 
 # Otimizações do sistema para produção
@@ -621,7 +619,7 @@ systemctl status nginx --no-pager -l
 
 echo ""
 echo "🔒 Certificados SSL:"
-certbot certificates
+openssl x509 -in /etc/ssl/certs/portal.sabercon.com.br.crt -text -noout | grep -E "(Subject:|Issuer:|Not Before|Not After)"
 
 echo ""
 echo "💾 Uso de disco:"
@@ -641,7 +639,7 @@ chmod +x /root/monitor-portal.sh
 # Resultados finais
 print_header "CONFIGURAÇÃO PRODUÇÃO CONCLUÍDA COM SUCESSO"
 echo ""
-log_success "🎉 Portal Sabercon configurado para produção na AWS!"
+log_success "🎉 Portal Sabercon configurado para produção na AWS com SSL existente!"
 echo ""
 echo -e "${GREEN}🌐 URLs HTTPS disponíveis:${NC}"
 echo -e "${GREEN}📱 Frontend:    https://$DOMAIN/ → localhost:$FRONTEND_PORT${NC}"
@@ -654,13 +652,12 @@ echo -e "${CYAN}📊 Status:      /root/monitor-portal.sh${NC}"
 echo -e "${CYAN}📝 Logs Nginx:  tail -f /var/log/nginx/access.log${NC}"
 echo -e "${CYAN}📝 Logs Error:  tail -f /var/log/nginx/error.log${NC}"
 echo -e "${CYAN}🔄 Restart:     systemctl restart nginx${NC}"
-echo -e "${CYAN}🔒 SSL Status:  certbot certificates${NC}"
-echo -e "${CYAN}🔄 SSL Renew:   certbot renew${NC}"
+echo -e "${CYAN}🔒 SSL Info:    openssl x509 -in $SSL_CERT_PATH -text -noout${NC}"
 echo ""
 echo -e "${YELLOW}⚠️  Lembre-se:${NC}"
-echo -e "${YELLOW}   • Configurar DNS para apontar $DOMAIN para este servidor${NC}"
 echo -e "${YELLOW}   • Verificar se as aplicações estão rodando (pm2 list)${NC}"
 echo -e "${YELLOW}   • Monitorar logs regularmente${NC}"
 echo -e "${YELLOW}   • Fazer backup regular do banco de dados${NC}"
+echo -e "${YELLOW}   • Renovar certificados SSL quando necessário${NC}"
 echo ""
 print_header "PORTAL SABERCON PRODUÇÃO ATIVO"

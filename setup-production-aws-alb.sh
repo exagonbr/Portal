@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # Script de Configuração Produção AWS - Portal Sabercon
+# Para uso com ALB/CloudFront (SSL terminado na AWS)
 # Domínio: https://portal.sabercon.com.br
 # Frontend: porta 3000 | Backend: porta 3001
-# Execute como root: sudo bash setup-production-aws.sh
+# Execute como root: sudo bash setup-production-aws-alb.sh
 
 set -e
 
@@ -21,7 +22,6 @@ NC='\033[0m'
 DOMAIN="portal.sabercon.com.br"
 FRONTEND_PORT="3000"
 BACKEND_PORT="3001"
-EMAIL="admin@sabercon.com.br"
 NODE_ENV="production"
 
 # Função para log
@@ -49,19 +49,19 @@ print_header() {
 
 # Header principal
 clear
-print_header "PORTAL SABERCON - CONFIGURAÇÃO PRODUÇÃO AWS"
+print_header "PORTAL SABERCON - CONFIGURAÇÃO PRODUÇÃO AWS (ALB/CloudFront)"
 echo ""
-echo -e "${CYAN}🌐 Domínio:     https://$DOMAIN${NC}"
-echo -e "${CYAN}📱 Frontend:    https://$DOMAIN/ → localhost:$FRONTEND_PORT${NC}"
-echo -e "${CYAN}🔧 Backend API: https://$DOMAIN/api/ → localhost:$BACKEND_PORT/api/${NC}"
-echo -e "${CYAN}🔧 Backend:     https://$DOMAIN/backend/ → localhost:$BACKEND_PORT/${NC}"
-echo -e "${CYAN}📧 Email SSL:   $EMAIL${NC}"
+echo -e "${CYAN}🌐 Domínio:     https://$DOMAIN (SSL terminado na AWS)${NC}"
+echo -e "${CYAN}📱 Frontend:    / → localhost:$FRONTEND_PORT${NC}"
+echo -e "${CYAN}🔧 Backend API: /api/ → localhost:$BACKEND_PORT/api/${NC}"
+echo -e "${CYAN}🔧 Backend:     /backend/ → localhost:$BACKEND_PORT/${NC}"
 echo -e "${CYAN}🏗️  Ambiente:    $NODE_ENV${NC}"
+echo -e "${CYAN}🔒 SSL:         Terminado no ALB/CloudFront${NC}"
 echo ""
 
 # Verificar root
 if [ "$EUID" -ne 0 ]; then
-    log_error "Execute como root: sudo bash setup-production-aws.sh"
+    log_error "Execute como root: sudo bash setup-production-aws-alb.sh"
     exit 1
 fi
 
@@ -125,10 +125,10 @@ log_success "Backup criado em $BACKUP_DIR"
 # Atualizar sistema
 log "📦 Atualizando sistema e instalando dependências..."
 apt update -qq
-apt install -y nginx certbot python3-certbot-nginx curl wget net-tools ufw software-properties-common htop
+apt install -y nginx curl wget net-tools ufw software-properties-common htop
 
-# Configurar firewall para produção
-log "🔥 Configurando firewall UFW para produção..."
+# Configurar firewall para produção (ALB)
+log "🔥 Configurando firewall UFW para ALB..."
 ufw --force reset
 ufw default deny incoming
 ufw default allow outgoing
@@ -136,31 +136,35 @@ ufw default allow outgoing
 # Portas essenciais
 ufw allow ssh
 ufw allow 22/tcp
-ufw allow 80/tcp
-ufw allow 443/tcp
+ufw allow 80/tcp  # ALB envia tráfego HTTP para a instância
 
-# Portas da aplicação (apenas localhost)
+# Portas da aplicação (apenas localhost e ALB)
 ufw allow from 127.0.0.1 to any port $FRONTEND_PORT
 ufw allow from 127.0.0.1 to any port $BACKEND_PORT
 
-# Regras específicas para AWS
+# Regras específicas para AWS ALB (ranges de IP da AWS)
 ufw allow from 10.0.0.0/8 to any port $FRONTEND_PORT
-ufw allow from 10.0.0.0/8 to any port $BACKEND_PORT
 ufw allow from 172.16.0.0/12 to any port $FRONTEND_PORT
+ufw allow from 192.168.0.0/16 to any port $FRONTEND_PORT
+ufw allow from 10.0.0.0/8 to any port $BACKEND_PORT
 ufw allow from 172.16.0.0/12 to any port $BACKEND_PORT
+ufw allow from 192.168.0.0/16 to any port $BACKEND_PORT
+
+# Permitir tráfego HTTP na porta 80 (do ALB)
+ufw allow 80/tcp
 
 ufw --force enable
-log_success "Firewall configurado para produção"
+log_success "Firewall configurado para ALB"
 
 # Parar serviços
 log "⏹️  Parando serviços..."
 systemctl stop nginx 2>/dev/null || true
 systemctl stop apache2 2>/dev/null || true
 
-# Configuração otimizada do Nginx para produção
-log "⚙️ Configurando Nginx para produção..."
+# Configuração otimizada do Nginx para ALB
+log "⚙️ Configurando Nginx para ALB (sem SSL local)..."
 
-# Configuração principal otimizada para produção
+# Configuração principal otimizada para ALB
 cat > /etc/nginx/nginx.conf << 'EOL'
 user www-data;
 worker_processes auto;
@@ -186,16 +190,24 @@ http {
     server_tokens off;
     client_max_body_size 100M;
     
+    # Real IP (importante para ALB)
+    set_real_ip_from 10.0.0.0/8;
+    set_real_ip_from 172.16.0.0/12;
+    set_real_ip_from 192.168.0.0/16;
+    real_ip_header X-Forwarded-For;
+    real_ip_recursive on;
+    
     # MIME Types
     include /etc/nginx/mime.types;
     default_type application/octet-stream;
     
-    # Logging
+    # Logging com IP real
     log_format main '$remote_addr - $remote_user [$time_local] "$request" '
                     '$status $body_bytes_sent "$http_referer" '
                     '"$http_user_agent" "$http_x_forwarded_for" '
                     'rt=$request_time uct="$upstream_connect_time" '
-                    'uht="$upstream_header_time" urt="$upstream_response_time"';
+                    'uht="$upstream_header_time" urt="$upstream_response_time" '
+                    'scheme=$scheme host=$host';
     
     access_log /var/log/nginx/access.log main buffer=16k flush=2m;
     error_log /var/log/nginx/error.log warn;
@@ -222,12 +234,7 @@ http {
         image/svg+xml
         image/x-icon;
     
-    # Brotli Compression (se disponível)
-    # brotli on;
-    # brotli_comp_level 6;
-    # brotli_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-    
-    # Rate Limiting para produção
+    # Rate Limiting baseado no IP real
     limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
     limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
     limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
@@ -256,63 +263,48 @@ http {
 }
 EOL
 
-# Configuração do site para produção
-cat > /etc/nginx/sites-available/default << EOF
-# Portal Sabercon - Configuração Produção AWS
-# Domínio: $DOMAIN
-# Frontend: localhost:$FRONTEND_PORT | Backend: localhost:$BACKEND_PORT
+# Configuração do site para ALB (apenas HTTP)
+cat > /etc/nginx/sites-available/default << 'EOF'
+# Portal Sabercon - Configuração Produção AWS com ALB
+# SSL terminado no ALB/CloudFront
+# Frontend: localhost:3000 | Backend: localhost:3001
 
-# Redirecionamento HTTP para HTTPS
 server {
     listen 80;
-    server_name $DOMAIN www.$DOMAIN;
+    server_name portal.sabercon.com.br www.portal.sabercon.com.br _;
     
-    # Permitir apenas Let's Encrypt challenge
-    location /.well-known/acme-challenge/ {
-        root /var/www/html;
+    # Headers para detectar HTTPS do ALB
+    set $forwarded_scheme $scheme;
+    if ($http_x_forwarded_proto = 'https') {
+        set $forwarded_scheme https;
     }
     
-    # Redirecionar todo o resto para HTTPS
-    location / {
-        return 301 https://\$server_name\$request_uri;
-    }
-}
-
-# Configuração HTTPS principal (será configurada pelo Certbot)
-# server {
-#     listen 443 ssl http2;
-#     server_name $DOMAIN www.$DOMAIN;
-#     
-#     # Configurações SSL (serão adicionadas pelo Certbot)
-    
-    # Security Headers
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    # Security Headers (adaptados para ALB)
     add_header X-Content-Type-Options nosniff always;
     add_header X-Frame-Options DENY always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.openai.com wss:; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';" always;
     
     # Rate limiting
     limit_conn conn_limit_per_ip 20;
     limit_conn conn_limit_per_server 1000;
     
-    # Frontend (raiz do site) → localhost:$FRONTEND_PORT
+    # Frontend (raiz do site) → localhost:3000
     location / {
         # Rate limiting suave para frontend
         limit_req zone=general burst=10 nodelay;
         
         proxy_pass http://frontend_backend;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header X-Forwarded-Host \$host;
-        proxy_set_header X-Forwarded-Port \$server_port;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $forwarded_scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_cache_bypass $http_upgrade;
         
         # Timeouts otimizados
         proxy_connect_timeout 30s;
@@ -332,7 +324,7 @@ server {
             proxy_cache_valid 200 1y;
             proxy_cache_valid 404 1m;
             add_header Cache-Control "public, immutable";
-            add_header X-Cache-Status \$upstream_cache_status;
+            add_header X-Cache-Status $upstream_cache_status;
             expires 1y;
         }
         
@@ -343,39 +335,39 @@ server {
             proxy_cache_valid 200 7d;
             proxy_cache_valid 404 1m;
             add_header Cache-Control "public, max-age=604800";
-            add_header X-Cache-Status \$upstream_cache_status;
+            add_header X-Cache-Status $upstream_cache_status;
             expires 7d;
         }
     }
     
-    # Backend API → localhost:$BACKEND_PORT/api/
+    # Backend API → localhost:3001/api/
     location /api/ {
         # Rate limiting mais rigoroso para API
         limit_req zone=api burst=50 nodelay;
         
         proxy_pass http://api_backend/api/;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header X-Forwarded-Host \$host;
-        proxy_set_header X-Forwarded-Port \$server_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $forwarded_scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
         
         # Headers específicos para API
-        proxy_set_header Content-Type \$content_type;
+        proxy_set_header Content-Type $content_type;
         proxy_set_header Accept application/json;
         
         # CORS headers para produção
-        add_header Access-Control-Allow-Origin "https://$DOMAIN" always;
+        add_header Access-Control-Allow-Origin "https://portal.sabercon.com.br" always;
         add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH" always;
         add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, X-CSRF-Token" always;
         add_header Access-Control-Allow-Credentials true always;
         add_header Access-Control-Max-Age 86400 always;
         
         # Preflight requests
-        if (\$request_method = 'OPTIONS') {
-            add_header Access-Control-Allow-Origin "https://$DOMAIN" always;
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin "https://portal.sabercon.com.br" always;
             add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS, PATCH" always;
             add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, X-CSRF-Token" always;
             add_header Access-Control-Max-Age 86400 always;
@@ -401,10 +393,10 @@ server {
         
         proxy_pass http://api_backend/api/auth/login;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $forwarded_scheme;
         
         # Timeouts para login
         proxy_connect_timeout 30s;
@@ -412,14 +404,14 @@ server {
         proxy_read_timeout 60s;
     }
     
-    # Backend direto → localhost:$BACKEND_PORT/
+    # Backend direto → localhost:3001/
     location /backend/ {
         proxy_pass http://api_backend/;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $forwarded_scheme;
         
         # Timeout padrão
         proxy_connect_timeout 30s;
@@ -427,10 +419,17 @@ server {
         proxy_read_timeout 60s;
     }
     
-    # Health check endpoint
+    # Health check endpoint (importante para ALB)
     location /_health {
         access_log off;
-        return 200 "OK - Portal Sabercon Production";
+        return 200 "OK - Portal Sabercon Production (ALB)";
+        add_header Content-Type text/plain;
+    }
+    
+    # ALB Health Check
+    location /health {
+        access_log off;
+        return 200 "healthy";
         add_header Content-Type text/plain;
     }
     
@@ -439,6 +438,8 @@ server {
         stub_status on;
         access_log off;
         allow 127.0.0.1;
+        allow 10.0.0.0/8;
+        allow 172.16.0.0/12;
         deny all;
     }
     
@@ -454,7 +455,7 @@ server {
         access_log off;
         log_not_found off;
     }
-# }
+}
 EOF
 
 # Criar diretório de cache
@@ -483,53 +484,6 @@ else
     log_error "Nginx não está ativo"
     systemctl status nginx
     exit 1
-fi
-
-# Obter certificado SSL Let's Encrypt
-log "🔒 Obtendo certificado SSL Let's Encrypt para $DOMAIN..."
-echo "Este processo pode demorar alguns minutos..."
-
-# Criar diretório para challenge
-mkdir -p /var/www/html/.well-known/acme-challenge
-chown -R www-data:www-data /var/www/html
-
-if certbot --nginx --non-interactive --agree-tos --email $EMAIL -d $DOMAIN -d www.$DOMAIN --redirect; then
-    log_success "Certificado SSL obtido com sucesso!"
-    
-    # Verificar certificado
-    if certbot certificates | grep -q $DOMAIN; then
-        log_success "Certificado verificado"
-    else
-        log_warning "Certificado pode não estar configurado corretamente"
-    fi
-    
-else
-    log_error "Falha ao obter certificado SSL"
-    echo ""
-    echo "Possíveis causas:"
-    echo "  • DNS não está apontando para este servidor"
-    echo "  • Firewall está bloqueando portas 80/443"
-    echo "  • Domínio não está propagado"
-    echo "  • Rate limit do Let's Encrypt atingido"
-    echo ""
-    echo "Para diagnosticar:"
-    echo "  dig $DOMAIN"
-    echo "  curl -I http://$DOMAIN"
-    echo "  systemctl status nginx"
-    echo "  tail -f /var/log/nginx/error.log"
-    exit 1
-fi
-
-# Configurar renovação automática
-log "🔄 Configurando renovação automática SSL..."
-systemctl enable certbot.timer
-systemctl start certbot.timer
-
-# Teste de renovação
-if certbot renew --dry-run > /dev/null 2>&1; then
-    log_success "Teste de renovação passou"
-else
-    log_warning "Teste de renovação falhou - verificar logs"
 fi
 
 # Otimizações do sistema para produção
@@ -576,34 +530,34 @@ EOL
 # Verificações finais
 log "🧪 Realizando verificações finais..."
 
-# Aguardar um pouco para o SSL se estabilizar
-sleep 5
+# Aguardar um pouco
+sleep 3
 
-# Testar HTTPS
-if curl -s -I https://$DOMAIN | head -1 | grep -q "200\|301\|302"; then
-    log_success "HTTPS respondendo corretamente"
+# Testar HTTP local
+if curl -s -I http://localhost | head -1 | grep -q "200\|301\|302"; then
+    log_success "HTTP local respondendo corretamente"
 else
-    log_warning "HTTPS pode não estar respondendo - verificar logs"
+    log_warning "HTTP local pode não estar respondendo"
 fi
 
-# Testar se frontend está acessível via HTTPS
-if curl -s -o /dev/null -w "%{http_code}" https://$DOMAIN | grep -q "200\|301\|302"; then
-    log_success "Frontend acessível via HTTPS"
+# Testar se frontend está acessível
+if curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200\|301\|302"; then
+    log_success "Frontend acessível via HTTP"
 else
-    log_warning "Frontend pode não estar acessível via HTTPS"
+    log_warning "Frontend pode não estar acessível via HTTP"
 fi
 
-# Testar se backend API está acessível
-if curl -s -o /dev/null -w "%{http_code}" https://$DOMAIN/api/health 2>/dev/null | grep -q "200\|404"; then
-    log_success "Backend API acessível via HTTPS"
+# Testar health check
+if curl -s -o /dev/null -w "%{http_code}" http://localhost/health | grep -q "200"; then
+    log_success "Health check funcionando"
 else
-    log_warning "Backend API pode não estar acessível"
+    log_warning "Health check pode não estar funcionando"
 fi
 
 # Criar script de monitoramento
 cat > /root/monitor-portal.sh << 'EOL'
 #!/bin/bash
-# Script de monitoramento Portal Sabercon
+# Script de monitoramento Portal Sabercon (ALB)
 
 echo "=== Portal Sabercon - Status $(date) ==="
 echo ""
@@ -613,15 +567,16 @@ pm2 list
 
 echo ""
 echo "🌐 Portas em uso:"
-netstat -tlnp | grep -E "(3000|3001|80|443)"
+netstat -tlnp | grep -E "(3000|3001|80)"
 
 echo ""
 echo "📊 Status Nginx:"
 systemctl status nginx --no-pager -l
 
 echo ""
-echo "🔒 Certificados SSL:"
-certbot certificates
+echo "🔒 Configuração ALB:"
+echo "SSL terminado no ALB/CloudFront"
+echo "Tráfego HTTP na porta 80"
 
 echo ""
 echo "💾 Uso de disco:"
@@ -634,6 +589,11 @@ free -h
 echo ""
 echo "⚡ Load average:"
 uptime
+
+echo ""
+echo "🏥 Health checks:"
+curl -s http://localhost/health
+curl -s http://localhost/_health
 EOL
 
 chmod +x /root/monitor-portal.sh
@@ -641,26 +601,26 @@ chmod +x /root/monitor-portal.sh
 # Resultados finais
 print_header "CONFIGURAÇÃO PRODUÇÃO CONCLUÍDA COM SUCESSO"
 echo ""
-log_success "🎉 Portal Sabercon configurado para produção na AWS!"
+log_success "🎉 Portal Sabercon configurado para produção AWS com ALB!"
 echo ""
-echo -e "${GREEN}🌐 URLs HTTPS disponíveis:${NC}"
-echo -e "${GREEN}📱 Frontend:    https://$DOMAIN/ → localhost:$FRONTEND_PORT${NC}"
-echo -e "${GREEN}🔧 Backend API: https://$DOMAIN/api/ → localhost:$BACKEND_PORT/api/${NC}"
-echo -e "${GREEN}🔧 Backend:     https://$DOMAIN/backend/ → localhost:$BACKEND_PORT/${NC}"
+echo -e "${GREEN}🌐 URLs disponíveis (via ALB):${NC}"
+echo -e "${GREEN}📱 Frontend:    https://$DOMAIN/ → HTTP localhost:$FRONTEND_PORT${NC}"
+echo -e "${GREEN}🔧 Backend API: https://$DOMAIN/api/ → HTTP localhost:$BACKEND_PORT/api/${NC}"
+echo -e "${GREEN}🔧 Backend:     https://$DOMAIN/backend/ → HTTP localhost:$BACKEND_PORT/${NC}"
 echo -e "${GREEN}🏥 Health:      https://$DOMAIN/_health${NC}"
+echo -e "${GREEN}🏥 ALB Health:  https://$DOMAIN/health${NC}"
 echo ""
 echo -e "${CYAN}📋 Comandos úteis:${NC}"
 echo -e "${CYAN}📊 Status:      /root/monitor-portal.sh${NC}"
 echo -e "${CYAN}📝 Logs Nginx:  tail -f /var/log/nginx/access.log${NC}"
 echo -e "${CYAN}📝 Logs Error:  tail -f /var/log/nginx/error.log${NC}"
 echo -e "${CYAN}🔄 Restart:     systemctl restart nginx${NC}"
-echo -e "${CYAN}🔒 SSL Status:  certbot certificates${NC}"
-echo -e "${CYAN}🔄 SSL Renew:   certbot renew${NC}"
+echo -e "${CYAN}🧪 Test Local:  curl -I http://localhost${NC}"
 echo ""
-echo -e "${YELLOW}⚠️  Lembre-se:${NC}"
-echo -e "${YELLOW}   • Configurar DNS para apontar $DOMAIN para este servidor${NC}"
-echo -e "${YELLOW}   • Verificar se as aplicações estão rodando (pm2 list)${NC}"
-echo -e "${YELLOW}   • Monitorar logs regularmente${NC}"
-echo -e "${YELLOW}   • Fazer backup regular do banco de dados${NC}"
+echo -e "${YELLOW}⚠️  Arquitetura ALB:${NC}"
+echo -e "${YELLOW}   • SSL terminado no ALB/CloudFront${NC}"
+echo -e "${YELLOW}   • Tráfego HTTP entre ALB e instância${NC}"
+echo -e "${YELLOW}   • Headers X-Forwarded-* preservados${NC}"
+echo -e "${YELLOW}   • Rate limiting baseado no IP real${NC}"
 echo ""
-print_header "PORTAL SABERCON PRODUÇÃO ATIVO"
+print_header "PORTAL SABERCON PRODUÇÃO ATIVO (ALB)"
