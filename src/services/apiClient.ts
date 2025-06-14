@@ -1,8 +1,6 @@
 import { ApiResponse, ApiError } from '../types/api';
 
-// Configuração base da API
-const API_BASE_URL = 'http://localhost:3001/api';
-const API_VERSION = 'v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
 
 // Classe para erros da API
 export class ApiClientError extends Error {
