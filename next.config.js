@@ -130,23 +130,21 @@ const nextConfig = {
   },
   // Configuração para bypass SSL em desenvolvimento
   // Configuração para garantir que as rotas de API funcionem corretamente
+
   async rewrites() {
-    return {
-      beforeFiles: [
-        // Garantir que as rotas de API não sejam reescritas
-        {
-          source: '/api/:path*',
-          destination: '/api/:path*',
-        },
-        // Proxy para backend HTTP em desenvolvimento
-        ...(isDev ? [
-          {
-            source: '/backend-api/:path*',
-            destination: 'http://localhost:3001/api/:path*',
-          }
-        ] : []),
-      ],
-    };
+    // Em produção com ALB, usar proxy interno
+    // Em desenvolvimento, usar localhost direto
+    const isDev = process.env.NODE_ENV === 'development';
+    const apiDestination = isDev 
+      ? 'http://localhost:3001/api/:path*'
+      : 'http://127.0.0.1:3001/api/:path*';
+    
+    return [
+      {
+        source: '/api/:path*',
+        destination: apiDestination
+      }
+    ]
   },
   images: {
     remotePatterns: [
@@ -197,6 +195,78 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: 'my-value',
   },
+  
+  // Configurações específicas para produção AWS ALB
+  async headers() {
+    const isDev = process.env.NODE_ENV === 'development';
+    
+    return [
+      {
+        source: '/books/:path*',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/epub+zip'
+          }
+        ]
+      },
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: isDev ? '*' : 'https://portal.sabercon.com.br'
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token'
+          },
+          {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true'
+          }
+        ]
+      },
+      {
+        source: '/:path*',
+        headers: [
+          // Headers de segurança para ALB
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          // CSP adaptado para ALB
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+              "style-src 'self' 'unsafe-inline' https:",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data: https:",
+              "connect-src 'self' https: wss:",
+              "media-src 'self' https:",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'"
+            ].join('; ')
+          }
+        ]
+      }
+    ];
+  },
   webpack: (config, { isServer, webpack }) => {
     config.module.rules.push({
       test: /\.(pdf)$/i,
@@ -246,70 +316,6 @@ const nextConfig = {
     });
 
     return config;
-  },
-  async headers() {
-    return [
-      {
-        source: '/books/:path*',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/epub+zip'
-          }
-        ]
-      },
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*'
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'X-Requested-With, Content-Type, Authorization'
-          },
-          // Permitir conexões HTTP inseguras em desenvolvimento
-          ...(isDev ? [
-            {
-              key: 'Content-Security-Policy',
-              value: [
-                "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: data: blob:",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:",
-                "style-src 'self' 'unsafe-inline' http: https:",
-                "img-src 'self' data: blob: http: https:",
-                "font-src 'self' data: http: https:",
-                "connect-src 'self' http: https: ws: wss:",
-                "media-src 'self' http: https:",
-                "object-src 'none'",
-                "base-uri 'self'",
-                "form-action 'self'"
-              ].join('; ')
-            }
-          ] : [
-            {
-              key: 'Content-Security-Policy',
-              value: [
-                "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: data: blob:",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:",
-                "style-src 'self' 'unsafe-inline' http: https:",
-                "img-src 'self' data: blob: http: https:",
-                "font-src 'self' data: http: https:",
-                "connect-src 'self' http: https: ws: wss:",
-                "media-src 'self' http: https:",
-                "object-src 'none'",
-                "base-uri 'self'",
-                "form-action 'self'"
-              ].join('; ')
-            }
-          ])
-        ]
-      }
-    ];
   }
 };
 

@@ -234,10 +234,10 @@ http {
         image/svg+xml
         image/x-icon;
     
-    # Rate Limiting baseado no IP real
-    limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
-    limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
-    limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+    # Rate Limiting baseado no IP real (configurações mais permissivas para desenvolvimento)
+    limit_req_zone $binary_remote_addr zone=api:10m rate=60r/s;
+    limit_req_zone $binary_remote_addr zone=general:10m rate=30r/s;
+    limit_req_zone $binary_remote_addr zone=login:10m rate=10r/m;
     
     # Connection limiting
     limit_conn_zone $binary_remote_addr zone=conn_limit_per_ip:10m;
@@ -387,9 +387,9 @@ server {
         proxy_max_temp_file_size 0;
     }
     
-    # Rate limiting especial para login
+    # Rate limiting especial para login (mais permissivo)
     location /api/auth/login {
-        limit_req zone=login burst=3 nodelay;
+        limit_req zone=login burst=10 nodelay;
         
         proxy_pass http://api_backend/api/auth/login;
         proxy_http_version 1.1;

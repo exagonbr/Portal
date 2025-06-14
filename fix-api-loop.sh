@@ -200,9 +200,31 @@ fi
 # Criar/atualizar .env.production
 cat > .env.production << 'EOF'
 # Portal Sabercon - Produção AWS ALB
+# Configurações para produção com SSL terminado no ALB/CloudFront
+
+# Ambiente
 NODE_ENV=production
-NEXT_PUBLIC_API_URL=/api
+
+# URLs da aplicação
 NEXT_PUBLIC_APP_URL=https://portal.sabercon.com.br
+NEXT_PUBLIC_API_URL=/api
+
+# Configurações de API (interno)
+API_BASE_URL=http://127.0.0.1:3001/api
+INTERNAL_API_URL=http://localhost:3001
+
+# Configurações de segurança
+NEXT_PUBLIC_SECURE_COOKIES=true
+NEXT_PUBLIC_SAME_SITE=strict
+
+# Configurações de CORS
+CORS_ORIGIN=https://portal.sabercon.com.br
+ALLOWED_ORIGINS=https://portal.sabercon.com.br,https://www.portal.sabercon.com.br
+
+# Configurações específicas para ALB
+TRUST_PROXY=true
+BEHIND_PROXY=true
+USE_SECURE_COOKIES=true
 EOF
 
 echo "✅ .env.production atualizado"
