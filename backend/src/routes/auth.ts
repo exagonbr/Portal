@@ -460,4 +460,130 @@ router.post('/validate-session', async (req: express.Request, res: express.Respo
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/refresh-token:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Refresh authentication token
+ *     description: Generates a new JWT using a valid refresh token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *               sessionId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                     expires_at:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Invalid or expired refresh token
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/refresh-token', async (req: express.Request, res: express.Response) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token não fornecido'
+      });
+    }
+
+    // Importação dinâmica do SessionService para evitar problemas de dependência circular
+    let SessionService;
+    try {
+      const sessionModule = await import('../services/SessionService');
+      SessionService = sessionModule.SessionService;
+    } catch (importError) {
+      console.error('SessionService não disponível:', importError);
+      return res.status(500).json({
+        success: false,
+        message: 'Serviço de sessão não disponível'
+      });
+    }
+
+    // Valida refresh token
+    const validatedSessionId = await SessionService.validateRefreshToken(refreshToken);
+    if (!validatedSessionId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token inválido ou expirado'
+      });
+    }
+
+    // Valida sessão
+    const sessionData = await SessionService.validateSession(validatedSessionId);
+    if (!sessionData) {
+      return res.status(401).json({
+        success: false,
+        message: 'Sessão inválida ou expirada'
+      });
+    }
+
+    // Gera novo JWT
+    const jwt = require('jsonwebtoken');
+    const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
+    
+    const newToken = jwt.sign(
+      {
+        userId: sessionData.userId,
+        email: sessionData.email,
+        name: sessionData.name,
+        role: sessionData.role,
+        institutionId: sessionData.institutionId,
+        permissions: sessionData.permissions,
+        sessionId: validatedSessionId
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Atualizar atividade da sessão
+    await SessionService.updateSessionActivity(validatedSessionId);
+
+    return res.json({
+      success: true,
+      data: {
+        token: newToken,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Erro no refresh token:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
 export default router;
