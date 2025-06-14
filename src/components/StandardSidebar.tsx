@@ -637,6 +637,12 @@ export default function StandardSidebar() {
                 icon: 'assignment',
                 label: 'Atividades',
                 permission: 'canViewChildrenAssignments'
+              },
+              {
+                href: '/dashboard/guardian/momentos',
+                icon: 'photo_camera',
+                label: 'Momentos',
+                permission: 'canViewChildrenInfo'
               }
             ]
           },

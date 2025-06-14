@@ -932,7 +932,7 @@ function DashboardSidebarComponent() {
                 permission: 'canViewChildrenAssignments'
               },
               {
-                href: '/dashboard/guardian?tab=photos',
+                href: '/dashboard/guardian/momentos',
                 icon: 'photo_camera',
                 label: 'Momentos',
                 permission: 'canViewChildrenInfo'
