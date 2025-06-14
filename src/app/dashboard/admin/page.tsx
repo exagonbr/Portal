@@ -223,11 +223,11 @@ export default function AdminDashboard() {
           }}
         />
         <QuickActionCard
-          title="Demo de Modais"
-          description="Teste todos os modais de CRUD criados"
-          icon={Settings}
+          title="Central de Notificações"
+          description="Gerencie e envie notificações do sistema"
+          icon={Bell}
           onClick={() => {
-            window.location.href = '/admin/demo-modals';
+            window.location.href = '/notifications';
           }}
         />
         <QuickActionCard

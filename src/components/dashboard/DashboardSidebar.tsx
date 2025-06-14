@@ -930,6 +930,12 @@ function DashboardSidebarComponent() {
                 icon: 'assignment',
                 label: 'Atividades',
                 permission: 'canViewChildrenAssignments'
+              },
+              {
+                href: '/dashboard/guardian?tab=photos',
+                icon: 'photo_camera',
+                label: 'Momentos',
+                permission: 'canViewChildrenInfo'
               }
             ]
           },

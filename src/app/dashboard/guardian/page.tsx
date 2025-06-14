@@ -276,6 +276,15 @@ export default function GuardianDashboardPage() {
   const [photoPosts, setPhotoPosts] = useState<PhotoPost[]>([]);
   const [photoFilter, setPhotoFilter] = useState<'all' | 'my-children'>('all');
 
+  // Detectar parâmetro da URL para abrir aba específica
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab === 'photos') {
+      setSelectedView('photos');
+    }
+  }, []);
+
   useEffect(() => {
     loadDashboardData();
   }, [selectedStudent]);
@@ -1382,23 +1391,23 @@ export default function GuardianDashboardPage() {
               {selectedView === 'photos' && (
                 <div className="space-y-6">
                   {/* Header do Feed */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-xl">
                     <div className="flex items-center gap-3">
                       <Camera className="w-6 h-6 text-pink-600" />
-                      <h2 className="text-2xl font-bold text-gray-800">📸 Momentos Especiais</h2>
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">📸 Momentos Especiais</h2>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
                       <select 
                         value={photoFilter} 
                         onChange={(e) => setPhotoFilter(e.target.value as any)}
-                        className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500"
+                        className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 w-full sm:w-auto"
                       >
                         <option value="all">Todas as fotos</option>
                         <option value="my-children">Apenas meus filhos</option>
                       </select>
-                      <button className="flex items-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors">
+                      <button className="flex items-center justify-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors w-full sm:w-auto">
                         <Filter className="w-4 h-4" />
-                        Filtrar
+                        <span className="sm:inline">Filtrar</span>
                       </button>
                     </div>
                   </div>
@@ -1410,22 +1419,22 @@ export default function GuardianDashboardPage() {
                       .map(post => (
                       <div key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
                         {/* Header do Post */}
-                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-lg">
+                        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-100">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-lg flex-shrink-0">
                               {post.teacherAvatar || post.teacherName.charAt(0)}
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-800">{post.teacherName}</h3>
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <MapPin className="w-3 h-3" />
-                                <span>{post.location}</span>
-                                <span>•</span>
-                                <span>{post.activity}</span>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold text-gray-800 truncate">{post.teacherName}</h3>
+                              <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500">
+                                <MapPin className="w-3 h-3 flex-shrink-0" />
+                                <span className="truncate">{post.location}</span>
+                                <span className="hidden sm:inline">•</span>
+                                <span className="truncate hidden sm:inline">{post.activity}</span>
                               </div>
                             </div>
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-xs sm:text-sm text-gray-500 flex-shrink-0 ml-2">
                             {formatTimeAgo(post.timestamp)}
                           </div>
                         </div>
@@ -1435,12 +1444,12 @@ export default function GuardianDashboardPage() {
                           <img 
                             src={post.imageUrl} 
                             alt={post.caption}
-                            className="w-full h-80 object-cover"
+                            className="w-full h-64 sm:h-80 object-cover"
                           />
                           {/* Tags dos Estudantes */}
-                          <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-wrap gap-1 sm:gap-2 max-w-[calc(100%-1rem)]">
                             {post.studentNames.map(name => (
-                              <span key={name} className="bg-black bg-opacity-50 text-white px-2 py-1 rounded-full text-xs">
+                              <span key={name} className="bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs truncate max-w-[120px] sm:max-w-none">
                                 👤 {name}
                               </span>
                             ))}
@@ -1448,11 +1457,11 @@ export default function GuardianDashboardPage() {
                         </div>
 
                         {/* Ações do Post */}
-                        <div className="p-4">
+                        <div className="p-3 sm:p-4">
                           <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3 sm:gap-4">
                               <button 
-                                className={`flex items-center gap-2 transition-colors ${
+                                className={`flex items-center gap-1 sm:gap-2 transition-colors ${
                                   post.isLikedByParent ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
                                 }`}
                                 onClick={() => handleLikePost(post.id)}
@@ -1460,13 +1469,13 @@ export default function GuardianDashboardPage() {
                                 <Heart className={`w-5 h-5 ${post.isLikedByParent ? 'fill-current' : ''}`} />
                                 <span className="text-sm font-medium">{post.likes}</span>
                               </button>
-                              <button className="flex items-center gap-2 text-gray-500 hover:text-blue-500 transition-colors">
+                              <button className="flex items-center gap-1 sm:gap-2 text-gray-500 hover:text-blue-500 transition-colors">
                                 <MessageCircle className="w-5 h-5" />
                                 <span className="text-sm font-medium">{post.comments.length}</span>
                               </button>
-                              <button className="flex items-center gap-2 text-gray-500 hover:text-green-500 transition-colors">
+                              <button className="flex items-center gap-1 sm:gap-2 text-gray-500 hover:text-green-500 transition-colors">
                                 <Share2 className="w-5 h-5" />
-                                <span className="text-sm font-medium">Compartilhar</span>
+                                <span className="text-sm font-medium hidden sm:inline">Compartilhar</span>
                               </button>
                             </div>
                             <button className="text-gray-500 hover:text-gray-700 transition-colors">
@@ -1495,8 +1504,8 @@ export default function GuardianDashboardPage() {
                                 {post.comments.length} comentário{post.comments.length !== 1 ? 's' : ''}
                               </div>
                               {post.comments.slice(0, 2).map(comment => (
-                                <div key={comment.id} className="flex items-start gap-3">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                                <div key={comment.id} className="flex items-start gap-2 sm:gap-3">
+                                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
                                     comment.authorType === 'parent' ? 'bg-blue-100 text-blue-700' :
                                     comment.authorType === 'teacher' ? 'bg-green-100 text-green-700' :
                                     'bg-purple-100 text-purple-700'
@@ -1504,12 +1513,12 @@ export default function GuardianDashboardPage() {
                                     {comment.authorType === 'parent' ? '👨‍👩‍👧‍👦' :
                                      comment.authorType === 'teacher' ? '👩‍🏫' : '👤'}
                                   </div>
-                                  <div className="flex-1">
+                                  <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                      <span className="font-medium text-gray-800 text-sm">{comment.authorName}</span>
-                                      <span className="text-xs text-gray-500">{formatTimeAgo(comment.timestamp)}</span>
+                                      <span className="font-medium text-gray-800 text-sm truncate">{comment.authorName}</span>
+                                      <span className="text-xs text-gray-500 flex-shrink-0">{formatTimeAgo(comment.timestamp)}</span>
                                     </div>
-                                    <p className="text-sm text-gray-700">{comment.content}</p>
+                                    <p className="text-sm text-gray-700 break-words">{comment.content}</p>
                                     <div className="flex items-center gap-3 mt-1">
                                       <button className="text-xs text-gray-500 hover:text-red-500 transition-colors">
                                         ❤️ {comment.likes}
@@ -1530,17 +1539,17 @@ export default function GuardianDashboardPage() {
                           )}
 
                           {/* Adicionar Comentário */}
-                          <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-100">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                          <div className="flex items-center gap-2 sm:gap-3 mt-4 pt-3 border-t border-gray-100">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                               👨‍👩‍👧‍👦
                             </div>
                             <input 
                               type="text" 
                               placeholder="Adicione um comentário..."
-                              className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                              className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent min-w-0"
                             />
-                            <button className="text-pink-600 hover:text-pink-700 transition-colors">
-                              <Send className="w-5 h-5" />
+                            <button className="text-pink-600 hover:text-pink-700 transition-colors flex-shrink-0">
+                              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                           </div>
                         </div>
@@ -1549,8 +1558,8 @@ export default function GuardianDashboardPage() {
                   </div>
 
                   {/* Botão para carregar mais */}
-                  <div className="text-center">
-                    <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 rounded-full hover:from-pink-600 hover:to-purple-700 transition-all hover:scale-105 shadow-lg">
+                  <div className="text-center px-4">
+                    <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 sm:px-8 py-3 rounded-full hover:from-pink-600 hover:to-purple-700 transition-all hover:scale-105 shadow-lg text-sm sm:text-base w-full sm:w-auto max-w-xs">
                       📸 Carregar mais momentos
                     </button>
                   </div>

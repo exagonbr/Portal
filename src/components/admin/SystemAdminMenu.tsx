@@ -73,6 +73,29 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
       ]
     },
     {
+      section: 'Comunicação',
+      items: [
+        {
+          href: '/notifications',
+          icon: 'notifications',
+          label: 'Central de Notificações',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/notifications/send',
+          icon: 'send',
+          label: 'Enviar Notificação',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/notifications/sent',
+          icon: 'history',
+          label: 'Histórico de Envios',
+          permission: 'canManageSystem'
+        }
+      ]
+    },
+    {
       section: 'Gestão de Conteúdo',
       items: [
         {
