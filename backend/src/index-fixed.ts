@@ -101,8 +101,7 @@ app.get('/health', (_, res) => {
 });
 
 // Swagger UI at /backend/docs
-app.use('/backend/docs', swaggerUi.serve);
-app.get('/backend/docs', swaggerUi.setup(swaggerSpec, {
+app.use('/backend/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Portal Sabercon API Documentation',
   customfavIcon: '/favicon.ico',

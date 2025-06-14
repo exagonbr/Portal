@@ -1,5 +1,5 @@
 import express from 'express';
-// import swaggerUi from 'swagger-ui-express'; // DESABILITADO TEMPORARIAMENTE
+import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from '../config/swagger';
 import { createAwsRoutes } from './awsRoutes';
 import db from '../config/database';
@@ -34,23 +34,12 @@ import schoolsRouter from './schools.routes';
 
 const router = express.Router();
 
-// SWAGGER UI DESABILITADO TEMPORARIAMENTE PARA EVITAR LOOPS
-// router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-//   explorer: true,
-//   customCss: '.swagger-ui .topbar { display: none }',
-//   customSiteTitle: 'Portal Sabercon API Documentation'
-// }));
-
-// Rota temporária para /docs (evitar loop)
-router.get('/docs', (req, res) => {
-  res.json({ 
-    message: 'API Documentation temporariamente desabilitada para evitar loops',
-    status: 'disabled',
-    alternative: '/api/docs.json para especificação OpenAPI',
-    timestamp: new Date().toISOString(),
-    swagger_spec_url: '/api/docs.json'
-  });
-});
+// Swagger UI route
+router.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Portal Sabercon API Documentation'
+}));
 
 // Health check
 router.get('/health', (req, res) => {

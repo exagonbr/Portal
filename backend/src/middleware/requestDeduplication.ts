@@ -27,6 +27,11 @@ export const requestDeduplication = (req: Request, res: Response, next: NextFunc
     return next();
   }
 
+  // Excluir rotas do Swagger UI e documentação
+  if (req.originalUrl.includes('/docs') || req.originalUrl.includes('/swagger')) {
+    return next();
+  }
+
   // Criar chave única baseada na URL, query params e usuário
   const userId = req.user?.userId || 'anonymous';
   const cacheKey = `${req.method}:${req.originalUrl}:${userId}`;
