@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { UserRole } from '@/types/roles'
 import { apiClient } from '@/services/apiClient'
 import { pushNotificationService } from '@/services/pushNotificationService'
 
@@ -27,7 +28,7 @@ interface User {
   id: string
   name: string
   email: string
-  role: 'admin' | 'manager' | 'teacher' | 'student'
+  role: string
 }
 
 export default function SendNotificationPage() {
@@ -56,21 +57,16 @@ export default function SendNotificationPage() {
     subscribed: boolean
   } | null>(null)
 
-  // Verificar permissões
+  // Verificar permissões - apenas GUARDIAN e STUDENT não podem acessar
   useEffect(() => {
-    if (!user || user.role === 'student') {
-      router.push('/notifications')
+    if (!user) {
+      router.push('/login')
       return
     }
 
     // Verificar se o usuário tem permissão para enviar notificações
-    const allowedRoles = ['admin',
-        'system_admin',
-        'institution_manager',
-        'academic_coordinator',
-        'manager',
-        'teacher']
-    if (!allowedRoles.includes(user.role)) {
+    const restrictedRoles = [UserRole.GUARDIAN, UserRole.STUDENT]
+    if (restrictedRoles.includes(user.role as UserRole)) {
       router.push('/notifications')
       return
     }
@@ -96,12 +92,16 @@ export default function SendNotificationPage() {
       try {
         // Buscar usuários do backend baseado na role do usuário atual
         let roles = ''
-        if (user?.role === 'admin') {
-          roles = 'manager,teacher'
-        } else if (user?.role === 'manager') {
-          roles = 'teacher'
-        } else if (user?.role === 'teacher') {
-          roles = 'student'
+        const userRole = user?.role as UserRole
+        
+        if (userRole === UserRole.SYSTEM_ADMIN) {
+          roles = 'INSTITUTION_MANAGER,ACADEMIC_COORDINATOR,TEACHER,STUDENT,GUARDIAN'
+        } else if (userRole === UserRole.INSTITUTION_MANAGER) {
+          roles = 'ACADEMIC_COORDINATOR,TEACHER,STUDENT,GUARDIAN'
+        } else if (userRole === UserRole.ACADEMIC_COORDINATOR) {
+          roles = 'TEACHER,STUDENT,GUARDIAN'
+        } else if (userRole === UserRole.TEACHER) {
+          roles = 'STUDENT,GUARDIAN'
         }
 
         const response = await apiClient.get(`/api/users?limit=100${roles ? `&roles=${roles}` : ''}`)
@@ -115,21 +115,25 @@ export default function SendNotificationPage() {
         console.error('Error loading users:', error)
         // Fallback para dados mock em caso de erro
         const mockUsers: User[] = [
-          { id: '1', name: 'João Silva', email: 'joao@escola.com', role: 'manager' },
-          { id: '2', name: 'Maria Santos', email: 'maria@escola.com', role: 'teacher' },
-          { id: '3', name: 'Pedro Costa', email: 'pedro@escola.com', role: 'teacher' },
-          { id: '4', name: 'Ana Oliveira', email: 'ana@escola.com', role: 'student' },
-          { id: '5', name: 'Carlos Lima', email: 'carlos@escola.com', role: 'student' },
-          { id: '6', name: 'Lucia Ferreira', email: 'lucia@escola.com', role: 'student' }
+          { id: '1', name: 'João Silva', email: 'joao@escola.com', role: 'INSTITUTION_MANAGER' },
+          { id: '2', name: 'Maria Santos', email: 'maria@escola.com', role: 'TEACHER' },
+          { id: '3', name: 'Pedro Costa', email: 'pedro@escola.com', role: 'TEACHER' },
+          { id: '4', name: 'Ana Oliveira', email: 'ana@escola.com', role: 'STUDENT' },
+          { id: '5', name: 'Carlos Lima', email: 'carlos@escola.com', role: 'STUDENT' },
+          { id: '6', name: 'Lucia Ferreira', email: 'lucia@escola.com', role: 'GUARDIAN' }
         ]
 
         let filteredUsers: User[] = []
-        if (user?.role === 'admin') {
-          filteredUsers = mockUsers.filter(u => u.role === 'manager' || u.role === 'teacher')
-        } else if (user?.role === 'manager') {
-          filteredUsers = mockUsers.filter(u => u.role === 'teacher')
-        } else if (user?.role === 'teacher') {
-          filteredUsers = mockUsers.filter(u => u.role === 'student')
+        const userRole = user?.role as UserRole
+        
+        if (userRole === UserRole.SYSTEM_ADMIN) {
+          filteredUsers = mockUsers
+        } else if (userRole === UserRole.INSTITUTION_MANAGER) {
+          filteredUsers = mockUsers.filter(u => ['ACADEMIC_COORDINATOR', 'TEACHER', 'STUDENT', 'GUARDIAN'].includes(u.role))
+        } else if (userRole === UserRole.ACADEMIC_COORDINATOR) {
+          filteredUsers = mockUsers.filter(u => ['TEACHER', 'STUDENT', 'GUARDIAN'].includes(u.role))
+        } else if (userRole === UserRole.TEACHER) {
+          filteredUsers = mockUsers.filter(u => ['STUDENT', 'GUARDIAN'].includes(u.role))
         }
 
         setAvailableUsers(filteredUsers)
@@ -142,18 +146,33 @@ export default function SendNotificationPage() {
   }, [user])
 
   const getAvailableRoles = () => {
-    if (user?.role === 'admin') {
+    const userRole = user?.role as UserRole
+    
+    if (userRole === UserRole.SYSTEM_ADMIN) {
       return [
-        { value: 'manager', label: 'Gestores' },
-        { value: 'teacher', label: 'Professores' }
+        { value: 'INSTITUTION_MANAGER', label: 'Gestores Institucionais' },
+        { value: 'ACADEMIC_COORDINATOR', label: 'Coordenadores Acadêmicos' },
+        { value: 'TEACHER', label: 'Professores' },
+        { value: 'STUDENT', label: 'Estudantes' },
+        { value: 'GUARDIAN', label: 'Responsáveis' }
       ]
-    } else if (user?.role === 'manager') {
+    } else if (userRole === UserRole.INSTITUTION_MANAGER) {
       return [
-        { value: 'teacher', label: 'Professores' }
+        { value: 'ACADEMIC_COORDINATOR', label: 'Coordenadores Acadêmicos' },
+        { value: 'TEACHER', label: 'Professores' },
+        { value: 'STUDENT', label: 'Estudantes' },
+        { value: 'GUARDIAN', label: 'Responsáveis' }
       ]
-    } else if (user?.role === 'teacher') {
+    } else if (userRole === UserRole.ACADEMIC_COORDINATOR) {
       return [
-        { value: 'student', label: 'Estudantes' }
+        { value: 'TEACHER', label: 'Professores' },
+        { value: 'STUDENT', label: 'Estudantes' },
+        { value: 'GUARDIAN', label: 'Responsáveis' }
+      ]
+    } else if (userRole === UserRole.TEACHER) {
+      return [
+        { value: 'STUDENT', label: 'Estudantes' },
+        { value: 'GUARDIAN', label: 'Responsáveis' }
       ]
     }
     return []
@@ -290,8 +309,23 @@ export default function SendNotificationPage() {
     )
   }
 
-  if (!user || user.role === 'student') {
-    return null
+  // Verificar se o usuário pode acessar esta página
+  if (!user || [UserRole.GUARDIAN, UserRole.STUDENT].includes(user.role as UserRole)) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <span className="material-symbols-outlined text-4xl text-gray-400 mb-4">block</span>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">Acesso Negado</h3>
+          <p className="text-gray-500 mb-4">Você não tem permissão para enviar notificações.</p>
+          <button
+            onClick={() => router.push('/notifications')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Voltar para Notificações
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

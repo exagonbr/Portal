@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { UserRole } from '@/types/roles'
 import { notificationService } from '@/services/notificationService'
 import { Notification as SentNotification } from '@/types/notification'
 import { PaginatedResponseDto } from '@/types/api'
@@ -22,9 +23,16 @@ export default function SentNotificationsPage() {
     hasPrev: false
   })
 
-  // Verificar permissões
+  // Verificar permissões - apenas GUARDIAN e STUDENT não podem acessar
   useEffect(() => {
-    if (!user || user.role === 'student') {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    // Verificar se o usuário tem permissão para ver notificações enviadas
+    const restrictedRoles = [UserRole.GUARDIAN, UserRole.STUDENT]
+    if (restrictedRoles.includes(user.role as UserRole)) {
       router.push('/notifications')
       return
     }
@@ -58,7 +66,7 @@ export default function SentNotificationsPage() {
       }
     }
 
-    if (user && user.role !== 'student') {
+    if (user && ![UserRole.GUARDIAN, UserRole.STUDENT].includes(user.role as UserRole)) {
       loadSentNotifications()
     }
   }, [user, filter, pagination.page, pagination.limit])
@@ -120,8 +128,23 @@ export default function SentNotificationsPage() {
     filter === 'all' || notification.status === filter
   )
 
-  if (!user || user.role === 'student') {
-    return null
+  // Verificar se o usuário pode acessar esta página
+  if (!user || [UserRole.GUARDIAN, UserRole.STUDENT].includes(user.role as UserRole)) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <span className="material-symbols-outlined text-4xl text-gray-400 mb-4">block</span>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">Acesso Negado</h3>
+          <p className="text-gray-500 mb-4">Você não tem permissão para ver notificações enviadas.</p>
+          <button
+            onClick={() => router.push('/notifications')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Voltar para Notificações
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {

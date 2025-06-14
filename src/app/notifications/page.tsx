@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { UserRole } from '@/types/roles'
 import NotificationSettings from '@/components/notifications/NotificationSettings'
 import { useNotifications, type NotificationFilters, type Notification } from '@/hooks/useNotifications'
 
@@ -36,6 +37,14 @@ export default function NotificationsPage() {
   const [viewMode, setViewMode] = useState<'list' | 'compact'>('list')
   const itemsPerPage = 15
 
+  // Verificar permissões - apenas GUARDIAN e STUDENT não podem acessar funcionalidades de envio
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+  }, [user, router])
+
   // Aplicar filtros
   useEffect(() => {
     const filtered = getFilteredNotifications(filters, searchTerm)
@@ -61,19 +70,19 @@ export default function NotificationsPage() {
   const getNotificationColor = (type: Notification['type']) => {
     switch (type) {
       case 'info':
-        return 'text-blue-600 bg-blue-50'
+        return 'bg-blue-100 text-blue-600'
       case 'warning':
-        return 'text-yellow-600 bg-yellow-50'
+        return 'bg-yellow-100 text-yellow-600'
       case 'success':
-        return 'text-green-600 bg-green-50'
+        return 'bg-green-100 text-green-600'
       case 'error':
-        return 'text-red-600 bg-red-50'
+        return 'bg-red-100 text-red-600'
       default:
-        return 'text-gray-600 bg-gray-50'
+        return 'bg-gray-100 text-gray-600'
     }
   }
 
-  const getCategoryLabel = (category: string) => {
+  const getCategoryLabel = (category: Notification['category']) => {
     switch (category) {
       case 'academic':
         return 'Acadêmico'
@@ -88,31 +97,36 @@ export default function NotificationsPage() {
     }
   }
 
-  const markSelectedAsRead = () => {
-    markMultipleAsRead(selectedNotifications)
-    setSelectedNotifications([])
-  }
-
-  const deleteSelected = () => {
-    deleteNotifications(selectedNotifications)
-    setSelectedNotifications([])
-  }
-
-  const toggleSelectNotification = (notificationId: number) => {
-    setSelectedNotifications(prev => 
-      prev.includes(notificationId)
-        ? prev.filter(id => id !== notificationId)
-        : [...prev, notificationId]
+  const toggleSelectNotification = (id: number) => {
+    setSelectedNotifications(prev =>
+      prev.includes(id)
+        ? prev.filter(notifId => notifId !== id)
+        : [...prev, id]
     )
   }
 
   const selectAllVisible = () => {
-    const visibleIds = paginatedNotifications.map(n => n.id)
-    setSelectedNotifications(prev =>
-      visibleIds.every(id => prev.includes(id))
-        ? prev.filter(id => !visibleIds.includes(id))
-        : Array.from(new Set([...prev, ...visibleIds]))
-    )
+    const allSelected = paginatedNotifications.every(n => selectedNotifications.includes(n.id))
+    if (allSelected) {
+      setSelectedNotifications(prev => prev.filter(id => !paginatedNotifications.some(n => n.id === id)))
+    } else {
+      const newSelections = paginatedNotifications.map(n => n.id).filter(id => !selectedNotifications.includes(id))
+      setSelectedNotifications(prev => [...prev, ...newSelections])
+    }
+  }
+
+  const markSelectedAsRead = async () => {
+    if (selectedNotifications.length > 0) {
+      await markMultipleAsRead(selectedNotifications)
+      setSelectedNotifications([])
+    }
+  }
+
+  const deleteSelected = async () => {
+    if (selectedNotifications.length > 0 && confirm('Tem certeza que deseja excluir as notificações selecionadas?')) {
+      await deleteNotifications(selectedNotifications)
+      setSelectedNotifications([])
+    }
   }
 
   const clearFilters = () => {
@@ -125,24 +139,25 @@ export default function NotificationsPage() {
     setSearchTerm('')
   }
 
-  const hasActiveFilters = () => {
-    return filters.category !== 'all' || 
-           filters.type !== 'all' || 
-           filters.status !== 'all' || 
-           searchTerm !== ''
-  }
+  const hasActiveFilters = Object.values(filters).some(value => value !== 'all') || searchTerm !== ''
 
   // Paginação
   const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedNotifications = filteredNotifications.slice(startIndex, startIndex + itemsPerPage)
+  const endIndex = startIndex + itemsPerPage
+  const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex)
+
+  // Verificar se o usuário pode enviar notificações (todos exceto GUARDIAN e STUDENT)
+  const canSendNotifications = user?.role && ![UserRole.GUARDIAN, UserRole.STUDENT].includes(user.role as UserRole)
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="text-sm-responsive text-gray-600">Carregando notificações...</p>
+      <div className="container-responsive spacing-y-responsive">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando notificações...</p>
+          </div>
         </div>
       </div>
     )
@@ -150,21 +165,11 @@ export default function NotificationsPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center max-w-md mx-auto">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="material-symbols-outlined text-xl sm:text-2xl text-red-600">
-              error
-            </span>
-          </div>
-          <h3 className="text-base-responsive font-semibold text-gray-700 mb-2">Erro ao carregar notificações</h3>
-          <p className="text-sm-responsive text-gray-600 mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="button-primary"
-          >
-            Tentar novamente
-          </button>
+      <div className="container-responsive spacing-y-responsive">
+        <div className="text-center py-12">
+          <span className="material-symbols-outlined text-4xl text-red-500 mb-4">error</span>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">Erro ao carregar notificações</h3>
+          <p className="text-gray-500">{error}</p>
         </div>
       </div>
     )
@@ -208,38 +213,27 @@ export default function NotificationsPage() {
 
             {/* Botões principais */}
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`button-icon ${
-                showFilters || hasActiveFilters()
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-              }`}
-              title="Filtros"
+              onClick={markAllAsRead}
+              className="px-3 py-2 text-xs-responsive bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
             >
-              <span className="material-symbols-outlined">tune</span>
+              <span className="material-symbols-outlined text-sm">done_all</span>
+              <span className="hide-mobile">Marcar todas</span>
             </button>
 
             <button
-              onClick={() => setViewMode(viewMode === 'list' ? 'compact' : 'list')}
-              className="button-icon text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-              title={viewMode === 'list' ? 'Visualização compacta' : 'Visualização em lista'}
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-3 py-2 text-xs-responsive rounded-lg transition-colors flex items-center gap-2 ${
+                showFilters || hasActiveFilters
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+              }`}
             >
-              <span className="material-symbols-outlined">
-                {viewMode === 'list' ? 'view_agenda' : 'view_list'}
-              </span>
+              <span className="material-symbols-outlined text-sm">filter_list</span>
+              <span className="hide-mobile">Filtros</span>
+              {hasActiveFilters && <span className="w-2 h-2 bg-white rounded-full"></span>}
             </button>
 
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="button-icon text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                title="Marcar todas como lidas"
-              >
-                <span className="material-symbols-outlined">done_all</span>
-              </button>
-            )}
-
-            {(user?.role !== 'student') && (
+            {canSendNotifications && (
               <>
                 <button
                   onClick={() => router.push('/notifications/sent')}
@@ -335,7 +329,7 @@ export default function NotificationsPage() {
                   </div>
                 </div>
 
-                {hasActiveFilters() && (
+                {hasActiveFilters && (
                   <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
                     <span className="text-xs-responsive text-gray-600">
                       {filteredNotifications.length} de {totalCount} notificações
@@ -353,7 +347,7 @@ export default function NotificationsPage() {
           )}
 
           {/* Filtros ativos (chips) */}
-          {hasActiveFilters() && !showFilters && (
+          {hasActiveFilters && !showFilters && (
             <div className="flex flex-wrap gap-2 mb-4">
               {filters.status !== 'all' && (
                 <span className="badge bg-blue-100 text-blue-800">
@@ -501,19 +495,19 @@ export default function NotificationsPage() {
               <div className="p-12 text-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="material-symbols-outlined text-2xl text-gray-400">
-                    {hasActiveFilters() ? 'search_off' : 'notifications_off'}
+                    {hasActiveFilters ? 'search_off' : 'notifications_off'}
                   </span>
                 </div>
                 <h3 className="text-lg font-medium text-gray-700 mb-2">
-                  {hasActiveFilters() ? 'Nenhuma notificação encontrada' : 'Nenhuma notificação'}
+                  {hasActiveFilters ? 'Nenhuma notificação encontrada' : 'Nenhuma notificação'}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {hasActiveFilters() 
+                  {hasActiveFilters 
                     ? 'Tente ajustar os filtros ou termos de busca.' 
                     : 'Você não possui notificações no momento.'
                   }
                 </p>
-                {hasActiveFilters() && (
+                {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
                     className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
@@ -576,4 +570,5 @@ export default function NotificationsPage() {
       </div>
     </div>
   )
+}
 }
