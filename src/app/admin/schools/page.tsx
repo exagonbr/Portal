@@ -107,9 +107,16 @@ export default function SystemAdminSchoolsPage() {
   const [editingSchool, setEditingSchool] = useState<SchoolUnit | null>(null);
   const [formData, setFormData] = useState<CreateSchoolData>({
     name: '',
+    code: '',
     description: '',
     institution_id: '',
     type: undefined,
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    phone: '',
+    email: '',
     is_active: true
   });
   const [filterType, setFilterType] = useState<'all' | 'elementary' | 'middle' | 'high' | 'technical'>('all');
@@ -183,6 +190,11 @@ export default function SystemAdminSchoolsPage() {
       return;
     }
     
+    if (!formData.code.trim()) {
+      toast.error('Código da escola é obrigatório');
+      return;
+    }
+    
     if (!formData.institution_id) {
       toast.error('Selecione uma instituição');
       return;
@@ -190,6 +202,11 @@ export default function SystemAdminSchoolsPage() {
     
     if (formData.name.length < 3) {
       toast.error('Nome da escola deve ter pelo menos 3 caracteres');
+      return;
+    }
+    
+    if (formData.code.length < 2) {
+      toast.error('Código da escola deve ter pelo menos 2 caracteres');
       return;
     }
     
@@ -231,9 +248,16 @@ export default function SystemAdminSchoolsPage() {
     setEditingSchool(school);
     setFormData({
       name: school.name,
+      code: school.code || '',
       description: school.description || '',
       institution_id: school.institution_id,
       type: school.type,
+      address: school.address?.street || '',
+      city: school.city || '',
+      state: school.state || '',
+      zip_code: school.zip_code || '',
+      phone: school.contact?.phone || '',
+      email: school.contact?.email || '',
       is_active: school.is_active
     });
     setShowModal(true);
@@ -259,9 +283,16 @@ export default function SystemAdminSchoolsPage() {
     setSubmitting(false);
     setFormData({
       name: '',
+      code: '',
       description: '',
       institution_id: '',
       type: undefined,
+      address: '',
+      city: '',
+      state: '',
+      zip_code: '',
+      phone: '',
+      email: '',
       is_active: true
     });
   };
@@ -598,7 +629,7 @@ export default function SystemAdminSchoolsPage() {
                       </h4>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
+                        <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Nome da Escola *
                           </label>
@@ -608,6 +639,20 @@ export default function SystemAdminSchoolsPage() {
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
                             placeholder="Ex: Escola Municipal João Silva"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Código *
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.code}
+                            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                            placeholder="Ex: ESC-001"
                             required
                           />
                         </div>
@@ -671,6 +716,131 @@ export default function SystemAdminSchoolsPage() {
                             </select>
                             <GraduationCap className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Informações de Localização */}
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-primary" />
+                        Localização
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Endereço
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                            placeholder="Rua, número, complemento"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Cidade
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.city}
+                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                            placeholder="Nome da cidade"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Estado
+                          </label>
+                          <select
+                            value={formData.state}
+                            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
+                          >
+                            <option value="">Selecione</option>
+                            <option value="AC">Acre</option>
+                            <option value="AL">Alagoas</option>
+                            <option value="AP">Amapá</option>
+                            <option value="AM">Amazonas</option>
+                            <option value="BA">Bahia</option>
+                            <option value="CE">Ceará</option>
+                            <option value="DF">Distrito Federal</option>
+                            <option value="ES">Espírito Santo</option>
+                            <option value="GO">Goiás</option>
+                            <option value="MA">Maranhão</option>
+                            <option value="MT">Mato Grosso</option>
+                            <option value="MS">Mato Grosso do Sul</option>
+                            <option value="MG">Minas Gerais</option>
+                            <option value="PA">Pará</option>
+                            <option value="PB">Paraíba</option>
+                            <option value="PR">Paraná</option>
+                            <option value="PE">Pernambuco</option>
+                            <option value="PI">Piauí</option>
+                            <option value="RJ">Rio de Janeiro</option>
+                            <option value="RN">Rio Grande do Norte</option>
+                            <option value="RS">Rio Grande do Sul</option>
+                            <option value="RO">Rondônia</option>
+                            <option value="RR">Roraima</option>
+                            <option value="SC">Santa Catarina</option>
+                            <option value="SP">São Paulo</option>
+                            <option value="SE">Sergipe</option>
+                            <option value="TO">Tocantins</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            CEP
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.zip_code}
+                            onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                            placeholder="00000-000"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Informações de Contato */}
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Phone className="w-5 h-5 text-primary" />
+                        Contato
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Telefone
+                          </label>
+                          <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                            placeholder="(00) 0000-0000"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            E-mail
+                          </label>
+                          <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                            placeholder="contato@escola.edu.br"
+                          />
                         </div>
                       </div>
                     </div>

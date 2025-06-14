@@ -7,6 +7,7 @@ import { InstitutionResponseDto } from '@/types/api'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionAddModal } from '@/components/InstitutionAddModal'
 import { InstitutionEditModal } from '@/components/InstitutionEditModal'
+import { InstitutionModalNew } from '@/components/modals/InstitutionModalNew'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
@@ -27,59 +28,30 @@ interface InstitutionStats {
   }
 }
 
-// Componente de Card de Estatística
+// Componente de Card de Estatística - Padrão Simples
 const StatCard = ({ 
   icon: Icon, 
   title, 
   value, 
   subtitle, 
-  color = 'bg-blue-600',
   trend
 }: {
   icon: any
   title: string
   value: string | number
   subtitle: string
-  color?: string
-  trend?: { value: number; isPositive: boolean }
+  trend?: string
 }) => (
-  <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-gray-200 transition-all duration-300 overflow-hidden">
-    {/* Background Pattern */}
-    <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
-      <div className={`w-full h-full ${color} rounded-full transform translate-x-8 -translate-y-8`}></div>
+  <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="flex items-center justify-between mb-2">
+      <Icon className="w-6 h-6 text-gray-600" />
+      {trend && (
+        <div className="text-xs text-green-600">{trend}</div>
+      )}
     </div>
-    
-    <div className="relative">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className={`${color} rounded-xl p-3 shadow-lg`}>
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        {trend && (
-          <div className={`flex items-center text-sm font-medium ${
-            trend.isPositive ? 'text-green-600' : 'text-red-600'
-          }`}>
-            <span className="mr-1">
-              {trend.isPositive ? '↗' : '↘'}
-            </span>
-            {Math.abs(trend.value)}%
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
-          {title}
-        </h3>
-        <p className="text-3xl font-bold text-gray-900 leading-none">
-          {value}
-        </p>
-        <p className="text-sm text-gray-500 leading-relaxed">
-          {subtitle}
-        </p>
-      </div>
-    </div>
+    <div className="text-sm font-medium text-gray-500 mb-1">{title}</div>
+    <div className="text-2xl font-bold text-gray-600">{value}</div>
+    <div className="text-xs text-gray-500 mt-2">{subtitle}</div>
   </div>
 )
 
@@ -95,6 +67,11 @@ export default function ManageInstitutions() {
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedInstitution, setSelectedInstitution] = useState<InstitutionResponseDto | null>(null)
+  
+  // Estados para o novo modal unificado
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view')
+  const [modalInstitution, setModalInstitution] = useState<InstitutionResponseDto | null>(null)
   const [stats, setStats] = useState<InstitutionStats>({
     totalInstitutions: 0,
     activeInstitutions: 0,
@@ -243,6 +220,35 @@ export default function ManageInstitutions() {
     router.push(`/admin/institutions/${institution.id}`)
   }
 
+  // Funções para o novo modal unificado
+  const openModal = (mode: 'view' | 'create' | 'edit', institution?: InstitutionResponseDto) => {
+    setModalMode(mode)
+    setModalInstitution(institution || null)
+    setModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setModalOpen(false)
+    setModalInstitution(null)
+  }
+
+  const handleModalSave = async (data: any) => {
+    try {
+      if (modalMode === 'create') {
+        await institutionService.createInstitution(data)
+        showSuccess("Sucesso", "Instituição criada com sucesso!")
+      } else if (modalMode === 'edit' && modalInstitution) {
+        await institutionService.updateInstitution(modalInstitution.id, data)
+        showSuccess("Sucesso", "Instituição atualizada com sucesso!")
+      }
+      
+      closeModal()
+      fetchInstitutions(currentPage, searchQuery)
+    } catch (error) {
+      showError("Erro ao salvar instituição", "Não foi possível salvar a instituição.")
+    }
+  }
+
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   return (
@@ -257,7 +263,7 @@ export default function ManageInstitutions() {
                 <p className="text-sm sm:text-base text-gray-600 mt-1">Gerencie as instituições do sistema</p>
               </div>
               <div className="flex-shrink-0">
-                <Button onClick={handleAddInstitution} className="flex items-center gap-2 w-full sm:w-auto justify-center">
+                <Button onClick={() => openModal('create')} className="flex items-center gap-2 w-full sm:w-auto justify-center">
                   <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">Nova Instituição</span>
                   <span className="sm:hidden">Nova</span>
@@ -267,61 +273,49 @@ export default function ManageInstitutions() {
 
             {/* Cards de Estatísticas */}
             <div className="mb-8">
-              {/* Título da Seção */}
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Visão Geral do Sistema</h2>
-                <p className="text-sm text-gray-600">Estatísticas principais das instituições e usuários</p>
-              </div>
-
               {/* Grid Responsivo de Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
                 <StatCard
                   icon={Building2}
                   title="Instituições"
                   value={stats.totalInstitutions}
                   subtitle={`${stats.activeInstitutions} ativas`}
-                  color="bg-gradient-to-br from-slate-500 to-slate-600"
-                  trend={{ value: 8.2, isPositive: true }}
+                  trend="↑ 8.2%"
                 />
                 <StatCard
                   icon={School}
                   title="Escolas"
                   value={stats.totalSchools}
                   subtitle="Unidades cadastradas"
-                  color="bg-gradient-to-br from-indigo-500 to-indigo-600"
-                  trend={{ value: 12.5, isPositive: true }}
+                  trend="↑ 12.5%"
                 />
                 <StatCard
                   icon={GraduationCap}
                   title="Alunos"
                   value={stats.usersByRole.STUDENT.toLocaleString('pt-BR')}
                   subtitle={`${stats.totalUsers > 0 ? ((stats.usersByRole.STUDENT / stats.totalUsers) * 100).toFixed(1) : 0}% do total`}
-                  color="bg-gradient-to-br from-blue-500 to-blue-600"
-                  trend={{ value: 5.7, isPositive: true }}
+                  trend="↑ 5.7%"
                 />
                 <StatCard
                   icon={UserCheck}
                   title="Professores"
                   value={stats.usersByRole.TEACHER.toLocaleString('pt-BR')}
                   subtitle="Corpo docente"
-                  color="bg-gradient-to-br from-green-500 to-green-600"
-                  trend={{ value: 3.2, isPositive: true }}
+                  trend="↑ 3.2%"
                 />
                 <StatCard
                   icon={UserCog}
                   title="Coordenadores"
                   value={stats.usersByRole.COORDINATOR.toLocaleString('pt-BR')}
                   subtitle="Gestão acadêmica"
-                  color="bg-gradient-to-br from-orange-500 to-orange-600"
-                  trend={{ value: 1.8, isPositive: false }}
+                  trend="↓ 1.8%"
                 />
                 <StatCard
                   icon={Users}
                   title="Total Usuários"
                   value={stats.totalUsers.toLocaleString('pt-BR')}
                   subtitle="Cadastros ativos"
-                  color="bg-gradient-to-br from-purple-500 to-purple-600"
-                  trend={{ value: 15.3, isPositive: true }}
+                  trend="↑ 15.3%"
                 />
               </div>
             </div>
@@ -450,7 +444,7 @@ export default function ManageInstitutions() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleViewInstitution(institution)}
+                                onClick={() => openModal('view', institution)}
                                 className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-1"
                                 title="Visualizar"
                               >
@@ -459,7 +453,7 @@ export default function ManageInstitutions() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleEditInstitution(institution)}
+                                onClick={() => openModal('edit', institution)}
                                 className="text-green-600 hover:text-green-900 hover:bg-green-50 p-1"
                                 title="Editar"
                               >
@@ -550,7 +544,7 @@ export default function ManageInstitutions() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleViewInstitution(institution)}
+                            onClick={() => openModal('view', institution)}
                             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-xl py-3"
                           >
                             <Eye className="w-4 h-4 mb-1" />
@@ -559,7 +553,7 @@ export default function ManageInstitutions() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEditInstitution(institution)}
+                            onClick={() => openModal('edit', institution)}
                             className="text-green-600 hover:text-green-700 hover:bg-green-50 border border-green-200 rounded-xl py-3"
                           >
                             <Edit className="w-4 h-4 mb-1" />
@@ -618,7 +612,7 @@ export default function ManageInstitutions() {
           )}
         </div>
 
-        {/* Modals */}
+        {/* Modais Antigos - Manter para compatibilidade */}
         {addModalOpen && (
           <InstitutionAddModal
             isOpen={addModalOpen}
@@ -640,6 +634,15 @@ export default function ManageInstitutions() {
             title="Editar Instituição"
           />
         )}
+
+        {/* Novo Modal Unificado */}
+        <InstitutionModalNew
+          isOpen={modalOpen}
+          onClose={closeModal}
+          onSave={handleModalSave}
+          institution={modalInstitution}
+          mode={modalMode}
+        />
       </div>
     </AuthenticatedLayout>
   )
