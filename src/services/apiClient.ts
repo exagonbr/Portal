@@ -108,17 +108,11 @@ export class ApiClient {
   private isRefreshing = false;
   private refreshPromise: Promise<boolean> | null = null;
   private refreshAttempts = 0;
-  private maxRefreshAttempts = 2;
 
   /**
    * Realiza o refresh do token de autenticação
    */
   private async refreshAuthToken(): Promise<boolean> {
-    if (this.refreshAttempts >= this.maxRefreshAttempts) {
-      console.error('Máximo de tentativas de refresh atingido');
-      return false;
-    }
-
     // Se já estiver em processo de refresh, retorna a Promise existente
     if (this.isRefreshing && this.refreshPromise) {
       return this.refreshPromise;
