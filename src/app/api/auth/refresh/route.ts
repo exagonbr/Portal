@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Enviar requisição para o backend para renovar o token
-    const response = await fetch(`${BACKEND_URL}/v1/auth/refresh-token`, {
+    const response = await fetch(`${BACKEND_URL}/auth/refresh-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

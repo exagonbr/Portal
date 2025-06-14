@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validar token e sessão com o backend
-    const response = await fetch(`${BACKEND_URL}/v1/auth/validate-session`, {
+    const response = await fetch(`${BACKEND_URL}/auth/validate-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar token e sessão com o backend
-    const response = await fetch(`${BACKEND_URL}/v1/auth/validate-session`, {
+    const response = await fetch(`${BACKEND_URL}/auth/validate-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

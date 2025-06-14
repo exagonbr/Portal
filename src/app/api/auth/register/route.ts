@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fazer requisição para o backend
-    const response = await fetch(`${BACKEND_URL}/v1/auth/register`, {
+    const response = await fetch(`${BACKEND_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

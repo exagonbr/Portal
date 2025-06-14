@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (authToken) {
       try {
         console.log('🔄 API: Notificando backend sobre logout');
-        const response = await fetch(`${BACKEND_URL}/v1/auth/logout`, {
+        const response = await fetch(`${BACKEND_URL}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

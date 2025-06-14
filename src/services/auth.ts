@@ -242,7 +242,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
   try {
     // Determinar dinamicamente a porta correta
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-    console.log(`Tentando login no endpoint: ${baseUrl}/api/v1/auth/login`);
+    console.log(`Tentando login no endpoint: ${baseUrl}/api/auth/login`);
     
     // Adicione um timeout para evitar espera infinita
     const controller = new AbortController();
@@ -629,7 +629,7 @@ export const refreshToken = async (): Promise<boolean> => {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
         
         // Fazer requisição para o endpoint de refresh
-        const response = await fetch(`${baseUrl}/api/v1/auth/refresh`, {
+        const response = await fetch(`${baseUrl}/api/auth/refresh`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
