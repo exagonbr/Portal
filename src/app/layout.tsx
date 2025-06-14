@@ -7,6 +7,7 @@ import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
 import GlobalSetup from '@/components/GlobalSetup';
 import Handtalk from '@/components/Handtalk';
+import MixedContentHandler from '@/components/MixedContentHandler';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -58,6 +59,8 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#0f3460" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)" />
+        <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+        <meta name="referrer" content="no-referrer-when-downgrade" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
         <link
@@ -68,6 +71,7 @@ export default function RootLayout({
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
         <ErrorSuppressor />
         <GlobalSetup />
+        <MixedContentHandler />
         <AppProviders>
         <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
 
