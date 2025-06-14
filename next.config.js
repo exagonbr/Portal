@@ -121,6 +121,10 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  // Configuração para bypass SSL em desenvolvimento
+  experimental: {
+    serverComponentsExternalPackages: ['oracledb'],
+  },
   // Configuração para garantir que as rotas de API funcionem corretamente
   async rewrites() {
     return {
@@ -130,6 +134,13 @@ const nextConfig = {
           source: '/api/v1/:path*',
           destination: '/api/v1/:path*',
         },
+        // Proxy para backend HTTP em desenvolvimento
+        ...(isDev ? [
+          {
+            source: '/backend-api/:path*',
+            destination: 'http://localhost:3001/api/:path*',
+          }
+        ] : []),
       ],
     };
   },
@@ -258,21 +269,40 @@ const nextConfig = {
             key: 'Access-Control-Allow-Headers',
             value: 'X-Requested-With, Content-Type, Authorization'
           },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: data: blob:",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:",
-              "style-src 'self' 'unsafe-inline' http: https:",
-              "img-src 'self' data: blob: http: https:",
-              "font-src 'self' data: http: https:",
-              "connect-src 'self' http: https: ws: wss:",
-              "media-src 'self' http: https:",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self'"
-            ].join('; ')
-          }
+          // Permitir conexões HTTP inseguras em desenvolvimento
+          ...(isDev ? [
+            {
+              key: 'Content-Security-Policy',
+              value: [
+                "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: data: blob:",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:",
+                "style-src 'self' 'unsafe-inline' http: https:",
+                "img-src 'self' data: blob: http: https:",
+                "font-src 'self' data: http: https:",
+                "connect-src 'self' http: https: ws: wss: http://localhost:3001",
+                "media-src 'self' http: https:",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "form-action 'self'"
+              ].join('; ')
+            }
+          ] : [
+            {
+              key: 'Content-Security-Policy',
+              value: [
+                "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: data: blob:",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:",
+                "style-src 'self' 'unsafe-inline' http: https:",
+                "img-src 'self' data: blob: http: https:",
+                "font-src 'self' data: http: https:",
+                "connect-src 'self' http: https: ws: wss:",
+                "media-src 'self' http: https:",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "form-action 'self'"
+              ].join('; ')
+            }
+          ])
         ]
       }
     ];
