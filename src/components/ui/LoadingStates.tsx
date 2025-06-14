@@ -213,7 +213,7 @@ export function EnhancedRedirectState({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 flex items-center justify-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-50"
+      className="fixed inset-0 flex items-center justify-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg backdrop-brightness-0 z-990"
     >
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md mx-auto border border-gray-200 dark:border-gray-700">
         <div className="text-center">
@@ -231,12 +231,6 @@ export function EnhancedRedirectState({
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             {message}
           </h3>
-
-          {destination && (
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Direcionando para: <span className="font-medium">{destination}</span>
-            </p>
-          )}
 
           {autoRedirect && timeLeft > 0 && (
             <div className="mb-6">

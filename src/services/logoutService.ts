@@ -26,13 +26,13 @@ export class LogoutService {
       // 5. Notificar backend sobre logout
       await this.notifyBackendLogout();
 
-      // 6. Aguardar um pouco para garantir que tudo foi processado
+      // 6. Pequena pausa para garantir que tudo foi processado
       await new Promise(resolve => setTimeout(resolve, 500));
 
       console.log('✅ LogoutService: Logout completo realizado com sucesso');
     } catch (error) {
       console.error('❌ LogoutService: Erro durante logout:', error);
-      // Mesmo com erro, tentar limpeza de emergência
+      // Executar limpeza de emergência
       await this.emergencyCleanup();
       throw error;
     }
@@ -108,7 +108,8 @@ export class LogoutService {
         'next-auth.session-token',
         'next-auth.csrf-token',
         '__Secure-next-auth.session-token',
-        '__Host-next-auth.csrf-token'
+        '__Host-next-auth.csrf-token',
+        'redirect_count' // Limpar contador de redirecionamentos
       ];
 
       cookiesToClear.forEach(cookieName => {
@@ -116,6 +117,16 @@ export class LogoutService {
         document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
         document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
         document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
+        
+        // Em produção, limpar também para subdomínios
+        if (process.env.NODE_ENV === 'production') {
+          const hostname = window.location.hostname;
+          const parts = hostname.split('.');
+          if (parts.length > 2) {
+            const rootDomain = parts.slice(-2).join('.');
+            document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${rootDomain}`;
+          }
+        }
       });
 
       console.log('✅ LogoutService: Cookies limpos');
@@ -183,25 +194,26 @@ export class LogoutService {
   }
 
   /**
-   * Limpeza de emergência em caso de erro
+   * Limpeza de emergência quando algo falha
    */
   private static async emergencyCleanup(): Promise<void> {
-    console.log('🚨 LogoutService: Executando limpeza de emergência');
-    
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
+      console.log('🚨 LogoutService: Executando limpeza de emergência');
       
-      if (typeof document !== 'undefined') {
-        // Limpar todos os cookies possíveis
-        const cookies = document.cookie.split(';');
-        cookies.forEach(cookie => {
-          const eqPos = cookie.indexOf('=');
-          const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-        });
+      if (typeof window !== 'undefined') {
+        // Limpar localStorage
+        try {
+          localStorage.clear();
+        } catch (e) {
+          console.error('Erro ao limpar localStorage na emergência:', e);
+        }
+        
+        // Limpar sessionStorage
+        try {
+          sessionStorage.clear();
+        } catch (e) {
+          console.error('Erro ao limpar sessionStorage na emergência:', e);
+        }
       }
       
       console.log('✅ LogoutService: Limpeza de emergência concluída');
@@ -211,13 +223,25 @@ export class LogoutService {
   }
 
   /**
-   * Redireciona para a página de login
+   * Determina a melhor rota de redirecionamento após logout
    */
-  static redirectToLogin(): void {
-    if (typeof window !== 'undefined') {
-      // Usar window.location.href para garantir recarregamento completo
-      window.location.href = '/login';
+  private static getLogoutRedirectUrl(): string {
+    if (typeof window === 'undefined') return '/login';
+    
+    const currentPath = window.location.pathname;
+    
+    // Se estamos em uma rota do portal, redirecionar para login com parâmetro específico
+    if (currentPath.startsWith('/portal')) {
+      return '/login?from=portal';
     }
+    
+    // Se estamos em dashboard, redirecionar para login com parâmetro específico
+    if (currentPath.startsWith('/dashboard')) {
+      return '/login?from=dashboard';
+    }
+    
+    // Redirecionamento padrão
+    return '/login?logout=true';
   }
 
   /**
@@ -226,11 +250,23 @@ export class LogoutService {
   static async logoutAndRedirect(): Promise<void> {
     try {
       await this.performCompleteLogout();
-      this.redirectToLogin();
+      
+      // Determinar URL de redirecionamento
+      const redirectUrl = this.getLogoutRedirectUrl();
+      
+      // Aguardar um pouco antes do redirecionamento para garantir que tudo foi processado
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Redirecionar usando window.location para garantir limpeza completa
+      if (typeof window !== 'undefined') {
+        window.location.href = redirectUrl;
+      }
     } catch (error) {
       console.error('❌ LogoutService: Erro no logout, forçando redirecionamento:', error);
-      // Mesmo com erro, redirecionar
-      this.redirectToLogin();
+      // Forçar redirecionamento mesmo com erro
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?error=logout_failed';
+      }
     }
   }
 }

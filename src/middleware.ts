@@ -4,6 +4,7 @@ import { UserRole } from './types/roles';
 import { ROLE_DASHBOARD_MAP, getDashboardPath, isValidRole } from './utils/roleRedirect';
 import { getToken } from 'next-auth/jwt';
 import { applyRateLimit } from './middleware/rateLimit';
+import { PRODUCTION_CONFIG, ProductionUtils } from './config/production';
 
 // Configuration constants
 const CONFIG = {
@@ -34,7 +35,12 @@ const ROUTES = {
     '/test-julia-login',
     '/portal',
     '/portal/books',
-    '/portal/videos'
+    '/portal/videos',
+    '/portal/courses',
+    '/portal/assignments',
+    '/portal/dashboard',
+    '/portal/student',
+    '/portal/reports'
   ],
   
   // Authentication routes
@@ -74,7 +80,24 @@ class MiddlewareUtils {
   }
 
   static createRedirectResponse(url: string, request: NextRequest): NextResponse {
-    const response = NextResponse.redirect(new URL(url, request.url), {
+    // Verificar se estamos em produção e ajustar a URL se necessário
+    let redirectUrl = url;
+    
+    // Em produção, garantir que redirecionamentos para portal incluam o path correto
+    if (process.env.NODE_ENV === 'production') {
+      // Se a URL é relativa e começa com /portal, garantir que está correta
+      if (url.startsWith('/portal') && !url.includes('portal.')) {
+        // Manter a URL como está, mas garantir que não há duplicação
+        redirectUrl = url;
+      }
+      
+      // Se estamos redirecionando para login após logout, limpar query params problemáticos
+      if (url.includes('/login') && url.includes('error=unauthorized')) {
+        redirectUrl = '/login?logout=true';
+      }
+    }
+    
+    const response = NextResponse.redirect(new URL(redirectUrl, request.url), {
       // Definir status 303 para garantir que o navegador siga o redirecionamento mesmo após POST
       status: 303
     });
@@ -83,6 +106,7 @@ class MiddlewareUtils {
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
+    response.headers.set('X-Redirect-Reason', 'middleware-auth');
     
     return response;
   }
@@ -92,8 +116,9 @@ class MiddlewareUtils {
     this.clearAuthCookies(response);
     
     // Adicionar header especial para indicar que deve limpar todos os dados no cliente
-    if (url.includes('error=unauthorized')) {
+    if (url.includes('error=unauthorized') || url.includes('logout=true')) {
       response.headers.set('X-Clear-All-Data', 'true');
+      response.headers.set('X-Logout-Redirect', 'true');
     }
     
     return response;
@@ -340,18 +365,13 @@ export async function middleware(request: NextRequest) {
     const redirectCount = request.cookies.get('redirect_count')?.value;
     const redirectCountInt = redirectCount ? parseInt(redirectCount) : 0;
 
-    // Se já redirecionamos demais vezes (potencial loop), permitir acesso temporário
-    // ou redirecionar para página de erro específica
-    if (redirectCountInt > 3) {
+    // Se já redirecionamos demais vezes (potencial loop), usar configuração de produção
+    if (redirectCountInt > PRODUCTION_CONFIG.REDIRECT.MAX_REDIRECTS) {
       console.warn(`⚠️ Middleware: Detectado potencial loop de redirecionamento em ${pathname}`);
       
-      // Opção 1: Redirecionar para página de erro específica
-      return MiddlewareUtils.createRedirectResponse('/auth-error?type=redirect_loop', request);
-      
-      // Opção 2: Permitir acesso temporário (comentado)
-      // const tempResponse = NextResponse.next();
-      // tempResponse.cookies.delete('redirect_count');
-      // return tempResponse;
+      // Usar rota de fallback baseada no contexto atual
+      const fallbackRoute = ProductionUtils.getFallbackRoute(pathname);
+      return MiddlewareUtils.createRedirectResponse(fallbackRoute, request);
     }
 
     const authResult = await SessionValidator.isAuthenticated(token);
@@ -360,12 +380,21 @@ export async function middleware(request: NextRequest) {
       console.log(`Middleware: Usuário não autenticado tentando acessar ${pathname}`);
       
       // Incrementar contador de redirecionamentos
-      const response = MiddlewareUtils.createRedirectWithClearCookies('/login?error=unauthorized', request);
+      const response = MiddlewareUtils.createRedirectWithClearCookies(
+        PRODUCTION_CONFIG.ROUTES.FALLBACK_ROUTES.UNAUTHORIZED, 
+        request
+      );
+      
+      const cookieConfig = ProductionUtils.getCookieConfig({
+        HTTP_ONLY: true,
+        MAX_AGE: 60 // 1 minuto apenas para contador
+      });
+      
       response.cookies.set('redirect_count', (redirectCountInt + 1).toString(), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60, // 1 minuto apenas
+        httpOnly: cookieConfig.HTTP_ONLY,
+        secure: cookieConfig.SECURE,
+        sameSite: cookieConfig.SAME_SITE,
+        maxAge: cookieConfig.MAX_AGE,
         path: '/',
       });
       
@@ -447,7 +476,9 @@ export async function middleware(request: NextRequest) {
     
     // Fallback to portal if role determination fails
     console.log('⚠️ Não foi possível determinar o dashboard correto, redirecionando para portal');
-    return MiddlewareUtils.createRedirectResponse('/portal/videos', request);
+    // Em produção, usar uma rota mais específica para evitar loops
+    const fallbackRoute = process.env.NODE_ENV === 'production' ? '/portal/books' : '/portal/videos';
+    return MiddlewareUtils.createRedirectResponse(fallbackRoute, request);
   }
 
   // 5. Role-based access control for authenticated users
@@ -505,8 +536,12 @@ export async function middleware(request: NextRequest) {
         console.log('Usuário já está no dashboard correto, permitindo acesso');
         // Não redireciona, deixa o RoleProtectedRoute lidar com isso
       } else {
-        console.log('Redirecionando para portal/videos como fallback');
-        return MiddlewareUtils.createRedirectResponse('/portal/videos', request);
+        console.log('Redirecionando para portal como fallback');
+        // Alternar entre diferentes rotas do portal para evitar loops
+        const portalRoutes = ['/portal/books', '/portal/courses', '/portal/videos'];
+        const currentPortalRoute = portalRoutes.find(route => pathname.startsWith(route));
+        const fallbackRoute = currentPortalRoute ? '/portal/books' : '/portal/videos';
+        return MiddlewareUtils.createRedirectResponse(fallbackRoute, request);
       }
     } else {
       console.log(`Acesso permitido para ${userData.name} em ${pathname}`);
