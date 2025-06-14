@@ -1,5 +1,6 @@
 import {User, UserEssentials, Permission, UserRole} from '../types/auth';
-import {getSession, signOut} from 'next-auth/react';
+// REMOVIDO: NextAuth imports para evitar erros 404 e loops
+// import {getSession, signOut} from 'next-auth/react';
 
 export interface LoginResponse {
   success: boolean;
@@ -431,27 +432,9 @@ export const getCurrentUser = async (): Promise<UserEssentials | null> => {
     }
   }
 
-  // Only try NextAuth session as fallback and avoid infinite loops
-  try {
-    const session = await getSession();
-    if (session?.user) {
-      const userEssentials: UserEssentials = {
-        id: Math.random().toString(36).substring(2, 11), // Generate random ID for Google users
-        name: session.user.name || '',
-        email: session.user.email || '',
-        role: 'teacher' as UserRole,
-        permissions: []
-      };
-      
-      // Store in localStorage for future calls
-      StorageManager.set(AUTH_CONFIG.STORAGE_KEYS.USER, JSON.stringify(userEssentials));
-      
-      return userEssentials;
-    }
-  } catch (error) {
-    console.error('Error getting NextAuth session:', error);
-  }
-
+  // REMOVIDO: NextAuth session check para evitar loops e erros 404
+  // O sistema agora usa apenas autenticação customizada
+  
   return null;
 };
 
@@ -459,33 +442,34 @@ export const logout = async (): Promise<void> => {
   console.log('Iniciando processo de logout...');
   
   try {
-    // 1. Chamar API de logout
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/logout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
+    // 1. Chamar API de logout (com tratamento de erro mais robusto)
+    try {
+      const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-    if (!response.ok) {
-      console.error('Erro na resposta do logout:', response.status);
+      if (!response.ok) {
+        console.warn('Erro na resposta do logout:', response.status);
+        // Continuar mesmo se o logout da API falhar
+      }
+    } catch (apiError) {
+      console.warn('Erro ao chamar API de logout:', apiError);
+      // Continuar mesmo se a API não responder
     }
     
-    // 2. Sign out from NextAuth (se ainda estiver usando)
-    try {
-      console.log('Fazendo logout do NextAuth...');
-      await signOut({ redirect: false });
-    } catch (error) {
-      console.error('Erro ao fazer logout do NextAuth:', error);
-    }
+    // 2. REMOVIDO: NextAuth signOut para evitar erros 404
+    // O sistema agora usa apenas autenticação customizada
     
     // 3. Clear local storage
     console.log('Limpando localStorage...');
     StorageManager.clearAuthData();
     
     // 4. Clear authentication cookies (fallback)
-    console.log('Limpando cookies de autenticação (fallback)...');
+    console.log('Limpando cookies de autenticação...');
     CookieManager.clearAuthCookies();
     
     // 5. Small delay to ensure all operations complete
@@ -503,17 +487,16 @@ export const logout = async (): Promise<void> => {
       console.error('Erro no fallback de logout:', fallbackError);
     }
     
-    throw error;
+    // Não fazer throw do erro para não quebrar o fluxo de logout
+    console.warn('Logout completado com alguns erros, mas dados locais foram limpos');
   }
 };
 
 export const isAuthenticated = async (): Promise<boolean> => {
   try {
-    // Primeiro verificar NextAuth
-    const session = await getSession();
-    if (session) return true;
-
-    // Depois verificar token local
+    // REMOVIDO: NextAuth check para evitar loops
+    // Verificar apenas token local e cookies
+    
     const token = StorageManager.get(AUTH_CONFIG.STORAGE_KEYS.AUTH_TOKEN);
     if (!token && typeof window !== 'undefined') {
       // Verificar cookies como fallback
@@ -524,19 +507,25 @@ export const isAuthenticated = async (): Promise<boolean> => {
     // Se não temos token, não estamos autenticados
     if (!token) return false;
 
-    // Validar token com o backend
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/validate-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token }),
-      credentials: 'include',
-    });
+    // Validar token com o backend (opcional, pode ser removido para evitar chamadas desnecessárias)
+    try {
+      const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/validate-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+        credentials: 'include',
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      return data.valid;
+      if (response.ok) {
+        const data = await response.json();
+        return data.valid;
+      }
+    } catch (validationError) {
+      console.warn('Erro na validação do token, assumindo válido baseado na presença local:', validationError);
+      // Se a validação falhar, assumir que o token é válido se existir localmente
+      return true;
     }
 
     return false;
