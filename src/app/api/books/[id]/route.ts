@@ -33,6 +33,17 @@ const updateBookSchema = z.object({
 // Mock database - substituir por Prisma/banco real
 const mockBooks = new Map()
 
+// Função utilitária para normalizar o valor do userRole
+function normalizeUserRole(role: string | undefined): string | undefined {
+  switch (role) {
+    case 'INSTITUTION_ADMIN':
+    case 'SCHOOL_MANAGER':
+      return 'INSTITUTION_MANAGER';
+    default:
+      return role;
+  }
+}
+
 // GET - Buscar livro por ID
 export async function GET(
   request: NextRequest,
@@ -61,13 +72,12 @@ export async function GET(
     }
 
     // Verificar permissões de acesso
-    const userRole = session.user?.role
+    const userRole = normalizeUserRole(session.user?.role);
     const canAccess = 
       book.access_type === 'FREE' ||
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       userRole === 'TEACHER' ||
-      userRole === 'LIBRARIAN' ||
       (userRole === 'STUDENT' && book.is_active && (
         book.access_type === 'FREE' ||
         (book.course_ids && book.course_ids.some((courseId: string) => 
@@ -153,11 +163,10 @@ export async function PUT(
     }
 
     // Verificar permissões
-    const userRole = session.user?.role
+    const userRole = normalizeUserRole(session.user?.role);
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
-      userRole === 'LIBRARIAN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       (userRole === 'TEACHER' && existingBook.created_by === session.user?.id)
 
     if (!canEdit) {
@@ -219,7 +228,7 @@ export async function DELETE(
     }
 
     // Verificar permissões
-    const userRole = session.user?.role
+    const userRole = normalizeUserRole(session.user?.role);
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
       userRole === 'INSTITUTION_ADMIN' ||

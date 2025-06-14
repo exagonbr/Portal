@@ -81,15 +81,15 @@ export async function GET(request: NextRequest) {
 
     // Aplicar filtros
     if (type) {
-      notifications = notifications.filter(notif => notif.type === type)
+      notifications = notifications.filter((notif: any) => notif.type === type)
     }
 
     if (priority) {
-      notifications = notifications.filter(notif => notif.priority === priority)
+      notifications = notifications.filter((notif: any) => notif.priority === priority)
     }
 
     if (status) {
-      notifications = notifications.filter(notif => {
+      notifications = notifications.filter((notif: any) => {
         if (status === 'unread') return !notif.read
         if (status === 'read') return notif.read && !notif.archived
         if (status === 'archived') return notif.archived
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
 
     // Filtrar por período
     if (from_date || to_date) {
-      notifications = notifications.filter(notif => {
+      notifications = notifications.filter((notif: any) => {
         const createdAt = new Date(notif.created_at)
         if (from_date && createdAt < new Date(from_date)) return false
         if (to_date && createdAt > new Date(to_date)) return false
@@ -109,15 +109,15 @@ export async function GET(request: NextRequest) {
 
     // Filtrar notificações expiradas
     const now = new Date()
-    notifications = notifications.filter(notif => 
+    notifications = notifications.filter((notif: any) => 
       !notif.expires_at || new Date(notif.expires_at) > now
     )
 
     // Ordenar por prioridade e data
-    notifications.sort((a, b) => {
+    notifications.sort((a: any, b: any) => {
       // Prioridade urgente primeiro
       const priorityOrder = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 }
-      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority]
+      const priorityDiff = priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder]
       if (priorityDiff !== 0) return priorityDiff
       
       // Depois por data (mais recente primeiro)
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
     const paginatedNotifications = notifications.slice(startIndex, endIndex)
 
     // Contar notificações não lidas
-    const unreadCount = notifications.filter(n => !n.read).length
+    const unreadCount = notifications.filter((n: any) => !n.read).length
 
     return NextResponse.json({
       success: true,
@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
 
     // Inicializar status para cada destinatário
     recipientUserIds.forEach(userId => {
-      newNotification.user_statuses[userId] = {
+      (newNotification.user_statuses as any)[userId] = {
         read: false,
         read_at: null,
         archived: false,
@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
 
     // Se agendada, não enviar imediatamente
     if (notificationData.scheduled_for && new Date(notificationData.scheduled_for) > new Date()) {
-      newNotification.status = 'scheduled'
+      (newNotification as any).status = 'scheduled'
     } else {
       // Enviar por outros canais se configurado
       if (notificationData.channels.includes('EMAIL')) {
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
       if (notificationData.channels.includes('SMS')) {
         // Enviar SMS
       }
-      newNotification.status = 'sent'
+      (newNotification as any).status = 'sent'
     }
 
     return NextResponse.json({

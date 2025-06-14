@@ -79,9 +79,13 @@ export default function BookViewPage() {
         id: bookId,
         title: title,
         filePath: filePath,
-        format: format
+        format: format,
+        thumbnail: '',
+        author: 'Autor não informado',
+        publisher: 'Editora não informada',
+        synopsis: 'Descrição não disponível',
+        duration: '0 min'
       }}
-      onClose={handleClose}
     />
   );
 } 

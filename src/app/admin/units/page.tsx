@@ -22,7 +22,7 @@ export default function AdminUnitsPage() {
   const [selectedUnit, setSelectedUnit] = useState<UnitResponseDto | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<UnitFilters>({
-    searchTerm: '',
+    search: '',
     type: '',
     active: undefined,
     institution_id: ''
@@ -36,7 +36,7 @@ export default function AdminUnitsPage() {
   useEffect(() => {
     const loadInstitutions = async () => {
       try {
-        const response = await institutionService.list();
+        const response = await institutionService.getAll();
         setInstitutions(response.data.map(inst => ({
           id: inst.id,
           name: inst.name
@@ -52,13 +52,9 @@ export default function AdminUnitsPage() {
   const loadUnits = async () => {
     setIsLoading(true);
     try {
-      const response = await unitService.list({
-        ...filters,
-        page: currentPage,
-        limit: 10
-      });
-      setUnits(response.data);
-      setTotalItems(response.total);
+      const response = await unitService.list(filters);
+      setUnits(response.items);
+      setTotalItems(response.pagination.total);
     } catch (error) {
       showError('Erro ao carregar unidades');
     } finally {
@@ -75,12 +71,16 @@ export default function AdminUnitsPage() {
     setIsAddModalOpen(true);
   };
 
-  const handleEdit = (unit: UnitResponseDto) => {
-    setSelectedUnit(unit);
-    setIsEditModalOpen(true);
+  const handleEdit = (item: { id: string | number }) => {
+    const unit = units.find(u => u.id === item.id);
+    if (unit) {
+      setSelectedUnit(unit);
+      setIsEditModalOpen(true);
+    }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (item: { id: string | number }) => {
+    const id = String(item.id);
     if (!confirm('Tem certeza que deseja excluir esta unidade?')) return;
     
     try {
@@ -148,57 +148,59 @@ export default function AdminUnitsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <Input
             placeholder="Buscar unidades..."
-            value={filters.searchTerm}
-            onChange={(e) => setFilters({ ...filters, searchTerm: e.target.value })}
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           />
           <Select
             value={filters.type}
-            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-          >
-            <option value="">Todos os tipos</option>
-            <option value="ESCOLA">Escola</option>
-            <option value="FACULDADE">Faculdade</option>
-            <option value="UNIVERSIDADE">Universidade</option>
-            <option value="CENTRO_EDUCACIONAL">Centro Educacional</option>
-          </Select>
+            onChange={(value) => setFilters({ ...filters, type: value as string })}
+            options={[
+              { value: '', label: 'Todos os tipos' },
+              { value: 'ESCOLA', label: 'Escola' },
+              { value: 'FACULDADE', label: 'Faculdade' },
+              { value: 'UNIVERSIDADE', label: 'Universidade' },
+              { value: 'CENTRO_EDUCACIONAL', label: 'Centro Educacional' }
+            ]}
+          />
           <Select
             value={filters.institution_id}
-            onChange={(e) => setFilters({ ...filters, institution_id: e.target.value })}
-          >
-            <option value="">Todas as instituições</option>
-            {institutions.map((inst) => (
-              <option key={inst.id} value={inst.id}>
-                {inst.name}
-              </option>
-            ))}
-          </Select>
+            onChange={(value) => setFilters({ ...filters, institution_id: value as string })}
+            options={[
+              { value: '', label: 'Todas as instituições' },
+              ...institutions.map((inst) => ({
+                value: inst.id,
+                label: inst.name
+              }))
+            ]}
+          />
           <Select
             value={filters.active?.toString()}
-            onChange={(e) => setFilters({ ...filters, active: e.target.value === 'true' ? true : e.target.value === 'false' ? false : undefined })}
-          >
-            <option value="">Todos os status</option>
-            <option value="true">Ativos</option>
-            <option value="false">Inativos</option>
-          </Select>
+            onChange={(value) => setFilters({ ...filters, active: value === 'true' ? true : value === 'false' ? false : undefined })}
+            options={[
+              { value: '', label: 'Todos os status' },
+              { value: 'true', label: 'Ativos' },
+              { value: 'false', label: 'Inativos' }
+            ]}
+          />
         </div>
 
         <GenericCRUD
+          title="Unidades"
+          entityName="Unidade"
           data={units}
           columns={columns}
           onEdit={handleEdit}
           onDelete={handleDelete}
           loading={isLoading}
-          pagination={{
-            currentPage,
-            totalItems,
-            onPageChange: setCurrentPage
-          }}
+          totalItems={totalItems}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
         />
       </div>
 
       {(isEditModalOpen || isAddModalOpen) && (
         <UnitEditModal
-          unit={selectedUnit}
+          unit={selectedUnit || undefined}
           onSave={handleSave}
           onClose={() => {
             setIsEditModalOpen(false);

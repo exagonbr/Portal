@@ -106,7 +106,7 @@ export default function ManageInstitutions() {
         email: institution.email,
         created_at: institution.created_at,
         updated_at: institution.updated_at,
-        active: institution.is_active,
+        active: institution.active,
         users_count: Math.floor(Math.random() * 500) + 50, // Mock data - substituir por dados reais
         courses_count: Math.floor(Math.random() * 20) + 5 // Mock data - substituir por dados reais
       }))
@@ -196,7 +196,7 @@ export default function ManageInstitutions() {
         address: data.address,
         phone: data.phone,
         email: data.email,
-        is_active: data.active,
+        active: data.active,
         type: 'SCHOOL' // Valor padrão, pode ser ajustado conforme necessário
       }
 

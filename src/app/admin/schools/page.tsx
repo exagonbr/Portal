@@ -81,13 +81,6 @@ interface SchoolUnit extends School {
   type: 'elementary' | 'middle' | 'high' | 'technical';
   status: 'active' | 'inactive';
   institutionName?: string;
-  address: {
-    street: string;
-    number: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
   contact: {
     phone: string;
     email: string;
@@ -110,7 +103,7 @@ export default function SystemAdminSchoolsPage() {
     code: '',
     description: '',
     institution_id: '',
-    type: undefined,
+
     address: '',
     city: '',
     state: '',
@@ -154,16 +147,10 @@ export default function SystemAdminSchoolsPage() {
           teachersCount: school.teachersCount || Math.floor(Math.random() * 50),
           classesCount: school.classesCount || Math.floor(Math.random() * 30),
           type: ['elementary', 'middle', 'high', 'technical'][Math.floor(Math.random() * 4)] as 'elementary' | 'middle' | 'high' | 'technical',
-          status: school.is_active ? 'active' : 'inactive',
+          status: school.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
           active: school.is_active,
           institutionName: institution?.name || 'Instituição não encontrada',
-          address: {
-            street: school.address || '',
-            number: '',
-            city: school.city || '',
-            state: school.state || '',
-            zipCode: school.zip_code || ''
-          },
+
           contact: {
             phone: school.phone || '',
             email: school.email || '',
@@ -190,7 +177,7 @@ export default function SystemAdminSchoolsPage() {
       return;
     }
     
-    if (!formData.code.trim()) {
+    if (!formData.code?.trim()) {
       toast.error('Código da escola é obrigatório');
       return;
     }
@@ -251,8 +238,8 @@ export default function SystemAdminSchoolsPage() {
       code: school.code || '',
       description: school.description || '',
       institution_id: school.institution_id,
-      type: school.type,
-      address: school.address?.street || '',
+
+      address: school.address || '',
       city: school.city || '',
       state: school.state || '',
       zip_code: school.zip_code || '',
@@ -286,7 +273,7 @@ export default function SystemAdminSchoolsPage() {
       code: '',
       description: '',
       institution_id: '',
-      type: undefined,
+
       address: '',
       city: '',
       state: '',
@@ -704,15 +691,12 @@ export default function SystemAdminSchoolsPage() {
                           </label>
                           <div className="relative">
                             <select
-                              value={formData.type || ''}
-                              onChange={(e) => setFormData({ ...formData, type: e.target.value as 'elementary' | 'middle' | 'high' | 'technical' || undefined })}
-                              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
+                              value=""
+                              onChange={() => {}}
+                              disabled
+                              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none opacity-50"
                             >
-                              <option value="">Selecione o tipo</option>
-                              <option value="elementary">Fundamental I</option>
-                              <option value="middle">Fundamental II</option>
-                              <option value="high">Ensino Médio</option>
-                              <option value="technical">Técnico</option>
+                              <option value="">Tipo não configurado</option>
                             </select>
                             <GraduationCap className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                           </div>

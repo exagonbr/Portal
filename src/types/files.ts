@@ -30,6 +30,7 @@ export interface S3FileInfo {
   url: string
   hasDbReference?: boolean
   dbRecord?: FileRecord | null
+  category?: string
 }
 
 export interface FileUploadRequest {

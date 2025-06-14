@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { connection as db } from '@/config/database'
 
 // Para agora, vou usar uma versão simplificada sem AWS SDK até que as dependências sejam instaladas
 export async function GET(request: NextRequest) {
-  const db = getDatabase()
-  
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')

@@ -183,7 +183,7 @@ export async function PUT(
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       (userMembership?.role === 'LEADER') ||
-      (userMembership?.role === 'MODERATOR' && !['visibility', 'max_members'].some(field => updateData[field] !== undefined))
+      (userMembership?.role === 'MODERATOR' && !['visibility', 'max_members'].some(field => (updateData as any)[field] !== undefined))
 
     if (!canEdit) {
       return NextResponse.json(

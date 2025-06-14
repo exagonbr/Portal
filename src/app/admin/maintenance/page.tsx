@@ -132,7 +132,7 @@ export default function MaintenancePage() {
   return (
     <DashboardPageLayout
       title="Manutenção do Sistema"
-      description="Gerenciar tarefas de manutenção e monitoramento do sistema"
+      subtitle="Gerenciar tarefas de manutenção e monitoramento do sistema"
     >
       <div className="space-y-6">
         {/* Status do Sistema */}

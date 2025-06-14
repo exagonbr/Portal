@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { courseService } from '@/services/courseService'
+import { courseService, getCoursesByTeacher, getCoursesByStudent } from '@/services/courseService'
 import CourseCard from '@/components/CourseCard'
 import { BookOpen, PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -27,13 +27,13 @@ export default function Courses() {
     try {
       let coursesData: CourseResponseDto[] = []
 
-      if (user.role === 'TEACHER' || user.role === 'ADMIN') {
+      if ((user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN') {
         // Professores e admins veem cursos onde são instrutores
-        const response = await courseService.getCoursesByTeacher(user.id)
+        const response = await getCoursesByTeacher(user.id)
         coursesData = response
-      } else if (user.role === 'STUDENT') {
+      } else if ((user.role as string) === 'STUDENT') {
         // Estudantes veem cursos em que estão matriculados
-        const response = await courseService.getCoursesByStudent(user.id)
+        const response = await getCoursesByStudent(user.id)
         coursesData = response
       }
 
@@ -83,14 +83,14 @@ export default function Courses() {
           <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
               <BookOpen className="w-8 h-8 text-blue-600" />
-              {user.role === 'TEACHER' || user.role === 'ADMIN' ? 'Painel do Professor' : 'Meus Cursos'}
+              {(user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN' ? 'Painel do Professor' : 'Meus Cursos'}
             </h1>
             <p className="text-gray-600">
-              Bem-vindo(a), {user?.name}! {user.role === 'TEACHER' || user.role === 'ADMIN' ? 'Acompanhe o progresso dos seus alunos.' : 'Acesse seus cursos e continue estudando.'}
+              Bem-vindo(a), {user?.name}! {(user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN' ? 'Acompanhe o progresso dos seus alunos.' : 'Acesse seus cursos e continue estudando.'}
             </p>
           </div>
 
-          {(user.role === 'TEACHER' || user.role === 'ADMIN') && (
+          {((user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN') && (
             <Button onClick={handleCreateCourse}>
               <PlusCircle className="w-4 h-4 mr-2" />
               Criar Novo Curso
@@ -106,14 +106,14 @@ export default function Courses() {
           <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-gray-100 shadow-sm">
             <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
             <h3 className="text-xl font-medium text-gray-700 mb-2">
-              {user.role === 'TEACHER' || user.role === 'ADMIN' ? 'Você ainda não tem cursos cadastrados' : 'Você não está matriculado em nenhum curso'}
+              {(user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN' ? 'Você ainda não tem cursos cadastrados' : 'Você não está matriculado em nenhum curso'}
             </h3>
             <p className="text-gray-500 mb-6 text-center max-w-md">
-              {user.role === 'TEACHER' || user.role === 'ADMIN'
+              {(user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN'
                 ? 'Crie seu primeiro curso para começar a gerenciar suas aulas e alunos.'
                 : 'Entre em contato com sua instituição para se matricular em cursos disponíveis.'}
             </p>
-            {(user.role === 'TEACHER' || user.role === 'ADMIN') && (
+            {((user.role as string) === 'TEACHER' || (user.role as string) === 'SYSTEM_ADMIN') && (
               <Button onClick={handleCreateCourse}>
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Criar Primeiro Curso
@@ -126,7 +126,7 @@ export default function Courses() {
               <CourseCard
                 key={course.id}
                 course={course}
-                userType={user.role === 'STUDENT' ? 'student' : 'teacher'}
+                userType={(user.role as string) === 'STUDENT' ? 'student' : 'teacher'}
                 onAccess={() => handleAccessCourse(course)}
                 onManage={() => handleManageCourse(course)}
               />

@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Limitar período máximo
-    const maxDays = reportData.type === 'DETAILED_DATA' ? 90 : 365
+    const maxDays = reportData.type === 'CUSTOM' ? 90 : 365
     const daysDiff = Math.ceil((dateTo.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24))
     
     if (daysDiff > maxDays) {

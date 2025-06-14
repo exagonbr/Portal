@@ -197,7 +197,7 @@ export async function PUT(
     // Não permitir certas alterações se já houver submissões
     if (existingAssignment.submissions && existingAssignment.submissions.length > 0) {
       const restrictedFields = ['points', 'rubric', 'submission_type', 'group_assignment']
-      const hasRestrictedChanges = restrictedFields.some(field => updateData[field] !== undefined)
+      const hasRestrictedChanges = restrictedFields.some(field => (updateData as any)[field] !== undefined)
       
       if (hasRestrictedChanges) {
         return NextResponse.json(

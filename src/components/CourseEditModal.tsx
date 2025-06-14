@@ -20,7 +20,7 @@ interface CourseEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: CourseUpdateDto) => Promise<void>;
-  course: CourseResponseDto;
+  course?: CourseResponseDto;
   title: string;
 }
 

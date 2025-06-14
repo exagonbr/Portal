@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { connection as db } from '@/config/database'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const db = getDatabase()
-  
   try {
     const fileId = params.id
     const { name } = await request.json()

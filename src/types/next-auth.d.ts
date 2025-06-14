@@ -7,6 +7,7 @@ declare module 'next-auth' {
       role: 'SYSTEM_ADMIN' | 'INSTITUTION_ADMIN' | 'SCHOOL_MANAGER' | 'TEACHER' | 'STUDENT' | 'GUARDIAN'
       institution_id?: string
       school_id?: string
+      dependents?: string[]
     } & DefaultSession['user']
   }
 
@@ -15,6 +16,7 @@ declare module 'next-auth' {
     role: 'SYSTEM_ADMIN' | 'INSTITUTION_ADMIN' | 'SCHOOL_MANAGER' | 'TEACHER' | 'STUDENT' | 'GUARDIAN'
     institution_id?: string
     school_id?: string
+    dependents?: string[]
   }
 }
 
@@ -24,5 +26,6 @@ declare module 'next-auth/jwt' {
     role: 'SYSTEM_ADMIN' | 'INSTITUTION_ADMIN' | 'SCHOOL_MANAGER' | 'TEACHER' | 'STUDENT' | 'GUARDIAN'
     institution_id?: string
     school_id?: string
+    dependents?: string[]
   }
 } 

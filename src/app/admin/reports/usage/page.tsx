@@ -7,7 +7,7 @@ export default function UsageReportsPage() {
   return (
     <DashboardPageLayout
       title="Relatórios de Uso"
-      description="Análise detalhada do uso da plataforma pelos usuários"
+      subtitle="Análise detalhada do uso da plataforma pelos usuários"
     >
       <div className="space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">

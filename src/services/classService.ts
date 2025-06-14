@@ -109,18 +109,15 @@ export const classService = {
     await apiClient.delete(`/classes/${classId}/education-cycles/${cycleId}`);
   },
 
-  async search(query: string, filters?: ClassFilters) {
+  async search(query: string, filters?: ClassFilters): Promise<PaginatedResponseDto<ClassResponseDto>> {
     try {
-      const response = await apiClient.get<{
-        items(items: any): unknown;
-        pagination: any; data: ClassResponseDto[]; total: number 
-}>('/classes/search', {
+      const response = await apiClient.get<PaginatedResponseDto<ClassResponseDto>>('/classes/search', {
         params: {
           query,
           ...filters
         }
       });
-      return response.data;
+      return response.data!;
     } catch (error) {
       throw handleApiError(error);
     }

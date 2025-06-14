@@ -12,6 +12,7 @@ import { institutionService } from '@/services/institutionService';
 import { CourseResponseDto } from '@/types/api';
 
 export default function CoursesPage() {
+  const { showError, showSuccess } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseResponseDto | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,30 +38,33 @@ export default function CoursesPage() {
 
   const loadInstitutions = async () => {
     try {
-      const response = await institutionService.list();
+      const response = await institutionService.getAll();
       setInstitutions(response.data.map(inst => ({
         id: inst.id,
         name: inst.name
       })));
     } catch (error) {
-      toast.error('Erro ao carregar instituições');
+      showError('Erro ao carregar instituições');
     }
   };
 
   const loadCourses = async () => {
     setIsLoading(true);
     try {
-      const response = await courseService.search(filters.search, {
+      const response = await courseService.getCourses({
         page: currentPage,
-        institution_id: filters.institution_id || undefined,
-        level: filters.level || undefined,
-        type: filters.type || undefined,
-        active: filters.active ? filters.active === 'true' : undefined
+        filters: {
+          search: filters.search || undefined,
+          institution_id: filters.institution_id || undefined,
+          level: filters.level || undefined,
+          type: filters.type || undefined,
+          active: filters.active ? filters.active === 'true' : undefined
+        }
       });
-      setCourses(response.data);
-      setTotalItems(response.total);
+      setCourses(response.items);
+      setTotalItems(response.pagination.total);
     } catch (error) {
-      toast.error('Erro ao carregar cursos');
+      showError('Erro ao carregar cursos');
     } finally {
       setIsLoading(false);
     }
@@ -71,35 +75,39 @@ export default function CoursesPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (course: CourseResponseDto) => {
-    setSelectedCourse(course);
-    setIsModalOpen(true);
+  const handleEdit = (item: { id: string | number }) => {
+    const course = courses.find(c => c.id === item.id);
+    if (course) {
+      setSelectedCourse(course);
+      setIsModalOpen(true);
+    }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (item: { id: string | number }) => {
+    const id = String(item.id);
     if (!confirm('Tem certeza que deseja excluir este curso?')) return;
 
     try {
-      await courseService.delete(id);
-      toast.success('Curso excluído com sucesso!');
+      await courseService.deleteCourse(id);
+      showSuccess('Curso excluído com sucesso!');
       loadCourses();
     } catch (error) {
-      toast.error('Erro ao excluir curso');
+      showError('Erro ao excluir curso');
     }
   };
 
   const handleSave = async (data: any) => {
     try {
       if (selectedCourse) {
-        await courseService.update(selectedCourse.id, data);
-        toast.success('Curso atualizado com sucesso!');
+        await courseService.updateCourse(selectedCourse.id, data);
+        showSuccess('Curso atualizado com sucesso!');
       } else {
-        await courseService.create(data);
-        toast.success('Curso criado com sucesso!');
+        await courseService.createCourse(data);
+        showSuccess('Curso criado com sucesso!');
       }
       loadCourses();
     } catch (error) {
-      toast.error('Erro ao salvar curso');
+      showError('Erro ao salvar curso');
       throw error;
     }
   };
@@ -153,54 +161,58 @@ export default function CoursesPage() {
         />
         <Select
           value={filters.institution_id}
-          onChange={(e) => setFilters({ ...filters, institution_id: e.target.value })}
-        >
-          <option value="">Todas as instituições</option>
-          {institutions.map((inst) => (
-            <option key={inst.id} value={inst.id}>
-              {inst.name}
-            </option>
-          ))}
-        </Select>
+          onChange={(value) => setFilters({ ...filters, institution_id: value as string })}
+          options={[
+            { value: '', label: 'Todas as instituições' },
+            ...institutions.map((inst) => ({
+              value: inst.id,
+              label: inst.name
+            }))
+          ]}
+        />
         <Select
           value={filters.level}
-          onChange={(e) => setFilters({ ...filters, level: e.target.value })}
-        >
-          <option value="">Todos os níveis</option>
-          <option value="FUNDAMENTAL">Ensino Fundamental</option>
-          <option value="MEDIO">Ensino Médio</option>
-          <option value="SUPERIOR">Ensino Superior</option>
-          <option value="POS_GRADUACAO">Pós-Graduação</option>
-          <option value="MESTRADO">Mestrado</option>
-          <option value="DOUTORADO">Doutorado</option>
-        </Select>
+          onChange={(value) => setFilters({ ...filters, level: value as string })}
+          options={[
+            { value: '', label: 'Todos os níveis' },
+            { value: 'FUNDAMENTAL', label: 'Ensino Fundamental' },
+            { value: 'MEDIO', label: 'Ensino Médio' },
+            { value: 'SUPERIOR', label: 'Ensino Superior' },
+            { value: 'POS_GRADUACAO', label: 'Pós-Graduação' },
+            { value: 'MESTRADO', label: 'Mestrado' },
+            { value: 'DOUTORADO', label: 'Doutorado' }
+          ]}
+        />
         <Select
           value={filters.type}
-          onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-        >
-          <option value="">Todos os tipos</option>
-          <option value="PRESENCIAL">Presencial</option>
-          <option value="EAD">EAD</option>
-          <option value="HIBRIDO">Híbrido</option>
-        </Select>
+          onChange={(value) => setFilters({ ...filters, type: value as string })}
+          options={[
+            { value: '', label: 'Todos os tipos' },
+            { value: 'PRESENCIAL', label: 'Presencial' },
+            { value: 'EAD', label: 'EAD' },
+            { value: 'HIBRIDO', label: 'Híbrido' }
+          ]}
+        />
       </div>
 
       <GenericCRUD
+        title="Cursos"
+        entityName="Curso"
         data={courses}
         columns={columns}
         onEdit={handleEdit}
         onDelete={handleDelete}
         loading={isLoading}
-        pagination={{
-          currentPage,
-          totalItems,
-          onPageChange: setCurrentPage
-        }}
+        totalItems={totalItems}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
       />
 
       {isModalOpen && (
         <CourseEditModal
+          isOpen={isModalOpen}
           course={selectedCourse}
+          title={selectedCourse ? 'Editar Curso' : 'Novo Curso'}
           onSave={handleSave}
           onClose={() => setIsModalOpen(false)}
         />

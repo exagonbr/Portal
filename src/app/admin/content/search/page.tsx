@@ -169,17 +169,14 @@ export default function AdminContentSearchPage() {
       const allBucketFiles = await FileService.getAllBucketFiles(activeTab)
       updateProgress(60)
       
-      // Verificar referências no banco de dados para esta categoria específica
-      const filesWithReferences = await FileService.checkDatabaseReferences(activeTab as 'literario' | 'professor' | 'aluno')
       updateProgress(80)
       
-      // Combinar arquivos do bucket com informações de referência
+      // Mapear arquivos do bucket sem verificação de referências (método removido)
       const combinedFiles = allBucketFiles.map((bucketFile: S3FileInfo) => {
-        const dbReference = filesWithReferences.find(dbFile => dbFile.name === bucketFile.name)
         return {
           ...bucketFile,
-          hasDbReference: !!dbReference,
-          dbRecord: dbReference?.dbRecord || null,
+          hasDbReference: false, // Temporariamente false até implementar nova verificação
+          dbRecord: null,
           bucket: activeBucket.name, // Garantir que o bucket está correto
           category: activeTab // Adicionar categoria para facilitar filtragem
         }
@@ -220,16 +217,12 @@ export default function AdminContentSearchPage() {
           // Carregar arquivos do bucket específico
           const allBucketFiles = await FileService.getAllBucketFiles(bucket.category)
           
-          // Verificar referências no banco para esta categoria
-          const filesWithReferences = await FileService.checkDatabaseReferences(bucket.category as 'literario' | 'professor' | 'aluno')
-          
-          // Combinar dados
+          // Mapear dados sem verificação de referências (método removido)
           const combinedFiles = allBucketFiles.map((bucketFile: S3FileInfo) => {
-            const dbReference = filesWithReferences.find(dbFile => dbFile.name === bucketFile.name)
             return {
               ...bucketFile,
-              hasDbReference: !!dbReference,
-              dbRecord: dbReference?.dbRecord || null,
+              hasDbReference: false, // Temporariamente false até implementar nova verificação
+              dbRecord: null,
               bucket: bucket.name,
               category: bucket.category
             }

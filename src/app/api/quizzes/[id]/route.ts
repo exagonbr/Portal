@@ -239,7 +239,7 @@ export async function PUT(
     if (allAttempts.length > 0) {
       // Restringir alterações se já houver tentativas
       const restrictedFields = ['questions', 'passing_score', 'time_limit_minutes']
-      const hasRestrictedChanges = restrictedFields.some(field => updateData[field] !== undefined)
+      const hasRestrictedChanges = restrictedFields.some(field => (updateData as any)[field] !== undefined)
       
       if (hasRestrictedChanges) {
         return NextResponse.json(

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 
@@ -25,7 +25,7 @@ async function main() {
           email: user.email,
           name: user.name,
           password: user.password.startsWith('$2') ? user.password : await bcrypt.hash(user.password, 10),
-          role: 'TEACHER', // Definindo role_id como TEACHER conforme solicitado
+          role: UserRole.TEACHER, // Definindo role como TEACHER conforme solicitado
           is_active: user.is_active || true,
           phone: user.phone || null,
           avatar: user.avatar || null,
