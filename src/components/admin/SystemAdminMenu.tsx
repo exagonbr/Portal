@@ -41,6 +41,12 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           permission: 'canManageInstitutions'
         },
         {
+          href: '/admin/schools',
+          icon: 'school',
+          label: 'Escolas',
+          permission: 'canManageSchools'
+        },
+        {
           href: '/admin/users',
           icon: 'manage_accounts',
           label: 'Usuários Globais',

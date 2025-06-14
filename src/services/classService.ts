@@ -1,4 +1,4 @@
-import apiClient, { handleApiError } from './api';
+import { apiClient, handleApiError } from './apiClient';
 import { 
   Class, 
   CreateClassData, 

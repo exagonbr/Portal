@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient } from './apiClient';
 
 // Interfaces para dados do dashboard do sistema
 export interface SystemDashboardData {
