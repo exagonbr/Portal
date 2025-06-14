@@ -141,7 +141,16 @@ const nextConfig = {
         pathname: '/b/**'
       },
       {
+        protocol: 'http',
+        hostname: 'covers.openlibrary.org',
+        pathname: '/b/**'
+      },
+      {
         protocol: 'https',
+        hostname: 'images.unsplash.com'
+      },
+      {
+        protocol: 'http',
         hostname: 'images.unsplash.com'
       },
       {
@@ -149,8 +158,24 @@ const nextConfig = {
         hostname: 'images-na.ssl-images-amazon.com'
       },
       {
+        protocol: 'http',
+        hostname: 'images-na.ssl-images-amazon.com'
+      },
+      {
         protocol: 'https',
         hostname: 'img.youtube.com'
+      },
+      {
+        protocol: 'http',
+        hostname: 'img.youtube.com'
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost'
+      },
+      {
+        protocol: 'https',
+        hostname: 'localhost'
       }
     ]
   },
@@ -232,6 +257,21 @@ const nextConfig = {
           {
             key: 'Access-Control-Allow-Headers',
             value: 'X-Requested-With, Content-Type, Authorization'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: data: blob:",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:",
+              "style-src 'self' 'unsafe-inline' http: https:",
+              "img-src 'self' data: blob: http: https:",
+              "font-src 'self' data: http: https:",
+              "connect-src 'self' http: https: ws: wss:",
+              "media-src 'self' http: https:",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'"
+            ].join('; ')
           }
         ]
       }

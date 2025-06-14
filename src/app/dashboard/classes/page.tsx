@@ -229,8 +229,7 @@ export default function ClassesPage() {
                 </p>
                 {isManagement() && (
                   <Button
-                    variant="primary"
-                    icon="person_add"
+                    variant="default"
                     size="sm"
                   >
                     Adicionar Aluno

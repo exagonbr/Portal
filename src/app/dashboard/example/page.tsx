@@ -154,7 +154,7 @@ export default function ExampleDashboard() {
                 <Button variant="outline" size="sm">
                   Exportar
                 </Button>
-                <Button variant="primary" size="sm" gradient>
+                <Button variant="default" size="sm">
                   Ver Detalhes
                 </Button>
               </ButtonGroup>
@@ -221,34 +221,27 @@ export default function ExampleDashboard() {
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="primary" 
-                  size="sm" 
-                  fullWidth
-                  icon={<span className="material-symbols-outlined">add</span>}
+                <Button
+                  variant="default"
+                  size="sm"
                 >
                   Novo
                 </Button>
                 <Button 
                   variant="secondary" 
-                  size="sm" 
-                  fullWidth
-                  icon={<span className="material-symbols-outlined">upload</span>}
+                  size="sm"
                 >
                   Upload
                 </Button>
                 <Button 
-                  variant="accent" 
-                  size="sm" 
-                  fullWidth
-                  icon={<span className="material-symbols-outlined">share</span>}
+                  variant="outline" 
+                  size="sm"
                 >
                   Compartilhar
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  fullWidth
                   icon={<span className="material-symbols-outlined">download</span>}
                 >
                   Baixar
