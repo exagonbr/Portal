@@ -128,9 +128,19 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  // Configuração para bypass SSL em desenvolvimento
+  
+  // Configurações para resolver erro de dynamic server usage
+  experimental: {
+    // Forçar renderização estática quando possível
+    staticWorkerRequestDeduping: true,
+    // Otimizar bundle
+    optimizePackageImports: ['@/components', '@/utils', '@/services'],
+  },
+  
+  // Configuração de output para produção
+  output: isDev ? undefined : 'standalone',
+  
   // Configuração para garantir que as rotas de API funcionem corretamente
-
   async rewrites() {
     // Em produção com ALB, usar proxy interno
     // Em desenvolvimento, usar localhost direto
@@ -146,6 +156,7 @@ const nextConfig = {
       }
     ]
   },
+  
   images: {
     remotePatterns: [
       {
@@ -267,6 +278,7 @@ const nextConfig = {
       }
     ];
   },
+  
   webpack: (config, { isServer, webpack }) => {
     config.module.rules.push({
       test: /\.(pdf)$/i,
