@@ -33,27 +33,49 @@ const StatCard = ({
   title, 
   value, 
   subtitle, 
-  color = 'bg-blue-600' 
+  color = 'bg-blue-600',
+  trend
 }: {
   icon: any
   title: string
   value: string | number
   subtitle: string
   color?: string
+  trend?: { value: number; isPositive: boolean }
 }) => (
-  <div className="bg-white rounded-xl shadow-lg p-4 sm:p-5 border-l-4 border-l-blue-500 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-    <div className="flex items-start">
-      <div className={`${color} rounded-xl p-2 sm:p-3 mr-3 sm:mr-4 flex-shrink-0 shadow-md`}>
-        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+  <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-gray-200 transition-all duration-300 overflow-hidden">
+    {/* Background Pattern */}
+    <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
+      <div className={`w-full h-full ${color} rounded-full transform translate-x-8 -translate-y-8`}></div>
+    </div>
+    
+    <div className="relative">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className={`${color} rounded-xl p-3 shadow-lg`}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        {trend && (
+          <div className={`flex items-center text-sm font-medium ${
+            trend.isPositive ? 'text-green-600' : 'text-red-600'
+          }`}>
+            <span className="mr-1">
+              {trend.isPositive ? '↗' : '↘'}
+            </span>
+            {Math.abs(trend.value)}%
+          </div>
+        )}
       </div>
-      <div className="flex-1">
-        <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1 leading-relaxed">
+
+      {/* Content */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
           {title}
         </h3>
-        <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 leading-tight">
+        <p className="text-3xl font-bold text-gray-900 leading-none">
           {value}
         </p>
-        <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+        <p className="text-sm text-gray-500 leading-relaxed">
           {subtitle}
         </p>
       </div>
@@ -244,54 +266,62 @@ export default function ManageInstitutions() {
             </div>
 
             {/* Cards de Estatísticas */}
-            <div className="space-y-6 mb-8">
-              {/* Primeira linha - Estatísticas principais */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="mb-8">
+              {/* Título da Seção */}
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Visão Geral do Sistema</h2>
+                <p className="text-sm text-gray-600">Estatísticas principais das instituições e usuários</p>
+              </div>
+
+              {/* Grid Responsivo de Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-6">
                 <StatCard
                   icon={Building2}
                   title="Instituições"
                   value={stats.totalInstitutions}
-                  subtitle={`${stats.activeInstitutions} instituições ativas no sistema`}
-                  color="bg-slate-600"
+                  subtitle={`${stats.activeInstitutions} ativas`}
+                  color="bg-gradient-to-br from-slate-500 to-slate-600"
+                  trend={{ value: 8.2, isPositive: true }}
                 />
                 <StatCard
                   icon={School}
                   title="Escolas"
                   value={stats.totalSchools}
-                  subtitle="Unidades educacionais cadastradas"
-                  color="bg-indigo-600"
+                  subtitle="Unidades cadastradas"
+                  color="bg-gradient-to-br from-indigo-500 to-indigo-600"
+                  trend={{ value: 12.5, isPositive: true }}
                 />
-                <StatCard
-                  icon={Users}
-                  title="Total Usuários"
-                  value={stats.totalUsers.toLocaleString('pt-BR')}
-                  subtitle="Usuários cadastrados no sistema"
-                  color="bg-purple-600"
-                />
-              </div>
-              
-              {/* Segunda linha - Usuários por categoria */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard
                   icon={GraduationCap}
                   title="Alunos"
                   value={stats.usersByRole.STUDENT.toLocaleString('pt-BR')}
-                  subtitle={`${stats.totalUsers > 0 ? ((stats.usersByRole.STUDENT / stats.totalUsers) * 100).toFixed(1) : 0}% do total de usuários`}
-                  color="bg-blue-600"
+                  subtitle={`${stats.totalUsers > 0 ? ((stats.usersByRole.STUDENT / stats.totalUsers) * 100).toFixed(1) : 0}% do total`}
+                  color="bg-gradient-to-br from-blue-500 to-blue-600"
+                  trend={{ value: 5.7, isPositive: true }}
                 />
                 <StatCard
                   icon={UserCheck}
                   title="Professores"
                   value={stats.usersByRole.TEACHER.toLocaleString('pt-BR')}
-                  subtitle="Educadores ativos no sistema"
-                  color="bg-green-600"
+                  subtitle="Corpo docente"
+                  color="bg-gradient-to-br from-green-500 to-green-600"
+                  trend={{ value: 3.2, isPositive: true }}
                 />
                 <StatCard
                   icon={UserCog}
                   title="Coordenadores"
                   value={stats.usersByRole.COORDINATOR.toLocaleString('pt-BR')}
-                  subtitle="Profissionais de gestão acadêmica"
-                  color="bg-orange-600"
+                  subtitle="Gestão acadêmica"
+                  color="bg-gradient-to-br from-orange-500 to-orange-600"
+                  trend={{ value: 1.8, isPositive: false }}
+                />
+                <StatCard
+                  icon={Users}
+                  title="Total Usuários"
+                  value={stats.totalUsers.toLocaleString('pt-BR')}
+                  subtitle="Cadastros ativos"
+                  color="bg-gradient-to-br from-purple-500 to-purple-600"
+                  trend={{ value: 15.3, isPositive: true }}
                 />
               </div>
             </div>
@@ -454,73 +484,95 @@ export default function ManageInstitutions() {
 
                 {/* Mobile/Tablet Cards */}
                 <div className="lg:hidden">
-                  <div className="space-y-4 p-4">
+                  <div className="space-y-6 p-4">
                     {institutions.map((institution) => (
-                      <div key={institution.id} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1 pr-3">
-                            <h3 className="text-lg font-semibold text-gray-900 leading-tight mb-1">{institution.name}</h3>
+                      <div key={institution.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:border-gray-200 transition-all duration-300">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center flex-1 pr-4">
+                            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                              <Building2 className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1 truncate">{institution.name}</h3>
+                              <p className="text-sm text-gray-500">ID: {institution.id.slice(0, 8)}...</p>
+                            </div>
                           </div>
                           <Badge variant={institution.active ? "success" : "danger"} className="flex-shrink-0">
                             {institution.active ? "Ativa" : "Inativa"}
                           </Badge>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                          <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
-                            <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide">Escolas</p>
-                            <p className="text-xl font-bold text-blue-800 mt-1">{Math.floor(Math.random() * 10) + 1}</p>
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <School className="w-5 h-5 text-blue-600" />
+                              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Escolas</span>
+                            </div>
+                            <p className="text-2xl font-bold text-blue-800">{Math.floor(Math.random() * 10) + 1}</p>
                           </div>
-                          <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
-                            <p className="text-xs text-green-600 font-semibold uppercase tracking-wide">Usuários</p>
-                            <p className="text-xl font-bold text-green-800 mt-1">{institution.users_count || 0}</p>
+                          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <Users className="w-5 h-5 text-green-600" />
+                              <span className="text-xs font-semibold text-green-600 uppercase tracking-wide">Usuários</span>
+                            </div>
+                            <p className="text-2xl font-bold text-green-800">{institution.users_count || 0}</p>
                           </div>
                         </div>
 
+                        {/* Contact Info */}
                         {(institution.email || institution.phone) && (
-                          <div className="mb-4 space-y-2 p-3 bg-gray-50 rounded-lg">
-                            {institution.email && (
-                              <p className="text-sm text-gray-700 flex items-center">
-                                <span className="font-semibold text-gray-600 min-w-0 flex-shrink-0 mr-2">Email:</span>
-                                <span className="break-all">{institution.email}</span>
-                              </p>
-                            )}
-                            {institution.phone && (
-                              <p className="text-sm text-gray-700 flex items-center">
-                                <span className="font-semibold text-gray-600 min-w-0 flex-shrink-0 mr-2">Telefone:</span>
-                                <span>{institution.phone}</span>
-                              </p>
-                            )}
+                          <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                              <span className="mr-2">📞</span>
+                              Informações de Contato
+                            </h4>
+                            <div className="space-y-2">
+                              {institution.email && (
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <span className="w-4 text-center mr-2">📧</span>
+                                  <span className="break-all">{institution.email}</span>
+                                </div>
+                              )}
+                              {institution.phone && (
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <span className="w-4 text-center mr-2">📱</span>
+                                  <span>{institution.phone}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between gap-2 pt-4 border-t border-gray-200">
+                        {/* Action Buttons */}
+                        <div className="grid grid-cols-3 gap-3">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewInstitution(institution)}
-                            className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 flex-1"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-xl py-3"
                           >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Ver
+                            <Eye className="w-4 h-4 mb-1" />
+                            <span className="text-xs font-medium">Ver</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditInstitution(institution)}
-                            className="text-green-600 hover:text-green-900 hover:bg-green-50 flex-1"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 border border-green-200 rounded-xl py-3"
                           >
-                            <Edit className="w-4 h-4 mr-1" />
-                            Editar
+                            <Edit className="w-4 h-4 mb-1" />
+                            <span className="text-xs font-medium">Editar</span>
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteInstitution(institution)}
-                            className="text-red-600 hover:text-red-900 hover:bg-red-50 flex-1"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 rounded-xl py-3"
                           >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            Excluir
+                            <Trash2 className="w-4 h-4 mb-1" />
+                            <span className="text-xs font-medium">Excluir</span>
                           </Button>
                         </div>
                       </div>

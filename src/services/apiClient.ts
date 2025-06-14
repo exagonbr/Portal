@@ -200,12 +200,28 @@ export class ApiClient {
         delete headers['Content-Type'];
       }
 
+      // Debug: Log do body antes da serialização
+      if (method === 'PUT' && body) {
+        console.log('ApiClient PUT - Body original:', body);
+        console.log('ApiClient PUT - Body serializado:', JSON.stringify(body));
+      }
+
       const requestOptions: RequestInit = {
         method,
         headers,
         body: body instanceof FormData ? body : JSON.stringify(body),
         credentials: 'include', // Importante para enviar cookies em requisições cross-origin
       };
+
+      // Debug: Log das opções da requisição
+      if (method === 'PUT') {
+        console.log('ApiClient PUT - Request options:', {
+          method: requestOptions.method,
+          url,
+          body: requestOptions.body,
+          headers: requestOptions.headers
+        });
+      }
 
       // Implementa timeout
       const controller = new AbortController();

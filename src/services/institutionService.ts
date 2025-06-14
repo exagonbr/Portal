@@ -76,6 +76,58 @@ const getAuthHeaders = (): HeadersInit => {
 };
 
 export const institutionService = {
+  async getAll(): Promise<{ data: Institution[] }> {
+    try {
+      console.log('🔍 Buscando todas as instituições...');
+      
+      const queryParams = new URLSearchParams({
+        limit: '100' // Set a high limit to get all institutions
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        console.error(`❌ Erro HTTP ${response.status} ao buscar instituições`);
+        if (response.status === 401) {
+          throw new Error('Não autorizado. Faça login novamente.');
+        }
+        throw new Error(`Falha ao buscar instituições (HTTP ${response.status})`);
+      }
+
+      const result = await response.json();
+      console.log('📥 Resposta da API de instituições:', result);
+      
+      // Check different possible response structures
+      let institutions: Institution[] = [];
+      
+      if (result.items && Array.isArray(result.items)) {
+        // Direct items array
+        institutions = result.items;
+      } else if (result.data && result.data.items && Array.isArray(result.data.items)) {
+        // Nested data.items structure
+        institutions = result.data.items;
+      } else if (result.data && Array.isArray(result.data)) {
+        // Direct data array
+        institutions = result.data;
+      } else if (Array.isArray(result)) {
+        // Direct array response
+        institutions = result;
+      } else {
+        console.warn('⚠️ Estrutura de resposta não reconhecida:', result);
+        return { data: [] };
+      }
+
+      console.log(`✅ ${institutions.length} instituições encontradas`);
+      return { data: institutions };
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar instituições:', error);
+      throw error;
+    }
+  },
+
   async getInstitutions(params: InstitutionListOptions = {}): Promise<PaginatedResponse<Institution>> {
     const queryParams = new URLSearchParams();
     

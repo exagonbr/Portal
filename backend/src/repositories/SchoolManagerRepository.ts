@@ -224,7 +224,7 @@ export class SchoolManagerRepository extends BaseRepository<SchoolManager> {
   }
 
   async getManagerHistory(userId: string): Promise<ManagerHistoryDto> {
-    const userInfo = await this.db('User')
+            const userInfo = await this.db('users')
       .where({ id: userId })
       .first();
 

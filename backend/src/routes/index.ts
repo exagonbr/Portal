@@ -30,6 +30,7 @@ import queueRouter from './queue';
 import cacheRouter from './cache';
 import teachersRouter from './teachers';
 import studentsRouter from './students';
+import schoolsRouter from './schools.routes';
 
 const router = express.Router();
 
@@ -79,5 +80,6 @@ router.use('/queue', queueRouter);
 router.use('/cache', cacheRouter);
 router.use('/teachers', teachersRouter);
 router.use('/students', studentsRouter);
+router.use('/schools', schoolsRouter);
 
 export default router;

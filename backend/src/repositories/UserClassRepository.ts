@@ -229,7 +229,7 @@ export class UserClassRepository extends BaseRepository<UserClass> {
   }
 
   async getUserEnrollmentHistory(userId: string): Promise<UserEnrollmentHistoryDto> {
-    const userInfo = await this.db('User')
+            const userInfo = await this.db('users')
       .where({ id: userId })
       .first();
 

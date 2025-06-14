@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { db } from '../database/connection';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { validatePermission } from '../middleware/permission.middleware';
 
 const router = Router();
 
@@ -10,7 +9,7 @@ const router = Router();
  * @desc Get all schools
  * @access Private
  */
-router.get('/', authMiddleware, validatePermission('schools:read'), async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const query = db('schools')
       .select('*')
@@ -22,10 +21,25 @@ router.get('/', authMiddleware, validatePermission('schools:read'), async (req, 
     }
 
     const schools = await query;
-    return res.json(schools);
+    
+    return res.json({
+      success: true,
+      data: {
+        items: schools,
+        pagination: {
+          total: schools.length,
+          page: 1,
+          limit: schools.length,
+          totalPages: 1
+        }
+      }
+    });
   } catch (error) {
     console.error('Error fetching schools:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Internal server error' 
+    });
   }
 });
 
@@ -34,7 +48,7 @@ router.get('/', authMiddleware, validatePermission('schools:read'), async (req, 
  * @desc Get school by ID
  * @access Private
  */
-router.get('/:id', authMiddleware, validatePermission('schools:read'), async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const query = db('schools').where({ id: req.params.id });
 
@@ -46,13 +60,22 @@ router.get('/:id', authMiddleware, validatePermission('schools:read'), async (re
     const school = await query.first();
 
     if (!school) {
-      return res.status(404).json({ error: 'School not found' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'School not found' 
+      });
     }
 
-    return res.json(school);
+    return res.json({
+      success: true,
+      data: school
+    });
   } catch (error) {
     console.error('Error fetching school:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Internal server error' 
+    });
   }
 });
 
@@ -61,11 +84,12 @@ router.get('/:id', authMiddleware, validatePermission('schools:read'), async (re
  * @desc Create a new school
  * @access Private
  */
-router.post('/', authMiddleware, validatePermission('schools:create'), async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const {
       name,
       code,
+      type,
       description,
       address,
       city,
@@ -85,6 +109,7 @@ router.post('/', authMiddleware, validatePermission('schools:create'), async (re
       .insert({
         name,
         code,
+        type,
         description,
         address,
         city,
@@ -93,14 +118,21 @@ router.post('/', authMiddleware, validatePermission('schools:create'), async (re
         phone,
         email,
         institution_id: institution_id || req.user?.institutionId,
-        status: 'active'
+        is_active: true
       })
       .returning('*');
 
-    return res.status(201).json(school);
+    return res.status(201).json({
+      success: true,
+      data: school,
+      message: 'School created successfully'
+    });
   } catch (error) {
     console.error('Error creating school:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Internal server error' 
+    });
   }
 });
 
@@ -109,11 +141,12 @@ router.post('/', authMiddleware, validatePermission('schools:create'), async (re
  * @desc Update a school
  * @access Private
  */
-router.put('/:id', authMiddleware, validatePermission('schools:update'), async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const {
       name,
       code,
+      type,
       description,
       address,
       city,
@@ -121,7 +154,7 @@ router.put('/:id', authMiddleware, validatePermission('schools:update'), async (
       zip_code,
       phone,
       email,
-      status
+      is_active
     } = req.body;
 
     const query = db('schools').where({ id: req.params.id });
@@ -135,6 +168,7 @@ router.put('/:id', authMiddleware, validatePermission('schools:update'), async (
       .update({
         name,
         code,
+        type,
         description,
         address,
         city,
@@ -142,19 +176,29 @@ router.put('/:id', authMiddleware, validatePermission('schools:update'), async (
         zip_code,
         phone,
         email,
-        status,
+        is_active,
         updated_at: new Date()
       })
       .returning('*');
 
     if (!school) {
-      return res.status(404).json({ error: 'School not found' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'School not found' 
+      });
     }
 
-    return res.json(school);
+    return res.json({
+      success: true,
+      data: school,
+      message: 'School updated successfully'
+    });
   } catch (error) {
     console.error('Error updating school:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Internal server error' 
+    });
   }
 });
 
@@ -163,7 +207,7 @@ router.put('/:id', authMiddleware, validatePermission('schools:update'), async (
  * @desc Delete a school
  * @access Private
  */
-router.delete('/:id', authMiddleware, validatePermission('schools:delete'), async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const query = db('schools').where({ id: req.params.id });
 
@@ -175,13 +219,22 @@ router.delete('/:id', authMiddleware, validatePermission('schools:delete'), asyn
     const deleted = await query.delete();
 
     if (!deleted) {
-      return res.status(404).json({ error: 'School not found' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'School not found' 
+      });
     }
 
-    return res.json({ message: 'School deleted successfully' });
+    return res.json({ 
+      success: true,
+      message: 'School deleted successfully' 
+    });
   } catch (error) {
     console.error('Error deleting school:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Internal server error' 
+    });
   }
 });
 

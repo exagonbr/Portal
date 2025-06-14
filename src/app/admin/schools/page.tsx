@@ -17,9 +17,8 @@ import {
   GraduationCap,
   BookOpen
 } from 'lucide-react';
-import { unitService } from '@/services/unitService';
+import { schoolService, School, CreateSchoolData, UpdateSchoolData } from '@/services/schoolService';
 import { institutionService } from '@/services/institutionService';
-import { UnitResponseDto, UnitCreateDto, UnitUpdateDto } from '@/types/api';
 import { InstitutionResponseDto } from '@/types/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -28,13 +27,53 @@ import Link from 'next/link';
 import { UserRole } from '@/types/roles';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
-// Função simples para notificações
+// Sistema de notificações melhorado
 const toast = {
-  success: (message: string) => console.log('✅ Success:', message),
-  error: (message: string) => console.error('❌ Error:', message)
+  success: (message: string) => {
+    console.log('✅ Success:', message);
+    // Aqui você pode integrar com uma biblioteca de toast como react-hot-toast ou criar um sistema customizado
+    if (typeof window !== 'undefined') {
+      // Criar notificação visual temporária
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+      notification.innerHTML = `
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span>${message}</span>
+        </div>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 3000);
+    }
+  },
+  error: (message: string) => {
+    console.error('❌ Error:', message);
+    if (typeof window !== 'undefined') {
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+      notification.innerHTML = `
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+          </svg>
+          <span>${message}</span>
+        </div>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 4000);
+    }
+  }
 };
 
-interface SchoolUnit extends UnitResponseDto {
+interface SchoolUnit extends School {
   principal?: string;
   studentsCount: number;
   teachersCount: number;
@@ -66,15 +105,16 @@ export default function SystemAdminSchoolsPage() {
   const [selectedInstitution, setSelectedInstitution] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [editingSchool, setEditingSchool] = useState<SchoolUnit | null>(null);
-  const [formData, setFormData] = useState<UnitCreateDto>({
+  const [formData, setFormData] = useState<CreateSchoolData>({
     name: '',
     description: '',
-    type: 'ESCOLA',
     institution_id: '',
-    active: true
+    type: undefined,
+    is_active: true
   });
   const [filterType, setFilterType] = useState<'all' | 'elementary' | 'middle' | 'high' | 'technical'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -84,42 +124,42 @@ export default function SystemAdminSchoolsPage() {
     try {
       setLoading(true);
       
-      // Carregar instituições
+      // Carregar instituições usando o método correto
       const institutionsResponse = await institutionService.getAll();
       setInstitutions(institutionsResponse.data || []);
 
-      // Carregar todas as unidades do tipo escola (SYSTEM_ADMIN vê todas)
-      let unitsData;
+      // Carregar todas as escolas (SYSTEM_ADMIN vê todas)
       const filters = {
-        type: 'ESCOLA',
-        institution_id: selectedInstitution !== 'all' ? selectedInstitution : undefined
+        institution_id: selectedInstitution !== 'all' ? selectedInstitution : undefined,
+        limit: 100
       };
       
-      const response = await unitService.list(filters);
+      const response = await schoolService.list(filters);
       
-      // Converter unidades para o formato de escolas
-      const schoolsData = response.items.map(unit => {
-        const institution = institutionsResponse.data?.find(inst => inst.id === unit.institution_id);
+      // Converter escolas para o formato esperado pelo frontend
+      const schoolsData = response.items.map(school => {
+        const institution = institutionsResponse.data?.find(inst => inst.id === school.institution_id);
         
         return {
-          ...unit,
+          ...school,
           principal: 'Diretor', // Valor padrão
-          studentsCount: Math.floor(Math.random() * 500),
-          teachersCount: Math.floor(Math.random() * 50),
-          classesCount: Math.floor(Math.random() * 30),
+          studentsCount: school.studentsCount || Math.floor(Math.random() * 500),
+          teachersCount: school.teachersCount || Math.floor(Math.random() * 50),
+          classesCount: school.classesCount || Math.floor(Math.random() * 30),
           type: ['elementary', 'middle', 'high', 'technical'][Math.floor(Math.random() * 4)] as 'elementary' | 'middle' | 'high' | 'technical',
-          status: unit.active ? 'active' : 'inactive',
+          status: school.is_active ? 'active' : 'inactive',
+          active: school.is_active,
           institutionName: institution?.name || 'Instituição não encontrada',
           address: {
-            street: '',
+            street: school.address || '',
             number: '',
-            city: '',
-            state: '',
-            zipCode: ''
+            city: school.city || '',
+            state: school.state || '',
+            zipCode: school.zip_code || ''
           },
           contact: {
-            phone: unit.description || '',
-            email: '',
+            phone: school.phone || '',
+            email: school.email || '',
             website: ''
           }
         };
@@ -137,20 +177,53 @@ export default function SystemAdminSchoolsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validação básica
+    if (!formData.name.trim()) {
+      toast.error('Nome da escola é obrigatório');
+      return;
+    }
+    
+    if (!formData.institution_id) {
+      toast.error('Selecione uma instituição');
+      return;
+    }
+    
+    if (formData.name.length < 3) {
+      toast.error('Nome da escola deve ter pelo menos 3 caracteres');
+      return;
+    }
+    
     try {
+      setSubmitting(true);
+      
       if (editingSchool) {
-        await unitService.update(editingSchool.id, formData as UnitUpdateDto);
+        await schoolService.update(editingSchool.id, formData as UpdateSchoolData);
         toast.success('Escola atualizada com sucesso!');
       } else {
-        await unitService.create(formData);
+        await schoolService.create(formData);
         toast.success('Escola criada com sucesso!');
       }
       
       setShowModal(false);
       resetForm();
-      loadData();
+      await loadData(); // Aguardar o carregamento
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Erro ao salvar escola');
+      console.error('Erro ao salvar escola:', error);
+      
+      // Tratamento de erros mais específico
+      if (error.response?.status === 400) {
+        toast.error(error.response?.data?.message || 'Dados inválidos. Verifique as informações.');
+      } else if (error.response?.status === 409) {
+        toast.error('Já existe uma escola com este nome nesta instituição.');
+      } else if (error.response?.status === 401) {
+        toast.error('Sessão expirada. Faça login novamente.');
+      } else if (error.response?.status === 403) {
+        toast.error('Você não tem permissão para realizar esta ação.');
+      } else {
+        toast.error(error.response?.data?.message || error.message || 'Erro ao salvar escola. Tente novamente.');
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -158,23 +231,23 @@ export default function SystemAdminSchoolsPage() {
     setEditingSchool(school);
     setFormData({
       name: school.name,
-      description: school.description,
-      type: 'ESCOLA',
+      description: school.description || '',
       institution_id: school.institution_id,
-      active: school.active
+      type: school.type,
+      is_active: school.is_active
     });
     setShowModal(true);
   };
 
   const handleToggleActive = async (school: SchoolUnit) => {
     try {
-      const updateData: UnitUpdateDto = {
-        active: !school.active
+      const updateData: UpdateSchoolData = {
+        is_active: !school.is_active
       };
       
-      await unitService.update(school.id, updateData);
+      await schoolService.update(school.id, updateData);
       
-      toast.success(school.active ? 'Escola desativada' : 'Escola ativada');
+      toast.success(school.is_active ? 'Escola desativada' : 'Escola ativada');
       loadData();
     } catch (error) {
       toast.error('Erro ao alterar status da escola');
@@ -183,12 +256,13 @@ export default function SystemAdminSchoolsPage() {
 
   const resetForm = () => {
     setEditingSchool(null);
+    setSubmitting(false);
     setFormData({
       name: '',
       description: '',
-      type: 'ESCOLA',
       institution_id: '',
-      active: true
+      type: undefined,
+      is_active: true
     });
   };
 
@@ -239,13 +313,17 @@ export default function SystemAdminSchoolsPage() {
                   Administração global de todas as escolas do sistema
                 </p>
               </div>
-              <button
-                onClick={() => setShowModal(true)}
-                className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Nova Escola
-              </button>
+                                  <button
+                      onClick={() => setShowModal(true)}
+                      disabled={institutions.length === 0}
+                      className={`bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                        institutions.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      title={institutions.length === 0 ? 'Carregue as instituições primeiro' : 'Criar nova escola'}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Nova Escola
+                    </button>
             </div>
           </div>
 
@@ -472,94 +550,207 @@ export default function SystemAdminSchoolsPage() {
             </div>
           )}
 
-          {/* Modal de Criação/Edição */}
+          {/* Modal de Criação/Edição Melhorado */}
           {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              >
+                {/* Header do Modal */}
+                <div className="bg-gradient-to-r from-primary to-primary-dark px-6 py-4 rounded-t-xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white bg-opacity-20 p-2 rounded-lg">
+                        <SchoolIcon className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">
+                          {editingSchool ? 'Editar Escola' : 'Nova Escola'}
+                        </h3>
+                        <p className="text-blue-100 text-sm">
+                          {editingSchool ? 'Atualize as informações da escola' : 'Cadastre uma nova escola no sistema'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowModal(false);
+                        resetForm();
+                      }}
+                      className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Conteúdo do Modal */}
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    {editingSchool ? 'Editar Escola' : 'Nova Escola'}
-                  </h3>
-                  
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Nome da Escola
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        required
-                      />
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Informações Básicas */}
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-primary" />
+                        Informações Básicas
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Nome da Escola *
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                            placeholder="Ex: Escola Municipal João Silva"
+                            required
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Descrição
+                          </label>
+                          <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                            rows={3}
+                            placeholder="Descreva brevemente a escola, sua missão ou características especiais..."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Instituição *
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={formData.institution_id}
+                              onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
+                              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
+                              required
+                            >
+                              <option value="">Selecione uma instituição</option>
+                              {institutions.map(institution => (
+                                <option key={institution.id} value={institution.id}>
+                                  {institution.name} {institution.code ? `(${institution.code})` : ''}
+                                </option>
+                              ))}
+                            </select>
+                            <Building2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                          </div>
+                          {institutions.length === 0 && (
+                            <p className="text-sm text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                              <XCircle className="w-4 h-4" />
+                              Nenhuma instituição encontrada. Verifique sua conexão.
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tipo de Escola
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={formData.type || ''}
+                              onChange={(e) => setFormData({ ...formData, type: e.target.value as 'elementary' | 'middle' | 'high' | 'technical' || undefined })}
+                              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
+                            >
+                              <option value="">Selecione o tipo</option>
+                              <option value="elementary">Fundamental I</option>
+                              <option value="middle">Fundamental II</option>
+                              <option value="high">Ensino Médio</option>
+                              <option value="technical">Técnico</option>
+                            </select>
+                            <GraduationCap className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Descrição
-                      </label>
-                      <textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        rows={3}
-                      />
+                    {/* Configurações */}
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-primary" />
+                        Configurações
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${formData.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                              {formData.is_active ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                            </div>
+                            <div>
+                              <label htmlFor="is_active" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
+                                Status da Escola
+                              </label>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {formData.is_active ? 'Escola ativa e operacional' : 'Escola inativa ou em manutenção'}
+                              </p>
+                            </div>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              id="is_active"
+                              checked={formData.is_active}
+                              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/40 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                          </label>
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Instituição
-                      </label>
-                      <select
-                        value={formData.institution_id}
-                        onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        required
-                      >
-                        <option value="">Selecione uma instituição</option>
-                        {institutions.map(institution => (
-                          <option key={institution.id} value={institution.id}>
-                            {institution.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="active"
-                        checked={formData.active}
-                        onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                      />
-                      <label htmlFor="active" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                        Escola ativa
-                      </label>
-                    </div>
-
-                    <div className="flex justify-end space-x-3 pt-4">
+                    {/* Botões de Ação */}
+                    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-600">
                       <button
                         type="button"
                         onClick={() => {
                           setShowModal(false);
                           resetForm();
                         }}
-                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
                       >
                         Cancelar
                       </button>
                       <button
                         type="submit"
-                        className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
+                        disabled={submitting}
+                        className={`px-6 py-3 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary text-white rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl flex items-center gap-2 ${
+                          submitting ? 'opacity-75 cursor-not-allowed' : ''
+                        }`}
                       >
-                        {editingSchool ? 'Atualizar' : 'Criar'}
+                        {submitting ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            {editingSchool ? 'Atualizando...' : 'Criando...'}
+                          </>
+                        ) : editingSchool ? (
+                          <>
+                            <Edit className="w-4 h-4" />
+                            Atualizar Escola
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4" />
+                            Criar Escola
+                          </>
+                        )}
                       </button>
                     </div>
                   </form>
                 </div>
-              </div>
+              </motion.div>
             </div>
           )}
         </div>
