@@ -417,9 +417,9 @@ export default function SystemAdminDashboard() {
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  // Dados para gráficos
-  const usersByRoleData = dashboardData ? {
-    labels: Object.keys(dashboardData.users.byRole).map(role => {
+  // Dados para gráficos usando dados reais do backend
+  const usersByRoleData = Object.keys(realUsersByRole).length > 0 ? {
+    labels: Object.keys(realUsersByRole).map(role => {
       const roleNames: Record<string, string> = {
         'STUDENT': 'Alunos',
         'TEACHER': 'Professores', 
@@ -432,7 +432,7 @@ export default function SystemAdminDashboard() {
     }),
     datasets: [{
       label: 'Usuários',
-      data: Object.values(dashboardData.users.byRole),
+      data: Object.values(realUsersByRole),
       backgroundColor: [
         'rgba(59, 130, 246, 0.9)',   // Azul para Alunos
         'rgba(16, 185, 129, 0.9)',   // Verde para Professores
@@ -490,6 +490,83 @@ export default function SystemAdminDashboard() {
         'rgba(168, 85, 247, 1)'
       ],
       hoverBorderWidth: 3
+    }]
+  } : null;
+
+  // Gráfico de crescimento de usuários
+  const userGrowthData = systemAnalytics?.userGrowth ? {
+    labels: systemAnalytics.userGrowth.map((item: any) => item.month),
+    datasets: [{
+      label: 'Usuários Totais',
+      data: systemAnalytics.userGrowth.map((item: any) => item.users),
+      borderColor: 'rgba(59, 130, 246, 1)',
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      borderWidth: 3,
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 6,
+      pointHoverRadius: 8
+    }, {
+      label: 'Taxa de Crescimento (%)',
+      data: systemAnalytics.userGrowth.map((item: any) => item.growth),
+      borderColor: 'rgba(16, 185, 129, 1)',
+      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+      borderWidth: 2,
+      fill: false,
+      tension: 0.4,
+      yAxisID: 'y1',
+      pointBackgroundColor: 'rgba(16, 185, 129, 1)',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    }]
+  } : null;
+
+  // Gráfico de tendências de sessões por hora
+  const sessionTrendsData = systemAnalytics?.sessionTrends ? {
+    labels: systemAnalytics.sessionTrends.map((item: any) => item.hour),
+    datasets: [{
+      label: 'Sessões por Hora',
+      data: systemAnalytics.sessionTrends.map((item: any) => item.sessions),
+      borderColor: 'rgba(168, 85, 247, 1)',
+      backgroundColor: 'rgba(168, 85, 247, 0.1)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.3,
+      pointBackgroundColor: 'rgba(168, 85, 247, 1)',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 5
+    }]
+  } : null;
+
+  // Gráfico de distribuição de instituições
+  const institutionDistributionData = systemAnalytics?.institutionDistribution ? {
+    labels: systemAnalytics.institutionDistribution.map((item: any) => item.name),
+    datasets: [{
+      label: 'Usuários por Instituição',
+      data: systemAnalytics.institutionDistribution.map((item: any) => item.users),
+      backgroundColor: [
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(249, 115, 22, 0.8)',
+        'rgba(168, 85, 247, 0.8)',
+        'rgba(236, 72, 153, 0.8)'
+      ],
+      borderColor: [
+        'rgba(59, 130, 246, 1)',
+        'rgba(16, 185, 129, 1)',
+        'rgba(249, 115, 22, 1)',
+        'rgba(168, 85, 247, 1)',
+        'rgba(236, 72, 153, 1)'
+      ],
+      borderWidth: 2,
+      borderRadius: 6
     }]
   } : null;
 
@@ -635,28 +712,28 @@ export default function SystemAdminDashboard() {
         <StatCard
           icon={Users}
           title="Alunos"
-          value={dashboardData?.users.byRole.STUDENT?.toLocaleString('pt-BR') || '0'}
-          subtitle={`${((dashboardData?.users.byRole.STUDENT || 0) / (dashboardData?.users.total || 1) * 100).toFixed(1)}% do total`}
+          value={realUsersByRole.STUDENT?.toLocaleString('pt-BR') || dashboardData?.users.byRole.STUDENT?.toLocaleString('pt-BR') || '0'}
+          subtitle={`${((realUsersByRole.STUDENT || dashboardData?.users.byRole.STUDENT || 0) / (Object.values(realUsersByRole).reduce((a, b) => a + b, 0) || dashboardData?.users.total || 1) * 100).toFixed(1)}% do total`}
           color="bg-blue-600"
         />
         <StatCard
           icon={UserCheck}
           title="Professores"
-          value={dashboardData?.users.byRole.TEACHER?.toLocaleString('pt-BR') || '0'}
+          value={realUsersByRole.TEACHER?.toLocaleString('pt-BR') || dashboardData?.users.byRole.TEACHER?.toLocaleString('pt-BR') || '0'}
           subtitle="Educadores ativos"
           color="bg-green-600"
         />
         <StatCard
           icon={Users}
           title="Coordenadores"
-          value={dashboardData?.users.byRole.COORDINATOR?.toLocaleString('pt-BR') || '0'}
+          value={realUsersByRole.COORDINATOR?.toLocaleString('pt-BR') || dashboardData?.users.byRole.COORDINATOR?.toLocaleString('pt-BR') || '0'}
           subtitle="Gestão pedagógica"
           color="bg-orange-600"
         />
         <StatCard
           icon={Users}
           title="Responsáveis"
-          value={dashboardData?.users.byRole.PARENT?.toLocaleString('pt-BR') || '0'}
+          value={realUsersByRole.PARENT?.toLocaleString('pt-BR') || dashboardData?.users.byRole.PARENT?.toLocaleString('pt-BR') || '0'}
           subtitle="Pais e tutores"
           color="bg-purple-600"
         />
@@ -677,79 +754,29 @@ export default function SystemAdminDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Instituições e Gráficos */}
-        <div className="lg:col-span-2">
-          {/* Instituições Cadastradas */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center">
-                <Building2 className="w-5 h-5 mr-2 text-primary-dark" />
-                Instituições Cadastradas
-              </h2>
-              <button 
-                onClick={() => router.push('/admin/institutions')}
-                className="text-sm text-primary hover:text-primary-dark"
-              >
-                Ver todas
-              </button>
-            </div>
-            <div className="space-y-3">
-              {institutions.slice(0, 5).map((institution) => (
-                <div
-                  key={institution.id}
-                  className="p-4 bg-gray-50 rounded-lg hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold">{institution.name}</h3>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          institution.active 
-                            ? 'bg-accent-green/10 text-accent-green' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {institution.active ? 'Ativa' : 'Inativa'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                        <span>{institution.type}</span>
-                        {institution.schools_count && (
-                          <>
-                            <span>•</span>
-                            <span>{institution.schools_count} escolas</span>
-                          </>
-                        )}
-                        {institution.users_count && (
-                          <>
-                            <span>•</span>
-                            <span>{institution.users_count.toLocaleString('pt-BR')} usuários</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500">
-                        {new Date(institution.created_at).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Gráficos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Layout Principal com 3 Colunas */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        
+        {/* Coluna Principal - Gráficos e Analytics */}
+        <div className="xl:col-span-8">
+          
+          {/* Seção de Gráficos Principais */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            
+            {/* Usuários por Função - Dados Reais do Backend */}
             {usersByRoleData && (
               <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Usuários por Função</h3>
-                  <div className="text-sm text-gray-500">
-                    Total: {Object.values(dashboardData?.users.byRole || {}).reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Users className="w-5 h-5 text-blue-500" />
+                    Usuários por Função
+                  </h3>
+                  <div className="text-sm text-gray-500 flex items-center gap-1">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    Total: {Object.values(realUsersByRole).reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}
                   </div>
                 </div>
-                <div className="h-56">
+                <div className="h-64">
                   <Pie 
                     data={usersByRoleData}
                     options={{
@@ -795,7 +822,7 @@ export default function SystemAdminDashboard() {
                   />
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">
-                  {dashboardData && Object.entries(dashboardData.users.byRole).map(([role, count], index) => {
+                  {Object.entries(realUsersByRole).map(([role, count], index) => {
                     const roleNames: Record<string, string> = {
                       'STUDENT': 'Alunos',
                       'TEACHER': 'Professores', 
@@ -806,7 +833,7 @@ export default function SystemAdminDashboard() {
                     };
                     const colors = ['text-blue-600', 'text-green-600', 'text-orange-600', 'text-purple-600', 'text-pink-600', 'text-emerald-600'];
                     const bgColors = ['bg-blue-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100', 'bg-pink-100', 'bg-emerald-100'];
-                    const total = Object.values(dashboardData.users.byRole).reduce((a, b) => a + b, 0);
+                    const total = Object.values(realUsersByRole).reduce((a, b) => a + b, 0);
                     const percentage = Math.round((count / total) * 100);
                     
                     return (
@@ -830,11 +857,80 @@ export default function SystemAdminDashboard() {
                 </div>
               </div>
             )}
+
+            {/* Crescimento de Usuários */}
+            {userGrowthData && (
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-green-500" />
+                    Crescimento de Usuários
+                  </h3>
+                  <div className="text-sm text-gray-500">Últimos 6 meses</div>
+                </div>
+                <div className="h-64">
+                  <Line 
+                    data={userGrowthData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                          labels: {
+                            boxWidth: 12,
+                            usePointStyle: true,
+                            font: { size: 11 },
+                            padding: 15
+                          }
+                        }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: false,
+                          position: 'left',
+                          grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                          ticks: {
+                            callback: function(value) {
+                              return (value as number).toLocaleString('pt-BR');
+                            }
+                          }
+                        },
+                        y1: {
+                          type: 'linear',
+                          display: true,
+                          position: 'right',
+                          grid: { drawOnChartArea: false },
+                          ticks: {
+                            callback: function(value) {
+                              return value + '%';
+                            }
+                          }
+                        }
+                      },
+                      interaction: {
+                        intersect: false,
+                        mode: 'index'
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* Seção de Gráficos Secundários */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             
+            {/* Sessões por Dispositivo */}
             {sessionsByDeviceData && (
               <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Sessões por Dispositivo</h3>
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Monitor className="w-5 h-5 text-indigo-500" />
+                    Sessões por Dispositivo
+                  </h3>
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span className="text-xs text-gray-500">Tempo real</span>
@@ -847,16 +943,7 @@ export default function SystemAdminDashboard() {
                       responsive: true,
                       maintainAspectRatio: false,
                       plugins: {
-                        legend: { 
-                          display: true,
-                          position: 'bottom',
-                          labels: {
-                            boxWidth: 12,
-                            usePointStyle: true,
-                            font: { size: 11 },
-                            padding: 15
-                          }
-                        },
+                        legend: { display: false },
                         tooltip: {
                           backgroundColor: 'rgba(0, 0, 0, 0.8)',
                           titleColor: 'white',
@@ -877,9 +964,7 @@ export default function SystemAdminDashboard() {
                       scales: {
                         y: { 
                           beginAtZero: true,
-                          grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                          },
+                          grid: { color: 'rgba(0, 0, 0, 0.05)' },
                           ticks: {
                             font: { size: 10 },
                             callback: function(value) {
@@ -888,21 +973,13 @@ export default function SystemAdminDashboard() {
                           }
                         },
                         x: {
-                          grid: {
-                            display: false
-                          },
-                          ticks: {
-                            font: { size: 11 }
-                          }
+                          grid: { display: false },
+                          ticks: { font: { size: 11 } }
                         }
                       },
                       animation: {
                         duration: 1000,
                         easing: 'easeInOutQuart'
-                      },
-                      interaction: {
-                        intersect: false,
-                        mode: 'index'
                       }
                     }}
                   />
@@ -931,11 +1008,265 @@ export default function SystemAdminDashboard() {
                 </div>
               </div>
             )}
+
+            {/* Tendências de Sessões por Hora */}
+            {sessionTrendsData && (
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-purple-500" />
+                    Atividade por Hora
+                  </h3>
+                  <div className="text-sm text-gray-500">Hoje</div>
+                </div>
+                <div className="h-56">
+                  <Line 
+                    data={sessionTrendsData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                          ticks: {
+                            callback: function(value) {
+                              return (value as number).toLocaleString('pt-BR');
+                            }
+                          }
+                        },
+                        x: {
+                          grid: { display: false },
+                          ticks: { 
+                            maxTicksLimit: 12,
+                            callback: function(value, index) {
+                              return index % 2 === 0 ? this.getLabelForValue(value as number) : '';
+                            }
+                          }
+                        }
+                      },
+                      interaction: {
+                        intersect: false,
+                        mode: 'index'
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
           </div>
+
+          {/* Distribuição por Instituições */}
+          {institutionDistributionData && (
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-slate-500" />
+                  Distribuição por Instituições
+                </h3>
+                <button 
+                  onClick={() => router.push('/admin/institutions')}
+                  className="text-sm text-primary hover:text-primary-dark"
+                >
+                  Ver todas
+                </button>
+              </div>
+              <div className="h-64">
+                <Bar 
+                  data={institutionDistributionData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                          callback: function(value) {
+                            return (value as number).toLocaleString('pt-BR');
+                          }
+                        }
+                      },
+                      x: {
+                        grid: { display: false },
+                        ticks: { 
+                          maxRotation: 45,
+                          font: { size: 10 }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* Painel Lateral */}
-        <div className="space-y-6">
+        {/* Coluna Lateral - Resumos e Ações */}
+        <div className="xl:col-span-4 space-y-6">
+          
+          {/* Resumo de Instituições */}
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-slate-500" />
+                Instituições Ativas
+              </h3>
+              <button 
+                onClick={() => router.push('/admin/institutions')}
+                className="text-sm text-primary hover:text-primary-dark"
+              >
+                Ver todas
+              </button>
+            </div>
+            <div className="space-y-3">
+              {institutions.slice(0, 4).map((institution) => (
+                <div
+                  key={institution.id}
+                  className="p-3 bg-gray-50 rounded-lg hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-sm">{institution.name}</h4>
+                        <span className="px-2 py-1 text-xs rounded-full bg-accent-green/10 text-accent-green">
+                          Ativa
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-600">
+                        <span>{institution.type}</span>
+                        {institution.schools_count && (
+                          <>
+                            <span>•</span>
+                            <span>{institution.schools_count} escolas</span>
+                          </>
+                        )}
+                        {institution.users_count && (
+                          <>
+                            <span>•</span>
+                            <span>{institution.users_count.toLocaleString('pt-BR')} usuários</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Métricas de Engajamento */}
+          {engagementMetrics && (
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-green-500" />
+                Engajamento dos Usuários
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Taxa de Retenção:</span>
+                  <span className="font-semibold text-green-600">{engagementMetrics.retentionRate}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Tempo Médio de Sessão:</span>
+                  <span className="font-semibold">{engagementMetrics.averageSessionDuration}min</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Taxa de Rejeição:</span>
+                  <span className="font-semibold text-orange-600">{engagementMetrics.bounceRate}%</span>
+                </div>
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600 mb-2">Funcionalidades Mais Usadas:</p>
+                  <div className="space-y-2">
+                    {engagementMetrics.topFeatures.slice(0, 3).map((feature: any, index: number) => (
+                      <div key={feature.name} className="flex justify-between items-center">
+                        <span className="text-xs text-gray-700">{feature.name}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-2 bg-gray-200 rounded-full">
+                            <div 
+                              className="h-2 bg-blue-500 rounded-full" 
+                              style={{ width: `${feature.usage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs font-medium">{feature.usage}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Status AWS Resumido */}
+          {(dashboardData?.infrastructure?.aws || awsStats) && (
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Cloud className="w-5 h-5 text-orange-500" />
+                Infraestrutura AWS
+              </h3>
+              <div className="space-y-3">
+                {dashboardData?.infrastructure?.aws ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Uptime:</span>
+                      <span className={`font-semibold ${
+                        dashboardData.infrastructure.aws.performance.uptime >= 99.9 ? 'text-accent-green' : 
+                        dashboardData.infrastructure.aws.performance.uptime >= 99.5 ? 'text-accent-yellow' : 'text-red-600'
+                      }`}>
+                        {dashboardData.infrastructure.aws.performance.uptime}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Serviços Ativos:</span>
+                      <span className="font-semibold">{dashboardData.infrastructure.aws.services.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Tempo Resposta:</span>
+                      <span className="font-semibold">{dashboardData.infrastructure.aws.performance.responseTime}ms</span>
+                    </div>
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-600 mb-1">Custo Mensal:</p>
+                      <p className="text-lg font-bold text-gray-800">
+                        ${dashboardData.infrastructure.aws.costs.monthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </>
+                ) : awsStats && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Taxa de Sucesso:</span>
+                      <span className={`font-semibold ${
+                        awsStats.success_rate >= 95 ? 'text-accent-green' : 
+                        awsStats.success_rate >= 80 ? 'text-accent-yellow' : 'text-red-600'
+                      }`}>
+                        {awsStats.success_rate.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Conexões:</span>
+                      <span className="font-semibold">{awsStats.total_connections}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <button 
+                onClick={() => router.push('/admin/aws')}
+                className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark"
+              >
+                Configurar AWS
+              </button>
+            </div>
+          )}
+
           {/* Ações Rápidas */}
           <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Ações do Sistema</h3>
@@ -971,124 +1302,6 @@ export default function SystemAdminDashboard() {
             </div>
           </div>
 
-          {/* Estatísticas de Roles */}
-          {roleStats && (
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4">Estatísticas de Roles</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Total de Roles:</span>
-                  <span className="font-semibold">{roleStats.totalRoles}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Roles do Sistema:</span>
-                  <span className="font-semibold">{roleStats.systemRoles}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Roles Customizadas:</span>
-                  <span className="font-semibold">{roleStats.customRoles}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Roles Ativas:</span>
-                  <span className="font-semibold text-accent-green">{roleStats.activeRoles}</span>
-                </div>
-              </div>
-              <button 
-                onClick={() => router.push('/admin/roles')}
-                className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark"
-              >
-                Gerenciar Roles
-              </button>
-            </div>
-          )}
-
-          {/* Status AWS */}
-          {(dashboardData?.infrastructure?.aws || awsStats) && (
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Cloud className="w-5 h-5 text-orange-500" />
-                Infraestrutura AWS
-              </h3>
-              <div className="space-y-3">
-                {dashboardData?.infrastructure?.aws ? (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Uptime:</span>
-                      <span className={`font-semibold ${
-                        dashboardData.infrastructure.aws.performance.uptime >= 99.9 ? 'text-accent-green' : 
-                        dashboardData.infrastructure.aws.performance.uptime >= 99.5 ? 'text-accent-yellow' : 'text-red-600'
-                      }`}>
-                        {dashboardData.infrastructure.aws.performance.uptime}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Serviços Ativos:</span>
-                      <span className="font-semibold">{dashboardData.infrastructure.aws.services.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Tempo Resposta:</span>
-                      <span className="font-semibold">{dashboardData.infrastructure.aws.performance.responseTime}ms</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Transferência:</span>
-                      <span className="font-semibold">{dashboardData.infrastructure.aws.performance.dataTransfer}</span>
-                    </div>
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600 mb-2">Custo Mensal:</p>
-                      <p className="text-lg font-bold text-gray-800">
-                        ${dashboardData.infrastructure.aws.costs.monthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Storage: ${dashboardData.infrastructure.aws.costs.storage.toFixed(2)} • 
-                        Compute: ${dashboardData.infrastructure.aws.costs.compute.toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-xs text-gray-600 mb-2">Serviços:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {dashboardData.infrastructure.aws.services.map(service => (
-                          <span key={service} className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">
-                            {service}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                ) : awsStats && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Taxa de Sucesso:</span>
-                      <span className={`font-semibold ${
-                        awsStats.success_rate >= 95 ? 'text-accent-green' : 
-                        awsStats.success_rate >= 80 ? 'text-accent-yellow' : 'text-red-600'
-                      }`}>
-                        {awsStats.success_rate.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Conexões Totais:</span>
-                      <span className="font-semibold">{awsStats.total_connections}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Tempo Médio:</span>
-                      <span className="font-semibold">{awsStats.average_response_time.toFixed(0)}ms</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Serviços:</span>
-                      <span className="font-semibold">{awsStats.services_used.length}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              <button 
-                onClick={() => router.push('/admin/aws')}
-                className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark"
-              >
-                Configurar AWS
-              </button>
-            </div>
-          )}
-
           {/* Links Rápidos */}
           <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Acesso Rápido</h3>
@@ -1123,6 +1336,7 @@ export default function SystemAdminDashboard() {
               </button>
             </div>
           </div>
+
         </div>
       </div>
     </div>
