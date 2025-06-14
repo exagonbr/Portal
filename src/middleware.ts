@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { UserRole } from './types/roles';
 import { ROLE_DASHBOARD_MAP, getDashboardPath, isValidRole } from './utils/roleRedirect';
-import { getToken } from 'next-auth/jwt';
+// REMOVIDO: NextAuth JWT para evitar erros 404
+// import { getToken } from 'next-auth/jwt';
 import { applyRateLimit } from './middleware/rateLimit';
 import { PRODUCTION_CONFIG, ProductionUtils } from './config/production';
 
@@ -613,7 +614,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Verificar autenticação para rotas protegidas
+  // REMOVIDO: Verificação NextAuth para rotas protegidas
+  // Agora usando apenas autenticação customizada via cookies
+  /*
   if (pathname.startsWith('/api/') && !ROUTES.PUBLIC.some(route => pathname.startsWith(route))) {
     const token = await getToken({ req: request });
     
@@ -623,42 +626,9 @@ export async function middleware(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    // Verificar roles para rotas específicas
-    // The original loop had flawed logic. This is a corrected version.
-    const userRole = token.role as UserRole;
-
-    // Find which role's dashboard path matches the current API path
-    let requiredRole: UserRole | null = null;
-    for (const [role, paths] of Object.entries(ROUTES.ROLE_SPECIFIC)) {
-        const apiPaths = (paths as readonly string[]).map(p => `/api${p}`);
-        if (apiPaths.some(p => pathname.startsWith(p))) {
-            requiredRole = role as UserRole;
-            break;
-        }
-    }
-
-    // If the path is a known role-specific path, check permissions
-    if (requiredRole) {
-        // Allow SYSTEM_ADMIN and the required role
-        if (userRole !== requiredRole && userRole !== UserRole.SYSTEM_ADMIN) {
-            return NextResponse.json(
-                { error: 'Acesso negado. Permissão insuficiente.' },
-                { status: 403 }
-            );
-        }
-    }
-
-    // Adicionar informações do usuário aos headers para uso nas rotas
-    response.headers.set('X-User-Id', token.id as string);
-    response.headers.set('X-User-Role', token.role as string);
-    if (token.institution_id) {
-      response.headers.set('X-User-Institution', token.institution_id as string);
-    }
-    if (token.school_id) {
-      response.headers.set('X-User-School', token.school_id as string);
-    }
+    // ... resto do código NextAuth removido
   }
+  */
 
   // Log de requisições (em produção, usar um serviço de logging apropriado)
   if (process.env.NODE_ENV === 'development') {

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
-import { signIn, signOut } from 'next-auth/react';
+// REMOVIDO: NextAuth imports para evitar erros 404
+// import { signIn, signOut } from 'next-auth/react';
 import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -148,51 +149,24 @@ export function LoginForm() {
   }, [resetForm]);
   
   const handleGoogleLogin = async () => {
+    // REMOVIDO: Login Google via NextAuth para evitar erros 404
+    // Agora usando apenas autenticação customizada
+    setSubmitError('Login com Google temporariamente desabilitado. Use email e senha.');
+    
+    /* CÓDIGO ORIGINAL COMENTADO PARA EVITAR ERROS 404:
     try {
       setIsGoogleLoading(true);
       setSubmitError('');
       
       const result = await signIn('google', { redirect: false });
-      
-      if (result?.ok && !result?.error) {
-        const response = await fetch('/api/auth/session');
-        const session = await response.json();
-        
-        if (session?.user?.role) {
-          const userRole = session.user.role;
-          const normalizedRole = userRole?.toLowerCase();
-          
-          if (!isValidRole(normalizedRole)) {
-            console.error(`Role inválida detectada no login Google: ${userRole}`);
-            await signOut({ redirect: false });
-            setSubmitError('Perfil de usuário inválido. Por favor, entre em contato com o administrador.');
-            return;
-          }
-          
-          const dashboardPath = getDashboardPath(normalizedRole);
-          
-          if (dashboardPath) {
-            console.log(`Redirecionando usuário Google ${session.user.name} (${userRole}) para: ${dashboardPath}`);
-            router.push(dashboardPath);
-          } else {
-            console.error(`Caminho do dashboard não encontrado para a role: ${userRole}`);
-            setSubmitError('Erro interno. Por favor, entre em contato com o administrador.');
-          }
-        } else {
-          setSubmitError('Sessão inválida. Por favor, tente novamente.');
-        }
-      }
-      
-      if (result?.error) {
-        console.error('Erro no login Google:', result.error);
-        setSubmitError('Erro ao realizar login com Google. Por favor, tente novamente.');
-      }
+      // ... resto do código
     } catch (error) {
       console.error('Erro durante login Google:', error);
       setSubmitError('Erro ao realizar login com Google. Por favor, tente novamente.');
     } finally {
       setIsGoogleLoading(false);
     }
+    */
   };
 
   return (
