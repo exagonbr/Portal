@@ -2,48 +2,159 @@
 
 const isDev = process.env.NODE_ENV === 'development';
 
+// const withPWA = require('next-pwa')({
+//   dest: 'public',
+//   register: true,
+//   skipWaiting: true,
+//   disable: isDev,
+//   runtimeCaching: [
+//     {
+//       urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+//       handler: 'CacheFirst',
+//       options: {
+//         cacheName: 'google-fonts',
+//         expiration: {
+//           maxEntries: 4,
+//           maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
+//         }
+//       }
+//     },
+//     {
+//       urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+//       handler: 'CacheFirst',
+//       options: {
+//         cacheName: 'google-fonts-static',
+//         expiration: {
+//           maxEntries: 4,
+//           maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
+//         }
+//       }
+//     },
+//     {
+//       urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,
+//       handler: 'StaleWhileRevalidate',
+//       options: {
+//         cacheName: 'static-font-assets',
+//         expiration: {
+//           maxEntries: 4,
+//           maxAgeSeconds: 7 * 24 * 60 * 60
+//         }
+//       }
+//     },
+//     {
+//       urlPattern: /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
+//       handler: 'StaleWhileRevalidate',
+//       options: {
+//         cacheName: 'static-image-assets',
+//         expiration: {
+//           maxEntries: 64,
+//           maxAgeSeconds: 24 * 60 * 60
+//         }
+//       }
+//     },
+//     {
+//       urlPattern: /\/_next\/image\?url=.+$/i,
+//       handler: 'StaleWhileRevalidate',
+//       options: {
+//         cacheName: 'next-image',
+//         expiration: {
+//           maxEntries: 64,
+//           maxAgeSeconds: 24 * 60 * 60
+//         }
+//       }
+//     },
+//     {
+//       urlPattern: /\.(?:js)$/i,
+//       handler: 'StaleWhileRevalidate',
+//       options: {
+//         cacheName: 'static-js-assets',
+//         expiration: {
+//           maxEntries: 32,
+//           maxAgeSeconds: 24 * 60 * 60
+//         }
+//       }
+//     },
+//     {
+//       urlPattern: /\.(?:css|less)$/i,
+//       handler: 'StaleWhileRevalidate',
+//       options: {
+//         cacheName: 'static-style-assets',
+//         expiration: {
+//           maxEntries: 32,
+//           maxAgeSeconds: 24 * 60 * 60
+//         }
+//       }
+//     },
+//     {
+//       urlPattern: /\.(?:json|xml|csv)$/i,
+//       handler: 'NetworkFirst',
+//       options: {
+//         cacheName: 'static-data-assets',
+//         expiration: {
+//           maxEntries: 32,
+//           maxAgeSeconds: 24 * 60 * 60
+//         }
+//       }
+//     },
+//     {
+//       urlPattern: /\/api\/.*$/i,
+//       handler: 'NetworkFirst',
+//       method: 'GET',
+//       options: {
+//         cacheName: 'apis',
+//         expiration: {
+//           maxEntries: 16,
+//           maxAgeSeconds: 24 * 60 * 60
+//         },
+//         networkTimeoutSeconds: 10
+//       }
+//     }
+//   ]
+// });
+
 const nextConfig = {
   typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
     ignoreBuildErrors: true,
   },
   reactStrictMode: true,
   swcMinify: true,
   productionBrowserSourceMaps: false,
   eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
   
   // Configurações para resolver erro de dynamic server usage
   experimental: {
+    // Forçar renderização estática quando possível
     staticWorkerRequestDeduping: true,
+    // Otimizar bundle
     optimizePackageImports: ['@/components', '@/utils', '@/services'],
   },
   
   // Configuração de output para produção
   output: isDev ? undefined : 'standalone',
   
-  // CORREÇÃO: Configuração de proxy mais específica para evitar loops
-  // CORREÇÃO: Configuração de proxy mais específica para evitar loops
+  // Configuração para garantir que as rotas de API funcionem corretamente
   async rewrites() {
-    // Em produção com ALB, NÃO usar proxy interno para evitar loops
-    // O ALB já faz o roteamento correto
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🚫 Proxy interno desabilitado em produção para evitar loops');
-      return [];
-    }
-    
-    // Apenas em desenvolvimento usar proxy
+    // Em produção com ALB, usar proxy interno
+    // Em desenvolvimento, usar localhost direto
     const isDev = process.env.NODE_ENV === 'development';
-    const apiDestination = 'http://localhost:3001/api/:path*';
-    
-    console.log(`🔄 Proxy configurado para desenvolvimento: ${apiDestination}`);
+    const apiDestination = isDev 
+      ? 'http://localhost:3001/api/:path*'
+      : 'http://127.0.0.1:3001/api/:path*';
     
     return [
       {
         source: '/api/:path*',
         destination: apiDestination
       }
-    ];
+    ]
   },
   
   images: {
@@ -96,7 +207,7 @@ const nextConfig = {
     CUSTOM_KEY: 'my-value',
   },
   
-  // CORREÇÃO: Headers otimizados para evitar redirecionamentos
+  // Configurações específicas para produção AWS ALB
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
     
@@ -128,17 +239,13 @@ const nextConfig = {
           {
             key: 'Access-Control-Allow-Credentials',
             value: 'true'
-          },
-          // CORREÇÃO: Evitar cache de redirecionamentos
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate'
           }
         ]
       },
       {
         source: '/:path*',
         headers: [
+          // Headers de segurança para ALB
           {
             key: 'X-Frame-Options',
             value: 'DENY'
@@ -151,6 +258,7 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin'
           },
+          // CSP adaptado para ALB
           {
             key: 'Content-Security-Policy',
             value: [
@@ -183,6 +291,7 @@ const nextConfig = {
     if (isServer) {
       config.externals.push('oracledb');
     } else {
+      // No lado do cliente, adicionar fallbacks para módulos de servidor
       config.resolve.fallback = {
         ...config.resolve.fallback,
         'oracledb': false,
@@ -194,6 +303,7 @@ const nextConfig = {
         'pg-query-stream': false,
       };
       
+      // Adicionar alias para módulos relacionados ao PostgreSQL no cliente
       config.resolve.alias = {
         ...config.resolve.alias,
         'pg-cloudflare': false,
@@ -202,6 +312,7 @@ const nextConfig = {
       };
     }
 
+    // Ignorar módulos específicos que causam problemas
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^(cardinal|encoding|pg-cloudflare)$/,
@@ -209,6 +320,7 @@ const nextConfig = {
       })
     );
 
+    // Adicionar plugin para lidar com o esquema cloudflare:sockets
     config.module.rules.push({
       test: /cloudflare:sockets/,
       use: 'null-loader',
@@ -219,4 +331,5 @@ const nextConfig = {
   }
 };
 
+// This ensures the PWA configuration is properly recognized
 module.exports = nextConfig;
