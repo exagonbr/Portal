@@ -9,9 +9,9 @@ export async function POST(request: NextRequest) {
     const authToken = cookieStore.get('auth_token')?.value;
     const sessionId = cookieStore.get('session_id')?.value;
 
-    console.log('🔄 API: Iniciando logout');
+    console.log('🔄 API: Iniciando logout completo');
 
-    // Se houver token, notificar o backend sobre o logout
+    // 1. Se houver token, notificar o backend sobre o logout
     if (authToken) {
       try {
         console.log('🔄 API: Notificando backend sobre logout');
@@ -44,7 +44,30 @@ export async function POST(request: NextRequest) {
       console.log('ℹ️ API: Sem token de autenticação para enviar ao backend');
     }
 
-    // Limpar todos os cookies de autenticação independentemente da resposta do backend
+    // 2. Invalidar sessão no Redis se houver sessionId
+    if (sessionId) {
+      try {
+        console.log('🔄 API: Invalidando sessão no Redis');
+        const redisResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/sessions/invalidate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId }),
+        });
+
+        if (redisResponse.ok) {
+          console.log('✅ API: Sessão Redis invalidada com sucesso');
+        } else {
+          console.warn('⚠️ API: Erro ao invalidar sessão no Redis');
+        }
+      } catch (redisError) {
+        console.error('⚠️ API: Erro ao invalidar sessão no Redis:', redisError);
+        // Continua mesmo se falhar
+      }
+    }
+
+    // 3. Limpar todos os cookies de autenticação independentemente da resposta do backend
     const cookiesToClear = [
       'auth_token',
       'refresh_token',
@@ -59,9 +82,15 @@ export async function POST(request: NextRequest) {
     console.log('🔄 API: Limpando cookies de autenticação');
     cookiesToClear.forEach(cookieName => {
       if (cookieStore.get(cookieName)) {
+        // Limpar para diferentes paths e domínios
         cookieStore.delete({
           name: cookieName,
           path: '/',
+        });
+        cookieStore.delete({
+          name: cookieName,
+          path: '/',
+          domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : 'localhost',
         });
         console.log(`✅ API: Cookie ${cookieName} removido`);
       }

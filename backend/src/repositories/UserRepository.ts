@@ -1,7 +1,10 @@
 import { BaseRepository } from './BaseRepository';
 import { User, CreateUserData, UpdateUserData, UserWithoutPassword } from '../models/User';
+import db from '../config/database';
 
 export class UserRepository extends BaseRepository<User> {
+  protected tableName = 'users';
+
   constructor() {
     super('users');
   }
@@ -31,40 +34,44 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findUserWithoutPassword(id: string): Promise<UserWithoutPassword | null> {
-    const user = await this.db(this.tableName)
+    const user = await db(this.tableName)
       .where('id', id)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at')
+      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'cpf', 'birth_date', 'created_at', 'updated_at')
       .first();
     
     return user || null;
   }
 
   async findUsersWithoutPassword(filters?: Partial<User>): Promise<UserWithoutPassword[]> {
-    let query = this.db(this.tableName)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at');
+    let query = db(this.tableName)
+      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'cpf', 'birth_date', 'created_at', 'updated_at');
 
     if (filters) {
-      query = query.where(filters);
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined) {
+          query = query.where(key, value);
+        }
+      });
     }
 
     return query;
   }
 
   async searchUsers(searchTerm: string, institutionId?: string): Promise<UserWithoutPassword[]> {
-    let query = this.db(this.tableName)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'created_at', 'updated_at')
+    let query = db(this.tableName)
+      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'cpf', 'birth_date', 'created_at', 'updated_at')
       .where('name', 'ilike', `%${searchTerm}%`)
       .orWhere('email', 'ilike', `%${searchTerm}%`);
 
     if (institutionId) {
-      query = query.andWhere('institution_id', institutionId);
+      query = query.where('institution_id', institutionId);
     }
 
     return query;
   }
 
   async getUsersWithRoleAndInstitution(): Promise<any[]> {
-    return this.db(this.tableName)
+    return db(this.tableName)
       .select(
         `${this.tableName}.id`,
         `${this.tableName}.email`,
@@ -75,6 +82,8 @@ export class UserRepository extends BaseRepository<User> {
         `${this.tableName}.telefone`,
         `${this.tableName}.school_id`,
         `${this.tableName}.is_active`,
+        `${this.tableName}.cpf`,
+        `${this.tableName}.birth_date`,
         `${this.tableName}.created_at`,
         `${this.tableName}.updated_at`,
         'roles.name as role_name',
@@ -83,11 +92,12 @@ export class UserRepository extends BaseRepository<User> {
       )
       .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
       .leftJoin('institutions', `${this.tableName}.institution_id`, 'institutions.id')
-      .leftJoin('schools', `${this.tableName}.school_id`, 'schools.id');
+      .leftJoin('schools', `${this.tableName}.school_id`, 'schools.id')
+      .where(`${this.tableName}.is_active`, true);
   }
 
   async getUserWithRoleAndInstitution(id: string): Promise<User | null> {
-    const result = await this.db(this.tableName)
+    const result = await db(this.tableName)
       .select(
         `${this.tableName}.id`,
         `${this.tableName}.email`,
@@ -98,6 +108,8 @@ export class UserRepository extends BaseRepository<User> {
         `${this.tableName}.telefone`,
         `${this.tableName}.school_id`,
         `${this.tableName}.is_active`,
+        `${this.tableName}.cpf`,
+        `${this.tableName}.birth_date`,
         `${this.tableName}.created_at`,
         `${this.tableName}.updated_at`,
         'roles.name as role_name',
@@ -114,37 +126,36 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async updateLastLogin(id: string): Promise<void> {
-    await this.db(this.tableName)
+    await db(this.tableName)
       .where('id', id)
-      .update({ last_login: new Date() });
+      .update({ last_login: db.fn.now() });
   }
 
   async getUserCourses(userId: string): Promise<any[]> {
     // Get courses where user is a student
-    const studentCourses = await this.db('course_students')
+    const studentCourses = await db('course_students')
       .select(
         'courses.*',
         'course_students.progress',
         'course_students.grades',
         'course_students.enrolled_at',
-        this.db.raw("'student' as user_role")
+        db.raw("'student' as user_role")
       )
       .leftJoin('courses', 'course_students.course_id', 'courses.id')
       .where('course_students.user_id', userId);
 
     // Get courses where user is a teacher
-    const teacherCourses = await this.db('course_teachers')
+    const teacherCourses = await db('course_teachers')
       .select(
         'courses.*',
-        this.db.raw('NULL as progress'),
-        this.db.raw('NULL as grades'),
+        db.raw('NULL as progress'),
+        db.raw('NULL as grades'),
         'course_teachers.assigned_at as enrolled_at',
-        this.db.raw("'teacher' as user_role")
+        db.raw("'teacher' as user_role")
       )
       .leftJoin('courses', 'course_teachers.course_id', 'courses.id')
       .where('course_teachers.user_id', userId);
 
-    // Combine both results
     return [...studentCourses, ...teacherCourses];
   }
 }

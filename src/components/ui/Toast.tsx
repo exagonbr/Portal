@@ -95,7 +95,7 @@ export function Toast({ id, type, title, message, duration = 5000, onClose }: To
 
   return (
     <div
-      className={`max-w-sm w-full border rounded-lg shadow-lg pointer-events-auto transform transition-all duration-300 ease-in-out ${
+      className={`max-w-lg w-full border rounded-lg shadow-lg pointer-events-auto transform transition-all duration-300 ease-in-out ${
         getColorClasses()
       } ${
         isVisible && !isLeaving
@@ -110,10 +110,10 @@ export function Toast({ id, type, title, message, duration = 5000, onClose }: To
           <div className={`flex-shrink-0 ${getIconColorClasses()}`}>
             {getIcon()}
           </div>
-          <div className="ml-3 w-0 flex-1">
-            <p className="text-sm font-medium">{title}</p>
+          <div className="ml-3 flex-1 min-w-0">
+            <p className="text-sm font-medium break-words">{title}</p>
             {message && (
-              <p className="mt-1 text-sm opacity-90">{message}</p>
+              <p className="mt-1 text-sm opacity-90 break-words">{message}</p>
             )}
           </div>
           <div className="ml-4 flex-shrink-0 flex">

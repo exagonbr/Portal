@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+// import { Select } from '@/components/ui/Select'; // Removido - usando select HTML nativo
 import { Switch } from '@/components/ui/Switch';
 import { useToast } from '@/components/ToastManager';
 import { CreateUserDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api';
@@ -263,9 +263,10 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Função *
               </label>
-              <Select
+              <select
                 value={formData.role_id}
                 onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
                 <option value="">Selecione uma função</option>
@@ -274,7 +275,7 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
                     {role.name}
                   </option>
                 ))}
-              </Select>
+              </select>
             </div>
 
             <div>
@@ -282,9 +283,10 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
                 Instituição
               </label>
               <div className="relative">
-                <Select
+                <select
                   value={formData.institution_id || ''}
                   onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Selecione uma instituição</option>
                   {institutions.map((institution) => (
@@ -292,7 +294,7 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
                       {institution.name}
                     </option>
                   ))}
-                </Select>
+                </select>
                 <Building2 className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               </div>
             </div>

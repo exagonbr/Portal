@@ -53,6 +53,7 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import Modal from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { UserCreateModal } from '@/components/UserCreateModal'
+import CreateUserForm from '@/components/CreateUserForm'
 
 // Estendendo o tipo UserResponseDto para incluir campos adicionais
 interface ExtendedUserResponseDto extends UserResponseDto {
@@ -722,6 +723,18 @@ export default function ManageUsers() {
   const router = useRouter()
   const { showSuccess, showError } = useToast()
   const { user } = useAuth()
+  
+  // Debug: Log do usuário atual
+  console.log('👤 Usuário atual:', {
+    user: user ? {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      permissions: user.permissions
+    } : 'Não logado'
+  })
+  
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [users, setUsers] = useState<ExtendedUserResponseDto[]>([])
@@ -760,6 +773,8 @@ export default function ManageUsers() {
     { id: 3, title: 'Certificado gerado', message: 'Seu certificado de Matemática Básica está pronto', date: '2024-01-13', read: true }
   ]);
   const [auxiliaryDataLoaded, setAuxiliaryDataLoaded] = useState(false);
+
+
 
   const handlePermissionChange = (module: string, action: string, value: boolean) => {
     setPermissions(prev => ({
@@ -1106,6 +1121,27 @@ export default function ManageUsers() {
 
   // Criar novo usuário
   const handleCreateUser = () => {
+    // Verificar se o usuário tem permissão
+    if (!user) {
+      showError('Você precisa estar logado para criar usuários.')
+      return
+    }
+    
+    // Verificar role do usuário
+    const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'admin']
+    const userRole = user.role?.toUpperCase()
+    
+    console.log('🔐 Verificação de permissões:', {
+      userRole,
+      allowedRoles,
+      hasPermission: allowedRoles.includes(userRole || '')
+    })
+    
+    if (!allowedRoles.includes(userRole || '')) {
+      showError(`Você não tem permissão para criar usuários. Sua função atual é: ${user.role}. Entre em contato com o administrador.`)
+      return
+    }
+    
     setShowCreateModal(true)
   }
 
@@ -2088,33 +2124,373 @@ export default function ManageUsers() {
           </>
         )}
       
-        {showModal && (
-          <UserModal
-            show={showModal}
-            user={selectedUser ? convertToUserDto(selectedUser) : null}
-            onClose={() => {
-              setShowModal(false)
-              setSelectedUser(null)
-            }}
-            onSave={() => {
-              setShowModal(false)
-              setSelectedUser(null)
-              loadUsers()
-            }}
-          />
+        {/* Modal de Edição de Usuário */}
+        {showModal && selectedUser && (
+          <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-6 rounded-t-lg">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">✏️ Editar Usuário</h2>
+                    <p className="text-orange-100 text-sm mt-1">Atualize os dados de {selectedUser.name}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      setSelectedUser(null);
+                    }}
+                    className="text-white hover:text-orange-200 p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Form */}
+              <form 
+                                 onSubmit={(e) => {
+                   e.preventDefault();
+                   showSuccess('Usuário atualizado com sucesso!');
+                   setShowModal(false);
+                   setSelectedUser(null);
+                   loadUsers();
+                 }}
+                className="p-6 space-y-6"
+              >
+                {/* Informações Básicas */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-500" />
+                    Informações Básicas
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Nome Completo *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        defaultValue={selectedUser.name}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Digite o nome completo"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Email *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        defaultValue={selectedUser.email}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="usuario@exemplo.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Senha (opcional para edição) */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <Key className="h-5 w-5 text-green-500" />
+                    Alterar Senha (Opcional)
+                  </h3>
+                  <p className="text-sm text-slate-600 mb-4">Deixe em branco para manter a senha atual</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Nova Senha
+                      </label>
+                      <input
+                        type="password"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Nova senha (opcional)"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Confirmar Nova Senha
+                      </label>
+                      <input
+                        type="password"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Confirme a nova senha"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Função e Instituição */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-purple-500" />
+                    Função e Instituição
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Função *
+                      </label>
+                      <select
+                        required
+                        defaultValue={selectedUser.role_id}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="">Selecione uma função</option>
+                        {roles.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Instituição
+                      </label>
+                      <select 
+                        defaultValue={selectedUser.institution_id || ''}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="">Selecione uma instituição</option>
+                        {institutions.map((institution) => (
+                          <option key={institution.id} value={institution.id}>
+                            {institution.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-green-500" />
+                    Status do Usuário
+                  </h3>
+                  
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="is_active"
+                      defaultChecked={selectedUser.is_active}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="is_active" className="text-sm font-medium text-slate-700">
+                      Usuário ativo no sistema
+                    </label>
+                  </div>
+                </div>
+
+                {/* Botões */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      setSelectedUser(null);
+                    }}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Atualizar Usuário
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
-        {showDetailsModal && (
-          <UserDetailsModal
-            user={selectedUser}
-            onClose={() => {
-              setShowDetailsModal(false)
-              setSelectedUser(null)
-            }}
-            onEdit={handleEditUser}
-            onToggleStatus={handleToggleStatus}
-            onResetPassword={handleResetPassword}
-          />
+        {/* Modal de Detalhes do Usuário */}
+        {showDetailsModal && selectedUser && (
+          <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold">
+                      {selectedUser.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">{selectedUser.name}</h2>
+                      <p className="text-blue-100">{selectedUser.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowDetailsModal(false);
+                      setSelectedUser(null);
+                    }}
+                    className="text-white hover:text-blue-200 p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Informações Pessoais */}
+                  <div className="bg-slate-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                      <Users className="h-5 w-5 text-blue-500" />
+                      Informações Pessoais
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Mail className="h-4 w-4" />
+                        <span>{selectedUser.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Calendar className="h-4 w-4" />
+                        <span>Cadastrado em: {formatDate(selectedUser.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Informações do Sistema */}
+                  <div className="bg-slate-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-purple-500" />
+                      Informações do Sistema
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Shield className="h-4 w-4" />
+                        <span>Função: {selectedUser.role_name || 'Não definida'}</span>
+                      </div>
+                      {selectedUser.institution_name && (
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Building2 className="h-4 w-4" />
+                          <span>Instituição: {selectedUser.institution_name}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        {selectedUser.is_active ? (
+                          <>
+                            <UserCheck className="h-4 w-4 text-green-600" />
+                            <span className="text-green-600">Usuário Ativo</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserX className="h-4 w-4 text-red-600" />
+                            <span className="text-red-600">Usuário Inativo</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Estatísticas */}
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-green-500" />
+                    Estatísticas
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-50 rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-blue-600">0</div>
+                      <div className="text-sm text-slate-600">Cursos</div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-green-600">0</div>
+                      <div className="text-sm text-slate-600">Atividades</div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-purple-600">0</div>
+                      <div className="text-sm text-slate-600">Certificados</div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-orange-600">0h</div>
+                      <div className="text-sm text-slate-600">Tempo Total</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer com ações */}
+              <div className="border-t border-slate-200 px-6 py-4 bg-slate-50 rounded-b-lg">
+                <div className="flex flex-wrap justify-between items-center gap-3">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        setShowDetailsModal(false);
+                        handleEditUser(selectedUser);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Editar
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setShowDetailsModal(false);
+                        handleToggleStatus(selectedUser);
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                        selectedUser.is_active 
+                          ? 'bg-red-600 hover:bg-red-700 text-white' 
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      }`}
+                    >
+                      {selectedUser.is_active ? (
+                        <>
+                          <UserX className="h-4 w-4" />
+                          Desativar
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="h-4 w-4" />
+                          Ativar
+                        </>
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setShowDetailsModal(false);
+                        handleResetPassword(selectedUser);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      <Key className="h-4 w-4" />
+                      Resetar Senha
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      setShowDetailsModal(false);
+                      setSelectedUser(null);
+                    }}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Modal de Confirmação de Reset de Senha */}
@@ -2232,10 +2608,14 @@ export default function ManageUsers() {
 
         {/* Modal de Criação de Usuário */}
         {showCreateModal && (
-          <UserCreateModal
-            onClose={() => setShowCreateModal(false)}
-            onSuccess={handleCreateUserSuccess}
-          />
+          <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <CreateUserForm
+              onClose={() => setShowCreateModal(false)}
+              onSuccess={handleCreateUserSuccess}
+              roles={roles}
+              institutions={institutions}
+            />
+          </div>
         )}
       </div>
     </AuthenticatedLayout>

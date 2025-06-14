@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { FaDownload, FaTimes, FaApple, FaAndroid, FaChrome } from 'react-icons/fa';
+import { useEffect, useState, useRef } from 'react';
+import { FaDownload, FaTimes, FaApple, FaAndroid, FaChrome, FaEyeSlash } from 'react-icons/fa';
 
 interface PWAInstallPromptProps {
   registration: ServiceWorkerRegistration | null;
@@ -22,6 +22,9 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
   const [platform, setPlatform] = useState<Platform>('unknown');
   const [isVisible, setIsVisible] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(30); // 30 segundos
+  const [showTimer, setShowTimer] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Detectar plataforma
@@ -72,6 +75,14 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     const hasInteractedBefore = localStorage.getItem('pwa-prompt-interacted') === 'true';
     setHasInteracted(hasInteractedBefore);
 
+    // Verificar se o usuário escolheu "Não exibir novamente"
+    const neverShowAgain = localStorage.getItem('pwa-prompt-never-show') === 'true';
+    if (neverShowAgain) {
+      setIsVisible(false);
+      setHasInteracted(true);
+      return;
+    }
+
     // Listen for the beforeinstallprompt event (só funciona em HTTPS)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -97,8 +108,60 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     };
   }, [registration]);
 
+  // Timer para fechar automaticamente após 30 segundos
+  useEffect(() => {
+    // Limpar timer anterior se existir
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Só inicia o timer se o modal estiver visível e o usuário não tiver interagido
+    if (!isVisible || hasInteracted || isInstalled) {
+      setTimeLeft(0);
+      return;
+    }
+
+    // Resetar o timer quando o modal se torna visível
+    setTimeLeft(30);
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Tempo esgotado, fechar automaticamente
+          setIsVisible(false);
+          setHasInteracted(true);
+          localStorage.setItem('pwa-prompt-interacted', 'true');
+          
+          // Limpar o timer
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isVisible, hasInteracted, isInstalled]);
+
   const handleInstallClick = async () => {
+    // Limpar timer quando usuário interage
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
     setHasInteracted(true);
+    setTimeLeft(0);
     localStorage.setItem('pwa-prompt-interacted', 'true');
 
     if (!isHttps) {
@@ -129,9 +192,36 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
   };
 
   const handleClose = () => {
+    // Limpar timer quando usuário fecha
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
     setIsVisible(false);
     setHasInteracted(true);
+    setTimeLeft(0);
     localStorage.setItem('pwa-prompt-interacted', 'true');
+  };
+
+  const handleNeverShowAgain = () => {
+    // Limpar timer quando usuário escolhe não exibir novamente
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    setIsVisible(false);
+    setHasInteracted(true);
+    setTimeLeft(0);
+    localStorage.setItem('pwa-prompt-interacted', 'true');
+    localStorage.setItem('pwa-prompt-never-show', 'true');
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const getInstructions = () => {
@@ -211,6 +301,13 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
               <div className="absolute inset-0 bg-white rounded-t-full translate-y-6 translate-x-8 animate-wave-fast"></div>
             </div>
             
+            {/* Timer no canto superior esquerdo */}
+            {showTimer && timeLeft > 0 && (
+              <div className="absolute top-2 left-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-mono z-10">
+                {formatTime(timeLeft)}
+              </div>
+            )}
+            
             {/* Botão de fechar */}
             <button
               onClick={handleClose}
@@ -233,21 +330,36 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={handleInstallClick}
-                className="w-full mt-2 px-4 py-3 bg-white text-green-600 font-bold 
-                         rounded-xl hover:bg-gray-50 transition-all duration-300 
-                         transform hover:scale-[1.02] active:scale-[0.98]
-                         shadow-lg hover:shadow-xl relative overflow-hidden group"
-              >
-                {/* Efeito de brilho no hover */}
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-green-100 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              
+              {/* Botões de ação */}
+              <div className="space-y-2">
+                <button
+                  onClick={handleInstallClick}
+                  className="w-full px-4 py-3 bg-white text-green-600 font-bold 
+                           rounded-xl hover:bg-gray-50 transition-all duration-300 
+                           transform hover:scale-[1.02] active:scale-[0.98]
+                           shadow-lg hover:shadow-xl relative overflow-hidden group"
+                >
+                  {/* Efeito de brilho no hover */}
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-green-100 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  
+                  <span className="flex items-center justify-center gap-3 relative z-10">
+                    <FaDownload className="text-lg" />
+                    Instalar Agora
+                  </span>
+                </button>
                 
-                <span className="flex items-center justify-center gap-3 relative z-10">
-                  <FaDownload className="text-lg" />
-                  Instalar Agora
-                </span>
-              </button>
+                {/* Botão "Não exibir novamente" */}
+                <button
+                  onClick={handleNeverShowAgain}
+                  className="w-full px-3 py-2 text-white/80 hover:text-white text-sm 
+                           hover:bg-white/10 rounded-lg transition-all duration-200
+                           flex items-center justify-center gap-2"
+                >
+                  <FaEyeSlash className="text-xs" />
+                  Não exibir novamente
+                </button>
+              </div>
             </div>
           </div>
         </div>

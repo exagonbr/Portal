@@ -6,6 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ROLE_LABELS, UserRole } from '@/types/roles'
+import { EnhancedLoadingState } from '../ui/LoadingStates'
 
 interface Notification {
   id: number
@@ -20,6 +21,7 @@ export default function DashboardHeader() {
   const { theme } = useTheme()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const router = useRouter()
 
   // Mock notifications data
@@ -76,13 +78,23 @@ export default function DashboardHeader() {
   }
 
   return (
-    <header 
-      className="border-b h-16 flex-shrink-0"
-      style={{ 
-        backgroundColor: theme.colors.background.primary,
-        borderColor: theme.colors.border.DEFAULT 
-      }}
-    >
+    <>
+      {/* Loading State para Logout */}
+      {isLoggingOut && (
+        <EnhancedLoadingState
+          message="Saindo do sistema..."
+          submessage="Limpando dados e finalizando sessão"
+          showProgress={false}
+        />
+      )}
+
+      <header 
+        className="border-b h-16 flex-shrink-0"
+        style={{ 
+          backgroundColor: theme.colors.background.primary,
+          borderColor: theme.colors.border.DEFAULT 
+        }}
+      >
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left side - Title */}
         <h1 
@@ -366,9 +378,16 @@ export default function DashboardHeader() {
                     Alterar Senha
                   </button>
                   <button
-                    onClick={() => {
-                      logout()
-                      setShowProfileMenu(false)
+                    onClick={async () => {
+                      setIsLoggingOut(true);
+                      setShowProfileMenu(false);
+                      try {
+                        await logout();
+                      } catch (error) {
+                        console.error('Erro ao fazer logout:', error);
+                      } finally {
+                        setIsLoggingOut(false);
+                      }
                     }}
                     className="w-full px-4 py-2 text-sm hover:bg-opacity-10 flex items-center transition-colors"
                     style={{ color: theme.colors.status.error }}
@@ -394,5 +413,6 @@ export default function DashboardHeader() {
         </div>
       </div>
     </header>
+    </>
   )
 }

@@ -132,26 +132,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
-      // Limpar todos os dados antes do logout
-      await clearAllDataForUnauthorized();
+      // Usar o LogoutService para limpeza completa
+      const { LogoutService } = await import('../services/logoutService');
       
-      await authService.logout();
+      // Limpar estado local primeiro
       setUser(null);
       setError(null);
-      router.push('/login');
-    } catch (err: any) {
-      console.error('Erro no logout:', err);
-      setError(err.message || 'Erro ao fazer logout');
       
-      // Mesmo com erro, tentar limpar dados e redirecionar
+      // Limpar dados adicionais
       try {
         await clearAllDataForUnauthorized();
       } catch (clearError) {
         console.error('Erro ao limpar dados durante logout:', clearError);
       }
       
+      // Chamar serviço de logout
+      try {
+        await authService.logout();
+      } catch (serviceError) {
+        console.warn('Erro no serviço de logout:', serviceError);
+        // Continua mesmo se falhar
+      }
+      
+      // Executar logout completo e redirecionar
+      await LogoutService.logoutAndRedirect();
+      
+    } catch (err: any) {
+      console.error('Erro no logout:', err);
+      setError(err.message || 'Erro ao fazer logout');
+      
+      // Fallback: forçar limpeza e redirecionamento mesmo com erro
+      try {
+        const { LogoutService } = await import('../services/logoutService');
+        await LogoutService.logoutAndRedirect();
+      } catch (fallbackError) {
+        console.error('Erro no fallback de logout:', fallbackError);
+        // Último recurso: redirecionamento direto
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/login';
+        }
+      }
+      
       setUser(null);
-      router.push('/login');
     } finally {
       setLoading(false);
     }

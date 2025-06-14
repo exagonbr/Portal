@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, memo } from 'react'
 import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
+import { EnhancedLoadingState } from '../ui/LoadingStates'
 
 interface NavItem {
   href: string
@@ -481,12 +482,16 @@ function DashboardSidebarComponent() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
     try {
-      await logout()
-      window.location.href = '/login'
+      setIsLoggingOut(true);
+      await logout();
     } catch (error) {
-      console.error('Erro ao fazer logout:', error)
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
   }
 
@@ -990,17 +995,27 @@ function DashboardSidebarComponent() {
       : getNavItems();
 
   return (
-    <motion.aside
-      initial={{ x: -300 }}
-      animate={{ x: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="w-64 flex flex-col min-h-screen shadow-xl"
-      style={{
-        backgroundColor: theme.colors.sidebar.bg,
-        borderRight: `1px solid ${theme.colors.sidebar.border}`,
-        color: theme.colors.sidebar.text
-      }}
-    >
+    <>
+      {/* Loading State para Logout */}
+      {isLoggingOut && (
+        <EnhancedLoadingState
+          message="Saindo do sistema..."
+          submessage="Limpando dados e finalizando sessão"
+          showProgress={false}
+        />
+      )}
+
+      <motion.aside
+        initial={{ x: -300 }}
+        animate={{ x: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="w-64 flex flex-col min-h-screen shadow-xl"
+        style={{
+          backgroundColor: theme.colors.sidebar.bg,
+          borderRight: `1px solid ${theme.colors.sidebar.border}`,
+          color: theme.colors.sidebar.text
+        }}
+      >
       {/* Logo */}
       <motion.div
         className={`border-b flex-shrink-0 ${isSystemAdmin ? 'p-2' : 'p-4'}`}
@@ -1097,6 +1112,7 @@ function DashboardSidebarComponent() {
         />
       </div>
     </motion.aside>
+    </>
   )
 }
 

@@ -7,6 +7,7 @@ import { UserRole } from '../types/auth';
 import { ROLE_LABELS } from '@/types/roles';
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion } from 'framer-motion';
+import { EnhancedLoadingState } from './ui/LoadingStates';
 
 interface StandardHeaderProps {
   title?: string;
@@ -209,9 +210,18 @@ const StandardHeader = ({
     };
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    setIsProfileMenuOpen(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      setIsProfileMenuOpen(false);
+      await logout();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const markNotificationAsRead = (notificationId: string) => {
@@ -357,15 +367,25 @@ const StandardHeader = ({
   };
 
   return (
-    <motion.header 
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="border-b shadow-sm"
-      style={{ 
-        backgroundColor: theme.colors.background.primary,
-        borderColor: theme.colors.border.DEFAULT 
-      }}
-    >
+    <>
+      {/* Loading State para Logout */}
+      {isLoggingOut && (
+        <EnhancedLoadingState
+          message="Saindo do sistema..."
+          submessage="Limpando dados e finalizando sessão"
+          showProgress={false}
+        />
+      )}
+
+      <motion.header 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="border-b shadow-sm"
+        style={{ 
+          backgroundColor: theme.colors.background.primary,
+          borderColor: theme.colors.border.DEFAULT 
+        }}
+      >
       <div className="flex items-center justify-between h-16 px-6">
         {/* Left Section - Title and Breadcrumb */}
         <div className="flex-1">
@@ -828,6 +848,7 @@ const StandardHeader = ({
         </div>
       </div>
     </motion.header>
+    </>
   );
 };
 

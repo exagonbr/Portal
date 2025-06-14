@@ -109,11 +109,6 @@ export const duplicateRequestLogger = () => {
     if (existing) {
       existing.count++;
       existing.lastSeen = now;
-      
-      // Log if there are many duplicate requests in a short time
-      if (existing.count > 5 && (now - existing.lastSeen) < 10000) { // 10 seconds
-        console.warn(`🔄 Duplicate request detected: ${req.method} ${req.originalUrl} (${existing.count} times) - User: ${req.user?.userId || 'anonymous'}`);
-      }
     } else {
       requestCounts.set(key, { count: 1, lastSeen: now });
     }

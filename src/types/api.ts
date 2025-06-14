@@ -24,26 +24,28 @@ export interface PaginationParams {
 
 // DTOs de usuário que correspondem ao backend
 export interface CreateUserDto {
+  name: string;
   email: string;
   password: string;
-  name: string;
-  role_id?: string; // Agora opcional, será definido para TEACHER por padrão
-  institution_id?: string;
+  role_id: string;
+  institution_id: string;
   endereco?: string;
   telefone?: string;
-  school_id?: string;
+  cpf?: string;
+  birth_date?: string;
   is_active?: boolean;
 }
 
 export interface UpdateUserDto {
+  name?: string;
   email?: string;
   password?: string;
-  name?: string;
   role_id?: string;
   institution_id?: string;
   endereco?: string;
   telefone?: string;
-  school_id?: string;
+  cpf?: string;
+  birth_date?: string;
   is_active?: boolean;
 }
 
@@ -62,16 +64,21 @@ export interface ChangePasswordDto {
 
 export interface UserResponseDto {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role_id: string;
-  institution_id?: string;
+  institution_id: string;
   endereco?: string;
   telefone?: string;
   school_id?: string;
+  cpf?: string;
+  birth_date?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  role_name?: string;
+  institution_name?: string;
+  school_name?: string;
 }
 
 export interface UserWithRoleDto extends UserResponseDto {

@@ -324,15 +324,15 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       409:
  *         description: Email already exists
  */
-router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
+router.post('/', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
   try {
-    const { email, password, name, role_id, institution_id, endereco, telefone, usuario, unidade_ensino } = req.body;
+    const { email, password, name, role_id, institution_id, endereco, telefone, cpf, birth_date } = req.body;
 
     // Validar campos obrigatórios
-    if (!email || !password || !name || !role_id || !institution_id || !usuario) {
+    if (!email || !password || !name || !role_id || !institution_id) {
       return res.status(400).json({
         success: false,
-        message: 'Campos obrigatórios: email, password, name, role_id, institution_id, usuario'
+        message: 'Campos obrigatórios: email, password, name, role_id, institution_id'
       });
     }
 
@@ -349,8 +349,8 @@ router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Criar usuário
-    const userData = {
+    // Criar usuário - filtrar apenas campos que existem na tabela
+    const baseUserData = {
       email,
       password: hashedPassword,
       name,
@@ -358,9 +358,17 @@ router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
       institution_id,
       endereco,
       telefone,
-      usuario,
-      unidade_ensino
+      is_active: true
     };
+
+    // Adicionar campos opcionais apenas se fornecidos
+    const optionalFields: any = {};
+          if (cpf) optionalFields.cpf = cpf;
+      if (birth_date) optionalFields.birth_date = birth_date;
+
+    const userData = { ...baseUserData, ...optionalFields };
+
+    console.log('Creating user with data:', { ...userData, password: '[HIDDEN]' });
 
     const newUser = await userRepository.createUser(userData);
     
@@ -372,11 +380,34 @@ router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
       data: userWithDetails,
       message: 'Usuário criado com sucesso'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating user:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack
+    });
+    
+    // Tratar erros específicos do banco de dados
+    if (error.code === '42703') {
+      return res.status(400).json({
+        success: false,
+        message: 'Campo não existe na tabela de usuários'
+      });
+    }
+    
+    if (error.code === '23505') {
+      return res.status(409).json({
+        success: false,
+        message: 'Email já está em uso'
+      });
+    }
+    
     return res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -424,10 +455,10 @@ router.post('/', validateJWT, requireRole(['admin']), async (req, res) => {
  *       404:
  *         description: User not found
  */
-router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
+router.put('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, name, role_id, institution_id, endereco, telefone, usuario, unidade_ensino, password } = req.body;
+    const { email, name, role_id, institution_id, endereco, telefone, password, cpf, birth_date } = req.body;
 
     // Verificar se o usuário existe
     if (!id) {
@@ -464,8 +495,10 @@ router.put('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
     if (institution_id) updateData.institution_id = institution_id;
     if (endereco !== undefined) updateData.endereco = endereco;
     if (telefone !== undefined) updateData.telefone = telefone;
-    if (usuario) updateData.usuario = usuario;
-    if (unidade_ensino !== undefined) updateData.unidade_ensino = unidade_ensino;
+    
+    
+    if (cpf !== undefined) updateData.cpf = cpf;
+          if (birth_date !== undefined) updateData.birth_date = birth_date;
 
     // Hash da nova senha se fornecida
     if (password) {

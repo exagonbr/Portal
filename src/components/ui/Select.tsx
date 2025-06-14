@@ -13,7 +13,7 @@ interface Option {
 interface SelectProps {
   label?: string
   placeholder?: string
-  options: Option[]
+  options?: Option[]
   value?: string | string[]
   onChange: (value: string | string[]) => void
   error?: string
@@ -53,15 +53,15 @@ export function Select({
   const [isFocused, setIsFocused] = useState(false)
   const selectRef = useRef<HTMLDivElement>(null)
 
-  const filteredOptions = searchable
+  const filteredOptions = searchable && options
     ? options.filter(option =>
         option.label.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    : options
+    : options || []
 
   const selectedOptions = multiple
-    ? options.filter(option => Array.isArray(value) && value.includes(option.value))
-    : options.find(option => option.value === value)
+    ? (options || []).filter(option => Array.isArray(value) && value.includes(option.value))
+    : (options || []).find(option => option.value === value)
 
   const getVariantStyles = () => {
     const baseStyles = {
@@ -229,7 +229,7 @@ export function Select({
               )}
               
               <div className="max-h-60 overflow-y-auto">
-                {filteredOptions.length === 0 ? (
+                {!filteredOptions || filteredOptions.length === 0 ? (
                   <div 
                     className="px-4 py-3 text-sm text-center"
                     style={{ color: theme.colors.text.secondary }}

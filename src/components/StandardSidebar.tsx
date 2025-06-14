@@ -9,6 +9,7 @@ import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRo
 import { useTheme } from '@/contexts/ThemeContext'
 import { motion } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
+import { EnhancedLoadingState } from './ui/LoadingStates'
 
 interface NavItem {
   href: string
@@ -245,12 +246,16 @@ export default function StandardSidebar() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
     try {
-      await logout()
-      window.location.href = '/login'
+      setIsLoggingOut(true);
+      await logout();
     } catch (error) {
-      console.error('Erro ao fazer logout:', error)
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
   }
 
@@ -698,6 +703,15 @@ export default function StandardSidebar() {
 
   return (
     <>
+      {/* Loading State para Logout */}
+      {isLoggingOut && (
+        <EnhancedLoadingState
+          message="Saindo do sistema..."
+          submessage="Limpando dados e finalizando sessão"
+          showProgress={false}
+        />
+      )}
+
       {/* Mobile Menu Button */}
       <motion.button
         whileHover={{ scale: 1.05 }}
