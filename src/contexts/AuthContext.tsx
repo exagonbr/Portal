@@ -28,59 +28,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Função para buscar o usuário atual (melhorada para evitar loops)
+  // Função para buscar o usuário atual (simplificada para evitar loops)
   const fetchCurrentUser = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Verificar se já temos dados do usuário no localStorage
+      // APENAS verificar localStorage - não fazer requisições automáticas
       const currentUser = await authService.getCurrentUser();
       
       if (currentUser) {
+        console.log('🔐 AuthContext: Usuário encontrado no localStorage:', currentUser.email);
         setUser(currentUser);
         setError(null);
-        return;
-      }
-
-      // Se não temos usuário, verificar se há token válido
-      const isAuth = await authService.isAuthenticated();
-      if (!isAuth) {
+      } else {
+        console.log('🔐 AuthContext: Nenhum usuário no localStorage');
         setUser(null);
-        return;
-      }
-
-      // Se há token mas não há usuário, tentar buscar do backend
-      // Mas apenas se não estivermos em uma rota que pode causar loop
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-      const isNotificationRoute = currentPath.includes('/notifications');
-      
-      if (!isNotificationRoute) {
-        // Tentar refresh token se necessário
-        const tokenExpired = await authService.isTokenExpired();
-        if (tokenExpired) {
-          const refreshed = await authService.refreshToken();
-          if (!refreshed) {
-            setUser(null);
-            return;
-          }
-        }
       }
       
-      setUser(currentUser);
-      setError(null);
     } catch (err) {
-      console.error('❌ Erro ao buscar usuário:', err);
-      
-      // Se o erro for de autenticação e estivermos em uma rota de notificações,
-      // não limpar o usuário imediatamente para evitar loops
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-      const isNotificationRoute = currentPath.includes('/notifications');
-      
-      if (!isNotificationRoute) {
-        setUser(null);
-      }
-      
-      // Não definir erro para evitar mensagens desnecessárias em rotas protegidas
+      console.error('❌ Erro ao buscar usuário do localStorage:', err);
+      setUser(null);
     } finally {
       setLoading(false);
     }

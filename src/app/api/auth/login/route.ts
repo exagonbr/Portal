@@ -2,13 +2,86 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { API_CONFIG } from '@/config/constants';
 
+// Rate limiting simples para evitar loops
+const requestCounts = new Map<string, { count: number; lastReset: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minuto
+const MAX_REQUESTS_PER_WINDOW = 10; // Máximo 10 tentativas por minuto
+
+function getRateLimitKey(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0] : 
+             request.headers.get('x-real-ip') || 
+             'unknown';
+  return `login_${ip}`;
+}
+
+function checkRateLimit(key: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const record = requestCounts.get(key);
+  
+  if (!record || now - record.lastReset > RATE_LIMIT_WINDOW) {
+    requestCounts.set(key, { count: 1, lastReset: now });
+    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1 };
+  }
+  
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, remaining: 0 };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count };
+}
+
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  const referer = request.headers.get('referer') || 'unknown';
+  const origin = request.headers.get('origin') || 'unknown';
+  
+  console.log(`🔐 LOGIN REQUEST START:`, {
+    timestamp: new Date().toISOString(),
+    userAgent: userAgent.substring(0, 100),
+    referer,
+    origin,
+    method: request.method,
+    url: request.url
+  });
+
+  // Rate limiting
+  const rateLimitKey = getRateLimitKey(request);
+  const rateLimit = checkRateLimit(rateLimitKey);
+  
+  if (!rateLimit.allowed) {
+    console.log(`🚫 RATE LIMIT EXCEEDED for ${rateLimitKey}`);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Muitas tentativas de login. Aguarde 1 minuto antes de tentar novamente.',
+        retryAfter: 60
+      },
+      { 
+        status: 429,
+        headers: {
+          'Retry-After': '60',
+          'X-RateLimit-Remaining': '0'
+        }
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     const { email, password } = body;
 
+    console.log(`🔐 LOGIN ATTEMPT:`, {
+      email: email ? email.substring(0, 3) + '***' : 'missing',
+      hasPassword: !!password,
+      passwordLength: password ? password.length : 0
+    });
+
     // Validação básica
     if (!email || !password) {
+      console.log(`🚫 LOGIN VALIDATION FAILED: Missing credentials`);
       return NextResponse.json(
         { success: false, message: 'Email e senha são obrigatórios' },
         { status: 400 }
@@ -20,6 +93,8 @@ export async function POST(request: NextRequest) {
     let response;
     
     try {
+      console.log(`🌐 BACKEND REQUEST: Tentando ${API_CONFIG.BASE_URL}/auth/login`);
+      
       response = await fetch(`${API_CONFIG.BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -29,6 +104,12 @@ export async function POST(request: NextRequest) {
         signal: AbortSignal.timeout(10000), // 10 segundos timeout
       });
 
+      console.log(`🌐 BACKEND RESPONSE:`, {
+        status: response.status,
+        statusText: response.statusText,
+        contentType: response.headers.get('content-type')
+      });
+
       // Verificar se a resposta é JSON válido
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -36,8 +117,10 @@ export async function POST(request: NextRequest) {
       }
 
       data = await response.json();
+      console.log(`🌐 BACKEND DATA:`, { success: data.success, hasUser: !!data.user });
+      
     } catch (backendError) {
-      console.error('Erro ao conectar com backend:', backendError);
+      console.error('🚫 BACKEND ERROR:', backendError);
       
       // Fallback: Autenticação local para desenvolvimento/teste
       const mockUsers = {
@@ -101,6 +184,8 @@ export async function POST(request: NextRequest) {
       const mockUser = mockUsers[email as keyof typeof mockUsers];
       
       if (mockUser && mockUser.password === password) {
+        console.log(`✅ FALLBACK LOGIN SUCCESS for ${email}`);
+        
         // Gerar token mock JWT-like
         const mockToken = Buffer.from(JSON.stringify({
           userId: mockUser.user.id,
@@ -121,18 +206,20 @@ export async function POST(request: NextRequest) {
         };
         response = { ok: true, status: 200 };
       } else {
+        console.log(`🚫 FALLBACK LOGIN FAILED for ${email}`);
         return NextResponse.json(
           { 
             success: false, 
-            message: 'Erro de conexão com o servidor. Tente novamente em alguns instantes.',
+            message: 'Credenciais inválidas ou servidor temporariamente indisponível.',
             details: backendError instanceof Error ? backendError.message : 'Erro desconhecido'
           },
-          { status: 503 }
+          { status: 401 }
         );
       }
     }
 
     if (!response.ok) {
+      console.log(`🚫 LOGIN FAILED:`, { status: response.status, message: data.message });
       return NextResponse.json(
         { success: false, message: data.message || 'Erro ao fazer login' },
         { status: response.status }
@@ -141,6 +228,8 @@ export async function POST(request: NextRequest) {
 
     // Configurar cookies com os tokens recebidos do backend
     const cookieStore = cookies();
+    
+    console.log(`🍪 SETTING COOKIES for user ${data.user.email}`);
     
     // Token de acesso - configurado para ser acessível pelo middleware
     cookieStore.set('auth_token', data.token, {
@@ -191,15 +280,33 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
+    const duration = Date.now() - startTime;
+    console.log(`✅ LOGIN SUCCESS:`, {
+      email: data.user.email,
+      role: data.user.role,
+      duration: `${duration}ms`,
+      rateLimitRemaining: rateLimit.remaining
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Login realizado com sucesso',
       user: userData,
       redirectTo: data.redirectTo || '/dashboard'
+    }, {
+      headers: {
+        'X-RateLimit-Remaining': rateLimit.remaining.toString()
+      }
     });
 
   } catch (error) {
-    console.error('Erro no login:', error);
+    const duration = Date.now() - startTime;
+    console.error('💥 LOGIN ERROR:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      duration: `${duration}ms`,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
