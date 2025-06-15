@@ -1,5 +1,5 @@
 import { queueService, JobTypes } from './queueService';
-import { apiClient } from './apiClient';
+import { apiClient } from '@/lib/api-client';
 import { CreateNotificationDto, Notification } from '@/types/notification';
 
 interface NotificationAPI {

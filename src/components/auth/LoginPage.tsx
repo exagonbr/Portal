@@ -11,6 +11,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
+import { getDashboardPath } from '@/utils/roleRedirect';
 
 export function LoginPage() {
   const router = useRouter();
@@ -38,10 +39,26 @@ export function LoginPage() {
     }
   }, [searchParams]);
 
-  // Redirect if already logged in
+  // Redirecionar usuário já autenticado para o dashboard correto
   useEffect(() => {
     if (user) {
-      router.push('/dashboard');
+      const normalizedRole = user.role?.toLowerCase();
+      const dashboardPath = getDashboardPath(normalizedRole || user.role);
+      
+      if (dashboardPath) {
+        console.log(`🎯 Redirecionando usuário autenticado para: ${dashboardPath}`);
+        
+        // Usar window.location.replace para redirecionamento mais confiável
+        if (typeof window !== 'undefined') {
+          window.location.replace(dashboardPath);
+        }
+      } else {
+        console.warn(`⚠️ Dashboard não encontrado para role ${user.role}, usando fallback`);
+        
+        if (typeof window !== 'undefined') {
+          window.location.replace('/dashboard/student');
+        }
+      }
     }
   }, [user, router]);
 

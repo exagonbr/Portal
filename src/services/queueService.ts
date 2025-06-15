@@ -1,4 +1,4 @@
-import { apiClient, handleApiError } from './apiClient';
+import { apiClient, handleApiError } from '@/lib/api-client';
 
 export interface QueueJob<T = any> {
   id: string;

@@ -36,10 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // REMOVIDO: Verificação de token expirado para evitar loops
       // Buscar usuário diretamente
       const currentUser = await authService.getCurrentUser();
+      
       setUser(currentUser);
       setError(null);
     } catch (err) {
-      console.error('Erro ao buscar usuário:', err);
+      console.error('❌ Erro ao buscar usuário:', err);
       setUser(null);
       // Não definir erro aqui para evitar mensagens desnecessárias
     } finally {
@@ -55,12 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login
   const login = useCallback(async (email: string, password: string) => {
     try {
+      console.log('🔐 Iniciando login...');
       setLoading(true);
       setError(null);
       
       const response = await authService.login(email, password);
       
       if (response.success && response.user) {
+        console.log('🔐 Login bem-sucedido, usuário:', response.user.name, 'Role:', response.user.role);
         setUser(response.user);
         
         // Normaliza a role para lowercase
@@ -68,20 +71,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Redirecionar para o dashboard apropriado
         const dashboardPath = getDashboardPath(normalizedRole || response.user.role);
+        
         if (dashboardPath) {
-          router.push(dashboardPath);
+          console.log(`🎯 Redirecionando para: ${dashboardPath}`);
+          
+          // Usar window.location.replace para redirecionamento mais confiável
+          if (typeof window !== 'undefined') {
+            console.log('🎯 AuthContext: Usando window.location.replace');
+            window.location.replace(dashboardPath);
+          }
         } else {
-          router.push('/dashboard');
+          console.warn(`⚠️ Dashboard não encontrado para role ${response.user.role}, usando fallback`);
+          
+          if (typeof window !== 'undefined') {
+            console.log('🎯 AuthContext: Usando window.location.replace para fallback');
+            window.location.replace('/dashboard/student');
+          }
         }
+      } else {
+        console.error('🔐 Login falhou:', response.message);
+        throw new Error(response.message || 'Falha no login');
       }
     } catch (err: any) {
-      console.error('Erro no login:', err);
+      console.error('❌ Erro no login:', err.message);
       setError(err.message || 'Erro ao fazer login');
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   // Register
   const register = async (name: string, email: string, password: string, type: 'student' | 'teacher') => {
@@ -100,9 +118,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Redirecionar para o dashboard apropriado
         const dashboardPath = getDashboardPath(normalizedRole || response.user.role);
         if (dashboardPath) {
+          console.log(`🎯 AuthContext Register: Redirecionando para dashboard específico: ${dashboardPath}`);
           router.push(dashboardPath);
         } else {
-          router.push('/dashboard');
+          console.warn(`⚠️ AuthContext Register: Dashboard não encontrado para role ${response.user.role}, usando fallback`);
+          // Fallback para dashboard de estudante se role não for reconhecida - EVITA /dashboard genérico
+          router.push('/dashboard/student');
         }
       }
     } catch (err: any) {

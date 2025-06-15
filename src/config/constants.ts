@@ -1,5 +1,13 @@
-// API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// API Configuration - Centralizada
+export const API_CONFIG = {
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+  TIMEOUT: 30000,
+  RETRY_ATTEMPTS: 3,
+  RETRY_DELAY: 1000,
+} as const;
+
+// Backward compatibility
+export const API_BASE_URL = API_CONFIG.BASE_URL;
 
 // Pagination defaults
 export const DEFAULT_PAGE_SIZE = 10;

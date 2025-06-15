@@ -1,4 +1,4 @@
-import { apiClient, handleApiError } from './apiClient';
+import { apiClient, handleApiError } from '@/lib/api-client';
 
 export interface CacheConfig {
   ttl?: number; // Time to live em segundos

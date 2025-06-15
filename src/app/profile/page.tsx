@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 import { User, UserRole } from '@/types/auth'
-import { apiPut, ApiResponse, BaseApiService } from '@/services/api'
+import { apiClient } from '@/lib/api-client'
 
 interface ProfileFormData {
   name: string
@@ -77,7 +77,7 @@ export default function ProfilePage() {
       }
 
       // Fazer requisição para atualizar perfil
-      const response = await apiPut<ApiResponse>(`/users/${user.id}`, updateData)
+      const response = await apiClient.put(`/users/${user.id}`, updateData)
       
       if (response.success) {
         // Atualizar dados originais

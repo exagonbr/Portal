@@ -4,7 +4,8 @@ import { UserRole } from './types/roles';
 import { ROLE_DASHBOARD_MAP, getDashboardPath, isValidRole } from './utils/roleRedirect';
 // REMOVIDO: NextAuth JWT para evitar erros 404
 // import { getToken } from 'next-auth/jwt';
-import { applyRateLimit } from './middleware/rateLimit';
+// REMOVIDO: Rate limiting completamente
+// import { applyRateLimit } from './middleware/rateLimit';
 import { PRODUCTION_CONFIG, ProductionUtils } from './config/production';
 
 // Configuration constants
@@ -387,7 +388,7 @@ export async function middleware(request: NextRequest) {
       );
       
       const cookieConfig = ProductionUtils.getCookieConfig({
-        HTTP_ONLY: true,
+        HTTP_ONLY: false,
         MAX_AGE: 60 // 1 minuto apenas para contador
       });
       
@@ -590,45 +591,6 @@ export async function middleware(request: NextRequest) {
     });
     return preflight;
   }
-
-  // Aplicar rate limiting para APIs
-  if (pathname.startsWith('/api/')) {
-    // Determinar tipo de rate limiting
-    let rateLimitType: 'public' | 'authenticated' | 'upload' | 'reports' = 'authenticated';
-    let limit = 30; // requisições por minuto
-
-    if (ROUTES.PUBLIC.some(route => pathname.startsWith(route))) {
-      rateLimitType = 'public';
-      limit = 20;
-    } else if (pathname.includes('/upload')) {
-      rateLimitType = 'upload';
-      limit = 5;
-    } else if (pathname.includes('/reports')) {
-      rateLimitType = 'reports';
-      limit = 10;
-    }
-
-    const rateLimitResponse = await applyRateLimit(request, rateLimitType, limit);
-    if (rateLimitResponse) {
-      return rateLimitResponse;
-    }
-  }
-
-  // REMOVIDO: Verificação NextAuth para rotas protegidas
-  // Agora usando apenas autenticação customizada via cookies
-  /*
-  if (pathname.startsWith('/api/') && !ROUTES.PUBLIC.some(route => pathname.startsWith(route))) {
-    const token = await getToken({ req: request });
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      );
-    }
-    // ... resto do código NextAuth removido
-  }
-  */
 
   // Log de requisições (em produção, usar um serviço de logging apropriado)
   if (process.env.NODE_ENV === 'development') {

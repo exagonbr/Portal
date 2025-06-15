@@ -8,16 +8,11 @@ const nextConfig = {
   },
   reactStrictMode: true,
   swcMinify: true,
-  productionBrowserSourceMaps: true,
-  eslint: {
+  productionBrowserSourceMaps: false,
+    eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
     ignoreDuringBuilds: true,
-    dirs: ['src']
-  },
-  
-  // Configurações para resolver erro de dynamic server usage
-  experimental: {
-    staticWorkerRequestDeduping: true,
-    optimizePackageImports: ['@/components', '@/utils', '@/services'],
   },
   
   // Configuração de output para produção
@@ -41,8 +36,8 @@ const nextConfig = {
     
     return [
       {
-        source: '/api/:path*',
-        destination: apiDestination
+        source: '/api/((?!screenshots).*)',
+        destination: 'http://localhost:3001/api/$1'
       }
     ];
   },
@@ -182,8 +177,16 @@ const nextConfig = {
     });
 
     if (isServer) {
-      config.externals.push('oracledb');
+      config.externals.push({
+        'oracledb': 'commonjs oracledb',
+        'mysql': 'commonjs mysql',
+        'mysql2': 'commonjs mysql2',
+        'sqlite3': 'commonjs sqlite3',
+        'better-sqlite3': 'commonjs better-sqlite3',
+        'tedious': 'commonjs tedious'
+      })
     } else {
+      // No lado do cliente, adicionar fallbacks para módulos de servidor
       config.resolve.fallback = {
         ...config.resolve.fallback,
         'oracledb': false,
@@ -194,7 +197,8 @@ const nextConfig = {
         'pg-native': false,
         'pg-query-stream': false,
       };
-      
+
+      // Adicionar alias para módulos relacionados ao PostgreSQL no cliente
       config.resolve.alias = {
         ...config.resolve.alias,
         'pg-cloudflare': false,
@@ -203,6 +207,7 @@ const nextConfig = {
       };
     }
 
+    // Ignorar módulos específicos que causam problemas
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^(cardinal|encoding|pg-cloudflare)$/,
@@ -210,19 +215,46 @@ const nextConfig = {
       })
     );
 
+    // Adicionar plugin para lidar com o esquema cloudflare:sockets
     config.module.rules.push({
       test: /cloudflare:sockets/,
       use: 'null-loader',
       include: /node_modules/,
     });
 
-    // Suprimir warnings específicos
-    config.ignoreWarnings = [
-      /Critical dependency: the request of a dependency is an expression/,
-    ];
-
     return config;
+  },
+  async headers() {
+    return [
+      {
+        source: '/books/:path*',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/epub+zip'
+          }
+        ]
+      },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Authorization'
+          }
+        ]
+      }
+    ];
   }
 };
 
+// This ensures the PWA configuration is properly recognized
 module.exports = nextConfig;

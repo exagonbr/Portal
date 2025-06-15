@@ -1,4 +1,4 @@
-import { apiClient, handleApiError, ApiClientError } from './apiClient';
+import { apiClient, handleApiError, ApiClientError } from '@/lib/api-client';
 import { 
   UnitResponseDto, 
   UnitCreateDto, 

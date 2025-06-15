@@ -1,4 +1,4 @@
-import { apiClient, handleApiError, ApiClientError, isAuthError } from './apiClient';
+import { apiClient, handleApiError, ApiClientError, isAuthError } from '@/lib/api-client';
 import { 
   LoginDto, 
   AuthResponseDto, 

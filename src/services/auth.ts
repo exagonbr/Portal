@@ -1,4 +1,6 @@
 import {User, UserEssentials, Permission, UserRole} from '../types/auth';
+import { apiClient, handleApiError } from '@/lib/api-client';
+import { API_CONFIG, TOKEN_KEY, REFRESH_TOKEN_KEY, TOKEN_EXPIRY_KEY } from '@/config/constants';
 // REMOVIDO: NextAuth imports para evitar erros 404 e loops
 // import {getSession, signOut} from 'next-auth/react';
 
@@ -18,12 +20,10 @@ export interface RegisterResponse {
   message?: string;
 }
 
-// Configuration constants
+// Configuration constants - usando configuração centralizada
 const AUTH_CONFIG = {
-  // Use primeiro a variável de ambiente, depois fallback para o proxy local
-  API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
-  BACKEND_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
-  API_VERSION: 'v1', // Adicionando versão da API
+  API_URL: API_CONFIG.BASE_URL,
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/api',
   COOKIES: {
     AUTH_TOKEN: 'auth_token',
     SESSION_ID: 'session_id',
@@ -31,9 +31,9 @@ const AUTH_CONFIG = {
     REFRESH_TOKEN: 'refresh_token'
   },
   STORAGE_KEYS: {
-    AUTH_TOKEN: 'auth_token',
+    AUTH_TOKEN: TOKEN_KEY,
     USER: 'user',
-    AUTH_EXPIRES_AT: 'auth_expires_at'
+    AUTH_EXPIRES_AT: TOKEN_EXPIRY_KEY
   },
   DEFAULT_COOKIE_DAYS: 7
 } as const;

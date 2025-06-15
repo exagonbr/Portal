@@ -1,4 +1,4 @@
-import api from './api'
+import { apiClient } from '@/lib/api-client'
 
 interface DashboardStats {
   totalUsers: number
@@ -32,8 +32,17 @@ interface UpcomingEvent {
 export const dashboardService = {
   async getStats(): Promise<DashboardStats> {
     try {
-      const response = await api.get('/dashboard/stats')
-      return response.data
+      const response = await apiClient.get<DashboardStats>('/dashboard/stats')
+      return response.data || {
+        totalUsers: 0,
+        totalCourses: 0,
+        totalBooks: 0,
+        totalInstitutions: 0,
+        activeStudents: 0,
+        completedCourses: 0,
+        averageProgress: 0,
+        monthlyGrowth: 0
+      }
     } catch (error) {
       console.error('Erro ao buscar estatísticas do dashboard:', error)
       // Retornar dados mock em caso de erro
@@ -52,8 +61,8 @@ export const dashboardService = {
 
   async getRecentActivities(): Promise<RecentActivity[]> {
     try {
-      const response = await api.get('/dashboard/activities')
-      return response.data
+      const response = await apiClient.get<RecentActivity[]>('/dashboard/activities')
+      return response.data || []
     } catch (error) {
       console.error('Erro ao buscar atividades recentes:', error)
       // Retornar dados mock em caso de erro
@@ -88,8 +97,8 @@ export const dashboardService = {
 
   async getUpcomingEvents(): Promise<UpcomingEvent[]> {
     try {
-      const response = await api.get('/dashboard/events')
-      return response.data
+      const response = await apiClient.get<UpcomingEvent[]>('/dashboard/events')
+      return response.data || []
     } catch (error) {
       console.error('Erro ao buscar eventos próximos:', error)
       // Retornar dados mock em caso de erro

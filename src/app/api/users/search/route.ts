@@ -2,8 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+import { API_CONFIG } from '@/config/constants'
 
 // GET - Buscar usuários
 export async function GET(request: NextRequest) {
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
     if (is_active !== null) params.append('is_active', is_active)
 
     // Buscar usuários da API
-    const response = await fetch(`${BACKEND_URL}/users/search?${params.toString()}`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/users/search?${params.toString()}`, {
       headers: {
         'Authorization': `Bearer ${session.user?.id}`,
         'Content-Type': 'application/json'

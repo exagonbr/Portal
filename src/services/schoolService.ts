@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient';
+import { apiClient } from '@/lib/api-client';
 
 export interface School {
   id: string;

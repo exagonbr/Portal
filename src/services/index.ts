@@ -1,7 +1,7 @@
 // Exportações centralizadas de todos os serviços
 
 // Cliente API base
-export { apiClient, handleApiError, ApiClientError, isAuthError } from './apiClient';
+export { apiClient, handleApiError, ApiClientError, isAuthError } from '@/lib/api-client';
 
 // Serviços de cache
 export {
@@ -223,7 +223,7 @@ export const checkServicesHealth = async () => {
 
   try {
     // Testa conectividade básica da API
-    const { apiClient } = await import('./apiClient');
+    const { apiClient } = await import('@/lib/api-client');
     await apiClient.get('/health');
     health.api = true;
   } catch (error) {

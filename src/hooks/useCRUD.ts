@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { BaseApiService, PaginatedResponse, handleApiError } from '@/services/api'
+import { BaseApiService, PaginatedResponse, handleApiError } from '@/lib/api-client'
 
 interface UseCRUDOptions<T> {
   service: BaseApiService<T>

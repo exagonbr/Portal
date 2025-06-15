@@ -1,4 +1,4 @@
-import api from './api'
+import { apiClient } from '@/lib/api-client'
 import { BookResponseDto, BookCreateDto, BookUpdateDto, PaginatedResponseDto as PaginatedResponse } from '@/types/api'
 
 interface BookFilters {
@@ -24,8 +24,17 @@ export const bookService = {
         ...filters
       })
 
-      const response = await api.get(`/books?${queryParams}`)
-      return response.data
+      const response = await apiClient.get<PaginatedResponse<BookResponseDto>>(`/books?${queryParams}`)
+      return response.data || {
+        items: [],
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false },
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false
+      }
     } catch (error) {
       console.error('Erro ao buscar livros:', error)
       // Retornar dados mock em caso de erro
@@ -78,7 +87,8 @@ export const bookService = {
 
   async getBookById(id: string): Promise<BookResponseDto> {
     try {
-      const response = await api.get(`/books/${id}`)
+      const response = await apiClient.get<BookResponseDto>(`/books/${id}`)
+      if (!response.data) throw new Error('Livro não encontrado')
       return response.data
     } catch (error) {
       console.error('Erro ao buscar livro:', error)
@@ -88,7 +98,8 @@ export const bookService = {
 
   async createBook(data: BookCreateDto): Promise<BookResponseDto> {
     try {
-      const response = await api.post('/books', data)
+      const response = await apiClient.post<BookResponseDto>('/books', data)
+      if (!response.data) throw new Error('Erro ao criar livro')
       return response.data
     } catch (error) {
       console.error('Erro ao criar livro:', error)
@@ -98,7 +109,8 @@ export const bookService = {
 
   async updateBook(id: string, data: BookUpdateDto): Promise<BookResponseDto> {
     try {
-      const response = await api.put(`/books/${id}`, data)
+      const response = await apiClient.put<BookResponseDto>(`/books/${id}`, data)
+      if (!response.data) throw new Error('Erro ao atualizar livro')
       return response.data
     } catch (error) {
       console.error('Erro ao atualizar livro:', error)
@@ -108,7 +120,7 @@ export const bookService = {
 
   async deleteBook(id: string): Promise<void> {
     try {
-      await api.delete(`/books/${id}`)
+      await apiClient.delete(`/books/${id}`)
     } catch (error) {
       console.error('Erro ao excluir livro:', error)
       throw error
@@ -117,8 +129,8 @@ export const bookService = {
 
   async getBooksByCategory(category: string): Promise<BookResponseDto[]> {
     try {
-      const response = await api.get(`/books/category/${category}`)
-      return response.data
+      const response = await apiClient.get<BookResponseDto[]>(`/books/category/${category}`)
+      return response.data || []
     } catch (error) {
       console.error('Erro ao buscar livros por categoria:', error)
       return []
@@ -127,8 +139,8 @@ export const bookService = {
 
   async searchBooks(query: string): Promise<BookResponseDto[]> {
     try {
-      const response = await api.get(`/books/search?q=${encodeURIComponent(query)}`)
-      return response.data
+      const response = await apiClient.get<BookResponseDto[]>(`/books/search?q=${encodeURIComponent(query)}`)
+      return response.data || []
     } catch (error) {
       console.error('Erro ao pesquisar livros:', error)
       return []

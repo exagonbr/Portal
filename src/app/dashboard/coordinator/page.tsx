@@ -26,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
+import { ClientAuthGuard } from '@/components/auth/ClientAuthGuard';
 
 interface CoordinatorStats {
   totalCycles: number;
@@ -81,14 +82,21 @@ interface AcademicAlert {
 }
 
 export default function CoordinatorDashboardPage() {
+  return (
+    <ClientAuthGuard requiredRole={UserRole.ACADEMIC_COORDINATOR}>
+      <CoordinatorDashboardContent />
+    </ClientAuthGuard>
+  );
+}
+
+function CoordinatorDashboardContent() {
   const { user } = useAuth();
 
   return (
-          <ProtectedRoute requiredRole={[UserRole.ACADEMIC_COORDINATOR, UserRole.SYSTEM_ADMIN]}>
-      <DashboardPageLayout
-        title="Painel do Coordenador"
-        subtitle="Gerencie o planejamento acadêmico e o corpo docente"
-      >
+    <DashboardPageLayout
+      title="Painel do Coordenador"
+      subtitle="Gerencie o planejamento acadêmico e o corpo docente"
+    >
         <div className="space-y-6">
           {/* Cards de Estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -250,7 +258,6 @@ export default function CoordinatorDashboardPage() {
           </div>
         </div>
       </DashboardPageLayout>
-    </ProtectedRoute>
   );
 }
 

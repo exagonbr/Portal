@@ -1,4 +1,4 @@
-import { apiClient, handleApiError, withRetry } from './apiClient';
+import { apiClient, handleApiError, withRetry } from '@/lib/api-client';
 import {
   cacheService,
   CacheKeys,

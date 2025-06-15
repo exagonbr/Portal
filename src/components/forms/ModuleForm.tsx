@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch'
 import { useTheme } from '@/contexts/ThemeContext'
-import { BaseApiService } from '@/services/api'
+import { apiClient, BaseApiService } from '@/lib/api-client'
 import { useToast } from '@/components/ToastManager'
 import Input from '../ui/Input'
 

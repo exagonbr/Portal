@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserRole } from '@/types/roles'
-import { apiClient } from '@/services/apiClient'
+import { apiClient } from '@/lib/api-client'
 import { pushNotificationService } from '@/services/pushNotificationService'
 
 interface NotificationForm {

@@ -74,8 +74,8 @@ export default function DashboardRedirect() {
     setError('');
     setRedirecting(false);
     redirectAttempts.current = 0;
-    // Força uma nova verificação
-    window.location.reload();
+    // Força uma nova verificação sem reload da página
+    router.refresh();
   };
 
   const handleCancelRedirect = () => {

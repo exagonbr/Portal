@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+import { API_CONFIG } from '@/config/constants'
 
 // Schema de validação para criação de usuário
 const createUserSchema = z.object({
@@ -34,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     // Encaminha todos os parâmetros de query para o backend
     const { searchParams } = new URL(request.url)
-    const backendUrl = `${BACKEND_URL}/users?${searchParams.toString()}`
+    const backendUrl = `${API_CONFIG.BASE_URL}/users?${searchParams.toString()}`
 
     const response = await fetch(backendUrl, {
       headers: {
@@ -89,7 +88,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const backendUrl = `${BACKEND_URL}/users`
+    const backendUrl = `${API_CONFIG.BASE_URL}/users`
     const response = await fetch(backendUrl, {
         method: 'POST',
         headers: {
