@@ -547,7 +547,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTI
  *       404:
  *         description: User not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin']), async (req, res) => {
+router.delete('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   try {
     const { id } = req.params;
 

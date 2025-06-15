@@ -166,7 +166,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstit
  *       404:
  *         description: Course not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin']), requireInstitution, async (req, res) => {
+router.delete('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), requireInstitution, async (req, res) => {
   return courseController.delete(req, res);
 });
 
