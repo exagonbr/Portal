@@ -76,7 +76,7 @@ export default function ModuleForm({ module, mode, onSubmit, onCancel }: ModuleF
   const fetchCourses = async () => {
     try {
       const response = await courseService.getAll()
-      setCourses(response.items || [])
+      setCourses(response || [])
     } catch (error) {
       showError('Erro ao carregar cursos', 'Não foi possível carregar a lista de cursos')
     }

@@ -20,9 +20,25 @@ class UnitService {
 
   async list(filters?: UnitFilters): Promise<PaginatedResponseDto<UnitResponseDto>> {
     try {
-      const response = await apiClient.get<PaginatedResponseDto<UnitResponseDto>>(this.baseUrl, {
-        params: filters
-      });
+      // Filter out undefined values and ensure all values are of correct type
+      const params: Record<string, string | number | boolean> = {};
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params[key] = value;
+          }
+        });
+      }
+
+      const response = await apiClient.get<PaginatedResponseDto<UnitResponseDto>>(
+        this.baseUrl,
+        Object.keys(params).length > 0 ? params : undefined
+      );
+      
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      
       return response.data;
     } catch (error) {
       throw handleApiError(error as ApiClientError);
@@ -32,6 +48,11 @@ class UnitService {
   async getById(id: string): Promise<UnitResponseDto> {
     try {
       const response = await apiClient.get<UnitResponseDto>(`${this.baseUrl}/${id}`);
+      
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      
       return response.data;
     } catch (error) {
       throw handleApiError(error as ApiClientError);
@@ -41,6 +62,11 @@ class UnitService {
   async create(data: UnitCreateDto): Promise<UnitResponseDto> {
     try {
       const response = await apiClient.post<UnitResponseDto>(this.baseUrl, data);
+      
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      
       return response.data;
     } catch (error) {
       throw handleApiError(error as ApiClientError);
@@ -50,6 +76,11 @@ class UnitService {
   async update(id: string, data: UnitUpdateDto): Promise<UnitResponseDto> {
     try {
       const response = await apiClient.put<UnitResponseDto>(`${this.baseUrl}/${id}`, data);
+      
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      
       return response.data;
     } catch (error) {
       throw handleApiError(error as ApiClientError);
@@ -66,9 +97,22 @@ class UnitService {
 
   async search(query: string, filters?: UnitFilters): Promise<UnitResponseDto[]> {
     try {
-      const response = await apiClient.get<UnitResponseDto[]>(`${this.baseUrl}/search`, {
-        params: { q: query, ...filters }
-      });
+      // Filter out undefined values and ensure all values are of correct type
+      const params: Record<string, string | number | boolean> = { q: query };
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params[key] = value;
+          }
+        });
+      }
+
+      const response = await apiClient.get<UnitResponseDto[]>(`${this.baseUrl}/search`, params);
+      
+      if (!response.data) {
+        throw new Error('No data received from API');
+      }
+      
       return response.data;
     } catch (error) {
       throw handleApiError(error as ApiClientError);

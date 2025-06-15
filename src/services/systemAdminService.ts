@@ -9,6 +9,51 @@ export interface SystemDashboardData {
     byRole: Record<string, number>;
     byInstitution: Record<string, number>;
   };
+  institutions?: {
+    total: number;
+    active: number;
+    byType: Record<string, number>;
+    totalSchools: number;
+    totalStudents: number;
+    totalTeachers: number;
+  };
+  growth?: {
+    usersThisMonth: number;
+    usersLastMonth: number;
+    schoolsThisMonth: number;
+    institutionsThisMonth: number;
+    growthRate: number;
+  };
+  engagement?: {
+    dailyActiveUsers: number;
+    weeklyActiveUsers: number;
+    monthlyActiveUsers: number;
+    averageSessionTime: number;
+    bounceRate: number;
+    returnUserRate: number;
+  };
+  content?: {
+    totalCourses: number;
+    activeCourses: number;
+    totalLessons: number;
+    completionRate: number;
+    averageRating: number;
+  };
+  notifications?: {
+    totalSent: number;
+    delivered: number;
+    opened: number;
+    clicked: number;
+    deliveryRate: number;
+    openRate: number;
+  };
+  support?: {
+    totalTickets: number;
+    openTickets: number;
+    resolvedTickets: number;
+    averageResolutionTime: number;
+    satisfactionScore: number;
+  };
   schools?: {
     total: number;
     active: number;
@@ -314,9 +359,7 @@ class SystemAdminService {
    */
   async getAnalyticsData(type: 'users' | 'sessions' | 'activity', period: 'day' | 'week' | 'month' = 'week'): Promise<AnalyticsData> {
     try {
-      const response = await apiClient.get<{ data: AnalyticsData }>(`${this.baseUrl}/dashboard/analytics`, {
-        params: { type, period }
-      });
+      const response = await apiClient.get<{ data: AnalyticsData }>(`${this.baseUrl}/dashboard/analytics`, { type, period });
       
       if (response.success && response.data) {
         return response.data.data;

@@ -52,7 +52,8 @@ const createEmptyPermissions = (): RolePermissions => ({
   canViewFinancialInfo: false,
   canViewPayments: false,
   canViewBoletos: false,
-  canViewFinancialHistory: false
+  canViewFinancialHistory: false,
+  canViewPortalReports: false
 })
 
 // Mock de contagem de usuários por role

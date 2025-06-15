@@ -44,10 +44,19 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
     setLoading(true);
 
     try {
+      // Convert the form data to match the service's expected format
+      const serviceData = {
+        ...formData,
+        // Map the institution type to the service's expected format
+        type: formData.type === 'PUBLIC' ? 'SCHOOL' as const :
+              formData.type === 'PRIVATE' ? 'COLLEGE' as const :
+              'UNIVERSITY' as const // Default for MIXED
+      };
+
       if (institution) {
-        await institutionService.update(institution.id, formData as UpdateInstitutionDtoFromInstitution);
+        await institutionService.updateInstitution(institution.id, serviceData);
       } else {
-        await institutionService.create(formData);
+        await institutionService.createInstitution(serviceData);
       }
       onClose();
     } catch (error: any) {

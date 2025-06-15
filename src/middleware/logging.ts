@@ -1,3 +1,5 @@
+import { Request, Response, NextFunction } from 'express';
+
 // Middleware to log errors in detail
 export const errorLogger = (err: any, req: Request, res: Response, next: NextFunction) => {
   const errorInfo = {

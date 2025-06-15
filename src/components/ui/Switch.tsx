@@ -3,7 +3,7 @@
 import { forwardRef, InputHTMLAttributes } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 
-export interface SwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
+export interface SwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange' | 'size'> {
   label?: string
   checked?: boolean
   onChange?: (checked: boolean) => void

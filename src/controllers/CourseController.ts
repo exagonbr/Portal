@@ -105,23 +105,23 @@ export class CourseController {
 
       let queryBuilder = Course.query();
 
-      if (query) {
+      if (query && typeof query === 'string') {
         queryBuilder = queryBuilder.where('name', 'ilike', `%${query}%`);
       }
 
-      if (level) {
+      if (level && typeof level === 'string') {
         queryBuilder = queryBuilder.where('level', level);
       }
 
-      if (type) {
+      if (type && typeof type === 'string') {
         queryBuilder = queryBuilder.where('type', type);
       }
 
-      if (institution_id) {
+      if (institution_id && typeof institution_id === 'string') {
         queryBuilder = queryBuilder.where('institution_id', institution_id);
       }
 
-      if (active !== undefined) {
+      if (active !== undefined && typeof active === 'string') {
         queryBuilder = queryBuilder.where('active', active === 'true');
       }
 

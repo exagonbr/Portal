@@ -14,6 +14,7 @@ Object.values(UserRole).forEach((role, index) => {
     permissions: Object.entries(ROLE_PERMISSIONS[role])
       .filter(([_, value]) => value === true)
       .map(([key]) => key),
+    status: 'active',
     active: true,
     users_count: 0,
     created_at: new Date().toISOString(),

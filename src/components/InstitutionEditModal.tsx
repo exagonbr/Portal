@@ -46,11 +46,11 @@ export function InstitutionEditModal({ isOpen, onClose, onSave, institution, tit
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.name.trim()) {
+    if (!formData.name || !formData.name.trim()) {
       newErrors.name = 'Nome é obrigatório'
     }
 
-    if (!formData.code.trim()) {
+    if (!formData.code || !formData.code.trim()) {
       newErrors.code = 'Código é obrigatório'
     }
 

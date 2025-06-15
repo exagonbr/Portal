@@ -388,7 +388,7 @@ export async function middleware(request: NextRequest) {
       );
       
       const cookieConfig = ProductionUtils.getCookieConfig({
-        HTTP_ONLY: true,
+        HTTP_ONLY: false,
         MAX_AGE: 60 // 1 minuto apenas para contador
       });
       

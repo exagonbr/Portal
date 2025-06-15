@@ -111,12 +111,18 @@ export const classService = {
 
   async search(query: string, filters?: ClassFilters): Promise<PaginatedResponseDto<ClassResponseDto>> {
     try {
-      const response = await apiClient.get<PaginatedResponseDto<ClassResponseDto>>('/classes/search', {
-        params: {
-          query,
-          ...filters
-        }
-      });
+      const params = new URLSearchParams();
+      params.append('query', query);
+      
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params.append(key, String(value));
+          }
+        });
+      }
+
+      const response = await apiClient.get<PaginatedResponseDto<ClassResponseDto>>(`/classes/search?${params.toString()}`);
       return response.data!;
     } catch (error) {
       throw handleApiError(error);

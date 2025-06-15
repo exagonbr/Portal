@@ -6,8 +6,7 @@ import { UserClass, CreateUserClassData, UserClassRole, USER_CLASS_ROLE_LABELS, 
 import { userClassService } from '@/services/userClassService';
 import { classService } from '@/services/classService';
 import { userService } from '@/services/userService';
-import { Class } from '@/types/class';
-import { UserResponseDto } from '@/types/api';
+import { ClassResponseDto, UserResponseDto } from '@/types/api';
 
 interface UserClassModalProps {
   isOpen: boolean;
@@ -25,7 +24,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
     enrollment_date: new Date()
   });
   const [enrollmentDateStr, setEnrollmentDateStr] = useState(new Date().toISOString().split('T')[0]);
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState<ClassResponseDto[]>([]);
   const [users, setUsers] = useState<UserResponseDto[]>([]);
   const [enrolledUsers, setEnrolledUsers] = useState<UserClassWithDetails[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,7 +185,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
                     <option value="">Selecione uma turma</option>
                     {classes.map((classItem) => (
                       <option key={classItem.id} value={classItem.id}>
-                        {classItem.name} - {classItem.code}
+                        {classItem.name} - {classItem.description}
                       </option>
                     ))}
                   </select>

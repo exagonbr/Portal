@@ -21,7 +21,8 @@ export default function MixedContentHandler() {
           } else if (input instanceof Request) {
             url = input.url;
           } else {
-            url = input.toString();
+            // This should never happen, but TypeScript needs this case
+            url = String(input);
           }
           
           // Se a URL é HTTP e estamos em HTTPS, tentar converter
@@ -47,7 +48,7 @@ export default function MixedContentHandler() {
         
         // Interceptar XMLHttpRequest também
         const originalXHROpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...args: any[]) {
+        XMLHttpRequest.prototype.open = function(method: string, url: string | URL, async?: boolean, user?: string | null, password?: string | null) {
           let urlString = url.toString();
           
           if (urlString.startsWith('http://') && !urlString.includes('localhost')) {
@@ -55,7 +56,7 @@ export default function MixedContentHandler() {
             urlString = urlString.replace('http://', 'https://');
           }
           
-          return originalXHROpen.call(this, method, urlString, ...args);
+          return originalXHROpen.call(this, method, urlString, async ?? true, user, password);
         };
         
         console.log('✅ Mixed Content Handler: Interceptadores instalados');

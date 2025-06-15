@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { bookService } from '@/services/bookService'
 import GenericCRUD, { CRUDColumn } from '@/components/crud/GenericCRUD'
-import { CourseResponseDto as BookResponseDto } from '@/types/api'
+import { BookResponseDto } from '@/types/api'
 import { useToast } from '@/components/ToastManager'
 import { BookAddModal } from '@/components/BookAddModal'
 import { BookEditModal } from '@/components/BookEditModal'
@@ -58,17 +58,17 @@ export default function BooksPage() {
   }
 
   const handleEditBook = (book: BookResponseDto) => {
-    // Adaptar CourseResponseDto para o formato esperado pelo BookEditModal
+    // BookResponseDto já tem a estrutura correta
     const adaptedBook = {
       id: book.id,
-      title: book.name || '', // CourseResponseDto usa 'name' em vez de 'title'
-      subtitle: book.description || '',
-      author: 'Autor não especificado', // CourseResponseDto não tem author
-      category: 'Categoria não especificada', // CourseResponseDto não tem category
-      pages: 0, // CourseResponseDto não tem pages
-      description: book.description || '',
-      cover_url: '',
-      status: book.active ? 'published' : 'draft'
+      title: book.name,
+      subtitle: book.subtitle || '',
+      author: book.author,
+      category: book.category,
+      pages: book.pages,
+      description: book.subtitle || '', // Usar subtitle como description
+      cover_url: book.cover_url || '',
+      status: book.status
     };
     setSelectedBook(adaptedBook as any);
     setEditModalOpen(true);
@@ -126,20 +126,20 @@ export default function BooksPage() {
 
   const columns: CRUDColumn<BookResponseDto>[] = [
     {
-      key: 'title',
+      key: 'name',
       label: 'Título',
       sortable: true,
       render: (book) => (
         <div className="flex items-center space-x-3">
           {book.cover_url && (
-            <img 
-              src={book.cover_url} 
-              alt={book.title}
+            <img
+              src={book.cover_url}
+              alt={book.name}
               className="w-12 h-16 object-cover rounded"
             />
           )}
           <div>
-            <div className="font-medium text-gray-900">{book.title}</div>
+            <div className="font-medium text-gray-900">{book.name}</div>
             {book.subtitle && (
               <div className="text-sm text-gray-500">{book.subtitle}</div>
             )}

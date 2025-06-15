@@ -136,6 +136,7 @@ export interface RoleDto {
 }
 
 export interface RoleResponseDto extends RoleDto {
+  status: string;
   active?: boolean;
   users_count?: number;
 }
@@ -178,6 +179,7 @@ export interface InstitutionResponseDto extends InstitutionDto {
 
 export interface CreateInstitutionDto {
   name: string;
+  code: string;
   description?: string;
   address?: string;
   phone?: string;
@@ -187,6 +189,7 @@ export interface CreateInstitutionDto {
 
 export interface UpdateInstitutionDto {
   name?: string;
+  code?: string;
   description?: string;
   address?: string;
   phone?: string;
@@ -433,4 +436,41 @@ export interface ClassUpdateDto {
   course_id?: string;
   teacher_id?: string;
   active?: boolean;
+}
+
+// Book DTOs
+export interface BookResponseDto {
+  id: string;
+  name: string;
+  subtitle?: string;
+  author: string;
+  category: string;
+  status: string;
+  pages: number;
+  cover_url?: string;
+  published_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BookCreateDto {
+  name: string;
+  subtitle?: string;
+  author: string;
+  category: string;
+  status: string;
+  pages: number;
+  cover_url?: string;
+  published_date: string;
+}
+
+export interface BookUpdateDto {
+  name?: string;
+  subtitle?: string;
+  author?: string;
+  category?: string;
+  status?: string;
+  pages?: number;
+  cover_url?: string;
+  published_date?: string;
 }

@@ -176,7 +176,8 @@ export class RoleService {
           active: response.data.data?.active ?? true,
           users_count: response.data.data?.users_count || 0,
           created_at: response.data.data?.created_at || new Date().toISOString(),
-          updated_at: response.data.data?.updated_at || new Date().toISOString()
+          updated_at: response.data.data?.updated_at || new Date().toISOString(),
+          status: ''
         };
 
         return role;

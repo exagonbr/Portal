@@ -52,7 +52,7 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
   useEffect(() => {
     const loadInstitutions = async () => {
       try {
-        const response = await institutionService.list();
+        const response = await institutionService.getAll();
         setInstitutions(response.data.map(inst => ({
           id: inst.id,
           name: inst.name
@@ -102,25 +102,27 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Tipo</label>
-          <Select
+          <select
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
             required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Selecione um tipo</option>
             <option value="ESCOLA">Escola</option>
             <option value="FACULDADE">Faculdade</option>
             <option value="UNIVERSIDADE">Universidade</option>
             <option value="CENTRO_EDUCACIONAL">Centro Educacional</option>
-          </Select>
+          </select>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Instituição</label>
-          <Select
+          <select
             value={formData.institution_id}
             onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
             required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Selecione uma instituição</option>
             {institutions.map((inst) => (
@@ -128,7 +130,7 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
                 {inst.name}
               </option>
             ))}
-          </Select>
+          </select>
         </div>
 
         <div className="flex items-center">

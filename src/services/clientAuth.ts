@@ -1,4 +1,4 @@
-import {User} from '../types/auth';
+import {User, UserRole} from '../types/auth';
 import {getSession, signOut} from 'next-auth/react';
 import {MOCK_USERS} from '../constants/mockData';
 
@@ -47,7 +47,10 @@ const removeCookie = (name: string) => {
 
 // User management functions
 export const listUsers = async (): Promise<User[]> => {
-  return Object.values(MOCK_USERS);
+  return Object.values(MOCK_USERS).map(user => ({
+    ...user,
+    role: user.role as UserRole
+  }));
 };
 
 export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
@@ -55,7 +58,7 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
     ...userData,
     id: Math.random().toString(36).substr(2, 9)
   } as User;
-  MOCK_USERS[userData.email] = newUser;
+  (MOCK_USERS as any)[userData.email] = newUser;
   return newUser;
 };
 
@@ -63,8 +66,12 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
   const user = Object.values(MOCK_USERS).find(u => u.id === id);
   if (!user) return null;
   
-  const updatedUser = { ...user, ...userData };
-  MOCK_USERS[user.email] = updatedUser;
+  const updatedUser: User = {
+    ...user,
+    ...userData,
+    role: (userData.role || user.role) as UserRole
+  };
+  (MOCK_USERS as any)[user.email] = updatedUser;
   return updatedUser;
 };
 
@@ -72,7 +79,7 @@ export const deleteUser = async (id: string): Promise<boolean> => {
   const user = Object.values(MOCK_USERS).find(u => u.id === id);
   if (!user) return false;
   
-  delete MOCK_USERS[user.email];
+  delete (MOCK_USERS as any)[user.email];
   return true;
 };
 
@@ -99,8 +106,8 @@ const safeLocalStorage = {
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
   return new Promise(async (resolve, reject) => {
     setTimeout(async () => {
-      if (password === 'teste123') {
-        const user = MOCK_USERS[email.toLowerCase()];
+      if (password === 'password123') {
+        const user = (MOCK_USERS as any)[email.toLowerCase()] as User;
         if (user) {
           try {
             // Gera um session ID simples para o cliente
@@ -147,7 +154,7 @@ export const register = async (
         id: Math.random().toString(36).substr(2, 9),
         name,
         email,
-        role: type,
+        role: type as UserRole,
         courses: []
       };
 
@@ -186,7 +193,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
       id: Math.random().toString(36).substr(2, 9), // Generate random ID for Google users
       name: session.user.name || '',
       email: session.user.email || '',
-      role: 'teacher',
+      role: 'teacher' as UserRole,
       type: 'teacher', // Default role for Google users
       courses: []
     };

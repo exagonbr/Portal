@@ -105,23 +105,23 @@ export class ClassController {
 
       let queryBuilder = Class.query();
 
-      if (query) {
+      if (query && typeof query === 'string') {
         queryBuilder = queryBuilder.where('name', 'ilike', `%${query}%`);
       }
 
-      if (status) {
+      if (status && typeof status === 'string') {
         queryBuilder = queryBuilder.where('status', status);
       }
 
-      if (course_id) {
+      if (course_id && typeof course_id === 'string') {
         queryBuilder = queryBuilder.where('course_id', course_id);
       }
 
-      if (teacher_id) {
+      if (teacher_id && typeof teacher_id === 'string') {
         queryBuilder = queryBuilder.where('teacher_id', teacher_id);
       }
 
-      if (active !== undefined) {
+      if (active !== undefined && typeof active === 'string') {
         queryBuilder = queryBuilder.where('active', active === 'true');
       }
 

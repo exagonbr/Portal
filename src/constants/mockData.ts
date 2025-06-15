@@ -1,6 +1,6 @@
 import { Course } from '../types/education';
 import { ForumThread, ForumTagCategory, ChatMessage } from '../types/communication';
-import { User } from '../types/auth';
+import { User, UserRole } from '../types/auth';
 import { Annotation, Highlight } from '../components/books/BookViewer/types';
 import { Collection } from '../types/collection';
 
@@ -152,7 +152,7 @@ export const MOCK_USERS = {
     id: 'admin1',
     name: 'ADM',
     email: 'admin@portal.com',
-    role: 'admin',
+    role: 'SYSTEM_ADMIN',
     institution: { id: 'portal-corp', name: 'Portal Corp' },
     courses: [],
     endereco: 'Rua Principal, 123',
@@ -462,26 +462,41 @@ export const mockAnnotations: { [bookId: string]: Annotation[] } = {
 export const mockHighlights: { [bookId: string]: Highlight[] } = {
   'local-epub-1': [
     {
-      id: 1,
+      id: '1',
       pageNumber: 25,
       content: 'O sol se punha no horizonte, pintando o céu com cores de fogo e ouro.',
       color: 'yellow',
+      position: {
+        x: 120, y: 300,
+        width: 200,
+        height: 20
+      },
       createdAt: '2024-01-21T18:00:00Z'
     },
     {
-      id: 2,
+      id: '2',
       pageNumber: 25,
       content: 'Uma brisa suave soprava do leste, trazendo consigo o cheiro do mar.',
       color: 'blue',
+      position: {
+        x: 80, y: 350,
+        width: 250,
+        height: 20
+      },
       createdAt: '2024-01-21T18:05:00Z'
     }
   ],
   'local-epub-2': [
     {
-      id: 3,
+      id: '3',
       pageNumber: 10,
       content: 'A decisão foi tomada. Não havia mais volta.',
       color: 'green',
+      position: {
+        x: 200, y: 180,
+        width: 180,
+        height: 20
+      },
       createdAt: '2024-01-23T11:45:00Z'
     }
   ]

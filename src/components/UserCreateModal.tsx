@@ -54,10 +54,10 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
           // Mock data para desenvolvimento
           const now = new Date().toISOString();
           setRoles([
-            { id: 'role-1', name: 'Administrador', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
-            { id: 'role-2', name: 'Professor', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
-            { id: 'role-3', name: 'Estudante', description: 'Acessa os cursos e materiais', created_at: now, updated_at: now },
-            { id: 'role-4', name: 'Coordenador', description: 'Coordena professores e turmas', created_at: now, updated_at: now },
+            { id: 'role-1', name: 'Administrador', description: 'Acesso total ao sistema', status: 'active', created_at: now, updated_at: now },
+            { id: 'role-2', name: 'Professor', description: 'Gerencia cursos e alunos', status: 'active', created_at: now, updated_at: now },
+            { id: 'role-3', name: 'Estudante', description: 'Acessa os cursos e materiais', status: 'active', created_at: now, updated_at: now },
+            { id: 'role-4', name: 'Coordenador', description: 'Coordena professores e turmas', status: 'active', created_at: now, updated_at: now },
           ]);
         }
 

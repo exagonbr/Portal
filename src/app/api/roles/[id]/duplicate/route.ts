@@ -74,6 +74,7 @@ export async function POST(
       name,
       description: existingRole.description ? `${existingRole.description} (Cópia)` : `Cópia de ${existingRole.name}`,
       permissions: existingRole.permissions ? [...existingRole.permissions] : [],
+      status: existingRole.status || 'active',
       active: true,
       users_count: 0,
       created_at: new Date().toISOString(),

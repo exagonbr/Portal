@@ -1,5 +1,5 @@
 import api from './api'
-import { CourseResponseDto as BookResponseDto, CourseCreateDto as BookCreateDto, CourseUpdateDto as BookUpdateDto, PaginatedResponseDto as PaginatedResponse } from '@/types/api'
+import { BookResponseDto, BookCreateDto, BookUpdateDto, PaginatedResponseDto as PaginatedResponse } from '@/types/api'
 
 interface BookFilters {
   search?: string
@@ -58,10 +58,20 @@ export const bookService = {
             updated_at: '2023-02-20'
           }
         ],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        },
         total: 2,
         page: 1,
         limit: 10,
-        totalPages: 1
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false
       }
     }
   },

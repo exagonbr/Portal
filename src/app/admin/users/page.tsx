@@ -853,12 +853,12 @@ export default function ManageUsers() {
         console.log('🔧 Usando roles mock como fallback...');
         const now = new Date().toISOString();
         rolesData = [
-          { id: 'role-admin', name: 'Administrador', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
-          { id: 'role-teacher', name: 'Professor', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
-          { id: 'role-student', name: 'Estudante', description: 'Acessa os cursos e materiais', created_at: now, updated_at: now },
-          { id: 'role-coordinator', name: 'Coordenador', description: 'Coordena professores e turmas', created_at: now, updated_at: now },
-          { id: 'role-manager', name: 'Gerente', description: 'Gerencia instituição', created_at: now, updated_at: now },
-          { id: 'role-guardian', name: 'Responsável', description: 'Responsável por estudante', created_at: now, updated_at: now },
+          { id: 'role-admin', name: 'Administrador', description: 'Acesso total ao sistema', status: 'active', created_at: now, updated_at: now },
+          { id: 'role-teacher', name: 'Professor', description: 'Gerencia cursos e alunos', status: 'active', created_at: now, updated_at: now },
+          { id: 'role-student', name: 'Estudante', description: 'Acessa os cursos e materiais', status: 'active', created_at: now, updated_at: now },
+          { id: 'role-coordinator', name: 'Coordenador', description: 'Coordena professores e turmas', status: 'active', created_at: now, updated_at: now },
+          { id: 'role-manager', name: 'Gerente', description: 'Gerencia instituição', status: 'active', created_at: now, updated_at: now },
+          { id: 'role-guardian', name: 'Responsável', description: 'Responsável por estudante', status: 'active', created_at: now, updated_at: now },
         ];
         console.log('🔧 Roles mock criadas:', rolesData.map(r => ({ id: r.id, name: r.name })));
       }
@@ -921,9 +921,9 @@ export default function ManageUsers() {
       // Em caso de erro crítico, usa os mocks
       const now = new Date().toISOString();
       const fallbackRoles = [
-        { id: 'fallback-admin', name: 'Administrador (Fallback)', description: 'Acesso total ao sistema', created_at: now, updated_at: now },
-        { id: 'fallback-teacher', name: 'Professor (Fallback)', description: 'Gerencia cursos e alunos', created_at: now, updated_at: now },
-        { id: 'fallback-student', name: 'Estudante (Fallback)', description: 'Acessa os cursos e materiais', created_at: now, updated_at: now },
+        { id: 'fallback-admin', name: 'Administrador (Fallback)', description: 'Acesso total ao sistema', status: 'active', created_at: now, updated_at: now },
+        { id: 'fallback-teacher', name: 'Professor (Fallback)', description: 'Gerencia cursos e alunos', status: 'active', created_at: now, updated_at: now },
+        { id: 'fallback-student', name: 'Estudante (Fallback)', description: 'Acessa os cursos e materiais', status: 'active', created_at: now, updated_at: now },
       ];
       const fallbackInstitutions = [
         { id: 'fallback-inst', name: 'Escola SaberCon (Fallback)', code: 'SABERCON_FALLBACK', created_at: now, updated_at: now },

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import { mockRoles, findRoleByName } from './mockDatabase'
+import { stat } from 'fs'
 
 // Schema de validação para criação de role
 const createRoleSchema = z.object({
@@ -156,7 +157,8 @@ export async function POST(request: NextRequest) {
       ...roleData,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      users_count: 0
+      users_count: 0,
+      status: 'active'
     }
 
     mockRoles.set(newRole.id, newRole)

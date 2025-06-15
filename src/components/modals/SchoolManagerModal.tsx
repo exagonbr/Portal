@@ -4,9 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Search, UserPlus, UserMinus } from 'lucide-react';
 import { SchoolManager, CreateSchoolManagerData, UpdateSchoolManagerData, ManagerPosition, MANAGER_POSITION_LABELS, SchoolManagerWithDetails } from '@/types/schoolManager';
 import { schoolManagerService } from '@/services/schoolManagerService';
-import { schoolService } from '@/services/schoolService';
+import { schoolService, School } from '@/services/schoolService';
 import { userService } from '@/services/userService';
-import { School } from '@/types/school';
 import { UserResponseDto } from '@/types/api';
 
 interface SchoolManagerModalProps {
