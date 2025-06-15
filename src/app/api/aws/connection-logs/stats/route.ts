@@ -1,40 +1,8 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { getAuthentication, hasRequiredRole } from '../../lib/auth-utils';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
-
-// Helper function to validate JWT token
-async function validateJWTToken(token: string) {
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as any;
-    return {
-      user: {
-        id: decoded.userId,
-        email: decoded.email,
-        name: decoded.name,
-        role: decoded.role,
-        institution_id: decoded.institutionId,
-        permissions: decoded.permissions || []
-      }
-    };
-  } catch (error) {
-    return null;
-  }
-}
-
-// Helper function to get authentication
-async function getAuthentication(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const jwtSession = await validateJWTToken(token);
-    if (jwtSession) {
-      return jwtSession;
-    }
-  }
-  return null;
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se é admin
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(session.user.role)) {
+    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { status: 403 }

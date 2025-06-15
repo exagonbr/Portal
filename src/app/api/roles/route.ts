@@ -1,22 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
 import { mockRoles, findRoleByName } from './mockDatabase'
-import { stat } from 'fs'
 
 // Schema de validação para criação de role
 const createRoleSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   description: z.string().optional(),
-  permissions: z.array(z.string()).optional(),
-  active: z.boolean().default(true)
+  permissions: z.array(z.string()).default([]),
+  is_active: z.boolean().default(true)
 })
 
 // GET - Listar roles
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -25,24 +23,23 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Verificar permissões
+    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
+      return NextResponse.json(
+        { error: 'Sem permissão para listar roles' },
+        { status: 403 }
+      )
+    }
+
     // Parâmetros de query
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
-    const active = searchParams.get('active')
-    const sortBy = searchParams.get('sortBy') || 'name'
-    const sortOrder = searchParams.get('sortOrder') || 'asc'
+    const is_active = searchParams.get('is_active')
 
     // Buscar roles
-    let roles = Array.from(mockRoles.values())
-
-    // Aplicar filtros baseados no role do usuário
-    const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)) {
-      // Usuários comuns veem apenas roles ativas
-      roles = roles.filter(role => role.active)
-    }
+    let roles = [...mockRoles]
 
     // Aplicar filtros de busca
     if (search) {
@@ -53,27 +50,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    if (active !== null) {
-      roles = roles.filter(role => role.active === (active === 'true'))
+    if (is_active !== null) {
+      roles = roles.filter(role => role.is_active === (is_active === 'true'))
     }
 
-    // Ordenar
-    roles.sort((a, b) => {
-      if (sortBy === 'name') {
-        return sortOrder === 'asc' 
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name)
-      }
-      if (sortBy === 'users_count') {
-        const countA = a.users_count || 0
-        const countB = b.users_count || 0
-        return sortOrder === 'asc' ? countA - countB : countB - countA
-      }
-      // Default para created_at
-      return sortOrder === 'asc'
-        ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        : new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    })
+    // Ordenar por nome
+    roles.sort((a, b) => a.name.localeCompare(b.name))
 
     // Paginação
     const startIndex = (page - 1) * limit
@@ -88,9 +70,7 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: roles.length,
-          totalPages: Math.ceil(roles.length / limit),
-          hasNext: endIndex < roles.length,
-          hasPrev: page > 1
+          totalPages: Math.ceil(roles.length / limit)
         }
       }
     })
@@ -98,7 +78,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao listar roles:', error)
     return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
@@ -107,19 +87,19 @@ export async function GET(request: NextRequest) {
 // POST - Criar role
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
+        { error: 'Não autorizado' },
         { status: 401 }
       )
     }
 
-    // Apenas SYSTEM_ADMIN e INSTITUTION_MANAGER podem criar roles
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(session.user?.role)) {
+    // Verificar permissões
+    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN'])) {
       return NextResponse.json(
-        { success: false, error: 'Sem permissão para criar roles' },
+        { error: 'Sem permissão para criar roles' },
         { status: 403 }
       )
     }
@@ -131,7 +111,6 @@ export async function POST(request: NextRequest) {
     if (!validationResult.success) {
       return NextResponse.json(
         { 
-          success: false,
           error: 'Dados inválidos',
           errors: validationResult.error.flatten().fieldErrors
         },
@@ -141,12 +120,11 @@ export async function POST(request: NextRequest) {
 
     const roleData = validationResult.data
 
-    // Verificar se nome já existe
+    // Verificar se já existe role com mesmo nome
     const existingRole = findRoleByName(roleData.name)
-
     if (existingRole) {
       return NextResponse.json(
-        { success: false, error: 'Já existe uma role com este nome' },
+        { error: 'Já existe uma role com este nome' },
         { status: 409 }
       )
     }
@@ -157,11 +135,10 @@ export async function POST(request: NextRequest) {
       ...roleData,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      users_count: 0,
-      status: 'active'
+      created_by: session.user?.id
     }
 
-    mockRoles.set(newRole.id, newRole)
+    mockRoles.push(newRole)
 
     return NextResponse.json({
       success: true,
@@ -172,7 +149,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao criar role:', error)
     return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
@@ -180,13 +157,62 @@ export async function POST(request: NextRequest) {
 
 // PUT - Atualizar role (redireciona para o endpoint correto)
 export async function PUT(request: NextRequest) {
-  return NextResponse.json(
-    {
-      success: false,
-      error: 'Método não permitido neste endpoint',
-      message: 'Para atualizar uma role, use PUT /api/roles/{id}',
-      example: 'PUT /api/roles/role_123456'
-    },
-    { status: 405 }
-  )
+  try {
+    const session = await getAuthentication(request)
+    
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      )
+    }
+
+    // Verificar permissões
+    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN'])) {
+      return NextResponse.json(
+        { error: 'Sem permissão para atualizar roles' },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json()
+    const { id, ...updateData } = body
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID da role é obrigatório' },
+        { status: 400 }
+      )
+    }
+
+    // Buscar role existente
+    const roleIndex = mockRoles.findIndex(role => role.id === id)
+    if (roleIndex === -1) {
+      return NextResponse.json(
+        { error: 'Role não encontrada' },
+        { status: 404 }
+      )
+    }
+
+    // Atualizar role
+    mockRoles[roleIndex] = {
+      ...mockRoles[roleIndex],
+      ...updateData,
+      updated_at: new Date().toISOString(),
+      updated_by: session.user?.id
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: mockRoles[roleIndex],
+      message: 'Role atualizada com sucesso'
+    })
+
+  } catch (error) {
+    console.error('Erro ao atualizar role:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
+  }
 }

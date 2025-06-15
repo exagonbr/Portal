@@ -1,35 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+// Mock de configurações
+const mockSettings = {
+  general: {
+    site_name: 'Portal Educacional',
+    site_description: 'Sistema de gestão educacional',
+    logo_url: '/logo.png',
+    theme: 'light'
+  },
+  email: {
+    smtp_host: 'smtp.gmail.com',
+    smtp_port: 587,
+    smtp_user: 'noreply@portal.com',
+    smtp_enabled: true
+  },
+  aws: {
+    region: 'sa-east-1',
+    s3_bucket: 'portal-files',
+    enabled: true
+  },
+  security: {
+    password_min_length: 8,
+    session_timeout: 3600,
+    two_factor_enabled: false
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
-    if (!session || session.user?.role !== 'SYSTEM_ADMIN') {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      )
     }
 
-    // Buscar configurações do backend
-    const response = await fetch(`${BACKEND_URL}/api/settings`, {
-      headers: {
-        'Authorization': `Bearer ${session.user?.id}`,
-        'Content-Type': 'application/json'
-      }
+    // Verificar permissões
+    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN'])) {
+      return NextResponse.json(
+        { error: 'Sem permissão para visualizar configurações' },
+        { status: 403 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: mockSettings
     })
 
-    if (!response.ok) {
-      throw new Error('Erro ao buscar configurações')
-    }
-
-    const settings = await response.json()
-    return NextResponse.json(settings)
   } catch (error) {
     console.error('Erro ao buscar configurações:', error)
     return NextResponse.json(
-      { error: 'Erro ao buscar configurações' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
@@ -37,33 +62,38 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
-    if (!session || session.user?.role !== 'SYSTEM_ADMIN') {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      )
     }
 
-    const updates = await request.json()
+    // Verificar permissões
+    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN'])) {
+      return NextResponse.json(
+        { error: 'Sem permissão para alterar configurações' },
+        { status: 403 }
+      )
+    }
 
-    // Enviar atualizações para o backend
-    const response = await fetch(`${BACKEND_URL}/api/settings`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${session.user?.id}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(updates)
+    const body = await request.json()
+
+    // Atualizar configurações (em produção, salvar no banco)
+    Object.assign(mockSettings, body)
+
+    return NextResponse.json({
+      success: true,
+      data: mockSettings,
+      message: 'Configurações atualizadas com sucesso'
     })
 
-    if (!response.ok) {
-      throw new Error('Erro ao atualizar configurações')
-    }
-
-    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Erro ao atualizar configurações:', error)
     return NextResponse.json(
-      { error: 'Erro ao atualizar configurações' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }

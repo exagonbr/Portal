@@ -1,131 +1,141 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
-import { API_CONFIG } from '@/config/constants'
-import jwt from 'jsonwebtoken'
-
-// Helper function to validate JWT token
-async function validateJWTToken(token: string) {
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as any;
-    return {
-      user: {
-        id: decoded.userId,
-        email: decoded.email,
-        name: decoded.name,
-        role: decoded.role,
-        institution_id: decoded.institutionId,
-        permissions: decoded.permissions || []
-      }
-    };
-  } catch (error) {
-    return null;
-  }
-}
-
-// Helper function to get authentication from either NextAuth or JWT
-async function getAuthentication(request: NextRequest) {
-  // First try NextAuth session
-  const session = await getServerSession(authOptions);
-  if (session) {
-    return session;
-  }
-
-  // Then try JWT token from Authorization header
-  const authHeader = request.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const jwtSession = await validateJWTToken(token);
-    if (jwtSession) {
-      return jwtSession;
-    }
-  }
-
-  return null;
-}
+import { getAuthentication, hasRequiredRole } from './lib/auth-utils'
 
 // Schema de validação para criação de usuário
 const createUserSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
+  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  role_id: z.string().uuid('ID de role inválido'),
-  institution_id: z.string().uuid('ID de instituição inválido').optional(),
-  school_id: z.string().uuid('ID de escola inválido').optional(),
-  telefone: z.string().optional(),
-  endereco: z.string().optional(),
+  role: z.enum(['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'TEACHER', 'STUDENT', 'GUARDIAN']),
+  institution_id: z.string().uuid().optional(),
+  school_id: z.string().uuid().optional(),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').optional()
 })
 
-// GET - Listar usuários (Proxy para o Backend)
+// Mock database - substituir por Prisma/banco real
+const mockUsers = new Map()
+
+// GET - Listar usuários
 export async function GET(request: NextRequest) {
   try {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-    }
-
-    // A verificação de permissão deve ser feita no backend, mas podemos ter uma camada aqui também
-    const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
-      return NextResponse.json({ error: 'Sem permissão para listar usuários' }, { status: 403 })
-    }
-
-    // Encaminha todos os parâmetros de query para o backend
-    const { searchParams } = new URL(request.url)
-    const backendUrl = `${API_CONFIG.BASE_URL}/users?${searchParams.toString()}`
-
-    // Get the original Authorization header to pass to backend
-    const authHeader = request.headers.get('authorization');
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json'
-    };
-    
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    } else {
-      // If no auth header but we have a session, create one
-      headers['Authorization'] = `Bearer ${session.user?.id}`;
-    }
-
-    const response = await fetch(backendUrl, { headers })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: response.statusText }))
-      console.error('Erro ao buscar usuários do backend:', errorData)
       return NextResponse.json(
-        { error: 'Erro ao buscar usuários no backend', details: errorData },
-        { status: response.status }
+        { error: 'Não autorizado' },
+        { status: 401 }
       )
     }
 
-    const data = await response.json()
-    return NextResponse.json(data)
+    // Verificar permissões
+    const userRole = session.user?.role
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'])) {
+      return NextResponse.json(
+        { error: 'Sem permissão para listar usuários' },
+        { status: 403 }
+      )
+    }
+
+    // Parâmetros de query
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const search = searchParams.get('search') || ''
+    const role = searchParams.get('role')
+    const institution_id = searchParams.get('institution_id')
+    const is_active = searchParams.get('is_active')
+
+    // Buscar usuários (substituir por query real)
+    let users = Array.from(mockUsers.values())
+
+    // Aplicar filtros baseados no role do usuário
+    if (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id) {
+      users = users.filter(user => user.institution_id === session.user.institution_id)
+    } else if (userRole === 'SCHOOL_MANAGER' && session.user.school_id) {
+      users = users.filter(user => user.school_id === session.user.school_id)
+    }
+
+    // Aplicar filtros de busca
+    if (search) {
+      const searchLower = search.toLowerCase()
+      users = users.filter(user => 
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower)
+      )
+    }
+
+    if (role) {
+      users = users.filter(user => user.role === role)
+    }
+
+    if (institution_id) {
+      users = users.filter(user => user.institution_id === institution_id)
+    }
+
+    if (is_active !== null) {
+      users = users.filter(user => user.is_active === (is_active === 'true'))
+    }
+
+    // Ordenar por nome
+    users.sort((a, b) => a.name.localeCompare(b.name))
+
+    // Paginação
+    const startIndex = (page - 1) * limit
+    const endIndex = page * limit
+    const paginatedUsers = users.slice(startIndex, endIndex)
+
+    // Remover dados sensíveis
+    const safeUsers = paginatedUsers.map(user => ({
+      ...user,
+      password: undefined
+    }))
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        items: safeUsers,
+        pagination: {
+          page,
+          limit,
+          total: users.length,
+          totalPages: Math.ceil(users.length / limit)
+        }
+      }
+    })
 
   } catch (error) {
-    console.error('Erro no proxy ao listar usuários:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
+    console.error('Erro ao listar usuários:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
   }
 }
 
-// POST - Criar usuário (Proxy para o Backend)
+// POST - Criar usuário
 export async function POST(request: NextRequest) {
   try {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Não autorizado' },
+        { status: 401 }
+      )
     }
 
+    // Verificar permissões
     const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
-      return NextResponse.json({ error: 'Sem permissão para criar usuários' }, { status: 403 })
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'])) {
+      return NextResponse.json(
+        { error: 'Sem permissão para criar usuários' },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
 
-    // Valida o corpo da requisição antes de enviar para o backend
+    // Validar dados
     const validationResult = createUserSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
@@ -137,41 +147,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const backendUrl = `${API_CONFIG.BASE_URL}/users`
-    
-    // Get the original Authorization header to pass to backend
-    const authHeader = request.headers.get('authorization');
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json'
-    };
-    
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    } else {
-      // If no auth header but we have a session, create one
-      headers['Authorization'] = `Bearer ${session.user?.id}`;
+    const userData = validationResult.data
+
+    // Verificar se email já existe
+    const existingUser = Array.from(mockUsers.values()).find(
+      user => user.email === userData.email
+    )
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Email já está em uso' },
+        { status: 409 }
+      )
     }
 
-    const response = await fetch(backendUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(validationResult.data)
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-        console.error('Erro ao criar usuário no backend:', data)
-        return NextResponse.json(
-            { error: 'Erro ao criar usuário no backend', details: data },
-            { status: response.status }
-        )
+    // Criar usuário
+    const newUser = {
+      id: `user_${Date.now()}`,
+      ...userData,
+      password: userData.password || 'password123', // Gerar senha temporária
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      created_by: session.user?.id
     }
 
-    return NextResponse.json(data, { status: 201 })
+    mockUsers.set(newUser.id, newUser)
+
+    // Remover senha da resposta
+    const { password, ...safeUser } = newUser
+
+    return NextResponse.json({
+      success: true,
+      data: safeUser,
+      message: 'Usuário criado com sucesso'
+    }, { status: 201 })
 
   } catch (error) {
-    console.error('Erro no proxy ao criar usuário:', error)
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
+    console.error('Erro ao criar usuário:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
   }
 }

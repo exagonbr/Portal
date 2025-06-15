@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
 
 // Schema de validação para atualização de usuário
 const updateUserSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').optional(),
+  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
   email: z.string().email('Email inválido').optional(),
-  role_id: z.string().uuid('ID de role inválido').optional(),
-  institution_id: z.string().uuid('ID de instituição inválido').nullable().optional(),
-  school_id: z.string().uuid('ID de escola inválido').nullable().optional(),
+  role: z.enum(['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'TEACHER', 'STUDENT', 'GUARDIAN']).optional(),
+  is_active: z.boolean().optional(),
   telefone: z.string().optional(),
-  endereco: z.string().optional(),
-  is_active: z.boolean().optional()
+  endereco: z.string().optional()
 })
 
 // Mock database - substituir por Prisma/banco real
@@ -24,7 +21,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -35,7 +32,7 @@ export async function GET(
 
     const userId = params.id
 
-    // Buscar usuário (substituir por query real)
+    // Buscar usuário
     const user = mockUsers.get(userId)
 
     if (!user) {
@@ -45,23 +42,27 @@ export async function GET(
       )
     }
 
-    // Verificar permissões
+    // Verificar permissões de visualização
     const userRole = session.user?.role
-    const isSelf = session.user?.id === userId
-    
-    if (!isSelf && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
+    const canView = 
+      userRole === 'SYSTEM_ADMIN' ||
+      (userRole === 'INSTITUTION_ADMIN' && user.institution_id === session.user.institution_id) ||
+      (userRole === 'SCHOOL_MANAGER' && user.school_id === session.user.school_id) ||
+      session.user?.id === userId // Próprio usuário
+
+    if (!canView) {
       return NextResponse.json(
         { error: 'Sem permissão para visualizar este usuário' },
         { status: 403 }
       )
     }
 
-    // Remover senha da resposta
-    const { password, ...userResponse } = user
+    // Remover dados sensíveis
+    const { password, ...safeUser } = user
 
     return NextResponse.json({
       success: true,
-      data: userResponse
+      data: safeUser
     })
 
   } catch (error) {
@@ -79,7 +80,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -116,22 +117,26 @@ export async function PUT(
 
     // Verificar permissões
     const userRole = session.user?.role
-    const isSelf = session.user?.id === userId
-    
-    if (!isSelf && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
+    const canEdit = 
+      userRole === 'SYSTEM_ADMIN' ||
+      (userRole === 'INSTITUTION_ADMIN' && existingUser.institution_id === session.user.institution_id) ||
+      (userRole === 'SCHOOL_MANAGER' && existingUser.school_id === session.user.school_id) ||
+      (session.user?.id === userId && !updateData.role) // Próprio usuário (sem alterar role)
+
+    if (!canEdit) {
       return NextResponse.json(
-        { error: 'Sem permissão para atualizar este usuário' },
+        { error: 'Sem permissão para editar este usuário' },
         { status: 403 }
       )
     }
 
-    // Se está alterando email, verificar se já existe
+    // Se está alterando email, verificar duplicação
     if (updateData.email && updateData.email !== existingUser.email) {
-      const emailExists = Array.from(mockUsers.values()).some(
+      const duplicateUser = Array.from(mockUsers.values()).find(
         user => user.email === updateData.email && user.id !== userId
       )
 
-      if (emailExists) {
+      if (duplicateUser) {
         return NextResponse.json(
           { error: 'Email já está em uso' },
           { status: 409 }
@@ -143,17 +148,18 @@ export async function PUT(
     const updatedUser = {
       ...existingUser,
       ...updateData,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      updated_by: session.user?.id
     }
 
     mockUsers.set(userId, updatedUser)
 
-    // Remover senha da resposta
-    const { password, ...userResponse } = updatedUser
+    // Remover dados sensíveis
+    const { password, ...safeUser } = updatedUser
 
     return NextResponse.json({
       success: true,
-      data: userResponse,
+      data: safeUser,
       message: 'Usuário atualizado com sucesso'
     })
 
@@ -172,7 +178,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -181,17 +187,9 @@ export async function DELETE(
       )
     }
 
-    // Apenas SYSTEM_ADMIN pode deletar usuários
-    if (session.user?.role !== 'SYSTEM_ADMIN') {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar usuários' },
-        { status: 403 }
-      )
-    }
-
     const userId = params.id
 
-    // Verificar se usuário existe
+    // Buscar usuário
     const existingUser = mockUsers.get(userId)
     if (!existingUser) {
       return NextResponse.json(
@@ -200,11 +198,24 @@ export async function DELETE(
       )
     }
 
-    // Não permitir deletar a si mesmo
+    // Verificar permissões
+    const userRole = session.user?.role
+    const canDelete = 
+      userRole === 'SYSTEM_ADMIN' ||
+      (userRole === 'INSTITUTION_ADMIN' && existingUser.institution_id === session.user.institution_id)
+
+    if (!canDelete) {
+      return NextResponse.json(
+        { error: 'Sem permissão para deletar este usuário' },
+        { status: 403 }
+      )
+    }
+
+    // Não permitir deletar próprio usuário
     if (session.user?.id === userId) {
       return NextResponse.json(
-        { error: 'Você não pode deletar sua própria conta' },
-        { status: 400 }
+        { error: 'Não é possível deletar seu próprio usuário' },
+        { status: 409 }
       )
     }
 
