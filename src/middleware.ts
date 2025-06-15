@@ -127,72 +127,37 @@ function getDashboardForRole(role: string): string {
 }
 
 /**
- * Middleware principal
+ * Middleware principal - Simplificado para evitar loops
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  console.log(`🔧 Middleware: Processando ${pathname}`);
+  // Log apenas uma vez por rota para debug
+  console.log(`🔧 Middleware: ${pathname}`);
 
-  // 1. Permitir rotas públicas sempre
-  if (isPublicRoute(pathname)) {
-    console.log(`🔧 Middleware: Rota pública permitida: ${pathname}`);
-    return NextResponse.next();
-  }
-
-  // 2. TEMPORÁRIO: Desabilitar middleware para resolver loop - usar ClientAuthGuard
-  if (isProtectedRoute(pathname)) {
-    console.log(`🔧 Middleware: Rota protegida ${pathname} - TEMPORARIAMENTE PERMITIDA`);
-    console.log(`🔧 Middleware: Usando ClientAuthGuard para proteção no lado do cliente`);
-    return NextResponse.next();
-    
-    /* CÓDIGO COMENTADO TEMPORARIAMENTE PARA RESOLVER LOOP
-    const token = request.cookies.get(MIDDLEWARE_CONFIG.COOKIES.AUTH_TOKEN)?.value;
-    const userDataCookie = request.cookies.get(MIDDLEWARE_CONFIG.COOKIES.USER_DATA)?.value;
-    
-    // Verificar também se há token no header Authorization (para casos onde cookies falham)
-    const authHeader = request.headers.get('authorization');
-    const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    
-    // Verificar header customizado também
-    const customToken = request.headers.get('x-auth-token');
-    
-    console.log(`🔧 Middleware: Verificando autenticação para ${pathname}`);
-    console.log(`🔧 Middleware: Cookie token: ${token ? 'Presente' : 'Ausente'}`);
-    console.log(`🔧 Middleware: Header token: ${headerToken ? 'Presente' : 'Ausente'}`);
-    console.log(`🔧 Middleware: Custom token: ${customToken ? 'Presente' : 'Ausente'}`);
-    console.log(`🔧 Middleware: UserData cookie: ${userDataCookie ? 'Presente' : 'Ausente'}`);
-    
-    // Permitir acesso se houver token nos cookies OU nos headers
-    const hasValidToken = token || headerToken || customToken;
-    
-    if (!hasValidToken) {
-      console.log(`🔧 Middleware: Sem token válido, redirecionando para login`);
-      return createRedirect('/login', request);
-    }
-    
-    console.log(`🔧 Middleware: Token válido encontrado, permitindo acesso`);
-    return NextResponse.next();
-    */
-  }
-
-  // 3. Para outras rotas, permitir
-  console.log(`🔧 Middleware: Rota não protegida, permitindo: ${pathname}`);
+  // Como o matcher já filtra apenas rotas protegidas específicas,
+  // e estamos usando ClientAuthGuard no lado do cliente,
+  // simplesmente permitir todas as requisições que chegam aqui
   return NextResponse.next();
 }
 
 /**
- * Configuração do matcher
+ * Configuração do matcher - Específica apenas para rotas que realmente precisam
  */
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
+     * Match apenas rotas protegidas específicas:
+     * - /dashboard/* (rotas protegidas)
+     * - /admin/* (rotas protegidas)
+     * - /profile/* (rotas protegidas)
+     * - /settings/* (rotas protegidas)
+     * 
+     * NÃO incluir /api/* para evitar loop nas APIs
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/profile/:path*',
+    '/settings/:path*',
   ],
 }; 
