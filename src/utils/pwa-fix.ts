@@ -3,8 +3,6 @@
  * Identifica e resolve problemas de interceptação de requisições
  */
 
-import { fetchInterceptorManager, type FetchMonitor } from './fetch-interceptor';
-
 interface PWALoopDetector {
   requestCount: number;
   lastReset: number;
@@ -21,10 +19,11 @@ class PWALoopFixer {
   };
 
   private isMonitoring = false;
-  private readonly INTERCEPTOR_NAME = 'pwa-loop-fixer';
+  private originalFetch: typeof fetch | null = null;
 
   constructor() {
-    // Não precisamos mais armazenar originalFetch
+    // Armazenar referência original do fetch
+    this.originalFetch = window.fetch;
   }
 
   /**
@@ -36,10 +35,8 @@ class PWALoopFixer {
     console.log('🔍 PWA Loop Fixer: Iniciando monitoramento');
     this.isMonitoring = true;
 
-    // Adicionar interceptador ao sistema coordenado
-    fetchInterceptorManager.addInterceptor(this.INTERCEPTOR_NAME, {
-      monitor: this.createFetchInterceptor()
-    });
+    // Interceptar fetch diretamente
+    this.interceptFetch();
 
     // Monitorar service worker
     this.monitorServiceWorker();
@@ -54,21 +51,29 @@ class PWALoopFixer {
     console.log('🛑 PWA Loop Fixer: Parando monitoramento');
     this.isMonitoring = false;
 
-    // Remover interceptador do sistema coordenado
-    fetchInterceptorManager.removeInterceptor(this.INTERCEPTOR_NAME);
+    // Restaurar fetch original
+    if (this.originalFetch) {
+      window.fetch = this.originalFetch;
+    }
   }
 
   /**
-   * Cria interceptor de fetch para detectar loops
+   * Intercepta fetch para detectar loops
    */
-  private createFetchInterceptor(): FetchMonitor {
-    return (input: RequestInfo | URL, init?: RequestInit): void => {
+  private interceptFetch(): void {
+    if (!this.originalFetch) return;
+
+    const originalFetch = this.originalFetch;
+    
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       
       // Verificar se é requisição de API
       if (url.includes('/api/')) {
         this.trackRequest(url);
       }
+
+      return originalFetch(input, init);
     };
   }
 

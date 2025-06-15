@@ -201,17 +201,19 @@ export class QueueService {
   }
 
   /**
-   * Obtém estatísticas da fila
+   * Obtém estatísticas da fila (mock local)
    */
   async getStats(): Promise<QueueStats> {
     try {
-      const response = await apiClient.get<QueueStats>('/api/queue/stats');
-
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao obter estatísticas da fila');
-      }
-
-      return response.data;
+      // Retornar estatísticas mock para evitar chamadas desnecessárias
+      return {
+        pending: 0,
+        processing: 0,
+        completed: 0,
+        failed: 0,
+        delayed: 0,
+        total: 0
+      };
     } catch (error) {
       console.error('Erro ao obter estatísticas da fila:', error);
       throw new Error(handleApiError(error));

@@ -1,49 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import { mockInstitutions, findInstitutionByEmail, findInstitutionByCNPJ } from './mockDatabase'
-import jwt from 'jsonwebtoken'
-
-// Helper function to validate JWT token
-async function validateJWTToken(token: string) {
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as any;
-    return {
-      user: {
-        id: decoded.userId,
-        email: decoded.email,
-        name: decoded.name,
-        role: decoded.role,
-        institution_id: decoded.institutionId,
-        permissions: decoded.permissions || []
-      }
-    };
-  } catch (error) {
-    return null;
-  }
-}
-
-// Helper function to get authentication from either NextAuth or JWT
-async function getAuthentication(request: NextRequest) {
-  // First try NextAuth session
-  const session = await getServerSession(authOptions);
-  if (session) {
-    return session;
-  }
-
-  // Then try JWT token from Authorization header
-  const authHeader = request.headers.get('authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    const jwtSession = await validateJWTToken(token);
-    if (jwtSession) {
-      return jwtSession;
-    }
-  }
-
-  return null;
-}
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 
 // Schema de validação para criação de instituição
 const createInstitutionSchema = z.object({
@@ -100,7 +58,7 @@ export async function GET(request: NextRequest) {
     if (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id) {
       // Admin de instituição vê apenas sua própria instituição
       institutions = institutions.filter(inst => inst.id === session.user.institution_id)
-    } else if (!['SYSTEM_ADMIN'].includes(userRole)) {
+    } else if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN'])) {
       // Outros usuários veem apenas instituições ativas
       institutions = institutions.filter(inst => inst.active)
     }
@@ -174,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apenas SYSTEM_ADMIN pode criar instituições
-    if (session.user?.role !== 'SYSTEM_ADMIN') {
+    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN'])) {
       return NextResponse.json(
         { error: 'Sem permissão para criar instituições' },
         { status: 403 }

@@ -23,17 +23,22 @@ export function QueueMonitor() {
       setIsLoading(true);
       setError(null);
       
-      const response = await apiClient.get<QueueStats>('/api/queue/stats');
+      // Usar dados mock locais em vez de chamada à API
+      const mockStats = {
+        pending: 0,
+        processing: 0,
+        completed: 0,
+        failed: 0,
+        delayed: 0,
+        total: 0
+      };
+      
       const responseTime = Date.now() - startTime;
 
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Falha ao obter estatísticas da fila');
-      }
-
       const queueStats: QueueMonitorStats = {
-        ...response.data,
+        ...mockStats,
         lastUpdate: new Date().toISOString(),
-        isHealthy: response.data.failed < 10 && response.data.pending < 50,
+        isHealthy: mockStats.failed < 10 && mockStats.pending < 50,
         responseTime
       };
 

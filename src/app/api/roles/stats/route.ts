@@ -1,13 +1,12 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { getRoleStats } from '../mockDatabase'
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 
 // GET - Obter estatísticas das roles
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -17,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apenas SYSTEM_ADMIN, INSTITUTION_MANAGER e ACADEMIC_COORDINATOR podem ver estatísticas
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR'].includes(session.user?.role)) {
+    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR'])) {
       return NextResponse.json(
         { success: false, error: 'Sem permissão para visualizar estatísticas' },
         { status: 403 }
