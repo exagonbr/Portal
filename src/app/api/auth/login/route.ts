@@ -10,13 +10,45 @@ const PATTERN_DETECTION_WINDOW = 5000; // 5 segundos para detectar padrões
 const MAX_CONSECUTIVE_REQUESTS = 12; // Máximo 12 requisições consecutivas muito rápidas
 const MIN_REQUEST_INTERVAL = 300; // Mínimo 300ms entre requisições para não ser considerado loop
 
+// Sistema de detecção de loops mais agressivo
+const loopDetectionCache = new Map<string, { 
+  attempts: number; 
+  firstAttempt: number; 
+  lastAttempt: number;
+  userAgent: string;
+  ip: string;
+}>();
+
+// Limpar cache periodicamente (a cada 5 minutos)
+setInterval(() => {
+  const now = Date.now();
+  const fiveMinutesAgo = now - (5 * 60 * 1000);
+  
+  // Limpar entradas antigas do loopDetectionCache
+  for (const [key, data] of loopDetectionCache.entries()) {
+    if (data.lastAttempt < fiveMinutesAgo) {
+      loopDetectionCache.delete(key);
+    }
+  }
+  
+  // Limpar entradas antigas do requestCounts
+  for (const [key, data] of requestCounts.entries()) {
+    if (data.lastReset < fiveMinutesAgo && (!data.blockedUntil || data.blockedUntil < now)) {
+      requestCounts.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
 function getRateLimitKey(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const ip = forwarded ? forwarded.split(',')[0] : 
              request.headers.get('x-real-ip') || 
              'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
-  return `login_${ip}_${userAgent.substring(0, 50)}`;
+  
+  // Criar chave mais específica incluindo parte do user agent
+  const cleanUserAgent = userAgent.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '_');
+  return `login_${ip}_${cleanUserAgent}`;
 }
 
 function createRequestPattern(request: NextRequest): string {
@@ -25,9 +57,63 @@ function createRequestPattern(request: NextRequest): string {
   return `${referer}_${origin}`;
 }
 
-function checkRateLimit(key: string, pattern: string): { allowed: boolean; remaining: number; reason?: string } {
+function checkRateLimit(key: string, pattern: string, request: NextRequest): { allowed: boolean; remaining: number; reason?: string } {
   const now = Date.now();
   const record = requestCounts.get(key);
+  
+  // Extrair informações para detecção de loop
+  const forwarded = request.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0] : 
+             request.headers.get('x-real-ip') || 
+             'unknown';
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  
+  // Verificar detecção de loop agressiva
+  const loopKey = `${ip}_${userAgent.substring(0, 30)}`;
+  const loopData = loopDetectionCache.get(loopKey);
+  
+  if (loopData) {
+    const timeSinceFirst = now - loopData.firstAttempt;
+    const timeSinceLast = now - loopData.lastAttempt;
+    
+    // Se muitas tentativas em pouco tempo (mais de 5 em 2 segundos)
+    if (loopData.attempts > 5 && timeSinceFirst < 2000) {
+      console.error(`🚨 LOOP CRÍTICO DETECTADO: ${loopData.attempts} tentativas em ${timeSinceFirst}ms`);
+      
+      // Bloquear por 30 segundos
+      if (record) {
+        record.blockedUntil = now + 30000;
+      } else {
+        requestCounts.set(key, {
+          count: 1,
+          lastReset: now,
+          lastRequest: now,
+          pattern: [pattern],
+          consecutiveRequests: 1,
+          blockedUntil: now + 30000
+        });
+      }
+      
+      return {
+        allowed: false,
+        remaining: 0,
+        reason: 'Loop crítico detectado. Sistema bloqueado por 30 segundos para proteção.'
+      };
+    }
+    
+    // Atualizar dados do loop
+    loopData.attempts++;
+    loopData.lastAttempt = now;
+  } else {
+    // Criar novo registro de loop
+    loopDetectionCache.set(loopKey, {
+      attempts: 1,
+      firstAttempt: now,
+      lastAttempt: now,
+      userAgent,
+      ip
+    });
+  }
   
   // Verificar se ainda está bloqueado
   if (record?.blockedUntil && now < record.blockedUntil) {
@@ -134,7 +220,7 @@ export async function POST(request: NextRequest) {
   // Rate limiting inteligente
   const rateLimitKey = getRateLimitKey(request);
   const requestPattern = createRequestPattern(request);
-  const rateLimit = checkRateLimit(rateLimitKey, requestPattern);
+  const rateLimit = checkRateLimit(rateLimitKey, requestPattern, request);
   
   if (!rateLimit.allowed) {
     console.log(`🚫 RATE LIMIT EXCEEDED for ${rateLimitKey}:`, rateLimit.reason);

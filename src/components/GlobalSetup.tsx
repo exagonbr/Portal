@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { initializeLoopPrevention } from '@/utils/loop-prevention';
 
 // Declarações de tipos para bibliotecas globais
 declare global {
@@ -12,6 +13,44 @@ declare global {
 
 export default function GlobalSetup() {
   useEffect(() => {
+    // Configurações globais do sistema
+    
+    // Inicializar sistema de prevenção de loops
+    try {
+      const loopPrevention = initializeLoopPrevention();
+      console.log('✅ Sistema de prevenção de loops inicializado');
+      
+      // Adicionar ao window para debug em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        (window as any).loopPrevention = loopPrevention;
+        (window as any).loopStats = () => loopPrevention.getStats();
+      }
+    } catch (error) {
+      console.error('❌ Erro ao inicializar prevenção de loops:', error);
+    }
+
+    // Desabilitar logs desnecessários em produção
+    if (process.env.NODE_ENV === 'production') {
+      const noop = () => {};
+      console.debug = noop;
+      console.info = noop;
+    }
+
+    // Configurar tratamento global de erros
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      event.preventDefault();
+    });
+
+    // Configurar detecção de conexão
+    window.addEventListener('online', () => {
+      console.log('🌐 Conexão restaurada');
+    });
+
+    window.addEventListener('offline', () => {
+      console.log('📵 Sem conexão');
+    });
+
     // Configurar globalmente para evitar erros do ResizeObserver
     
     // Otimizar Chart.js se estiver disponível
@@ -53,6 +92,12 @@ export default function GlobalSetup() {
       window.pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
     }
 
+    // Cleanup
+    return () => {
+      window.removeEventListener('unhandledrejection', () => {});
+      window.removeEventListener('online', () => {});
+      window.removeEventListener('offline', () => {});
+    };
   }, []);
 
   return null;
