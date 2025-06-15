@@ -8,7 +8,7 @@ import NotificationSettings from '@/components/notifications/NotificationSetting
 import { useNotifications, type NotificationFilters, type Notification } from '@/hooks/useNotifications'
 
 export default function NotificationsPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading, error: authError } = useAuth()
   const router = useRouter()
   const {
     notifications,
@@ -35,15 +35,29 @@ export default function NotificationsPage() {
   const [selectedNotifications, setSelectedNotifications] = useState<number[]>([])
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'compact'>('list')
+  const [authRetryCount, setAuthRetryCount] = useState(0)
   const itemsPerPage = 15
 
   // Verificar permissões - apenas GUARDIAN e STUDENT não podem acessar funcionalidades de envio
   useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
+    if (!authLoading && !user) {
+      // Se não há usuário após o carregamento, mas não houve muitas tentativas, tentar recarregar
+      if (authRetryCount < 2) {
+        console.log('🔄 Notificações: Tentando recarregar dados de autenticação...');
+        setAuthRetryCount(prev => prev + 1);
+        
+        // Tentar recarregar a página após um pequeno delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+        return;
+      }
+      
+      // Após várias tentativas, redirecionar para login
+      router.push('/login');
+      return;
     }
-  }, [user, router])
+  }, [user, authLoading, router, authRetryCount])
 
   // Aplicar filtros
   useEffect(() => {
@@ -149,6 +163,57 @@ export default function NotificationsPage() {
 
   // Verificar se o usuário pode enviar notificações (todos exceto GUARDIAN e STUDENT)
   const canSendNotifications = user?.role && ![UserRole.GUARDIAN, UserRole.STUDENT].includes(user.role as UserRole)
+
+  // Componente para erro de autenticação específico
+  const AuthErrorComponent = () => (
+    <div className="container-responsive spacing-y-responsive">
+      <div className="text-center py-12">
+        <span className="material-symbols-outlined text-4xl text-orange-500 mb-4">warning</span>
+        <h3 className="text-lg font-medium text-gray-700 mb-2">Problema de Autenticação</h3>
+        <p className="text-gray-500 mb-6">
+          Houve um problema ao verificar sua sessão. Isso pode acontecer quando sua sessão expira.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-sm">refresh</span>
+            Recarregar Página
+          </button>
+          <button
+            onClick={() => router.push('/login')}
+            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-sm">login</span>
+            Fazer Login
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mt-4">
+          Se o problema persistir, entre em contato com o suporte.
+        </p>
+      </div>
+    </div>
+  )
+
+  // Se está carregando autenticação, mostrar loading
+  if (authLoading) {
+    return (
+      <div className="container-responsive spacing-y-responsive">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-dark mx-auto mb-4"></div>
+            <p className="text-gray-600">Verificando autenticação...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Se não há usuário após tentativas, mostrar erro de autenticação
+  if (!user && authRetryCount >= 2) {
+    return <AuthErrorComponent />
+  }
 
   if (loading) {
     return (

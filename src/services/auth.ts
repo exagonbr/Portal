@@ -590,6 +590,16 @@ export const refreshToken = async (): Promise<boolean> => {
     console.log(`Muitas tentativas de refresh em curto período (${now - lastRefreshAttempt}ms), aguardando...`);
     return false;
   }
+
+  // Verificar se estamos em uma rota que pode causar loops
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isNotificationRoute = currentPath.includes('/notifications');
+  
+  // Se estivermos na rota de notificações e já tentamos refresh recentemente, evitar
+  if (isNotificationRoute && now - lastRefreshAttempt < 30000) { // 30 segundos para notificações
+    console.log('Evitando refresh token em rota de notificações para prevenir loops');
+    return true; // Retornar true para não forçar logout
+  }
   
   try {
     console.log('Iniciando refresh do token...');
@@ -609,6 +619,13 @@ export const refreshToken = async (): Promise<boolean> => {
     // Se não temos refresh token, não podemos renovar o token
     if (!refreshToken) {
       console.warn('Refresh token não encontrado, não é possível renovar token');
+      
+      // Se estivermos na rota de notificações, não falhar imediatamente
+      if (isNotificationRoute) {
+        console.log('Mantendo sessão atual para rota de notificações');
+        return true;
+      }
+      
       return false;
     }
     
@@ -632,6 +649,14 @@ export const refreshToken = async (): Promise<boolean> => {
         
         if (!response.ok) {
           console.error('Erro na resposta do refresh token:', response.status);
+          
+          // Se estivermos na rota de notificações, ser mais tolerante a erros
+          if (isNotificationRoute && response.status !== 401) {
+            console.log('Mantendo sessão atual para rota de notificações devido a erro temporário');
+            resolve(true);
+            return;
+          }
+          
           resolve(false);
           return;
         }
@@ -640,6 +665,14 @@ export const refreshToken = async (): Promise<boolean> => {
         
         if (!data.success) {
           console.error('Falha no refresh token:', data.message);
+          
+          // Se estivermos na rota de notificações, ser mais tolerante
+          if (isNotificationRoute) {
+            console.log('Mantendo sessão atual para rota de notificações');
+            resolve(true);
+            return;
+          }
+          
           resolve(false);
           return;
         }
@@ -661,6 +694,15 @@ export const refreshToken = async (): Promise<boolean> => {
         resolve(true);
       } catch (error) {
         console.error('Erro durante refresh do token:', error);
+        
+        // Se estivermos na rota de notificações e for erro de rede, ser tolerante
+        if (isNotificationRoute && error instanceof Error && 
+            (error.message.includes('fetch') || error.message.includes('network'))) {
+          console.log('Mantendo sessão atual para rota de notificações devido a erro de rede');
+          resolve(true);
+          return;
+        }
+        
         resolve(false);
       }
     });
@@ -668,6 +710,13 @@ export const refreshToken = async (): Promise<boolean> => {
     return await refreshPromise;
   } catch (error) {
     console.error('Erro não tratado durante refresh:', error);
+    
+    // Se estivermos na rota de notificações, ser mais tolerante
+    if (isNotificationRoute) {
+      console.log('Mantendo sessão atual para rota de notificações devido a erro não tratado');
+      return true;
+    }
+    
     return false;
   } finally {
     isRefreshingToken = false;

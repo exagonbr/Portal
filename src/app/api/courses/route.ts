@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
 
 // Schema de validação para criação de curso
 const createCourseSchema = z.object({
@@ -22,7 +21,7 @@ const mockCourses = new Map()
 // GET - Listar cursos
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -128,7 +127,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar curso
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -139,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar permissões
     const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
       return NextResponse.json(
         { error: 'Sem permissão para criar cursos' },
         { status: 403 }

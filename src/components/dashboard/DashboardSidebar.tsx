@@ -1021,7 +1021,7 @@ function DashboardSidebarComponent() {
         initial={{ x: -300 }}
         animate={{ x: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="w-64 flex flex-col min-h-screen shadow-xl"
+        className="w-63 flex flex-col h-screen shadow-xl"
         style={{
           backgroundColor: theme.colors.sidebar.bg,
           borderRight: `1px solid ${theme.colors.sidebar.border}`,
@@ -1077,7 +1077,7 @@ function DashboardSidebarComponent() {
 
       {/* Navigation - Scrollable Area */}
       <nav className={`flex-1 px-1 overflow-y-auto overflow-x-hidden ${
-        isSystemAdmin ? 'py-0 min-h-[450px]' : 'py-1 min-h-0'
+        isSystemAdmin ? 'py-1' : 'py-2'
       }`} 
            style={{
              scrollbarWidth: 'thin',
@@ -1085,20 +1085,20 @@ function DashboardSidebarComponent() {
            }}>
         <style jsx>{`
           nav::-webkit-scrollbar {
-            width: 2px;
+            width: 3px;
           }
           nav::-webkit-scrollbar-track {
             background: transparent;
           }
           nav::-webkit-scrollbar-thumb {
             background: ${theme.colors.sidebar.hover};
-            border-radius: 1px;
+            border-radius: 2px;
           }
           nav::-webkit-scrollbar-thumb:hover {
             background: ${theme.colors.sidebar.border};
           }
         `}</style>
-        <div className={`${isSystemAdmin ? 'space-y-0 pb-1' : 'space-y-0.5 pb-2'}`}>
+        <div className={`${isSystemAdmin ? 'space-y-0.5 pb-2' : 'space-y-1 pb-3'}`}>
           {navItems.map((section, idx) => (
             <NavSection
               key={idx}
@@ -1114,8 +1114,8 @@ function DashboardSidebarComponent() {
         </div>
       </nav>
 
-      {/* Bottom Actions */}
-      <div className={`border-t flex-shrink-0 ${isSystemAdmin ? 'p-0.5' : 'p-1'}`} style={{ borderColor: theme.colors.sidebar.border }}>
+      {/* Bottom Actions - Fixed at bottom */}
+      <div className={`border-t flex-shrink-0 mt-auto ${isSystemAdmin ? 'p-0.5' : 'p-1'}`} style={{ borderColor: theme.colors.sidebar.border }}>
         <LogoutButton 
           isCollapsed={isCollapsed} 
           onLogout={handleLogout} 

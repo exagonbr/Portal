@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
 
 // Schema de validação para criação de livro
 const createBookSchema = z.object({
@@ -37,7 +36,7 @@ const mockBooks = new Map()
 // GET - Listar livros
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -160,7 +159,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar livro
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -171,7 +170,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar permissões
     const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER', 'LIBRARIAN'].includes(userRole)) {
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER', 'LIBRARIAN'])) {
       return NextResponse.json(
         { error: 'Sem permissão para criar livros' },
         { status: 403 }

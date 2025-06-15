@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
 
 // Schema de validação para criação de tarefa
 const createAssignmentSchema = z.object({
@@ -49,7 +48,7 @@ const mockAssignments = new Map()
 // GET - Listar tarefas
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -192,7 +191,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar tarefa
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -203,7 +202,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar permissões
     const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'])) {
       return NextResponse.json(
         { error: 'Sem permissão para criar tarefas' },
         { status: 403 }

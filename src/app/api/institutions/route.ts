@@ -3,6 +3,47 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import { mockInstitutions, findInstitutionByEmail, findInstitutionByCNPJ } from './mockDatabase'
+import jwt from 'jsonwebtoken'
+
+// Helper function to validate JWT token
+async function validateJWTToken(token: string) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as any;
+    return {
+      user: {
+        id: decoded.userId,
+        email: decoded.email,
+        name: decoded.name,
+        role: decoded.role,
+        institution_id: decoded.institutionId,
+        permissions: decoded.permissions || []
+      }
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+// Helper function to get authentication from either NextAuth or JWT
+async function getAuthentication(request: NextRequest) {
+  // First try NextAuth session
+  const session = await getServerSession(authOptions);
+  if (session) {
+    return session;
+  }
+
+  // Then try JWT token from Authorization header
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    const jwtSession = await validateJWTToken(token);
+    if (jwtSession) {
+      return jwtSession;
+    }
+  }
+
+  return null;
+}
 
 // Schema de validação para criação de instituição
 const createInstitutionSchema = z.object({
@@ -34,7 +75,7 @@ const createInstitutionSchema = z.object({
 // GET - Listar instituições
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
@@ -123,7 +164,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar instituição
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(

@@ -4,6 +4,69 @@
 
 A Central de Notificações é um sistema completo que permite aos usuários visualizar, gerenciar, configurar e enviar notificações no portal educacional, com controle de permissões baseado em roles.
 
+## ⚠️ Correções Implementadas - Refresh Token Loop
+
+### Problema Identificado
+A rota `/notifications` estava causando loops de refresh token que redirecionavam o usuário para a página de login. Isso acontecia devido a:
+
+1. **Tentativas excessivas de refresh token** quando a sessão expirava
+2. **Loops infinitos** entre verificação de autenticação e renovação de token
+3. **Redirecionamentos automáticos** que não consideravam o contexto da rota de notificações
+
+### Soluções Implementadas
+
+#### 1. **AuthContext Melhorado** (`src/contexts/AuthContext.tsx`)
+- ✅ **Verificação de rota específica**: Detecta quando está na rota de notificações
+- ✅ **Controle de tentativas**: Evita múltiplas tentativas de refresh em rotas sensíveis
+- ✅ **Fallback inteligente**: Mantém dados do usuário quando possível para evitar logout forçado
+
+#### 2. **Serviço de Autenticação Otimizado** (`src/services/auth.ts`)
+- ✅ **Throttling de refresh**: Limita tentativas de refresh token (5s geral, 30s para notificações)
+- ✅ **Tolerância a erros**: Mantém sessão ativa em caso de erros temporários na rota de notificações
+- ✅ **Detecção de contexto**: Comportamento diferenciado para rota de notificações vs outras rotas
+
+#### 3. **ApiClient Inteligente** (`src/lib/api-client.ts`)
+- ✅ **Controle de refresh por rota**: Evita refresh automático excessivo em notificações
+- ✅ **Cache de tentativas**: Rastreia últimas tentativas de refresh para evitar loops
+- ✅ **Mensagens de erro específicas**: Informa ao usuário sobre problemas de sessão sem redirecionamento forçado
+
+#### 4. **Interface de Usuário Melhorada** (`src/app/notifications/page.tsx`)
+- ✅ **Componente de erro específico**: Interface dedicada para problemas de autenticação
+- ✅ **Opções de recuperação**: Botões para recarregar página ou fazer login manual
+- ✅ **Tentativas automáticas**: Sistema de retry inteligente (máximo 2 tentativas)
+- ✅ **Loading states**: Indicadores visuais durante verificação de autenticação
+
+### Comportamento Atual
+
+#### ✅ **Cenário Normal**
+1. Usuário acessa `/notifications`
+2. Sistema verifica autenticação
+3. Se token válido → Carrega notificações
+4. Se token expirado → Tenta refresh uma vez
+5. Se refresh bem-sucedido → Continua normalmente
+
+#### ✅ **Cenário de Erro de Rede**
+1. Usuário acessa `/notifications`
+2. Erro de rede durante verificação
+3. Sistema mantém sessão atual (não força logout)
+4. Mostra interface de erro com opções de recuperação
+
+#### ✅ **Cenário de Sessão Expirada**
+1. Usuário acessa `/notifications`
+2. Token realmente expirado/inválido
+3. Máximo 2 tentativas de refresh
+4. Se falhar → Mostra interface de erro amigável
+5. Usuário pode escolher recarregar ou fazer login
+
+### Benefícios das Correções
+
+- 🚫 **Elimina loops infinitos** de refresh token
+- 🔄 **Reduz redirecionamentos desnecessários** para login
+- 👤 **Melhora experiência do usuário** com mensagens claras
+- 🛡️ **Mantém segurança** sem comprometer usabilidade
+- 📱 **Interface responsiva** para tratamento de erros
+- ⚡ **Performance otimizada** com cache de tentativas
+
 ## Sistema de Permissões
 
 ### 📋 Hierarquia de Envio
@@ -68,6 +131,7 @@ A Central de Notificações é um sistema completo que permite aos usuários vis
 - Navegação intuitiva com breadcrumb
 - Integração com o layout do dashboard
 - **Controle de acesso visual** baseado em permissões
+- **Tratamento de erros de autenticação** com interface amigável
 
 ## Estrutura de Arquivos
 
@@ -139,6 +203,7 @@ O hook personalizado `useNotifications` fornece:
 - **Autenticação**: Todas as rotas requerem login
 - **Autorização**: Páginas de envio verificam role do usuário
 - **Redirecionamento**: Students são redirecionados se tentarem acessar páginas restritas
+- **Tratamento de Erros**: Interface amigável para problemas de autenticação
 
 ## Funcionalidades Futuras
 
@@ -172,6 +237,7 @@ O hook personalizado `useNotifications` fornece:
 - **Filtros locais**: Processamento eficiente no frontend
 - **Lazy loading**: Componentes carregados sob demanda
 - **Memoização**: Otimização de re-renderizações
+- **Cache de autenticação**: Evita verificações desnecessárias
 
 ## Acessibilidade
 
@@ -187,3 +253,14 @@ O hook personalizado `useNotifications` fornece:
 - Sidebar colapsável em telas menores
 - Botões e elementos touch-friendly
 - Tipografia escalável
+
+## Troubleshooting
+
+### Problema: "Sessão expirada" constante
+**Solução**: Recarregue a página ou faça login novamente. Se persistir, limpe o cache do navegador.
+
+### Problema: Notificações não carregam
+**Solução**: Verifique sua conexão de internet e recarregue a página.
+
+### Problema: Erro de permissão
+**Solução**: Verifique se sua role tem permissão para acessar a funcionalidade desejada.

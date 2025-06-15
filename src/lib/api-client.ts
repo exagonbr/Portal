@@ -262,15 +262,44 @@ class ApiClient {
         };
       }
 
-      // Trata erro de autenticação (401)
+      // Trata erro de autenticação (401) com lógica especial para notificações
       if (response.status === 401 && !skipAuth && !endpoint.includes('/auth/')) {
+        // Verificar se estamos em uma rota de notificações
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        const isNotificationRoute = currentPath.includes('/notifications');
+        
+        // Se estivermos na rota de notificações, ser mais cauteloso com refresh
+        if (isNotificationRoute) {
+          console.log('🔄 ApiClient: Erro 401 em rota de notificações, tentando refresh cauteloso');
+          
+          // Verificar se já tentamos refresh recentemente
+          const lastRefreshKey = 'last_api_refresh_attempt';
+          const lastRefresh = localStorage.getItem(lastRefreshKey);
+          const now = Date.now();
+          
+          if (lastRefresh && (now - parseInt(lastRefresh)) < 30000) { // 30 segundos
+            console.log('🔄 ApiClient: Refresh recente detectado, evitando loop');
+            
+            // Retornar erro sem tentar refresh para evitar loop
+            throw new ApiClientError('Sessão expirada. Por favor, recarregue a página.', 401);
+          }
+          
+          localStorage.setItem(lastRefreshKey, now.toString());
+        }
+        
         const refreshed = await this.refreshAuthToken();
         
         if (refreshed) {
           // Refaz a requisição com o novo token
           return this.makeRequest<T>(endpoint, options);
         } else {
-          // Limpa autenticação e redireciona
+          // Se estamos na rota de notificações, não redirecionar automaticamente
+          if (isNotificationRoute) {
+            console.log('🔄 ApiClient: Refresh falhou em rota de notificações, mantendo usuário na página');
+            throw new ApiClientError('Sessão expirada. Por favor, recarregue a página ou faça login novamente.', 401);
+          }
+          
+          // Limpa autenticação e redireciona para outras rotas
           this.clearAuth();
           if (typeof window !== 'undefined') {
             window.location.href = '/login';

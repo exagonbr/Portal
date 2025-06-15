@@ -3,6 +3,47 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import { API_CONFIG } from '@/config/constants'
+import jwt from 'jsonwebtoken'
+
+// Helper function to validate JWT token
+async function validateJWTToken(token: string) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as any;
+    return {
+      user: {
+        id: decoded.userId,
+        email: decoded.email,
+        name: decoded.name,
+        role: decoded.role,
+        institution_id: decoded.institutionId,
+        permissions: decoded.permissions || []
+      }
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+// Helper function to get authentication from either NextAuth or JWT
+async function getAuthentication(request: NextRequest) {
+  // First try NextAuth session
+  const session = await getServerSession(authOptions);
+  if (session) {
+    return session;
+  }
+
+  // Then try JWT token from Authorization header
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    const jwtSession = await validateJWTToken(token);
+    if (jwtSession) {
+      return jwtSession;
+    }
+  }
+
+  return null;
+}
 
 // Schema de validação para criação de usuário
 const createUserSchema = z.object({
@@ -19,7 +60,7 @@ const createUserSchema = z.object({
 // GET - Listar usuários (Proxy para o Backend)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -35,12 +76,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const backendUrl = `${API_CONFIG.BASE_URL}/users?${searchParams.toString()}`
 
-    const response = await fetch(backendUrl, {
-      headers: {
-        'Authorization': `Bearer ${session.user?.id}`, // Assumindo que o ID do usuário é o token
-        'Content-Type': 'application/json'
-      }
-    })
+    // Get the original Authorization header to pass to backend
+    const authHeader = request.headers.get('authorization');
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    } else {
+      // If no auth header but we have a session, create one
+      headers['Authorization'] = `Bearer ${session.user?.id}`;
+    }
+
+    const response = await fetch(backendUrl, { headers })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: response.statusText }))
@@ -63,7 +112,7 @@ export async function GET(request: NextRequest) {
 // POST - Criar usuário (Proxy para o Backend)
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -89,12 +138,23 @@ export async function POST(request: NextRequest) {
     }
 
     const backendUrl = `${API_CONFIG.BASE_URL}/users`
+    
+    // Get the original Authorization header to pass to backend
+    const authHeader = request.headers.get('authorization');
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    } else {
+      // If no auth header but we have a session, create one
+      headers['Authorization'] = `Bearer ${session.user?.id}`;
+    }
+
     const response = await fetch(backendUrl, {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${session.user?.id}`,
-            'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify(validationResult.data)
     })
 
