@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { fetchInterceptorManager, type FetchTransformer } from '@/utils/fetch-interceptor';
 
 export default function MixedContentHandler() {
   useEffect(() => {
@@ -8,10 +9,8 @@ export default function MixedContentHandler() {
     const handleMixedContent = () => {
       // Se estamos em HTTPS, mas temos URLs HTTP configuradas
       if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-        // Interceptar fetch para automaticamente converter HTTP para HTTPS quando necessário
-        const originalFetch = window.fetch;
-        
-        window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
+        // Criar interceptador para converter HTTP para HTTPS
+        const mixedContentTransformer: FetchTransformer = (input, init) => {
           let url: string;
           
           if (typeof input === 'string') {
@@ -43,8 +42,13 @@ export default function MixedContentHandler() {
             correctedInput = url;
           }
           
-          return originalFetch.call(this, correctedInput, init);
+          return { input: correctedInput, init };
         };
+
+        // Adicionar interceptador ao sistema coordenado
+        fetchInterceptorManager.addInterceptor('mixed-content-handler', {
+          transformer: mixedContentTransformer
+        });
         
         // Interceptar XMLHttpRequest também
         const originalXHROpen = XMLHttpRequest.prototype.open;
@@ -86,6 +90,9 @@ export default function MixedContentHandler() {
     
     // Cleanup
     return () => {
+      // Remover interceptador do sistema coordenado
+      fetchInterceptorManager.removeInterceptor('mixed-content-handler');
+      
       if (document.readyState === 'loading') {
         document.removeEventListener('DOMContentLoaded', handleMixedContent);
       }

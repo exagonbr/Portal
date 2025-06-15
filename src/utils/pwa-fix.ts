@@ -3,6 +3,8 @@
  * Identifica e resolve problemas de interceptação de requisições
  */
 
+import { fetchInterceptorManager, type FetchMonitor } from './fetch-interceptor';
+
 interface PWALoopDetector {
   requestCount: number;
   lastReset: number;
@@ -18,11 +20,11 @@ class PWALoopFixer {
     windowMs: 5000, // janela de 5 segundos
   };
 
-  private originalFetch: typeof fetch;
   private isMonitoring = false;
+  private readonly INTERCEPTOR_NAME = 'pwa-loop-fixer';
 
   constructor() {
-    this.originalFetch = window.fetch;
+    // Não precisamos mais armazenar originalFetch
   }
 
   /**
@@ -34,8 +36,10 @@ class PWALoopFixer {
     console.log('🔍 PWA Loop Fixer: Iniciando monitoramento');
     this.isMonitoring = true;
 
-    // Interceptar fetch para detectar loops
-    window.fetch = this.createFetchInterceptor();
+    // Adicionar interceptador ao sistema coordenado
+    fetchInterceptorManager.addInterceptor(this.INTERCEPTOR_NAME, {
+      monitor: this.createFetchInterceptor()
+    });
 
     // Monitorar service worker
     this.monitorServiceWorker();
@@ -50,24 +54,21 @@ class PWALoopFixer {
     console.log('🛑 PWA Loop Fixer: Parando monitoramento');
     this.isMonitoring = false;
 
-    // Restaurar fetch original
-    window.fetch = this.originalFetch;
+    // Remover interceptador do sistema coordenado
+    fetchInterceptorManager.removeInterceptor(this.INTERCEPTOR_NAME);
   }
 
   /**
    * Cria interceptor de fetch para detectar loops
    */
-  private createFetchInterceptor() {
-    return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  private createFetchInterceptor(): FetchMonitor {
+    return (input: RequestInfo | URL, init?: RequestInit): void => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       
       // Verificar se é requisição de API
       if (url.includes('/api/')) {
         this.trackRequest(url);
       }
-
-      // Chamar fetch original
-      return this.originalFetch(input, init);
     };
   }
 
