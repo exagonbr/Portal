@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 import { mockRoles, findRoleByName } from './mockDatabase'
 
 // Schema de validação para criação de role

@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
-// REMOVIDO: NextAuth imports para evitar erros 404
-// import { signIn, signOut } from 'next-auth/react';
 import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
 import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -59,7 +57,7 @@ export function LoginForm() {
   const MIN_LOGIN_INTERVAL_MS = 2000; // 2 segundos entre tentativas
   
   // Função para resetar o formulário - será conectada depois
-  const resetFormRef = useRef<() => void>(() => {});
+  const resetFormRef = useRef<(() => void) | null>(null);
   
   const {
     values,
@@ -128,7 +126,9 @@ export function LoginForm() {
             setRetryAfter(retrySeconds);
             setSubmitError(`Muitas tentativas de login. Tente novamente em ${retrySeconds} segundos.`);
             // Limpar o formulário para evitar novas tentativas com os mesmos dados
-            resetFormRef.current();
+            if (resetFormRef.current) {
+              resetFormRef.current();
+            }
           } else {
             setSubmitError(error.message || 'Email ou senha incorretos. Por favor, tente novamente.');
           }
@@ -149,24 +149,8 @@ export function LoginForm() {
   }, [resetForm]);
   
   const handleGoogleLogin = async () => {
-    // REMOVIDO: Login Google via NextAuth para evitar erros 404
-    // Agora usando apenas autenticação customizada
+    // Login Google temporariamente desabilitado para evitar erros 404
     setSubmitError('Login com Google temporariamente desabilitado. Use email e senha.');
-    
-    /* CÓDIGO ORIGINAL COMENTADO PARA EVITAR ERROS 404:
-    try {
-      setIsGoogleLoading(true);
-      setSubmitError('');
-      
-      const result = await signIn('google', { redirect: false });
-      // ... resto do código
-    } catch (error) {
-      console.error('Erro durante login Google:', error);
-      setSubmitError('Erro ao realizar login com Google. Por favor, tente novamente.');
-    } finally {
-      setIsGoogleLoading(false);
-    }
-    */
   };
 
   return (
@@ -278,6 +262,7 @@ export function LoginForm() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                 style={{ color: theme.colors.text.tertiary }}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
               >
                 <span className="material-symbols-outlined text-xl">
                   {showPassword ? 'visibility_off' : 'visibility'}

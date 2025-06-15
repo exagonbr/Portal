@@ -83,10 +83,7 @@ router.post(
 
       const result = await AuthService.register(req.body);
 
-      return res.status(201).json({
-        success: true,
-        ...result,
-      });
+      return res.status(201).json(result);
     } catch (error: any) {
       if (error.message === 'User already exists') {
         return res.status(409).json({
@@ -199,10 +196,7 @@ router.post(
       } catch (sessionError) {
         // If Redis session creation fails, fall back to basic JWT
         console.warn('Failed to create Redis session, falling back to basic JWT:', sessionError);
-        return res.json({
-          success: true,
-          ...result,
-        });
+        return res.json(result);
       }
     } catch (error: any) {
       if (error.message === 'Credenciais inválidas' || error.message === 'Invalid credentials') {
