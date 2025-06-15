@@ -15,7 +15,6 @@ const MIDDLEWARE_CONFIG = {
   },
   ROUTES: {
     PUBLIC: [
-      '/api',
       '/login',
       '/register',
       '/portal',
@@ -134,6 +133,12 @@ export async function middleware(request: NextRequest) {
 
   console.log(`🔧 Middleware: Processando ${pathname}`);
 
+  // 0. NUNCA processar rotas de API - deixar para o Next.js
+  if (pathname.startsWith('/api/')) {
+    console.log(`🔧 Middleware: Rota de API ignorada: ${pathname}`);
+    return NextResponse.next();
+  }
+
   // 1. Permitir rotas públicas sempre
   if (isPublicRoute(pathname)) {
     console.log(`🔧 Middleware: Rota pública permitida: ${pathname}`);
@@ -188,11 +193,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api (API routes - handled by Next.js)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (public folder)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|public/).*)',
   ],
 }; 
