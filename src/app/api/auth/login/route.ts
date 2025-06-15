@@ -3,11 +3,12 @@ import { cookies } from 'next/headers';
 import { API_CONFIG } from '@/config/constants';
 
 // Rate limiting inteligente para evitar loops
-const requestCounts = new Map<string, { count: number; lastReset: number; lastRequest: number; pattern: string[] }>();
+const requestCounts = new Map<string, { count: number; lastReset: number; lastRequest: number; pattern: string[]; consecutiveRequests: number; blockedUntil?: number }>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minuto
-const MAX_REQUESTS_PER_WINDOW = 15; // Aumentado para 15 tentativas por minuto
-const PATTERN_DETECTION_WINDOW = 10000; // 10 segundos para detectar padrões
-const MAX_PATTERN_REQUESTS = 5; // Máximo 5 requisições idênticas em 10 segundos
+const MAX_REQUESTS_PER_WINDOW = 20; // Aumentado para 20 tentativas por minuto
+const PATTERN_DETECTION_WINDOW = 5000; // 5 segundos para detectar padrões
+const MAX_CONSECUTIVE_REQUESTS = 12; // Máximo 12 requisições consecutivas muito rápidas
+const MIN_REQUEST_INTERVAL = 300; // Mínimo 300ms entre requisições para não ser considerado loop
 
 function getRateLimitKey(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -28,6 +29,16 @@ function checkRateLimit(key: string, pattern: string): { allowed: boolean; remai
   const now = Date.now();
   const record = requestCounts.get(key);
   
+  // Verificar se ainda está bloqueado
+  if (record?.blockedUntil && now < record.blockedUntil) {
+    const remainingSeconds = Math.ceil((record.blockedUntil - now) / 1000);
+    return {
+      allowed: false,
+      remaining: 0,
+      reason: `Aguarde ${remainingSeconds} segundos antes de tentar novamente.`
+    };
+  }
+  
   // Limpar registros antigos automaticamente
   if (requestCounts.size > 1000) {
     const cutoff = now - (RATE_LIMIT_WINDOW * 2);
@@ -43,7 +54,8 @@ function checkRateLimit(key: string, pattern: string): { allowed: boolean; remai
       count: 1, 
       lastReset: now, 
       lastRequest: now,
-      pattern: [pattern]
+      pattern: [pattern],
+      consecutiveRequests: 1
     });
     return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1 };
   }
@@ -52,32 +64,44 @@ function checkRateLimit(key: string, pattern: string): { allowed: boolean; remai
   const timeSinceLastRequest = now - record.lastRequest;
   record.lastRequest = now;
   
-  // Se as requisições estão vindo muito rapidamente (< 1 segundo)
-  if (timeSinceLastRequest < 1000) {
-    record.pattern.push(pattern);
+  // Lógica mais inteligente para detectar loops
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    // Requisições muito rápidas - incrementar contador consecutivo
+    record.consecutiveRequests++;
     
-    // Manter apenas os últimos 10 padrões
-    if (record.pattern.length > 10) {
-      record.pattern = record.pattern.slice(-10);
-    }
+    // Verificar se é realmente um loop suspeito
+    const isVeryFast = timeSinceLastRequest < 100; // Menos de 100ms é muito suspeito
+    const isSuspiciousPattern = record.consecutiveRequests >= MAX_CONSECUTIVE_REQUESTS;
+    const hasHighFrequency = record.count > 10 && timeSinceLastRequest < 200;
     
-    // Verificar se há padrão repetitivo nos últimos 10 segundos
-    const recentPatterns = record.pattern.slice(-MAX_PATTERN_REQUESTS);
-    const uniquePatterns = new Set(recentPatterns);
-    
-    if (recentPatterns.length >= MAX_PATTERN_REQUESTS && uniquePatterns.size <= 2) {
-      console.warn(`🚨 LOOP DETECTADO para ${key}:`, {
-        patterns: recentPatterns,
-        uniquePatterns: Array.from(uniquePatterns),
-        timeBetweenRequests: timeSinceLastRequest
-      });
-      
-      return { 
-        allowed: false, 
-        remaining: 0, 
-        reason: 'Loop de requisições detectado. Aguarde 30 segundos antes de tentar novamente.' 
-      };
-    }
+          // Só bloquear se for realmente suspeito
+      if (isSuspiciousPattern && (isVeryFast || hasHighFrequency)) {
+        console.warn(`🚨 LOOP DETECTADO para ${key}:`, {
+          consecutiveRequests: record.consecutiveRequests,
+          timeBetweenRequests: timeSinceLastRequest,
+          totalRequests: record.count,
+          isVeryFast,
+          hasHighFrequency
+        });
+        
+        // Bloquear por 10 segundos
+        record.blockedUntil = now + 10000;
+        
+        return { 
+          allowed: false, 
+          remaining: 0, 
+          reason: 'Loop de requisições detectado. Aguarde 10 segundos antes de tentar novamente.' 
+        };
+      }
+  } else {
+    // Requisição com intervalo normal - resetar contador consecutivo
+    record.consecutiveRequests = Math.max(1, record.consecutiveRequests - 1);
+  }
+  
+  // Adicionar padrão para análise adicional
+  record.pattern.push(pattern);
+  if (record.pattern.length > 15) {
+    record.pattern = record.pattern.slice(-15);
   }
   
   if (record.count >= MAX_REQUESTS_PER_WINDOW) {
@@ -115,8 +139,8 @@ export async function POST(request: NextRequest) {
   if (!rateLimit.allowed) {
     console.log(`🚫 RATE LIMIT EXCEEDED for ${rateLimitKey}:`, rateLimit.reason);
     
-    // Se foi detectado um loop, aplicar timeout maior
-    const retryAfter = rateLimit.reason?.includes('Loop') ? 30 : 60;
+    // Se foi detectado um loop, aplicar timeout menor
+    const retryAfter = rateLimit.reason?.includes('Loop') ? 10 : 60;
     
     return NextResponse.json(
       { 
