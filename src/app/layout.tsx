@@ -7,7 +7,6 @@ import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
 import GlobalSetup from '@/components/GlobalSetup';
 import Handtalk from '@/components/Handtalk';
-import MixedContentHandler from '@/components/MixedContentHandler';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -71,7 +70,6 @@ export default function RootLayout({
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
         <ErrorSuppressor />
         <GlobalSetup />
-        <MixedContentHandler />
         <AppProviders>
         <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
 
