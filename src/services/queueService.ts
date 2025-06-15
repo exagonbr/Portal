@@ -111,18 +111,9 @@ export class QueueService {
     try {
       console.log('🔄 QueueService: Iniciando processamento de jobs');
       
-      const response = await apiClient.get<QueueJob[]>('/api/queue/next');
-
-      if (response.success && response.data && response.data.length > 0) {
-        const jobs = response.data;
-        console.log(`📋 QueueService: ${jobs.length} jobs encontrados`);
-        
-        // Processa jobs em paralelo (limitado)
-        const promises = jobs.slice(0, 3).map(job => this.processJob(job));
-        await Promise.allSettled(promises);
-      } else {
-        console.log('📋 QueueService: Nenhum job pendente');
-      }
+      // Endpoint /api/queue/next removido - não há jobs para processar
+      console.log('📋 QueueService: Endpoint /api/queue/next removido - sistema de filas desabilitado');
+      return;
       
       const duration = Date.now() - startTime;
       console.log(`✅ QueueService: Processamento concluído em ${duration}ms`);

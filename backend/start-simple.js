@@ -78,14 +78,7 @@ const simpleAuth = (req, res, next) => {
   next();
 };
 
-// Rotas de Queue
-app.get('/api/queue/next', simpleAuth, (req, res) => {
-  res.json({
-    success: true,
-    data: [],
-    message: 'No jobs available'
-  });
-});
+// Rotas de Queue - endpoint /next removido (não necessário)
 
 app.get('/api/queue/stats', simpleAuth, (req, res) => {
   res.json({
@@ -236,7 +229,7 @@ app.listen(PORT, () => {
   console.log('');
   console.log('🎯 Endpoints disponíveis:');
   console.log('  - GET /health');
-  console.log('  - GET /api/queue/next');
+  // - GET /api/queue/next (removido)
   console.log('  - GET /api/cache/get');
   console.log('  - GET /api/users');
   console.log('  - GET /api/institution');

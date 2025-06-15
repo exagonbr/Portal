@@ -5,41 +5,7 @@ import { validateJWT, requireRole } from '../middleware/auth';
 const router = express.Router();
 // const queueService = QueueService.getInstance();
 
-/**
- * @swagger
- * /api/queue/next:
- *   get:
- *     summary: Get next jobs from queue
- *     tags: [Queue]
- *     responses:
- *       200:
- *         description: Next jobs in queue
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/QueueJob'
- */
-router.get('/next', validateJWT, async (req, res) => {
-  try {
-    const user = req.user || { userId: 'anonymous' };
-    console.log(`Processing queue/next request for user: ${user.userId}`);
-    
-    // Retorna uma lista vazia se não há jobs, com código 200
-    res.json({
-      success: true,
-      data: [],
-      message: 'No jobs available'
-    });
-  } catch (error) {
-    console.error('Error fetching next jobs:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
+// Endpoint /next removido - não é necessário no sistema atual
 
 /**
  * @swagger
