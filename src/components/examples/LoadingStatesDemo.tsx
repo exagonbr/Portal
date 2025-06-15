@@ -140,7 +140,7 @@ export function LoadingStatesDemo() {
           retryText="Tentar Novamente"
           cancelText="Fechar"
           showRefresh={true}
-          details="Detalhes técnicos do erro:\n- Componente: LoadingStatesDemo\n- Tipo: Demonstração\n- Timestamp: " + new Date().toISOString()
+          details={`Detalhes técnicos do erro:\n- Componente: LoadingStatesDemo\n- Tipo: Demonstração\n- Timestamp: ${new Date().toISOString()}`}
         />
       )}
 

@@ -7,7 +7,7 @@ import Input from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Switch } from '@/components/ui/Switch';
-import { CreateCourseDto } from '@/types/api';
+import { CourseCreateDto } from '@/types/api';
 import { institutionService } from '@/services/institutionService';
 import { useToast } from '@/components/ToastManager';
 
@@ -19,13 +19,13 @@ interface Institution {
 interface CourseAddModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: CreateCourseDto) => Promise<void>;
+  onSave: (data: CourseCreateDto) => Promise<void>;
   title: string;
 }
 
 export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModalProps) {
   const { showSuccess, showError } = useToast();
-  const [formData, setFormData] = useState<CreateCourseDto>({
+  const [formData, setFormData] = useState<CourseCreateDto>({
     name: '',
     description: '',
     level: '',
@@ -42,14 +42,14 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
     const fetchInstitutions = async () => {
       try {
         const response = await institutionService.getInstitutions();
-        if (response.success && response.data) {
+        if (response.data) {
           setInstitutions(response.data.map(inst => ({
             id: inst.id,
             name: inst.name
           })));
         }
       } catch (error) {
-        showError("Erro", "Não foi possível carregar as instituições");
+        showError('Erro ao carregar instituições');
       }
     };
 
@@ -85,18 +85,17 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (field: keyof CourseCreateDto, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [field]: value
     }));
     
     // Clear error when user types
-    if (errors[name]) {
+    if (errors[field]) {
       setErrors(prev => ({
         ...prev,
-        [name]: ''
+        [field]: ''
       }));
     }
   };
@@ -137,7 +136,7 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
           <Input
             name="name"
             value={formData.name}
-            onChange={handleInputChange}
+            onChange={(e) => handleInputChange('name', e.target.value)}
             error={errors.name}
             placeholder="Nome do curso"
           />
@@ -151,7 +150,7 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
           <Textarea
             name="description"
             value={formData.description}
-            onChange={handleInputChange}
+            onChange={(e) => handleInputChange('description', e.target.value)}
             error={errors.description}
             placeholder="Descrição do curso"
             rows={4}
@@ -165,19 +164,18 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
               Nível <span className="text-red-500">*</span>
             </label>
             <Select
-              name="level"
               value={formData.level}
-              onChange={handleInputChange}
+              onChange={(value) => handleInputChange('level', Array.isArray(value) ? value[0] : value)}
+              options={[
+                { value: '', label: 'Selecione um nível' },
+                { value: 'FUNDAMENTAL', label: 'Ensino Fundamental' },
+                { value: 'MEDIO', label: 'Ensino Médio' },
+                { value: 'SUPERIOR', label: 'Ensino Superior' },
+                { value: 'TECNICO', label: 'Ensino Técnico' },
+                { value: 'POS_GRADUACAO', label: 'Pós-graduação' }
+              ]}
               error={errors.level}
-            >
-              <option value="">Selecione um nível</option>
-              <option value="FUNDAMENTAL">Ensino Fundamental</option>
-              <option value="MEDIO">Ensino Médio</option>
-              <option value="SUPERIOR">Ensino Superior</option>
-              <option value="POS_GRADUACAO">Pós-Graduação</option>
-              <option value="MESTRADO">Mestrado</option>
-              <option value="DOUTORADO">Doutorado</option>
-            </Select>
+            />
             {errors.level && <p className="text-red-500 text-sm mt-1">{errors.level}</p>}
           </div>
 
@@ -186,16 +184,17 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
               Tipo <span className="text-red-500">*</span>
             </label>
             <Select
-              name="type"
               value={formData.type}
-              onChange={handleInputChange}
+              onChange={(value) => handleInputChange('type', Array.isArray(value) ? value[0] : value)}
+              options={[
+                { value: '', label: 'Selecione um tipo' },
+                { value: 'PRESENCIAL', label: 'Presencial' },
+                { value: 'EAD', label: 'Ensino a Distância' },
+                { value: 'HIBRIDO', label: 'Híbrido' },
+                { value: 'LIVRE', label: 'Curso Livre' }
+              ]}
               error={errors.type}
-            >
-              <option value="">Selecione um tipo</option>
-              <option value="PRESENCIAL">Presencial</option>
-              <option value="EAD">EAD</option>
-              <option value="HIBRIDO">Híbrido</option>
-            </Select>
+            />
             {errors.type && <p className="text-red-500 text-sm mt-1">{errors.type}</p>}
           </div>
         </div>
@@ -205,25 +204,24 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
             Instituição <span className="text-red-500">*</span>
           </label>
           <Select
-            name="institution_id"
             value={formData.institution_id}
-            onChange={handleInputChange}
+            onChange={(value) => handleInputChange('institution_id', Array.isArray(value) ? value[0] : value)}
+            options={[
+              { value: '', label: 'Selecione uma instituição' },
+              ...institutions.map(inst => ({
+                value: inst.id,
+                label: inst.name
+              }))
+            ]}
             error={errors.institution_id}
-          >
-            <option value="">Selecione uma instituição</option>
-            {institutions.map(institution => (
-              <option key={institution.id} value={institution.id}>
-                {institution.name}
-              </option>
-            ))}
-          </Select>
+          />
           {errors.institution_id && <p className="text-red-500 text-sm mt-1">{errors.institution_id}</p>}
         </div>
 
         <div className="flex items-center">
-          <Switch 
-            checked={formData.active} 
-            onCheckedChange={handleSwitchChange} 
+          <Switch
+            checked={formData.active}
+            onChange={handleSwitchChange}
             id="active-status"
           />
           <label htmlFor="active-status" className="ml-2 text-sm text-gray-700">
@@ -239,9 +237,9 @@ export function CourseAddModal({ isOpen, onClose, onSave, title }: CourseAddModa
           >
             Cancelar
           </Button>
-          <Button 
-            type="submit" 
-            isLoading={isLoading}
+          <Button
+            type="submit"
+            loading={isLoading}
           >
             Criar Curso
           </Button>

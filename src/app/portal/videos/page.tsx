@@ -138,7 +138,7 @@ const getVideosInProgress = (videos: any[]) => {
 const groupVideosBySubject = (videoCategories: any[]) => {
   return videoCategories.map(cat => ({
     subject: cat.category,
-    videos: cat.videos.map(video => ({
+    videos: cat.videos.map((video: any) => ({
       id: `${cat.category.toLowerCase()}-${video.id}`,
       thumbnail: `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`,
       title: `${cat.category}: ${video.title}`,
@@ -514,13 +514,13 @@ export default function VideoPortalPage() {
     const sidebarContainer = document.querySelector('[class*="sidebar"]');
     
     if (sidebar) {
-      sidebar.style.display = 'none';
+      (sidebar as HTMLElement).style.display = 'none';
     }
     if (header) {
-      header.style.display = 'none';
+      (header as HTMLElement).style.display = 'none';
     }
     if (sidebarContainer) {
-      sidebarContainer.style.display = 'none';
+      (sidebarContainer as HTMLElement).style.display = 'none';
     }
 
     // Force body to be fullscreen
@@ -540,7 +540,7 @@ export default function VideoPortalPage() {
       '#__next > div'
     ];
 
-    const elements = selectors.map(selector => document.querySelector(selector)).filter(Boolean);
+    const elements = selectors.map(selector => document.querySelector(selector)).filter(Boolean) as HTMLElement[];
     
     // Store original styles
     const originalStyles = elements.map(el => ({
@@ -574,13 +574,13 @@ export default function VideoPortalPage() {
     // Cleanup
     return () => {
       if (sidebar) {
-        sidebar.style.display = '';
+        (sidebar as HTMLElement).style.display = '';
       }
       if (header) {
-        header.style.display = '';
+        (header as HTMLElement).style.display = '';
       }
       if (sidebarContainer) {
-        sidebarContainer.style.display = '';
+        (sidebarContainer as HTMLElement).style.display = '';
       }
       
       document.body.style.overflow = '';

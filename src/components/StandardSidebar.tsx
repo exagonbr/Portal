@@ -53,6 +53,7 @@ const SidebarLogo = memo(({ isCollapsed, theme }: { isCollapsed: boolean, theme:
     )}
   </Link>
 ));
+SidebarLogo.displayName = 'SidebarLogo';
 
 const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed: boolean, theme: any }) => (
   <div className="px-2 py-3 border-b flex-shrink-0" style={{ borderColor: `${theme.colors.border.light}40` }}>
@@ -79,6 +80,7 @@ const UserProfile = memo(({ user, isCollapsed, theme }: { user: any, isCollapsed
     </div>
   </div>
 ));
+UserProfile.displayName = 'UserProfile';
 
 const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: { 
   item: NavItem, 
@@ -137,6 +139,7 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme }: {
     )}
   </Link>
 ));
+NavItem.displayName = 'NavItem';
 
 const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: { 
   section: string, 
@@ -180,6 +183,7 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
     </div>
   );
 });
+NavSection.displayName = 'NavSection';
 
 const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: boolean, onLogout: () => void, theme: any }) => (
   <button
@@ -222,6 +226,7 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme }: { isCollapsed: bool
     )}
   </button>
 ));
+LogoutButton.displayName = 'LogoutButton';
 
 export default function StandardSidebar() {
   const pathname = usePathname()

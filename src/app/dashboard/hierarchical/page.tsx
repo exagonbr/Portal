@@ -17,10 +17,9 @@ import { institutionService } from '@/services/institutionService';
 import { schoolService } from '@/services/schoolService';
 import { classService } from '@/services/classService';
 import { Institution } from '@/types/institution';
-import { School as SchoolType, SchoolStats } from '@/types/school';
-import { Class } from '@/types/class';
-import { SHIFT_LABELS } from '@/types/class';
+import { School as SchoolType } from '@/services/schoolService';
 import { EDUCATION_LEVEL_LABELS, EDUCATION_LEVEL_COLORS } from '@/types/educationCycle';
+import { ClassResponseDto } from '@/types/api';
 
 interface DashboardStats {
   totalInstitutions: number;
@@ -46,8 +45,7 @@ export default function HierarchicalDashboard() {
   const [selectedSchool, setSelectedSchool] = useState<SchoolType | null>(null);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [schools, setSchools] = useState<SchoolType[]>([]);
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [schoolStats, setSchoolStats] = useState<SchoolStats | null>(null);
+  const [classes, setClasses] = useState<ClassResponseDto[]>([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -62,43 +60,30 @@ export default function HierarchicalDashboard() {
   useEffect(() => {
     if (selectedSchool) {
       loadClasses(selectedSchool.id);
-      loadSchoolStats(selectedSchool.id);
     }
   }, [selectedSchool]);
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const institutionsResponse = await institutionService.list({ limit: 100 });
-      setInstitutions(institutionsResponse.items as any);
+      const institutionsResponse = await institutionService.getAll();
+      setInstitutions(institutionsResponse.data as any);
       
-      // Calcular estatísticas gerais
+      // Calcular estatísticas gerais básicas
       let totalSchools = 0;
-      let totalClasses = 0;
-      let totalStudents = 0;
-      let totalTeachers = 0;
-      let activeClasses = 0;
 
-      for (const institution of institutionsResponse.items) {
+      for (const institution of institutionsResponse.data) {
         const schoolsData = await schoolService.getByInstitution(institution.id);
         totalSchools += schoolsData.length;
-
-        for (const school of schoolsData) {
-          const stats = await schoolService.getStats(school.id);
-          totalClasses += stats.totalClasses;
-          totalStudents += stats.totalStudents;
-          totalTeachers += stats.totalTeachers;
-          activeClasses += stats.activeClasses;
-        }
       }
 
       setStats({
-        totalInstitutions: institutionsResponse.items.length,
+        totalInstitutions: institutionsResponse.data.length,
         totalSchools,
-        totalClasses,
-        totalStudents,
-        totalTeachers,
-        activeClasses
+        totalClasses: 0, // Placeholder - implementar quando necessário
+        totalStudents: 0, // Placeholder - implementar quando necessário
+        totalTeachers: 0, // Placeholder - implementar quando necessário
+        activeClasses: 0 // Placeholder - implementar quando necessário
       });
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
@@ -122,15 +107,6 @@ export default function HierarchicalDashboard() {
       setClasses(classesData);
     } catch (error) {
       console.error('Erro ao carregar turmas:', error);
-    }
-  };
-
-  const loadSchoolStats = async (schoolId: string) => {
-    try {
-      const stats = await schoolService.getStats(schoolId);
-      setSchoolStats(stats);
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas da escola:', error);
     }
   };
 
@@ -276,26 +252,23 @@ export default function HierarchicalDashboard() {
             <Users className="w-5 h-5 mr-2 text-green-500" />
             Detalhes da Escola
           </h2>
-          {selectedSchool && schoolStats ? (
+          {selectedSchool ? (
             <div>
-              {/* Estatísticas da Escola */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 dark:bg-gray-300 p-3 rounded">
-                  <p className="text-sm text-gray-500">Total de Turmas</p>
-                  <p className="text-xl font-semibold">{schoolStats.totalClasses}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-300 p-3 rounded">
-                  <p className="text-sm text-gray-500">Turmas Ativas</p>
-                  <p className="text-xl font-semibold">{schoolStats.activeClasses}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-300 p-3 rounded">
-                  <p className="text-sm text-gray-500">Alunos</p>
-                  <p className="text-xl font-semibold">{schoolStats.totalStudents}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-gray-300 p-3 rounded">
-                  <p className="text-sm text-gray-500">Professores</p>
-                  <p className="text-xl font-semibold">{schoolStats.totalTeachers}</p>
-                </div>
+              {/* Informações da Escola */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-lg mb-2">{selectedSchool.name}</h3>
+                <p className="text-sm text-gray-600 mb-1">
+                  <strong>Código:</strong> {selectedSchool.code || 'N/A'}
+                </p>
+                <p className="text-sm text-gray-600 mb-1">
+                  <strong>Cidade:</strong> {selectedSchool.city || 'N/A'}
+                </p>
+                <p className="text-sm text-gray-600 mb-1">
+                  <strong>Estado:</strong> {selectedSchool.state || 'N/A'}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Status:</strong> {selectedSchool.is_active ? 'Ativa' : 'Inativa'}
+                </p>
               </div>
 
               {/* Lista de Turmas */}
@@ -310,20 +283,25 @@ export default function HierarchicalDashboard() {
                       <div>
                         <p className="font-medium">{classItem.name}</p>
                         <p className="text-sm text-gray-500">
-                          {classItem.year} - {SHIFT_LABELS[classItem.shift]}
+                          {classItem.description || 'Sem descrição'}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm">
-                          <span className="font-medium">{classItem.max_students}</span> vagas
+                          <span className="font-medium">{classItem.status}</span>
                         </p>
                         <p className="text-xs text-gray-500">
-                          {classItem.is_active ? 'Ativa' : 'Inativa'}
+                          {classItem.active ? 'Ativa' : 'Inativa'}
                         </p>
                       </div>
                     </div>
                   </div>
                 ))}
+                {classes.length === 0 && (
+                  <p className="text-gray-500 text-center py-4">
+                    Nenhuma turma encontrada
+                  </p>
+                )}
               </div>
             </div>
           ) : (

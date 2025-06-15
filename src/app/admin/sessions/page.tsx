@@ -78,7 +78,7 @@ const SessionsAdminPage: React.FC = () => {
           </h3>
           <div className="text-sm text-gray-700 space-y-2 font-mono">
             <p><strong>Listar todas as chaves de sessão:</strong> <code>KEYS session:*</code></p>
-            <p><strong>Contar sessões ativas:</strong> <code>EVAL "return #redis.call('keys', 'session:*')" 0</code></p>
+            <p><strong>Contar sessões ativas:</strong> <code>EVAL &quot;return #redis.call(&apos;keys&apos;, &apos;session:*&apos;)&quot; 0</code></p>
             <p><strong>Ver usuários ativos:</strong> <code>SMEMBERS active_users</code></p>
             <p><strong>Ver sessões de um usuário:</strong> <code>SMEMBERS user_sessions:USER_ID</code></p>
             <p><strong>Limpar todas as sessões:</strong> <code>FLUSHDB</code> (⚠️ Use com cuidado!)</p>

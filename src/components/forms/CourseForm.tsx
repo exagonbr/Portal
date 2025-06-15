@@ -198,8 +198,7 @@ export default function CourseForm({ course, mode, onSubmit, onCancel }: CourseF
           </Button>
           <Button
             type="submit"
-            variant="primary"
-            icon={mode === 'create' ? 'add' : 'save'}
+            variant="default"
           >
             {mode === 'create' ? 'Criar Curso' : 'Salvar Alterações'}
           </Button>

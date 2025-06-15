@@ -2,17 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import Input from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
-import { UserDto } from '@/types/api';
 import { userService } from '@/services/userService';
 import { X } from 'lucide-react';
+import { UserRole } from '@/types/roles';
 
 interface UserModalProps {
   show: boolean;
   onClose: () => void;
   user?: UserDto | null;
   onSave: () => void;
+}
+
+interface UserDto {
+  id: string;
+  name: string;
+  email: string;
+  role_id: string;
+  institution_id?: string;
+  isActive: boolean;
 }
 
 const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) => {
@@ -97,6 +105,13 @@ const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) =>
     }
   };
 
+  const handleSelectChange = (name: string) => (value: string | string[]) => {
+    setFormData({
+      ...formData,
+      [name]: Array.isArray(value) ? value[0] : value
+    });
+  };
+
   const validateForm = () => {
     if (!formData.name.trim()) return 'Nome é obrigatório';
     if (!formData.email.trim()) return 'Email é obrigatório';
@@ -124,30 +139,38 @@ const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) =>
     try {
       if (user) {
         // Update existing user
-        const updateData = {
+        const updateData: any = {
           name: formData.name,
           email: formData.email,
           role_id: formData.role_id,
-          institution_id: formData.institution_id || undefined,
           is_active: formData.is_active
         };
         
+        if (formData.institution_id) {
+          updateData.institution_id = formData.institution_id;
+        }
+        
         // Add password only if it was changed
         if (formData.password) {
-          Object.assign(updateData, { password: formData.password });
+          updateData.password = formData.password;
         }
         
         await userService.updateUser(user.id, updateData);
       } else {
         // Create new user
-        await userService.createUser({
+        const createData: any = {
           name: formData.name,
           email: formData.email,
           password: formData.password,
           role_id: formData.role_id,
-          institution_id: formData.institution_id || undefined,
           is_active: formData.is_active
-        });
+        };
+        
+        if (formData.institution_id) {
+          createData.institution_id = formData.institution_id;
+        }
+        
+        await userService.createUser(createData);
       }
       
       onSave();
@@ -236,10 +259,11 @@ const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) =>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Função</label>
-              <Select
+              <select
                 name="role_id"
                 value={formData.role_id}
                 onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="">Selecione uma função</option>
@@ -248,15 +272,16 @@ const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) =>
                     {role.label}
                   </option>
                 ))}
-              </Select>
+              </select>
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Instituição</label>
-              <Select
+              <select
                 name="institution_id"
                 value={formData.institution_id}
                 onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Selecione uma instituição</option>
                 {institutions.map(inst => (
@@ -264,7 +289,7 @@ const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) =>
                     {inst.label}
                   </option>
                 ))}
-              </Select>
+              </select>
             </div>
             
             <div className="flex items-center">
@@ -292,8 +317,8 @@ const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) =>
             </Button>
             <Button
               type="submit"
-              variant="primary"
-              isLoading={loading}
+              variant="default"
+              loading={loading}
             >
               {user ? 'Atualizar' : 'Criar'} Usuário
             </Button>

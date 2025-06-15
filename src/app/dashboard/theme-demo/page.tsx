@@ -198,30 +198,42 @@ export default function ThemeDemoPage() {
             
             <div className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                <Button variant="primary" icon={<span className="material-symbols-outlined">add</span>}>Criar Novo</Button>
-                <Button variant="secondary" icon={<span className="material-symbols-outlined">edit</span>}>Editar</Button>
-                <Button variant="outline" icon={<span className="material-symbols-outlined">delete</span>}>Excluir</Button>
-                <Button variant="ghost" icon={<span className="material-symbols-outlined">refresh</span>}>Atualizar</Button>
+                <Button variant="default">
+                  <span className="material-symbols-outlined">add</span>
+                  Criar Novo
+                </Button>
+                <Button variant="secondary">
+                  <span className="material-symbols-outlined">edit</span>
+                  Editar
+                </Button>
+                <Button variant="outline">
+                  <span className="material-symbols-outlined">delete</span>
+                  Excluir
+                </Button>
+                <Button variant="ghost">
+                  <span className="material-symbols-outlined">refresh</span>
+                  Atualizar
+                </Button>
               </div>
               
               <div className="flex flex-wrap gap-3">
-                <Button size="sm" gradient>Pequeno</Button>
-                <Button size="md" gradient>Médio</Button>
-                <Button size="lg" gradient>Grande</Button>
+                <Button size="sm">Pequeno</Button>
+                <Button size="default">Médio</Button>
+                <Button size="lg">Grande</Button>
               </div>
               
               <div className="flex flex-wrap gap-3">
-                <Button variant="primary" loading>Carregando...</Button>
+                <Button variant="default" loading>Carregando...</Button>
                 <Button variant="secondary" disabled>Desabilitado</Button>
-                <Button variant="primary" glow>Com Brilho</Button>
+                <Button variant="default">Com Brilho</Button>
               </div>
               
               <Button 
-                variant="primary" 
-                fullWidth 
+                variant="default"
                 onClick={() => setIsModalOpen(true)}
-                icon={<span className="material-symbols-outlined">visibility</span>}
+                className="w-full"
               >
+                <span className="material-symbols-outlined">visibility</span>
                 Abrir Modal de Exemplo
               </Button>
             </div>
@@ -343,7 +355,7 @@ export default function ThemeDemoPage() {
               <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button variant="primary" gradient onClick={() => setIsModalOpen(false)}>
+              <Button variant="default" onClick={() => setIsModalOpen(false)}>
                 Confirmar
               </Button>
             </div>

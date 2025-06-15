@@ -345,10 +345,10 @@ export default function StudentActivitiesPage() {
                       <div className="flex items-center gap-2">
                         {activity.status === 'pending' && (
                           <Button
-                            variant="primary"
+                            variant="default"
                             size="sm"
-                            icon="upload"
                           >
+                            <span className="material-symbols-outlined">upload</span>
                             Enviar
                           </Button>
                         )}
@@ -356,16 +356,16 @@ export default function StudentActivitiesPage() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            icon="edit"
                           >
+                            <span className="material-symbols-outlined">edit</span>
                             Editar Envio
                           </Button>
                         )}
                         <Button
                           variant="ghost"
                           size="sm"
-                          icon="visibility"
                         >
+                          <span className="material-symbols-outlined">visibility</span>
                           Ver Detalhes
                         </Button>
                       </div>

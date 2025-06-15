@@ -49,7 +49,7 @@ function RoleGuardContent({
         });
       } else {
         // Verifica se é SYSTEM_ADMIN simulando outra role
-        const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN;
+        const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN.toString();
         
         if (!allowedRoles.includes(user.role as UserRole) && !isAdminSimulation) {
           // Se o usuário não tem o papel permitido, redireciona para seu dashboard específico
@@ -74,7 +74,7 @@ function RoleGuardContent({
   }
 
   // Verifica se é SYSTEM_ADMIN simulando outra role
-  const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user?.role === UserRole.SYSTEM_ADMIN;
+  const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && UserRole.SYSTEM_ADMIN.toString();
   
   // Se não há usuário ou não tem permissão, não renderiza nada
   if (!user || (!allowedRoles.includes(user.role as UserRole) && !isAdminSimulation)) {

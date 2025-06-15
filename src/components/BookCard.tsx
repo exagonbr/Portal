@@ -177,7 +177,7 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
               className="absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded-lg shadow-lg text-white"
               style={{
                 background: progress 
-                  ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.secondary.DEFAULT})`
+                  ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.primary.dark})`
                   : theme.colors.background.secondary,
                 color: progress ? 'white' : theme.colors.text.secondary
               }}
@@ -253,8 +253,8 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
           <div 
             className="absolute top-3 left-3 px-2 py-1 text-xs font-semibold rounded-lg shadow-lg"
             style={{
-              background: progress 
-                ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.accent.purple})`
+              background: progress
+                ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}, ${theme.colors.primary.dark})`
                 : theme.colors.background.card + 'E6',
               color: progress ? 'white' : theme.colors.text.primary
             }}
@@ -293,7 +293,7 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
                 animate={{ width: `${progress}%` }}
                 className="h-full"
                 style={{
-                  background: `linear-gradient(90deg, ${theme.colors.primary.light}, ${theme.colors.accent.purple})`
+                  background: `linear-gradient(90deg, ${theme.colors.primary.light}, ${theme.colors.primary.dark})`
                 }}
               />
             </div>
@@ -332,8 +332,8 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
             <div 
               className="absolute top-3 left-3 px-3 py-1.5 text-xs font-semibold rounded-xl shadow-lg backdrop-blur-sm"
               style={{
-                background: progress 
-                  ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}E6, ${theme.colors.accent.purple}E6)`
+                background: progress
+                  ? `linear-gradient(135deg, ${theme.colors.primary.DEFAULT}E6, ${theme.colors.primary.dark}E6)`
                   : theme.colors.background.card + 'E6',
                 color: progress ? 'white' : theme.colors.text.primary
               }}
@@ -351,7 +351,7 @@ export default function BookCard({ viewMode = 'grid', onBookOpen, ...props }: Bo
                   animate={{ width: `${progress}%` }}
                   className="h-full"
                   style={{
-                    background: `linear-gradient(90deg, ${theme.colors.primary.light}, ${theme.colors.accent.purple})`
+                    background: `linear-gradient(90deg, ${theme.colors.primary.light}, ${theme.colors.primary.dark})`
                   }}
                 />
               </div>

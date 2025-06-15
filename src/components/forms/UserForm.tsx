@@ -158,8 +158,7 @@ export default function UserForm({ user, mode, onSubmit, onCancel }: UserFormPro
           </Button>
           <Button
             type="submit"
-            variant="primary"
-            leftIcon={<span className="material-symbols-outlined">{mode === 'create' ? 'add' : 'save'}</span>}
+            variant="default"
           >
             {mode === 'create' ? 'Criar Usuário' : 'Salvar Alterações'}
           </Button>

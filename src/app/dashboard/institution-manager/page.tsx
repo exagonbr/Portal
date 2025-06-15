@@ -158,7 +158,7 @@ export default function InstitutionManagerDashboardPage() {
               <div className="text-sm font-medium text-gray-500 mb-1">Total de Instituições</div>
               <div className="text-2xl font-bold text-gray-600">{institutions.length}</div>
               <div className="text-xs text-green-600 mt-2">
-                {institutions.filter(i => i.is_active).length} ativas
+                {institutions.filter(i => i.active).length} ativas
               </div>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -230,11 +230,11 @@ export default function InstitutionManagerDashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        institution.is_active 
+                        institution.active 
                           ? 'bg-green-100 text-green-700' 
                           : 'bg-red-100 text-red-700'
                       }`}>
-                        {institution.is_active ? 'Ativa' : 'Inativa'}
+                        {institution.active ? 'Ativa' : 'Inativa'}
                       </span>
                       <div className="flex items-center gap-1">
                         <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded">

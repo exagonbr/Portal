@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { classService } from '@/services/classService';
 import { schoolService } from '@/services/schoolService';
-import { Class, CreateClassData, UpdateClassData, SHIFT_LABELS } from '@/types/class';
+import { Class, CreateClassData, UpdateClassData, SHIFT_LABELS, ShiftType } from '@/types/class';
 import { School as SchoolType } from '@/types/school';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -32,7 +32,7 @@ export default function InstitutionClassesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSchool, setFilterSchool] = useState<string>('all');
-  const [filterShift, setFilterShift] = useState<'all' | 'morning' | 'afternoon' | 'evening' | 'full'>('all');
+  const [filterShift, setFilterShift] = useState<'all' | ShiftType>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'completed'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -46,95 +46,51 @@ export default function InstitutionClassesPage() {
       const mockClasses: Class[] = [
         {
           id: '1',
-          name: 'Turma A',
+          name: 'Turma A - 5º Ano',
           code: '5A-MAT-2024',
-          schoolId: '1',
-          schoolName: 'Escola Municipal Dom Pedro I',
-          grade: '5º Ano',
-          shift: 'morning',
-          academicYear: 2024,
-          teacher: { id: '1', name: 'Prof. Maria Silva' },
-          studentsCount: 28,
-          maxStudents: 30,
-          subjects: ['Matemática', 'Português', 'Ciências', 'História', 'Geografia'],
-          schedule: [
-            { day: 'Segunda', startTime: '07:30', endTime: '12:00' },
-            { day: 'Terça', startTime: '07:30', endTime: '12:00' },
-            { day: 'Quarta', startTime: '07:30', endTime: '12:00' },
-            { day: 'Quinta', startTime: '07:30', endTime: '12:00' },
-            { day: 'Sexta', startTime: '07:30', endTime: '12:00' }
-          ],
-          status: 'active',
-          createdAt: new Date('2024-02-01')
+          school_id: '1',
+          year: 2024,
+          shift: 'MORNING',
+          max_students: 30,
+          is_active: true,
+          created_at: new Date('2024-02-01'),
+          updated_at: new Date('2024-02-01')
         },
         {
           id: '2',
-          name: 'Turma B',
+          name: 'Turma B - 5º Ano',
           code: '5B-MAT-2024',
-          schoolId: '1',
-          schoolName: 'Escola Municipal Dom Pedro I',
-          grade: '5º Ano',
-          shift: 'afternoon',
-          academicYear: 2024,
-          teacher: { id: '2', name: 'Prof. João Santos' },
-          studentsCount: 25,
-          maxStudents: 30,
-          subjects: ['Matemática', 'Português', 'Ciências', 'História', 'Geografia'],
-          schedule: [
-            { day: 'Segunda', startTime: '13:00', endTime: '17:30' },
-            { day: 'Terça', startTime: '13:00', endTime: '17:30' },
-            { day: 'Quarta', startTime: '13:00', endTime: '17:30' },
-            { day: 'Quinta', startTime: '13:00', endTime: '17:30' },
-            { day: 'Sexta', startTime: '13:00', endTime: '17:30' }
-          ],
-          status: 'active',
-          createdAt: new Date('2024-02-01')
+          school_id: '1',
+          year: 2024,
+          shift: 'AFTERNOON',
+          max_students: 30,
+          is_active: true,
+          created_at: new Date('2024-01-15'),
+          updated_at: new Date('2024-01-15')
         },
         {
           id: '3',
-          name: 'Turma 3A',
-          code: '3EM-A-2024',
-          schoolId: '2',
-          schoolName: 'Colégio Estadual Santos Dumont',
-          grade: '3º Ano EM',
-          shift: 'morning',
-          academicYear: 2024,
-          teacher: { id: '3', name: 'Prof. Ana Costa' },
-          studentsCount: 35,
-          maxStudents: 35,
-          subjects: ['Matemática', 'Física', 'Química', 'Biologia', 'Português', 'História'],
-          schedule: [
-            { day: 'Segunda', startTime: '07:00', endTime: '12:30' },
-            { day: 'Terça', startTime: '07:00', endTime: '12:30' },
-            { day: 'Quarta', startTime: '07:00', endTime: '12:30' },
-            { day: 'Quinta', startTime: '07:00', endTime: '12:30' },
-            { day: 'Sexta', startTime: '07:00', endTime: '12:30' }
-          ],
-          status: 'active',
-          createdAt: new Date('2024-02-01')
+          name: 'Turma C - 3º Ano',
+          code: 'TC-3A-2024',
+          school_id: '1',
+          year: 2024,
+          shift: 'MORNING',
+          max_students: 30,
+          is_active: true,
+          created_at: new Date('2024-01-10'),
+          updated_at: new Date('2024-01-10')
         },
         {
           id: '4',
-          name: 'Turma TI-2',
-          code: 'TI2-2024',
-          schoolId: '3',
-          schoolName: 'Instituto Técnico Industrial',
-          grade: '2º Módulo',
-          shift: 'evening',
-          academicYear: 2024,
-          teacher: { id: '4', name: 'Prof. Carlos Oliveira' },
-          studentsCount: 20,
-          maxStudents: 25,
-          subjects: ['Programação', 'Banco de Dados', 'Redes', 'Sistemas Operacionais'],
-          schedule: [
-            { day: 'Segunda', startTime: '19:00', endTime: '22:30' },
-            { day: 'Terça', startTime: '19:00', endTime: '22:30' },
-            { day: 'Quarta', startTime: '19:00', endTime: '22:30' },
-            { day: 'Quinta', startTime: '19:00', endTime: '22:30' },
-            { day: 'Sexta', startTime: '19:00', endTime: '22:30' }
-          ],
-          status: 'active',
-          createdAt: new Date('2024-02-01')
+          name: 'Turma D - 1º Ano',
+          code: 'TD-1A-2024',
+          school_id: '2',
+          year: 2024,
+          shift: 'EVENING',
+          max_students: 25,
+          is_active: true,
+          created_at: new Date('2024-02-01'),
+          updated_at: new Date('2024-02-01')
         }
       ];
       
@@ -148,51 +104,36 @@ export default function InstitutionClassesPage() {
 
   const filteredClasses = classes.filter(classItem => {
     const matchesSearch = classItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         classItem.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         classItem.teacher.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSchool = filterSchool === 'all' || classItem.schoolId === filterSchool;
+                         classItem.code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSchool = filterSchool === 'all' || classItem.school_id === filterSchool;
     const matchesShift = filterShift === 'all' || classItem.shift === filterShift;
-    const matchesStatus = filterStatus === 'all' || classItem.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' || 
+                         (filterStatus === 'active' && classItem.is_active) ||
+                         (filterStatus === 'inactive' && !classItem.is_active);
     
     return matchesSearch && matchesSchool && matchesShift && matchesStatus;
   });
 
-  const getShiftLabel = (shift: string) => {
-    const labels = {
-      morning: 'Manhã',
-      afternoon: 'Tarde',
-      evening: 'Noite',
-      full: 'Integral'
-    };
-    return labels[shift as keyof typeof labels] || shift;
+  const getShiftLabel = (shift: ShiftType) => {
+    return SHIFT_LABELS[shift] || shift;
   };
 
-  const getShiftColor = (shift: string) => {
+  const getShiftColor = (shift: ShiftType) => {
     const colors = {
-      morning: theme.colors.status.info,
-      afternoon: theme.colors.status.warning,
-      evening: theme.colors.primary.DEFAULT,
-      full: theme.colors.status.success
+      MORNING: theme.colors.status.info,
+      AFTERNOON: theme.colors.status.warning,
+      EVENING: theme.colors.primary.DEFAULT,
+      FULL_TIME: theme.colors.status.success
     };
-    return colors[shift as keyof typeof colors] || theme.colors.text.secondary;
+    return colors[shift] || theme.colors.text.secondary;
   };
 
-  const getStatusColor = (status: string) => {
-    const colors = {
-      active: theme.colors.status.success,
-      inactive: theme.colors.status.error,
-      completed: theme.colors.text.tertiary
-    };
-    return colors[status as keyof typeof colors] || theme.colors.text.secondary;
+  const getStatusColor = (isActive: boolean) => {
+    return isActive ? theme.colors.status.success : theme.colors.status.error;
   };
 
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      active: 'Ativa',
-      inactive: 'Inativa',
-      completed: 'Concluída'
-    };
-    return labels[status as keyof typeof labels] || status;
+  const getStatusLabel = (isActive: boolean) => {
+    return isActive ? 'Ativa' : 'Inativa';
   };
 
   const getOccupancyColor = (current: number, max: number) => {
@@ -202,13 +143,11 @@ export default function InstitutionClassesPage() {
     return theme.colors.status.success;
   };
 
-  const uniqueSchools = Array.from(new Set(classes.map(c => ({ id: c.schoolId, name: c.schoolName }))));
-
   const stats = {
     total: classes.length,
-    active: classes.filter(c => c.status === 'active').length,
-    totalStudents: classes.reduce((acc, c) => acc + c.studentsCount, 0),
-    totalCapacity: classes.reduce((acc, c) => acc + c.maxStudents, 0)
+    active: classes.filter(c => c.is_active).length,
+    totalStudents: 0, // Placeholder - implementar quando necessário
+    totalCapacity: classes.reduce((sum, c) => sum + c.max_students, 0)
   };
 
   if (loading) {
@@ -370,9 +309,9 @@ export default function InstitutionClassesPage() {
           }}
         >
           <option value="all">Todas as Escolas</option>
-          {uniqueSchools.map(school => (
+          {/* uniqueSchools.map(school => (
             <option key={school.id} value={school.id}>{school.name}</option>
-          ))}
+          )) */}
         </select>
 
         {/* Filtro por Turno */}
@@ -387,10 +326,10 @@ export default function InstitutionClassesPage() {
           }}
         >
           <option value="all">Todos os Turnos</option>
-          <option value="morning">Manhã</option>
-          <option value="afternoon">Tarde</option>
-          <option value="evening">Noite</option>
-          <option value="full">Integral</option>
+          <option value="MORNING">Manhã</option>
+          <option value="AFTERNOON">Tarde</option>
+          <option value="EVENING">Noite</option>
+          <option value="FULL_TIME">Integral</option>
         </select>
 
         {/* Filtro por Status */}
@@ -431,10 +370,10 @@ export default function InstitutionClassesPage() {
                  style={{ backgroundColor: theme.colors.background.secondary }}>
               <div>
                 <h3 className="text-lg font-semibold" style={{ color: theme.colors.text.primary }}>
-                  {classItem.name} - {classItem.grade}
+                  {classItem.name}
                 </h3>
                 <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                  {classItem.schoolName}
+                  Código: {classItem.code}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -447,10 +386,10 @@ export default function InstitutionClassesPage() {
                 </span>
                 <span className="px-3 py-1 rounded-full text-xs font-medium"
                       style={{
-                        backgroundColor: getStatusColor(classItem.status) + '20',
-                        color: getStatusColor(classItem.status)
+                        backgroundColor: getStatusColor(classItem.is_active) + '20',
+                        color: getStatusColor(classItem.is_active)
                       }}>
-                  {getStatusLabel(classItem.status)}
+                  {getStatusLabel(classItem.is_active)}
                 </span>
               </div>
             </div>
@@ -458,75 +397,36 @@ export default function InstitutionClassesPage() {
             {/* Conteúdo */}
             <div className="p-4">
               <div className="grid grid-cols-2 gap-4 mb-4">
-                {/* Professor */}
+                {/* Ano */}
                 <div>
-                  <p className="text-sm mb-1" style={{ color: theme.colors.text.tertiary }}>Professor(a)</p>
+                  <p className="text-sm mb-1" style={{ color: theme.colors.text.tertiary }}>Ano</p>
                   <p className="font-medium" style={{ color: theme.colors.text.primary }}>
-                    {classItem.teacher.name}
+                    {classItem.year}
                   </p>
                 </div>
 
-                {/* Código */}
+                {/* Capacidade */}
                 <div>
-                  <p className="text-sm mb-1" style={{ color: theme.colors.text.tertiary }}>Código</p>
+                  <p className="text-sm mb-1" style={{ color: theme.colors.text.tertiary }}>Capacidade</p>
                   <p className="font-medium" style={{ color: theme.colors.text.primary }}>
-                    {classItem.code}
+                    {classItem.max_students} alunos
                   </p>
                 </div>
 
-                {/* Ano Letivo */}
+                {/* Criado em */}
                 <div>
-                  <p className="text-sm mb-1" style={{ color: theme.colors.text.tertiary }}>Ano Letivo</p>
+                  <p className="text-sm mb-1" style={{ color: theme.colors.text.tertiary }}>Criado em</p>
                   <p className="font-medium" style={{ color: theme.colors.text.primary }}>
-                    {classItem.academicYear}
+                    {classItem.created_at.toLocaleDateString()}
                   </p>
                 </div>
 
-                {/* Ocupação */}
+                {/* Status */}
                 <div>
-                  <p className="text-sm mb-1" style={{ color: theme.colors.text.tertiary }}>Ocupação</p>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium" style={{ color: getOccupancyColor(classItem.studentsCount, classItem.maxStudents) }}>
-                      {classItem.studentsCount}/{classItem.maxStudents}
-                    </p>
-                    <div className="flex-1 h-2 rounded-full overflow-hidden"
-                         style={{ backgroundColor: theme.colors.border.light }}>
-                      <div className="h-full rounded-full transition-all duration-500"
-                           style={{
-                             width: `${(classItem.studentsCount / classItem.maxStudents) * 100}%`,
-                             backgroundColor: getOccupancyColor(classItem.studentsCount, classItem.maxStudents)
-                           }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Disciplinas */}
-              <div className="mb-4">
-                <p className="text-sm mb-2" style={{ color: theme.colors.text.tertiary }}>Disciplinas</p>
-                <div className="flex flex-wrap gap-2">
-                  {classItem.subjects.map((subject, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 rounded text-xs"
-                      style={{
-                        backgroundColor: theme.colors.primary.light + '20',
-                        color: theme.colors.primary.DEFAULT
-                      }}
-                    >
-                      {subject}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Horário */}
-              <div className="mb-4">
-                <p className="text-sm mb-2" style={{ color: theme.colors.text.tertiary }}>Horário</p>
-                <div className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                  {classItem.schedule[0].day} a {classItem.schedule[classItem.schedule.length - 1].day} • 
-                  {classItem.schedule[0].startTime} às {classItem.schedule[0].endTime}
+                  <p className="text-sm mb-1" style={{ color: theme.colors.text.tertiary }}>Status</p>
+                  <p className="font-medium" style={{ color: getStatusColor(classItem.is_active) }}>
+                    {getStatusLabel(classItem.is_active)}
+                  </p>
                 </div>
               </div>
 

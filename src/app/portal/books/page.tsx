@@ -73,7 +73,7 @@ const mockBooks: ExtendedBook[] = importedMockBooks.map((book, index) => ({
   status: book.progress === 100 ? 'completed' : book.progress && book.progress > 0 ? 'reading' : 'wishlist',
   size: `${(Math.random() * 5 + 1).toFixed(1)} MB`,
   progress: book.progress || 0,
-  format: book.format || 'pdf'
+  format: (book.format || 'pdf') as 'pdf' | 'epub'
 }));
 
 const categories = ['Todos', 'Literatura', 'Literatura Brasileira', 'Ciências', 'História', 'Matemática', 'Geografia', 'Tecnologia', 'Ficção'];

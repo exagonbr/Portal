@@ -15,6 +15,7 @@ import { usePermissions } from '@/hooks/usePermissions'
 import { Button, ButtonGroup } from '@/components/ui/Button';
 import Card, { CardHeader, CardBody, CardFooter } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import { List } from 'lucide-react';
 
 interface Module {
   id: string
@@ -166,7 +167,6 @@ export default function ModulesPage() {
       {data.map((module) => (
         <Card
           key={module.id}
-          variant="elevated"
           className="cursor-pointer hover:scale-105 transition-transform duration-200"
           onClick={() => handleView(module)}
         >
@@ -234,14 +234,14 @@ export default function ModulesPage() {
           actions={
             <div className="flex items-center gap-2">
               <Button
-                variant={viewMode === 'list' ? 'primary' : 'ghost'}
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
               >
-                <span className="material-symbols-outlined text-base">list</span>
+                <List className="w-4 h-4" />
               </Button>
               <Button
-                variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
               >
@@ -281,10 +281,10 @@ export default function ModulesPage() {
                 
                 {(isManagement() || isTeacher()) && (
                   <Button
-                    variant="primary"
+                    variant="default"
                     onClick={handleCreate}
-                    icon="add"
                   >
+                    <span className="material-symbols-outlined">add</span>
                     Novo Módulo
                   </Button>
                 )}

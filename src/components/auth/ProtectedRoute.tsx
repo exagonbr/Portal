@@ -62,7 +62,7 @@ function ProtectedRouteContent({
       }
 
       // Verificar se é SYSTEM_ADMIN simulando outra role
-      const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN
+      const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN.toString()
 
       // Verificar role
       if (requiredRole) {

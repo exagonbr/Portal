@@ -68,7 +68,7 @@ export default function CourseCard({ course, userType, onAccess, onManage }: Cou
             {course.name}
           </h3>
           <div className="flex items-center justify-center space-x-2">
-            <Badge variant="primary" className="bg-white/20 text-white border border-white/10">
+            <Badge variant="default" className="bg-white/20 text-white border border-white/10">
               {getLevelLabel()}
             </Badge>
             <Badge variant="secondary" className="bg-white/20 text-white border border-white/10">
@@ -106,8 +106,8 @@ export default function CourseCard({ course, userType, onAccess, onManage }: Cou
         
         <div className="mt-auto pt-4 border-t border-gray-100 flex gap-2">
           {userType === 'student' ? (
-            <Button 
-              variant="primary" 
+            <Button
+              variant="default"
               className="w-full"
               onClick={onAccess}
             >
@@ -124,8 +124,8 @@ export default function CourseCard({ course, userType, onAccess, onManage }: Cou
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Visualizar
               </Button>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="default"
                 className="flex-1"
                 onClick={onManage}
               >

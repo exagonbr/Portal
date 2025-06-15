@@ -6,7 +6,30 @@ import { Button } from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
-import { BookResponseDto, BookUpdateDto } from '@/types/api'
+
+// Tipos específicos para livros
+interface BookResponseDto {
+  id: string;
+  title: string;
+  subtitle?: string;
+  author: string;
+  category: string;
+  pages: number;
+  description?: string;
+  cover_url?: string;
+  status?: string;
+}
+
+interface BookUpdateDto {
+  title?: string;
+  subtitle?: string;
+  author?: string;
+  category?: string;
+  pages?: number;
+  description?: string;
+  cover_url?: string;
+  status?: string;
+}
 
 interface BookEditModalProps {
   isOpen: boolean
@@ -48,19 +71,19 @@ export function BookEditModal({ isOpen, onClose, onSave, book, title }: BookEdit
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.title.trim()) {
+    if (!formData.title?.trim()) {
       newErrors.title = 'Título é obrigatório'
     }
 
-    if (!formData.author.trim()) {
+    if (!formData.author?.trim()) {
       newErrors.author = 'Autor é obrigatório'
     }
 
-    if (!formData.category.trim()) {
+    if (!formData.category?.trim()) {
       newErrors.category = 'Categoria é obrigatória'
     }
 
-    if (formData.pages <= 0) {
+    if (!formData.pages || formData.pages <= 0) {
       newErrors.pages = 'Número de páginas deve ser maior que zero'
     }
 
@@ -108,7 +131,7 @@ export function BookEditModal({ isOpen, onClose, onSave, book, title }: BookEdit
           <div>
             <Input
               label="Título *"
-              value={formData.title}
+              value={formData.title || ''}
               onChange={(e) => handleInputChange('title', e.target.value)}
               error={errors.title}
               placeholder="Título do livro"
@@ -129,7 +152,7 @@ export function BookEditModal({ isOpen, onClose, onSave, book, title }: BookEdit
           <div>
             <Input
               label="Autor *"
-              value={formData.author}
+              value={formData.author || ''}
               onChange={(e) => handleInputChange('author', e.target.value)}
               error={errors.author}
               placeholder="Nome do autor"
@@ -139,7 +162,7 @@ export function BookEditModal({ isOpen, onClose, onSave, book, title }: BookEdit
           <div>
             <Input
               label="Categoria *"
-              value={formData.category}
+              value={formData.category || ''}
               onChange={(e) => handleInputChange('category', e.target.value)}
               error={errors.category}
               placeholder="Categoria do livro"
@@ -162,7 +185,7 @@ export function BookEditModal({ isOpen, onClose, onSave, book, title }: BookEdit
             <Input
               label="Número de Páginas *"
               type="number"
-              value={formData.pages.toString()}
+              value={(formData.pages || 0).toString()}
               onChange={(e) => handleInputChange('pages', parseInt(e.target.value) || 0)}
               error={errors.pages}
               placeholder="0"
@@ -174,7 +197,7 @@ export function BookEditModal({ isOpen, onClose, onSave, book, title }: BookEdit
             <Select
               label="Status"
               value={formData.status}
-              onChange={(value) => handleInputChange('status', value)}
+              onChange={(value) => handleInputChange('status', Array.isArray(value) ? value[0] : value)}
               options={[
                 { value: 'draft', label: 'Rascunho' },
                 { value: 'published', label: 'Publicado' },

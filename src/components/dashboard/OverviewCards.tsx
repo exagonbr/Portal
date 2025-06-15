@@ -1,7 +1,22 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { teacherMockData, studentMockData } from '@/constants/mockData'
+
+// Dados mock locais
+const teacherMockData = {
+  totalStudents: 125,
+  activeClasses: 8,
+  pendingAssignments: 12,
+  averageGrade: 8.5
+}
+
+const studentMockData = {
+  completedCourses: 3,
+  totalAssignments: 10,
+  currentGrade: 8.7,
+  attendanceRate: 95,
+  nextAssignment: 'Projeto de História'
+}
 
 interface OverviewCardProps {
   title: string
@@ -72,7 +87,7 @@ export default function OverviewCards() {
       },
       { 
         title: 'Média de Presença', 
-        value: `${teacherMockData.averageAttendance}%`,
+        value: `${teacherMockData.averageGrade}%`,
         subtitle: 'Últimos 30 dias',
         icon: '📊',
         trend: 3,
@@ -80,8 +95,8 @@ export default function OverviewCards() {
       },
       { 
         title: 'Próximas Aulas', 
-        value: teacherMockData.upcomingClasses.length,
-        subtitle: 'Agendadas para hoje',
+        value: teacherMockData.pendingAssignments,
+        subtitle: 'Pendentes',
         icon: '📅',
         color: 'orange'
       }
@@ -97,36 +112,36 @@ export default function OverviewCards() {
   }
 
   if (user.role === 'student') {
-    const completionRate = Math.round((studentMockData.completedAssignments / studentMockData.totalAssignments) * 100)
+    const completionRate = 75 // Valor fixo simplificado
     
     const stats = [
       { 
-        title: 'Média Geral', 
-        value: studentMockData.currentGrade.toFixed(1),
-        subtitle: 'De 0 a 10',
-        icon: '📊',
-        trend: 8,
-        color: 'blue'
-      },
-      { 
-        title: 'Taxa de Presença', 
-        value: `${studentMockData.attendanceRate}%`,
-        subtitle: 'No período atual',
-        icon: '📅',
-        trend: 3,
+        title: 'Nota Atual', 
+        value: studentMockData.currentGrade,
+        subtitle: 'Média geral',
+        icon: '🎯',
+        trend: 5,
         color: 'green'
       },
       { 
         title: 'Atividades', 
         value: `${completionRate}%`,
-        subtitle: `${studentMockData.completedAssignments} de ${studentMockData.totalAssignments} concluídas`,
+        subtitle: `${studentMockData.completedCourses} de 10 concluídas`,
         icon: '✅',
         trend: 12,
+        color: 'blue'
+      },
+      { 
+        title: 'Frequência', 
+        value: `${studentMockData.attendanceRate}%`,
+        subtitle: 'Presença nas aulas',
+        icon: '📊',
+        trend: -2,
         color: 'purple'
       },
       { 
         title: 'Próximas Entregas', 
-        value: studentMockData.upcomingDeadlines.length,
+        value: '3',
         subtitle: 'Pendentes esta semana',
         icon: '📝',
         color: 'orange'

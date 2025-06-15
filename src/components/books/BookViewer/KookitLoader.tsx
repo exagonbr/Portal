@@ -51,7 +51,7 @@ const KookitLoader: React.FC<KookitLoaderProps> = ({ children, fallback }) => {
         
         // Verificar se os renderizadores estão disponíveis
         const renderers = ['EpubRender', 'CacheRender', 'MobiRender', 'PdfRender'];
-        const availableRenderers = renderers.filter(renderer => window.Kookit![renderer]);
+        const availableRenderers = renderers.filter(renderer => (window.Kookit as any)?.[renderer]);
         
         console.log('📖 Renderizadores disponíveis:', availableRenderers);
         

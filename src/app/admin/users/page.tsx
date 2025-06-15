@@ -1708,7 +1708,7 @@ export default function ManageUsers() {
               )}
               {searchTerm && (
                 <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                  Busca: "{searchTerm}"
+                  Busca: &quot;{searchTerm}&quot;
                 </span>
               )}
               <button

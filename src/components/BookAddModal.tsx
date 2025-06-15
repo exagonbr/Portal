@@ -6,7 +6,18 @@ import { Button } from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
-import { BookCreateDto } from '@/types/api'
+
+// Tipo específico para criação de livros
+interface BookCreateDto {
+  title: string;
+  subtitle?: string;
+  author: string;
+  category: string;
+  pages: number;
+  description?: string;
+  cover_url?: string;
+  status?: string;
+}
 
 interface BookAddModalProps {
   isOpen: boolean
@@ -169,7 +180,7 @@ export function BookAddModal({ isOpen, onClose, onSave, title }: BookAddModalPro
             <Select
               label="Status"
               value={formData.status}
-              onChange={(value) => handleInputChange('status', value)}
+              onChange={(value) => handleInputChange('status', Array.isArray(value) ? value[0] : value)}
               options={[
                 { value: 'draft', label: 'Rascunho' },
                 { value: 'published', label: 'Publicado' },

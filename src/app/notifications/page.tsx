@@ -362,7 +362,7 @@ export default function NotificationsPage() {
               )}
               {filters.category !== 'all' && (
                 <span className="badge bg-green-100 text-green-800">
-                  {getCategoryLabel(filters.category)}
+                  {getCategoryLabel(filters.category as 'system' | 'academic' | 'administrative' | 'social')}
                   <button
                     onClick={() => setFilters(prev => ({ ...prev, category: 'all' }))}
                     className="ml-2 text-green-600 hover:text-green-800"
@@ -373,7 +373,7 @@ export default function NotificationsPage() {
               )}
               {searchTerm && (
                 <span className="badge bg-purple-100 text-purple-800">
-                  Busca: "{searchTerm}"
+                  Busca: &quot;{searchTerm}&quot;
                   <button
                     onClick={() => setSearchTerm('')}
                     className="ml-2 text-purple-600 hover:text-purple-800"

@@ -22,7 +22,7 @@ export default function BooksPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [selectedBook, setSelectedBook] = useState<BookResponseDto | null>(null)
+  const [selectedBook, setSelectedBook] = useState<any>(null)
 
   const fetchBooks = async (page = 1, search = '') => {
     setLoading(true)
@@ -58,8 +58,20 @@ export default function BooksPage() {
   }
 
   const handleEditBook = (book: BookResponseDto) => {
-    setSelectedBook(book)
-    setEditModalOpen(true)
+    // Adaptar CourseResponseDto para o formato esperado pelo BookEditModal
+    const adaptedBook = {
+      id: book.id,
+      title: book.name || '', // CourseResponseDto usa 'name' em vez de 'title'
+      subtitle: book.description || '',
+      author: 'Autor não especificado', // CourseResponseDto não tem author
+      category: 'Categoria não especificada', // CourseResponseDto não tem category
+      pages: 0, // CourseResponseDto não tem pages
+      description: book.description || '',
+      cover_url: '',
+      status: book.active ? 'published' : 'draft'
+    };
+    setSelectedBook(adaptedBook as any);
+    setEditModalOpen(true);
   }
 
   const handleDeleteBook = async (book: BookResponseDto) => {

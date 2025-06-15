@@ -203,8 +203,7 @@ export default function ClassForm({ classItem, mode, onSubmit, onCancel }: Class
           </Button>
           <Button
             type="submit"
-            variant="primary"
-            icon={mode === 'create' ? 'add' : 'save'}
+            variant="default"
           >
             {mode === 'create' ? 'Criar Turma' : 'Salvar Alterações'}
           </Button>

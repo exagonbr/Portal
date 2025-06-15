@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
-import { teacherMockData, studentMockData } from '@/constants/mockData'
 import { motion } from 'framer-motion'
 import {
   Chart as ChartJS,
@@ -267,41 +266,19 @@ export default function Charts() {
   }
 
   if (user.role === 'teacher') {
-    const performanceData = teacherMockData.studentPerformance.map(item => ({
+    const performanceData = teacherMockData.performanceData.map(item => ({
       label: item.month,
-      value: item.average,
+      value: item.value,
       details: {
-        'Aprovados': item.approved,
-        'Pendentes': item.pending
+        'Média': item.value
       }
     }))
 
-    const attendanceData = teacherMockData.classAttendance.map(item => ({
-      label: item.month,
-      value: item.attendance,
+    const gradeDistribution = teacherMockData.gradeDistribution.map(item => ({
+      label: item.grade,
+      value: item.count,
       details: {
-        'Presentes': item.present,
-        'Total': item.total
-      }
-    }))
-
-    const subjectData = teacherMockData.subjectDistribution.map(item => ({
-      label: item.subject,
-      value: item.students,
-      details: {
-        'Média': item.averageGrade,
-        'Frequência': `${item.attendanceRate}%`,
-        'Conclusão': `${item.completionRate}%`
-      }
-    }))
-
-    const classPerformance = teacherMockData.classPerformance.map(item => ({
-      label: item.class,
-      value: item.averageGrade * 10,
-      details: {
-        'Alunos': item.students,
-        'Frequência': `${item.attendanceRate}%`,
-        'Conclusão': `${item.completionRate}%`
+        'Alunos': item.count
       }
     }))
 
@@ -316,28 +293,12 @@ export default function Charts() {
             height="h-80"
           />
           <Chart 
-            title="Frequência nas Aulas" 
-            subtitle="Taxa de presença mensal"
-            type="line" 
-            data={attendanceData}
-            height="h-80"
-          />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Chart 
-            title="Distribuição por Disciplina" 
-            subtitle="Alunos e desempenho por matéria"
+            title="Distribuição de Notas" 
+            subtitle="Alunos e quantidade por nota"
             type="pie" 
-            data={subjectData}
+            data={gradeDistribution}
             height="h-80"
             showLegend={true}
-          />
-          <Chart 
-            title="Desempenho por Turma" 
-            subtitle="Média e indicadores por turma"
-            type="bar" 
-            data={classPerformance}
-            height="h-80"
           />
         </div>
       </div>
@@ -345,39 +306,19 @@ export default function Charts() {
   }
 
   if (user.role === 'student') {
-    const gradeData = studentMockData.gradeHistory.map(subject => ({
-      label: subject.subject.substring(0, 3),
-      value: subject.average,
+    const gradeData = studentMockData.subjectGrades.map(subject => ({
+      label: subject.subject,
+      value: subject.grade,
       details: {
-        'Professor': subject.teacher,
-        'Ranking': `${subject.ranking}º lugar`
+        'Nota': subject.grade
       }
     }))
 
-    const attendanceData = studentMockData.attendanceBySubject.map(item => ({
-      label: item.subject.substring(0, 3),
-      value: item.attendance,
+    const performanceData = studentMockData.performanceData.map(item => ({
+      label: item.month,
+      value: item.value,
       details: {
-        'Aulas': `${item.presentClasses}/${item.totalClasses}`,
-        'Última Falta': item.lastAbsence
-      }
-    }))
-
-    const studyData = studentMockData.weeklyStudyHours.map(item => ({
-      label: item.day.substring(0, 3),
-      value: item.hours * 10,
-      details: {
-        'Matérias': item.subjects.join(', ')
-      }
-    }))
-
-    const performanceData = studentMockData.performanceHistory.map(item => ({
-      label: item.month.substring(0, 3),
-      value: item.averageGrade * 10,
-      details: {
-        'Frequência': `${item.attendanceRate}%`,
-        'Conclusão': `${item.completionRate}%`,
-        'Ranking': `${item.ranking}º`
+        'Média': item.value
       }
     }))
 
@@ -389,22 +330,6 @@ export default function Charts() {
             subtitle="Média e ranking em cada matéria"
             type="bar" 
             data={gradeData}
-            height="h-80"
-          />
-          <Chart 
-            title="Frequência por Disciplina" 
-            subtitle="Taxa de presença e histórico"
-            type="bar" 
-            data={attendanceData}
-            height="h-80"
-          />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Chart 
-            title="Horas de Estudo" 
-            subtitle="Dedicação semanal por dia"
-            type="line" 
-            data={studyData}
             height="h-80"
           />
           <Chart 
@@ -420,4 +345,41 @@ export default function Charts() {
   }
 
   return null
+}
+
+// Dados mock locais
+const teacherMockData = {
+  performanceData: [
+    { month: 'Jan', value: 85 },
+    { month: 'Fev', value: 88 },
+    { month: 'Mar', value: 92 },
+    { month: 'Abr', value: 87 },
+    { month: 'Mai', value: 90 },
+    { month: 'Jun', value: 94 }
+  ],
+  gradeDistribution: [
+    { grade: 'A', count: 15 },
+    { grade: 'B', count: 25 },
+    { grade: 'C', count: 18 },
+    { grade: 'D', count: 8 },
+    { grade: 'F', count: 4 }
+  ]
+}
+
+const studentMockData = {
+  performanceData: [
+    { month: 'Jan', value: 78 },
+    { month: 'Fev', value: 82 },
+    { month: 'Mar', value: 85 },
+    { month: 'Abr', value: 80 },
+    { month: 'Mai', value: 88 },
+    { month: 'Jun', value: 91 }
+  ],
+  subjectGrades: [
+    { subject: 'Matemática', grade: 85 },
+    { subject: 'Português', grade: 92 },
+    { subject: 'História', grade: 78 },
+    { subject: 'Geografia', grade: 88 },
+    { subject: 'Ciências', grade: 90 }
+  ]
 }

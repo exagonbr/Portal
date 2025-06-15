@@ -214,7 +214,7 @@ export default function InstitutionForm({ institution, mode, onSubmit, onCancel 
           </Button>
           <Button
             type="submit"
-            variant="primary"
+            variant="default"
           >
             {mode === 'create' ? 'Criar Instituição' : 'Salvar Alterações'}
           </Button>

@@ -271,8 +271,7 @@ export default function StudentLiveClassesPage() {
             style={{
               backgroundColor: theme.colors.background.card,
               borderWidth: '1px',
-              borderColor: liveClass.status === 'live' ? theme.colors.status.error : theme.colors.border.DEFAULT,
-              ringColor: theme.colors.status.error
+              borderColor: liveClass.status === 'live' ? theme.colors.status.error : theme.colors.border.DEFAULT
             }}
           >
             <div className="p-5">

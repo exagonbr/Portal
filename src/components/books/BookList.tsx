@@ -97,7 +97,7 @@ const BookList: React.FC<BookListProps> = ({ books, showViewer = true }) => {
       {selectedBook && showViewer && (
         <BookViewer 
           book={selectedBook}
-          onClose={handleCloseViewer}
+          onBack={handleCloseViewer}
         />
       )}
     </div>

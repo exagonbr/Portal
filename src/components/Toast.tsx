@@ -164,22 +164,18 @@ export function useToast() {
   return context
 }
 
-// Helper functions for common toast types
-export const toast = {
+// Helper functions for common toast types - use within components only
+export const createToastHelpers = (showToast: (toast: Omit<Toast, 'id'>) => void) => ({
   success: (message: string, duration?: number) => {
-    const context = useContext(ToastContext)
-    context?.showToast({ type: 'success', message, duration })
+    showToast({ type: 'success', message, duration })
   },
   error: (message: string, duration?: number) => {
-    const context = useContext(ToastContext)
-    context?.showToast({ type: 'error', message, duration })
+    showToast({ type: 'error', message, duration })
   },
   warning: (message: string, duration?: number) => {
-    const context = useContext(ToastContext)
-    context?.showToast({ type: 'warning', message, duration })
+    showToast({ type: 'warning', message, duration })
   },
   info: (message: string, duration?: number) => {
-    const context = useContext(ToastContext)
-    context?.showToast({ type: 'info', message, duration })
+    showToast({ type: 'info', message, duration })
   }
-}
+})

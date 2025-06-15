@@ -99,6 +99,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
         const page = await pdfDoc.getPage(currentPage);
         const canvas = canvasRef.current;
+        
+        if (!canvas) {
+          onError('Canvas não encontrado');
+          return;
+        }
+        
         const context = canvas.getContext('2d');
         
         if (!context) {

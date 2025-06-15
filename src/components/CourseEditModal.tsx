@@ -56,14 +56,14 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
     const fetchInstitutions = async () => {
       try {
         const response = await institutionService.getInstitutions();
-        if (response.success && response.data) {
+        if (response.data) {
           setInstitutions(response.data.map(inst => ({
             id: inst.id,
             name: inst.name
           })));
         }
       } catch (error) {
-        showError("Erro", "Não foi possível carregar as instituições");
+        showError('Erro ao carregar instituições');
       }
     };
 
@@ -179,19 +179,18 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
               Nível <span className="text-red-500">*</span>
             </label>
             <Select
-              name="level"
               value={formData.level}
-              onChange={handleInputChange}
+              onChange={(value) => setFormData(prev => ({ ...prev, level: Array.isArray(value) ? value[0] : value }))}
+              options={[
+                { value: '', label: 'Selecione um nível' },
+                { value: 'FUNDAMENTAL', label: 'Ensino Fundamental' },
+                { value: 'MEDIO', label: 'Ensino Médio' },
+                { value: 'SUPERIOR', label: 'Ensino Superior' },
+                { value: 'TECNICO', label: 'Ensino Técnico' },
+                { value: 'POS_GRADUACAO', label: 'Pós-graduação' }
+              ]}
               error={errors.level}
-            >
-              <option value="">Selecione um nível</option>
-              <option value="FUNDAMENTAL">Ensino Fundamental</option>
-              <option value="MEDIO">Ensino Médio</option>
-              <option value="SUPERIOR">Ensino Superior</option>
-              <option value="POS_GRADUACAO">Pós-Graduação</option>
-              <option value="MESTRADO">Mestrado</option>
-              <option value="DOUTORADO">Doutorado</option>
-            </Select>
+            />
             {errors.level && <p className="text-red-500 text-sm mt-1">{errors.level}</p>}
           </div>
 
@@ -200,16 +199,17 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
               Tipo <span className="text-red-500">*</span>
             </label>
             <Select
-              name="type"
               value={formData.type}
-              onChange={handleInputChange}
+              onChange={(value) => setFormData(prev => ({ ...prev, type: Array.isArray(value) ? value[0] : value }))}
+              options={[
+                { value: '', label: 'Selecione um tipo' },
+                { value: 'PRESENCIAL', label: 'Presencial' },
+                { value: 'EAD', label: 'Ensino a Distância' },
+                { value: 'HIBRIDO', label: 'Híbrido' },
+                { value: 'LIVRE', label: 'Curso Livre' }
+              ]}
               error={errors.type}
-            >
-              <option value="">Selecione um tipo</option>
-              <option value="PRESENCIAL">Presencial</option>
-              <option value="EAD">EAD</option>
-              <option value="HIBRIDO">Híbrido</option>
-            </Select>
+            />
             {errors.type && <p className="text-red-500 text-sm mt-1">{errors.type}</p>}
           </div>
         </div>
@@ -219,25 +219,24 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
             Instituição <span className="text-red-500">*</span>
           </label>
           <Select
-            name="institution_id"
             value={formData.institution_id}
-            onChange={handleInputChange}
+            onChange={(value) => setFormData(prev => ({ ...prev, institution_id: Array.isArray(value) ? value[0] : value }))}
+            options={[
+              { value: '', label: 'Selecione uma instituição' },
+              ...institutions.map(inst => ({
+                value: inst.id,
+                label: inst.name
+              }))
+            ]}
             error={errors.institution_id}
-          >
-            <option value="">Selecione uma instituição</option>
-            {institutions.map(institution => (
-              <option key={institution.id} value={institution.id}>
-                {institution.name}
-              </option>
-            ))}
-          </Select>
+          />
           {errors.institution_id && <p className="text-red-500 text-sm mt-1">{errors.institution_id}</p>}
         </div>
 
         <div className="flex items-center">
-          <Switch 
-            checked={formData.active || false} 
-            onCheckedChange={handleSwitchChange} 
+          <Switch
+            checked={formData.active || false}
+            onChange={handleSwitchChange}
             id="active-status"
           />
           <label htmlFor="active-status" className="ml-2 text-sm text-gray-700">
@@ -253,9 +252,9 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
           >
             Cancelar
           </Button>
-          <Button 
-            type="submit" 
-            isLoading={isLoading}
+          <Button
+            type="submit"
+            loading={isLoading}
           >
             Atualizar Curso
           </Button>

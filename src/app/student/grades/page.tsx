@@ -252,13 +252,13 @@ export default function StudentGradesPage() {
           <div className="flex gap-4 mb-6">
             <Select
               value={selectedCourse}
-              onChange={setSelectedCourse}
+              onChange={(value) => setSelectedCourse(value as string)}
               options={courseOptions}
               className="w-64"
             />
             <Select
               value={selectedPeriod}
-              onChange={setSelectedPeriod}
+              onChange={(value) => setSelectedPeriod(value as string)}
               options={periodOptions}
               className="w-48"
             />

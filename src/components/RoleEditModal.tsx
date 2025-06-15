@@ -558,7 +558,7 @@ export default function RoleEditModal({ isOpen, onClose, role }: RoleEditModalPr
           <div className="bg-background-primary rounded-lg p-6 max-w-md shadow-xl">
             <h3 className="text-lg font-semibold text-text-primary mb-4">Confirmar Exclusão</h3>
             <p className="text-text-secondary mb-6">
-              Tem certeza que deseja excluir a função "{role.name}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir a função &quot;{role.name}&quot;? Esta ação não pode ser desfeita.
             </p>
             <div className="flex justify-end gap-3">
               <button

@@ -50,21 +50,22 @@ const SidebarLogo = memo(({ isCollapsed }: { isCollapsed: boolean }) => (
     {isCollapsed ? (
       <div className="w-8 h-8 bg-primary-light/20 rounded-lg flex items-center justify-center">
         <span className="text-xl font-bold text-white">S</span>
-</div>
-) : (
-    <div className="table">
-      <Image
+      </div>
+    ) : (
+      <div className="table">
+        <Image
           src="/sabercon-logo-white.png"
           alt="Logo"
           width={250}
           height={100}
           className="object-contain"
           priority
-      />
-    </div>
-)}
-</span>
+        />
+      </div>
+    )}
+  </span>
 ));
+SidebarLogo.displayName = 'SidebarLogo';
 
 const UserProfile = memo(({ user, isCollapsed, theme, isSystemAdmin = false }: { 
   user: any, 
@@ -130,6 +131,7 @@ const UserProfile = memo(({ user, isCollapsed, theme, isSystemAdmin = false }: {
     </div>
   </motion.div>
 ));
+UserProfile.displayName = 'UserProfile';
 
 const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme, isSystemAdmin = false }: {
   item: NavItem,
@@ -222,6 +224,7 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme, isSystemAdm
     </Link>
   </motion.div>
 ));
+NavItem.displayName = 'NavItem';
 
 const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: {
   section: string,
@@ -268,6 +271,7 @@ const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, u
     </div>
   );
 });
+NavSection.displayName = 'NavSection';
 
 const LogoutButton = memo(({ isCollapsed, onLogout, theme, isSystemAdmin = false }: { 
   isCollapsed: boolean, 
@@ -345,6 +349,7 @@ const LogoutButton = memo(({ isCollapsed, onLogout, theme, isSystemAdmin = false
     </AnimatePresence>
   </motion.button>
 ));
+LogoutButton.displayName = 'LogoutButton';
 
 const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme, isSystemAdmin = false }: { 
   userRole: UserRole,
@@ -405,6 +410,7 @@ const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme, isSyst
     </motion.div>
   );
 });
+RoleSelector.displayName = 'RoleSelector';
 
 function DashboardSidebarComponent() {
   const pathname = usePathname()

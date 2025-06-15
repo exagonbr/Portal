@@ -241,9 +241,9 @@ export default function ExampleDashboard() {
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm" 
-                  icon={<span className="material-symbols-outlined">download</span>}
+                  size="sm"
                 >
+                  <span className="material-symbols-outlined">download</span>
                   Baixar
                 </Button>
               </div>
@@ -254,11 +254,11 @@ export default function ExampleDashboard() {
 
       {/* Floating Action Button */}
       <FAB
-        variant="primary"
-        gradient
-        icon={<span className="material-symbols-outlined">add</span>}
+        variant="default"
         onClick={() => console.log('FAB clicked')}
-      />
+      >
+        <span className="material-symbols-outlined">add</span>
+      </FAB>
 
       {/* Demo Buttons Section */}
       <motion.div
@@ -281,12 +281,12 @@ export default function ExampleDashboard() {
                 Variantes
               </h3>
               <ButtonGroup>
-                <Button variant="primary">Primário</Button>
+                <Button variant="default">Primário</Button>
                 <Button variant="secondary">Secundário</Button>
-                <Button variant="accent">Destaque</Button>
+                <Button variant="info">Com Brilho</Button>
                 <Button variant="success">Sucesso</Button>
                 <Button variant="warning">Aviso</Button>
-                <Button variant="error">Erro</Button>
+                <Button variant="danger">Erro</Button>
                 <Button variant="ghost">Ghost</Button>
                 <Button variant="outline">Outline</Button>
               </ButtonGroup>
@@ -301,11 +301,11 @@ export default function ExampleDashboard() {
                 Tamanhos
               </h3>
               <ButtonGroup>
-                <Button size="xs">Extra Pequeno</Button>
+                <Button size="sm">Extra Pequeno</Button>
                 <Button size="sm">Pequeno</Button>
-                <Button size="md">Médio</Button>
+                <Button size="default">Médio</Button>
                 <Button size="lg">Grande</Button>
-                <Button size="xl">Extra Grande</Button>
+                <Button size="lg">Extra Grande</Button>
               </ButtonGroup>
             </div>
 
@@ -318,9 +318,9 @@ export default function ExampleDashboard() {
                 Com Gradiente e Brilho
               </h3>
               <ButtonGroup>
-                <Button variant="primary" gradient>Gradiente Primário</Button>
-                <Button variant="secondary" gradient glow>Gradiente + Brilho</Button>
-                <Button variant="accent" glow>Com Brilho</Button>
+                <Button variant="default">Gradiente Primário</Button>
+                <Button variant="secondary">Gradiente + Brilho</Button>
+                <Button variant="info">Com Brilho</Button>
               </ButtonGroup>
             </div>
 
@@ -335,17 +335,13 @@ export default function ExampleDashboard() {
               <ButtonGroup>
                 <Button loading>Carregando</Button>
                 <Button disabled>Desabilitado</Button>
-                <Button 
-                  icon={<span className="material-symbols-outlined">favorite</span>}
-                  iconPosition="left"
-                >
+                <Button>
+                  <span className="material-symbols-outlined">favorite</span>
                   Com Ícone
                 </Button>
-                <Button 
-                  icon={<span className="material-symbols-outlined">arrow_forward</span>}
-                  iconPosition="right"
-                >
+                <Button>
                   Ícone à Direita
+                  <span className="material-symbols-outlined">arrow_forward</span>
                 </Button>
               </ButtonGroup>
             </div>

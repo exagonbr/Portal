@@ -28,7 +28,7 @@ interface Class {
   schedule: string
   max_students: number
   enrolled_students?: number
-  status: 'planned' | 'active' | 'completed' | 'cancelled'
+  status: 'planned' | 'in_progress' | 'completed' | 'cancelled'
   created_at: string
   updated_at: string
 }
@@ -107,7 +107,7 @@ export default function TeacherClassesPage() {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       planned: { label: 'Planejada', color: theme.colors.status.info },
-      active: { label: 'Em Andamento', color: theme.colors.status.success },
+      in_progress: { label: 'Em Andamento', color: theme.colors.status.success },
       completed: { label: 'Concluída', color: theme.colors.status.warning },
       cancelled: { label: 'Cancelada', color: theme.colors.status.error }
     }
@@ -166,7 +166,7 @@ export default function TeacherClassesPage() {
       label: 'Alunos',
       icon: 'group',
       onClick: handleManageStudents,
-      variant: 'primary' as const
+      variant: 'default' as const
     },
     {
       label: 'Frequência',
@@ -187,7 +187,6 @@ export default function TeacherClassesPage() {
       {data.map((classItem) => (
         <Card
           key={classItem.id}
-          variant="elevated"
           className="hover:shadow-xl transition-all duration-300 cursor-pointer"
           onClick={() => handleView(classItem)}
         >
@@ -215,15 +214,15 @@ export default function TeacherClassesPage() {
             </div>
 
             <div className="flex gap-2">
-                             <Button
+              <Button
                 size="sm"
-                variant="primary"
+                variant="default"
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation()
                   handleManageStudents(classItem)
                 }}
-                icon="group"
               >
+                <span className="material-symbols-outlined">group</span>
                 Alunos
               </Button>
               <Button
@@ -233,8 +232,8 @@ export default function TeacherClassesPage() {
                   e.stopPropagation()
                   handleViewAttendance(classItem)
                 }}
-                icon="fact_check"
               >
+                <span className="material-symbols-outlined">fact_check</span>
                 Frequência
               </Button>
               <Button
@@ -244,8 +243,8 @@ export default function TeacherClassesPage() {
                   e.stopPropagation()
                   handleViewGrades(classItem)
                 }}
-                icon="grade"
               >
+                <span className="material-symbols-outlined">grade</span>
                 Notas
               </Button>
             </div>
@@ -317,10 +316,10 @@ export default function TeacherClassesPage() {
                   onChange={(e) => search(e.target.value)}
                 />
                 <Button
-                  variant="primary"
+                  variant="default"
                   onClick={handleCreate}
-                  icon="add"
                 >
+                  <span className="material-symbols-outlined">add</span>
                   Nova Turma
                 </Button>
               </div>

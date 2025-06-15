@@ -4,13 +4,14 @@ const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig = {
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   reactStrictMode: true,
   swcMinify: true,
-  productionBrowserSourceMaps: false,
+  productionBrowserSourceMaps: true,
   eslint: {
     ignoreDuringBuilds: true,
+    dirs: ['src']
   },
   
   // Configurações para resolver erro de dynamic server usage
@@ -214,6 +215,11 @@ const nextConfig = {
       use: 'null-loader',
       include: /node_modules/,
     });
+
+    // Suprimir warnings específicos
+    config.ignoreWarnings = [
+      /Critical dependency: the request of a dependency is an expression/,
+    ];
 
     return config;
   }

@@ -57,11 +57,11 @@ export function ClassEditModal({ classData, onSave, onClose }: ClassEditModalPro
   const loadData = async () => {
     try {
       const [coursesResponse, teachersResponse] = await Promise.all([
-        courseService.list(),
+        courseService.getCourses(),
         userService.list({ role: 'TEACHER' })
       ])
-      setCourses(coursesResponse)
-      setTeachers(teachersResponse.data)
+      setCourses(coursesResponse.items || [])
+      setTeachers(teachersResponse.items || [])
     } catch (error) {
       showError('Erro ao carregar dados')
     }
@@ -123,16 +123,15 @@ export function ClassEditModal({ classData, onSave, onClose }: ClassEditModalPro
             </label>
             <Select
               value={formData.course_id}
-              onChange={(e) => handleChange('course_id', e.target.value)}
-              required
-            >
-              <option value="">Selecione um curso</option>
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.name}
-                </option>
-              ))}
-            </Select>
+              onChange={(value) => handleChange('course_id', Array.isArray(value) ? value[0] : value)}
+              options={[
+                { value: '', label: 'Selecione um curso' },
+                ...courses.map((course) => ({
+                  value: course.id,
+                  label: course.name
+                }))
+              ]}
+            />
           </div>
 
           <div>
@@ -141,16 +140,15 @@ export function ClassEditModal({ classData, onSave, onClose }: ClassEditModalPro
             </label>
             <Select
               value={formData.teacher_id}
-              onChange={(e) => handleChange('teacher_id', e.target.value)}
-              required
-            >
-              <option value="">Selecione um professor</option>
-              {teachers.map((teacher) => (
-                <option key={teacher.id} value={teacher.id}>
-                  {teacher.name}
-                </option>
-              ))}
-            </Select>
+              onChange={(value) => handleChange('teacher_id', Array.isArray(value) ? value[0] : value)}
+              options={[
+                { value: '', label: 'Selecione um professor' },
+                ...teachers.map((teacher) => ({
+                  value: teacher.id,
+                  label: teacher.name
+                }))
+              ]}
+            />
           </div>
         </div>
 

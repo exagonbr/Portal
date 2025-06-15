@@ -2062,7 +2062,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
                   Página {highlight.pageNumber}
                 </div>
                 <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
-                  "{highlight.content.substring(0, 50)}..."
+                  &quot;{highlight.content.substring(0, 50)}...&quot;
                 </div>
               </div>
             ))}

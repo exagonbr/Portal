@@ -1,7 +1,57 @@
 'use client'
 
 import { useState } from 'react'
-import { mockQuiz, Quiz, Question, QuestionType } from '@/constants/mockData'
+
+// Tipos locais
+type QuestionType = 'multiple-choice' | 'true-false' | 'short-answer'
+
+interface Question {
+  id: string
+  type: QuestionType
+  question: string
+  options?: string[]
+  correctAnswer: number | string | string[]
+  points: number
+  explanation?: string
+}
+
+interface Quiz {
+  id: string
+  title: string
+  description: string
+  timeLimit?: number
+  passingScore: number
+  attempts: number
+  questions: Question[]
+}
+
+// Mock quiz local
+const mockQuiz: Quiz = {
+  id: '1',
+  title: 'Quiz de Exemplo',
+  description: 'Este é um quiz de exemplo para demonstração',
+  timeLimit: 30,
+  passingScore: 70,
+  attempts: 3,
+  questions: [
+    {
+      id: '1',
+      type: 'multiple-choice' as QuestionType,
+      question: 'Qual é a capital do Brasil?',
+      options: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Belo Horizonte'],
+      correctAnswer: 2,
+      points: 10
+    },
+    {
+      id: '2',
+      type: 'multiple-choice' as QuestionType,
+      question: 'Quanto é 2 + 2?',
+      options: ['3', '4', '5', '6'],
+      correctAnswer: 1,
+      points: 10
+    }
+  ]
+}
 
 export default function CourseQuiz() {
   const [currentQuestion, setCurrentQuestion] = useState(0)
@@ -23,12 +73,14 @@ export default function CourseQuiz() {
     mockQuiz.questions.forEach(question => {
       totalPoints += question.points
       if (question.type === 'short-answer') {
-        const correctAnswers = question.correctAnswer as string[]
+        const correctAnswers = Array.isArray(question.correctAnswer) 
+          ? question.correctAnswer 
+          : [question.correctAnswer.toString()]
         if (correctAnswers.includes(answers[question.id]?.toLowerCase())) {
           earnedPoints += question.points
         }
       } else {
-        if (answers[question.id] === question.correctAnswer) {
+        if (answers[question.id] === question.correctAnswer.toString()) {
           earnedPoints += question.points
         }
       }
@@ -154,8 +206,10 @@ export default function CourseQuiz() {
           <div className="mt-4 space-y-6">
             {mockQuiz.questions.map((question, index) => {
               const isCorrect = question.type === 'short-answer'
-                ? (question.correctAnswer as string[]).includes(answers[question.id]?.toLowerCase())
-                : answers[question.id] === question.correctAnswer
+                ? Array.isArray(question.correctAnswer) 
+                  ? question.correctAnswer.includes(answers[question.id]?.toLowerCase())
+                  : question.correctAnswer.toString().toLowerCase() === answers[question.id]?.toLowerCase()
+                : answers[question.id] === question.correctAnswer.toString()
 
               return (
                 <div key={question.id} className="border-t border-border-light pt-4">
@@ -164,21 +218,16 @@ export default function CourseQuiz() {
                       {index + 1}
                     </span>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-text-primary">{question.text}</p>
+                      <p className="text-sm font-medium text-text-primary">{question.question}</p>
                       <div className="mt-2">
                         <p className="text-sm text-text-secondary">
                           Sua resposta: {answers[question.id] || 'Não respondida'}
                         </p>
                         <p className={`mt-1 text-sm ${isCorrect ? 'text-success-text' : 'text-error-text'}`}>
-                          Resposta correta: {Array.isArray(question.correctAnswer)
-                            ? question.correctAnswer.join(' ou ')
+                          Resposta correta: {Array.isArray(question.correctAnswer) 
+                            ? question.correctAnswer.join(', ')
                             : question.correctAnswer}
                         </p>
-                        {question.explanation && (
-                          <p className="mt-2 text-sm text-text-secondary">
-                            <span className="font-medium">Explicação:</span> {question.explanation}
-                          </p>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -245,7 +294,7 @@ export default function CourseQuiz() {
         <h3 className="text-lg font-medium text-text-primary">
           Questão {currentQuestion + 1}
         </h3>
-        <p className="mt-2 text-text-secondary">{currentQ.text}</p>
+        <p className="mt-2 text-text-secondary">{currentQ.question}</p>
 
         {/* Answer Options */}
         <div className="mt-4 space-y-4">

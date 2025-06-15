@@ -1,7 +1,30 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { teacherMockData } from '@/constants/mockData'
+
+// Dados mock locais
+const teacherMockData = {
+  activities: [
+    {
+      id: 1,
+      title: 'Atividade de Matemática',
+      course: 'Matemática Básica',
+      dueDate: '2024-01-15',
+      submissions: 25,
+      totalStudents: 30,
+      status: 'active' as const
+    },
+    {
+      id: 2,
+      title: 'Prova de História',
+      course: 'História do Brasil',
+      dueDate: '2024-01-20',
+      submissions: 18,
+      totalStudents: 22,
+      status: 'active' as const
+    }
+  ]
+}
 
 interface Activity {
   id: number

@@ -105,14 +105,14 @@ export default function InstitutionSchoolsPage() {
           teachersCount: Math.floor(Math.random() * 50), // Simulação de dados
           classesCount: Math.floor(Math.random() * 30), // Simulação de dados
           type: ['elementary', 'middle', 'high', 'technical'][Math.floor(Math.random() * 4)] as 'elementary' | 'middle' | 'high' | 'technical', // Simulação de dados
-          status: unit.active ? 'active' : 'inactive',
+          status: (unit.active ? 'active' : 'inactive') as 'active' | 'inactive',
           address: addressInfo,
           contact: {
             phone: unit.description || '',
             email: '',
             website: ''
           }
-        };
+        } as SchoolUnit;
       });
       
       setSchools(schoolsData);
