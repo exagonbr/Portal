@@ -58,8 +58,9 @@ export async function GET(request: NextRequest) {
 
     // Aplicar filtros baseados no role do usuário
     const userRole = session.user?.role
-    if (userRole === 'SCHOOL_MANAGER' && session.user.school_id) {
-      classes = classes.filter(cls => cls.school_id === session.user.school_id)
+    if (userRole === 'SCHOOL_MANAGER' && session.user && 'school_id' in session.user && session.user.school_id) {
+      const userSchoolId = (session.user as any).school_id;
+      classes = classes.filter(cls => cls.school_id === userSchoolId)
     } else if (userRole === 'TEACHER') {
       // Professor vê apenas suas turmas
       classes = classes.filter(cls => cls.teacher_id === session.user?.id)
@@ -178,8 +179,9 @@ export async function POST(request: NextRequest) {
     const classData = validationResult.data
 
     // Se for SCHOOL_MANAGER, forçar a escola dele
-    if (userRole === 'SCHOOL_MANAGER' && session.user.school_id) {
-      classData.school_id = session.user.school_id
+    if (userRole === 'SCHOOL_MANAGER' && session.user && 'school_id' in session.user && session.user.school_id) {
+      const userSchoolId = (session.user as any).school_id;
+      classData.school_id = userSchoolId;
     }
 
     // Validar datas

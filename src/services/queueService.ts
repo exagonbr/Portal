@@ -38,13 +38,14 @@ export class QueueService {
   private handlers = new Map<string, JobHandler>();
   private isProcessing = false;
   private processingInterval: NodeJS.Timeout | null = null;
-  private readonly pollInterval = 5000; // 5 segundos
+  private readonly pollInterval = 30000; // 30 segundos (reduzido para evitar loops)
 
   constructor() {
-    // Inicia o processamento automático se estiver no browser
-    if (typeof window !== 'undefined') {
-      this.startProcessing();
-    }
+    // TEMPORARIAMENTE DESABILITADO para evitar loops
+    // if (typeof window !== 'undefined') {
+    //   this.startProcessing();
+    // }
+    console.log('🔄 QueueService: Inicializado sem auto-start (evitando loops)');
   }
 
   /**
@@ -99,22 +100,46 @@ export class QueueService {
    * Processa jobs pendentes
    */
   async processJobs(): Promise<void> {
-    if (this.isProcessing) return;
+    if (this.isProcessing) {
+      console.log('🔄 QueueService: Processamento já em andamento, ignorando');
+      return;
+    }
 
     this.isProcessing = true;
+    const startTime = Date.now();
 
     try {
+      console.log('🔄 QueueService: Iniciando processamento de jobs');
+      
       const response = await apiClient.get<QueueJob[]>('/api/queue/next');
 
       if (response.success && response.data && response.data.length > 0) {
         const jobs = response.data;
+        console.log(`📋 QueueService: ${jobs.length} jobs encontrados`);
         
         // Processa jobs em paralelo (limitado)
         const promises = jobs.slice(0, 3).map(job => this.processJob(job));
         await Promise.allSettled(promises);
+      } else {
+        console.log('📋 QueueService: Nenhum job pendente');
       }
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ QueueService: Processamento concluído em ${duration}ms`);
+      
     } catch (error) {
-      console.error('Erro ao processar jobs:', error);
+      const duration = Date.now() - startTime;
+      console.error(`❌ QueueService: Erro ao processar jobs (${duration}ms):`, error);
+      
+      // Se for erro de rate limit, aumentar intervalo temporariamente
+      if (error instanceof Error && error.message.includes('429')) {
+        console.warn('🚨 QueueService: Rate limit detectado, pausando processamento por 60s');
+        this.stopProcessing();
+        setTimeout(() => {
+          console.log('🔄 QueueService: Retomando processamento após rate limit');
+          this.startProcessing();
+        }, 60000);
+      }
     } finally {
       this.isProcessing = false;
     }

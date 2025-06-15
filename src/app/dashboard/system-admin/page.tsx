@@ -159,7 +159,7 @@ interface SystemAlert {
 
 export default function SystemAdminDashboard() {
   return (
-    <ClientAuthGuard requiredRole={UserRole.SYSTEM_ADMIN}>
+    <ClientAuthGuard allowedRoles={['SYSTEM_ADMIN']}>
       <SystemAdminDashboardContent />
     </ClientAuthGuard>
   );

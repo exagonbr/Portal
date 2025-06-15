@@ -8,6 +8,8 @@ import ErrorSuppressor from '@/components/ErrorSuppressor';
 import GlobalSetup from '@/components/GlobalSetup';
 import Handtalk from '@/components/Handtalk';
 import MixedContentHandler from '@/components/MixedContentHandler';
+import { PWALoopDebugger } from '@/components/debug/PWALoopDebugger';
+import QueueEndpointMonitor from '@/components/debug/QueueEndpointMonitor';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -80,6 +82,12 @@ export default function RootLayout({
           </div>
           <PWARegistration />
           <PushNotificationInitializer />
+          {process.env.NODE_ENV === 'development' && (
+            <>
+              <PWALoopDebugger />
+              <QueueEndpointMonitor />
+            </>
+          )}
         </AppProviders>
       </body>
     </html>
