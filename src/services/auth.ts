@@ -248,6 +248,29 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 
     console.log('Iniciando processo de login...');
     
+    // Verificar se há muitas tentativas recentes
+    const lastAttemptKey = 'last_login_attempt';
+    const attemptCountKey = 'login_attempt_count';
+    const now = Date.now();
+    const lastAttempt = localStorage.getItem(lastAttemptKey);
+    const attemptCount = parseInt(localStorage.getItem(attemptCountKey) || '0');
+    
+    // Reset contador se passou mais de 1 minuto
+    if (!lastAttempt || (now - parseInt(lastAttempt)) > 60000) {
+      localStorage.setItem(attemptCountKey, '1');
+    } else {
+      const newCount = attemptCount + 1;
+      localStorage.setItem(attemptCountKey, newCount.toString());
+      
+      // Se muitas tentativas em pouco tempo, aguardar
+      if (newCount > 5) {
+        const waitTime = Math.min(30, newCount * 2); // Máximo 30 segundos
+        throw new Error(`Muitas tentativas de login. Aguarde ${waitTime} segundos antes de tentar novamente.`);
+      }
+    }
+    
+    localStorage.setItem(lastAttemptKey, now.toString());
+    
     // Usar apenas uma URL para simplificar
     const loginUrl = '/api/auth/login';
     console.log(`Fazendo login em: ${loginUrl}`);
@@ -263,12 +286,51 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 
     console.log('Resposta recebida, status:', response.status);
     
+    // Tratamento especial para erro 429 (Too Many Requests)
+    if (response.status === 429) {
+      try {
+        const errorData = await response.json();
+        console.warn('🚨 Erro 429 recebido:', errorData);
+        
+        // Se foi detectado um loop pelo servidor
+        if (errorData.isLoop) {
+          console.error('🚨 Loop de requisições detectado pelo servidor!');
+          
+          // Limpar dados de tentativas para evitar mais loops
+          localStorage.removeItem(lastAttemptKey);
+          localStorage.removeItem(attemptCountKey);
+          
+          // Tentar aplicar correção PWA se disponível
+          try {
+            const { emergencyPWAFix } = await import('../utils/pwa-fix');
+            await emergencyPWAFix();
+          } catch (pwaError) {
+            console.warn('⚠️ Não foi possível aplicar correção PWA:', pwaError);
+          }
+          
+          throw new Error('Loop de requisições detectado. A página será recarregada automaticamente para corrigir o problema.');
+        }
+        
+        // Erro 429 normal
+        const retryAfter = errorData.retryAfter || 60;
+        throw new Error(`${errorData.message || 'Muitas tentativas de login'}. Aguarde ${retryAfter} segundos.`);
+        
+      } catch (jsonError) {
+        // Se não conseguir ler JSON, usar mensagem padrão
+        throw new Error('Muitas tentativas de login. Aguarde alguns segundos antes de tentar novamente.');
+      }
+    }
+    
     const data = await response.json();
     console.log('Dados da resposta:', data);
     
     if (!response.ok) {
       throw new Error(data.message || 'Erro ao fazer login');
     }
+
+    // Limpar contadores de tentativa em caso de sucesso
+    localStorage.removeItem(lastAttemptKey);
+    localStorage.removeItem(attemptCountKey);
 
     // Extrair apenas os campos essenciais do usuário
     const userEssentials = data.user ? extractUserEssentials(data.user) : undefined;
@@ -292,7 +354,13 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     };
   } catch (error) {
     console.error('Erro no login:', error);
-    // Fornecer mensagem de erro mais detalhada
+    
+    // Se o erro menciona loop, não incrementar contador
+    if (error instanceof Error && error.message.includes('Loop de requisições')) {
+      throw error;
+    }
+    
+    // Para outros erros, fornecer mensagem mais detalhada
     if (error instanceof Error) {
       throw new Error(`Erro ao fazer login: ${error.message}`);
     } else {

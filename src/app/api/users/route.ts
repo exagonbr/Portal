@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 
 // Schema de validação para criação de usuário
 const createUserSchema = z.object({
@@ -51,8 +51,8 @@ export async function GET(request: NextRequest) {
     // Aplicar filtros baseados no role do usuário
     if (userRole === 'INSTITUTION_ADMIN' && session.user.institution_id) {
       users = users.filter(user => user.institution_id === session.user.institution_id)
-    } else if (userRole === 'SCHOOL_MANAGER' && session.user.school_id) {
-      users = users.filter(user => user.school_id === session.user.school_id)
+    } else if (userRole === 'SCHOOL_MANAGER' && (session.user as any).school_id) {
+      users = users.filter(user => user.school_id === (session.user as any).school_id)
     }
 
     // Aplicar filtros de busca

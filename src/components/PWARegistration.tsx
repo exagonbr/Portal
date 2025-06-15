@@ -6,6 +6,7 @@ import { PWAInstallPrompt } from './PWAInstallPrompt';
 import { IOSInstallBanner } from './IOSInstallBanner';
 import { OfflineIndicator } from './OfflineIndicator';
 import { startPWALoopMonitoring, isPWALoopActive, emergencyPWAFix } from '@/utils/pwa-fix';
+import { setupRequestLoopDetection, setupLoginLoopProtection } from '@/utils/request-loop-detector';
 
 export function PWARegistration() {
   const [isOnline, setIsOnline] = useState(true);
@@ -13,18 +14,29 @@ export function PWARegistration() {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [workbox, setWorkbox] = useState<Workbox | null>(null);
   const [loopDetected, setLoopDetected] = useState(false);
+  const [swRedundant, setSwRedundant] = useState(false);
 
   useEffect(() => {
     const registerSW = async () => {
-      // Iniciar monitoramento de loops ANTES de registrar o service worker
+      // 1. Configurar proteções contra loops ANTES de qualquer coisa
       try {
+        console.log('🔧 Configurando proteções contra loops...');
+        
+        // Ativar detector geral de loops
+        setupRequestLoopDetection();
+        
+        // Ativar proteção específica para login
+        setupLoginLoopProtection();
+        
+        // Iniciar monitoramento PWA
         startPWALoopMonitoring();
-        console.log('🔍 PWA Loop Monitoring iniciado');
+        
+        console.log('✅ Proteções contra loops ativadas');
       } catch (error) {
-        console.warn('⚠️ Não foi possível iniciar monitoramento de loops:', error);
+        console.warn('⚠️ Erro ao configurar proteções contra loops:', error);
       }
 
-      // Verificar se há loop ativo antes de prosseguir
+      // 2. Verificar se há loop ativo antes de prosseguir
       if (isPWALoopActive()) {
         console.warn('🚨 Loop PWA detectado, executando correção de emergência...');
         setLoopDetected(true);
@@ -32,6 +44,7 @@ export function PWARegistration() {
         return;
       }
 
+      // 3. Registrar Service Worker com proteções
       if ('serviceWorker' in navigator) {
         try {
           const wb = new Workbox('/sw.js');
@@ -52,6 +65,35 @@ export function PWARegistration() {
           // Adicionar listener para detectar problemas
           wb.addEventListener('redundant', () => {
             console.warn('⚠️ Service Worker tornou-se redundante');
+            setSwRedundant(true);
+            
+            // Limpar notificação após 10 segundos
+            setTimeout(() => setSwRedundant(false), 10000);
+            
+            // Verificar se há um novo service worker disponível
+            if (navigator.serviceWorker.controller) {
+              console.log('🔄 Novo Service Worker detectado, preparando para atualização...');
+              setIsUpdateAvailable(true);
+            } else {
+              console.warn('🚨 Service Worker redundante sem substituto, pode ser necessário recarregar');
+              
+              // Tentar re-registrar após um delay
+              setTimeout(async () => {
+                try {
+                  console.log('🔄 Tentando re-registrar Service Worker...');
+                  const newReg = await wb.register();
+                  if (newReg) {
+                    console.log('✅ Service Worker re-registrado com sucesso');
+                    setRegistration(newReg);
+                    setSwRedundant(false);
+                  }
+                } catch (error) {
+                  console.error('❌ Falha ao re-registrar Service Worker:', error);
+                  // Se falhar, aplicar correção de emergência
+                  await emergencyPWAFix();
+                }
+              }, 3000);
+            }
           });
 
           // Register the service worker com timeout
@@ -123,6 +165,20 @@ export function PWARegistration() {
           </div>
           <p className="text-xs mt-1 opacity-90">
             A página será recarregada automaticamente
+          </p>
+        </div>
+      )}
+
+      {swRedundant && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 p-3 bg-yellow-500 text-white rounded-lg shadow-lg border border-yellow-600 max-w-md">
+          <div className="flex items-center space-x-2">
+            <div className="animate-pulse rounded-full h-3 w-3 bg-white"></div>
+            <p className="text-sm font-medium">
+              Service Worker redundante detectado
+            </p>
+          </div>
+          <p className="text-xs mt-1 opacity-90">
+            Tentando reativar automaticamente...
           </p>
         </div>
       )}

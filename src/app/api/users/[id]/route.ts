@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthentication, hasRequiredRole } from '../../lib/auth-utils'
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 
 // Schema de validação para atualização de usuário
 const updateUserSchema = z.object({
@@ -47,7 +47,7 @@ export async function GET(
     const canView = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && user.institution_id === session.user.institution_id) ||
-      (userRole === 'SCHOOL_MANAGER' && user.school_id === session.user.school_id) ||
+      (userRole === 'SCHOOL_MANAGER' && user.school_id === (session.user as any).school_id) ||
       session.user?.id === userId // Próprio usuário
 
     if (!canView) {
@@ -120,7 +120,7 @@ export async function PUT(
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
       (userRole === 'INSTITUTION_ADMIN' && existingUser.institution_id === session.user.institution_id) ||
-      (userRole === 'SCHOOL_MANAGER' && existingUser.school_id === session.user.school_id) ||
+      (userRole === 'SCHOOL_MANAGER' && existingUser.school_id === (session.user as any).school_id) ||
       (session.user?.id === userId && !updateData.role) // Próprio usuário (sem alterar role)
 
     if (!canEdit) {

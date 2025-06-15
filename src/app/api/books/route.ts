@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthentication, hasRequiredRole } from '../lib/auth-utils'
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 
 // Schema de validação para criação de livro
 const createBookSchema = z.object({

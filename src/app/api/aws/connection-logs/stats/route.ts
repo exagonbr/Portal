@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthentication, hasRequiredRole } from '../../../lib/auth-utils';
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 

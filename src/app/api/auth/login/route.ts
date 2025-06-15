@@ -2,30 +2,90 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { API_CONFIG } from '@/config/constants';
 
-// Rate limiting simples para evitar loops
-const requestCounts = new Map<string, { count: number; lastReset: number }>();
+// Rate limiting inteligente para evitar loops
+const requestCounts = new Map<string, { count: number; lastReset: number; lastRequest: number; pattern: string[] }>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minuto
-const MAX_REQUESTS_PER_WINDOW = 10; // Máximo 10 tentativas por minuto
+const MAX_REQUESTS_PER_WINDOW = 15; // Aumentado para 15 tentativas por minuto
+const PATTERN_DETECTION_WINDOW = 10000; // 10 segundos para detectar padrões
+const MAX_PATTERN_REQUESTS = 5; // Máximo 5 requisições idênticas em 10 segundos
 
 function getRateLimitKey(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const ip = forwarded ? forwarded.split(',')[0] : 
              request.headers.get('x-real-ip') || 
              'unknown';
-  return `login_${ip}`;
+  const userAgent = request.headers.get('user-agent') || 'unknown';
+  return `login_${ip}_${userAgent.substring(0, 50)}`;
 }
 
-function checkRateLimit(key: string): { allowed: boolean; remaining: number } {
+function createRequestPattern(request: NextRequest): string {
+  const referer = request.headers.get('referer') || '';
+  const origin = request.headers.get('origin') || '';
+  return `${referer}_${origin}`;
+}
+
+function checkRateLimit(key: string, pattern: string): { allowed: boolean; remaining: number; reason?: string } {
   const now = Date.now();
   const record = requestCounts.get(key);
   
+  // Limpar registros antigos automaticamente
+  if (requestCounts.size > 1000) {
+    const cutoff = now - (RATE_LIMIT_WINDOW * 2);
+    for (const [k, v] of Array.from(requestCounts.entries())) {
+      if (v.lastReset < cutoff) {
+        requestCounts.delete(k);
+      }
+    }
+  }
+  
   if (!record || now - record.lastReset > RATE_LIMIT_WINDOW) {
-    requestCounts.set(key, { count: 1, lastReset: now });
+    requestCounts.set(key, { 
+      count: 1, 
+      lastReset: now, 
+      lastRequest: now,
+      pattern: [pattern]
+    });
     return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1 };
   }
   
+  // Detectar padrões suspeitos (possível loop)
+  const timeSinceLastRequest = now - record.lastRequest;
+  record.lastRequest = now;
+  
+  // Se as requisições estão vindo muito rapidamente (< 1 segundo)
+  if (timeSinceLastRequest < 1000) {
+    record.pattern.push(pattern);
+    
+    // Manter apenas os últimos 10 padrões
+    if (record.pattern.length > 10) {
+      record.pattern = record.pattern.slice(-10);
+    }
+    
+    // Verificar se há padrão repetitivo nos últimos 10 segundos
+    const recentPatterns = record.pattern.slice(-MAX_PATTERN_REQUESTS);
+    const uniquePatterns = new Set(recentPatterns);
+    
+    if (recentPatterns.length >= MAX_PATTERN_REQUESTS && uniquePatterns.size <= 2) {
+      console.warn(`🚨 LOOP DETECTADO para ${key}:`, {
+        patterns: recentPatterns,
+        uniquePatterns: Array.from(uniquePatterns),
+        timeBetweenRequests: timeSinceLastRequest
+      });
+      
+      return { 
+        allowed: false, 
+        remaining: 0, 
+        reason: 'Loop de requisições detectado. Aguarde 30 segundos antes de tentar novamente.' 
+      };
+    }
+  }
+  
   if (record.count >= MAX_REQUESTS_PER_WINDOW) {
-    return { allowed: false, remaining: 0 };
+    return { 
+      allowed: false, 
+      remaining: 0,
+      reason: 'Muitas tentativas de login. Aguarde 1 minuto antes de tentar novamente.'
+    };
   }
   
   record.count++;
@@ -47,23 +107,30 @@ export async function POST(request: NextRequest) {
     url: request.url
   });
 
-  // Rate limiting
+  // Rate limiting inteligente
   const rateLimitKey = getRateLimitKey(request);
-  const rateLimit = checkRateLimit(rateLimitKey);
+  const requestPattern = createRequestPattern(request);
+  const rateLimit = checkRateLimit(rateLimitKey, requestPattern);
   
   if (!rateLimit.allowed) {
-    console.log(`🚫 RATE LIMIT EXCEEDED for ${rateLimitKey}`);
+    console.log(`🚫 RATE LIMIT EXCEEDED for ${rateLimitKey}:`, rateLimit.reason);
+    
+    // Se foi detectado um loop, aplicar timeout maior
+    const retryAfter = rateLimit.reason?.includes('Loop') ? 30 : 60;
+    
     return NextResponse.json(
       { 
         success: false, 
-        message: 'Muitas tentativas de login. Aguarde 1 minuto antes de tentar novamente.',
-        retryAfter: 60
+        message: rateLimit.reason || 'Muitas tentativas de login. Aguarde antes de tentar novamente.',
+        retryAfter,
+        isLoop: rateLimit.reason?.includes('Loop') || false
       },
       { 
         status: 429,
         headers: {
-          'Retry-After': '60',
-          'X-RateLimit-Remaining': '0'
+          'Retry-After': retryAfter.toString(),
+          'X-RateLimit-Remaining': '0',
+          'X-Loop-Detected': rateLimit.reason?.includes('Loop') ? 'true' : 'false'
         }
       }
     );

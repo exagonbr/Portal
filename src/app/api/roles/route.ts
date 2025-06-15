@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const is_active = searchParams.get('is_active')
 
     // Buscar roles
-    let roles = [...mockRoles]
+    let roles = Array.from(mockRoles.values())
 
     // Aplicar filtros de busca
     if (search) {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (is_active !== null) {
-      roles = roles.filter(role => role.is_active === (is_active === 'true'))
+      roles = roles.filter(role => role.active === (is_active === 'true'))
     }
 
     // Ordenar por nome
@@ -132,13 +132,18 @@ export async function POST(request: NextRequest) {
     // Criar role
     const newRole = {
       id: `role_${Date.now()}`,
-      ...roleData,
+      name: roleData.name,
+      description: roleData.description,
+      permissions: roleData.permissions,
+      status: 'active',
+      active: roleData.is_active,
+      users_count: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       created_by: session.user?.id
     }
 
-    mockRoles.push(newRole)
+    mockRoles.set(newRole.id, newRole)
 
     return NextResponse.json({
       success: true,
@@ -186,8 +191,8 @@ export async function PUT(request: NextRequest) {
     }
 
     // Buscar role existente
-    const roleIndex = mockRoles.findIndex(role => role.id === id)
-    if (roleIndex === -1) {
+    const existingRole = mockRoles.get(id)
+    if (!existingRole) {
       return NextResponse.json(
         { error: 'Role não encontrada' },
         { status: 404 }
@@ -195,16 +200,18 @@ export async function PUT(request: NextRequest) {
     }
 
     // Atualizar role
-    mockRoles[roleIndex] = {
-      ...mockRoles[roleIndex],
+    const updatedRole = {
+      ...existingRole,
       ...updateData,
       updated_at: new Date().toISOString(),
       updated_by: session.user?.id
     }
+    
+    mockRoles.set(id, updatedRole)
 
     return NextResponse.json({
       success: true,
-      data: mockRoles[roleIndex],
+      data: updatedRole,
       message: 'Role atualizada com sucesso'
     })
 
