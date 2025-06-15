@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { QueueStats } from '@/services/queueService';
-import { apiClient } from '@/services/api';
+import { apiClient } from '@/services';
 
 interface QueueMonitorStats extends QueueStats {
   lastUpdate: string;
