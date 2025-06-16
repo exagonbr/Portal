@@ -41,22 +41,41 @@ const API_BASE = `${API_BASE_URL}/institutions`;
 const getAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   
-  // Tentar obter token de localStorage
+  // 1. Tentar obter token de localStorage primeiro
   let token = localStorage.getItem('auth_token') || 
               localStorage.getItem('token') ||
               localStorage.getItem('authToken') ||
               sessionStorage.getItem('token') ||
               sessionStorage.getItem('auth_token');
   
-  // Se não encontrar no storage, tentar obter dos cookies
+  // 2. Se não encontrar no storage, tentar obter dos cookies
   if (!token) {
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split('=');
       if (name === 'auth_token' || name === 'token' || name === 'authToken') {
-        token = value;
+        token = decodeURIComponent(value);
         break;
       }
+    }
+  }
+  
+  // 3. Como último recurso, tentar obter da sessão de usuário (se houver)
+  if (!token) {
+    try {
+      const userCookie = document.cookie
+        .split(';')
+        .find(cookie => cookie.trim().startsWith('user_session='));
+      
+      if (userCookie) {
+        const userSessionValue = userCookie.split('=')[1];
+        const userData = JSON.parse(decodeURIComponent(userSessionValue));
+        if (userData && userData.token) {
+          token = userData.token;
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro ao extrair token da sessão do usuário:', error);
     }
   }
   
@@ -70,8 +89,11 @@ const createAuthHeaders = (): Record<string, string> => {
   };
   
   const token = getAuthToken();
+  
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.warn('⚠️ InstitutionService: Nenhum token de autenticação encontrado');
   }
   
   return headers;

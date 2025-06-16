@@ -350,16 +350,35 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       // Extrair apenas os campos essenciais do usuário
       const userEssentials = userData ? extractUserEssentials(userData) : undefined;
       
+      // Extrair token da resposta
+      const token = result.data?.token || result.token;
+      
       // Armazenar sessão usando cookies
       if (userEssentials) {
         SessionManager.setUserSession(userEssentials);
         console.log('✅ Sessão do usuário criada com sucesso');
       }
 
+      // Armazenar token no localStorage e apiClient para outros serviços
+      if (token) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', token);
+          console.log('✅ Token salvo no localStorage');
+        }
+        
+        // Importar dinamicamente o apiClient para evitar dependência circular
+        import('../lib/api-client').then(({ apiClient }) => {
+          apiClient.setAuthToken(token);
+          console.log('✅ Token configurado no apiClient');
+        }).catch(error => {
+          console.warn('⚠️ Erro ao configurar token no apiClient:', error);
+        });
+      }
+
       return {
         success: true,
         user: userEssentials,
-        token: result.data?.token || result.token,
+        token,
         expiresAt: result.data?.expiresAt || result.expiresAt
       };
     } catch (fetchError) {
@@ -450,16 +469,35 @@ export const register = async (
       // Extrair apenas os campos essenciais do usuário
       const userEssentials = userData ? extractUserEssentials(userData) : undefined;
       
+      // Extrair token da resposta
+      const token = result.data?.token || result.token;
+      
       // Armazenar sessão usando cookies
       if (userEssentials) {
         SessionManager.setUserSession(userEssentials);
         console.log('✅ Sessão do usuário criada após registro');
       }
 
+      // Armazenar token no localStorage e apiClient para outros serviços
+      if (token) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', token);
+          console.log('✅ Token salvo no localStorage após registro');
+        }
+        
+        // Importar dinamicamente o apiClient para evitar dependência circular
+        import('../lib/api-client').then(({ apiClient }) => {
+          apiClient.setAuthToken(token);
+          console.log('✅ Token configurado no apiClient após registro');
+        }).catch(error => {
+          console.warn('⚠️ Erro ao configurar token no apiClient após registro:', error);
+        });
+      }
+
       return {
         success: true,
         user: userEssentials,
-        token: result.data?.token || result.token,
+        token,
         expiresAt: result.data?.expiresAt || result.expiresAt,
         message: result.message,
       };
@@ -495,6 +533,23 @@ export const logout = async (): Promise<void> => {
   try {
     // 1. Limpar sessão local primeiro
     SessionManager.clearSession();
+    
+    // 2. Limpar token do localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
+      console.log('✅ Tokens removidos do localStorage');
+    }
+    
+    // 3. Limpar token do apiClient
+    try {
+      const { apiClient } = await import('../lib/api-client');
+      apiClient.clearAuth();
+      console.log('✅ Auth limpo do apiClient');
+    } catch (error) {
+      console.warn('⚠️ Erro ao limpar auth do apiClient:', error);
+    }
     
     // 2. Chamar API de logout (sem bloquear se falhar)
     try {
