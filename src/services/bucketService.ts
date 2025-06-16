@@ -25,8 +25,16 @@ export class BucketService {
       if (!response.ok) {
         throw new Error('Erro ao buscar buckets configurados')
       }
-      const data: BucketListResponse = await response.json()
-      return data.configured
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data.configured || []
+      }
+      
+      // Fallback para estrutura antiga
+      const data: BucketListResponse = result
+      return data.configured || []
     } catch (error) {
       console.error('Erro no serviço de buckets:', error)
       throw error
@@ -40,7 +48,15 @@ export class BucketService {
       if (!response.ok) {
         throw new Error('Erro ao buscar todos os buckets')
       }
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao buscar todos os buckets:', error)
       throw error
@@ -63,7 +79,15 @@ export class BucketService {
         throw new Error(errorData.error || 'Erro ao adicionar bucket')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao adicionar bucket:', error)
       throw error

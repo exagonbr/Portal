@@ -62,7 +62,8 @@ export class PushSubscriptionController {
 
             return res.status(200).json({
                 success: true,
-                message: 'Push subscription registered successfully'
+                message: 'Push subscription registered successfully',
+                data: {}
             });
         } catch (error) {
             console.error('Error registering push subscription:', error);
@@ -91,7 +92,8 @@ export class PushSubscriptionController {
 
             return res.status(200).json({
                 success: true,
-                message: 'Push subscription removed successfully'
+                message: 'Push subscription removed successfully',
+                data: {}
             });
         } catch (error) {
             console.error('Error removing push subscription:', error);
@@ -219,7 +221,7 @@ export class PushSubscriptionController {
             return res.status(200).json({
                 success: true,
                 message: `Notification sent to ${sentCount} subscriptions`,
-                sentCount
+                data: { sentCount }
             });
         } catch (error) {
             console.error('Error sending bulk notification:', error);

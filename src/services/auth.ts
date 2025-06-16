@@ -168,8 +168,15 @@ export const listUsers = async (): Promise<User[]> => {
       throw new Error('Failed to fetch users');
     }
 
-    const data = await response.json();
-    return data.users || [];
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data.users || result.data || [];
+    }
+    
+    // Fallback para estrutura antiga
+    return result.users || [];
   } catch (error) {
     console.error('Error listing users:', error);
     throw error;
@@ -191,8 +198,15 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
       throw new Error('Failed to create user');
     }
 
-    const data = await response.json();
-    return data.user;
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data.user || result.data;
+    }
+    
+    // Fallback para estrutura antiga
+    return result.user;
   } catch (error) {
     console.error('Error creating user:', error);
     throw error;
@@ -217,8 +231,15 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
       throw new Error('Failed to update user');
     }
 
-    const data = await response.json();
-    return data.user;
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data.user || result.data;
+    }
+    
+    // Fallback para estrutura antiga
+    return result.user;
   } catch (error) {
     console.error('Error updating user:', error);
     throw error;
@@ -288,15 +309,24 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 
     console.log('🔐 Resposta recebida, status:', response.status);
     
-    const data = await response.json();
-    console.log('🔐 Dados da resposta:', data);
+    const result = await response.json();
+    console.log('🔐 Dados da resposta:', result);
     
     if (!response.ok) {
-      throw new Error(data.message || 'Erro ao fazer login');
+      throw new Error(result.message || 'Erro ao fazer login');
+    }
+
+    // O backend retorna { success: true, data: {...} }
+    let userData;
+    if (result.success && result.data) {
+      userData = result.data.user || result.data;
+    } else {
+      // Fallback para estrutura antiga
+      userData = result.user;
     }
 
     // Extrair apenas os campos essenciais do usuário
-    const userEssentials = data.user ? extractUserEssentials(data.user) : undefined;
+    const userEssentials = userData ? extractUserEssentials(userData) : undefined;
     
     // Armazenar sessão usando cookies
     if (userEssentials) {
@@ -307,8 +337,8 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     return {
       success: true,
       user: userEssentials,
-      token: data.token,
-      expiresAt: data.expiresAt
+      token: result.data?.token || result.token,
+      expiresAt: result.data?.expiresAt || result.expiresAt
     };
   } catch (error) {
     console.error('❌ Erro no login:', error);
@@ -342,14 +372,23 @@ export const register = async (
       credentials: 'include',
     });
 
-    const data = await response.json();
+    const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Erro ao registrar usuário');
+      throw new Error(result.message || 'Erro ao registrar usuário');
+    }
+
+    // O backend retorna { success: true, data: {...} }
+    let userData;
+    if (result.success && result.data) {
+      userData = result.data.user || result.data;
+    } else {
+      // Fallback para estrutura antiga
+      userData = result.user;
     }
 
     // Extrair apenas os campos essenciais do usuário
-    const userEssentials = data.user ? extractUserEssentials(data.user) : undefined;
+    const userEssentials = userData ? extractUserEssentials(userData) : undefined;
     
     // Armazenar sessão usando cookies
     if (userEssentials) {
@@ -360,9 +399,9 @@ export const register = async (
     return {
       success: true,
       user: userEssentials,
-      token: data.token,
-      expiresAt: data.expiresAt,
-      message: data.message,
+      token: result.data?.token || result.token,
+      expiresAt: result.data?.expiresAt || result.expiresAt,
+      message: result.message,
     };
   } catch (error) {
     console.error('❌ Erro no registro:', error);

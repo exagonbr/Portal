@@ -10,7 +10,15 @@ export class FileService {
       if (!response.ok) {
         throw new Error('Erro ao buscar arquivos')
       }
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: [...] }
+      if (result.success && result.data) {
+        return Array.isArray(result.data) ? result.data : []
+      }
+      
+      // Fallback para estrutura antiga
+      return Array.isArray(result) ? result : []
     } catch (error) {
       console.error('Erro no serviço de arquivos:', error)
       throw error
@@ -24,7 +32,15 @@ export class FileService {
       if (!response.ok) {
         throw new Error('Erro ao buscar todos os arquivos')
       }
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result || {}
     } catch (error) {
       console.error('Erro no serviço de arquivos:', error)
       throw error
@@ -55,7 +71,15 @@ export class FileService {
         throw new Error('Erro ao fazer upload do arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro no upload:', error)
       throw error
@@ -78,7 +102,15 @@ export class FileService {
         throw new Error('Erro ao substituir arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao substituir arquivo:', error)
       throw error
@@ -100,7 +132,15 @@ export class FileService {
         throw new Error('Erro ao renomear arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao renomear arquivo:', error)
       throw error
@@ -122,7 +162,15 @@ export class FileService {
         throw new Error('Erro ao mover/copiar arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao mover arquivo:', error)
       throw error
@@ -162,7 +210,15 @@ export class FileService {
         throw new Error('Erro ao atualizar arquivo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao atualizar arquivo:', error)
       throw error
@@ -184,7 +240,15 @@ export class FileService {
         throw new Error('Erro ao criar referência no banco')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao criar referência:', error)
       throw error
@@ -198,7 +262,16 @@ export class FileService {
       if (!response.ok) {
         throw new Error('Erro ao buscar arquivos do bucket')
       }
-      return await response.json()
+      
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao buscar arquivos do bucket:', error)
       throw error
@@ -220,7 +293,15 @@ export class FileService {
         throw new Error('Erro ao vincular arquivo à coleção')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao vincular à coleção:', error)
       throw error
@@ -242,7 +323,15 @@ export class FileService {
         throw new Error('Erro ao adicionar arquivo à biblioteca')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao adicionar à biblioteca:', error)
       throw error
@@ -263,7 +352,15 @@ export class FileService {
         throw new Error('Erro ao desvincular arquivo do conteúdo')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao desvincular do conteúdo:', error)
       throw error
@@ -295,7 +392,15 @@ export class FileService {
         throw new Error('Erro ao adicionar arquivo à biblioteca de livros')
       }
 
-      return await response.json()
+      const result = await response.json()
+      
+      // O backend retorna { success: true, data: {...} }
+      if (result.success && result.data) {
+        return result.data
+      }
+      
+      // Fallback para estrutura antiga
+      return result
     } catch (error) {
       console.error('Erro ao adicionar à biblioteca de livros:', error)
       throw error

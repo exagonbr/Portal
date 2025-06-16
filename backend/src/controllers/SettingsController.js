@@ -6,32 +6,56 @@ class SettingsController {
     try {
       const settings = await settingsService.getAwsSettings();
       if (!settings) {
-        return res.status(404).json({ error: 'Configurações AWS não encontradas' });
+        return res.status(404).json({ 
+          success: false,
+          message: 'Configurações AWS não encontradas' 
+        });
       }
-      res.json(settings);
+      res.json({
+        success: true,
+        data: settings,
+        message: 'Configurações AWS obtidas com sucesso'
+      });
     } catch (error) {
       console.error('Erro ao buscar configurações AWS:', error);
-      res.status(500).json({ error: 'Erro ao buscar configurações AWS' });
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao buscar configurações AWS' 
+      });
     }
   }
 
   async saveAwsSettings(req, res) {
     try {
       const settings = await settingsService.saveAwsSettings(req.body);
-      res.json(settings);
+      res.json({
+        success: true,
+        data: settings,
+        message: 'Configurações AWS salvas com sucesso'
+      });
     } catch (error) {
       console.error('Erro ao salvar configurações AWS:', error);
-      res.status(500).json({ error: 'Erro ao salvar configurações AWS' });
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao salvar configurações AWS' 
+      });
     }
   }
 
   async deleteAwsSettings(req, res) {
     try {
       await settingsService.deleteAwsSettings(req.params.id);
-      res.status(204).send();
+      res.json({
+        success: true,
+        data: {},
+        message: 'Configurações AWS deletadas com sucesso'
+      });
     } catch (error) {
       console.error('Erro ao deletar configurações AWS:', error);
-      res.status(500).json({ error: 'Erro ao deletar configurações AWS' });
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao deletar configurações AWS' 
+      });
     }
   }
 
@@ -40,22 +64,39 @@ class SettingsController {
     try {
       const settings = await settingsService.getBackgroundSettings();
       if (!settings) {
-        return res.status(404).json({ error: 'Configurações de plano de fundo não encontradas' });
+        return res.status(404).json({ 
+          success: false,
+          message: 'Configurações de plano de fundo não encontradas' 
+        });
       }
-      res.json(settings);
+      res.json({
+        success: true,
+        data: settings,
+        message: 'Configurações de plano de fundo obtidas com sucesso'
+      });
     } catch (error) {
       console.error('Erro ao buscar configurações de plano de fundo:', error);
-      res.status(500).json({ error: 'Erro ao buscar configurações de plano de fundo' });
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao buscar configurações de plano de fundo' 
+      });
     }
   }
 
   async saveBackgroundSettings(req, res) {
     try {
       const settings = await settingsService.saveBackgroundSettings(req.body);
-      res.json(settings);
+      res.json({
+        success: true,
+        data: settings,
+        message: 'Configurações de plano de fundo salvas com sucesso'
+      });
     } catch (error) {
       console.error('Erro ao salvar configurações de plano de fundo:', error);
-      res.status(500).json({ error: 'Erro ao salvar configurações de plano de fundo' });
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao salvar configurações de plano de fundo' 
+      });
     }
   }
 
@@ -172,10 +213,17 @@ class SettingsController {
   async getAllSettings(req, res) {
     try {
       const settings = await settingsService.getAllSettings();
-      res.json(settings);
+      res.json({
+        success: true,
+        data: settings,
+        message: 'Todas as configurações obtidas com sucesso'
+      });
     } catch (error) {
       console.error('Erro ao buscar todas as configurações:', error);
-      res.status(500).json({ error: 'Erro ao buscar configurações' });
+      res.status(500).json({ 
+        success: false,
+        message: 'Erro ao buscar configurações' 
+      });
     }
   }
 }
