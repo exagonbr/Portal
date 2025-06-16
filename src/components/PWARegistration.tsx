@@ -135,20 +135,6 @@ export function PWARegistration() {
         </div>
       )}
 
-      {swRedundant && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 p-3 bg-yellow-500 text-white rounded-lg shadow-lg border border-yellow-600 max-w-md">
-          <div className="flex items-center space-x-2">
-            <div className="animate-pulse rounded-full h-3 w-3 bg-white"></div>
-            <p className="text-sm font-medium">
-              Service Worker redundante detectado
-            </p>
-          </div>
-          <p className="text-xs mt-1 opacity-90">
-            Tentando reativar automaticamente...
-          </p>
-        </div>
-      )}
-
       {isUpdateAvailable && (
         <div className="fixed bottom-20 right-4 z-50 p-4 bg-background-primary rounded-lg shadow-lg border border-border-DEFAULT">
           <p className="text-sm text-text-primary mb-2">

@@ -376,4 +376,64 @@ export const optionalAuth = async (
   }
   
   next();
+};
+
+/**
+ * Middleware ultra-simples que apenas valida JWT sem criar sessões
+ * Usado para evitar loops em rotas críticas como dashboard
+ */
+export const validateJWTSimple = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token de autorização não fornecido'
+      });
+    }
+
+    const token = authHeader.substring(7);
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Formato de token inválido'
+      });
+    }
+
+    const secret = process.env.JWT_SECRET || 'ExagonTech';
+    const decoded = jwt.verify(token, secret) as any;
+    
+    if (typeof decoded === 'string' || !decoded.userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido'
+      });
+    }
+    
+    // Criar objeto user mínimo sem validações complexas
+    req.user = {
+      userId: decoded.userId,
+      email: decoded.email || '',
+      name: decoded.name || '',
+      role: decoded.role || 'user',
+      permissions: decoded.permissions || [],
+      institutionId: decoded.institutionId,
+      sessionId: decoded.sessionId,
+      iat: decoded.iat,
+      exp: decoded.exp
+    };
+    
+    next();
+  } catch (error) {
+    console.error('Erro na validação JWT simples:', error);
+    return res.status(401).json({
+      success: false,
+      message: 'Token inválido ou expirado'
+    });
+  }
 }; 

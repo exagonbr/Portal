@@ -141,7 +141,7 @@ export class DashboardService {
   /**
    * Obtém estatísticas de usuários
    */
-  private static async getUserStats() {
+  static async getUserStats() {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
