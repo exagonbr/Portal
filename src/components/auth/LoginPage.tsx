@@ -48,16 +48,16 @@ export function LoginPage() {
       if (dashboardPath) {
         console.log(`🎯 Redirecionando usuário autenticado para: ${dashboardPath}`);
         
-        // Usar window.location.replace para redirecionamento mais confiável
-        if (typeof window !== 'undefined') {
-          window.location.replace(dashboardPath);
-        }
+        // Adicionar delay para evitar loops e usar router.push
+        setTimeout(() => {
+          router.push(dashboardPath);
+        }, 500);
       } else {
         console.warn(`⚠️ Dashboard não encontrado para role ${user.role}, usando fallback`);
         
-        if (typeof window !== 'undefined') {
-          window.location.replace('/dashboard/student');
-        }
+        setTimeout(() => {
+          router.push('/dashboard/student');
+        }, 500);
       }
     }
   }, [user, router]);

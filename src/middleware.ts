@@ -142,22 +142,12 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Configuração do matcher - Específica apenas para rotas que realmente precisam
+ * Configuração do matcher - DESABILITADO para evitar loops
+ * A autenticação é gerenciada pelos componentes do lado do cliente
  */
 export const config = {
   matcher: [
-    /*
-     * Match apenas rotas protegidas específicas:
-     * - /dashboard/* (rotas protegidas)
-     * - /admin/* (rotas protegidas)
-     * - /profile/* (rotas protegidas)
-     * - /settings/* (rotas protegidas)
-     * 
-     * NÃO incluir /api/* para evitar loop nas APIs
-     */
-    '/dashboard/:path*',
-    '/admin/:path*',
-    '/profile/:path*',
-    '/settings/:path*',
+    // Matcher vazio para desabilitar o middleware completamente
+    // A proteção de rotas é feita pelos componentes ProtectedRoute e RoleGuard
   ],
 }; 

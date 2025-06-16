@@ -53,7 +53,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { systemAdminService } from '@/services/systemAdminService';
 import { institutionService } from '@/services/institutionService';
-import { ClientAuthGuard } from '@/components/auth/ClientAuthGuard';
+
 
 // Registrando os componentes necessários do Chart.js
 ChartJS.register(
@@ -158,11 +158,7 @@ interface SystemAlert {
 }
 
 export default function SystemAdminDashboard() {
-  return (
-    <ClientAuthGuard allowedRoles={['SYSTEM_ADMIN']}>
-      <SystemAdminDashboardContent />
-    </ClientAuthGuard>
-  );
+  return <SystemAdminDashboardContent />;
 }
 
 function SystemAdminDashboardContent() {

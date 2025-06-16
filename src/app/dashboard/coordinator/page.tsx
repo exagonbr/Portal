@@ -26,7 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
-import { ClientAuthGuard } from '@/components/auth/ClientAuthGuard';
+
 
 interface CoordinatorStats {
   totalCycles: number;
@@ -82,11 +82,7 @@ interface AcademicAlert {
 }
 
 export default function CoordinatorDashboardPage() {
-  return (
-    <ClientAuthGuard allowedRoles={['ACADEMIC_COORDINATOR', 'SYSTEM_ADMIN']}>
-      <CoordinatorDashboardContent />
-    </ClientAuthGuard>
-  );
+  return <CoordinatorDashboardContent />;
 }
 
 function CoordinatorDashboardContent() {

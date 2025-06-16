@@ -37,17 +37,6 @@ function RoleGuardContent({
           console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total');
           return;
         }
-        
-        if (!allowedRoles.includes(user.role as UserRole)) {
-          console.log(`🔒 RoleGuard: Role ${user.role} não permitida para esta rota`);
-          // Se o usuário não tem o papel permitido, redireciona para seu dashboard específico
-          const roleRoute = ROLE_BASED_ROUTES.find(route =>
-            route.roles.includes(user.role as UserRole) &&
-            route.path.startsWith('/dashboard')
-          );
-          
-          router.push(roleRoute?.path || redirectTo || '/login');
-        }
       }
     }
   }, [user, loading, allowedRoles, router, redirectTo]);

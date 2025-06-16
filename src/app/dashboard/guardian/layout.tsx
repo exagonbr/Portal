@@ -1,8 +1,7 @@
 'use client'
 
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
-import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import { UserRole } from '@/types/roles'
+
 
 export default function GuardianLayout({
   children,
@@ -10,13 +9,11 @@ export default function GuardianLayout({
   children: React.ReactNode
 }) {
   return (
-    <ProtectedRoute requiredRole={[UserRole.GUARDIAN, UserRole.SYSTEM_ADMIN]}>
-      <DashboardPageLayout
-        title="Dashboard do Responsável"
-        subtitle="Acompanhe o progresso dos alunos"
-      >
-        {children}
-      </DashboardPageLayout>
-    </ProtectedRoute>
+    <DashboardPageLayout
+      title="Dashboard do Responsável"
+      subtitle="Acompanhe o progresso dos alunos"
+    >
+      {children}
+    </DashboardPageLayout>
   )
 }

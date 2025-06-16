@@ -56,7 +56,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, RadialBarChart, RadialBar, Legend, Area, AreaChart } from 'recharts';
 import Link from 'next/link';
@@ -694,7 +694,6 @@ export default function GuardianDashboardPage() {
     subjectPerformances[selectedStudent] || [];
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.GUARDIAN, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="🏠 Painel do Responsável"
         subtitle="Acompanhe o desenvolvimento dos seus filhos com dados em tempo real"
@@ -1275,7 +1274,6 @@ export default function GuardianDashboardPage() {
           </div>
         </div>
       </DashboardPageLayout>
-    </ProtectedRoute>
   );
 }
 

@@ -11,14 +11,12 @@ export default function DashboardRedirect() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [error, setError] = useState<string>('');
-  const [redirecting, setRedirecting] = useState(false);
-  const [destination, setDestination] = useState<string>('');
   const redirectAttempts = useRef(0);
   const maxRedirectAttempts = 3;
 
   useEffect(() => {
     // Evita múltiplos redirecionamentos
-    if (redirecting || redirectAttempts.current >= maxRedirectAttempts) {
+    if (redirectAttempts.current >= maxRedirectAttempts) {
       return;
     }
 
@@ -28,8 +26,7 @@ export default function DashboardRedirect() {
 
         if (!user) {
           console.log('🔄 DashboardRedirect: Usuário não autenticado, redirecionando para login');
-          setDestination('/login?error=unauthorized');
-          setRedirecting(true);
+          router.push('/login?error=unauthorized');
           return;
         }
 
@@ -60,26 +57,23 @@ export default function DashboardRedirect() {
         }
 
         console.log(`✅ DashboardRedirect: Redirecionando para: ${defaultRoute}`);
-        setDestination(defaultRoute);
-        setRedirecting(true);
+        // Redirecionar diretamente sem usar o componente de redirecionamento
+        router.push(defaultRoute);
 
       } catch (err) {
         console.error('❌ DashboardRedirect: Erro no redirecionamento:', err);
         setError('Erro interno. Por favor, tente novamente ou entre em contato com o suporte.');
       }
     }
-  }, [user, loading, router, redirecting]);
+  }, [user, loading, router]);
 
   const handleRetry = () => {
     setError('');
-    setRedirecting(false);
     redirectAttempts.current = 0;
-    // Força uma nova verificação sem reload da página
-    router.refresh();
+    // Força uma nova verificação sem refresh para evitar loop
   };
 
-  const handleCancelRedirect = () => {
-    setRedirecting(false);
+  const handleCancel = () => {
     redirectAttempts.current = 0;
     router.push('/login');
   };
@@ -91,7 +85,7 @@ export default function DashboardRedirect() {
         title="Erro de Redirecionamento"
         message={error}
         onRetry={handleRetry}
-        onCancel={() => router.push('/login')}
+        onCancel={handleCancel}
         retryText="Tentar Novamente"
         cancelText="Voltar ao Login"
         details={`Tentativas: ${redirectAttempts.current}/${maxRedirectAttempts}`}
@@ -99,18 +93,7 @@ export default function DashboardRedirect() {
     );
   }
 
-  // Estado de redirecionamento
-  if (redirecting && destination) {
-    return (
-      <EnhancedRedirectState
-        destination={destination}
-        message="Redirecionando para seu dashboard"
-        countdown={3}
-        onCancel={handleCancelRedirect}
-        autoRedirect={true}
-      />
-    );
-  }
+  // Não há mais estado de redirecionamento - redirecionamento é direto
 
   // Estado de carregamento
   return (
@@ -121,7 +104,7 @@ export default function DashboardRedirect() {
       onTimeout={() => {
         setError('Tempo limite excedido. Tente fazer login novamente.');
       }}
-      onCancel={handleCancelRedirect}
+      onCancel={handleCancel}
       cancelText="Cancelar e voltar ao login"
     />
   );

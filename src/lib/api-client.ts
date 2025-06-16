@@ -262,50 +262,25 @@ class ApiClient {
         };
       }
 
-      // Trata erro de autenticação (401) com lógica especial para notificações
+      // Trata erro de autenticação (401) - REFRESH DESABILITADO PARA APRESENTAÇÃO
       if (response.status === 401 && !skipAuth && !endpoint.includes('/auth/')) {
-        // Verificar se estamos em uma rota de notificações
-        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        const isNotificationRoute = currentPath.includes('/notifications');
+        console.log('🔄 ApiClient: Erro 401 detectado, mas refresh automático está DESABILITADO para apresentação');
         
-        // Se estivermos na rota de notificações, ser mais cauteloso com refresh
-        if (isNotificationRoute) {
-          console.log('🔄 ApiClient: Erro 401 em rota de notificações, tentando refresh cauteloso');
-          
-          // Verificar se já tentamos refresh recentemente
-          const lastRefreshKey = 'last_api_refresh_attempt';
-          const lastRefresh = localStorage.getItem(lastRefreshKey);
-          const now = Date.now();
-          
-          if (lastRefresh && (now - parseInt(lastRefresh)) < 30000) { // 30 segundos
-            console.log('🔄 ApiClient: Refresh recente detectado, evitando loop');
-            
-            // Retornar erro sem tentar refresh para evitar loop
-            throw new ApiClientError('Sessão expirada. Por favor, recarregue a página.', 401);
-          }
-          
-          localStorage.setItem(lastRefreshKey, now.toString());
-        }
+        // TODA A LÓGICA DE REFRESH DESABILITADA PARA APRESENTAÇÃO
+        // Apenas continuar sem fazer refresh ou redirecionamento
+        console.log('🔄 ApiClient: Continuando sem refresh para apresentação');
         
-        const refreshed = await this.refreshAuthToken();
-        
-        if (refreshed) {
-          // Refaz a requisição com o novo token
-          return this.makeRequest<T>(endpoint, options);
-        } else {
-          // Se estamos na rota de notificações, não redirecionar automaticamente
-          if (isNotificationRoute) {
-            console.log('🔄 ApiClient: Refresh falhou em rota de notificações, mantendo usuário na página');
-            throw new ApiClientError('Sessão expirada. Por favor, recarregue a página ou faça login novamente.', 401);
-          }
-          
-          // Limpa autenticação e redireciona para outras rotas
-          this.clearAuth();
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
-          throw new ApiClientError('Sessão expirada. Por favor, faça login novamente.', 401);
-        }
+        // Não fazer nada - apenas continuar
+        // const refreshed = await this.refreshAuthToken();
+        // if (refreshed) {
+        //   return this.makeRequest<T>(endpoint, options);
+        // } else {
+        //   this.clearAuth();
+        //   if (typeof window !== 'undefined') {
+        //     window.location.href = '/login';
+        //   }
+        //   throw new ApiClientError('Sessão expirada. Por favor, faça login novamente.', 401);
+        // }
       }
 
       // Verifica outros erros

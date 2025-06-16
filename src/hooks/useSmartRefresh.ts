@@ -90,14 +90,8 @@ export function useSmartRefresh(options: SmartRefreshOptions = {}) {
       const isHealthy = await checkHealth();
       
       if (isHealthy) {
-        // Se o servidor está ok, tentar recarregar apenas os dados
+        // Se o servidor está ok, apenas marcar como sucesso sem refresh para evitar loops
         await new Promise(resolve => setTimeout(resolve, 500)); // Pequeno delay
-        
-        // Tentar usar router.refresh() primeiro (mais leve que window.location.reload)
-        router.refresh();
-        
-        // Aguardar um pouco para ver se funcionou
-        await new Promise(resolve => setTimeout(resolve, 1000));
         
         setState(prev => ({
           ...prev,

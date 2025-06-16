@@ -190,9 +190,8 @@ export function EnhancedRedirectState({
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          if (destination) {
-            router.push(destination);
-          }
+          // Removido redirecionamento automático para evitar loops
+          // O usuário deve clicar manualmente em "Ir Agora"
           return 0;
         }
         return prev - 1;

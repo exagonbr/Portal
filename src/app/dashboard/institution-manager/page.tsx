@@ -34,7 +34,7 @@ import { UserRole, ROLE_COLORS } from '@/types/roles';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
 import { institutionService, Institution, InstitutionQueryParams } from '@/services/institutionService';
-import { ClientAuthGuard } from '@/components/auth/ClientAuthGuard';
+
 
 interface InstitutionStats {
   totalSchools: number;

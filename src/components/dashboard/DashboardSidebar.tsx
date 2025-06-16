@@ -464,38 +464,9 @@ function DashboardSidebarComponent() {
           const navigationUrl = `${targetDashboard}?timestamp=${Date.now()}`;
           console.log('🚀 Navegando para:', navigationUrl);
           
-          // Múltiplas tentativas de navegação para garantir que funcione
-          const navigate = () => {
-            try {
-              // Tentativa 1: window.location.href (mais confiável)
-              if (typeof window !== 'undefined') {
-                console.log('🔄 Tentativa 1: window.location.href');
-                window.location.href = navigationUrl;
-                return;
-              }
-            } catch (error) {
-              console.warn('⚠️ Erro na tentativa 1:', error);
-            }
-            
-            try {
-              // Tentativa 2: router.push
-              console.log('🔄 Tentativa 2: router.push');
-              router.push(navigationUrl);
-            } catch (error) {
-              console.warn('⚠️ Erro na tentativa 2:', error);
-              
-              // Tentativa 3: router.replace
-              try {
-                console.log('🔄 Tentativa 3: router.replace');
-                router.replace(navigationUrl);
-              } catch (finalError) {
-                console.error('❌ Todas as tentativas de navegação falharam:', finalError);
-              }
-            }
-          };
-          
-          // Executar navegação com pequeno delay para garantir que o estado seja atualizado
-          setTimeout(navigate, 100);
+          // Navegação simples sem múltiplas tentativas para evitar loops
+          console.log('🔄 Navegando com router.push');
+          router.push(navigationUrl);
         } else {
           console.log('❌ Dashboard não encontrado para role:', newRole);
         }

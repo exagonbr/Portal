@@ -36,7 +36,7 @@ import { UserClass } from '@/types/userClass';
 import { SHIFT_LABELS } from '@/types/class';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
 import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
-import { ClientAuthGuard } from '@/components/auth/ClientAuthGuard';
+
 
 interface TeacherStats {
   totalClasses: number;
@@ -1055,9 +1055,5 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
 
 // Componente principal com proteção de rotas
 export default function TeacherDashboard() {
-  return (
-    <ClientAuthGuard allowedRoles={['TEACHER', 'SYSTEM_ADMIN']}>
-      <TeacherDashboardContent />
-    </ClientAuthGuard>
-  );
+  return <TeacherDashboardContent />;
 }

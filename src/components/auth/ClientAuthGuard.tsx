@@ -26,7 +26,10 @@ export function ClientAuthGuard({
     if (!loading) {
       if (requireAuth && !user) {
         console.log('🔒 ClientAuthGuard: Usuário não autenticado, redirecionando para login');
-        router.replace(redirectTo);
+        // Adicionar delay para evitar loops
+        setTimeout(() => {
+          router.replace(redirectTo);
+        }, 100);
         return;
       }
 
@@ -47,9 +50,13 @@ export function ClientAuthGuard({
           // Redirecionar para o dashboard correto da role do usuário
           const dashboardPath = getDashboardPath(userRole);
           if (dashboardPath) {
-            router.replace(dashboardPath);
+            setTimeout(() => {
+              router.replace(dashboardPath);
+            }, 100);
           } else {
-            router.replace('/dashboard/student');
+            setTimeout(() => {
+              router.replace('/dashboard/student');
+            }, 100);
           }
           return;
         }

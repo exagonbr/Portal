@@ -51,11 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const currentUser = await authService.getCurrentUser();
       
       if (currentUser) {
-        console.log('🔐 AuthContext: Usuário encontrado na sessão:', currentUser.email);
         setUser(currentUser);
         setError(null);
       } else {
-        console.log('🔐 AuthContext: Nenhuma sessão ativa');
         setUser(null);
       }
       

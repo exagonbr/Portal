@@ -96,7 +96,26 @@ class SessionManager {
 
   static getUserSession(): UserEssentials | null {
     try {
-      // Primeiro tentar cookies
+      // Primeiro tentar localStorage (mais confiável)
+      if (typeof window !== 'undefined') {
+        const sessionStr = localStorage.getItem(AUTH_CONFIG.STORAGE_KEYS.USER);
+        
+        if (sessionStr) {
+          const sessionData = JSON.parse(sessionStr);
+          
+          // Verificar se não expirou
+          if (sessionData.expiresAt && Date.now() < sessionData.expiresAt) {
+            this.updateActivity();
+            return sessionData.user;
+          } else {
+            // Sessão expirada, limpar
+            this.clearSession();
+            return null;
+          }
+        }
+      }
+
+      // Fallback para cookies
       const userDataCookie = this.getCookie(AUTH_CONFIG.COOKIES.USER_DATA);
       const expiresAtCookie = this.getCookie(AUTH_CONFIG.COOKIES.SESSION_EXPIRES);
       
@@ -115,27 +134,9 @@ class SessionManager {
         }
       }
 
-      // Fallback para localStorage
-      if (typeof window !== 'undefined') {
-        const sessionStr = localStorage.getItem(AUTH_CONFIG.STORAGE_KEYS.USER);
-        if (sessionStr) {
-          const sessionData = JSON.parse(sessionStr);
-          
-          // Verificar se não expirou
-          if (Date.now() < sessionData.expiresAt) {
-            this.updateActivity();
-            return sessionData.user;
-          } else {
-            // Sessão expirada, limpar
-            this.clearSession();
-            return null;
-          }
-        }
-      }
-
       return null;
     } catch (error) {
-      console.error('Erro ao recuperar sessão do usuário:', error);
+      console.error('❌ SessionManager: Erro ao recuperar sessão do usuário:', error);
       this.clearSession();
       return null;
     }
@@ -486,32 +487,32 @@ export const refreshToken = async (): Promise<boolean> => {
   }
 };
 
-// Monitoramento de atividade para manter sessão ativa
-if (typeof window !== 'undefined') {
-  // Atualizar atividade em eventos do usuário
-  const updateActivity = () => SessionManager.updateActivity();
-  
-  ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
-    document.addEventListener(event, updateActivity, { passive: true });
-  });
+// Monitoramento de atividade DESABILITADO para apresentação
+// if (typeof window !== 'undefined') {
+//   // Atualizar atividade em eventos do usuário
+//   const updateActivity = () => SessionManager.updateActivity();
+//   
+//   ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+//     document.addEventListener(event, updateActivity, { passive: true });
+//   });
 
-  // Verificar sessão periodicamente
-  setInterval(() => {
-    const lastActivity = localStorage.getItem(AUTH_CONFIG.STORAGE_KEYS.LAST_ACTIVITY);
-    if (lastActivity) {
-      const timeSinceActivity = Date.now() - parseInt(lastActivity);
-      
-      // Se não há atividade há mais de 30 minutos, limpar sessão
-      if (timeSinceActivity > 30 * 60 * 1000) {
-        console.log('🔐 Sessão expirada por inatividade');
-        SessionManager.clearSession();
-        
-        // Redirecionar para login se estivermos em uma página protegida
-        if (window.location.pathname.includes('/dashboard')) {
-          window.location.href = '/login?expired=true';
-        }
-      }
-    }
-  }, AUTH_CONFIG.ACTIVITY_CHECK_INTERVAL);
-}
+//   // Verificar sessão periodicamente
+//   setInterval(() => {
+//     const lastActivity = localStorage.getItem(AUTH_CONFIG.STORAGE_KEYS.LAST_ACTIVITY);
+//     if (lastActivity) {
+//       const timeSinceActivity = Date.now() - parseInt(lastActivity);
+//       
+//       // Se não há atividade há mais de 30 minutos, limpar sessão
+//       if (timeSinceActivity > 30 * 60 * 1000) {
+//         console.log('🔐 Sessão expirada por inatividade');
+//         SessionManager.clearSession();
+//         
+//         // Redirecionar para login se estivermos em uma página protegida
+//         if (window.location.pathname.includes('/dashboard')) {
+//           window.location.href = '/login?expired=true';
+//         }
+//       }
+//     }
+//   }, AUTH_CONFIG.ACTIVITY_CHECK_INTERVAL);
+// }
 

@@ -1,6 +1,6 @@
 /**
  * Detector de Loops de Requisições
- * Sistema global para detectar e prevenir loops de requisições HTTP
+ * Sistema global para detectar e registrar loops de requisições HTTP (apenas logs)
  */
 
 interface RequestPattern {
@@ -15,12 +15,10 @@ interface LoopDetectionConfig {
   windowMs: number;
   maxSameRequestsInSequence: number;
   sequenceWindowMs: number;
-  cooldownMs: number;
 }
 
 class RequestLoopDetector {
   private requests: RequestPattern[] = [];
-  private blockedUntil: number = 0;
   private config: LoopDetectionConfig;
 
   constructor(config?: Partial<LoopDetectionConfig>) {
@@ -29,30 +27,15 @@ class RequestLoopDetector {
       windowMs: 30000, // 30 segundos
       maxSameRequestsInSequence: 5,
       sequenceWindowMs: 10000, // 10 segundos
-      cooldownMs: 30000, // 30 segundos de cooldown
       ...config
     };
   }
 
   /**
-   * Verifica se uma requisição deve ser bloqueada
+   * Verifica e registra padrões de loop (apenas logs)
    */
-  shouldBlockRequest(url: string, method: string = 'GET', headers?: Record<string, string>): {
-    blocked: boolean;
-    reason?: string;
-    retryAfter?: number;
-  } {
+  checkAndLogRequest(url: string, method: string = 'GET', headers?: Record<string, string>): void {
     const now = Date.now();
-
-    // Verificar se ainda estamos em cooldown
-    if (now < this.blockedUntil) {
-      const retryAfter = Math.ceil((this.blockedUntil - now) / 1000);
-      return {
-        blocked: true,
-        reason: 'Sistema em cooldown devido a loop detectado',
-        retryAfter
-      };
-    }
 
     // Limpar requisições antigas
     this.cleanOldRequests(now);
@@ -60,12 +43,12 @@ class RequestLoopDetector {
     // Verificar padrões de loop
     const loopDetection = this.detectLoop(url, method, now);
     if (loopDetection.isLoop) {
-      this.blockedUntil = now + this.config.cooldownMs;
-      return {
-        blocked: true,
+      console.warn('🚫 Loop de requisições detectado:', {
+        url,
+        method,
         reason: loopDetection.reason,
-        retryAfter: Math.ceil(this.config.cooldownMs / 1000)
-      };
+        timestamp: new Date(now).toISOString()
+      });
     }
 
     // Registrar a requisição
@@ -75,8 +58,6 @@ class RequestLoopDetector {
       timestamp: now,
       headers
     });
-
-    return { blocked: false };
   }
 
   /**
@@ -140,7 +121,6 @@ class RequestLoopDetector {
    */
   reset(): void {
     this.requests = [];
-    this.blockedUntil = 0;
   }
 
   /**
@@ -149,8 +129,6 @@ class RequestLoopDetector {
   getStats(): {
     totalRequests: number;
     recentRequests: number;
-    isBlocked: boolean;
-    blockedUntil?: Date;
   } {
     const now = Date.now();
     const recentRequests = this.requests.filter(
@@ -159,9 +137,7 @@ class RequestLoopDetector {
 
     return {
       totalRequests: this.requests.length,
-      recentRequests: recentRequests.length,
-      isBlocked: now < this.blockedUntil,
-      blockedUntil: this.blockedUntil > 0 ? new Date(this.blockedUntil) : undefined
+      recentRequests: recentRequests.length
     };
   }
 }
@@ -170,7 +146,7 @@ class RequestLoopDetector {
 const globalDetector = new RequestLoopDetector();
 
 /**
- * Interceptador de fetch para detecção automática de loops
+ * Interceptador de fetch para detecção automática de loops (apenas logs)
  */
 export function setupRequestLoopDetection(): void {
   if (typeof window === 'undefined') return;
@@ -184,37 +160,8 @@ export function setupRequestLoopDetection(): void {
     
     const method = init?.method || 'GET';
 
-    // Verificar se deve bloquear a requisição
-    const blockCheck = globalDetector.shouldBlockRequest(url, method);
-    
-    if (blockCheck.blocked) {
-      console.warn('🚫 Requisição bloqueada pelo detector de loops:', {
-        url,
-        method,
-        reason: blockCheck.reason,
-        retryAfter: blockCheck.retryAfter
-      });
-
-      // Criar resposta de erro simulada
-      const errorResponse = new Response(
-        JSON.stringify({
-          success: false,
-          message: blockCheck.reason,
-          retryAfter: blockCheck.retryAfter,
-          isLoop: true
-        }),
-        {
-          status: 429,
-          statusText: 'Too Many Requests',
-          headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': blockCheck.retryAfter?.toString() || '30'
-          }
-        }
-      );
-
-      return errorResponse;
-    }
+    // Verificar e logar padrões de loop (sem bloquear)
+    globalDetector.checkAndLogRequest(url, method);
 
     // Executar requisição normal
     try {
@@ -225,7 +172,7 @@ export function setupRequestLoopDetection(): void {
     }
   };
 
-  console.log('🔍 Detector de loops de requisições ativado');
+  console.log('🔍 Detector de loops de requisições ativado (apenas logs)');
 }
 
 /**
@@ -240,14 +187,10 @@ export function disableRequestLoopDetection(): void {
 }
 
 /**
- * Verifica se uma URL específica deve ser bloqueada
+ * Verifica padrões de loop para uma URL específica (apenas logs)
  */
-export function checkRequestBlocked(url: string, method: string = 'GET'): {
-  blocked: boolean;
-  reason?: string;
-  retryAfter?: number;
-} {
-  return globalDetector.shouldBlockRequest(url, method);
+export function checkRequestLoop(url: string, method: string = 'GET'): void {
+  globalDetector.checkAndLogRequest(url, method);
 }
 
 /**
@@ -266,7 +209,7 @@ export function getRequestLoopStats() {
 }
 
 /**
- * Configuração específica para login
+ * Configuração específica para login (apenas logs)
  */
 export function setupLoginLoopProtection(): void {
   const loginDetector = new RequestLoopDetector({
@@ -274,7 +217,6 @@ export function setupLoginLoopProtection(): void {
     windowMs: 60000, // 1 minuto
     maxSameRequestsInSequence: 3,
     sequenceWindowMs: 5000, // 5 segundos
-    cooldownMs: 60000 // 1 minuto de cooldown
   });
 
   // Interceptar apenas requisições de login
@@ -285,37 +227,16 @@ export function setupLoginLoopProtection(): void {
                 input instanceof URL ? input.toString() : 
                 input.url;
     
-    // Aplicar proteção apenas para login
+    // Aplicar detecção apenas para login (sem bloquear)
     if (url.includes('/api/auth/login')) {
       const method = init?.method || 'POST';
-      const blockCheck = loginDetector.shouldBlockRequest(url, method);
-      
-      if (blockCheck.blocked) {
-        console.warn('🚫 Login bloqueado pelo detector de loops:', blockCheck.reason);
-        
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: blockCheck.reason,
-            retryAfter: blockCheck.retryAfter,
-            isLoop: true
-          }),
-          {
-            status: 429,
-            statusText: 'Too Many Requests',
-            headers: {
-              'Content-Type': 'application/json',
-              'Retry-After': blockCheck.retryAfter?.toString() || '60'
-            }
-          }
-        );
-      }
+      loginDetector.checkAndLogRequest(url, method);
     }
 
     return originalFetch(input, init);
   };
 
-  console.log('🔐 Proteção contra loops de login ativada');
+  console.log('🔐 Proteção contra loops de login ativada (apenas logs)');
 }
 
 export default RequestLoopDetector; 
