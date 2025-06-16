@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '../config/constants';
 import { 
-  Institution, 
+  Institution,
   InstitutionDto,
   CreateInstitutionDto, 
   UpdateInstitutionDto,
@@ -25,6 +25,9 @@ import {
 // Re-exportar tipos para compatibilidade
 export { 
   Institution, 
+  InstitutionDto,
+  CreateInstitutionDto,
+  UpdateInstitutionDto,
   InstitutionType, 
   INSTITUTION_TYPE_LABELS,
   type InstitutionFilter as InstitutionFilters,

@@ -481,6 +481,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Login realizado com sucesso',
       user: userData,
+      token: data.token, // Incluir o token na resposta para uso em headers Authorization
       redirectTo: data.redirectTo || '/dashboard'
     }, {
       headers: {
