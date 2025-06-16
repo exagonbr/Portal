@@ -21,23 +21,14 @@ const nextConfig = {
   // CORREÇÃO: Configuração de proxy mais específica para evitar loops
   // CORREÇÃO: Configuração de proxy mais específica para evitar loops
   async rewrites() {
-    // Em produção com ALB, NÃO usar proxy interno para evitar loops
-    // O ALB já faz o roteamento correto
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🚫 Proxy interno desabilitado em produção para evitar loops');
-      return [];
-    }
-    
-    // Apenas em desenvolvimento usar proxy
-    const isDev = process.env.NODE_ENV === 'development';
     const apiDestination = 'http://localhost:3001/api/:path*';
     
-    console.log(`🔄 Proxy configurado para desenvolvimento: ${apiDestination}`);
+    console.log(`🔄 Proxy configurado para : ${apiDestination}`);
     
     return [
       {
-        source: '/api/((?!screenshots).*)',
-        destination: 'http://localhost:3001/api/$1'
+        source: '/api/',
+        destination: apiDestination
       }
     ];
   },

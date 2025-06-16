@@ -197,7 +197,7 @@ export default function ManageInstitutions() {
         phone: data.phone,
         email: data.email,
         active: data.active,
-        type: 'SCHOOL' // Valor padrão, pode ser ajustado conforme necessário
+        type: 'PUBLIC' // Valor padrão, pode ser ajustado conforme necessário
       }
 
       if (selectedInstitution) {

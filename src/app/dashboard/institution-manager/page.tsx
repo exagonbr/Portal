@@ -34,6 +34,7 @@ import { UserRole, ROLE_COLORS } from '@/types/roles';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
 import { institutionService, Institution, InstitutionQueryParams } from '@/services/institutionService';
+import { InstitutionDto } from '@/types/institution';
 
 
 interface InstitutionStats {
@@ -79,7 +80,7 @@ interface Announcement {
 
 export default function InstitutionManagerDashboardPage() {
   const { user } = useAuth();
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [institutions, setInstitutions] = useState<InstitutionDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [queryParams, setQueryParams] = useState<InstitutionQueryParams>({
@@ -98,7 +99,7 @@ export default function InstitutionManagerDashboardPage() {
       setLoading(true);
       setError(null);
       const response = await institutionService.getInstitutions(queryParams);
-      setInstitutions(response.data);
+      setInstitutions(response.items);
     } catch (err) {
       setError('Erro ao carregar instituições. Verifique se o backend está rodando.');
       console.error('Error fetching institutions:', err);
@@ -135,29 +136,29 @@ export default function InstitutionManagerDashboardPage() {
               <div className="text-sm font-medium text-gray-500 mb-1">Total de Instituições</div>
               <div className="text-2xl font-bold text-gray-600">{institutions.length}</div>
               <div className="text-xs text-green-600 mt-2">
-                {institutions.filter(i => i.active).length} ativas
+                {institutions.filter(i => i.is_active).length} ativas
               </div>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="text-sm font-medium text-gray-500 mb-1">Escolas</div>
+              <div className="text-sm font-medium text-gray-500 mb-1">Públicas</div>
               <div className="text-2xl font-bold text-gray-600">
-                {institutions.filter(i => i.type === 'SCHOOL').length}
+                {institutions.filter(i => i.type === 'PUBLIC').length}
               </div>
-              <div className="text-xs text-blue-600 mt-2">Ensino básico</div>
+              <div className="text-xs text-blue-600 mt-2">Instituições públicas</div>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="text-sm font-medium text-gray-500 mb-1">Universidades</div>
+              <div className="text-sm font-medium text-gray-500 mb-1">Privadas</div>
               <div className="text-2xl font-bold text-gray-600">
-                {institutions.filter(i => i.type === 'UNIVERSITY').length}
+                {institutions.filter(i => i.type === 'PRIVATE').length}
               </div>
-              <div className="text-xs text-purple-600 mt-2">Ensino superior</div>
+              <div className="text-xs text-purple-600 mt-2">Instituições privadas</div>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="text-sm font-medium text-gray-500 mb-1">Centros Técnicos</div>
+              <div className="text-sm font-medium text-gray-500 mb-1">Mistas</div>
               <div className="text-2xl font-bold text-gray-600">
-                {institutions.filter(i => i.type === 'TECH_CENTER').length}
+                {institutions.filter(i => i.type === 'MIXED').length}
               </div>
-              <div className="text-xs text-orange-600 mt-2">Ensino técnico</div>
+              <div className="text-xs text-orange-600 mt-2">Instituições mistas</div>
             </div>
           </div>
 
@@ -181,15 +182,15 @@ export default function InstitutionManagerDashboardPage() {
                   <div key={institution.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        institution.type === 'SCHOOL' ? 'bg-blue-100' :
-                        institution.type === 'UNIVERSITY' ? 'bg-purple-100' :
-                        institution.type === 'COLLEGE' ? 'bg-green-100' :
+                        institution.type === 'PUBLIC' ? 'bg-blue-100' :
+                        institution.type === 'PRIVATE' ? 'bg-purple-100' :
+                        institution.type === 'MIXED' ? 'bg-green-100' :
                         'bg-orange-100'
                       }`}>
                         <School className={`w-6 h-6 ${
-                          institution.type === 'SCHOOL' ? 'text-blue-600' :
-                          institution.type === 'UNIVERSITY' ? 'text-purple-600' :
-                          institution.type === 'COLLEGE' ? 'text-green-600' :
+                          institution.type === 'PUBLIC' ? 'text-blue-600' :
+                          institution.type === 'PRIVATE' ? 'text-purple-600' :
+                          institution.type === 'MIXED' ? 'text-green-600' :
                           'text-orange-600'
                         }`} />
                       </div>
@@ -207,11 +208,11 @@ export default function InstitutionManagerDashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        institution.active 
+                        institution.is_active 
                           ? 'bg-green-100 text-green-700' 
                           : 'bg-red-100 text-red-700'
                       }`}>
-                        {institution.active ? 'Ativa' : 'Inativa'}
+                        {institution.is_active ? 'Ativa' : 'Inativa'}
                       </span>
                       <div className="flex items-center gap-1">
                         <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded">

@@ -47,10 +47,8 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
       // Convert the form data to match the service's expected format
       const serviceData = {
         ...formData,
-        // Map the institution type to the service's expected format
-        type: formData.type === 'PUBLIC' ? 'SCHOOL' as const :
-              formData.type === 'PRIVATE' ? 'COLLEGE' as const :
-              'UNIVERSITY' as const // Default for MIXED
+        // Use the type directly since it now matches the backend
+        type: formData.type
       };
 
       if (institution) {
