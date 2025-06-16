@@ -217,20 +217,17 @@ export class InstitutionService extends BaseService<Institution, CreateInstituti
       type: institution.type,
       created_at: institution.created_at,
       updated_at: institution.updated_at,
+      is_active: institution.is_active,
     };
 
+    // Campos opcionais
     if (institution.address !== undefined) dto.address = institution.address;
-    // if (institution.city !== undefined) dto.city = institution.city; // Modelo não possui city
-    // if (institution.state !== undefined) dto.state = institution.state; // Modelo não possui state
-    // if (institution.zip_code !== undefined) dto.zip_code = institution.zip_code; // Modelo não possui zip_code
-    // if (institution.country !== undefined) dto.country = institution.country; // Modelo não possui country
+    if (institution.city !== undefined) dto.city = institution.city;
+    if (institution.state !== undefined) dto.state = institution.state;
+    if (institution.zip_code !== undefined) dto.zip_code = institution.zip_code;
     if (institution.phone !== undefined) dto.phone = institution.phone;
     if (institution.email !== undefined) dto.email = institution.email;
-    // if (institution.website !== undefined) dto.website = institution.website; // Modelo não possui website
-    // if (institution.logo_url !== undefined) dto.logo_url = institution.logo_url; // Modelo não possui logo_url
-    
-    // O modelo Institution possui 'is_active', então incluímos no DTO
-    dto.is_active = institution.is_active;
+    if (institution.website !== undefined) dto.website = institution.website;
 
     return dto;
   }

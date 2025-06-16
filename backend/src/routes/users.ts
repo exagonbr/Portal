@@ -599,5 +599,70 @@ router.delete('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async
 });
 
 
+/**
+ * @swagger
+ * /api/users/stats:
+ *   get:
+ *     summary: Get user statistics
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalUsers:
+ *                       type: number
+ *                     users_by_role:
+ *                       type: object
+ *                     activeUsers:
+ *                       type: number
+ *                     inactiveUsers:
+ *                       type: number
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/stats', validateJWTSmart, requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
+  try {
+    // Buscar estatísticas de usuários
+    const totalUsers = await userRepository.count();
+    const activeUsers = await userRepository.count({ is_active: true });
+    const inactiveUsers = totalUsers - activeUsers;
+    
+    // Buscar usuários por role
+    const usersByRole = await userRepository.getUserStatsByRole();
+    
+    // Formatar resposta
+    const stats = {
+      totalUsers,
+      activeUsers,
+      inactiveUsers,
+      users_by_role: usersByRole || {}
+    };
+
+    return res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
 export default router;
 

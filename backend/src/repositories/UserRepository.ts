@@ -158,4 +158,27 @@ export class UserRepository extends BaseRepository<User> {
 
     return [...studentCourses, ...teacherCourses];
   }
+
+  async getUserStatsByRole(): Promise<Record<string, number>> {
+    try {
+      const result = await db(this.tableName)
+        .select('roles.name as role_name')
+        .count('users.id as count')
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .where('users.is_active', true)
+        .groupBy('roles.name');
+
+      // Converter array de resultados em objeto
+      const stats: Record<string, number> = {};
+      result.forEach((row: any) => {
+        const roleName = row.role_name || 'Sem Role';
+        stats[roleName] = parseInt(row.count, 10) || 0;
+      });
+
+      return stats;
+    } catch (error) {
+      console.error('Error fetching user stats by role:', error);
+      return {};
+    }
+  }
 }
