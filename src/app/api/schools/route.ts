@@ -20,7 +20,7 @@ const createSchoolSchema = z.object({
   }),
   principal_name: z.string().min(3, 'Nome do diretor é obrigatório'),
   principal_email: z.string().email('Email do diretor inválido'),
-  type: z.enum(['PUBLIC', 'PRIVATE', 'CHARTER']),
+  type: z.enum(['elementary', 'middle', 'high', 'technical']).optional(),
   education_levels: z.array(z.enum(['INFANTIL', 'FUNDAMENTAL_I', 'FUNDAMENTAL_II', 'MEDIO', 'TECNICO', 'EJA'])),
   shifts: z.array(z.enum(['MORNING', 'AFTERNOON', 'EVENING', 'FULL_TIME'])),
   is_active: z.boolean().default(true),
@@ -40,7 +40,7 @@ const mockSchools = new Map([
     name: 'Escola Estadual Dom Pedro II',
     code: 'EEDP2',
     institution_id: 'inst_sabercon',
-    type: 'PUBLIC',
+    type: 'elementary',
     description: 'Escola pública de ensino fundamental e médio',
     address: {
       street: 'Rua das Flores',
@@ -76,7 +76,7 @@ const mockSchools = new Map([
     name: 'Colégio Particular Santa Clara',
     code: 'CPSC',
     institution_id: 'inst_sabercon',
-    type: 'PRIVATE',
+    type: 'high',
     description: 'Colégio particular de ensino integral',
     address: {
       street: 'Av. Paulista',
@@ -112,7 +112,7 @@ const mockSchools = new Map([
     name: 'Centro de Educação Técnica',
     code: 'CET',
     institution_id: 'inst_ifsp',
-    type: 'PUBLIC',
+    type: 'technical',
     description: 'Centro de educação técnica e profissionalizante',
     address: {
       street: 'Rua Tecnológica',

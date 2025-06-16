@@ -5,6 +5,7 @@ export interface School {
   name: string;
   code?: string;
   institution_id: string;
+  type?: 'elementary' | 'middle' | 'high' | 'technical';
   description?: string;
   address?: string;
   city?: string;
@@ -18,7 +19,6 @@ export interface School {
   updated_at: string;
   // Campos adicionais para compatibilidade
   active?: boolean;
-  type?: string;
   institutionName?: string;
   principal?: string;
   studentsCount?: number;
@@ -30,6 +30,7 @@ export interface CreateSchoolData {
   name: string;
   code?: string;
   institution_id: string;
+  type?: 'elementary' | 'middle' | 'high' | 'technical';
   description?: string;
   address?: string;
   city?: string;
@@ -43,6 +44,7 @@ export interface CreateSchoolData {
 export interface UpdateSchoolData {
   name?: string;
   code?: string;
+  type?: 'elementary' | 'middle' | 'high' | 'technical';
   description?: string;
   address?: string;
   city?: string;

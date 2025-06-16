@@ -62,18 +62,63 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Helper function to parse cookies
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  if (!cookieHeader) return cookies;
+  
+  cookieHeader.split(';').forEach(cookie => {
+    const [name, value] = cookie.trim().split('=');
+    if (name && value) {
+      cookies[name] = decodeURIComponent(value);
+    }
+  });
+  
+  return cookies;
+}
+
 // Middleware de autenticação simples
 const simpleAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  let token = '';
   
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // Try to get token from Authorization header
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else {
+    // Try to get token from cookies
+    const cookies = parseCookies(req.headers.cookie || '');
+    token = cookies.auth_token || cookies.authToken || cookies.token || '';
+  }
+  
+  if (!token) {
     return res.status(401).json({
       success: false,
       message: 'No authorization token provided'
     });
   }
   
-  // Para teste, aceitar qualquer token que comece com 'Bearer '
+  // Para tokens base64 (fallback), decodificar e validar
+  try {
+    if (token.length > 100) { // Provavelmente um token base64 longo
+      const decoded = Buffer.from(token, 'base64').toString('utf-8');
+      const tokenData = JSON.parse(decoded);
+      
+      if (tokenData.userId && tokenData.role) {
+        req.user = { 
+          userId: tokenData.userId, 
+          role: tokenData.role,
+          email: tokenData.email,
+          name: tokenData.name
+        };
+        return next();
+      }
+    }
+  } catch (e) {
+    // Se falhar na decodificação base64, continuar com validação simples
+  }
+  
+  // Para teste, aceitar qualquer token que não seja vazio
   req.user = { userId: 'test-user', role: 'admin' };
   next();
 };
@@ -169,6 +214,79 @@ app.get('/api/institutions', simpleAuth, (req, res) => {
       }
     ],
     total: 1
+  });
+});
+
+// Rota específica para escolas com dados mock
+app.get('/api/schools', simpleAuth, (req, res) => {
+  const schools = [
+    {
+      id: 'school_1',
+      name: 'Escola Estadual Dom Pedro II',
+      code: 'EEDP2',
+      institution_id: 'inst_sabercon',
+      type: 'PUBLIC',
+      description: 'Escola pública de ensino fundamental e médio',
+      phone: '(11) 3456-7890',
+      email: 'contato@eedp2.edu.br',
+      is_active: true,
+      students_count: 450,
+      teachers_count: 32,
+      classes_count: 18,
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2025-06-16T21:00:00Z'
+    },
+    {
+      id: 'school_2',
+      name: 'Colégio Particular Santa Clara',
+      code: 'CPSC',
+      institution_id: 'inst_sabercon',
+      type: 'PRIVATE',
+      description: 'Colégio particular de ensino integral',
+      phone: '(11) 9876-5432',
+      email: 'secretaria@santaclara.edu.br',
+      is_active: true,
+      students_count: 280,
+      teachers_count: 25,
+      classes_count: 12,
+      created_at: '2024-02-01T10:00:00Z',
+      updated_at: '2025-06-16T21:00:00Z'
+    },
+    {
+      id: 'school_3',
+      name: 'Centro de Educação Técnica',
+      code: 'CET',
+      institution_id: 'inst_ifsp',
+      type: 'PUBLIC',
+      description: 'Centro de educação técnica e profissionalizante',
+      phone: '(19) 3234-5678',
+      email: 'contato@cet.edu.br',
+      is_active: true,
+      students_count: 600,
+      teachers_count: 45,
+      classes_count: 24,
+      created_at: '2024-03-01T10:00:00Z',
+      updated_at: '2025-06-16T21:00:00Z'
+    }
+  ];
+
+  const limit = parseInt(req.query.limit) || 10;
+  const page = parseInt(req.query.page) || 1;
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const paginatedSchools = schools.slice(startIndex, endIndex);
+
+  res.json({
+    success: true,
+    data: {
+      items: paginatedSchools,
+      pagination: {
+        total: schools.length,
+        page,
+        limit,
+        totalPages: Math.ceil(schools.length / limit)
+      }
+    }
   });
 });
 

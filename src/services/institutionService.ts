@@ -61,18 +61,25 @@ export class InstitutionService {
 
       const result = await response.json();
       
-      // Validar estrutura da resposta
-      const validatedResponse = validateApiResponse<PaginatedResponse<InstitutionDto>>(result);
-      if (!validatedResponse || !validatedResponse.data) {
+      console.log('Raw result from API:', result);
+      
+      // A API já retorna no formato { success: true, data: { items: [...], pagination: {...} } }
+      // Verificar se a resposta está no formato correto
+      if (!result.success || !result.data) {
         throw new Error('Estrutura de resposta inválida da API');
+      }
+
+      // Verificar se data tem items e pagination
+      if (!result.data.items || !Array.isArray(result.data.items)) {
+        throw new Error('Items não encontrados na resposta da API');
       }
 
       // Migrar campos legados se necessário
       const migratedData = {
-        ...validatedResponse.data,
-        items: validatedResponse.data.items.map(institution => 
+        items: result.data.items.map((institution: any) => 
           migrateContactFields(institution)
-        )
+        ),
+        pagination: result.data.pagination
       };
 
       return migratedData;

@@ -20,7 +20,7 @@ const updateSchoolSchema = z.object({
   }).optional(),
   principal_name: z.string().min(3).optional(),
   principal_email: z.string().email().optional(),
-  type: z.enum(['PUBLIC', 'PRIVATE', 'CHARTER']).optional(),
+  type: z.enum(['elementary', 'middle', 'high', 'technical']).optional(),
   education_levels: z.array(z.enum(['INFANTIL', 'FUNDAMENTAL_I', 'FUNDAMENTAL_II', 'MEDIO', 'TECNICO', 'EJA'])).optional(),
   shifts: z.array(z.enum(['MORNING', 'AFTERNOON', 'EVENING', 'FULL_TIME'])).optional(),
   is_active: z.boolean().optional(),

@@ -95,8 +95,6 @@ export default function ManageInstitutions() {
         search
       })
       
-      console.log('Response from API:', response)
-      
       // Mapear Institution para InstitutionResponseDto
       const mappedInstitutions: InstitutionResponseDto[] = (response.items || []).map(institution => {
         // Função auxiliar para formatar endereço

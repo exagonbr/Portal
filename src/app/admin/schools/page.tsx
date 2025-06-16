@@ -73,12 +73,22 @@ const toast = {
   }
 };
 
+// Constantes para tipos de escola
+const SCHOOL_TYPES = [
+  { value: 'elementary', label: 'Fundamental I', description: 'Anos iniciais do ensino fundamental (1º ao 5º ano)' },
+  { value: 'middle', label: 'Fundamental II', description: 'Anos finais do ensino fundamental (6º ao 9º ano)' },
+  { value: 'high', label: 'Ensino Médio', description: 'Ensino médio regular (1º ao 3º ano)' },
+  { value: 'technical', label: 'Técnico', description: 'Ensino técnico e profissionalizante' }
+] as const;
+
+type SchoolType = typeof SCHOOL_TYPES[number]['value'];
+
 interface SchoolUnit extends School {
   principal?: string;
   studentsCount: number;
   teachersCount: number;
   classesCount: number;
-  type: 'elementary' | 'middle' | 'high' | 'technical';
+  type: SchoolType;
   status: 'active' | 'inactive';
   institutionName?: string;
   contact: {
@@ -88,22 +98,31 @@ interface SchoolUnit extends School {
   };
 }
 
+interface ExtendedCreateSchoolData extends CreateSchoolData {
+  type?: SchoolType;
+}
+
+interface ExtendedUpdateSchoolData extends UpdateSchoolData {
+  type?: SchoolType;
+}
+
 export default function SystemAdminSchoolsPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const [schools, setSchools] = useState<SchoolUnit[]>([]);
   const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingInstitutions, setLoadingInstitutions] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInstitution, setSelectedInstitution] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [editingSchool, setEditingSchool] = useState<SchoolUnit | null>(null);
-  const [formData, setFormData] = useState<CreateSchoolData>({
+  const [formData, setFormData] = useState<ExtendedCreateSchoolData>({
     name: '',
     code: '',
     description: '',
     institution_id: '',
-
+    type: 'elementary',
     address: '',
     city: '',
     state: '',
@@ -112,21 +131,47 @@ export default function SystemAdminSchoolsPage() {
     email: '',
     is_active: true
   });
-  const [filterType, setFilterType] = useState<'all' | 'elementary' | 'middle' | 'high' | 'technical'>('all');
+  const [filterType, setFilterType] = useState<'all' | SchoolType>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, [selectedInstitution]);
+    loadInstitutions();
+  }, []);
+
+  useEffect(() => {
+    if (!loadingInstitutions) {
+      loadData();
+    }
+  }, [selectedInstitution, loadingInstitutions]);
+
+  const loadInstitutions = async () => {
+    try {
+      setLoadingInstitutions(true);
+      console.log('🔄 Carregando instituições...');
+      
+      const institutionsResponse = await institutionService.getAll();
+      console.log('📊 Instituições carregadas:', institutionsResponse);
+      
+      setInstitutions(institutionsResponse.data || []);
+      
+      if (!institutionsResponse.data || institutionsResponse.data.length === 0) {
+        toast.error('Nenhuma instituição encontrada. Verifique a conexão.');
+      } else {
+        console.log(`✅ ${institutionsResponse.data.length} instituições carregadas com sucesso`);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar instituições:', error);
+      toast.error('Erro ao carregar instituições. Verifique sua conexão.');
+      setInstitutions([]);
+    } finally {
+      setLoadingInstitutions(false);
+    }
+  };
 
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // Carregar instituições usando o método correto
-      const institutionsResponse = await institutionService.getAll();
-      setInstitutions(institutionsResponse.data || []);
 
       // Carregar todas as escolas (SYSTEM_ADMIN vê todas)
       const filters = {
@@ -138,7 +183,7 @@ export default function SystemAdminSchoolsPage() {
       
       // Converter escolas para o formato esperado pelo frontend
       const schoolsData = response.items.map(school => {
-        const institution = institutionsResponse.data?.find(inst => inst.id === school.institution_id);
+        const institution = institutions.find(inst => inst.id === school.institution_id);
         
         return {
           ...school,
@@ -146,11 +191,10 @@ export default function SystemAdminSchoolsPage() {
           studentsCount: school.studentsCount || Math.floor(Math.random() * 500),
           teachersCount: school.teachersCount || Math.floor(Math.random() * 50),
           classesCount: school.classesCount || Math.floor(Math.random() * 30),
-          type: ['elementary', 'middle', 'high', 'technical'][Math.floor(Math.random() * 4)] as 'elementary' | 'middle' | 'high' | 'technical',
+          type: (school.type || 'elementary') as SchoolType,
           status: school.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
           active: school.is_active,
           institutionName: institution?.name || 'Instituição não encontrada',
-
           contact: {
             phone: school.phone || '',
             email: school.email || '',
@@ -187,6 +231,11 @@ export default function SystemAdminSchoolsPage() {
       return;
     }
     
+    if (!formData.type) {
+      toast.error('Selecione um tipo de escola');
+      return;
+    }
+    
     if (formData.name.length < 3) {
       toast.error('Nome da escola deve ter pelo menos 3 caracteres');
       return;
@@ -201,7 +250,7 @@ export default function SystemAdminSchoolsPage() {
       setSubmitting(true);
       
       if (editingSchool) {
-        await schoolService.update(editingSchool.id, formData as UpdateSchoolData);
+        await schoolService.update(editingSchool.id, formData as ExtendedUpdateSchoolData);
         toast.success('Escola atualizada com sucesso!');
       } else {
         await schoolService.create(formData);
@@ -238,7 +287,7 @@ export default function SystemAdminSchoolsPage() {
       code: school.code || '',
       description: school.description || '',
       institution_id: school.institution_id,
-
+      type: school.type || 'elementary',
       address: school.address || '',
       city: school.city || '',
       state: school.state || '',
@@ -252,7 +301,7 @@ export default function SystemAdminSchoolsPage() {
 
   const handleToggleActive = async (school: SchoolUnit) => {
     try {
-      const updateData: UpdateSchoolData = {
+      const updateData: ExtendedUpdateSchoolData = {
         is_active: !school.is_active
       };
       
@@ -273,7 +322,7 @@ export default function SystemAdminSchoolsPage() {
       code: '',
       description: '',
       institution_id: '',
-
+      type: 'elementary',
       address: '',
       city: '',
       state: '',
@@ -306,13 +355,8 @@ export default function SystemAdminSchoolsPage() {
   };
 
   const getTypeLabel = (type: string) => {
-    const labels = {
-      elementary: 'Fundamental I',
-      middle: 'Fundamental II',
-      high: 'Ensino Médio',
-      technical: 'Técnico'
-    };
-    return labels[type as keyof typeof labels] || type;
+    const typeData = SCHOOL_TYPES.find(t => t.value === type);
+    return typeData ? typeData.label : type;
   };
 
   return (
@@ -333,14 +377,29 @@ export default function SystemAdminSchoolsPage() {
               </div>
                                   <button
                       onClick={() => setShowModal(true)}
-                      disabled={institutions.length === 0}
+                      disabled={loadingInstitutions || institutions.length === 0}
                       className={`bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                        institutions.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                        loadingInstitutions || institutions.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
-                      title={institutions.length === 0 ? 'Carregue as instituições primeiro' : 'Criar nova escola'}
+                      title={
+                        loadingInstitutions 
+                          ? 'Aguarde o carregamento das instituições' 
+                          : institutions.length === 0 
+                            ? 'Nenhuma instituição disponível para criar escolas' 
+                            : 'Criar nova escola'
+                      }
                     >
-                      <Plus className="w-4 h-4" />
-                      Nova Escola
+                      {loadingInstitutions ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Carregando...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4" />
+                          Nova Escola
+                        </>
+                      )}
                     </button>
             </div>
           </div>
@@ -361,18 +420,28 @@ export default function SystemAdminSchoolsPage() {
               </div>
 
               {/* Filtro por Instituição */}
-              <select
-                value={selectedInstitution}
-                onChange={(e) => setSelectedInstitution(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">Todas as Instituições</option>
-                {institutions.map(institution => (
-                  <option key={institution.id} value={institution.id}>
-                    {institution.name}
+              <div className="relative">
+                <select
+                  value={selectedInstitution}
+                  onChange={(e) => setSelectedInstitution(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  disabled={loadingInstitutions}
+                >
+                  <option value="all">
+                    {loadingInstitutions ? 'Carregando...' : 'Todas as Instituições'}
                   </option>
-                ))}
-              </select>
+                  {!loadingInstitutions && institutions.map(institution => (
+                    <option key={institution.id} value={institution.id}>
+                      {institution.name}
+                    </option>
+                  ))}
+                </select>
+                {loadingInstitutions && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  </div>
+                )}
+              </div>
 
               {/* Filtro por Tipo */}
               <select
@@ -381,10 +450,11 @@ export default function SystemAdminSchoolsPage() {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
                 <option value="all">Todos os Tipos</option>
-                <option value="elementary">Fundamental I</option>
-                <option value="middle">Fundamental II</option>
-                <option value="high">Ensino Médio</option>
-                <option value="technical">Técnico</option>
+                {SCHOOL_TYPES.map(type => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
               </select>
 
               {/* Filtro por Status */}
@@ -667,39 +737,84 @@ export default function SystemAdminSchoolsPage() {
                               onChange={(e) => setFormData({ ...formData, institution_id: e.target.value })}
                               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
                               required
+                              disabled={loadingInstitutions}
                             >
-                              <option value="">Selecione uma instituição</option>
-                              {institutions.map(institution => (
+                              {loadingInstitutions ? (
+                                <option value="">Carregando instituições...</option>
+                              ) : institutions.length === 0 ? (
+                                <option value="">Nenhuma instituição disponível</option>
+                              ) : (
+                                <option value="">Selecione uma instituição</option>
+                              )}
+                              {!loadingInstitutions && institutions.map(institution => (
                                 <option key={institution.id} value={institution.id}>
                                   {institution.name} {institution.code ? `(${institution.code})` : ''}
                                 </option>
                               ))}
                             </select>
-                            <Building2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                            {loadingInstitutions ? (
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                              </div>
+                            ) : (
+                              <Building2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                            )}
                           </div>
-                          {institutions.length === 0 && (
-                            <p className="text-sm text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-                              <XCircle className="w-4 h-4" />
-                              Nenhuma instituição encontrada. Verifique sua conexão.
+                          {!loadingInstitutions && institutions.length === 0 && (
+                            <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                              <div className="flex items-start gap-2">
+                                <XCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                                <div className="text-sm">
+                                  <p className="text-amber-700 dark:text-amber-300 font-medium">
+                                    Nenhuma instituição encontrada
+                                  </p>
+                                  <p className="text-amber-600 dark:text-amber-400 mt-1">
+                                    Verifique sua conexão ou aguarde o carregamento.
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={loadInstitutions}
+                                    className="mt-2 text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 underline text-sm"
+                                  >
+                                    Tentar novamente
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {loadingInstitutions && (
+                            <p className="text-sm text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                              Carregando instituições...
                             </p>
                           )}
                         </div>
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tipo de Escola
+                            Tipo de Escola *
                           </label>
                           <div className="relative">
                             <select
-                              value=""
-                              onChange={() => {}}
-                              disabled
-                              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none opacity-50"
+                              value={formData.type}
+                              onChange={(e) => setFormData({ ...formData, type: e.target.value as SchoolType })}
+                              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
+                              required
                             >
-                              <option value="">Tipo não configurado</option>
+                              <option value="">Selecione o tipo</option>
+                              {SCHOOL_TYPES.map(type => (
+                                <option key={type.value} value={type.value}>
+                                  {type.label}
+                                </option>
+                              ))}
                             </select>
                             <GraduationCap className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                           </div>
+                          {formData.type && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              {SCHOOL_TYPES.find(t => t.value === formData.type)?.description}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
