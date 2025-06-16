@@ -109,7 +109,7 @@ export default function InstitutionManagerDashboardPage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER]}>
+      <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER, UserRole.SYSTEM_ADMIN]}>
         <DashboardPageLayout
           title="Painel do Gestor"
           subtitle="Gerencie sua instituição de ensino"
@@ -124,7 +124,7 @@ export default function InstitutionManagerDashboardPage() {
 
   if (error) {
     return (
-      <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER]}>
+      <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER, UserRole.SYSTEM_ADMIN]}>
         <DashboardPageLayout
           title="Painel do Gestor"
           subtitle="Gerencie sua instituição de ensino"
@@ -147,7 +147,7 @@ export default function InstitutionManagerDashboardPage() {
   }
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER]}>
+    <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="Painel do Gestor"
         subtitle="Gerencie sua instituição de ensino"

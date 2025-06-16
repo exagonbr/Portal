@@ -1,5 +1,5 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { validateJWT, requireRole, validateJWTSmart, requireRoleSmart } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -40,7 +40,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validateJWT, async (req, res) => {
+router.get('/', validateJWTSmart, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -118,7 +118,7 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', validateJWTSmart, requireRoleSmart(['admin', 'teacher']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

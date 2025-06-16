@@ -83,7 +83,7 @@ interface AcademicAlert {
 
 export default function CoordinatorDashboardPage() {
   return (
-    <ClientAuthGuard allowedRoles={['ACADEMIC_COORDINATOR']}>
+    <ClientAuthGuard allowedRoles={['ACADEMIC_COORDINATOR', 'SYSTEM_ADMIN']}>
       <CoordinatorDashboardContent />
     </ClientAuthGuard>
   );

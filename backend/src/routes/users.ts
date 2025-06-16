@@ -1,5 +1,5 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { validateJWT, requireRole, validateJWTSmart, requireRoleSmart } from '../middleware/auth';
 import { UserRepository } from '../repositories/UserRepository';
 import bcrypt from 'bcryptjs';
 
@@ -41,7 +41,7 @@ const userRepository = new UserRepository();
  *       403:
  *         description: Forbidden
  */
-router.get('/', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
+router.get('/', validateJWTSmart, requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
   try {
     const { institution_id, role } = req.query;
     
@@ -94,7 +94,7 @@ router.get('/', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_
  *       401:
  *         description: Unauthorized
  */
-router.get('/me', validateJWT, async (req, res) => {
+router.get('/me', validateJWTSmart, async (req, res) => {
   try {
     const userId = req.user?.userId;
     
@@ -158,7 +158,7 @@ router.get('/me', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.put('/me', validateJWT, async (req, res) => {
+router.put('/me', validateJWTSmart, async (req, res) => {
   try {
     const userId = req.user?.userId;
     
@@ -243,7 +243,7 @@ router.put('/me', validateJWT, async (req, res) => {
  *       404:
  *         description: User not found
  */
-router.get('/:id', validateJWT, async (req, res) => {
+router.get('/:id', validateJWTSmart, async (req, res) => {
   try {
     const { id } = req.params;
     

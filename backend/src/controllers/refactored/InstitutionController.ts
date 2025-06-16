@@ -8,11 +8,11 @@ import {
 } from '../../dto/InstitutionDto';
 
 export class InstitutionController extends BaseController {
-  private institutionervice: InstitutionService;
+  private institutionService: InstitutionService;
 
   constructor() {
     super('InstitutionController');
-    this.institutionervice = new InstitutionService();
+    this.institutionService = new InstitutionService();
   }
 
   getAll = this.asyncHandler(async (req: Request, res: Response) => {
@@ -46,7 +46,7 @@ export class InstitutionController extends BaseController {
       filters.sortOrder = req.query.sortOrder as 'asc' | 'desc';
     }
 
-    const result = await this.institutionervice.findInstitutionsWithFilters(filters);
+    const result = await this.institutionService.findInstitutionsWithFilters(filters);
 
     if (!result.success) {
       return this.error(res, result.error || 'Failed to retrieve institution');
@@ -64,7 +64,7 @@ export class InstitutionController extends BaseController {
       return this.error(res, 'Invalid institution ID format', 400);
     }
 
-    const result = await this.institutionervice.findInstitutionDetails(id);
+    const result = await this.institutionService.findInstitutionDetails(id);
 
     if (!result.success) {
       return result.error === 'Institution not found' 
@@ -82,7 +82,7 @@ export class InstitutionController extends BaseController {
       return this.error(res, 'Institution code is required', 400);
     }
 
-    const result = await this.institutionervice.findByCode(code);
+    const result = await this.institutionService.findByCode(code);
 
     if (!result.success) {
       return result.error === 'Institution not found'
@@ -101,7 +101,7 @@ export class InstitutionController extends BaseController {
     }
 
     const createDto: CreateInstitutionDto = req.body;
-    const result = await this.institutionervice.createInstitution(createDto, this.getUserId(req) || undefined);
+    const result = await this.institutionService.createInstitution(createDto, this.getUserId(req) || undefined);
 
     if (!result.success) {
       if (result.errors) return this.validationError(res, result.errors as any); // Cast para any se o tipo não bater
@@ -124,7 +124,7 @@ export class InstitutionController extends BaseController {
     }
 
     const updateDto: UpdateInstitutionDto = req.body;
-    const result = await this.institutionervice.updateInstitution(id, updateDto, this.getUserId(req) || undefined);
+    const result = await this.institutionService.updateInstitution(id, updateDto, this.getUserId(req) || undefined);
 
     if (!result.success) {
       if (result.error === 'Institution not found') return this.notFound(res, 'Institution');
@@ -142,7 +142,7 @@ export class InstitutionController extends BaseController {
       return this.error(res, 'Invalid institution ID format', 400);
     }
 
-    const result = await this.institutionervice.deleteInstitution(id, this.getUserId(req) || undefined);
+    const result = await this.institutionService.deleteInstitution(id, this.getUserId(req) || undefined);
 
     if (!result.success) {
       return result.error === 'Institution not found'
@@ -160,7 +160,7 @@ export class InstitutionController extends BaseController {
       return this.error(res, 'Invalid institution ID format', 400);
     }
 
-    const result = await this.institutionervice.getInstitutionStats(id);
+    const result = await this.institutionService.getInstitutionStats(id);
     
     if (!result.success) {
        return result.error === 'Institution not found'

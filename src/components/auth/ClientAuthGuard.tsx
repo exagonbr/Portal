@@ -34,6 +34,13 @@ export function ClientAuthGuard({
         const userRole = user.role?.toLowerCase();
         const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
         
+        // SYSTEM_ADMIN pode acessar TODAS as rotas
+        if (userRole === 'system_admin') {
+          console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total');
+          setIsChecking(false);
+          return;
+        }
+        
         if (!normalizedAllowedRoles.includes(userRole)) {
           console.log(`🔒 ClientAuthGuard: Role ${userRole} não permitida, redirecionando`);
           

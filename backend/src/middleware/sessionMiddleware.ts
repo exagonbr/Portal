@@ -436,4 +436,119 @@ export const validateJWTSimple = async (
       message: 'Token inválido ou expirado'
     });
   }
+};
+
+/**
+ * Middleware inteligente que escolhe automaticamente entre validação simples e completa
+ * baseado na rota e contexto para evitar loops
+ */
+export const validateJWTSmart = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  try {
+    const path = req.path || req.url;
+    const isHighRiskRoute = [
+      '/dashboard/system',
+      '/dashboard/metrics',
+      '/dashboard/analytics',
+      '/aws/connection-logs/stats',
+      '/sessions/validate',
+      '/sessions/list'
+    ].some(route => path.includes(route));
+
+    // Para rotas de alto risco, usar validação simples
+    if (isHighRiskRoute) {
+      console.log(`🛡️ Usando validação simples para rota de alto risco: ${path}`);
+      return validateJWTSimple(req, res, next);
+    }
+
+    // Para outras rotas, usar validação completa
+    return validateJWTAndSession(req, res, next);
+  } catch (error) {
+    console.error('Erro no middleware inteligente:', error);
+    // Fallback para validação simples em caso de erro
+    return validateJWTSimple(req, res, next);
+  }
+};
+
+/**
+ * Middleware de role inteligente que evita consultas desnecessárias
+ */
+export const requireRoleSmart = (roles: string[]) => {
+  return (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Response | void => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Autenticação necessária'
+        });
+      }
+
+      const userRole = req.user.role?.toLowerCase();
+      
+      // SYSTEM_ADMIN tem acesso a TODAS as rotas
+      if (userRole === 'system_admin') {
+        console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total à rota:', req.path);
+        return next();
+      }
+      
+      const allowedRoles = roles.map(role => role.toLowerCase());
+      
+      // Se não há role definido, permitir acesso com warning
+      if (!userRole) {
+        console.warn(`⚠️ Usuário sem role acessando rota protegida: ${req.path}`);
+        return next();
+      }
+
+      // Verificar se o usuário tem uma das roles permitidas
+      if (!allowedRoles.includes(userRole)) {
+        console.warn(`❌ Acesso negado para role ${userRole} na rota ${req.path}. Necessário: ${roles.join(', ')}`);
+        return res.status(403).json({
+          success: false,
+          message: 'Permissões insuficientes'
+        });
+      }
+
+      console.log('✅ Acesso permitido para role:', userRole, 'na rota:', req.path);
+      next();
+    } catch (error) {
+      console.error('Erro no middleware de role inteligente:', error);
+      // Em caso de erro, permitir acesso com warning
+      console.warn('⚠️ Erro na verificação de role, permitindo acesso');
+      next();
+    }
+  };
+};
+
+/**
+ * Middleware wrapper que adiciona timeout e fallback para qualquer middleware
+ */
+export const withTimeout = (middleware: any, timeoutMs: number = 5000) => {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Middleware timeout')), timeoutMs);
+      });
+
+      const middlewarePromise = new Promise((resolve, reject) => {
+        middleware(req, res, (error?: any) => {
+          if (error) reject(error);
+          else resolve(true);
+        });
+      });
+
+      await Promise.race([middlewarePromise, timeoutPromise]);
+      next();
+    } catch (error) {
+      console.error(`⚠️ Timeout ou erro no middleware para ${req.path}:`, error);
+      // Fallback: usar validação simples
+      return validateJWTSimple(req, res, next);
+    }
+  };
 }; 

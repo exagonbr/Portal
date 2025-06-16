@@ -16,10 +16,13 @@ export class AuthController {
 
       return res.status(201).json({
         success: true,
-        user: result.user,
-        token: result.token,
-        sessionId: result.sessionId,
-        expires_at: result.expires_at
+        data: {
+          user: result.user,
+          token: result.token,
+          sessionId: result.sessionId,
+          expires_at: result.expires_at
+        },
+        message: 'Usuário registrado com sucesso'
       });
     } catch (error: any) {
       if (error.message === 'Usuário já existe') {
@@ -50,10 +53,13 @@ export class AuthController {
 
       return res.json({
         success: true,
-        user: result.user,
-        token: result.token,
-        sessionId: result.sessionId,
-        expires_at: result.expires_at
+        data: {
+          user: result.user,
+          token: result.token,
+          sessionId: result.sessionId,
+          expires_at: result.expires_at
+        },
+        message: 'Login realizado com sucesso'
       });
     } catch (error: any) {
       if (error.message === 'Credenciais inválidas' || error.message === 'Usuário inativo') {
@@ -108,7 +114,8 @@ export class AuthController {
             role_name: userData.role?.name,
             institution_name: userData.institution?.name
           }
-        }
+        },
+        message: 'Perfil do usuário recuperado com sucesso'
       });
     } catch (error: any) {
       return res.status(500).json({
@@ -141,8 +148,11 @@ export class AuthController {
 
       return res.json({
         success: true,
-        valid: true,
-        session: sessionData
+        data: {
+          valid: true,
+          session: sessionData
+        },
+        message: 'Sessão válida'
       });
     } catch (error: any) {
       return res.status(500).json({
@@ -169,8 +179,11 @@ export class AuthController {
 
       return res.json({
         success: true,
-        token: result.token,
-        expires_at: result.expires_at
+        data: {
+          token: result.token,
+          expires_at: result.expires_at
+        },
+        message: 'Token renovado com sucesso'
       });
     } catch (error: any) {
       return res.status(500).json({
@@ -191,6 +204,7 @@ export class AuthController {
 
       return res.json({
         success: true,
+        data: null,
         message: 'Logout realizado com sucesso'
       });
     } catch (error: any) {
@@ -217,8 +231,10 @@ export class AuthController {
 
       return res.json({
         success: true,
-        message: `Logout realizado em ${removedCount} dispositivos`,
-        removedSessions: removedCount
+        data: {
+          removedSessions: removedCount
+        },
+        message: `Logout realizado em ${removedCount} dispositivos`
       });
     } catch (error: any) {
       return res.status(500).json({
@@ -245,6 +261,7 @@ export class AuthController {
 
       return res.json({
         success: true,
+        data: null,
         message: 'Senha alterada com sucesso'
       });
     } catch (error: any) {
@@ -278,7 +295,8 @@ export class AuthController {
 
       return res.json({
         success: true,
-        sessions
+        data: sessions,
+        message: 'Sessões do usuário recuperadas com sucesso'
       });
     } catch (error: any) {
       return res.status(500).json({

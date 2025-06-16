@@ -651,7 +651,7 @@ function StudentDashboardContent() {
 export default function StudentDashboard() {
   return (
     <RoleProtectedRoute
-      allowedRoles={['student', 'aluno', 'Aluno']}
+      allowedRoles={['student', 'aluno', 'Aluno', 'STUDENT', 'SYSTEM_ADMIN']}
       fallbackPath="/login"
       loadingComponent={
         <div className="flex items-center justify-center min-h-screen">

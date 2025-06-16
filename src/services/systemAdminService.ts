@@ -173,18 +173,13 @@ class SystemAdminService {
    */
   async getUsersByRole(): Promise<Record<string, number>> {
     try {
-      const response = await fetch('/api/users/stats', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        return result.data?.users_by_role || {};
+      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`${this.baseUrl}/users/stats`);
+      
+      if (response.success && response.data) {
+        return response.data.data?.users_by_role || {};
       }
       
-      throw new Error('Falha ao carregar dados de usuários');
+      throw new Error(response.message || 'Falha ao carregar dados de usuários');
     } catch (error) {
       console.error('Erro ao carregar usuários por função:', error);
       

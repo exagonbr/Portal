@@ -14,7 +14,7 @@ export interface Institution {
   email?: string;
   website?: string;
   logo_url?: string;
-  active: boolean;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -31,7 +31,7 @@ export interface PaginatedResponse<T> {
 
 export interface InstitutionFilters {
   type?: string;
-  active?: boolean;
+  is_active?: boolean;
   search?: string;
 }
 
@@ -50,7 +50,7 @@ export type InstitutionQueryParams = {
   sortOrder?: 'asc' | 'desc';
   search?: string;
   type?: string;
-  active?: boolean;
+  is_active?: boolean;
 };
 
 // Helper function to get auth token
@@ -99,28 +99,15 @@ export const institutionService = {
       const result = await response.json();
       console.log('📥 Resposta da API de instituições:', result);
       
-      // Check different possible response structures
-      let institutions: Institution[] = [];
-      
-      if (result.items && Array.isArray(result.items)) {
-        // Direct items array
-        institutions = result.items;
-      } else if (result.data && result.data.items && Array.isArray(result.data.items)) {
-        // Nested data.items structure
-        institutions = result.data.items;
-      } else if (result.data && Array.isArray(result.data)) {
-        // Direct data array
-        institutions = result.data;
-      } else if (Array.isArray(result)) {
-        // Direct array response
-        institutions = result;
-      } else {
-        console.warn('⚠️ Estrutura de resposta não reconhecida:', result);
-        return { data: [] };
+      // O backend retorna { success: true, data: [...] }
+      if (result.success && result.data) {
+        const institutions = Array.isArray(result.data) ? result.data : [];
+        console.log(`✅ ${institutions.length} instituições encontradas`);
+        return { data: institutions };
       }
-
-      console.log(`✅ ${institutions.length} instituições encontradas`);
-      return { data: institutions };
+      
+      console.warn('⚠️ Estrutura de resposta não reconhecida:', result);
+      return { data: [] };
       
     } catch (error) {
       console.error('❌ Erro ao buscar instituições:', error);
@@ -143,7 +130,7 @@ export const institutionService = {
     if (params.filters) {
       if (params.filters.search) queryParams.append('search', params.filters.search);
       if (params.filters.type) queryParams.append('type', params.filters.type);
-      if (params.filters.active !== undefined) queryParams.append('active', params.filters.active.toString());
+      if (params.filters.is_active !== undefined) queryParams.append('is_active', params.filters.is_active.toString());
     }
 
     const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
@@ -157,7 +144,24 @@ export const institutionService = {
       throw new Error('Falha ao buscar instituições');
     }
 
-    return response.json();
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: [...], pagination: {...} }
+    // Precisamos adaptar para a interface PaginatedResponse
+    if (result.success && result.data && result.pagination) {
+      return {
+        data: result.data,
+        pagination: {
+          total: result.pagination.total,
+          page: result.pagination.page,
+          limit: result.pagination.limit,
+          totalPages: result.pagination.totalPages
+        }
+      };
+    }
+    
+    // Fallback para estrutura antiga ou inesperada
+    throw new Error('Estrutura de resposta inválida da API');
   },
 
   async getInstitutionById(id: string): Promise<Institution> {
@@ -175,7 +179,14 @@ export const institutionService = {
       throw new Error('Falha ao buscar instituição');
     }
 
-    return response.json();
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data;
+    }
+    
+    throw new Error('Estrutura de resposta inválida da API');
   },
 
   async createInstitution(data: Partial<Institution>): Promise<Institution> {
@@ -192,7 +203,14 @@ export const institutionService = {
       throw new Error('Falha ao criar instituição');
     }
 
-    return response.json();
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data;
+    }
+    
+    throw new Error('Estrutura de resposta inválida da API');
   },
 
   async updateInstitution(id: string, data: Partial<Institution>): Promise<Institution> {
@@ -212,7 +230,14 @@ export const institutionService = {
       throw new Error('Falha ao atualizar instituição');
     }
 
-    return response.json();
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data;
+    }
+    
+    throw new Error('Estrutura de resposta inválida da API');
   },
 
   async deleteInstitution(id: string): Promise<void> {
@@ -238,7 +263,7 @@ export const institutionService = {
       
       // Use the main institutions endpoint with a filter for active institutions
       const queryParams = new URLSearchParams({
-        active: 'true',
+        is_active: 'true',
         limit: '100' // Set a high limit to get all active institutions
       });
       
@@ -257,28 +282,15 @@ export const institutionService = {
       const result = await response.json();
       console.log('📥 Resposta da API de instituições:', result);
       
-      // Check different possible response structures
-      let institutions: Institution[] = [];
-      
-      if (result.items && Array.isArray(result.items)) {
-        // Direct items array
-        institutions = result.items;
-      } else if (result.data && result.data.items && Array.isArray(result.data.items)) {
-        // Nested data.items structure
-        institutions = result.data.items;
-      } else if (result.data && Array.isArray(result.data)) {
-        // Direct data array
-        institutions = result.data;
-      } else if (Array.isArray(result)) {
-        // Direct array response
-        institutions = result;
-      } else {
-        console.warn('⚠️ Estrutura de resposta não reconhecida:', result);
-        return [];
+      // O backend retorna { success: true, data: [...] }
+      if (result.success && result.data) {
+        const institutions = Array.isArray(result.data) ? result.data : [];
+        console.log(`✅ ${institutions.length} instituições ativas encontradas`);
+        return institutions.filter(inst => inst.is_active !== false);
       }
-
-      console.log(`✅ ${institutions.length} instituições ativas encontradas`);
-      return institutions.filter(inst => inst.active !== false);
+      
+      console.warn('⚠️ Estrutura de resposta não reconhecida:', result);
+      return [];
       
     } catch (error) {
       console.error('❌ Erro ao buscar instituições ativas:', error);
@@ -289,7 +301,7 @@ export const institutionService = {
   async searchInstitutionsByName(name: string): Promise<Institution[]> {
     const queryParams = new URLSearchParams({
       search: name,
-      active: 'true'
+      is_active: 'true'
     });
 
     const response = await fetch(`${API_BASE_URL}/institutions/search?${queryParams.toString()}`, {
@@ -303,7 +315,14 @@ export const institutionService = {
       throw new Error('Falha ao buscar instituições por nome');
     }
 
-    return response.json();
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: [...] }
+    if (result.success && result.data) {
+      return Array.isArray(result.data) ? result.data : [];
+    }
+    
+    throw new Error('Estrutura de resposta inválida da API');
   },
 
   async canDeleteInstitution(id: string): Promise<{ canDelete: boolean; reason?: string }> {
@@ -321,14 +340,21 @@ export const institutionService = {
       throw new Error('Falha ao verificar se a instituição pode ser excluída');
     }
 
-    return response.json();
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data;
+    }
+    
+    throw new Error('Estrutura de resposta inválida da API');
   },
 
   async toggleInstitutionStatus(id: string, isActive: boolean): Promise<Institution> {
     const response = await fetch(`${API_BASE_URL}/institutions/${id}/status`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ active: isActive }),
+      body: JSON.stringify({ is_active: isActive }),
     });
 
     if (!response.ok) {
@@ -341,7 +367,14 @@ export const institutionService = {
       throw new Error('Falha ao alterar o status da instituição');
     }
 
-    return response.json();
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data;
+    }
+    
+    throw new Error('Estrutura de resposta inválida da API');
   },
 
   async exportInstitutions(filters?: InstitutionFilters): Promise<Blob> {
@@ -350,7 +383,7 @@ export const institutionService = {
     if (filters) {
       if (filters.search) queryParams.append('search', filters.search);
       if (filters.type) queryParams.append('type', filters.type);
-      if (filters.active !== undefined) queryParams.append('active', filters.active.toString());
+      if (filters.is_active !== undefined) queryParams.append('is_active', filters.is_active.toString());
     }
 
     const response = await fetch(`${API_BASE_URL}/institutions/export?${queryParams.toString()}`, {
@@ -390,6 +423,14 @@ export const institutionService = {
       throw new Error('Falha ao importar instituições');
     }
 
-    return response.json();
+    const result = await response.json();
+    
+    // O backend retorna { success: true, data: {...} }
+    if (result.success && result.data) {
+      return result.data;
+    }
+    
+    // Fallback para estrutura antiga
+    return result;
   }
 };

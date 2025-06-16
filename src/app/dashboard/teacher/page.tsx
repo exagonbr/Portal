@@ -1056,7 +1056,7 @@ function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) 
 // Componente principal com proteção de rotas
 export default function TeacherDashboard() {
   return (
-    <ClientAuthGuard allowedRoles={['TEACHER']}>
+    <ClientAuthGuard allowedRoles={['TEACHER', 'SYSTEM_ADMIN']}>
       <TeacherDashboardContent />
     </ClientAuthGuard>
   );

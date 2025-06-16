@@ -10,10 +10,9 @@ import { body, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import { SessionService } from '../services/SessionService';
 import { 
-  validateJWTAndSession, 
-  extractClientInfo, 
-  AuthenticatedRequest,
-  requireRole 
+  validateJWTSmart,
+  requireRoleSmart,
+  AuthenticatedRequest
 } from '../middleware/sessionMiddleware';
 import { AppDataSource } from '../config/typeorm.config';
 import { User } from '../entities/User';
@@ -73,7 +72,7 @@ const router = express.Router();
  */
 router.post(
   '/login',
-  extractClientInfo,
+
   [
     body('email').isEmail().normalizeEmail(),
     body('password').notEmpty(),
@@ -188,7 +187,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/logout', validateJWTAndSession, async (req: AuthenticatedRequest, res: express.Response) => {
+router.post('/logout', validateJWTSmart, async (req: AuthenticatedRequest, res: express.Response) => {
   try {
     // Adiciona token à blacklist
     const authHeader = req.headers.authorization;
@@ -254,7 +253,7 @@ router.post('/logout', validateJWTAndSession, async (req: AuthenticatedRequest, 
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/logout-all', validateJWTAndSession, async (req: AuthenticatedRequest, res: express.Response) => {
+router.post('/logout-all', validateJWTSmart, async (req: AuthenticatedRequest, res: express.Response) => {
   try {
     const removedSessions = await SessionService.destroyAllUserSessions(req.user!.userId);
 
@@ -428,7 +427,7 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/list', validateJWTAndSession, async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/list', validateJWTSmart, async (req: AuthenticatedRequest, res: express.Response) => {
   try {
     const sessions = await SessionService.getUserSessions(req.user!.userId);
     
@@ -495,7 +494,7 @@ router.get('/list', validateJWTAndSession, async (req: AuthenticatedRequest, res
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete('/destroy/:sessionId', validateJWTAndSession, async (req: AuthenticatedRequest, res: express.Response) => {
+router.delete('/destroy/:sessionId', validateJWTSmart, async (req: AuthenticatedRequest, res: express.Response) => {
   try {
     const { sessionId } = req.params;
 
@@ -572,8 +571,8 @@ router.delete('/destroy/:sessionId', validateJWTAndSession, async (req: Authenti
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/stats', 
-  validateJWTAndSession, 
-  requireRole(['admin', 'SYSTEM_ADMIN']), 
+  validateJWTSmart, 
+  requireRoleSmart(['admin', 'SYSTEM_ADMIN']), 
   async (req: AuthenticatedRequest, res: express.Response) => {
     try {
       const stats = await SessionService.getSessionStats();
@@ -642,7 +641,7 @@ router.get('/stats',
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/validate', validateJWTAndSession, async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/validate', validateJWTSmart, async (req: AuthenticatedRequest, res: express.Response) => {
   try {
     return res.json({
       success: true,

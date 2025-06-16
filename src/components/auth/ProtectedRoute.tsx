@@ -61,6 +61,13 @@ function ProtectedRouteContent({
         return
       }
 
+      // SYSTEM_ADMIN pode acessar TODAS as rotas
+      if (user.role === UserRole.SYSTEM_ADMIN.toString() || user.role?.toLowerCase() === 'system_admin') {
+        console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total');
+        setIsAuthorized(true);
+        return;
+      }
+
       // Verificar se é SYSTEM_ADMIN simulando outra role
       const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN.toString()
 
@@ -70,6 +77,7 @@ function ProtectedRouteContent({
         const hasRole = roles.includes(user.role as UserRole)
         
         if (!hasRole && !isAdminSimulation) {
+          console.log(`🔒 ProtectedRoute: Role ${user.role} não permitida`);
           setIsAuthorized(false)
           if (!showUnauthorized) {
             router.push('/dashboard')
@@ -88,6 +96,7 @@ function ProtectedRouteContent({
         )
         
         if (!hasPermission && !isAdminSimulation) {
+          console.log(`🔒 ProtectedRoute: Permissão ${requiredPermission} não encontrada para role ${user.role}`);
           setIsAuthorized(false)
           if (!showUnauthorized) {
             router.push('/dashboard')
@@ -96,6 +105,7 @@ function ProtectedRouteContent({
         }
       }
 
+      console.log('✅ ProtectedRoute: Acesso autorizado para role:', user.role);
       setIsAuthorized(true)
     }
   }, [user, loading, requiredRole, requiredPermission, router, redirectTo, showUnauthorized, searchParams])
