@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserRole, ROLE_PERMISSIONS } from '@/types/roles'
 import { motion } from 'framer-motion'
@@ -27,22 +27,6 @@ function ProtectedRouteContent({
   const router = useRouter()
   const { theme } = useTheme()
   const [isAuthorized, setIsAuthorized] = useState(false)
-  const [searchParams, setSearchParams] = useState<URLSearchParams>(new URLSearchParams())
-
-  // Safely get search params
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.location && window.location.search) {
-        const params = new URLSearchParams(window.location.search);
-        setSearchParams(params);
-      } else {
-        setSearchParams(new URLSearchParams());
-      }
-    } catch (error) {
-      console.warn('Erro ao obter search params:', error);
-      setSearchParams(new URLSearchParams());
-    }
-  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -68,15 +52,12 @@ function ProtectedRouteContent({
         return;
       }
 
-      // Verificar se é SYSTEM_ADMIN simulando outra role
-      const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN.toString()
-
       // Verificar role
       if (requiredRole) {
         const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
         const hasRole = roles.includes(user.role as UserRole)
         
-        if (!hasRole && !isAdminSimulation) {
+        if (!hasRole) {
           console.log(`🔒 ProtectedRoute: Role ${user.role} não permitida`);
           setIsAuthorized(false)
           if (!showUnauthorized) {
@@ -95,7 +76,7 @@ function ProtectedRouteContent({
           userPermissions[permission] === true
         )
         
-        if (!hasPermission && !isAdminSimulation) {
+        if (!hasPermission) {
           console.log(`🔒 ProtectedRoute: Permissão ${requiredPermission} não encontrada para role ${user.role}`);
           setIsAuthorized(false)
           if (!showUnauthorized) {
@@ -108,7 +89,7 @@ function ProtectedRouteContent({
       console.log('✅ ProtectedRoute: Acesso autorizado para role:', user.role);
       setIsAuthorized(true)
     }
-  }, [user, loading, requiredRole, requiredPermission, router, redirectTo, showUnauthorized, searchParams])
+  }, [user, loading, requiredRole, requiredPermission, router, redirectTo, showUnauthorized])
 
   if (loading) {
     return (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_BASED_ROUTES } from '@/types/roles';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
@@ -19,22 +19,6 @@ function RoleGuardContent({
 }: RoleGuardProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [searchParams, setSearchParams] = useState<URLSearchParams>(new URLSearchParams());
-
-  // Safely get search params
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.location && window.location.search) {
-        const params = new URLSearchParams(window.location.search);
-        setSearchParams(params);
-      } else {
-        setSearchParams(new URLSearchParams());
-      }
-    } catch (error) {
-      console.warn('Erro ao obter search params:', error);
-      setSearchParams(new URLSearchParams());
-    }
-  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -54,10 +38,7 @@ function RoleGuardContent({
           return;
         }
         
-        // Verifica se é SYSTEM_ADMIN simulando outra role
-        const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user.role === UserRole.SYSTEM_ADMIN.toString();
-        
-        if (!allowedRoles.includes(user.role as UserRole) && !isAdminSimulation) {
+        if (!allowedRoles.includes(user.role as UserRole)) {
           console.log(`🔒 RoleGuard: Role ${user.role} não permitida para esta rota`);
           // Se o usuário não tem o papel permitido, redireciona para seu dashboard específico
           const roleRoute = ROLE_BASED_ROUTES.find(route =>
@@ -69,7 +50,7 @@ function RoleGuardContent({
         }
       }
     }
-  }, [user, loading, allowedRoles, router, redirectTo, searchParams]);
+  }, [user, loading, allowedRoles, router, redirectTo]);
 
   // Mostra loading enquanto verifica autenticação
   if (loading) {
@@ -86,11 +67,8 @@ function RoleGuardContent({
     return <>{children}</>;
   }
   
-  // Verifica se é SYSTEM_ADMIN simulando outra role
-  const isAdminSimulation = searchParams.get('admin_simulation') === 'true' && user?.role === UserRole.SYSTEM_ADMIN.toString();
-  
   // Se não há usuário ou não tem permissão, não renderiza nada
-  if (!user || (!allowedRoles.includes(user.role as UserRole) && !isAdminSimulation)) {
+  if (!user || !allowedRoles.includes(user.role as UserRole)) {
     return null;
   }
 

@@ -461,7 +461,7 @@ function DashboardSidebarComponent() {
         
         if (targetDashboard) {
           // Sempre navegar, mesmo se já estiver na rota
-          const navigationUrl = `${targetDashboard}?admin_simulation=true&role=${newRole}&timestamp=${Date.now()}`;
+          const navigationUrl = `${targetDashboard}?timestamp=${Date.now()}`;
           console.log('🚀 Navegando para:', navigationUrl);
           
           // Múltiplas tentativas de navegação para garantir que funcione

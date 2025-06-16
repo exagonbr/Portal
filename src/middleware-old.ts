@@ -298,11 +298,7 @@ class RoleAccessControl {
       return true;
     }
     
-    // Verifica se é simulação de admin (SYSTEM_ADMIN acessando dashboard de outra role)
-    if (searchParams?.get('admin_simulation') === 'true' && (normalizedRole === 'system_admin' || normalizedRole === 'administrador do sistema')) {
-      console.log(`✅ SYSTEM_ADMIN simulando acesso ao caminho: ${pathname}`);
-      return true;
-    }
+
     
     // Verifica se é um caminho de dashboard específico
     const isDashboardPath = pathname.startsWith('/dashboard/');
