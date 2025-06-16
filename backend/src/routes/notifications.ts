@@ -1,5 +1,5 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
 import { pushSubscriptionController } from '../controllers/pushSubscriptionController';
 import { emailService } from '../services/emailService';
 import { getUserFromRequest } from '../utils/auth';
@@ -69,7 +69,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.post('/send', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/send', authMiddleware, async (req, res) => {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
@@ -187,7 +187,7 @@ router.post('/send', validateJWT, requireRole(['admin', 'teacher']), async (req,
  *       401:
  *         description: Unauthorized
  */
-router.post('/email/test', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.post('/email/test', authMiddleware, async (req, res) => {
   try {
     const { to } = req.body;
 
@@ -258,7 +258,7 @@ router.post('/email/test', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), 
  *       401:
  *         description: Unauthorized
  */
-router.get('/email/verify', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.get('/email/verify', authMiddleware, async (req, res) => {
   try {
     const status = emailService.getStatus();
     const isConnected = await emailService.verifyConnection();

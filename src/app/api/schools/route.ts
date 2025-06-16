@@ -34,7 +34,7 @@ const createSchoolSchema = z.object({
 })
 
 // Mock database - substituir por Prisma/banco real
-const mockSchools = new Map([
+export const mockSchools = new Map([
   ['school_1', {
     id: 'school_1',
     name: 'Escola Estadual Dom Pedro II',

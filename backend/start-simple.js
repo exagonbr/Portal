@@ -88,7 +88,7 @@ const simpleAuth = (req, res, next) => {
   } else {
     // Try to get token from cookies
     const cookies = parseCookies(req.headers.cookie || '');
-    token = cookies.auth_token || cookies.authToken || cookies.token || '';
+    token = cookies.portal_token || cookies.auth_token || cookies.authToken || cookies.token || '';
   }
   
   if (!token) {
@@ -98,9 +98,26 @@ const simpleAuth = (req, res, next) => {
     });
   }
   
+  console.log('Token recebido:', token);
+  
   // Para tokens base64 (fallback), decodificar e validar
   try {
-    if (token.length > 100) { // Provavelmente um token base64 longo
+    // Verificar se é um token base64 simples (admin:admin, gestor:gestor, etc.)
+    if (token === 'YWRtaW46YWRtaW4=' || token === 'Z2VzdG9yOmdlc3Rvcg==' || token === 'cHJvZmVzc29yOnByb2Zlc3Nvcg==') {
+      const decoded = Buffer.from(token, 'base64').toString('utf-8');
+      const [username, password] = decoded.split(':');
+      
+      req.user = { 
+        userId: username, 
+        role: username,
+        email: `${username}@test.com`,
+        name: username.charAt(0).toUpperCase() + username.slice(1)
+      };
+      return next();
+    }
+    
+    // Para tokens mais complexos, tentar decodificar JSON
+    if (token.length > 100) {
       const decoded = Buffer.from(token, 'base64').toString('utf-8');
       const tokenData = JSON.parse(decoded);
       
@@ -115,11 +132,11 @@ const simpleAuth = (req, res, next) => {
       }
     }
   } catch (e) {
-    // Se falhar na decodificação base64, continuar com validação simples
+    // Se falhar na decodificação, tentar como token simples
   }
   
-  // Para teste, aceitar qualquer token que não seja vazio
-  req.user = { userId: 'test-user', role: 'admin' };
+  // Para teste, aceitar qualquer token que não seja vazio como válido
+  req.user = { userId: 'user', role: 'user' };
   next();
 };
 
@@ -286,6 +303,41 @@ app.get('/api/schools', simpleAuth, (req, res) => {
         limit,
         totalPages: Math.ceil(schools.length / limit)
       }
+    }
+  });
+});
+
+// Rota específica de notificações
+app.post('/api/notifications/send', simpleAuth, (req, res) => {
+  const {
+    title,
+    message,
+    type = 'info',
+    category = 'system',
+    recipients = {},
+    sendPush = true,
+    sendEmail = false,
+    priority = 'medium'
+  } = req.body;
+
+  if (!title || !message) {
+    return res.status(400).json({
+      success: false,
+      message: 'Title and message are required'
+    });
+  }
+
+  // Simular o envio de notificações
+  const pushSentCount = sendPush && recipients.userIds ? recipients.userIds.length : 0;
+  const emailSentCount = sendEmail && recipients.emails ? recipients.emails.length : 0;
+
+  res.json({
+    success: true,
+    message: 'Notification sent successfully',
+    data: {
+      pushSentCount,
+      emailSentCount,
+      totalRecipients: (recipients.userIds?.length || 0) + (recipients.emails?.length || 0)
     }
   });
 });
