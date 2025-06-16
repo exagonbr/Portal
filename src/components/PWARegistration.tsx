@@ -19,18 +19,9 @@ export function PWARegistration() {
   useEffect(() => {
     const registerSW = async () => {
       // 1. Configurar proteções contra loops ANTES de qualquer coisa
-      console.log('🔧 Configurando proteções contra loops...');
-      
-      // Ativar detector geral de loops
       setupRequestLoopDetection();
-      
-      // Ativar proteção específica para login
       setupLoginLoopProtection();
-      
-      // Iniciar monitoramento PWA
       startPWALoopMonitoring();
-      
-      console.log('✅ Proteções contra loops ativadas');
 
       // 2. Verificar se há loop ativo antes de prosseguir
       if (isPWALoopActive()) {
@@ -46,25 +37,21 @@ export function PWARegistration() {
 
         // Add event listeners for service worker updates
         wb.addEventListener('installed', (event) => {
-          console.log('📦 Service Worker instalado:', event.isUpdate ? 'Atualização' : 'Primeira instalação');
           if (event.isUpdate) {
             setIsUpdateAvailable(true);
           }
         });
 
         wb.addEventListener('waiting', () => {
-          console.log('⏳ Service Worker aguardando ativação');
           setIsUpdateAvailable(true);
         });
 
         // Adicionar listener para detectar problemas
         wb.addEventListener('redundant', () => {
-          console.warn('⚠️ Service Worker tornou-se redundante');
           setSwRedundant(true);
           
           // Verificar se há um novo service worker disponível
           if (navigator.serviceWorker.controller) {
-            console.log('🔄 Novo Service Worker detectado, preparando para atualização...');
             setIsUpdateAvailable(true);
           } else {
             console.warn('🚨 Service Worker redundante sem substituto, pode ser necessário recarregar');
@@ -80,7 +67,6 @@ export function PWARegistration() {
         const reg = await Promise.race([registrationPromise, timeoutPromise]) as ServiceWorkerRegistration;
         
         if (reg) {
-          console.log('✅ Service Worker registrado com sucesso');
           setRegistration(reg);
           setWorkbox(wb);
         }
