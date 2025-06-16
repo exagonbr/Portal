@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
+import { MobileDebugInfo } from '@/components/debug/MobileDebugInfo';
 
 export function LoginPage() {
   const router = useRouter();
@@ -347,6 +348,9 @@ export function LoginPage() {
           </div>
         </motion.div>
       </motion.div>
+      
+      {/* Debug info apenas em desenvolvimento */}
+      {process.env.NODE_ENV === 'development' && <MobileDebugInfo />}
     </div>
   );
 } 

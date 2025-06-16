@@ -42,6 +42,22 @@ export function LoginForm() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Detectar se é dispositivo móvel
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice = /mobile|android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent);
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsMobile(isMobileDevice || isTouchDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   useEffect(() => {
     if (retryAfter > 0) {
       const timer = setTimeout(() => setRetryAfter(retryAfter - 1), 1000);
@@ -52,9 +68,9 @@ export function LoginForm() {
   // Flag para rastrear se estamos em processo de login
   const [loginAttemptInProgress, setLoginAttemptInProgress] = useState(false);
   
-  // Throttle para evitar múltiplos envios em curto período
+  // Throttle ajustado para mobile (menos restritivo)
   const lastLoginAttemptRef = useRef<number>(0);
-  const MIN_LOGIN_INTERVAL_MS = 2000; // 2 segundos entre tentativas
+  const MIN_LOGIN_INTERVAL_MS = isMobile ? 1000 : 2000; // 1s para mobile, 2s para desktop
   
   // Função para resetar o formulário - será conectada depois
   const resetFormRef = useRef<(() => void) | null>(null);
@@ -79,12 +95,13 @@ export function LoginForm() {
           return;
         }
         
-        // Verificar throttle
+        // Verificar throttle (mais permissivo para mobile)
         const now = Date.now();
         const timeSinceLastAttempt = now - lastLoginAttemptRef.current;
         if (timeSinceLastAttempt < MIN_LOGIN_INTERVAL_MS) {
-          console.log(`Muitas tentativas rápidas. Aguarde ${((MIN_LOGIN_INTERVAL_MS - timeSinceLastAttempt) / 1000).toFixed(1)}s`);
-          setSubmitError(`Por favor, aguarde alguns segundos antes de tentar novamente.`);
+          const waitTime = ((MIN_LOGIN_INTERVAL_MS - timeSinceLastAttempt) / 1000).toFixed(1);
+          console.log(`Aguarde ${waitTime}s antes de tentar novamente`);
+          setSubmitError(`Por favor, aguarde ${waitTime}s antes de tentar novamente.`);
           return;
         }
         
@@ -93,13 +110,14 @@ export function LoginForm() {
         lastLoginAttemptRef.current = now;
         setSubmitError('');
         
-        // Limitar tempo máximo de tentativa
+        // Timeout ajustado para mobile (mais tempo)
+        const timeoutMs = isMobile ? 20000 : 15000; // 20s para mobile, 15s para desktop
         const timeoutId = setTimeout(() => {
           if (loginAttemptInProgress) {
             setLoginAttemptInProgress(false);
             setSubmitError('Tempo limite de login excedido. Por favor, tente novamente.');
           }
-        }, 15000); // 15 segundos
+        }, timeoutMs);
         
         try {
           await login(formValues.email, formValues.password);
@@ -140,7 +158,7 @@ export function LoginForm() {
         setSubmitError('Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.');
         setLoginAttemptInProgress(false);
       }
-    }, [login, loginAttemptInProgress])
+    }, [login, loginAttemptInProgress, MIN_LOGIN_INTERVAL_MS, isMobile])
   });
 
   // Atualizar a referência à função resetForm após a inicialização do formulário
@@ -185,6 +203,18 @@ export function LoginForm() {
                 value={values.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
+                // Melhorias específicas para mobile
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                // Prevenir zoom automático no iOS
+                style={{
+                  fontSize: isMobile ? '16px' : '14px', // 16px previne zoom no iOS
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: touched.email && errors.email ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                  color: theme.colors.text.primary,
+                }}
                 aria-invalid={touched.email && errors.email ? 'true' : 'false'}
                 aria-describedby={touched.email && errors.email ? 'email-error' : undefined}
                 className={`appearance-none block w-full pl-10 pr-3 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${
@@ -192,11 +222,6 @@ export function LoginForm() {
                     ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
                     : 'border-2 focus:ring-2'
                 }`}
-                style={{
-                  backgroundColor: theme.colors.background.secondary,
-                  borderColor: touched.email && errors.email ? theme.colors.status.error : theme.colors.border.DEFAULT,
-                  color: theme.colors.text.primary,
-                }}
                 placeholder="seu@email.com"
               />
               {touched.email && errors.email && (
@@ -243,6 +268,17 @@ export function LoginForm() {
                 value={values.password}
                 onChange={handleChange}
                 onBlur={handleBlur}
+                // Melhorias específicas para mobile
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                // Prevenir zoom automático no iOS
+                style={{
+                  fontSize: isMobile ? '16px' : '14px', // 16px previne zoom no iOS
+                  backgroundColor: theme.colors.background.secondary,
+                  borderColor: touched.password && errors.password ? theme.colors.status.error : theme.colors.border.DEFAULT,
+                  color: theme.colors.text.primary,
+                }}
                 aria-invalid={touched.password && errors.password ? 'true' : 'false'}
                 aria-describedby={touched.password && errors.password ? 'password-error' : undefined}
                 className={`appearance-none block w-full pl-10 pr-10 py-3 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all duration-200 ${
@@ -250,18 +286,20 @@ export function LoginForm() {
                     ? 'border-2 border-red-500 focus:ring-red-500 focus:border-red-500'
                     : 'border-2 focus:ring-2'
                 }`}
-                style={{
-                  backgroundColor: theme.colors.background.secondary,
-                  borderColor: touched.password && errors.password ? theme.colors.status.error : theme.colors.border.DEFAULT,
-                  color: theme.colors.text.primary,
-                }}
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                style={{ color: theme.colors.text.tertiary }}
+                // Melhor área de toque para mobile
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none ${
+                  isMobile ? 'p-1 -m-1' : ''
+                }`}
+                style={{ 
+                  color: theme.colors.text.tertiary,
+                  minWidth: isMobile ? '44px' : 'auto', // Área mínima de toque recomendada
+                  minHeight: isMobile ? '44px' : 'auto'
+                }}
                 aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
               >
                 <span className="material-symbols-outlined text-xl">
@@ -323,11 +361,16 @@ export function LoginForm() {
             <button
               type="submit"
               disabled={isSubmitting || loginAttemptInProgress || retryAfter > 0}
-              className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              // Melhor área de toque para mobile
+              className={`w-full flex justify-center items-center gap-2 rounded-lg shadow-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+                isMobile ? 'py-4 px-4' : 'py-3 px-4'
+              }`}
               style={{
                 backgroundColor: theme.colors.primary.DEFAULT,
                 color: theme.colors.primary.contrast,
-                boxShadow: theme.shadows.md
+                boxShadow: theme.shadows.md,
+                minHeight: isMobile ? '48px' : 'auto', // Altura mínima recomendada para mobile
+                fontSize: isMobile ? '16px' : '14px' // Prevenir zoom no iOS
               }}
             >
               {isSubmitting || loginAttemptInProgress ? (

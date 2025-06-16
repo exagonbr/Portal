@@ -1,0 +1,187 @@
+/* Correções específicas para mobile */
+
+/* Prevenir zoom automático em inputs no iOS */
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+select,
+textarea {
+  font-size: 16px !important; /* 16px previne zoom automático no iOS */
+}
+
+/* Melhorar área de toque para botões */
+button,
+[role="button"],
+.btn {
+  min-height: 44px; /* Área mínima recomendada para toque */
+  min-width: 44px;
+}
+
+/* Melhorar área de toque para links */
+a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Prevenir seleção de texto em elementos interativos */
+button,
+[role="button"],
+.btn {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Melhorar scroll em dispositivos touch */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
+/* Prevenir bounce scroll no iOS */
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Melhorar performance de animações */
+.animate-element {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Correções específicas para formulários */
+.form-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border-radius: 0; /* Remove bordas arredondadas padrão do iOS */
+}
+
+/* Melhorar visibilidade de foco em dispositivos touch */
+.form-input:focus,
+button:focus,
+[role="button"]:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Correções para Safari no iOS */
+@supports (-webkit-touch-callout: none) {
+  /* Prevenir callout no iOS */
+  * {
+    -webkit-touch-callout: none;
+  }
+  
+  /* Permitir callout apenas em links e textos selecionáveis */
+  a,
+  input,
+  textarea {
+    -webkit-touch-callout: default;
+  }
+}
+
+/* Correções para Android */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  /* Melhorar renderização de texto */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Media queries específicas para mobile */
+@media (max-width: 768px) {
+  /* Aumentar espaçamento em telas pequenas */
+  .mobile-spacing {
+    padding: 1rem;
+  }
+  
+  /* Melhorar legibilidade */
+  .mobile-text {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Botões mais altos em mobile */
+  .mobile-button {
+    padding: 12px 16px;
+    min-height: 48px;
+  }
+}
+
+/* Correções para orientação landscape em mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Reduzir espaçamentos verticais */
+  .landscape-compact {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  /* Ajustar altura de elementos */
+  .landscape-height {
+    min-height: 36px;
+  }
+}
+
+/* Correções para dispositivos com notch */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Melhorar performance de scroll */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevenir problemas de layout com teclado virtual */
+@media (max-height: 600px) {
+  .keyboard-adjust {
+    min-height: auto;
+    height: auto;
+  }
+}
+
+/* Correções para PWA */
+@media (display-mode: standalone) {
+  /* Ajustes quando executando como PWA */
+  .pwa-adjustments {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Melhorar contraste para acessibilidade */
+@media (prefers-contrast: high) {
+  button,
+  .btn {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Respeitar preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+} 
