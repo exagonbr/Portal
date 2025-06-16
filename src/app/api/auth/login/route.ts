@@ -3,12 +3,15 @@ import { cookies } from 'next/headers';
 import { API_CONFIG } from '@/config/constants';
 
 // Rate limiting inteligente para evitar loops
-const requestCounts = new Map<string, { count: number; lastReset: number; lastRequest: number; pattern: string[]; consecutiveRequests: number; blockedUntil?: number }>();
+const requestCounts = new Map<string, { count: number; lastReset: number; lastRequest: number; pattern: string[]; consecutiveRequests: number; blockedUntil?: number; isMobile?: boolean }>();
 const RATE_LIMIT_WINDOW = 60000; // 1 minuto
-const MAX_REQUESTS_PER_WINDOW = 20; // Aumentado para 20 tentativas por minuto
+const MAX_REQUESTS_PER_WINDOW = 20; // Desktop: 20 tentativas por minuto
+const MAX_REQUESTS_PER_WINDOW_MOBILE = 30; // Mobile: 30 tentativas por minuto (mais permissivo)
 const PATTERN_DETECTION_WINDOW = 5000; // 5 segundos para detectar padrões
-const MAX_CONSECUTIVE_REQUESTS = 12; // Máximo 12 requisições consecutivas muito rápidas
-const MIN_REQUEST_INTERVAL = 300; // Mínimo 300ms entre requisições para não ser considerado loop
+const MAX_CONSECUTIVE_REQUESTS = 12; // Desktop: máximo 12 requisições consecutivas
+const MAX_CONSECUTIVE_REQUESTS_MOBILE = 18; // Mobile: máximo 18 requisições consecutivas (mais permissivo)
+const MIN_REQUEST_INTERVAL = 300; // Desktop: mínimo 300ms entre requisições
+const MIN_REQUEST_INTERVAL_MOBILE = 200; // Mobile: mínimo 200ms entre requisições (mais permissivo)
 
 // Sistema de detecção de loops mais agressivo
 const loopDetectionCache = new Map<string, { 
@@ -46,9 +49,23 @@ function getRateLimitKey(request: NextRequest): string {
              'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
   
-  // Criar chave mais específica incluindo parte do user agent
+  // Detectar se é dispositivo móvel
+  const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(userAgent);
+  
+  // Para dispositivos móveis, usar chave mais genérica para evitar bloqueios desnecessários
+  if (isMobile) {
+    // Extrair apenas o tipo de dispositivo para mobile
+    let deviceType = 'mobile';
+    if (/iPhone/i.test(userAgent)) deviceType = 'iphone';
+    else if (/iPad/i.test(userAgent)) deviceType = 'ipad';
+    else if (/Android/i.test(userAgent)) deviceType = 'android';
+    
+    return `login_mobile_${ip}_${deviceType}`;
+  }
+  
+  // Para desktop, manter comportamento original
   const cleanUserAgent = userAgent.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '_');
-  return `login_${ip}_${cleanUserAgent}`;
+  return `login_desktop_${ip}_${cleanUserAgent}`;
 }
 
 function createRequestPattern(request: NextRequest): string {
@@ -67,6 +84,14 @@ function checkRateLimit(key: string, pattern: string, request: NextRequest): { a
              request.headers.get('x-real-ip') || 
              'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
+  
+  // Detectar se é dispositivo móvel
+  const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(userAgent);
+  
+  // Usar limites específicos baseados no tipo de dispositivo
+  const maxRequests = isMobile ? MAX_REQUESTS_PER_WINDOW_MOBILE : MAX_REQUESTS_PER_WINDOW;
+  const maxConsecutive = isMobile ? MAX_CONSECUTIVE_REQUESTS_MOBILE : MAX_CONSECUTIVE_REQUESTS;
+  const minInterval = isMobile ? MIN_REQUEST_INTERVAL_MOBILE : MIN_REQUEST_INTERVAL;
   
   // Verificar detecção de loop agressiva
   const loopKey = `${ip}_${userAgent.substring(0, 30)}`;
@@ -141,9 +166,10 @@ function checkRateLimit(key: string, pattern: string, request: NextRequest): { a
       lastReset: now, 
       lastRequest: now,
       pattern: [pattern],
-      consecutiveRequests: 1
+      consecutiveRequests: 1,
+      isMobile
     });
-    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1 };
+    return { allowed: true, remaining: maxRequests - 1 };
   }
   
   // Detectar padrões suspeitos (possível loop)
@@ -151,32 +177,35 @@ function checkRateLimit(key: string, pattern: string, request: NextRequest): { a
   record.lastRequest = now;
   
   // Lógica mais inteligente para detectar loops
-  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+  if (timeSinceLastRequest < minInterval) {
     // Requisições muito rápidas - incrementar contador consecutivo
     record.consecutiveRequests++;
     
     // Verificar se é realmente um loop suspeito
-    const isVeryFast = timeSinceLastRequest < 100; // Menos de 100ms é muito suspeito
-    const isSuspiciousPattern = record.consecutiveRequests >= MAX_CONSECUTIVE_REQUESTS;
-    const hasHighFrequency = record.count > 10 && timeSinceLastRequest < 200;
+    const isVeryFast = timeSinceLastRequest < (isMobile ? 50 : 100); // Mobile: 50ms, Desktop: 100ms
+    const isSuspiciousPattern = record.consecutiveRequests >= maxConsecutive;
+    const hasHighFrequency = record.count > (isMobile ? 15 : 10) && timeSinceLastRequest < (isMobile ? 150 : 200);
     
           // Só bloquear se for realmente suspeito
       if (isSuspiciousPattern && (isVeryFast || hasHighFrequency)) {
-        console.warn(`🚨 LOOP DETECTADO para ${key}:`, {
+        console.warn(`🚨 LOOP DETECTADO para ${key} (${isMobile ? 'MOBILE' : 'DESKTOP'}):`, {
           consecutiveRequests: record.consecutiveRequests,
           timeBetweenRequests: timeSinceLastRequest,
           totalRequests: record.count,
           isVeryFast,
-          hasHighFrequency
+          hasHighFrequency,
+          isMobile,
+          userAgent: userAgent.substring(0, 100)
         });
         
-        // Bloquear por 10 segundos
-        record.blockedUntil = now + 10000;
+        // Bloquear por menos tempo para mobile
+        const blockTime = isMobile ? 5000 : 10000; // Mobile: 5s, Desktop: 10s
+        record.blockedUntil = now + blockTime;
         
         return { 
           allowed: false, 
           remaining: 0, 
-          reason: 'Loop de requisições detectado. Aguarde 10 segundos antes de tentar novamente.' 
+          reason: `Loop de requisições detectado. Aguarde ${blockTime / 1000} segundos antes de tentar novamente.` 
         };
       }
   } else {
@@ -190,16 +219,16 @@ function checkRateLimit(key: string, pattern: string, request: NextRequest): { a
     record.pattern = record.pattern.slice(-15);
   }
   
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+  if (record.count >= maxRequests) {
     return { 
       allowed: false, 
       remaining: 0,
-      reason: 'Muitas tentativas de login. Aguarde 1 minuto antes de tentar novamente.'
+      reason: `Muitas tentativas de login. Aguarde 1 minuto antes de tentar novamente. (${isMobile ? 'Mobile' : 'Desktop'}: ${record.count}/${maxRequests})`
     };
   }
   
   record.count++;
-  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count };
+  return { allowed: true, remaining: maxRequests - record.count };
 }
 
 export async function POST(request: NextRequest) {
@@ -208,13 +237,17 @@ export async function POST(request: NextRequest) {
   const referer = request.headers.get('referer') || 'unknown';
   const origin = request.headers.get('origin') || 'unknown';
   
-  console.log(`🔐 LOGIN REQUEST START:`, {
+  // Detectar se é dispositivo móvel para logs
+  const isMobileDevice = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(userAgent);
+  
+  console.log(`🔐 LOGIN REQUEST START (${isMobileDevice ? 'MOBILE' : 'DESKTOP'}):`, {
     timestamp: new Date().toISOString(),
     userAgent: userAgent.substring(0, 100),
     referer,
     origin,
     method: request.method,
-    url: request.url
+    url: request.url,
+    isMobile: isMobileDevice
   });
 
   // Rate limiting inteligente

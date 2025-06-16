@@ -2,25 +2,54 @@
 
 ## 🔍 Problemas Identificados
 
-### 1. **Zoom Automático no iOS**
+### 1. **Rate Limiting Baseado em User-Agent (PRINCIPAL)**
+- Sistema de rate limiting criava chaves específicas baseadas no User-Agent completo
+- User-Agents mobile são diferentes dos desktop, causando bloqueios desnecessários
+- Limites muito restritivos para dispositivos móveis
+
+### 2. **Zoom Automático no iOS**
 - Inputs com `font-size` menor que 16px causam zoom automático
 - Viewport configurado para permitir zoom pode interferir na UX
 
-### 2. **Área de Toque Inadequada**
+### 3. **Área de Toque Inadequada**
 - Botões e elementos interativos menores que 44px são difíceis de tocar
 - Falta de padding adequado para elementos touch
 
-### 3. **Throttling Muito Restritivo**
+### 4. **Throttling Muito Restritivo**
 - Sistema de throttling de 2 segundos muito restritivo para mobile
 - Toques duplos acidentais podem ativar o throttling
 
-### 4. **Problemas de Performance**
+### 5. **Problemas de Performance**
 - Animações complexas podem causar lag em dispositivos móveis
 - Falta de otimizações específicas para touch devices
 
 ## 🛠️ Correções Implementadas
 
-### 1. **Ajustes no LoginForm.tsx**
+### 1. **Rate Limiting Específico para Mobile (src/app/api/auth/login/route.ts)**
+```typescript
+// Detecção de dispositivo móvel para chaves de rate limiting
+const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(userAgent);
+
+// Chaves mais genéricas para mobile
+if (isMobile) {
+  let deviceType = 'mobile';
+  if (/iPhone/i.test(userAgent)) deviceType = 'iphone';
+  else if (/iPad/i.test(userAgent)) deviceType = 'ipad';
+  else if (/Android/i.test(userAgent)) deviceType = 'android';
+  
+  return `login_mobile_${ip}_${deviceType}`;
+}
+
+// Limites mais permissivos para mobile
+const MAX_REQUESTS_PER_WINDOW_MOBILE = 30; // vs 20 para desktop
+const MAX_CONSECUTIVE_REQUESTS_MOBILE = 18; // vs 12 para desktop
+const MIN_REQUEST_INTERVAL_MOBILE = 200; // vs 300ms para desktop
+
+// Bloqueio mais curto para mobile
+const blockTime = isMobile ? 5000 : 10000; // 5s vs 10s
+```
+
+### 2. **Ajustes no LoginForm.tsx**
 ```typescript
 // Detecção de dispositivo móvel
 const [isMobile, setIsMobile] = useState(false);
@@ -43,7 +72,7 @@ style={{
 }}
 ```
 
-### 2. **Ajustes no Viewport (layout.tsx)**
+### 3. **Ajustes no Viewport (layout.tsx)**
 ```typescript
 export const viewport: Viewport = {
   width: 'device-width',
@@ -55,7 +84,7 @@ export const viewport: Viewport = {
 };
 ```
 
-### 3. **CSS Específico para Mobile (mobile-fixes.css)**
+### 4. **CSS Específico para Mobile (mobile-fixes.css)**
 ```css
 /* Prevenir zoom automático em inputs no iOS */
 input[type="email"],
@@ -76,12 +105,12 @@ button {
 }
 ```
 
-### 4. **Componente de Debug Mobile**
+### 5. **Componente de Debug Mobile**
 - Criado `MobileDebugInfo.tsx` para diagnosticar problemas
 - Mostra informações do dispositivo, autenticação, cookies, etc.
 - Disponível apenas em desenvolvimento
 
-### 5. **Melhorias nos Inputs**
+### 6. **Melhorias nos Inputs**
 ```typescript
 // Atributos específicos para mobile
 inputMode="email"
@@ -92,21 +121,31 @@ spellCheck="false"
 
 ## 🧪 Como Testar
 
-### 1. **Arquivo de Teste HTML**
-- Criado `test-mobile-login.html` para testes isolados
-- Testa a API de login sem interferência do React/Next.js
+### 1. **Script de Teste Node.js**
+- Criado `test-mobile-login-fix.js` para testes automatizados
+- Testa diferentes User-Agents (iPhone, Android, iPad, Desktop)
+- Compara rate limiting entre dispositivos móveis e desktop
 
 ### 2. **Debug Component**
 - Acesse a página de login em desenvolvimento
 - Clique no botão 🐛 no canto inferior direito
 - Verifique as informações do dispositivo e autenticação
 
-### 3. **Testes Recomendados**
+### 3. **Executar Teste Automatizado**
+```bash
+# Executar o script de teste
+node test-mobile-login-fix.js
+
+# Ou com URL específica
+TEST_URL=https://portal.sabercon.com.br node test-mobile-login-fix.js
+```
+
+### 4. **Testes Manuais Recomendados**
 1. **iOS Safari**: Verificar se não há zoom automático nos inputs
 2. **Android Chrome**: Testar área de toque dos botões
-3. **Dispositivos com notch**: Verificar safe areas
-4. **Orientação landscape**: Testar layout em paisagem
-5. **Conexões lentas**: Verificar timeouts ajustados
+3. **Rate Limiting**: Fazer múltiplas tentativas rápidas
+4. **PWA vs Browser**: Comparar comportamento
+5. **Diferentes User-Agents**: Testar vários dispositivos
 
 ## 📱 Dispositivos Testados
 
