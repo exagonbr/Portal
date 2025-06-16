@@ -150,15 +150,92 @@ export default function SystemAdminSchoolsPage() {
       setLoadingInstitutions(true);
       console.log('🔄 Carregando instituições...');
       
+      // Teste direto com fetch para debug
+      console.log('🧪 Testando chamada direta à API...');
+      try {
+        const directResponse = await fetch('/api/institutions?active=true&limit=1000');
+        console.log('📡 Direct fetch status:', directResponse.status);
+        const directData = await directResponse.json();
+        console.log('📊 Direct fetch data:', directData);
+        
+        if (directData.success && directData.data && directData.data.items) {
+          console.log(`🎯 Found ${directData.data.items.length} institutions via direct fetch`);
+          
+          // Normalizar dados
+          const institutionsArray = directData.data.items.map((institution: any) => ({
+            id: institution.id,
+            name: institution.name,
+            code: institution.code || '',
+            type: institution.type,
+            description: institution.description,
+            email: institution.email,
+            phone: institution.phone,
+            website: institution.website,
+            address: institution.address,
+            city: institution.city,
+            state: institution.state,
+            zip_code: institution.zip_code,
+            logo_url: institution.logo_url,
+            is_active: institution.active !== undefined ? institution.active : institution.is_active,
+            schools_count: institution.schools_count || 0,
+            users_count: institution.users_count || 0,
+            active_courses: institution.active_courses || 0,
+            created_at: institution.created_at,
+            updated_at: institution.updated_at
+          }));
+          
+          setInstitutions(institutionsArray);
+          
+          if (institutionsArray.length === 0) {
+            console.warn('⚠️ Nenhuma instituição encontrada na resposta');
+            toast.error('Nenhuma instituição encontrada. Verifique a conexão.');
+          } else {
+            console.log(`✅ ${institutionsArray.length} instituições carregadas com sucesso`);
+          }
+          return;
+        }
+      } catch (directError) {
+        console.error('❌ Direct fetch failed:', directError);
+      }
+      
+      // Fallback para o serviço original
+      console.log('🔄 Tentando via serviço...');
       const institutionsResponse = await institutionService.getAll();
-      console.log('📊 Instituições carregadas:', institutionsResponse);
+      console.log('📊 Instituições carregadas via serviço:', institutionsResponse);
       
-      setInstitutions(institutionsResponse.data || []);
+      // O método getAll() já retorna um array diretamente, não um objeto com data
+      let institutionsArray = Array.isArray(institutionsResponse) ? institutionsResponse : [];
       
-      if (!institutionsResponse.data || institutionsResponse.data.length === 0) {
+      // Normalizar dados para garantir compatibilidade
+      institutionsArray = institutionsArray.map(institution => ({
+        id: institution.id,
+        name: institution.name,
+        code: institution.code || '',
+        type: institution.type,
+        description: institution.description,
+        email: institution.email,
+        phone: institution.phone,
+        website: institution.website,
+        address: institution.address,
+        city: institution.city,
+        state: institution.state,
+        zip_code: institution.zip_code,
+        logo_url: institution.logo_url,
+        is_active: institution.active !== undefined ? institution.active : institution.is_active,
+        schools_count: institution.schools_count || 0,
+        users_count: institution.users_count || 0,
+        active_courses: institution.active_courses || 0,
+        created_at: institution.created_at,
+        updated_at: institution.updated_at
+      }));
+      
+      setInstitutions(institutionsArray);
+      
+      if (institutionsArray.length === 0) {
+        console.warn('⚠️ Nenhuma instituição encontrada na resposta');
         toast.error('Nenhuma instituição encontrada. Verifique a conexão.');
       } else {
-        console.log(`✅ ${institutionsResponse.data.length} instituições carregadas com sucesso`);
+        console.log(`✅ ${institutionsArray.length} instituições carregadas com sucesso`);
       }
     } catch (error) {
       console.error('❌ Erro ao carregar instituições:', error);

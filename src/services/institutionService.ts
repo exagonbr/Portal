@@ -45,7 +45,7 @@ export class InstitutionService {
       
       if (options.search) params.append('search', options.search);
       if (options.type) params.append('type', options.type);
-      if (options.is_active !== undefined) params.append('is_active', options.is_active.toString());
+      if (options.is_active !== undefined) params.append('active', options.is_active.toString());
       if (options.city) params.append('city', options.city);
       if (options.state) params.append('state', options.state);
       if (options.page) params.append('page', options.page.toString());
@@ -53,26 +53,37 @@ export class InstitutionService {
       if (options.sortBy) params.append('sortBy', options.sortBy);
       if (options.sortOrder) params.append('sortOrder', options.sortOrder);
 
-      const response = await fetch(`${API_BASE}?${params.toString()}`);
+      const url = `${API_BASE}?${params.toString()}`;
+      console.log('🔗 Fetching institutions from:', url);
+      
+      const response = await fetch(url);
+      
+      console.log('📡 Response status:', response.status, response.statusText);
       
       if (!response.ok) {
-        throw new Error('Falha ao buscar instituições');
+        const errorText = await response.text();
+        console.error('❌ Response error:', errorText);
+        throw new Error(`Falha ao buscar instituições: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
       
-      console.log('Raw result from API:', result);
+      console.log('📊 Raw result from API:', result);
       
       // A API já retorna no formato { success: true, data: { items: [...], pagination: {...} } }
       // Verificar se a resposta está no formato correto
       if (!result.success || !result.data) {
+        console.error('❌ Invalid API response structure:', result);
         throw new Error('Estrutura de resposta inválida da API');
       }
 
       // Verificar se data tem items e pagination
       if (!result.data.items || !Array.isArray(result.data.items)) {
+        console.error('❌ Items not found in API response:', result.data);
         throw new Error('Items não encontrados na resposta da API');
       }
+
+      console.log(`✅ Found ${result.data.items.length} institutions`);
 
       // Migrar campos legados se necessário
       const migratedData = {
@@ -84,7 +95,7 @@ export class InstitutionService {
 
       return migratedData;
     } catch (error) {
-      console.error('Erro ao buscar instituições:', error);
+      console.error('❌ Erro ao buscar instituições:', error);
       throw error;
     }
   }

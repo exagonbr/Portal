@@ -23,10 +23,10 @@ class LoopPreventionSystem {
     consecutiveErrors: new Map()
   };
 
-  private readonly MAX_REQUESTS_PER_SECOND = 2;
-  private readonly MAX_REQUESTS_PER_MINUTE = 10;
+  private readonly MAX_REQUESTS_PER_SECOND = 10;
+  private readonly MAX_REQUESTS_PER_MINUTE = 100;
   private readonly BLOCK_DURATION_MS = 30000; // 30 segundos
-  private readonly ERROR_THRESHOLD = 3;
+  private readonly ERROR_THRESHOLD = 5;
 
   constructor() {
     this.setupInterceptor();
@@ -282,7 +282,7 @@ class LoopPreventionSystem {
       const now = Date.now();
       
       // Limpar URLs bloqueadas expiradas
-      for (const [url, blockedUntil] of this.detector.blockedUntil.entries()) {
+      for (const [url, blockedUntil] of Array.from(this.detector.blockedUntil.entries())) {
         if (now >= blockedUntil) {
           this.detector.blockedUntil.delete(url);
         }
