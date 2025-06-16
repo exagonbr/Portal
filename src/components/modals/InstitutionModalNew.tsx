@@ -96,6 +96,13 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
       newErrors.email = 'Email inválido'
     }
 
+    if (formData.phone && formData.phone.trim()) {
+      const phoneRegex = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
+      if (!phoneRegex.test(formData.phone)) {
+        newErrors.phone = 'Telefone deve estar no formato (11) 99999-9999'
+      }
+    }
+
     if (formData.website && !/^https?:\/\/.+\..+/.test(formData.website)) {
       newErrors.website = 'Website deve ser uma URL válida (https://exemplo.com)'
     }
@@ -147,23 +154,42 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
   }
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    let processedValue = value
-    
-    // Aplica formatação especial para CNPJ
-    if (field === 'cnpj' && typeof value === 'string') {
-      processedValue = formatCNPJ(value)
+    if (field === 'phone' && typeof value === 'string') {
+      // Formatação automática do telefone
+      let formattedPhone = value.replace(/\D/g, '');
+      if (formattedPhone.length <= 11) {
+        if (formattedPhone.length <= 10) {
+          formattedPhone = formattedPhone.replace(/(\d{2})(\d)/, '($1) $2');
+          formattedPhone = formattedPhone.replace(/(\d{4})(\d)/, '$1-$2');
+        } else {
+          formattedPhone = formattedPhone.replace(/(\d{2})(\d)/, '($1) $2');
+          formattedPhone = formattedPhone.replace(/(\d{5})(\d)/, '$1-$2');
+        }
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        [field]: formattedPhone
+      }));
+    } else if (field === 'cnpj' && typeof value === 'string') {
+      const formattedCNPJ = formatCNPJ(value);
+      setFormData(prev => ({
+        ...prev,
+        [field]: formattedCNPJ
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
     }
     
-    setFormData(prev => ({
-      ...prev,
-      [field]: processedValue
-    }))
-    
+    // Limpar erro do campo se existir
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
         [field]: ''
-      }))
+      }));
     }
   }
 
@@ -485,9 +511,13 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.phone ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="(11) 99999-9999"
+                      maxLength={15}
                     />
+                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                   </div>
                   
                   <div className="md:col-span-2">

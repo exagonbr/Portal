@@ -37,6 +37,46 @@ export {
 
 const API_BASE = `${API_BASE_URL}/institutions`;
 
+// Função para obter o token de autenticação
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // Tentar obter token de localStorage
+  let token = localStorage.getItem('auth_token') || 
+              localStorage.getItem('token') ||
+              localStorage.getItem('authToken') ||
+              sessionStorage.getItem('token') ||
+              sessionStorage.getItem('auth_token');
+  
+  // Se não encontrar no storage, tentar obter dos cookies
+  if (!token) {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+        token = value;
+        break;
+      }
+    }
+  }
+  
+  return token;
+};
+
+// Função para criar headers com autenticação
+const createAuthHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  const token = getAuthToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
 export class InstitutionService {
   // Listar instituições com filtros e paginação
   static async getInstitutions(options: InstitutionFilter = {}): Promise<PaginatedResponse<InstitutionDto>> {
@@ -56,7 +96,9 @@ export class InstitutionService {
       const url = `${API_BASE}?${params.toString()}`;
       console.log('🔗 Fetching institutions from:', url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: createAuthHeaders(),
+      });
       
       console.log('📡 Response status:', response.status, response.statusText);
       
@@ -103,7 +145,9 @@ export class InstitutionService {
   // Obter instituição por ID
   static async getInstitutionById(id: string): Promise<InstitutionDto> {
     try {
-      const response = await fetch(`${API_BASE}/${id}`);
+      const response = await fetch(`${API_BASE}/${id}`, {
+        headers: createAuthHeaders(),
+      });
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -150,9 +194,7 @@ export class InstitutionService {
 
       const response = await fetch(API_BASE, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(compatibleData),
       });
 
@@ -200,9 +242,7 @@ export class InstitutionService {
 
       const response = await fetch(`${API_BASE}/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(compatibleData),
       });
 
@@ -250,6 +290,7 @@ export class InstitutionService {
     try {
       const response = await fetch(`${API_BASE}/${id}`, {
         method: 'DELETE',
+        headers: createAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -267,7 +308,9 @@ export class InstitutionService {
   // Verificar se instituição pode ser deletada
   static async canDeleteInstitution(id: string): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE}/${id}/can-delete`);
+      const response = await fetch(`${API_BASE}/${id}/can-delete`, {
+        headers: createAuthHeaders(),
+      });
       
       if (!response.ok) {
         return false;
@@ -293,6 +336,7 @@ export class InstitutionService {
     try {
       const response = await fetch(`${API_BASE}/${id}/toggle-status`, {
         method: 'PATCH',
+        headers: createAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -352,7 +396,9 @@ export class InstitutionService {
   // Exportar instituições
   static async exportInstitutions(format: 'csv' | 'xlsx' = 'csv'): Promise<Blob> {
     try {
-      const response = await fetch(`${API_BASE}/export?format=${format}`);
+      const response = await fetch(`${API_BASE}/export?format=${format}`, {
+        headers: createAuthHeaders(),
+      });
       
       if (!response.ok) {
         throw new Error('Falha ao exportar instituições');
@@ -371,8 +417,13 @@ export class InstitutionService {
       const formData = new FormData();
       formData.append('file', file);
 
+      const headers = createAuthHeaders();
+      // Remove Content-Type header para FormData
+      delete headers['Content-Type'];
+
       const response = await fetch(`${API_BASE}/import`, {
         method: 'POST',
+        headers,
         body: formData,
       });
 

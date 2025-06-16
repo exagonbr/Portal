@@ -17,11 +17,53 @@ interface BucketListResponse {
 
 const API_BASE = '/api/content/buckets'
 
+// Função para obter o token de autenticação
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // Tentar obter token de localStorage
+  let token = localStorage.getItem('auth_token') || 
+              localStorage.getItem('token') ||
+              localStorage.getItem('authToken') ||
+              sessionStorage.getItem('token') ||
+              sessionStorage.getItem('auth_token');
+  
+  // Se não encontrar no storage, tentar obter dos cookies
+  if (!token) {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+        token = value;
+        break;
+      }
+    }
+  }
+  
+  return token;
+};
+
+// Função para criar headers com autenticação
+const createAuthHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  const token = getAuthToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
 export class BucketService {
   // Listar buckets configurados
   static async getConfiguredBuckets(): Promise<BucketInfo[]> {
     try {
-      const response = await fetch(API_BASE)
+      const response = await fetch(API_BASE, {
+        headers: createAuthHeaders()
+      })
       if (!response.ok) {
         throw new Error('Erro ao buscar buckets configurados')
       }
@@ -44,7 +86,9 @@ export class BucketService {
   // Listar todos os buckets da conta AWS
   static async getAllBuckets(): Promise<BucketListResponse> {
     try {
-      const response = await fetch(`${API_BASE}?listAll=true`)
+      const response = await fetch(`${API_BASE}?listAll=true`, {
+        headers: createAuthHeaders()
+      })
       if (!response.ok) {
         throw new Error('Erro ao buscar todos os buckets')
       }
@@ -68,9 +112,7 @@ export class BucketService {
     try {
       const response = await fetch(API_BASE, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(bucketData)
       })
 

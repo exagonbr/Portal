@@ -2,11 +2,53 @@ import { FileRecord, S3FileInfo, FileUploadRequest, FileMoveRequest, FileUpdateR
 
 const API_BASE = '/api/content/files'
 
+// Função para obter o token de autenticação
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // Tentar obter token de localStorage
+  let token = localStorage.getItem('auth_token') || 
+              localStorage.getItem('token') ||
+              localStorage.getItem('authToken') ||
+              sessionStorage.getItem('token') ||
+              sessionStorage.getItem('auth_token');
+  
+  // Se não encontrar no storage, tentar obter dos cookies
+  if (!token) {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+        token = value;
+        break;
+      }
+    }
+  }
+  
+  return token;
+};
+
+// Função para criar headers com autenticação
+const createAuthHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  const token = getAuthToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
 export class FileService {
   // Listar arquivos de uma categoria específica
   static async getFilesByCategory(category: 'literario' | 'professor' | 'aluno'): Promise<S3FileInfo[]> {
     try {
-      const response = await fetch(`${API_BASE}?category=${category}`)
+      const response = await fetch(`${API_BASE}?category=${category}`, {
+        headers: createAuthHeaders()
+      })
       if (!response.ok) {
         throw new Error('Erro ao buscar arquivos')
       }
@@ -28,7 +70,9 @@ export class FileService {
   // Buscar todos os arquivos
   static async getAllFiles(): Promise<Record<string, S3FileInfo[]>> {
     try {
-      const response = await fetch(`${API_BASE}/all`)
+      const response = await fetch(`${API_BASE}/all`, {
+        headers: createAuthHeaders()
+      })
       if (!response.ok) {
         throw new Error('Erro ao buscar todos os arquivos')
       }
@@ -62,9 +106,14 @@ export class FileService {
         formData.append('tags', JSON.stringify(uploadData.tags))
       }
 
+      const headers = createAuthHeaders();
+      // Remove Content-Type header para FormData
+      delete headers['Content-Type'];
+
       const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers
       })
 
       if (!response.ok) {
@@ -93,9 +142,14 @@ export class FileService {
       formData.append('file', newFile)
       formData.append('fileId', fileId)
 
+      const headers = createAuthHeaders();
+      // Remove Content-Type header para FormData
+      delete headers['Content-Type'];
+
       const response = await fetch(`${API_BASE}/replace`, {
         method: 'PUT',
-        body: formData
+        body: formData,
+        headers
       })
 
       if (!response.ok) {
@@ -122,9 +176,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/rename`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ name: newName })
       })
 
@@ -152,9 +204,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/move`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(moveData)
       })
 
@@ -181,7 +231,8 @@ export class FileService {
   static async deleteFile(fileId: string): Promise<boolean> {
     try {
       const response = await fetch(`${API_BASE}/${fileId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: createAuthHeaders()
       })
 
       if (!response.ok) {
@@ -200,9 +251,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${updateData.fileId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(updateData)
       })
 
@@ -230,9 +279,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/create-reference`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ s3Key, category, ...metadata })
       })
 
@@ -258,7 +305,9 @@ export class FileService {
   // Buscar TODOS os arquivos do bucket (incluindo não vinculados)
   static async getAllBucketFiles(category: string): Promise<S3FileInfo[]> {
     try {
-      const response = await fetch(`${API_BASE}/bucket-files?category=${category}`)
+      const response = await fetch(`${API_BASE}/bucket-files?category=${category}`, {
+        headers: createAuthHeaders()
+      })
       if (!response.ok) {
         throw new Error('Erro ao buscar arquivos do bucket')
       }
@@ -283,9 +332,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/link-collection`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ collectionId })
       })
 
@@ -313,9 +360,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/add-library`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ libraryCategory })
       })
 
@@ -343,9 +388,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/unlink`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: createAuthHeaders()
       })
 
       if (!response.ok) {
@@ -382,9 +425,7 @@ export class FileService {
     try {
       const response = await fetch(`${API_BASE}/${fileId}/add-book`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify(bookData)
       })
 

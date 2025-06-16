@@ -59,7 +59,27 @@ class ApiClient {
    */
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token') || localStorage.getItem('token');
+    
+    // Tentar obter token de localStorage
+    let token = localStorage.getItem('auth_token') || 
+                localStorage.getItem('token') ||
+                localStorage.getItem('authToken') ||
+                sessionStorage.getItem('token') ||
+                sessionStorage.getItem('auth_token');
+    
+    // Se não encontrar no storage, tentar obter dos cookies
+    if (!token) {
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+          token = value;
+          break;
+        }
+      }
+    }
+    
+    return token;
   }
 
   /**
