@@ -296,7 +296,7 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="flex w-full overflow-hidden" style={{ height: 'calc(var(--vh, 1vh) * 100)' }}>
+    <div className="flex w-full h-full overflow-hidden" >
       {/* Lista de Conversas */}
       <div className="w-64 lg:w-80 max-w-[320px] bg-white flex flex-col h-full border-r border-gray-200 overflow-hidden">
         {/* Cabeçalho */}

@@ -198,7 +198,9 @@
   --sidebar-hover: #334155;
   --sidebar-active: #3b82f6;
   --sidebar-text: #cbd5e1;
-  --sidebar-text-active: #ffffff;
+  --sidebar-text-active: #f8fafc;
+  --card-bg: #1e293b;
+  --card-border: #334155;
 }
 
 @layer base {

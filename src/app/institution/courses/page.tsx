@@ -102,7 +102,7 @@ export default function InstitutionCoursesPage() {
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <span className="material-icons text-blue-600">school</span>
+                      <span className="material-symbols-outlined text-blue-600">school</span>
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-700">Matemática Avançada</div>

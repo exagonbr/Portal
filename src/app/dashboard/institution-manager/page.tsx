@@ -122,30 +122,6 @@ export default function InstitutionManagerDashboardPage() {
     );
   }
 
-  if (error) {
-    return (
-      <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER, UserRole.SYSTEM_ADMIN]}>
-        <DashboardPageLayout
-          title="Painel do Gestor"
-          subtitle="Gerencie sua instituição de ensino"
-        >
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              <div className="text-red-700">{error}</div>
-            </div>
-            <button 
-              onClick={fetchInstitutions}
-              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Tentar novamente
-            </button>
-          </div>
-        </DashboardPageLayout>
-      </ProtectedRoute>
-    );
-  }
-
   return (
     <ProtectedRoute requiredRole={[UserRole.INSTITUTION_MANAGER, UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout

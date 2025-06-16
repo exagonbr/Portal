@@ -94,60 +94,61 @@ export default function GuardianMessagesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Mensagens</h1>
-            <p className="text-gray-600">Comunicação com a escola e professores</p>
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4 sm:mb-6">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-700 dark:text-gray-800 truncate">Mensagens</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Comunicação com a escola e professores</p>
           </div>
           <button 
             onClick={() => setShowCompose(true)}
-            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors"
+            className="bg-primary text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-primary-dark flex items-center justify-center space-x-2 transition-colors text-sm sm:text-base w-full sm:w-auto"
           >
-            <span className="material-symbols-outlined">add</span>
-            <span>Nova Mensagem</span>
+            <span className="material-symbols-outlined text-lg sm:text-xl">add</span>
+            <span className="hidden sm:inline">Nova Mensagem</span>
+            <span className="sm:hidden">Nova</span>
           </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Total de Mensagens</div>
-            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{MOCK_MESSAGES.length}</div>
-            <div className="text-sm text-gray-600 mt-1">Este mês</div>
+        {/* Stats Cards - Grid responsivo */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6">
+            <div className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Total de Mensagens</div>
+            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-700 dark:text-gray-800">{MOCK_MESSAGES.length}</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Este mês</div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Não Lidas</div>
-            <div className="text-2xl font-bold text-error">{unreadCount}</div>
-            <div className="text-sm text-gray-600 mt-1">Requerem atenção</div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6">
+            <div className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Não Lidas</div>
+            <div className="text-xl sm:text-2xl font-bold text-error">{unreadCount}</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Requerem atenção</div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Alta Prioridade</div>
-            <div className="text-2xl font-bold text-accent-orange">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6">
+            <div className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Alta Prioridade</div>
+            <div className="text-xl sm:text-2xl font-bold text-accent-orange">
               {MOCK_MESSAGES.filter(m => m.priority === 'high').length}
             </div>
-            <div className="text-sm text-gray-600 mt-1">Urgentes</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Urgentes</div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">De Professores</div>
-            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6 col-span-2 lg:col-span-1">
+            <div className="text-xs sm:text-sm font-medium text-gray-500 mb-1">De Professores</div>
+            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-700 dark:text-gray-800">
               {MOCK_MESSAGES.filter(m => m.fromRole.includes('Professor')).length}
             </div>
-            <div className="text-sm text-gray-600 mt-1">Comunicações acadêmicas</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Comunicações acadêmicas</div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-6">
+        {/* Filters - Responsivo */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
           <select 
             value={filterRead}
             onChange={(e) => setFilterRead(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
           >
             <option value="all">Todas</option>
             <option value="unread">Não Lidas</option>
@@ -157,7 +158,7 @@ export default function GuardianMessagesPage() {
           <select 
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
           >
             <option value="all">Todas as Prioridades</option>
             <option value="high">Alta Prioridade</option>
@@ -167,7 +168,7 @@ export default function GuardianMessagesPage() {
           <select 
             value={filterChild}
             onChange={(e) => setFilterChild(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
           >
             <option value="all">Todos os Filhos</option>
             <option value="Geral">Mensagens Gerais</option>
@@ -178,12 +179,12 @@ export default function GuardianMessagesPage() {
         </div>
       </div>
 
-      {/* Messages List */}
-      <div className="space-y-4">
+      {/* Messages List - Responsivo */}
+      <div className="space-y-3 sm:space-y-4">
         {filteredMessages.map((message) => (
           <div 
             key={message.id} 
-            className={`bg-white rounded-lg shadow-md p-6 cursor-pointer transition-all hover:shadow-lg ${
+            className={`bg-white rounded-lg shadow-md p-4 sm:p-6 cursor-pointer transition-all hover:shadow-lg ${
               !message.read ? 'border-l-4 border-primary' : ''
             }`}
             onClick={() => {
@@ -191,206 +192,189 @@ export default function GuardianMessagesPage() {
               if (!message.read) markAsRead(message.id)
             }}
           >
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-1">
-                  <h3 className={`text-lg font-semibold ${!message.read ? 'text-gray-700' : 'text-gray-700'}`}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
+                  <h3 className={`text-base sm:text-lg font-semibold truncate ${!message.read ? 'text-gray-700' : 'text-gray-700'}`}>
                     {message.subject}
                   </h3>
                   {!message.read && (
-                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary flex-shrink-0 w-fit">
+                      Nova
+                    </span>
                   )}
                 </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600">
                   <span className="font-medium">{message.from}</span>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span>{message.fromRole}</span>
-                  <span>•</span>
-                  <span>{new Date(message.timestamp).toLocaleDateString('pt-BR')} às {new Date(message.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="hidden sm:inline">•</span>
+                  <span>{message.childName}</span>
                 </div>
               </div>
-              
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-shrink-0">
                 {message.priority === 'high' && (
-                  <span className="px-2 py-1 bg-error/20 text-error rounded-full text-xs font-medium">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-error/20 text-error w-fit">
                     Alta Prioridade
                   </span>
                 )}
-                {message.attachments.length > 0 && (
-                  <span className="material-symbols-outlined text-gray-400">attach_file</span>
-                )}
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  message.childName === 'Geral'
-                    ? 'bg-accent-purple/20 text-accent-purple'
-                    : 'bg-primary/20 text-primary'
-                }`}>
-                  {message.childName}
+                <span className="text-xs sm:text-sm text-gray-500">
+                  {new Date(message.timestamp).toLocaleDateString('pt-BR')}
                 </span>
               </div>
             </div>
-            
-            <p className={`text-gray-600 line-clamp-2 ${!message.read ? 'font-medium' : ''}`}>
-              {message.message}
-            </p>
+
+            <p className="text-sm text-gray-600 line-clamp-2 mb-3">{message.message}</p>
+
+            {message.attachments.length > 0 && (
+              <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
+                <span className="material-symbols-outlined text-sm">attach_file</span>
+                <span>{message.attachments.length} anexo(s)</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Message Details Modal */}
+      {/* Message Details Modal - Responsivo */}
       {selectedMessage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-primary">Detalhes da Mensagem</h3>
-              <button 
-                onClick={() => setSelectedMessage(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-lg font-semibold text-primary">{selectedMessage.subject}</h4>
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mt-2">
-                  <span><strong>De:</strong> {selectedMessage.from}</span>
-                  <span>•</span>
-                  <span>{selectedMessage.fromRole}</span>
-                  <span>•</span>
-                  <span>{new Date(selectedMessage.timestamp).toLocaleDateString('pt-BR')} às {new Date(selectedMessage.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-                <div className="flex items-center space-x-3 mt-2">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    selectedMessage.childName === 'Geral'
-                      ? 'bg-accent-purple/20 text-accent-purple'
-                      : 'bg-primary/20 text-primary'
-                  }`}>
-                    {selectedMessage.childName}
-                  </span>
-                  {selectedMessage.priority === 'high' && (
-                    <span className="px-2 py-1 bg-error/20 text-error rounded-full text-xs font-medium">
-                      Alta Prioridade
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold text-primary truncate pr-4">{selectedMessage.subject}</h3>
+                <button
+                  onClick={() => setSelectedMessage(null)}
+                  className="text-gray-400 hover:text-gray-600 p-1 flex-shrink-0"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="space-y-4 sm:space-y-6">
+                {/* Message Header */}
+                <div className="border-b border-gray-200 pb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div>
+                      <div className="font-medium text-gray-700">{selectedMessage.from}</div>
+                      <div className="text-sm text-gray-600">{selectedMessage.fromRole}</div>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {new Date(selectedMessage.timestamp).toLocaleString('pt-BR')}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      Para: {selectedMessage.childName}
                     </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-6">
-                <p className="text-gray-700 leading-relaxed">{selectedMessage.message}</p>
-              </div>
-
-              {selectedMessage.attachments.length > 0 && (
-                <div className="border-t border-gray-200 pt-6">
-                  <h5 className="font-medium text-primary-dark mb-3">Anexos</h5>
-                  <div className="space-y-2">
-                    {selectedMessage.attachments.map((attachment: string, index: number) => (
-                      <div key={index} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
-                        <span className="material-symbols-outlined text-primary">description</span>
-                        <span className="text-gray-700">{attachment}</span>
-                        <button className="ml-auto text-primary hover:text-primary-dark transition-colors">
-                          <span className="material-symbols-outlined">download</span>
-                        </button>
-                      </div>
-                    ))}
+                    {selectedMessage.priority === 'high' && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-error/20 text-error">
+                        Alta Prioridade
+                      </span>
+                    )}
                   </div>
                 </div>
-              )}
 
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button className="px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors">
-                  Responder
-                </button>
-                <button className="px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-accent-green/80 transition-colors">
-                  Marcar como Lida
-                </button>
+                {/* Message Content */}
+                <div>
+                  <p className="text-gray-700 leading-relaxed">{selectedMessage.message}</p>
+                </div>
+
+                {/* Attachments */}
+                {selectedMessage.attachments.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Anexos</h4>
+                    <div className="space-y-2">
+                      {selectedMessage.attachments.map((attachment: string, index: number) => (
+                        <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
+                          <span className="material-symbols-outlined text-gray-500">attach_file</span>
+                          <span className="text-sm text-gray-700 flex-1 truncate">{attachment}</span>
+                          <button className="text-primary hover:text-primary-dark text-sm">
+                            Baixar
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+                  <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm sm:text-base">
+                    Responder
+                  </button>
+                  <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base">
+                    Encaminhar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Compose Message Modal */}
+      {/* Compose Modal - Responsivo */}
       {showCompose && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-primary">Nova Mensagem</h3>
-              <button 
-                onClick={() => setShowCompose(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-primary-dark mb-1">Para</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option>Selecione o destinatário</option>
-                  <option>Direção</option>
-                  <option>Coordenação Pedagógica</option>
-                  <option>Secretaria</option>
-                  <option>Prof. João Silva - Matemática</option>
-                  <option>Profa. Maria Santos - Português</option>
-                  <option>Profa. Ana Costa - Polivalente</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-primary-dark mb-1">Referente ao aluno</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option>Selecione o aluno</option>
-                  {children.map(child => (
-                    <option key={child} value={child}>{child}</option>
-                  ))}
-                  <option value="geral">Assunto Geral</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-primary-dark mb-1">Assunto</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Digite o assunto da mensagem"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-primary-dark mb-1">Mensagem</label>
-                <textarea 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  rows={6}
-                  placeholder="Digite sua mensagem aqui..."
-                ></textarea>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-primary-dark mb-1">Prioridade</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                  <option value="normal">Normal</option>
-                  <option value="high">Alta</option>
-                </select>
-              </div>
-              
-              <div className="flex justify-end space-x-3 pt-4">
-                <button 
-                  type="button"
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold text-primary">Nova Mensagem</h3>
+                <button
                   onClick={() => setShowCompose(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 p-1"
                 >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit"
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-                >
-                  Enviar Mensagem
+                  <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-            </form>
+
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Para</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base">
+                    <option>Selecione o destinatário</option>
+                    <option>Coordenação Pedagógica</option>
+                    <option>Secretaria</option>
+                    <option>Prof. João Silva - Matemática</option>
+                    <option>Profa. Maria Santos - Português</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Assunto</label>
+                  <input 
+                    type="text" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
+                    placeholder="Digite o assunto da mensagem"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mensagem</label>
+                  <textarea 
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base resize-none"
+                    placeholder="Digite sua mensagem aqui..."
+                  ></textarea>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <button 
+                    type="submit"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm sm:text-base"
+                  >
+                    Enviar Mensagem
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setShowCompose(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

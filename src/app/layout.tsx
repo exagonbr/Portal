@@ -7,8 +7,7 @@ import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
 import GlobalSetup from '@/components/GlobalSetup';
 import Handtalk from '@/components/Handtalk';
-import { PWALoopDebugger } from '@/components/debug/PWALoopDebugger';
-import { QueueMonitor } from '@/components/debug/QueueMonitor';
+
 import { LoopEmergencyReset } from '@/components/LoopEmergencyReset';
 
 
@@ -82,8 +81,6 @@ export default function RootLayout({
           <PWARegistration />
           <PushNotificationInitializer />
           <LoopEmergencyReset />
-          {process.env.NODE_ENV === 'development' && <PWALoopDebugger />}
-          {process.env.NODE_ENV === 'development' && <QueueMonitor />}
         </AppProviders>
       </body>
     </html>

@@ -69,13 +69,13 @@ export default function LiveClassesPage() {
               onClick={() => setShowRecordings(!showRecordings)}
               className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
             >
-              <span className="material-icons text-sm mr-2">video_library</span>
+              <span className="material-symbols-outlined text-sm mr-2">video_library</span>
               {showRecordings ? 'Voltar à Aula' : 'Ver Gravações'}
             </button>
           )}
           {user?.role === 'teacher' && (
             <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
-              <span className="material-icons text-sm mr-2">video_call</span>
+              <span className="material-symbols-outlined text-sm mr-2">video_call</span>
               Nova Aula
             </button>
           )}
@@ -130,7 +130,7 @@ export default function LiveClassesPage() {
                         rel="noopener noreferrer"
                         className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200"
                       >
-                        <span className="material-icons text-sm">play_circle</span>
+                        <span className="material-symbols-outlined text-sm">play_circle</span>
                       </a>
                     )}
                   </div>

@@ -293,7 +293,7 @@ export default function NotificationsPage() {
                   : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
               }`}
             >
-              <span className="material-symbols-outlined text-sm">filter_list</span>
+              <span className="material-symbols-outlined text-sm">material-symbols-outlined</span>
               <span className="hide-mobile">Filtros</span>
               {hasActiveFilters && <span className="w-2 h-2 bg-white rounded-full"></span>}
             </button>

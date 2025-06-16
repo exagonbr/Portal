@@ -312,28 +312,7 @@ export const setupCacheCleanup = () => {
   }, 60 * 60 * 1000); // 1 hora
 };
 
-// Monitoramento das filas
-export const setupQueueMonitoring = () => {
-  // Monitora filas a cada 5 minutos
-  setInterval(async () => {
-    try {
-      const stats = await services.queue.getStats();
-      console.log('Estatísticas das filas:', stats);
-      
-      // Alerta se há muitos jobs falhados
-      if (stats.failed > 10) {
-        console.warn(`Muitos jobs falhados: ${stats.failed}`);
-      }
-      
-      // Alerta se há muitos jobs pendentes
-      if (stats.pending > 50) {
-        console.warn(`Muitos jobs pendentes: ${stats.pending}`);
-      }
-    } catch (error) {
-      console.warn('Erro no monitoramento das filas:', error);
-    }
-  }, 5 * 60 * 1000); // 5 minutos
-};
+
 
 // Utilitários para desenvolvimento
 export const devUtils = {
@@ -366,7 +345,6 @@ export const setupDevelopmentConfig = () => {
   if (process.env.NODE_ENV === 'development') {
     setupGlobalInterceptors();
     setupCacheCleanup();
-    setupQueueMonitoring();
     
     // Expõe utilitários no console para desenvolvimento
     if (typeof window !== 'undefined') {
@@ -393,7 +371,6 @@ export const setupProductionConfig = () => {
   });
   
   setupCacheCleanup();
-  setupQueueMonitoring();
 };
 
 // Auto-configuração baseada no ambiente

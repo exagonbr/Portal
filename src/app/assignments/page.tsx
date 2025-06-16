@@ -122,11 +122,11 @@ export default function AssignmentsPage() {
           </div>
           <div className="flex space-x-4">
             <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors duration-200">
-              <span className="material-icon text-sm mr-2">filter_list</span>
+              <span className="material-symbols-outlined text-sm mr-2">filter_list</span>
               Filtros
             </button>
             <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200">
-              <span className="material-icons text-sm mr-2">add</span>
+              <span className="material-symbols-outlined text-sm mr-2">add</span>
               Adicionar Atividade
             </button>
           </div>
@@ -225,7 +225,7 @@ export default function AssignmentsPage() {
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center mb-2">
-                    <span className={`material-icons mr-2 ${PRIORITY_ICONS[assignment.priority].color}`}>
+                    <span className={`material-symbols-outlined mr-2 ${PRIORITY_ICONS[assignment.priority].color}`}>
                       {PRIORITY_ICONS[assignment.priority].icon}
                     </span>
                     <h3 className="text-lg font-semibold text-primary-dark">{assignment.title}</h3>
@@ -233,19 +233,19 @@ export default function AssignmentsPage() {
                   <p className="text-gray-600 mb-4">{assignment.description}</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-500">
                     <div className="flex items-center">
-                      <span className="material-icons text-primary/60 text-base mr-2">school</span>
+                      <span className="material-symbols-outlined text-primary/60 text-base mr-2">school</span>
                       <span>{assignment.course}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="material-icons text-primary/60 text-base mr-2">event</span>
+                      <span className="material-symbols-outlined text-primary/60 text-base mr-2">event</span>
                       <span>Data limite: {new Date(assignment.dueDate).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="material-icons text-primary/60 text-base mr-2">schedule</span>
+                      <span className="material-symbols-outlined text-primary/60 text-base mr-2">schedule</span>
                       <span>{assignment.timeEstimate}</span>
                     </div>
                     <div className="flex items-center">
-                      <span className="material-icons text-primary/60 text-base mr-2">stars</span>
+                      <span className="material-symbols-outlined text-primary/60 text-base mr-2">stars</span>
                       <span>{assignment.points} pontos</span>
                     </div>
                   </div>
@@ -270,11 +270,11 @@ export default function AssignmentsPage() {
               </div>
               <div className="flex items-center space-x-6 mt-4 text-sm">
                 <div className="flex items-center text-gray-600">
-                  <span className="material-icons text-primary/60 text-base mr-1">attach_file</span>
+                  <span className="material-symbols-outlined text-primary/60 text-base mr-1">attach_file</span>
                   <span>{assignment.attachments} arquivos anexos</span>
                 </div>
                 <div className="flex items-center text-gray-600">
-                  <span className="material-icons text-primary/60 text-base mr-1">history</span>
+                  <span className="material-symbols-outlined text-primary/60 text-base mr-1">history</span>
                   <span>{assignment.submissions} tentativas</span>
                 </div>
                 <button className="text-primary hover:text-primary-dark transition-colors duration-200">

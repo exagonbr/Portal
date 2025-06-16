@@ -171,78 +171,73 @@ export default function GuardianActivitiesPage() {
   const stats = getActivityStats()
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Atividades Escolares</h1>
-            <p className="text-gray-600">Acompanhe as atividades e tarefas dos seus filhos</p>
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4 sm:mb-6">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-700 dark:text-gray-800 truncate">Atividades Escolares</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Acompanhe as atividades e tarefas dos seus filhos</p>
           </div>
-          <button className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark flex items-center space-x-2 transition-colors">
-            <span className="material-symbols-outlined">download</span>
+          <button className="bg-primary text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-primary-dark flex items-center justify-center space-x-2 transition-colors text-sm sm:text-base w-full sm:w-auto">
+            <span className="material-symbols-outlined text-lg sm:text-xl">download</span>
             <span>Relatório</span>
           </button>
         </div>
 
-        {/* Children Selector */}
-        <div className="flex space-x-4 mb-6">
+        {/* Children Selector - Responsivo */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
           {MOCK_ACTIVITIES_DATA.map((child) => (
             <button
               key={child.childId}
               onClick={() => setSelectedChild(child)}
-              className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all ${
+              className={`flex items-center space-x-3 p-3 sm:p-4 rounded-lg border-2 transition-all w-full sm:w-auto ${
                 selectedChild.childId === child.childId
                   ? 'border-blue-600 bg-blue-50'
                   : 'border-gray-300 hover:border-blue-400 bg-white'
               }`}
             >
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600">person</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-blue-600 text-lg sm:text-xl">person</span>
               </div>
-              <div className="text-left">
-                <div className="font-medium text-blue-700">{child.childName}</div>
-                <div className="text-sm text-gray-600">{child.grade}</div>
+              <div className="text-left min-w-0 flex-1">
+                <div className="font-medium text-blue-600 text-sm sm:text-base truncate">{child.childName}</div>
+                <div className="text-xs sm:text-sm text-gray-600">{child.grade}</div>
               </div>
             </button>
           ))}
         </div>
 
-        {/* Activity Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Total de Atividades</div>
-            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{stats.total}</div>
-            <div className="text-sm text-gray-600 mt-1">Este período</div>
+        {/* Stats Cards - Grid responsivo */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6">
+            <div className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Total</div>
+            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-700">{stats.total}</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">atividades</div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Concluídas</div>
-            <div className="text-2xl font-bold text-accent-green">{stats.completed}</div>
-            <div className="text-sm text-gray-600 mt-1">
-              {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% do total
-            </div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6">
+            <div className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Concluídas</div>
+            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-accent-green">{stats.completed}</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">finalizadas</div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Em Andamento</div>
-            <div className="text-3xl font-bold text-gray-700 dark:text-gray-800">{stats.inProgress}</div>
-            <div className="text-sm text-gray-600 mt-1">Sendo desenvolvidas</div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6">
+            <div className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Pendentes</div>
+            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-accent-yellow">{stats.pending}</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">aguardando</div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-sm font-medium text-gray-500 mb-1">Pendentes</div>
-            <div className="text-2xl font-bold text-accent-yellow">{stats.pending}</div>
-            <div className="text-sm text-gray-600 mt-1">Aguardando início</div>
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 lg:p-6">
+            <div className="text-xs sm:text-sm font-medium text-gray-500 mb-1">Em Andamento</div>
+            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">{stats.inProgress}</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">em progresso</div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex space-x-4 mb-6">
-          <select 
+        {/* Filters - Responsivo */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
           >
             <option value="all">Todos os Status</option>
             <option value="pending">Pendentes</option>
@@ -251,146 +246,148 @@ export default function GuardianActivitiesPage() {
             <option value="overdue">Atrasadas</option>
           </select>
           
-          <select 
+          <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base"
           >
             <option value="all">Todas as Prioridades</option>
-            <option value="high">Alta</option>
-            <option value="medium">Média</option>
-            <option value="low">Baixa</option>
+            <option value="high">Alta Prioridade</option>
+            <option value="medium">Prioridade Média</option>
+            <option value="low">Baixa Prioridade</option>
           </select>
         </div>
       </div>
 
-      {/* Activities List */}
-      <div className="space-y-6">
+      {/* Activities List - Responsivo */}
+      <div className="space-y-3 sm:space-y-4">
         {filteredActivities.map((activity) => (
-          <div key={activity.id} className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-primary">{activity.title}</h3>
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                  <span>{activity.subject}</span>
-                  <span>•</span>
-                  <span>{activity.teacher}</span>
-                  <span>•</span>
-                  <span>Entrega: {new Date(activity.dueDate).toLocaleDateString('pt-BR')}</span>
-                </div>
-                <p className="text-gray-600 mt-2">{activity.description}</p>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(activity.priority)}`}>
-                  {getPriorityText(activity.priority)}
-                </span>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
-                  {getStatusText(activity.status)}
-                </span>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  activity.type === 'Trabalho' ? 'bg-primary/20 text-primary' :
-                  activity.type === 'Projeto' ? 'bg-accent-purple/20 text-accent-purple' :
-                  activity.type === 'Exercícios' ? 'bg-accent-green/20 text-accent-green' :
-                  'bg-accent-orange/20 text-accent-orange'
+          <div key={activity.id} className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+              {/* Activity Icon */}
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                activity.type === 'Trabalho' ? 'bg-primary/20' :
+                activity.type === 'Projeto' ? 'bg-accent-purple/20' :
+                activity.type === 'Exercícios' ? 'bg-accent-green/20' :
+                'bg-accent-blue/20'
+              }`}>
+                <span className={`material-symbols-outlined text-lg sm:text-xl ${
+                  activity.type === 'Trabalho' ? 'text-primary' :
+                  activity.type === 'Projeto' ? 'text-accent-purple' :
+                  activity.type === 'Exercícios' ? 'text-accent-green' :
+                  'text-accent-blue'
                 }`}>
-                  {activity.type}
+                  {activity.type === 'Trabalho' ? 'assignment' :
+                   activity.type === 'Projeto' ? 'science' :
+                   activity.type === 'Exercícios' ? 'quiz' :
+                   'school'}
                 </span>
               </div>
-            </div>
 
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4 text-sm text-gray-600">
-                <div className="flex items-center space-x-1">
-                  <span className="material-symbols-outlined text-sm">schedule</span>
-                  <span>
-                    {Math.ceil((new Date(activity.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} dias restantes
-                  </span>
+              {/* Activity Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-700 truncate">{activity.title}</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">{activity.subject} • {activity.teacher}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 flex-shrink-0">
+                    <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
+                      {getStatusText(activity.status)}
+                    </span>
+                    <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(activity.priority)}`}>
+                      {getPriorityText(activity.priority)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <span className="material-symbols-outlined text-sm">assignment</span>
-                  <span>{activity.submissionType}</span>
+
+                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{activity.description}</p>
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="text-xs sm:text-sm text-gray-500">
+                    <span className="font-medium">Entrega:</span> {new Date(activity.dueDate).toLocaleDateString('pt-BR')}
+                  </div>
+                  <button
+                    onClick={() => setSelectedActivity(activity)}
+                    className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors w-full sm:w-auto"
+                  >
+                    Ver Detalhes
+                  </button>
                 </div>
               </div>
-              
-              <button 
-                onClick={() => setSelectedActivity(activity)}
-                className="text-primary hover:text-primary-dark flex items-center space-x-1 transition-colors"
-              >
-                <span className="material-symbols-outlined text-sm">visibility</span>
-                <span>Ver Detalhes</span>
-              </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Activity Details Modal */}
+      {/* Activity Details Modal - Responsivo */}
       {selectedActivity && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-primary">Detalhes da Atividade</h3>
-              <button 
-                onClick={() => setSelectedActivity(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-lg font-semibold text-primary">{selectedActivity.title}</h4>
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                  <span>{selectedActivity.subject}</span>
-                  <span>•</span>
-                  <span>{selectedActivity.teacher}</span>
-                </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold text-primary truncate pr-4">{selectedActivity.title}</h3>
+                <button
+                  onClick={() => setSelectedActivity(null)}
+                  className="text-gray-400 hover:text-gray-600 p-1 flex-shrink-0"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h5 className="font-medium text-primary-dark mb-2">Informações Gerais</h5>
-                  <div className="space-y-2 text-sm">
-                    <div><span className="font-medium">Tipo:</span> {selectedActivity.type}</div>
-                    <div><span className="font-medium">Data de Entrega:</span> {new Date(selectedActivity.dueDate).toLocaleDateString('pt-BR')}</div>
-                    <div><span className="font-medium">Prioridade:</span> {getPriorityText(selectedActivity.priority)}</div>
-                    <div><span className="font-medium">Status:</span> {getStatusText(selectedActivity.status)}</div>
-                    <div><span className="font-medium">Forma de Entrega:</span> {selectedActivity.submissionType}</div>
+              <div className="space-y-4 sm:space-y-6">
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Informações Básicas</h4>
+                    <div className="space-y-2 text-sm">
+                      <div><span className="font-medium">Disciplina:</span> {selectedActivity.subject}</div>
+                      <div><span className="font-medium">Professor:</span> {selectedActivity.teacher}</div>
+                      <div><span className="font-medium">Tipo:</span> {selectedActivity.type}</div>
+                      <div><span className="font-medium">Entrega:</span> {new Date(selectedActivity.dueDate).toLocaleDateString('pt-BR')}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Status</h4>
+                    <div className="space-y-2">
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedActivity.status)}`}>
+                        {getStatusText(selectedActivity.status)}
+                      </span>
+                      <br />
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(selectedActivity.priority)}`}>
+                        Prioridade {getPriorityText(selectedActivity.priority)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
+                {/* Description */}
                 <div>
-                  <h5 className="font-medium text-primary-dark mb-2">Materiais Necessários</h5>
-                  <div className="space-y-1">
+                  <h4 className="font-medium text-gray-700 mb-2">Descrição</h4>
+                  <p className="text-sm text-gray-600">{selectedActivity.description}</p>
+                </div>
+
+                {/* Instructions */}
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-2">Instruções</h4>
+                  <p className="text-sm text-gray-600">{selectedActivity.instructions}</p>
+                </div>
+
+                {/* Materials */}
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-2">Materiais Necessários</h4>
+                  <ul className="list-disc list-inside space-y-1">
                     {selectedActivity.materials.map((material: string, index: number) => (
-                      <div key={index} className="flex items-center space-x-2 text-sm">
-                        <span className="material-symbols-outlined text-xs text-primary">check</span>
-                        <span>{material}</span>
-                      </div>
+                      <li key={index} className="text-sm text-gray-600">{material}</li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
-              </div>
 
-              <div>
-                <h5 className="font-medium text-primary-dark mb-2">Descrição</h5>
-                <p className="text-gray-600">{selectedActivity.description}</p>
-              </div>
-
-              <div>
-                <h5 className="font-medium text-primary-dark mb-2">Instruções Detalhadas</h5>
-                <p className="text-gray-600">{selectedActivity.instructions}</p>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button className="button-secondary">
-                  Contatar Professor
-                </button>
-                <button className="button-success">
-                  Marcar como Concluída
-                </button>
+                {/* Submission Type */}
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-2">Forma de Entrega</h4>
+                  <p className="text-sm text-gray-600">{selectedActivity.submissionType}</p>
+                </div>
               </div>
             </div>
           </div>
