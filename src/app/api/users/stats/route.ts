@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prepareAuthHeaders } from '../lib/auth-headers';
+import { prepareAuthHeaders } from '../../lib/auth-headers';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
 
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = url.searchParams;
     
     // Construir URL do backend com parâmetros
-    const backendUrl = new URL('/schools', BACKEND_URL);
+    const backendUrl = new URL('/users/stats', BACKEND_URL);
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });
@@ -24,29 +24,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar escolas:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-
-    const response = await fetch(`${BACKEND_URL}/schools`, {
-      method: 'POST',
-      headers: prepareAuthHeaders(request),
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
-
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error('Erro ao criar escola:', error);
+    console.error('Erro ao buscar estatísticas de usuários:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

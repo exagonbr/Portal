@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/schools/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/institutions/${params.id}`, {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });
@@ -17,7 +17,7 @@ export async function GET(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar escola:', error);
+    console.error('Erro ao buscar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -32,7 +32,7 @@ export async function PUT(
   try {
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/schools/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/institutions/${params.id}`, {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -42,7 +42,7 @@ export async function PUT(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao atualizar escola:', error);
+    console.error('Erro ao atualizar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -55,7 +55,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/schools/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/institutions/${params.id}`, {
       method: 'DELETE',
       headers: prepareAuthHeaders(request),
     });
@@ -64,7 +64,7 @@ export async function DELETE(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao deletar escola:', error);
+    console.error('Erro ao deletar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

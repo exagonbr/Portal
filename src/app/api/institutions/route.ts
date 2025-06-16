@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = url.searchParams;
     
     // Construir URL do backend com parâmetros
-    const backendUrl = new URL('/schools', BACKEND_URL);
+    const backendUrl = new URL('/institutions', BACKEND_URL);
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar escolas:', error);
+    console.error('Erro ao buscar instituições:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/schools`, {
+    const response = await fetch(`${BACKEND_URL}/institutions`, {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao criar escola:', error);
+    console.error('Erro ao criar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
