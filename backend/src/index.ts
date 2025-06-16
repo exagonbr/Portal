@@ -8,7 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 // import testDatabaseConnection from "./config/database";
 import { testRedisConnection } from './config/redis';
-import { requestDeduplication } from './middleware/requestDeduplication';
+
 import { 
   responseTimeMiddleware, 
   slowRequestLogger, 
@@ -123,8 +123,8 @@ app.get('/backend', (_, res) => {
   res.redirect('/backend/docs');
 });
 
-// Mount API Routes with deduplication
-app.use('/api', requestDeduplication, apiRoutes);
+// Mount API Routes
+app.use('/api', apiRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

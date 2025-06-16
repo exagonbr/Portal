@@ -25,9 +25,7 @@ A API utiliza JWT (JSON Web Tokens) para autenticação. Para acessar endpoints 
 2. Use o token retornado no header \`Authorization: Bearer <token>\`
 3. O sistema também gerencia sessões Redis para maior segurança
 
-## Rate Limiting
-- A API implementa rate limiting para proteger contra abuso
-- Limites variam por endpoint e tipo de usuário
+
 
 ## Versionamento
 - Versão atual: v2.0.0
