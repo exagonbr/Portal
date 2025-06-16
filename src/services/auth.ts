@@ -272,7 +272,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     localStorage.setItem(lastAttemptKey, now.toString());
     
     // Usar apenas uma URL para simplificar
-    const loginUrl = '/api/auth/login';
+    const loginUrl = `${AUTH_CONFIG.API_URL}/auth/login`;
     console.log(`Fazendo login em: ${loginUrl}`);
     
     const response = await fetch(loginUrl, {

@@ -347,46 +347,6 @@ export function LoginPage() {
           </div>
         </motion.div>
       </motion.div>
-
-      {/* Floating Elements */}
-      <motion.div
-        className="absolute bottom-10 left-10 opacity-50"
-        animate={{
-          y: [0, -10, 0],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        <span 
-          className="material-symbols-outlined text-4xl"
-          style={{ color: theme.colors.primary.light }}
-        >
-          school
-        </span>
-      </motion.div>
-      
-      <motion.div
-        className="absolute top-10 right-10 opacity-50"
-        animate={{
-          y: [0, 10, 0],
-          rotate: [0, 10, 0],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        <span 
-          className="material-symbols-outlined text-4xl"
-          style={{ color: theme.colors.secondary.light }}
-        >
-          menu_book
-        </span>
-      </motion.div>
     </div>
   );
 } 
