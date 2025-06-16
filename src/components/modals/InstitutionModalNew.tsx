@@ -16,10 +16,13 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
   const [formData, setFormData] = useState({
     name: '',
     code: '',
+    cnpj: '',
     description: '',
     email: '',
     phone: '',
     address: '',
+    website: '',
+    type: 'PUBLIC' as 'PUBLIC' | 'PRIVATE' | 'MIXED',
     active: true
   })
   const [loading, setLoading] = useState(false)
@@ -27,23 +30,48 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
 
   useEffect(() => {
     if (institution && (mode === 'edit' || mode === 'view')) {
+      // Função para extrair endereço como string
+      const getAddressString = (address: any) => {
+        if (typeof address === 'string') {
+          return address
+        }
+        if (typeof address === 'object' && address) {
+          const parts = []
+          if (address.street) parts.push(address.street)
+          if (address.number) parts.push(address.number)
+          if (address.complement) parts.push(address.complement)
+          if (address.neighborhood) parts.push(address.neighborhood)
+          if (address.city) parts.push(address.city)
+          if (address.state) parts.push(address.state)
+          if (address.zipCode) parts.push(`CEP: ${address.zipCode}`)
+          return parts.join(', ')
+        }
+        return ''
+      }
+
       setFormData({
         name: institution.name || '',
         code: institution.code || '',
+        cnpj: institution.cnpj || '',
         description: institution.description || '',
         email: institution.email || '',
         phone: institution.phone || '',
-        address: institution.address || '',
+        address: getAddressString(institution.address) || '',
+        website: institution.website || '',
+        type: institution.type || 'PUBLIC',
         active: institution.active ?? true
       })
     } else if (mode === 'create') {
       setFormData({
         name: '',
         code: '',
+        cnpj: '',
         description: '',
         email: '',
         phone: '',
         address: '',
+        website: '',
+        type: 'PUBLIC',
         active: true
       })
     }
@@ -56,12 +84,20 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
       newErrors.name = 'Nome é obrigatório'
     }
 
-    if (!formData.code.trim()) {
-      newErrors.code = 'Código é obrigatório'
+    if (!formData.code.trim() && !formData.cnpj.trim()) {
+      newErrors.code = 'Código ou CNPJ é obrigatório'
+    }
+
+    if (formData.cnpj && !/^\d{14}$/.test(formData.cnpj.replace(/\D/g, ''))) {
+      newErrors.cnpj = 'CNPJ deve ter 14 dígitos'
     }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email inválido'
+    }
+
+    if (formData.website && !/^https?:\/\/.+\..+/.test(formData.website)) {
+      newErrors.website = 'Website deve ser uma URL válida (https://exemplo.com)'
     }
 
     setErrors(newErrors)
@@ -90,10 +126,37 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
     }
   }
 
+  const formatCNPJ = (value: string) => {
+    // Remove todos os caracteres não numéricos
+    const numericValue = value.replace(/\D/g, '')
+    
+    // Aplica a máscara do CNPJ
+    if (numericValue.length <= 14) {
+      return numericValue
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+    }
+    
+    return numericValue.slice(0, 14)
+      .replace(/(\d{2})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
+  }
+
   const handleInputChange = (field: string, value: string | boolean) => {
+    let processedValue = value
+    
+    // Aplica formatação especial para CNPJ
+    if (field === 'cnpj' && typeof value === 'string') {
+      processedValue = formatCNPJ(value)
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: processedValue
     }))
     
     if (errors[field]) {
@@ -195,8 +258,20 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                     <p className="text-blue-900 font-semibold">{institution.name}</p>
                   </div>
                   <div>
+                    <label className="text-sm font-medium text-blue-700">Tipo</label>
+                    <p className="text-blue-900 font-semibold">
+                      {institution.type === 'PUBLIC' ? 'Pública' : 
+                       institution.type === 'PRIVATE' ? 'Privada' : 
+                       institution.type === 'MIXED' ? 'Mista' : 'Não informado'}
+                    </p>
+                  </div>
+                  <div>
                     <label className="text-sm font-medium text-blue-700">Código</label>
-                    <p className="text-blue-900 font-semibold">{institution.code}</p>
+                    <p className="text-blue-900 font-semibold">{institution.code || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-blue-700">CNPJ</label>
+                    <p className="text-blue-900 font-semibold font-mono">{institution.cnpj || 'Não informado'}</p>
                   </div>
                 </div>
                 {institution.description && (
@@ -208,7 +283,7 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
               </div>
 
               {/* Contact Info */}
-              {(institution.email || institution.phone || institution.address) && (
+              {(institution.email || institution.phone || institution.address || institution.website) && (
                 <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
                   <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
                     <Mail className="w-5 h-5 mr-2" />
@@ -225,6 +300,16 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                       <div className="flex items-center">
                         <Phone className="w-4 h-4 text-green-600 mr-3" />
                         <span className="text-green-900">{institution.phone}</span>
+                      </div>
+                    )}
+                    {institution.website && (
+                      <div className="flex items-center">
+                        <svg className="w-4 h-4 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                        </svg>
+                        <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-green-900 hover:text-green-700 underline">
+                          {institution.website}
+                        </a>
                       </div>
                     )}
                     {institution.address && (
@@ -247,21 +332,21 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                   <div className="text-center">
                     <div className="bg-white rounded-lg p-4 shadow-sm">
                       <School className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-purple-900">{Math.floor(Math.random() * 10) + 1}</p>
+                      <p className="text-2xl font-bold text-purple-900">{institution.schools_count || 0}</p>
                       <p className="text-sm text-purple-600">Escolas</p>
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="bg-white rounded-lg p-4 shadow-sm">
                       <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-purple-900">{(institution as any).users_count || Math.floor(Math.random() * 500) + 100}</p>
+                      <p className="text-2xl font-bold text-purple-900">{institution.users_count || 0}</p>
                       <p className="text-sm text-purple-600">Usuários</p>
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="bg-white rounded-lg p-4 shadow-sm">
                       <Calendar className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-purple-900">{(institution as any).courses_count || Math.floor(Math.random() * 50) + 5}</p>
+                      <p className="text-2xl font-bold text-purple-900">{institution.courses_count || 0}</p>
                       <p className="text-sm text-purple-600">Cursos</p>
                     </div>
                   </div>
@@ -308,7 +393,22 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Código *
+                      Tipo da Instituição
+                    </label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => handleInputChange('type', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      <option value="PUBLIC">Pública</option>
+                      <option value="PRIVATE">Privada</option>
+                      <option value="MIXED">Mista</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Código
                     </label>
                     <input
                       type="text"
@@ -320,6 +420,23 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                       placeholder="Ex: UNIFESP"
                     />
                     {errors.code && <p className="text-red-500 text-sm mt-1">{errors.code}</p>}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      CNPJ
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cnpj}
+                      onChange={(e) => handleInputChange('cnpj', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono ${
+                        errors.cnpj ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="00.000.000/0000-00"
+                      maxLength={18}
+                    />
+                    {errors.cnpj && <p className="text-red-500 text-sm mt-1">{errors.cnpj}</p>}
                   </div>
                 </div>
 
@@ -371,6 +488,22 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="(11) 99999-9999"
                     />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Website
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.website}
+                      onChange={(e) => handleInputChange('website', e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.website ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="https://www.instituicao.edu.br"
+                    />
+                    {errors.website && <p className="text-red-500 text-sm mt-1">{errors.website}</p>}
                   </div>
                 </div>
 
