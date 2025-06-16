@@ -162,19 +162,40 @@ export interface RoleUpdateDto extends UpdateRoleDto {}
 export interface InstitutionDto {
   id: string;
   name: string;
-  code: string;
+  code?: string;
+  cnpj?: string;
   description?: string;
-  address?: string;
+  address?: string | {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
   phone?: string;
   email?: string;
+  website?: string;
+  logo?: string;
+  type?: 'PUBLIC' | 'PRIVATE' | 'MIXED';
   created_at: string;
   updated_at: string;
+  created_by?: string;
 }
 
 export interface InstitutionResponseDto extends InstitutionDto {
   active?: boolean;
   users_count?: number;
   courses_count?: number;
+  schools_count?: number;
+  settings?: {
+    allowStudentRegistration?: boolean;
+    requireEmailVerification?: boolean;
+    maxSchools?: number;
+    maxUsersPerSchool?: number;
+  };
+  schools?: any[];
 }
 
 export interface CreateInstitutionDto {

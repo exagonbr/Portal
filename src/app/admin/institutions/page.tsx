@@ -96,20 +96,49 @@ export default function ManageInstitutions() {
       })
       
       // Mapear Institution para InstitutionResponseDto
-      const mappedInstitutions: InstitutionResponseDto[] = (response.data || []).map(institution => ({
-        id: institution.id,
-        name: institution.name,
-        code: institution.code,
-        description: institution.address, // Usando address como description temporariamente
-        address: institution.address,
-        phone: institution.phone,
-        email: institution.email,
-        created_at: institution.created_at,
-        updated_at: institution.updated_at,
-        active: institution.active,
-        users_count: Math.floor(Math.random() * 500) + 50, // Mock data - substituir por dados reais
-        courses_count: Math.floor(Math.random() * 20) + 5 // Mock data - substituir por dados reais
-      }))
+      const mappedInstitutions: InstitutionResponseDto[] = (response.data || []).map(institution => {
+        // Função auxiliar para formatar endereço
+        const formatAddress = (address: any) => {
+          if (typeof address === 'string') {
+            return address
+          }
+          if (typeof address === 'object' && address) {
+            const parts = []
+            if (address.street) parts.push(address.street)
+            if (address.number) parts.push(address.number)
+            if (address.complement) parts.push(address.complement)
+            if (address.neighborhood) parts.push(address.neighborhood)
+            if (address.city) parts.push(address.city)
+            if (address.state) parts.push(address.state)
+            if (address.zipCode) parts.push(`CEP: ${address.zipCode}`)
+            return parts.join(', ')
+          }
+          return ''
+        }
+
+        return {
+          id: institution.id,
+          name: institution.name,
+          code: institution.code || institution.cnpj || '',
+          cnpj: institution.cnpj,
+          description: institution.description,
+          address: formatAddress(institution.address),
+          phone: institution.phone,
+          email: institution.email,
+          website: institution.website,
+          logo: institution.logo,
+          type: institution.type,
+          created_at: institution.created_at,
+          updated_at: institution.updated_at,
+          created_by: institution.created_by,
+          active: institution.active ?? true,
+          users_count: institution.users_count || 0,
+          courses_count: institution.courses_count || 0,
+          schools_count: institution.schools_count || institution.schools?.length || 0,
+          settings: institution.settings,
+          schools: institution.schools || []
+        }
+      })
       
       setInstitutions(mappedInstitutions)
       setTotalItems(response.pagination?.total || 0)
@@ -128,15 +157,15 @@ export default function ManageInstitutions() {
     const totalInstitutions = institutions.length
     const activeInstitutions = institutions.filter(inst => inst.active).length
     
-    // Mock data para escolas - em produção, buscar dados reais da API
+    // Somar escolas reais das instituições
     const totalSchools = institutions.reduce((total, inst) => {
-      return total + Math.floor(Math.random() * 10) + 1 // 1-10 escolas por instituição
+      return total + (inst.schools_count || 0)
     }, 0)
 
-    // Mock data para usuários - em produção, buscar dados reais da API
+    // Somar usuários reais das instituições
     const totalUsers = institutions.reduce((total, inst) => total + (inst.users_count || 0), 0)
     
-    // Mock data para usuários por role - em produção, buscar dados reais da API
+    // Calcular distribuição de usuários por role (usando proporções típicas se não houver dados específicos)
     const usersByRole = {
       STUDENT: Math.floor(totalUsers * 0.7), // 70% estudantes
       TEACHER: Math.floor(totalUsers * 0.15), // 15% professores
@@ -364,6 +393,9 @@ export default function ManageInstitutions() {
                             <span>Instituição</span>
                           </div>
                         </th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          <span>CNPJ/Código</span>
+                        </th>
                         <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           <div className="flex items-center justify-center space-x-1">
                             <School className="w-4 h-4 text-gray-600" />
@@ -399,14 +431,34 @@ export default function ManageInstitutions() {
                               </div>
                               <div>
                                 <div className="text-sm font-semibold text-gray-900">{institution.name}</div>
-                                <div className="text-xs text-gray-500">ID: {institution.id.slice(0, 8)}...</div>
+                                <div className="text-xs text-gray-500">
+                                  {institution.type && (
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600 mr-2">
+                                      {institution.type === 'PUBLIC' ? 'Pública' : institution.type === 'PRIVATE' ? 'Privada' : 'Mista'}
+                                    </span>
+                                  )}
+                                  ID: {institution.id.slice(0, 8)}...
+                                </div>
                               </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="text-sm text-gray-900">
+                              {institution.cnpj && (
+                                <div className="font-mono text-xs">{institution.cnpj}</div>
+                              )}
+                              {institution.code && !institution.cnpj && (
+                                <div className="text-xs text-gray-600">{institution.code}</div>
+                              )}
+                              {!institution.cnpj && !institution.code && (
+                                <span className="text-xs text-gray-400">-</span>
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-4 text-center">
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                               <School className="w-3 h-3 mr-1" />
-                              {Math.floor(Math.random() * 10) + 1}
+                              {institution.schools_count || 0}
                             </span>
                           </td>
                           <td className="px-4 py-4 text-center">
@@ -489,7 +541,16 @@ export default function ManageInstitutions() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1 truncate">{institution.name}</h3>
-                              <p className="text-sm text-gray-500">ID: {institution.id.slice(0, 8)}...</p>
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                {institution.type && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                                    {institution.type === 'PUBLIC' ? 'Pública' : institution.type === 'PRIVATE' ? 'Privada' : 'Mista'}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-500">
+                                {institution.cnpj ? `CNPJ: ${institution.cnpj}` : `ID: ${institution.id.slice(0, 8)}...`}
+                              </p>
                             </div>
                           </div>
                           <Badge variant={institution.active ? "success" : "danger"} className="flex-shrink-0">
@@ -504,7 +565,7 @@ export default function ManageInstitutions() {
                               <School className="w-5 h-5 text-blue-600" />
                               <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Escolas</span>
                             </div>
-                            <p className="text-2xl font-bold text-blue-800">{Math.floor(Math.random() * 10) + 1}</p>
+                            <p className="text-2xl font-bold text-blue-800">{institution.schools_count || 0}</p>
                           </div>
                           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
                             <div className="flex items-center justify-between mb-2">
@@ -516,7 +577,7 @@ export default function ManageInstitutions() {
                         </div>
 
                         {/* Contact Info */}
-                        {(institution.email || institution.phone) && (
+                        {(institution.email || institution.phone || institution.website) && (
                           <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
                               <span className="mr-2">📞</span>
@@ -533,6 +594,14 @@ export default function ManageInstitutions() {
                                 <div className="flex items-center text-sm text-gray-600">
                                   <span className="w-4 text-center mr-2">📱</span>
                                   <span>{institution.phone}</span>
+                                </div>
+                              )}
+                              {institution.website && (
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <span className="w-4 text-center mr-2">🌐</span>
+                                  <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline break-all">
+                                    {institution.website}
+                                  </a>
                                 </div>
                               )}
                             </div>

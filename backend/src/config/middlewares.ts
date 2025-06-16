@@ -27,10 +27,10 @@ export function setupMiddlewares(app: express.Application): void {
     xXssProtection: false
   }));
 
-  // CORS
+  // CORS - Permitir todas as origens (*)
   app.use(cors({
-    origin: true,
-    credentials: true,
+    origin: '*',
+    credentials: false, // Não pode usar credentials com origin: '*'
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type', 
@@ -39,25 +39,19 @@ export function setupMiddlewares(app: express.Application): void {
       'Access-Control-Allow-Origin',
       'Access-Control-Allow-Headers',
       'Access-Control-Allow-Methods',
-      'Access-Control-Allow-Credentials',
       'Accept',
       'Origin'
     ],
     exposedHeaders: [
       'Access-Control-Allow-Origin',
       'Access-Control-Allow-Headers',
-      'Access-Control-Allow-Methods',
-      'Access-Control-Allow-Credentials'
+      'Access-Control-Allow-Methods'
     ]
   }));
 
-  // Middleware adicional para garantir cabeçalhos CORS
+  // Middleware adicional para garantir cabeçalhos CORS com allow *
   app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (origin) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     

@@ -38,7 +38,8 @@
     "migrate:make": "knex migrate:make",
     "seed:run": "knex seed:run",
     "seed:make": "knex seed:make",
-    "assign-teacher-role": "node -r ts-node/register src/scripts/assignTeacherRole.ts"
+    "assign-teacher-role": "node -r ts-node/register src/scripts/assignTeacherRole.ts",
+    "test:cors": "node test-cors.js"
   },
   "keywords": [
     "education",
