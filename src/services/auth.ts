@@ -294,53 +294,92 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       throw new Error('Login deve ser executado no navegador');
     }
 
-    console.log('🔐 Iniciando processo de login...');
+    // Detectar se é dispositivo móvel
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+    console.log(`🔐 Iniciando processo de login (${isMobile ? 'MOBILE' : 'DESKTOP'})...`);
     
     const loginUrl = `${AUTH_CONFIG.API_URL}/auth/login`;
     console.log(`🔐 Fazendo login em: ${loginUrl}`);
-    
-    const response = await fetch(loginUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include',
-    });
 
-    console.log('🔐 Resposta recebida, status:', response.status);
-    
-    const result = await response.json();
-    console.log('🔐 Dados da resposta:', result);
-    
-    if (!response.ok) {
-      throw new Error(result.message || 'Erro ao fazer login');
+    // Configuração de timeout e opções específicas para mobile
+    const controller = new AbortController();
+    const timeoutMs = isMobile ? 30000 : 20000; // 30s para mobile, 20s para desktop
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, timeoutMs);
+
+    try {
+      const response = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        // Configurações específicas para mobile
+        credentials: 'same-origin', // Mudança de 'include' para 'same-origin' para melhor compatibilidade mobile
+        cache: 'no-cache',
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      console.log(`🔐 Resposta recebida (${isMobile ? 'MOBILE' : 'DESKTOP'}), status:`, response.status);
+      
+      let result;
+      try {
+        result = await response.json();
+        console.log('🔐 Dados da resposta:', result);
+      } catch (jsonError) {
+        console.error('❌ Erro ao parsear JSON da resposta:', jsonError);
+        throw new Error('Resposta inválida do servidor');
+      }
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Erro ao fazer login');
+      }
+
+      // O backend retorna { success: true, data: {...} }
+      let userData;
+      if (result.success && result.data) {
+        userData = result.data.user || result.data;
+      } else {
+        // Fallback para estrutura antiga
+        userData = result.user;
+      }
+
+      // Extrair apenas os campos essenciais do usuário
+      const userEssentials = userData ? extractUserEssentials(userData) : undefined;
+      
+      // Armazenar sessão usando cookies
+      if (userEssentials) {
+        SessionManager.setUserSession(userEssentials);
+        console.log('✅ Sessão do usuário criada com sucesso');
+      }
+
+      return {
+        success: true,
+        user: userEssentials,
+        token: result.data?.token || result.token,
+        expiresAt: result.data?.expiresAt || result.expiresAt
+      };
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      // Tratamento específico de erros para mobile
+      if (fetchError instanceof Error) {
+        if (fetchError.name === 'AbortError') {
+          console.error(`❌ Timeout no login (${timeoutMs}ms)`);
+          throw new Error(`Tempo limite excedido. Verifique sua conexão e tente novamente.`);
+        }
+        
+        if (fetchError.message.includes('fetch') || fetchError.message.includes('network')) {
+          console.error('❌ Erro de rede no login:', fetchError);
+          throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+        }
+      }
+      
+      throw fetchError;
     }
-
-    // O backend retorna { success: true, data: {...} }
-    let userData;
-    if (result.success && result.data) {
-      userData = result.data.user || result.data;
-    } else {
-      // Fallback para estrutura antiga
-      userData = result.user;
-    }
-
-    // Extrair apenas os campos essenciais do usuário
-    const userEssentials = userData ? extractUserEssentials(userData) : undefined;
-    
-    // Armazenar sessão usando cookies
-    if (userEssentials) {
-      SessionManager.setUserSession(userEssentials);
-      console.log('✅ Sessão do usuário criada com sucesso');
-    }
-
-    return {
-      success: true,
-      user: userEssentials,
-      token: result.data?.token || result.token,
-      expiresAt: result.data?.expiresAt || result.expiresAt
-    };
   } catch (error) {
     console.error('❌ Erro no login:', error);
     
@@ -359,24 +398,61 @@ export const register = async (
     type: 'student' | 'teacher'
 ): Promise<RegisterResponse> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        role: type
-      }),
-      credentials: 'include',
-    });
+    // Detectar dispositivo móvel
+    const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+    
+    // Configuração de timeout específica para mobile
+    const controller = new AbortController();
+    const timeoutMs = isMobile ? 30000 : 20000; // 30s para mobile, 20s para desktop
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    const result = await response.json();
+    try {
+      const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role: type
+        }),
+        credentials: 'same-origin', // Melhor compatibilidade mobile
+        cache: 'no-cache',
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      throw new Error(result.message || 'Erro ao registrar usuário');
+      clearTimeout(timeoutId);
+      
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('❌ Erro ao parsear JSON da resposta de registro:', jsonError);
+        throw new Error('Resposta inválida do servidor');
+      }
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Erro ao registrar usuário');
+      }
+
+      return result;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError instanceof Error) {
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Tempo limite excedido durante o registro. Tente novamente.');
+        }
+        
+        if (fetchError.message.includes('fetch') || fetchError.message.includes('network')) {
+          throw new Error('Erro de conexão durante o registro. Verifique sua internet.');
+        }
+      }
+      
+      throw fetchError;
     }
 
     // O backend retorna { success: true, data: {...} }
@@ -424,19 +500,29 @@ export const logout = async (): Promise<void> => {
     
     // 2. Chamar API de logout (sem bloquear se falhar)
     try {
+      // Configuração específica para mobile
+      const controller = new AbortController();
+      const timeoutMs = 10000; // 10s timeout para logout
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
       const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        credentials: 'include',
+        credentials: 'same-origin',
+        cache: 'no-cache',
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.warn('⚠️ Erro na resposta do logout:', response.status);
       }
     } catch (apiError) {
-      console.warn('⚠️ Erro ao chamar API de logout:', apiError);
+      console.warn('⚠️ Erro ao chamar API de logout (não crítico):', apiError);
     }
     
     console.log('✅ Logout concluído com sucesso');

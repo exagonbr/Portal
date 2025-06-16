@@ -2,24 +2,29 @@
 
 ## 🔍 Problemas Identificados
 
-### 1. **Rate Limiting Baseado em User-Agent (PRINCIPAL)**
+### 1. **Rate Limiting Baseado em User-Agent**
 - Sistema de rate limiting criava chaves específicas baseadas no User-Agent completo
 - User-Agents mobile são diferentes dos desktop, causando bloqueios desnecessários
 - Limites muito restritivos para dispositivos móveis
 
-### 2. **Zoom Automático no iOS**
+### 2. **Problemas de Fetch "Failed to Fetch" (PRINCIPAL)**
+- Configuração `credentials: 'include'` causando problemas em dispositivos móveis
+- Falta de timeout adequado para conexões móveis mais lentas
+- Tratamento inadequado de erros de rede específicos de mobile
+
+### 3. **Zoom Automático no iOS**
 - Inputs com `font-size` menor que 16px causam zoom automático
 - Viewport configurado para permitir zoom pode interferir na UX
 
-### 3. **Área de Toque Inadequada**
+### 4. **Área de Toque Inadequada**
 - Botões e elementos interativos menores que 44px são difíceis de tocar
 - Falta de padding adequado para elementos touch
 
-### 4. **Throttling Muito Restritivo**
+### 5. **Throttling Muito Restritivo**
 - Sistema de throttling de 2 segundos muito restritivo para mobile
 - Toques duplos acidentais podem ativar o throttling
 
-### 5. **Problemas de Performance**
+### 6. **Problemas de Performance**
 - Animações complexas podem causar lag em dispositivos móveis
 - Falta de otimizações específicas para touch devices
 
@@ -49,7 +54,42 @@ const MIN_REQUEST_INTERVAL_MOBILE = 200; // vs 300ms para desktop
 const blockTime = isMobile ? 5000 : 10000; // 5s vs 10s
 ```
 
-### 2. **Ajustes no LoginForm.tsx**
+### 2. **Correções de Fetch para Mobile (src/services/auth.ts)**
+```typescript
+// Configuração específica para mobile
+const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+const controller = new AbortController();
+const timeoutMs = isMobile ? 30000 : 20000; // 30s para mobile, 20s para desktop
+
+const response = await fetch(loginUrl, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  body: JSON.stringify({ email, password }),
+  credentials: 'same-origin', // Mudança de 'include' para 'same-origin'
+  cache: 'no-cache',
+  signal: controller.signal,
+});
+
+// Tratamento específico de erros para mobile
+if (fetchError.name === 'AbortError') {
+  throw new Error('Tempo limite excedido. Verifique sua conexão e tente novamente.');
+}
+
+if (fetchError.message.includes('fetch') || fetchError.message.includes('network')) {
+  throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+}
+```
+
+### 3. **Diagnósticos de Rede Mobile (src/utils/mobile-network-diagnostics.ts)**
+- Utilitário completo para diagnosticar problemas de conectividade
+- Testa múltiplos endpoints simultaneamente
+- Detecta tipo de conexão (WiFi, celular, velocidade)
+- Gera recomendações específicas para problemas encontrados
+
+### 4. **Ajustes no LoginForm.tsx**
 ```typescript
 // Detecção de dispositivo móvel
 const [isMobile, setIsMobile] = useState(false);
@@ -72,7 +112,7 @@ style={{
 }}
 ```
 
-### 3. **Ajustes no Viewport (layout.tsx)**
+### 5. **Ajustes no Viewport (layout.tsx)**
 ```typescript
 export const viewport: Viewport = {
   width: 'device-width',
@@ -84,7 +124,7 @@ export const viewport: Viewport = {
 };
 ```
 
-### 4. **CSS Específico para Mobile (mobile-fixes.css)**
+### 6. **CSS Específico para Mobile (mobile-fixes.css)**
 ```css
 /* Prevenir zoom automático em inputs no iOS */
 input[type="email"],
@@ -105,12 +145,14 @@ button {
 }
 ```
 
-### 5. **Componente de Debug Mobile**
+### 7. **Componente de Debug Mobile**
 - Criado `MobileDebugInfo.tsx` para diagnosticar problemas
 - Mostra informações do dispositivo, autenticação, cookies, etc.
+- **NOVO**: Inclui diagnósticos de rede com teste de conectividade
+- **NOVO**: Detecta problemas específicos de "Failed to fetch"
 - Disponível apenas em desenvolvimento
 
-### 6. **Melhorias nos Inputs**
+### 8. **Melhorias nos Inputs**
 ```typescript
 // Atributos específicos para mobile
 inputMode="email"

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { runFullDiagnostics, type NetworkDiagnostics, type ConnectivityTest } from '@/utils/mobile-network-diagnostics';
 
 interface DeviceInfo {
   userAgent: string;
@@ -26,6 +27,12 @@ interface DeviceInfo {
 export function MobileDebugInfo() {
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [networkDiagnostics, setNetworkDiagnostics] = useState<{
+    networkInfo: NetworkDiagnostics;
+    connectivityTests: ConnectivityTest[];
+    recommendations: string[];
+  } | null>(null);
+  const [isRunningDiagnostics, setIsRunningDiagnostics] = useState(false);
   const { user, loading, error } = useAuth();
 
   useEffect(() => {
@@ -74,6 +81,19 @@ export function MobileDebugInfo() {
       window.removeEventListener('resize', handleOrientationChange);
     };
   }, []);
+
+  // Função para executar diagnósticos de rede
+  const runNetworkDiagnostics = async () => {
+    setIsRunningDiagnostics(true);
+    try {
+      const diagnostics = await runFullDiagnostics();
+      setNetworkDiagnostics(diagnostics);
+    } catch (error) {
+      console.error('Erro ao executar diagnósticos:', error);
+    } finally {
+      setIsRunningDiagnostics(false);
+    }
+  };
 
   if (!deviceInfo) return null;
 
@@ -185,6 +205,58 @@ export function MobileDebugInfo() {
                     : 'Nenhum dado no localStorage'
                   }
                 </div>
+              </div>
+
+              {/* Diagnósticos de Rede */}
+              <div>
+                <h3 className="font-semibold text-sm text-gray-700 mb-2 flex items-center justify-between">
+                  Diagnósticos de Rede
+                  <button
+                    onClick={runNetworkDiagnostics}
+                    disabled={isRunningDiagnostics}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {isRunningDiagnostics ? 'Testando...' : 'Executar'}
+                  </button>
+                </h3>
+                
+                {networkDiagnostics ? (
+                  <div className="bg-gray-50 p-2 rounded text-xs space-y-2">
+                    <div><strong>Status:</strong> {networkDiagnostics.networkInfo.isOnline ? 'Online' : 'Offline'}</div>
+                    <div><strong>Tipo:</strong> {networkDiagnostics.networkInfo.connectionType}</div>
+                    {networkDiagnostics.networkInfo.effectiveType && (
+                      <div><strong>Velocidade:</strong> {networkDiagnostics.networkInfo.effectiveType}</div>
+                    )}
+                    {networkDiagnostics.networkInfo.rtt && (
+                      <div><strong>Latência:</strong> {networkDiagnostics.networkInfo.rtt}ms</div>
+                    )}
+                    
+                    <div className="border-t pt-2 mt-2">
+                      <strong>Testes de Conectividade:</strong>
+                      {networkDiagnostics.connectivityTests.map((test, index) => (
+                        <div key={index} className="text-xs">
+                          {test.endpoint}: {test.success ? 
+                            `✅ ${test.responseTime}ms` : 
+                            `❌ ${test.error?.substring(0, 30)}...`
+                          }
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {networkDiagnostics.recommendations.length > 0 && (
+                      <div className="border-t pt-2 mt-2">
+                        <strong>Recomendações:</strong>
+                        {networkDiagnostics.recommendations.map((rec, index) => (
+                          <div key={index} className="text-xs">• {rec}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-2 rounded text-xs">
+                    Clique em "Executar" para testar a conectividade
+                  </div>
+                )}
               </div>
 
               {/* Botões de ação */}
