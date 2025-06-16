@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 
 // Mock database - substituir por Prisma/banco real
 const mockUsers = new Map([
@@ -54,20 +53,20 @@ const mockUsers = new Map([
 // GET - Estatísticas de usuários
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
-        { error: 'Não autorizado' },
+        { success: false, message: 'Authorization required' },
         { status: 401 }
       )
     }
 
     // Apenas admins podem ver estatísticas
     const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(userRole)) {
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'])) {
       return NextResponse.json(
-        { error: 'Sem permissão para visualizar estatísticas' },
+        { success: false, message: 'Insufficient permissions' },
         { status: 403 }
       )
     }
@@ -139,7 +138,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
