@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { UserEssentials, Permission } from '@/types/auth';
 import * as authService from '@/services/auth';
 import { getDashboardPath } from '@/utils/roleRedirect';
-import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 
 interface AuthContextType {
   user: UserEssentials | null;
@@ -16,7 +15,6 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  refreshToken: () => Promise<boolean>;
   clearError: () => void;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
@@ -43,26 +41,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * Buscar usuário atual do localStorage (sem requisições automáticas)
+   * Buscar usuário atual da sessão (cookies/localStorage)
    */
   const fetchCurrentUser = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Verificar apenas localStorage - evita loops de requisições
+      // Usar apenas getCurrentUser que agora verifica sessões
       const currentUser = await authService.getCurrentUser();
       
       if (currentUser) {
-        console.log('🔐 AuthContext: Usuário encontrado no localStorage:', currentUser.email);
+        console.log('🔐 AuthContext: Usuário encontrado na sessão:', currentUser.email);
         setUser(currentUser);
         setError(null);
       } else {
-        console.log('🔐 AuthContext: Nenhum usuário no localStorage');
+        console.log('🔐 AuthContext: Nenhuma sessão ativa');
         setUser(null);
       }
       
     } catch (err) {
-      console.error('❌ Erro ao buscar usuário do localStorage:', err);
+      console.error('❌ Erro ao buscar usuário da sessão:', err);
       setUser(null);
       setError('Erro ao carregar dados do usuário');
     } finally {
@@ -71,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * Inicialização do contexto
+   * Inicialização do contexto - verificar sessão existente
    */
   useEffect(() => {
     fetchCurrentUser();
@@ -84,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (typeof window !== 'undefined') {
         console.log(`🎯 AuthContext: Redirecionando para ${path}`);
+        // Usar replace para evitar loops de navegação
         window.location.replace(path);
       }
     } catch (error) {
@@ -98,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const login = useCallback(async (email: string, password: string) => {
     try {
-      console.log('🔐 Iniciando login para:', email);
+      console.log('🔐 AuthContext: Iniciando login para:', email);
       setLoading(true);
       setError(null);
       
@@ -121,6 +120,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('🔐 Login bem-sucedido:', response.user.name, 'Role:', response.user.role);
         setUser(response.user);
         setError(null);
+        
+        // Aguardar um pouco para garantir que a sessão foi salva
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         // Determinar dashboard baseado na role
         const normalizedRole = response.user.role?.toLowerCase();
@@ -153,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const register = useCallback(async (name: string, email: string, password: string, type: 'student' | 'teacher') => {
     try {
-      console.log('🔐 Iniciando registro para:', email);
+      console.log('🔐 AuthContext: Iniciando registro para:', email);
       setLoading(true);
       setError(null);
       
@@ -176,6 +178,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('🔐 Registro bem-sucedido:', response.user.name, 'Role:', response.user.role);
         setUser(response.user);
         setError(null);
+        
+        // Aguardar um pouco para garantir que a sessão foi salva
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         // Determinar dashboard baseado na role
         const normalizedRole = response.user.role?.toLowerCase();
@@ -204,93 +209,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [safeRedirect]);
 
   /**
-   * Logout do usuário
+   * Logout do usuário - Simplificado
    */
   const logout = useCallback(async () => {
     try {
-      console.log('🔐 Iniciando logout...');
+      console.log('🔐 AuthContext: Iniciando logout...');
       setLoading(true);
       
       // Limpar estado local primeiro
       setUser(null);
       setError(null);
       
-      // Limpar dados do localStorage/sessionStorage
-      try {
-        await clearAllDataForUnauthorized();
-      } catch (clearError) {
-        console.warn('⚠️ Erro ao limpar dados durante logout:', clearError);
-      }
+      // Chamar serviço de logout (limpa sessão e cookies)
+      await authService.logout();
       
-      // Chamar serviço de logout (sem bloquear se falhar)
-      try {
-        await authService.logout();
-      } catch (serviceError) {
-        console.warn('⚠️ Erro no serviço de logout:', serviceError);
-      }
+      // Aguardar um pouco para garantir limpeza
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Usar LogoutService para limpeza completa
-      try {
-        const { LogoutService } = await import('../services/logoutService');
-        await LogoutService.logoutAndRedirect();
-      } catch (logoutServiceError) {
-        console.warn('⚠️ Erro no LogoutService:', logoutServiceError);
-        
-        // Fallback: redirecionamento direto
-        if (typeof window !== 'undefined') {
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.href = '/login';
-        }
-      }
+      // Redirecionar para login
+      console.log('🎯 Redirecionando para login após logout');
+      safeRedirect('/login');
       
     } catch (err: any) {
       console.error('❌ Erro no logout:', err);
-      setError('Erro ao fazer logout');
       
       // Garantir limpeza mesmo com erro
       setUser(null);
+      setError(null);
       
-      // Fallback final
-      if (typeof window !== 'undefined') {
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = '/login';
-      }
+      // Redirecionar mesmo com erro
+      safeRedirect('/login');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [safeRedirect]);
 
   /**
    * Refresh dos dados do usuário
    */
   const refreshUser = useCallback(async () => {
-    console.log('🔄 Atualizando dados do usuário...');
+    console.log('🔄 AuthContext: Atualizando dados do usuário...');
     await fetchCurrentUser();
-  }, [fetchCurrentUser]);
-
-  /**
-   * Refresh do token de acesso
-   */
-  const refreshToken = useCallback(async (): Promise<boolean> => {
-    try {
-      console.log('🔄 Renovando token de acesso...');
-      
-      const refreshed = await authService.refreshToken();
-      
-      if (refreshed) {
-        console.log('✅ Token renovado com sucesso');
-        await fetchCurrentUser(); // Atualizar dados do usuário
-        return true;
-      } else {
-        console.warn('⚠️ Falha ao renovar token');
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ Erro ao renovar token:', error);
-      return false;
-    }
   }, [fetchCurrentUser]);
 
   /**
@@ -334,7 +293,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     refreshUser,
-    refreshToken,
     clearError,
     hasPermission,
     hasAnyPermission,
@@ -357,7 +315,7 @@ export function useAuth() {
 }
 
 /**
- * Hook para exigir autenticação
+ * Hook para exigir autenticação - Simplificado
  */
 export function useRequireAuth(redirectTo = '/login') {
   const { user, loading } = useAuth();
@@ -367,19 +325,12 @@ export function useRequireAuth(redirectTo = '/login') {
     if (!loading && !user) {
       console.log('🔐 useRequireAuth: Usuário não autenticado, redirecionando...');
       
-      // Limpar dados antes de redirecionar para login
-      if (redirectTo.includes('/login')) {
-        clearAllDataForUnauthorized()
-          .then(() => {
-            router.push(redirectTo + '?error=unauthorized');
-          })
-          .catch((error) => {
-            console.error('❌ Erro durante limpeza de dados:', error);
-            router.push(redirectTo + '?error=unauthorized');
-          });
-      } else {
-        router.push(redirectTo);
-      }
+      // Redirecionar diretamente sem limpeza adicional
+      const redirectUrl = redirectTo.includes('?') 
+        ? `${redirectTo}&error=unauthorized` 
+        : `${redirectTo}?error=unauthorized`;
+      
+      router.replace(redirectUrl);
     }
   }, [user, loading, router, redirectTo]);
 
@@ -403,7 +354,7 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
       const normalizedRole = user.role?.toLowerCase();
       const dashboardPath = getDashboardPath(normalizedRole);
       
-      router.push(dashboardPath || redirectTo);
+      router.replace(dashboardPath || redirectTo);
     }
   }, [user, loading, hasAllowedRole, allowedRoles, router, redirectTo]);
 
@@ -432,7 +383,7 @@ export function useRequirePermission(requiredPermissions: string[], redirectTo =
       const normalizedRole = user.role?.toLowerCase();
       const dashboardPath = getDashboardPath(normalizedRole);
       
-      router.push(dashboardPath || redirectTo);
+      router.replace(dashboardPath || redirectTo);
     }
   }, [user, loading, hasRequiredPermissions, requiredPermissions, router, redirectTo]);
 
