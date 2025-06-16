@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
@@ -130,8 +130,26 @@ export default function DashboardLayout({
     setShowUserMenu(false)
   }
 
+  // Adicionar listener para cliques fora dos dropdowns
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as Element;
+      
+      // Verificar se o clique foi em um dropdown ou seus elementos
+      const isDropdownClick = target.closest('[data-dropdown]') || 
+                             target.closest('[data-dropdown-trigger]');
+      
+      if (!isDropdownClick) {
+        handleClickOutside();
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, [])
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden" onClick={handleClickOutside} style={{ backgroundColor: theme.colors.background.secondary }}>
+    <div className="flex h-screen w-screen overflow-hidden" style={{ backgroundColor: theme.colors.background.secondary }}>
       {/* Left Sidebar - Ajustado para ser responsivo */}
       <div className="hidden md:block">
         <DashboardSidebar />
@@ -176,6 +194,7 @@ export default function DashboardLayout({
                 {/* Notificações */}
                 <div className="relative">
                   <button
+                    data-dropdown-trigger
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowNotifications(!showNotifications)
@@ -214,6 +233,7 @@ export default function DashboardLayout({
                   {/* Dropdown de Notificações */}
                   {showNotifications && (
                     <motion.div
+                      data-dropdown
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -292,6 +312,7 @@ export default function DashboardLayout({
                 {/* Atividades */}
                 <div className="relative">
                   <button
+                    data-dropdown-trigger
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowActivities(!showActivities)
@@ -324,6 +345,7 @@ export default function DashboardLayout({
                   {/* Dropdown de Atividades */}
                   {showActivities && (
                     <motion.div
+                      data-dropdown
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -416,6 +438,7 @@ export default function DashboardLayout({
                 {/* Calendário */}
                 <div className="relative">
                   <button
+                    data-dropdown-trigger
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowCalendar(!showCalendar)
@@ -448,6 +471,7 @@ export default function DashboardLayout({
                   {/* Dropdown do Calendário */}
                   {showCalendar && (
                     <motion.div
+                      data-dropdown
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -535,6 +559,7 @@ export default function DashboardLayout({
                 {/* Avatar e Menu do Usuário - Ajustado para mobile */}
                 <div className="relative">
                   <button
+                    data-dropdown-trigger
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowUserMenu(!showUserMenu)
@@ -573,6 +598,7 @@ export default function DashboardLayout({
                   {/* Dropdown do Usuário */}
                   {showUserMenu && (
                     <div 
+                      data-dropdown
                       className="absolute right-0 mt-2 w-48 rounded-lg shadow-xl z-50"
                       style={{
                         backgroundColor: theme.colors.background.primary,

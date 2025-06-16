@@ -124,21 +124,6 @@ class RequestLoopDetector {
       };
     }
 
-    // 4. Verificar padrão específico de login
-    if (url.includes('/api/auth/login')) {
-      const loginRequests = this.requests.filter(
-        req => req.url.includes('/api/auth/login') && 
-               now - req.timestamp < 60000 // Último minuto
-      );
-
-      if (loginRequests.length >= 8) {
-        return {
-          isLoop: true,
-          reason: `Muitas tentativas de login (${loginRequests.length}) no último minuto`
-        };
-      }
-    }
-
     return { isLoop: false };
   }
 
