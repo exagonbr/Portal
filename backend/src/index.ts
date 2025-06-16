@@ -198,7 +198,7 @@ async function startServer() {
     }
     
     // Inicia o servidor
-    app.listen(PORT, () => {
+    app.listen(3001, '127.0.0.1', () => {
       logger.info(`✅ Servidor rodando na porta ${PORT}`);
       logger.info(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`📋 Health check: http://localhost:${PORT}/health`);

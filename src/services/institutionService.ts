@@ -1,436 +1,360 @@
 import { API_BASE_URL } from '../config/constants';
+import { 
+  Institution, 
+  InstitutionDto,
+  CreateInstitutionDto, 
+  UpdateInstitutionDto,
+  InstitutionFilter,
+  InstitutionType,
+  INSTITUTION_TYPE_LABELS
+} from '../types/institution';
+import { 
+  ApiResponse, 
+  PaginatedResponse,
+  formatPhone,
+  isValidEmail,
+  isValidPhone
+} from '../types/common';
+import { 
+  validateInstitutionData,
+  validateApiResponse,
+  migrateContactFields,
+  ensureLegacyCompatibility
+} from '../utils/validation';
 
-export interface Institution {
-  id: string;
-  name: string;
-  code: string;
-  type: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  country?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo_url?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-export interface InstitutionFilters {
-  type?: string;
-  is_active?: boolean;
-  search?: string;
-}
-
-export interface InstitutionListOptions {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  filters?: InstitutionFilters;
-}
-
-export type InstitutionQueryParams = {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  search?: string;
-  type?: string;
-  is_active?: boolean;
+// Re-exportar tipos para compatibilidade
+export { 
+  Institution, 
+  InstitutionType, 
+  INSTITUTION_TYPE_LABELS,
+  type InstitutionFilter as InstitutionFilters,
+  type InstitutionFilter as InstitutionListOptions,
+  type InstitutionFilter as InstitutionQueryParams
 };
 
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  
-  // Try to get token from localStorage (matches auth service)
-  return localStorage.getItem('auth_token');
-};
+const API_BASE = `${API_BASE_URL}/institutions`;
 
-// Helper function to get auth headers
-const getAuthHeaders = (): HeadersInit => {
-  const token = getAuthToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  return headers;
-};
-
-export const institutionService = {
-  async getAll(): Promise<{ data: Institution[] }> {
+export class InstitutionService {
+  // Listar instituições com filtros e paginação
+  static async getInstitutions(options: InstitutionFilter = {}): Promise<PaginatedResponse<InstitutionDto>> {
     try {
-      console.log('🔍 Buscando todas as instituições...');
+      const params = new URLSearchParams();
       
-      const queryParams = new URLSearchParams({
-        limit: '100' // Set a high limit to get all institutions
-      });
-      
-      const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
-        headers: getAuthHeaders(),
-      });
+      if (options.search) params.append('search', options.search);
+      if (options.type) params.append('type', options.type);
+      if (options.is_active !== undefined) params.append('is_active', options.is_active.toString());
+      if (options.city) params.append('city', options.city);
+      if (options.state) params.append('state', options.state);
+      if (options.page) params.append('page', options.page.toString());
+      if (options.limit) params.append('limit', options.limit.toString());
+      if (options.sortBy) params.append('sortBy', options.sortBy);
+      if (options.sortOrder) params.append('sortOrder', options.sortOrder);
 
+      const response = await fetch(`${API_BASE}?${params.toString()}`);
+      
       if (!response.ok) {
-        console.error(`❌ Erro HTTP ${response.status} ao buscar instituições`);
-        if (response.status === 401) {
-          throw new Error('Não autorizado. Faça login novamente.');
-        }
-        throw new Error(`Falha ao buscar instituições (HTTP ${response.status})`);
+        throw new Error('Falha ao buscar instituições');
       }
 
       const result = await response.json();
-      console.log('📥 Resposta da API de instituições:', result);
       
-      // O backend retorna { success: true, data: [...] }
-      if (result.success && result.data) {
-        const institutions = Array.isArray(result.data) ? result.data : [];
-        console.log(`✅ ${institutions.length} instituições encontradas`);
-        return { data: institutions };
+      // Validar estrutura da resposta
+      const validatedResponse = validateApiResponse<PaginatedResponse<InstitutionDto>>(result);
+      if (!validatedResponse || !validatedResponse.data) {
+        throw new Error('Estrutura de resposta inválida da API');
       }
-      
-      console.warn('⚠️ Estrutura de resposta não reconhecida:', result);
-      return { data: [] };
-      
-    } catch (error) {
-      console.error('❌ Erro ao buscar instituições:', error);
-      throw error;
-    }
-  },
 
-  async getInstitutions(params: InstitutionListOptions = {}): Promise<PaginatedResponse<Institution>> {
-    const queryParams = new URLSearchParams();
-    
-    // Add pagination parameters if they exist
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-    
-    // Add sorting parameters if they exist
-    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-    
-    // Add filter parameters if they exist
-    if (params.filters) {
-      if (params.filters.search) queryParams.append('search', params.filters.search);
-      if (params.filters.type) queryParams.append('type', params.filters.type);
-      if (params.filters.is_active !== undefined) queryParams.append('is_active', params.filters.is_active.toString());
-    }
-
-    const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      throw new Error('Falha ao buscar instituições');
-    }
-
-    const result = await response.json();
-    
-    // O backend retorna { success: true, data: [...], pagination: {...} }
-    // Precisamos adaptar para a interface PaginatedResponse
-    if (result.success && result.data && result.pagination) {
-      return {
-        data: result.data,
-        pagination: {
-          total: result.pagination.total,
-          page: result.pagination.page,
-          limit: result.pagination.limit,
-          totalPages: result.pagination.totalPages
-        }
+      // Migrar campos legados se necessário
+      const migratedData = {
+        ...validatedResponse.data,
+        items: validatedResponse.data.items.map(institution => 
+          migrateContactFields(institution)
+        )
       };
+
+      return migratedData;
+    } catch (error) {
+      console.error('Erro ao buscar instituições:', error);
+      throw error;
     }
-    
-    // Fallback para estrutura antiga ou inesperada
-    throw new Error('Estrutura de resposta inválida da API');
-  },
+  }
 
-  async getInstitutionById(id: string): Promise<Institution> {
-    const response = await fetch(`${API_BASE_URL}/institutions/${id}`, {
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      if (response.status === 404) {
-        throw new Error('Instituição não encontrada');
-      }
-      throw new Error('Falha ao buscar instituição');
-    }
-
-    const result = await response.json();
-    
-    // O backend retorna { success: true, data: {...} }
-    if (result.success && result.data) {
-      return result.data;
-    }
-    
-    throw new Error('Estrutura de resposta inválida da API');
-  },
-
-  async createInstitution(data: Partial<Institution>): Promise<Institution> {
-    const response = await fetch(`${API_BASE_URL}/institutions`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      throw new Error('Falha ao criar instituição');
-    }
-
-    const result = await response.json();
-    
-    // O backend retorna { success: true, data: {...} }
-    if (result.success && result.data) {
-      return result.data;
-    }
-    
-    throw new Error('Estrutura de resposta inválida da API');
-  },
-
-  async updateInstitution(id: string, data: Partial<Institution>): Promise<Institution> {
-    const response = await fetch(`${API_BASE_URL}/institutions/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      if (response.status === 404) {
-        throw new Error('Instituição não encontrada');
-      }
-      throw new Error('Falha ao atualizar instituição');
-    }
-
-    const result = await response.json();
-    
-    // O backend retorna { success: true, data: {...} }
-    if (result.success && result.data) {
-      return result.data;
-    }
-    
-    throw new Error('Estrutura de resposta inválida da API');
-  },
-
-  async deleteInstitution(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/institutions/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      if (response.status === 404) {
-        throw new Error('Instituição não encontrada');
-      }
-      throw new Error('Falha ao deletar instituição');
-    }
-  },
-
-  async getActiveInstitutions(): Promise<Institution[]> {
+  // Obter instituição por ID
+  static async getInstitutionById(id: string): Promise<InstitutionDto> {
     try {
-      console.log('🔍 Buscando instituições ativas...');
+      const response = await fetch(`${API_BASE}/${id}`);
       
-      // Use the main institutions endpoint with a filter for active institutions
-      const queryParams = new URLSearchParams({
-        is_active: 'true',
-        limit: '100' // Set a high limit to get all active institutions
-      });
-      
-      const response = await fetch(`${API_BASE_URL}/institutions?${queryParams.toString()}`, {
-        headers: getAuthHeaders(),
-      });
-
       if (!response.ok) {
-        console.error(`❌ Erro HTTP ${response.status} ao buscar instituições ativas`);
-        if (response.status === 401) {
-          throw new Error('Não autorizado. Faça login novamente.');
+        if (response.status === 404) {
+          throw new Error('Instituição não encontrada');
         }
-        throw new Error(`Falha ao buscar instituições ativas (HTTP ${response.status})`);
+        throw new Error('Falha ao buscar instituição');
       }
 
       const result = await response.json();
-      console.log('📥 Resposta da API de instituições:', result);
       
-      // O backend retorna { success: true, data: [...] }
-      if (result.success && result.data) {
-        const institutions = Array.isArray(result.data) ? result.data : [];
-        console.log(`✅ ${institutions.length} instituições ativas encontradas`);
-        return institutions.filter(inst => inst.is_active !== false);
+      // Validar estrutura da resposta
+      const validatedResponse = validateApiResponse<InstitutionDto>(result);
+      if (!validatedResponse || !validatedResponse.data) {
+        throw new Error('Estrutura de resposta inválida da API');
       }
-      
-      console.warn('⚠️ Estrutura de resposta não reconhecida:', result);
-      return [];
-      
+
+      // Migrar campos legados se necessário
+      return migrateContactFields(validatedResponse.data);
     } catch (error) {
-      console.error('❌ Erro ao buscar instituições ativas:', error);
+      console.error('Erro ao buscar instituição:', error);
       throw error;
     }
-  },
-
-  async searchInstitutionsByName(name: string): Promise<Institution[]> {
-    const queryParams = new URLSearchParams({
-      search: name,
-      is_active: 'true'
-    });
-
-    const response = await fetch(`${API_BASE_URL}/institutions/search?${queryParams.toString()}`, {
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      throw new Error('Falha ao buscar instituições por nome');
-    }
-
-    const result = await response.json();
-    
-    // O backend retorna { success: true, data: [...] }
-    if (result.success && result.data) {
-      return Array.isArray(result.data) ? result.data : [];
-    }
-    
-    throw new Error('Estrutura de resposta inválida da API');
-  },
-
-  async canDeleteInstitution(id: string): Promise<{ canDelete: boolean; reason?: string }> {
-    const response = await fetch(`${API_BASE_URL}/institutions/${id}/can-delete`, {
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      if (response.status === 404) {
-        throw new Error('Instituição não encontrada');
-      }
-      throw new Error('Falha ao verificar se a instituição pode ser excluída');
-    }
-
-    const result = await response.json();
-    
-    // O backend retorna { success: true, data: {...} }
-    if (result.success && result.data) {
-      return result.data;
-    }
-    
-    throw new Error('Estrutura de resposta inválida da API');
-  },
-
-  async toggleInstitutionStatus(id: string, isActive: boolean): Promise<Institution> {
-    const response = await fetch(`${API_BASE_URL}/institutions/${id}/status`, {
-      method: 'PATCH',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ is_active: isActive }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      if (response.status === 404) {
-        throw new Error('Instituição não encontrada');
-      }
-      throw new Error('Falha ao alterar o status da instituição');
-    }
-
-    const result = await response.json();
-    
-    // O backend retorna { success: true, data: {...} }
-    if (result.success && result.data) {
-      return result.data;
-    }
-    
-    throw new Error('Estrutura de resposta inválida da API');
-  },
-
-  async exportInstitutions(filters?: InstitutionFilters): Promise<Blob> {
-    const queryParams = new URLSearchParams();
-    
-    if (filters) {
-      if (filters.search) queryParams.append('search', filters.search);
-      if (filters.type) queryParams.append('type', filters.type);
-      if (filters.is_active !== undefined) queryParams.append('is_active', filters.is_active.toString());
-    }
-
-    const response = await fetch(`${API_BASE_URL}/institutions/export?${queryParams.toString()}`, {
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      throw new Error('Falha ao exportar instituições');
-    }
-
-    return response.blob();
-  },
-
-  async importInstitutions(file: File): Promise<{ success: number; errors: string[] }> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const headers: HeadersInit = {};
-    const token = getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/institutions/import`, {
-      method: 'POST',
-      headers,
-      body: formData,
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Não autorizado. Faça login novamente.');
-      }
-      throw new Error('Falha ao importar instituições');
-    }
-
-    const result = await response.json();
-    
-    // O backend retorna { success: true, data: {...} }
-    if (result.success && result.data) {
-      return result.data;
-    }
-    
-    // Fallback para estrutura antiga
-    return result;
   }
-};
+
+  // Criar nova instituição
+  static async createInstitution(institutionData: CreateInstitutionDto): Promise<InstitutionDto> {
+    try {
+      // Validar dados antes de enviar
+      const validation = validateInstitutionData(institutionData);
+      if (!validation.isValid) {
+        throw new Error(`Dados inválidos: ${validation.errors.join(', ')}`);
+      }
+
+      // Migrar campos legados e formatar dados
+      const processedData = migrateContactFields(institutionData);
+      
+      // Formatar telefone se fornecido
+      if (processedData.phone) {
+        processedData.phone = formatPhone(processedData.phone);
+      }
+
+      // Garantir compatibilidade com backend que ainda espera campos legados
+      const compatibleData = ensureLegacyCompatibility(processedData);
+
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(compatibleData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Falha ao criar instituição');
+      }
+
+      const result = await response.json();
+      
+      // Validar estrutura da resposta
+      const validatedResponse = validateApiResponse<InstitutionDto>(result);
+      if (!validatedResponse || !validatedResponse.data) {
+        throw new Error('Estrutura de resposta inválida da API');
+      }
+
+      return migrateContactFields(validatedResponse.data);
+    } catch (error) {
+      console.error('Erro ao criar instituição:', error);
+      throw error;
+    }
+  }
+
+  // Atualizar instituição
+  static async updateInstitution(id: string, updateData: UpdateInstitutionDto): Promise<InstitutionDto> {
+    try {
+      // Validar dados antes de enviar (apenas campos fornecidos)
+      if (Object.keys(updateData).length > 0) {
+        const validation = validateInstitutionData(updateData);
+        if (!validation.isValid) {
+          throw new Error(`Dados inválidos: ${validation.errors.join(', ')}`);
+        }
+      }
+
+      // Migrar campos legados e formatar dados
+      const processedData = migrateContactFields(updateData);
+      
+      // Formatar telefone se fornecido
+      if (processedData.phone) {
+        processedData.phone = formatPhone(processedData.phone);
+      }
+
+      // Garantir compatibilidade com backend
+      const compatibleData = ensureLegacyCompatibility(processedData);
+
+      const response = await fetch(`${API_BASE}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(compatibleData),
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Instituição não encontrada');
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Falha ao atualizar instituição');
+      }
+
+      const result = await response.json();
+      
+      // Validar estrutura da resposta
+      const validatedResponse = validateApiResponse<InstitutionDto>(result);
+      if (!validatedResponse || !validatedResponse.data) {
+        throw new Error('Estrutura de resposta inválida da API');
+      }
+
+      return migrateContactFields(validatedResponse.data);
+    } catch (error) {
+      console.error('Erro ao atualizar instituição:', error);
+      throw error;
+    }
+  }
+
+  // Buscar instituições por nome
+  static async searchInstitutionsByName(name: string): Promise<InstitutionDto[]> {
+    try {
+      const options: InstitutionFilter = {
+        search: name,
+        limit: 50 // Limite maior para busca
+      };
+      
+      const result = await this.getInstitutions(options);
+      return result.items;
+    } catch (error) {
+      console.error('Erro ao buscar instituições por nome:', error);
+      throw error;
+    }
+  }
+
+  // Verificar se instituição pode ser deletada
+  static async canDeleteInstitution(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE}/${id}/can-delete`);
+      
+      if (!response.ok) {
+        return false;
+      }
+
+      const result = await response.json();
+      
+      // Validar estrutura da resposta
+      const validatedResponse = validateApiResponse<{ canDelete: boolean }>(result);
+      if (!validatedResponse || !validatedResponse.data) {
+        return false;
+      }
+
+      return validatedResponse.data.canDelete;
+    } catch (error) {
+      console.error('Erro ao verificar se instituição pode ser deletada:', error);
+      return false;
+    }
+  }
+
+  // Alternar status ativo/inativo
+  static async toggleInstitutionStatus(id: string): Promise<InstitutionDto> {
+    try {
+      const response = await fetch(`${API_BASE}/${id}/toggle-status`, {
+        method: 'PATCH',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Instituição não encontrada');
+        }
+        throw new Error('Falha ao alterar status da instituição');
+      }
+
+      const result = await response.json();
+      
+      // Validar estrutura da resposta
+      const validatedResponse = validateApiResponse<InstitutionDto>(result);
+      if (!validatedResponse || !validatedResponse.data) {
+        throw new Error('Estrutura de resposta inválida da API');
+      }
+
+      return migrateContactFields(validatedResponse.data);
+    } catch (error) {
+      console.error('Erro ao alterar status da instituição:', error);
+      throw error;
+    }
+  }
+
+  // Obter todas as instituições (sem paginação)
+  static async getAll(): Promise<InstitutionDto[]> {
+    try {
+      const options: InstitutionFilter = {
+        limit: 1000, // Limite alto para obter todas
+        is_active: true
+      };
+      
+      const result = await this.getInstitutions(options);
+      return result.items;
+    } catch (error) {
+      console.error('Erro ao buscar todas as instituições:', error);
+      throw error;
+    }
+  }
+
+  // Obter apenas instituições ativas
+  static async getActiveInstitutions(): Promise<InstitutionDto[]> {
+    try {
+      const options: InstitutionFilter = {
+        is_active: true,
+        limit: 1000
+      };
+      
+      const result = await this.getInstitutions(options);
+      return result.items;
+    } catch (error) {
+      console.error('Erro ao buscar instituições ativas:', error);
+      throw error;
+    }
+  }
+
+  // Exportar instituições
+  static async exportInstitutions(format: 'csv' | 'xlsx' = 'csv'): Promise<Blob> {
+    try {
+      const response = await fetch(`${API_BASE}/export?format=${format}`);
+      
+      if (!response.ok) {
+        throw new Error('Falha ao exportar instituições');
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error('Erro ao exportar instituições:', error);
+      throw error;
+    }
+  }
+
+  // Importar instituições
+  static async importInstitutions(file: File): Promise<{ success: number; errors: string[] }> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${API_BASE}/import`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao importar instituições');
+      }
+
+      const result = await response.json();
+      
+      // Validar estrutura da resposta
+      const validatedResponse = validateApiResponse<{ success: number; errors: string[] }>(result);
+      if (!validatedResponse || !validatedResponse.data) {
+        throw new Error('Estrutura de resposta inválida da API');
+      }
+
+      return validatedResponse.data;
+    } catch (error) {
+      console.error('Erro ao importar instituições:', error);
+      throw error;
+    }
+  }
+}
+
+// Instância singleton para compatibilidade
+export const institutionService = InstitutionService;

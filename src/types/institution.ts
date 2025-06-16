@@ -1,13 +1,25 @@
-export type InstitutionType = 'PUBLIC' | 'PRIVATE' | 'MIXED';
+import { 
+  BaseEntity, 
+  BaseEntityDto, 
+  InstitutionType, 
+  ContactInfo, 
+  BaseFilter,
+  UUID,
+  DateString,
+  Phone,
+  Email,
+  INSTITUTION_TYPE_LABELS
+} from './common';
 
-export interface Institution {
-  id: string;
+export { InstitutionType, INSTITUTION_TYPE_LABELS };
+
+export interface Institution extends BaseEntity {
   name: string;
   code: string;
   type: InstitutionType;
   description?: string;
-  email?: string;
-  phone?: string;
+  email?: Email;
+  phone?: Phone;
   website?: string;
   address?: string;
   city?: string;
@@ -15,8 +27,25 @@ export interface Institution {
   zip_code?: string;
   logo_url?: string;
   is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
+}
+
+export interface InstitutionDto extends BaseEntityDto {
+  name: string;
+  code: string;
+  type: InstitutionType;
+  description?: string;
+  email?: Email;
+  phone?: Phone;
+  website?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  logo_url?: string;
+  is_active: boolean;
+  schools_count?: number;
+  users_count?: number;
+  active_courses?: number;
 }
 
 export interface CreateInstitutionDto {
@@ -24,8 +53,8 @@ export interface CreateInstitutionDto {
   code: string;
   type: InstitutionType;
   description?: string;
-  email?: string;
-  phone?: string;
+  email?: Email;
+  phone?: Phone;
   website?: string;
   address?: string;
   city?: string;
@@ -40,8 +69,8 @@ export interface UpdateInstitutionDto {
   code?: string;
   type?: InstitutionType;
   description?: string;
-  email?: string;
-  phone?: string;
+  email?: Email;
+  phone?: Phone;
   website?: string;
   address?: string;
   city?: string;
@@ -51,22 +80,11 @@ export interface UpdateInstitutionDto {
   is_active?: boolean;
 }
 
-export interface InstitutionDto extends Institution {
-  schools_count?: number;
-  users_count?: number;
-  active_courses?: number;
-}
-
-export interface InstitutionFilter {
-  search?: string;
+export interface InstitutionFilter extends BaseFilter {
   type?: InstitutionType;
-  is_active?: boolean;
   city?: string;
   state?: string;
-  page?: number;
-  limit?: number;
   sortBy?: keyof Institution;
-  sortOrder?: 'asc' | 'desc';
 }
 
 export interface InstitutionStats {
@@ -78,12 +96,6 @@ export interface InstitutionStats {
   institutions_by_type: Record<InstitutionType, number>;
   institutions_by_state: Record<string, number>;
 }
-
-export const INSTITUTION_TYPE_LABELS: Record<InstitutionType, string> = {
-  PUBLIC: 'Pública',
-  PRIVATE: 'Privada',
-  MIXED: 'Mista'
-};
 
 export const INSTITUTION_TYPE_COLORS: Record<InstitutionType, string> = {
   PUBLIC: '#4CAF50',
