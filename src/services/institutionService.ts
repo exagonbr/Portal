@@ -227,6 +227,25 @@ export class InstitutionService {
     }
   }
 
+  // Deletar instituição
+  static async deleteInstitution(id: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Instituição não encontrada');
+        }
+        throw new Error('Falha ao deletar instituição');
+      }
+    } catch (error) {
+      console.error('Erro ao deletar instituição:', error);
+      throw error;
+    }
+  }
+
   // Verificar se instituição pode ser deletada
   static async canDeleteInstitution(id: string): Promise<boolean> {
     try {

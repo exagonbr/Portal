@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 import { z } from 'zod'
 
 // Schema de validação para criação de escola
@@ -35,16 +34,125 @@ const createSchoolSchema = z.object({
 })
 
 // Mock database - substituir por Prisma/banco real
-const mockSchools = new Map()
+const mockSchools = new Map([
+  ['school_1', {
+    id: 'school_1',
+    name: 'Escola Estadual Dom Pedro II',
+    code: 'EEDP2',
+    institution_id: 'inst_sabercon',
+    type: 'PUBLIC',
+    description: 'Escola pública de ensino fundamental e médio',
+    address: {
+      street: 'Rua das Flores',
+      number: '123',
+      complement: '',
+      neighborhood: 'Centro',
+      city: 'São Paulo',
+      state: 'SP',
+      zipCode: '01234567'
+    },
+    phone: '(11) 3456-7890',
+    email: 'contato@eedp2.edu.br',
+    principal_name: 'Maria Silva',
+    principal_email: 'diretora@eedp2.edu.br',
+    education_levels: ['FUNDAMENTAL_I', 'FUNDAMENTAL_II', 'MEDIO'],
+    shifts: ['MORNING', 'AFTERNOON'],
+    is_active: true,
+    students_count: 450,
+    teachers_count: 32,
+    classes_count: 18,
+    settings: {
+      maxStudentsPerClass: 30,
+      allowOnlineClasses: true,
+      hasLibrary: true,
+      hasLab: true,
+      hasSportsArea: true
+    },
+    created_at: '2024-01-15T10:00:00Z',
+    updated_at: '2025-06-16T21:00:00Z'
+  }],
+  ['school_2', {
+    id: 'school_2',
+    name: 'Colégio Particular Santa Clara',
+    code: 'CPSC',
+    institution_id: 'inst_sabercon',
+    type: 'PRIVATE',
+    description: 'Colégio particular de ensino integral',
+    address: {
+      street: 'Av. Paulista',
+      number: '1000',
+      complement: 'Torre A',
+      neighborhood: 'Bela Vista',
+      city: 'São Paulo',
+      state: 'SP',
+      zipCode: '01310100'
+    },
+    phone: '(11) 9876-5432',
+    email: 'secretaria@santaclara.edu.br',
+    principal_name: 'João Santos',
+    principal_email: 'diretor@santaclara.edu.br',
+    education_levels: ['INFANTIL', 'FUNDAMENTAL_I', 'FUNDAMENTAL_II', 'MEDIO'],
+    shifts: ['FULL_TIME'],
+    is_active: true,
+    students_count: 280,
+    teachers_count: 25,
+    classes_count: 12,
+    settings: {
+      maxStudentsPerClass: 25,
+      allowOnlineClasses: true,
+      hasLibrary: true,
+      hasLab: true,
+      hasSportsArea: true
+    },
+    created_at: '2024-02-01T10:00:00Z',
+    updated_at: '2025-06-16T21:00:00Z'
+  }],
+  ['school_3', {
+    id: 'school_3',
+    name: 'Centro de Educação Técnica',
+    code: 'CET',
+    institution_id: 'inst_ifsp',
+    type: 'PUBLIC',
+    description: 'Centro de educação técnica e profissionalizante',
+    address: {
+      street: 'Rua Tecnológica',
+      number: '500',
+      complement: '',
+      neighborhood: 'Vila Industrial',
+      city: 'Campinas',
+      state: 'SP',
+      zipCode: '13040123'
+    },
+    phone: '(19) 3234-5678',
+    email: 'contato@cet.edu.br',
+    principal_name: 'Ana Costa',
+    principal_email: 'diretora@cet.edu.br',
+    education_levels: ['MEDIO', 'TECNICO'],
+    shifts: ['MORNING', 'AFTERNOON', 'EVENING'],
+    is_active: true,
+    students_count: 600,
+    teachers_count: 45,
+    classes_count: 24,
+    settings: {
+      maxStudentsPerClass: 35,
+      allowOnlineClasses: false,
+      hasLibrary: true,
+      hasLab: true,
+      hasSportsArea: false
+    },
+    created_at: '2024-03-01T10:00:00Z',
+    updated_at: '2025-06-16T21:00:00Z'
+  }]
+])
 
 // GET - Listar escolas
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
-        { error: 'Não autorizado' },
+        { success: false, message: 'Authorization required' },
         { status: 401 }
       )
     }
@@ -143,7 +251,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao listar escolas:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
@@ -152,20 +260,20 @@ export async function GET(request: NextRequest) {
 // POST - Criar escola
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getAuthentication(request)
     
     if (!session) {
       return NextResponse.json(
-        { error: 'Não autorizado' },
+        { success: false, message: 'Authorization required' },
         { status: 401 }
       )
     }
 
     // Verificar permissões
     const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
       return NextResponse.json(
-        { error: 'Sem permissão para criar escolas' },
+        { success: false, message: 'Insufficient permissions' },
         { status: 403 }
       )
     }
@@ -177,7 +285,8 @@ export async function POST(request: NextRequest) {
     if (!validationResult.success) {
       return NextResponse.json(
         { 
-          error: 'Dados inválidos',
+          success: false,
+          message: 'Dados inválidos',
           errors: validationResult.error.flatten().fieldErrors
         },
         { status: 400 }
@@ -199,7 +308,7 @@ export async function POST(request: NextRequest) {
 
     if (existingCode) {
       return NextResponse.json(
-        { error: 'Já existe uma escola com este código nesta instituição' },
+        { success: false, message: 'Já existe uma escola com este código nesta instituição' },
         { status: 409 }
       )
     }
@@ -211,7 +320,7 @@ export async function POST(request: NextRequest) {
 
     if (existingEmail) {
       return NextResponse.json(
-        { error: 'Email já cadastrado para outra escola' },
+        { success: false, message: 'Email já cadastrado para outra escola' },
         { status: 409 }
       )
     }
@@ -236,7 +345,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao criar escola:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
     )
   }

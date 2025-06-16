@@ -92,11 +92,13 @@ export default function ManageInstitutions() {
       const response = await institutionService.getInstitutions({
         page,
         limit: itemsPerPage,
-        filters: { search }
+        search
       })
       
+      console.log('Response from API:', response)
+      
       // Mapear Institution para InstitutionResponseDto
-      const mappedInstitutions: InstitutionResponseDto[] = (response.data || []).map(institution => {
+      const mappedInstitutions: InstitutionResponseDto[] = (response.items || []).map(institution => {
         // Função auxiliar para formatar endereço
         const formatAddress = (address: any) => {
           if (typeof address === 'string') {
