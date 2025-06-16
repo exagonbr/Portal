@@ -2,8 +2,6 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { AuthService } from '../services/auth';
 import { validateJWT } from '../middleware/auth';
-import { SessionService } from '../services/SessionService';
-import { extractClientInfo, AuthenticatedRequest } from '../middleware/sessionMiddleware';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
@@ -106,8 +104,8 @@ router.post(
  *   post:
  *     tags:
  *       - Authentication
- *     summary: Login user
- *     description: Authenticates a user and returns a token
+ *     summary: Login user - Simplified
+ *     description: Authenticates a user and returns a token (no rate limiting)
  *     requestBody:
  *       required: true
  *       content:
@@ -140,87 +138,101 @@ router.post(
  *       401:
  *         description: Invalid credentials
  */
-router.post(
-  '/login',
-  extractClientInfo,
-  [
-    body('email').isEmail().normalizeEmail(),
-    body('password').notEmpty(),
-  ],
-  async (req: AuthenticatedRequest, res: express.Response) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          errors: errors.array(),
-        });
-      }
-
-      const { email, password, remember = false } = req.body;
-      
-      // Use the basic AuthService for user validation
-      const result = await AuthService.login(email, password);
-      
-      // Create Redis session for compatibility with session middleware
-      try {
-        const { sessionId, refreshToken } = await SessionService.createSession(
-          result.user,
-          req.clientInfo!,
-          remember
-        );
-
-        // Generate new JWT with sessionId included
-        const tokenWithSession = jwt.sign(
-          {
-            userId: result.user.id,
-            email: result.user.email,
-            name: result.user.name,
-            role: (result.user as any).role,
-            institutionId: result.user.institution_id,
-            permissions: (result.user as any).permissions || [],
-            sessionId
-          },
-          process.env.JWT_SECRET || 'ExagonTech',
-          { expiresIn: remember ? '7d' : '24h' }
-        );
-
-        return res.json({
-          success: true,
-          token: tokenWithSession,
-          refreshToken,
-          sessionId,
-          user: result.user,
-          expiresAt: new Date(Date.now() + (remember ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()
-        });
-      } catch (sessionError) {
-        // If Redis session creation fails, fall back to basic JWT
-        console.warn('Failed to create Redis session, falling back to basic JWT:', sessionError);
-        return res.json(result);
-      }
-    } catch (error: any) {
-      if (error.message === 'Credenciais inválidas' || error.message === 'Invalid credentials') {
-        return res.status(401).json({
-          success: false,
-          message: 'Credenciais inválidas',
-        });
-      }
-
-      if (error.message === 'Usuário inativo') {
-        return res.status(401).json({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      console.error('Erro no login:', error);
-      return res.status(500).json({
+router.post('/login', async (req: express.Request, res: express.Response) => {
+  try {
+    console.log('🔐 Nova requisição de login recebida');
+    
+    // Validação básica sem middleware complexo
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
         success: false,
-        message: 'Erro ao fazer login',
+        message: 'Email e senha são obrigatórios'
       });
     }
+
+    // Validação simples de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email inválido'
+      });
+    }
+
+    console.log(`🔐 Tentativa de login para: ${email}`);
+    
+    // Chamar AuthService diretamente
+    const result = await AuthService.login(email, password);
+    
+    if (!result.success) {
+      return res.status(401).json({
+        success: false,
+        message: result.message || 'Credenciais inválidas'
+      });
+    }
+
+    console.log(`✅ Login bem-sucedido para: ${email}`);
+
+    // Gerar JWT simples
+    const token = jwt.sign(
+      {
+        userId: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role,
+        institutionId: result.user.institution_id,
+        permissions: result.user.permissions || []
+      },
+      process.env.JWT_SECRET || 'ExagonTech',
+      { expiresIn: '24h' }
+    );
+
+    // Resposta simplificada
+    return res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role,
+        institution_id: result.user.institution_id,
+        permissions: result.user.permissions || []
+      },
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    });
+
+  } catch (error: any) {
+    console.error('❌ Erro no login:', error);
+    
+    // Tratamento de erros específicos
+    if (error.message?.includes('Credenciais inválidas') || 
+        error.message?.includes('Invalid credentials') ||
+        error.message?.includes('User not found') ||
+        error.message?.includes('Usuário não encontrado')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email ou senha incorretos'
+      });
+    }
+
+    if (error.message?.includes('Usuário inativo') || 
+        error.message?.includes('User inactive')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Conta desativada. Entre em contato com o administrador.'
+      });
+    }
+
+    // Erro genérico
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor. Tente novamente.'
+    });
   }
-);
+});
 
 /**
  * @swagger
@@ -578,6 +590,69 @@ router.post('/refresh-token', async (req: express.Request, res: express.Response
       message: 'Erro interno do servidor'
     });
   }
+});
+
+/**
+ * @swagger
+ * /api/auth/test:
+ *   get:
+ *     tags:
+ *       - Authentication
+ *     summary: Test endpoint
+ *     description: Simple test endpoint to verify server is working
+ *     responses:
+ *       200:
+ *         description: Server is working
+ */
+router.get('/test', (req: express.Request, res: express.Response) => {
+  console.log('🧪 Rota de teste acessada');
+  return res.status(200).json({
+    success: true,
+    message: 'Servidor funcionando corretamente',
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.originalUrl
+  });
+});
+
+/**
+ * @swagger
+ * /api/auth/login-simple:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Ultra-simple login
+ *     description: Minimal login endpoint without any middleware
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ */
+router.post('/login-simple', (req: express.Request, res: express.Response) => {
+  console.log('🔐 Login simples acessado');
+  
+  const { email, password } = req.body;
+  
+  // Resposta de teste
+  return res.status(200).json({
+    success: true,
+    message: 'Endpoint de login funcionando',
+    received: { email: email ? 'presente' : 'ausente', password: password ? 'presente' : 'ausente' },
+    timestamp: new Date().toISOString()
+  });
 });
 
 export default router;

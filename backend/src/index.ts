@@ -9,14 +9,7 @@ import { swaggerSpec } from './config/swagger';
 // import testDatabaseConnection from "./config/database";
 import { testRedisConnection } from './config/redis';
 
-import { 
-  responseTimeMiddleware, 
-  slowRequestLogger, 
-  errorLogger, 
-  duplicateRequestLogger,
-  devLogFormat,
-  prodLogFormat 
-} from './middleware/logging';
+import { responseTimeMiddleware, errorLogger } from './middleware/logging';
 import apiRoutes from './routes';
 import { CacheWarmupService } from './services/CacheWarmupService';
 import { Logger } from './utils/Logger';
@@ -28,16 +21,22 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const logger = new Logger('ServerStartup');
 
-// Middlewares de segurança
+// Middlewares de segurança - Simplificado
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
+  contentSecurityPolicy: false, // Desabilitar CSP que pode causar problemas
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
+  originAgentCluster: false,
+  referrerPolicy: false,
+  strictTransportSecurity: false,
+  xContentTypeOptions: false,
+  xDnsPrefetchControl: false,
+  xDownloadOptions: false,
+  xFrameOptions: false,
+  xPermittedCrossDomainPolicies: false,
+  xPoweredBy: false,
+  xXssProtection: false
 }));
 
 // CORS
@@ -86,15 +85,8 @@ app.use(compression());
 // Response time tracking
 app.use(responseTimeMiddleware);
 
-// Logging
-const logFormat = process.env.NODE_ENV === 'production' ? prodLogFormat : devLogFormat;
-app.use(morgan(logFormat));
-
-// Slow request detection
-app.use(slowRequestLogger(2000)); // Log requests taking more than 2 seconds
-
-// Duplicate request detection
-app.use(duplicateRequestLogger());
+// Logging simplificado
+app.use(morgan('combined'));
 
 // Parsing
 app.use(express.json({ limit: '10mb' }));
