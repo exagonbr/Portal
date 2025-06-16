@@ -438,7 +438,31 @@ export const register = async (
         throw new Error(result.message || 'Erro ao registrar usuário');
       }
 
-      return result;
+      // O backend retorna { success: true, data: {...} }
+      let userData;
+      if (result.success && result.data) {
+        userData = result.data.user || result.data;
+      } else {
+        // Fallback para estrutura antiga
+        userData = result.user;
+      }
+
+      // Extrair apenas os campos essenciais do usuário
+      const userEssentials = userData ? extractUserEssentials(userData) : undefined;
+      
+      // Armazenar sessão usando cookies
+      if (userEssentials) {
+        SessionManager.setUserSession(userEssentials);
+        console.log('✅ Sessão do usuário criada após registro');
+      }
+
+      return {
+        success: true,
+        user: userEssentials,
+        token: result.data?.token || result.token,
+        expiresAt: result.data?.expiresAt || result.expiresAt,
+        message: result.message,
+      };
     } catch (fetchError) {
       clearTimeout(timeoutId);
       
@@ -454,32 +478,6 @@ export const register = async (
       
       throw fetchError;
     }
-
-    // O backend retorna { success: true, data: {...} }
-    let userData;
-    if (result.success && result.data) {
-      userData = result.data.user || result.data;
-    } else {
-      // Fallback para estrutura antiga
-      userData = result.user;
-    }
-
-    // Extrair apenas os campos essenciais do usuário
-    const userEssentials = userData ? extractUserEssentials(userData) : undefined;
-    
-    // Armazenar sessão usando cookies
-    if (userEssentials) {
-      SessionManager.setUserSession(userEssentials);
-      console.log('✅ Sessão do usuário criada após registro');
-    }
-
-    return {
-      success: true,
-      user: userEssentials,
-      token: result.data?.token || result.token,
-      expiresAt: result.data?.expiresAt || result.expiresAt,
-      message: result.message,
-    };
   } catch (error) {
     console.error('❌ Erro no registro:', error);
     throw error;

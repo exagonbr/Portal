@@ -28,14 +28,14 @@ setInterval(() => {
   const fiveMinutesAgo = now - (5 * 60 * 1000);
   
   // Limpar entradas antigas do loopDetectionCache
-  for (const [key, data] of loopDetectionCache.entries()) {
+  for (const [key, data] of Array.from(loopDetectionCache.entries())) {
     if (data.lastAttempt < fiveMinutesAgo) {
       loopDetectionCache.delete(key);
     }
   }
   
   // Limpar entradas antigas do requestCounts
-  for (const [key, data] of requestCounts.entries()) {
+  for (const [key, data] of Array.from(requestCounts.entries())) {
     if (data.lastReset < fiveMinutesAgo && (!data.blockedUntil || data.blockedUntil < now)) {
       requestCounts.delete(key);
     }
@@ -255,30 +255,6 @@ export async function POST(request: NextRequest) {
   const requestPattern = createRequestPattern(request);
   const rateLimit = checkRateLimit(rateLimitKey, requestPattern, request);
   
-  if (!rateLimit.allowed) {
-    console.log(`🚫 RATE LIMIT EXCEEDED for ${rateLimitKey}:`, rateLimit.reason);
-    
-    // Se foi detectado um loop, aplicar timeout menor
-    const retryAfter = rateLimit.reason?.includes('Loop') ? 10 : 60;
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: rateLimit.reason || 'Muitas tentativas de login. Aguarde antes de tentar novamente.',
-        retryAfter,
-        isLoop: rateLimit.reason?.includes('Loop') || false
-      },
-      { 
-        status: 429,
-        headers: {
-          'Retry-After': retryAfter.toString(),
-          'X-RateLimit-Remaining': '0',
-          'X-Loop-Detected': rateLimit.reason?.includes('Loop') ? 'true' : 'false'
-        }
-      }
-    );
-  }
-
   try {
     const body = await request.json();
     const { email, password } = body;
@@ -309,7 +285,10 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        // Configurações específicas para mobile
+        credentials: 'same-origin', // Mudança de 'include' para 'same-origin' para melhor compatibilidade mobile
         body: JSON.stringify({ email, password }),
         signal: AbortSignal.timeout(10000), // 10 segundos timeout
       });
