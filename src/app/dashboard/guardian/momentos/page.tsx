@@ -333,112 +333,117 @@ export default function MomentosPage() {
         title="📸 Momentos Especiais"
         subtitle="Acompanhe os momentos únicos dos seus filhos na escola"
       >
-        <div className="max-w-2xl mx-auto space-y-6">
-          {/* Header com navegação e filtros */}
-          <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-4 lg:p-6 shadow-sm">
-            <div className="flex flex-col space-y-4">
+        <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 space-y-4 sm:space-y-6">
+          {/* Header com navegação e filtros - Responsivo */}
+          <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm">
+            <div className="flex flex-col space-y-3 sm:space-y-4">
               {/* Navegação de volta */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Link 
                   href="/dashboard/guardian"
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-800 transition-colors"
                 >
-                  <ArrowLeft className="w-5 h-5" />
-                  <span className="text-sm font-medium">Voltar ao Dashboard</span>
+                  <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-xs sm:text-sm font-medium">Voltar ao Dashboard</span>
                 </Link>
               </div>
 
-              {/* Título e controles */}
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <Camera className="w-6 h-6 text-pink-600" />
-                  <h1 className="text-xl lg:text-2xl font-bold text-gray-800">Momentos Especiais</h1>
+              {/* Título e controles - Layout responsivo */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Camera className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600 flex-shrink-0" />
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 truncate">Momentos Especiais</h1>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-                  {/* Barra de pesquisa */}
-                  <div className="relative flex-1 lg:w-64">
+                {/* Controles - Stack vertical no mobile */}
+                <div className="flex flex-col gap-3">
+                  {/* Barra de pesquisa - Largura total no mobile */}
+                  <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
                       placeholder="Buscar momentos..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                     />
                   </div>
                   
-                  {/* Filtro */}
-                  <select 
-                    value={photoFilter} 
-                    onChange={(e) => setPhotoFilter(e.target.value as any)}
-                    className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-pink-500 w-full sm:w-auto"
-                  >
-                    <option value="all">Todas as fotos</option>
-                    <option value="my-children">Apenas meus filhos</option>
-                  </select>
-                  
-                  <button className="flex items-center justify-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors w-full sm:w-auto">
-                    <Filter className="w-4 h-4" />
-                    <span>Filtrar</span>
-                  </button>
+                  {/* Filtros - Layout responsivo */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <select 
+                      value={photoFilter} 
+                      onChange={(e) => setPhotoFilter(e.target.value as any)}
+                      className="bg-white border border-gray-300 rounded-lg px-3 py-2 sm:py-2.5 text-sm focus:ring-2 focus:ring-pink-500 flex-1 sm:flex-none sm:min-w-[160px]"
+                    >
+                      <option value="all">Todas as fotos</option>
+                      <option value="my-children">Apenas meus filhos</option>
+                    </select>
+                    
+                    <button className="flex items-center justify-center gap-2 bg-pink-600 text-white px-4 py-2 sm:py-2.5 rounded-lg hover:bg-pink-700 transition-colors text-sm font-medium">
+                      <Filter className="w-4 h-4" />
+                      <span>Filtrar</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Feed de Fotos estilo Instagram */}
-          <div className="space-y-6">
+          {/* Feed de Fotos estilo Instagram - Responsivo */}
+          <div className="space-y-4 sm:space-y-6">
             {filteredPosts.length === 0 ? (
-              <div className="text-center py-12">
-                <Camera className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-600 mb-2">Nenhum momento encontrado</h3>
-                <p className="text-gray-500">
+              <div className="text-center py-8 sm:py-12">
+                <Camera className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                <h3 className="text-base sm:text-lg font-medium text-gray-600 mb-2">Nenhum momento encontrado</h3>
+                <p className="text-sm sm:text-base text-gray-500 px-4">
                   {searchTerm ? 'Tente ajustar sua pesquisa' : 'Novos momentos aparecerão aqui em breve!'}
                 </p>
               </div>
             ) : (
               filteredPosts.map(post => (
                 <div key={post.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                  {/* Header do Post */}
+                  {/* Header do Post - Responsivo */}
                   <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-100">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-lg flex-shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm sm:text-lg flex-shrink-0">
                         {post.teacherAvatar || post.teacherName.charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-800 truncate">{post.teacherName}</h3>
-                        <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500">
-                          <MapPin className="w-3 h-3 flex-shrink-0" />
-                          <span className="truncate">{post.location}</span>
+                        <h3 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{post.teacherName}</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-2 text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{post.location}</span>
+                          </div>
                           <span className="hidden sm:inline">•</span>
-                          <span className="truncate hidden sm:inline">{post.activity}</span>
+                          <span className="truncate">{post.activity}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-500 flex-shrink-0 ml-2">
+                    <div className="text-xs text-gray-500 flex-shrink-0 ml-2">
                       {formatTimeAgo(post.timestamp)}
                     </div>
                   </div>
 
-                  {/* Imagem do Post */}
+                  {/* Imagem do Post - Altura responsiva */}
                   <div className="relative">
                     <img 
                       src={post.imageUrl} 
                       alt={post.caption}
-                      className="w-full h-64 sm:h-80 lg:h-96 object-cover"
+                      className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover"
                     />
-                    {/* Tags dos Estudantes */}
-                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-wrap gap-1 sm:gap-2 max-w-[calc(100%-1rem)]">
+                    {/* Tags dos Estudantes - Responsivas */}
+                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-wrap gap-1 sm:gap-2 max-w-[calc(100%-2rem)]">
                       {post.studentNames.map(name => (
-                        <span key={name} className="bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs truncate max-w-[120px] sm:max-w-none">
+                        <span key={name} className="bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs truncate max-w-[100px] sm:max-w-[140px]">
                           👤 {name}
                         </span>
                       ))}
                     </div>
                   </div>
 
-                  {/* Ações do Post */}
+                  {/* Ações do Post - Layout responsivo */}
                   <div className="p-3 sm:p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3 sm:gap-4">
@@ -448,46 +453,46 @@ export default function MomentosPage() {
                           }`}
                           onClick={() => handleLikePost(post.id)}
                         >
-                          <Heart className={`w-5 h-5 ${post.isLikedByParent ? 'fill-current' : ''}`} />
-                          <span className="text-sm font-medium">{post.likes}</span>
+                          <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${post.isLikedByParent ? 'fill-current' : ''}`} />
+                          <span className="text-xs sm:text-sm font-medium">{post.likes}</span>
                         </button>
                         <button className="flex items-center gap-1 sm:gap-2 text-gray-500 hover:text-blue-500 transition-colors">
-                          <MessageCircle className="w-5 h-5" />
-                          <span className="text-sm font-medium">{post.comments.length}</span>
+                          <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span className="text-xs sm:text-sm font-medium">{post.comments.length}</span>
                         </button>
                         <button className="flex items-center gap-1 sm:gap-2 text-gray-500 hover:text-green-500 transition-colors">
-                          <Share2 className="w-5 h-5" />
-                          <span className="text-sm font-medium hidden sm:inline">Compartilhar</span>
+                          <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span className="text-xs sm:text-sm font-medium hidden sm:inline">Compartilhar</span>
                         </button>
                       </div>
                       <button className="text-gray-500 hover:text-gray-700 transition-colors">
-                        <Bookmark className="w-5 h-5" />
+                        <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
                     </div>
 
-                    {/* Caption */}
+                    {/* Caption - Texto responsivo */}
                     <div className="mb-3">
-                      <p className="text-gray-800 leading-relaxed">{post.caption}</p>
+                      <p className="text-gray-800 leading-relaxed text-sm sm:text-base">{post.caption}</p>
                     </div>
 
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-3">
+                    {/* Tags - Layout responsivo */}
+                    <div className="flex flex-wrap gap-1 sm:gap-2 mb-3">
                       {post.tags.map(tag => (
-                        <span key={tag} className="text-blue-600 text-sm hover:text-blue-800 cursor-pointer">
+                        <span key={tag} className="text-blue-600 text-xs sm:text-sm hover:text-blue-800 cursor-pointer">
                           {tag}
                         </span>
                       ))}
                     </div>
 
-                    {/* Comentários */}
+                    {/* Comentários - Layout responsivo */}
                     {post.comments.length > 0 && (
-                      <div className="space-y-3 border-t border-gray-100 pt-3">
-                        <div className="text-sm font-medium text-gray-600">
+                      <div className="space-y-2 sm:space-y-3 border-t border-gray-100 pt-3">
+                        <div className="text-xs sm:text-sm font-medium text-gray-600">
                           {post.comments.length} comentário{post.comments.length !== 1 ? 's' : ''}
                         </div>
                         {post.comments.slice(0, 2).map(comment => (
                           <div key={comment.id} className="flex items-start gap-2 sm:gap-3">
-                            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
+                            <div className={`w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
                               comment.authorType === 'parent' ? 'bg-blue-100 text-blue-700' :
                               comment.authorType === 'teacher' ? 'bg-green-100 text-green-700' :
                               'bg-purple-100 text-purple-700'
@@ -496,11 +501,11 @@ export default function MomentosPage() {
                                comment.authorType === 'teacher' ? '👩‍🏫' : '👤'}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-gray-800 text-sm truncate">{comment.authorName}</span>
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                                <span className="font-medium text-gray-800 text-xs sm:text-sm truncate">{comment.authorName}</span>
                                 <span className="text-xs text-gray-500 flex-shrink-0">{formatTimeAgo(comment.timestamp)}</span>
                               </div>
-                              <p className="text-sm text-gray-700 break-words">{comment.content}</p>
+                              <p className="text-xs sm:text-sm text-gray-700 break-words leading-relaxed">{comment.content}</p>
                               <div className="flex items-center gap-3 mt-1">
                                 <button className="text-xs text-gray-500 hover:text-red-500 transition-colors">
                                   ❤️ {comment.likes}
@@ -513,22 +518,22 @@ export default function MomentosPage() {
                           </div>
                         ))}
                         {post.comments.length > 2 && (
-                          <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                          <button className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 transition-colors">
                             Ver todos os {post.comments.length} comentários
                           </button>
                         )}
                       </div>
                     )}
 
-                    {/* Adicionar Comentário */}
-                    <div className="flex items-center gap-2 sm:gap-3 mt-4 pt-3 border-t border-gray-100">
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    {/* Adicionar Comentário - Layout responsivo */}
+                    <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4 pt-3 border-t border-gray-100">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                         👨‍👩‍👧‍👦
                       </div>
                       <input 
                         type="text" 
                         placeholder="Adicione um comentário..."
-                        className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-2 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent min-w-0"
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent min-w-0"
                       />
                       <button className="text-pink-600 hover:text-pink-700 transition-colors flex-shrink-0">
                         <Send className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -540,9 +545,9 @@ export default function MomentosPage() {
             )}
           </div>
 
-          {/* Botão para carregar mais */}
+          {/* Botão para carregar mais - Responsivo */}
           {filteredPosts.length > 0 && (
-            <div className="text-center px-4">
+            <div className="text-center px-3 sm:px-4">
               <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 sm:px-8 py-3 rounded-full hover:from-pink-600 hover:to-purple-700 transition-all hover:scale-105 shadow-lg text-sm sm:text-base w-full sm:w-auto max-w-xs">
                 📸 Carregar mais momentos
               </button>

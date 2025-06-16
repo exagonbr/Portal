@@ -10,6 +10,25 @@ interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
+export enum UserRole {
+  SYSTEM_ADMIN = 'SYSTEM_ADMIN',
+  INSTITUTION_MANAGER = 'INSTITUTION_MANAGER', 
+  ACADEMIC_COORDINATOR = 'ACADEMIC_COORDINATOR',
+  TEACHER = 'TEACHER',
+  STUDENT = 'STUDENT',
+  GUARDIAN = 'GUARDIAN'
+}
+
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  [UserRole.SYSTEM_ADMIN]: 'Administrador do Sistema',
+  [UserRole.INSTITUTION_MANAGER]: 'Gestor de Instituição',
+  [UserRole.ACADEMIC_COORDINATOR]: 'Coordenador Acadêmico',
+  [UserRole.TEACHER]: 'Professor',
+  [UserRole.STUDENT]: 'Estudante',
+  [UserRole.GUARDIAN]: 'Responsável'
+};
+
 export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
@@ -22,6 +41,7 @@ export default function DashboardLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { theme, themeType, toggleTheme } = useTheme()
 
+  
   // Mock data para notificações - em produção viria de uma API
   const notifications = [
     {
@@ -578,10 +598,10 @@ export default function DashboardLayout({
                   >
                     <div className="hidden sm:block text-right">
                       <p className="text-sm font-medium truncate max-w-24 lg:max-w-32" style={{ color: theme.colors.text.primary }}>
-                        {user?.name || 'Usuário'}
+                      {user?.role && ROLE_LABELS[user.role as UserRole]}
                       </p>
                       <p className="text-xs" style={{ color: theme.colors.text.secondary }}>
-                        {user?.role || 'Estudante'}
+                      {user?.role && ROLE_LABELS[user.role as UserRole]}
                       </p>
                     </div>
                     
