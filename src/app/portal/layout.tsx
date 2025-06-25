@@ -11,7 +11,7 @@ export default function PortalLayout({
 }) {
   return (
     <RoleGuard allowedRoles={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR, UserRole.TEACHER, UserRole.STUDENT]}>
-      <DashboardPageLayout title="Portal do Estudante">
+      <DashboardPageLayout title="">
         {children}
       </DashboardPageLayout>
     </RoleGuard>

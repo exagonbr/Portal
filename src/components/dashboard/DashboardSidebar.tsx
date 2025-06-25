@@ -722,8 +722,8 @@ function DashboardSidebarComponent() {
               },
               {
                 href: '/portal/videos',
-                icon: 'person_outline',
-                label: 'Portal do Videos',
+                icon: 'play_circle',
+                label: 'Portal de Vídeos',
                 permission: 'canAccessLearningMaterials'
               },
               {
@@ -873,6 +873,12 @@ function DashboardSidebarComponent() {
                 href: '/portal/books',
                 icon: 'auto_stories',
                 label: 'Portal de Literatura',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/videos',
+                icon: 'play_circle',
+                label: 'Portal de Vídeos',
                 permission: 'canAccessLearningMaterials'
               },
               {

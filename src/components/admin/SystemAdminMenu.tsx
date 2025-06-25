@@ -99,15 +99,27 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
       section: 'Gestão de Conteúdo',
       items: [
         {
-          href: '/admin/content/library',
-          icon: 'library_books',
-          label: 'Acervo Digital',
-          permission: 'canManageSystem'
-        },
-        {
           href: '/admin/content/search',
           icon: 'archive',
           label: 'Gerenciar Arquivos',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/portal/collections',
+          icon: 'video_library',
+          label: 'Visualizar Coleções',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/portal/collections/manage',
+          icon: 'edit_note',
+          label: 'Gerenciar Coleções',
+          permission: 'canManageSystem'
+        },
+        {
+          href: '/portal/collections/books',
+          icon: 'book',
+          label: 'Coleção de Livros',
           permission: 'canManageSystem'
         }
       ]
