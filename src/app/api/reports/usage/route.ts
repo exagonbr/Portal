@@ -7,13 +7,13 @@ import knex from '@/config/database'
 // Schema de validação para filtros de relatório de uso
 const usageReportSchema = z.object({
   period: z.enum(['7d', '30d', '90d', '1y', 'custom']).default('30d'),
-  date_from: z.string().optional(),
-  date_to: z.string().optional(),
-  institution_id: z.string().optional(),
+  date_from: z.string().nullable().optional(),
+  date_to: z.string().nullable().optional(),
+  institution_id: z.string().nullable().optional(),
   role: z.enum(['all', 'STUDENT', 'TEACHER', 'MANAGER', 'PARENT', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN', 'admin', 'system_admin', 'institution_manager', 'academic_coordinator', 'manager', 'teacher', 'student', 'guardian']).default('all'),
-  activity_type: z.enum(['all', 'login', 'logout', 'page_view', 'content_access', 'quiz_attempt', 'assignment_submit']).default('all'),
-  user_name: z.string().optional(),
-  institution_name: z.string().optional()
+  activity_type: z.enum(['all', 'login', 'logout', 'page_view', 'content_access', 'quiz_attempt', 'assignment_submit', 'video']).default('all'),
+  user_name: z.string().nullable().optional(),
+  institution_name: z.string().nullable().optional()
 })
 
 interface UsageStats {
