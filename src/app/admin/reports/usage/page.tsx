@@ -18,7 +18,13 @@ import {
   Calendar,
   BarChart3,
   PieChart,
-  Search
+  Search,
+  Target,
+  Globe,
+  Zap,
+  ArrowUp,
+  ArrowDown,
+  Eye
 } from 'lucide-react'
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
 
@@ -75,7 +81,7 @@ export default function UsageReportsPage() {
 
   useEffect(() => {
     loadUsageData()
-  }, [filters])
+  }, [])
 
   const loadUsageData = async () => {
     setIsLoading(true)
@@ -102,6 +108,24 @@ export default function UsageReportsPage() {
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const applyFilters = () => {
+    loadUsageData()
+  }
+
+  const clearFilters = () => {
+    setFilters({
+      period: '30d',
+      role: 'all',
+      institution_id: '',
+      activity_type: 'all',
+      date_from: '',
+      date_to: '',
+      user_name: '',
+      institution_name: ''
+    })
+    setTimeout(() => loadUsageData(), 100)
   }
 
   const exportReport = async (format: 'PDF' | 'EXCEL' | 'CSV') => {
@@ -136,6 +160,7 @@ export default function UsageReportsPage() {
       case 'TEACHER': return <BookOpen className="w-5 h-5" />
       case 'MANAGER': return <UserCheck className="w-5 h-5" />
       case 'PARENT': return <Users className="w-5 h-5" />
+      case 'ADMIN': return <Activity className="w-5 h-5" />
       case 'INSTITUTION_ADMIN': return <School className="w-5 h-5" />
       case 'SYSTEM_ADMIN': return <Activity className="w-5 h-5" />
       default: return <Users className="w-5 h-5" />
@@ -148,6 +173,7 @@ export default function UsageReportsPage() {
       case 'TEACHER': return 'Professores'
       case 'MANAGER': return 'Gestores'
       case 'PARENT': return 'Responsáveis'
+      case 'ADMIN': return 'Administradores'
       case 'INSTITUTION_ADMIN': return 'Admins Instituição'
       case 'SYSTEM_ADMIN': return 'Admins Sistema'
       default: return role
@@ -158,6 +184,7 @@ export default function UsageReportsPage() {
     switch (activity) {
       case 'login': return <LogIn className="w-4 h-4" />
       case 'logout': return <LogIn className="w-4 h-4" />
+      case 'video': return <Eye className="w-4 h-4" />
       case 'page_view': return <MousePointer className="w-4 h-4" />
       case 'content_access': return <FileText className="w-4 h-4" />
       case 'quiz_attempt': return <BookOpen className="w-4 h-4" />
@@ -170,6 +197,7 @@ export default function UsageReportsPage() {
     switch (activity) {
       case 'login': return 'Logins'
       case 'logout': return 'Logouts'
+      case 'video': return 'Visualização de Vídeos'
       case 'page_view': return 'Visualizações'
       case 'content_access': return 'Acesso a Conteúdo'
       case 'quiz_attempt': return 'Tentativas de Quiz'
@@ -180,305 +208,377 @@ export default function UsageReportsPage() {
 
   return (
     <DashboardPageLayout
-      title="Relatórios de Uso"
-      subtitle="Análise detalhada do uso da plataforma pelos usuários"
+      title="📊 Relatórios de Uso da Plataforma"
+      subtitle="Análise completa do uso e engajamento dos usuários"
     >
-      <div className="space-y-6">
-        {/* Filtros */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <div className="flex flex-col gap-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Filter className="w-5 h-5 text-gray-500" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Filtros
-              </h3>
+      <div className="space-y-8">
+        {/* Filtros em Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Filter className="w-5 h-5 text-blue-600" />
             </div>
-            
-            {/* Primeira linha de filtros */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Período
-                </label>
-                <select
-                  value={filters.period}
-                  onChange={(e) => handleFilterChange('period', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="7d">Últimos 7 dias</option>
-                  <option value="30d">Últimos 30 dias</option>
-                  <option value="90d">Últimos 90 dias</option>
-                  <option value="1y">Último ano</option>
-                  <option value="custom">Período customizado</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tipo de Usuário
-                </label>
-                <select
-                  value={filters.role}
-                  onChange={(e) => handleFilterChange('role', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="all">Todos</option>
-                  <option value="STUDENT">Alunos</option>
-                  <option value="TEACHER">Professores</option>
-                  <option value="MANAGER">Gestores</option>
-                  <option value="PARENT">Responsáveis</option>
-                  <option value="INSTITUTION_ADMIN">Admins Instituição</option>
-                  <option value="SYSTEM_ADMIN">Admins Sistema</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tipo de Atividade
-                </label>
-                <select
-                  value={filters.activity_type}
-                  onChange={(e) => handleFilterChange('activity_type', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="all">Todas</option>
-                  <option value="login">Logins</option>
-                  <option value="page_view">Visualizações</option>
-                  <option value="content_access">Acesso a Conteúdo</option>
-                  <option value="quiz_attempt">Tentativas de Quiz</option>
-                  <option value="assignment_submit">Envios de Tarefas</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={loadUsageData}
-                  disabled={isLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                  Atualizar
-                </button>
-                
-                <div className="relative group">
-                  <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    Exportar
-                  </button>
-                  <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                    <button
-                      onClick={() => exportReport('PDF')}
-                      className="block w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 first:rounded-t-lg"
-                    >
-                      PDF
-                    </button>
-                    <button
-                      onClick={() => exportReport('EXCEL')}
-                      className="block w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      Excel
-                    </button>
-                    <button
-                      onClick={() => exportReport('CSV')}
-                      className="block w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 last:rounded-b-lg"
-                    >
-                      CSV
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Segunda linha de filtros - Campos de pesquisa */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Search className="w-4 h-4 inline mr-1" />
-                  Nome do Usuário
-                </label>
-                <input
-                  type="text"
-                  value={filters.user_name}
-                  onChange={(e) => handleFilterChange('user_name', e.target.value)}
-                  placeholder="Digite o nome do usuário..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <School className="w-4 h-4 inline mr-1" />
-                  Nome da Instituição
-                </label>
-                <input
-                  type="text"
-                  value={filters.institution_name}
-                  onChange={(e) => handleFilterChange('institution_name', e.target.value)}
-                  placeholder="Digite o nome da instituição..."
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-
-              {filters.period === 'custom' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Data Inicial
-                    </label>
-                    <input
-                      type="date"
-                      value={filters.date_from}
-                      onChange={(e) => handleFilterChange('date_from', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Data Final
-                    </label>
-                    <input
-                      type="date"
-                      value={filters.date_to}
-                      onChange={(e) => handleFilterChange('date_to', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Botão para limpar filtros */}
-            <div className="flex justify-end">
-              <button
-                onClick={() => setFilters({
-                  period: '30d',
-                  role: 'all',
-                  institution_id: '',
-                  activity_type: 'all',
-                  date_from: '',
-                  date_to: '',
-                  user_name: '',
-                  institution_name: ''
-                })}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-2"
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Filtros de Pesquisa
+            </h3>
+          </div>
+          
+          {/* Grid de Filtros Responsivo */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                📅 Período
+              </label>
+              <select
+                value={filters.period}
+                onChange={(e) => handleFilterChange('period', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
               >
-                <RefreshCw className="w-4 h-4" />
-                Limpar Filtros
+                <option value="7d">Últimos 7 dias</option>
+                <option value="30d">Últimos 30 dias</option>
+                <option value="90d">Últimos 90 dias</option>
+                <option value="1y">Último ano</option>
+                <option value="custom">Período customizado</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                👥 Tipo de Usuário
+              </label>
+              <select
+                value={filters.role}
+                onChange={(e) => handleFilterChange('role', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="all">Todos os usuários</option>
+                <option value="STUDENT">👨‍🎓 Alunos</option>
+                <option value="TEACHER">👨‍🏫 Professores</option>
+                <option value="MANAGER">👨‍💼 Gestores</option>
+                <option value="PARENT">👨‍👩‍👧‍👦 Responsáveis</option>
+                <option value="INSTITUTION_ADMIN">🏛️ Admins Instituição</option>
+                <option value="SYSTEM_ADMIN">⚙️ Admins Sistema</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                🎯 Tipo de Atividade
+              </label>
+              <select
+                value={filters.activity_type}
+                onChange={(e) => handleFilterChange('activity_type', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="all">Todas as atividades</option>
+                <option value="login">🔐 Logins</option>
+                <option value="video">📺 Visualização de Vídeos</option>
+                <option value="page_view">👁️ Visualizações</option>
+                <option value="content_access">📖 Acesso a Conteúdo</option>
+                <option value="quiz_attempt">📝 Tentativas de Quiz</option>
+                <option value="assignment_submit">📤 Envios de Tarefas</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                🔍 Nome do Usuário
+              </label>
+              <input
+                type="text"
+                value={filters.user_name}
+                onChange={(e) => handleFilterChange('user_name', e.target.value)}
+                placeholder="Digite o nome..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                🏫 Nome da Instituição
+              </label>
+              <input
+                type="text"
+                value={filters.institution_name}
+                onChange={(e) => handleFilterChange('institution_name', e.target.value)}
+                placeholder="Digite a instituição..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+
+            {filters.period === 'custom' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    📅 Data Inicial
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.date_from}
+                    onChange={(e) => handleFilterChange('date_from', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    📅 Data Final
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.date_to}
+                    onChange={(e) => handleFilterChange('date_to', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Botões de Ação */}
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={applyFilters}
+              disabled={isLoading}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Carregando...' : 'Aplicar Filtros'}
+            </button>
+            
+            <button
+              onClick={clearFilters}
+              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex items-center gap-2 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Limpar Filtros
+            </button>
+            
+            <div className="relative group">
+              <button className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 transition-colors">
+                <Download className="w-4 h-4" />
+                Exportar
               </button>
+              <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                <button
+                  onClick={() => exportReport('PDF')}
+                  className="block w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 first:rounded-t-lg"
+                >
+                  📄 PDF
+                </button>
+                <button
+                  onClick={() => exportReport('EXCEL')}
+                  className="block w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  📊 Excel
+                </button>
+                <button
+                  onClick={() => exportReport('CSV')}
+                  className="block w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 last:rounded-b-lg"
+                >
+                  📋 CSV
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Cards de Estatísticas Principais */}
         {usageData && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Total de Usuários */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Users className="w-8 h-8" />
                 </div>
-                <span className={`text-sm font-medium ${
-                  parseFloat(usageData.growthRate) >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {parseFloat(usageData.growthRate) >= 0 ? '+' : ''}{usageData.growthRate}%
-                </span>
+                <div className="text-right">
+                  <div className={`text-sm font-medium flex items-center gap-1 ${
+                    parseFloat(usageData.growthRate) >= 0 ? 'text-green-200' : 'text-red-200'
+                  }`}>
+                    {parseFloat(usageData.growthRate) >= 0 ? 
+                      <ArrowUp className="w-4 h-4" /> : 
+                      <ArrowDown className="w-4 h-4" />
+                    }
+                    {Math.abs(parseFloat(usageData.growthRate))}%
+                  </div>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+              <h3 className="text-3xl font-bold mb-2">
                 {formatNumber(usageData.totalUsers)}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Total de Usuários
-              </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-blue-100 mb-1">Total de Usuários</p>
+              <p className="text-xs text-blue-200">
                 {formatNumber(usageData.averageUsersPerDay)} usuários/dia em média
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            {/* Usuários Ativos */}
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <UserCheck className="w-6 h-6 text-green-600" />
+                <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <UserCheck className="w-8 h-8" />
                 </div>
-                <span className="text-sm font-medium text-green-600">
-                  {usageData.totalUsers > 0 ? Math.round((usageData.activeUsers / usageData.totalUsers) * 100) : 0}%
-                </span>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-green-200">
+                    {usageData.totalUsers > 0 ? Math.round((usageData.activeUsers / usageData.totalUsers) * 100) : 0}% ativo
+                  </div>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+              <h3 className="text-3xl font-bold mb-2">
                 {formatNumber(usageData.activeUsers)}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Usuários Ativos
-              </p>
-              <p className="text-xs text-gray-500">
-                Do total de usuários cadastrados
+              <p className="text-green-100 mb-1">Usuários Ativos</p>
+              <p className="text-xs text-green-200">
+                Últimos 7 dias do período
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            {/* Total de Sessões */}
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                  <Activity className="w-6 h-6 text-purple-600" />
+                <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Activity className="w-8 h-8" />
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-purple-200">
+                    <Zap className="w-4 h-4 inline" />
+                  </div>
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+              <h3 className="text-3xl font-bold mb-2">
                 {formatNumber(usageData.totalSessions)}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Total de Sessões
-              </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-purple-100 mb-1">Total de Sessões</p>
+              <p className="text-xs text-purple-200">
                 {formatNumber(usageData.averageSessionsPerDay)} sessões/dia em média
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            {/* Duração Média */}
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                  <Clock className="w-6 h-6 text-orange-600" />
+                <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Clock className="w-8 h-8" />
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-orange-200">
+                    <Target className="w-4 h-4 inline" />
+                  </div>
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+              <h3 className="text-3xl font-bold mb-2">
                 {usageData.averageSessionDuration}min
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Duração Média da Sessão
-              </p>
-              <p className="text-xs text-gray-500">
-                Tempo médio por sessão
+              <p className="text-orange-100 mb-1">Duração Média</p>
+              <p className="text-xs text-orange-200">
+                Por sessão de usuário
               </p>
             </div>
           </div>
         )}
 
-        {/* Estatísticas por Tipo de Usuário */}
+        {/* Cards de Resumo Adicional */}
         {usageData && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Usuários por Tipo
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Atividades por Dia */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {formatNumber(usageData.averageActivitiesPerDay)}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Atividades por dia
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Dia de Pico */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-emerald-100 dark:bg-emerald-900 rounded-lg">
+                  <Calendar className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div>
+                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {usageData.peakUsageDay.date.split('-').reverse().join('/')}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Dia de maior uso ({formatNumber(usageData.peakUsageDay.users)} usuários)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Taxa de Crescimento */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-3 rounded-lg ${
+                  parseFloat(usageData.growthRate) >= 0 ? 
+                  'bg-green-100 dark:bg-green-900' : 
+                  'bg-red-100 dark:bg-red-900'
+                }`}>
+                  {parseFloat(usageData.growthRate) >= 0 ? 
+                    <ArrowUp className="w-6 h-6 text-green-600" /> : 
+                    <ArrowDown className="w-6 h-6 text-red-600" />
+                  }
+                </div>
+                <div>
+                  <h4 className={`text-2xl font-bold ${
+                    parseFloat(usageData.growthRate) >= 0 ? 
+                    'text-green-600' : 
+                    'text-red-600'
+                  }`}>
+                    {parseFloat(usageData.growthRate) >= 0 ? '+' : ''}{usageData.growthRate}%
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Taxa de crescimento
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Estatísticas por Tipo de Usuário */}
+        {usageData && Object.keys(usageData.byRole).length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <PieChart className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Distribuição por Tipo de Usuário
               </h3>
-              <PieChart className="w-5 h-5 text-gray-500" />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(usageData.byRole).map(([role, count]) => (
-                <div key={role} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                      {getRoleIcon(role)}
+                <div key={role} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                        {getRoleIcon(role)}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {getRoleName(role)}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {usageData.totalUsers > 0 ? Math.round((count / usageData.totalUsers) * 100) : 0}% do total
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {getRoleName(role)}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {usageData.totalUsers > 0 ? Math.round((count / usageData.totalUsers) * 100) : 0}% do total
-                      </p>
+                    <div className="text-right">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {formatNumber(count)}
+                      </span>
                     </div>
                   </div>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">
-                    {formatNumber(count)}
-                  </span>
                 </div>
               ))}
             </div>
@@ -487,32 +587,32 @@ export default function UsageReportsPage() {
 
         {/* Estatísticas por Instituição */}
         {usageData && Object.keys(usageData.byInstitution).length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Usuários por Instituição
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                <School className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Top Instituições por Usuários
               </h3>
-              <School className="w-5 h-5 text-gray-500" />
             </div>
             
             <div className="space-y-4">
               {Object.entries(usageData.byInstitution).map(([institution, count]) => (
-                <div key={institution} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {institution}
-                      </span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {formatNumber(count)} usuários
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full"
-                        style={{ width: `${(count / Math.max(...Object.values(usageData.byInstitution))) * 100}%` }}
-                      ></div>
-                    </div>
+                <div key={institution} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {institution}
+                    </span>
+                    <span className="text-lg font-bold text-gray-900 dark:text-white">
+                      {formatNumber(count)} usuários
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                    <div
+                      className="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all duration-500"
+                      style={{ width: `${(count / Math.max(...Object.values(usageData.byInstitution))) * 100}%` }}
+                    ></div>
                   </div>
                 </div>
               ))}
@@ -522,120 +622,21 @@ export default function UsageReportsPage() {
 
         {/* Estatísticas por Tipo de Atividade */}
         {usageData && Object.keys(usageData.byActivityType).length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <BarChart3 className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Atividades por Tipo
               </h3>
-              <BarChart3 className="w-5 h-5 text-gray-500" />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Object.entries(usageData.byActivityType).map(([activity, count]) => (
-                <div key={activity} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                      {getActivityIcon(activity)}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {getActivityName(activity)}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {usageData.timeline.length > 0 ? Math.round(count / usageData.timeline.length) : 0} por dia
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">
-                    {formatNumber(count)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Resumo do Período */}
-        {usageData && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-              Resumo do Período
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg w-fit mx-auto mb-3">
-                  <TrendingUp className="w-6 h-6 text-blue-600" />
-                </div>
-                <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {formatNumber(usageData.averageActivitiesPerDay)}
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Atividades por dia
-                </p>
-              </div>
-              
-              <div className="text-center">
-                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg w-fit mx-auto mb-3">
-                  <Calendar className="w-6 h-6 text-green-600" />
-                </div>
-                <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {usageData.peakUsageDay.date.split('-').reverse().join('/')}
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Dia de maior uso ({formatNumber(usageData.peakUsageDay.users)} usuários)
-                </p>
-              </div>
-              
-              <div className="text-center">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg w-fit mx-auto mb-3">
-                  <BarChart3 className="w-6 h-6 text-purple-600" />
-                </div>
-                <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {parseFloat(usageData.growthRate) >= 0 ? '+' : ''}{usageData.growthRate}%
-                </h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Taxa de crescimento
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mr-3" />
-              <span className="text-gray-600 dark:text-gray-400">
-                Carregando dados de uso...
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Estado inicial */}
-        {!usageData && !isLoading && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <div className="text-center py-8">
-              <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Relatórios de Uso
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Selecione os filtros desejados e clique em "Atualizar" para visualizar os dados de uso da plataforma.
-              </p>
-              <button
-                onClick={loadUsageData}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 mx-auto"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Carregar Dados
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </DashboardPageLayout>
-  )
-}
+                <div key={activity} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                        {getActivityIcon(activity)}
+     

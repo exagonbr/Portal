@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { TVShowCollection, TVShowVideo, TVShowModuleStructure } from '@/types/collections'
-import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye } from 'lucide-react'
+import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen } from 'lucide-react'
 
 interface TVShowListItem {
   id: number
@@ -404,11 +404,14 @@ export default function TVShowsManagePage() {
                       )}
                     </div>
                     
-                    {/* Descrição */}
+                    {/* Descrição - Destacada */}
                     {selectedTvShow.overview && (
-                      <div>
-                        <span className="text-gray-300 text-sm">Sinopse:</span>
-                        <p className="text-gray-200 text-base leading-relaxed max-w-4xl mt-1">
+                      <div className="bg-black bg-opacity-30 rounded-lg p-4 backdrop-blur-sm">
+                        <h3 className="text-white text-lg font-semibold mb-2 flex items-center gap-2">
+                          <BookOpen className="w-5 h-5" />
+                          Sinopse da Coleção
+                        </h3>
+                        <p className="text-gray-100 text-base leading-relaxed max-w-4xl">
                           {selectedTvShow.overview}
                         </p>
                       </div>
