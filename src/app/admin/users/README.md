@@ -57,7 +57,7 @@ A página mostra o status da conexão no topo:
 
 #### Request
 ```
-GET /api/users?page=1&limit=10&sortBy=name&sortOrder=asc
+GET /api/user?page=1&limit=10&sortBy=name&sortOrder=asc
 ```
 
 #### Response
@@ -117,7 +117,7 @@ GET /api/users?page=1&limit=10&sortBy=name&sortOrder=asc
 #### ❌ "A resposta da API não contém dados válidos"
 1. **Teste o endpoint diretamente**
    ```bash
-   curl http://localhost:3001/api/users
+   curl http://localhost:3001/api/user
    ```
 
 2. **Verifique a estrutura da resposta**

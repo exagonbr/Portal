@@ -99,7 +99,7 @@ export default function DemoModalsPage() {
     status: 'Ativo' as const,
     userCount: 5,
     permissions: [
-      { id: 'users.view', name: 'Visualizar Usuários', description: 'Permite visualizar lista de usuários', category: 'Usuários', active: true },
+      { id: 'user.view', name: 'Visualizar Usuários', description: 'Permite visualizar lista de usuários', category: 'Usuários', active: true },
       { id: 'courses.edit', name: 'Editar Cursos', description: 'Permite editar dados de cursos', category: 'Cursos', active: true },
       { id: 'reports.view', name: 'Visualizar Relatórios', description: 'Permite visualizar relatórios', category: 'Relatórios', active: true }
     ],

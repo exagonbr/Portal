@@ -103,7 +103,7 @@ async function databaseFresh() {
     console.log('=====================================');
     
     const dbFinal = knex.default(knexConfig);
-    const institutionsCount = await dbFinal('institutions').count('* as count');
+    const institutionsCount = await dbFinal('institution').count('* as count');
     const usersCount = await dbFinal('users').count('* as count');
     const rolesCount = await dbFinal('roles').count('* as count');
     const permissionsCount = await dbFinal('permissions').count('* as count');

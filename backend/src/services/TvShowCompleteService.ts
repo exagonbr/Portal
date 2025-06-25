@@ -13,9 +13,9 @@ export class TvShowCompleteService {
   async getAllTvShows(page: number = 1, limit: number = 10, search?: string) {
     const offset = (page - 1) * limit;
     
-    // Query SQL pura para buscar TV Shows com JOINs para imagens
+    // Query SQL pura para buscar TV Shows com JOINs para imagens e contagem de vídeos
     let query = `
-      SELECT 
+      SELECT
         ts.id,
         ts.name,
         ts.overview,
@@ -39,10 +39,17 @@ export class TvShowCompleteService {
         pf.sha256hex as poster_sha256hex,
         pf.extension as poster_extension,
         bf.sha256hex as backdrop_sha256hex,
-        bf.extension as backdrop_extension
+        bf.extension as backdrop_extension,
+        COALESCE(v.video_count, 0) as video_count
       FROM tv_show ts
       LEFT JOIN file pf ON ts.poster_image_id = pf.id
       LEFT JOIN file bf ON ts.backdrop_image_id = bf.id
+      LEFT JOIN (
+        SELECT show_id, COUNT(*) as video_count
+        FROM video
+        WHERE deleted IS NULL OR deleted = false
+        GROUP BY show_id
+      ) v ON ts.id = v.show_id
       WHERE (ts.deleted IS NULL OR ts.deleted = false)
     `;
 
@@ -84,8 +91,8 @@ export class TvShowCompleteService {
       const tvShowsWithImages = tvShows.map((tvShow: any) => ({
         ...tvShow,
         poster_image_url: this.buildImageUrl(tvShow.poster_sha256hex, tvShow.poster_extension),
-        backdrop_image_url: this.buildImageUrl(tvShow.backdrop_sha256hex, tvShow.backdrop_extension),
-        video_count: 0 // Por enquanto, vídeos não estão sendo contados
+        backdrop_image_url: this.buildImageUrl(tvShow.backdrop_sha256hex, tvShow.backdrop_extension)
+        // video_count já vem da query SQL
       }));
 
       return {

@@ -216,7 +216,7 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
 
 export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/users/${id}`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/user/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -262,7 +262,7 @@ export const extractUserEssentials = (user: User): UserEssentials => {
 
 export const deleteUser = async (id: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${AUTH_CONFIG.API_URL}/users/${id}`, {
+    const response = await fetch(`${AUTH_CONFIG.API_URL}/user/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

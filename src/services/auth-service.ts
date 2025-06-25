@@ -328,7 +328,7 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
 
 export const updateUser = async (id: string, userData: Partial<User>): Promise<User | null> => {
   try {
-    const response = await apiClient.put<User>(`/users/${id}`, userData);
+    const response = await apiClient.put<User>(`/user/${id}`, userData);
     return response.data || null;
   } catch (error) {
     if (error instanceof ApiClientError && error.status === 404) {
@@ -341,7 +341,7 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
 
 export const deleteUser = async (id: string): Promise<boolean> => {
   try {
-    await apiClient.delete(`/users/${id}`);
+    await apiClient.delete(`/user/${id}`);
     return true;
   } catch (error) {
     if (error instanceof ApiClientError && error.status === 404) {

@@ -6,9 +6,10 @@
 // ===== ENUMS CENTRALIZADOS =====
 
 export enum InstitutionType {
-  PUBLIC = 'PUBLIC',
-  PRIVATE = 'PRIVATE',
-  MIXED = 'MIXED'
+  SCHOOL = 'SCHOOL',
+  COLLEGE = 'COLLEGE',
+  UNIVERSITY = 'UNIVERSITY',
+  TECH_CENTER = 'TECH_CENTER'
 }
 
 export enum UserRole {
@@ -95,9 +96,10 @@ export interface BaseFilter {
 // ===== LABELS PARA ENUMS =====
 
 export const INSTITUTION_TYPE_LABELS: Record<InstitutionType, string> = {
-  [InstitutionType.PUBLIC]: 'Pública',
-  [InstitutionType.PRIVATE]: 'Privada',
-  [InstitutionType.MIXED]: 'Mista'
+  [InstitutionType.SCHOOL]: 'Escola',
+  [InstitutionType.COLLEGE]: 'Faculdade',
+  [InstitutionType.UNIVERSITY]: 'Universidade',
+  [InstitutionType.TECH_CENTER]: 'Centro Técnico'
 };
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {

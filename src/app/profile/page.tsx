@@ -77,7 +77,7 @@ export default function ProfilePage() {
       }
 
       // Fazer requisição para atualizar perfil
-      const response = await apiClient.put(`/users/${user.id}`, updateData)
+      const response = await apiClient.put(`/user/${user.id}`, updateData)
       
       if (response.success) {
         // Atualizar dados originais

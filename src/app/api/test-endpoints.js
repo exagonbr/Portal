@@ -21,9 +21,9 @@ const endpoints = [
   { method: 'GET', path: '/institutions/inst_sabercon', description: 'Buscar Instituição por ID' },
   
   // Usuários
-  { method: 'GET', path: '/users?limit=10', description: 'Listar Usuários' },
-  { method: 'GET', path: '/users/me', description: 'Perfil do Usuário' },
-  { method: 'GET', path: '/users/stats', description: 'Estatísticas de Usuários' },
+  { method: 'GET', path: '/user?limit=10', description: 'Listar Usuários' },
+  { method: 'GET', path: '/user/me', description: 'Perfil do Usuário' },
+  { method: 'GET', path: '/user/stats', description: 'Estatísticas de Usuários' },
   
   // Roles
   { method: 'GET', path: '/roles', description: 'Listar Roles' },

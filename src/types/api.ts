@@ -178,7 +178,7 @@ export interface InstitutionDto {
   email?: string;
   website?: string;
   logo?: string;
-  type?: 'PUBLIC' | 'PRIVATE' | 'MIXED';
+  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
   created_at: string;
   updated_at: string;
   created_by?: string;
@@ -196,6 +196,12 @@ export interface InstitutionResponseDto extends InstitutionDto {
     maxUsersPerSchool?: number;
   };
   schools?: any[];
+  // Campos adicionais da tabela institution
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  status?: 'active' | 'inactive';
+  logo_url?: string;
 }
 
 export interface CreateInstitutionDto {
@@ -206,6 +212,7 @@ export interface CreateInstitutionDto {
   phone?: string;
   email?: string;
   active?: boolean;
+  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
 }
 
 export interface UpdateInstitutionDto {
@@ -216,6 +223,7 @@ export interface UpdateInstitutionDto {
   phone?: string;
   email?: string;
   active?: boolean;
+  type?: 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER';
 }
 
 export interface InstitutionCreateDto extends CreateInstitutionDto {}

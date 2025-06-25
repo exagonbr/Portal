@@ -762,7 +762,7 @@ export default function ManageUsers() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [permissions, setPermissions] = useState({
-    users: { create: true, read: true, update: false, delete: false },
+    user: { create: true, read: true, update: false, delete: false },
     courses: { create: false, read: true, update: false, delete: false },
     reports: { create: false, read: true, update: false, delete: false },
     settings: { create: false, read: false, update: false, delete: false }

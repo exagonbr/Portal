@@ -22,7 +22,7 @@ export default function TestConnection() {
       setStatus('success')
       setMessage('Conexão estabelecida com sucesso!')
       setDetails({
-        endpoint: '/api/users',
+        endpoint: '/api/user',
         totalUsers: response.pagination?.total || 0,
         responseStructure: {
           hasItems: !!response.items,
@@ -83,7 +83,7 @@ export default function TestConnection() {
             <h3 className="font-semibold mb-2 text-blue-800">Configuração Atual:</h3>
             <div className="text-sm text-blue-700 space-y-1">
               <p><strong>URL da API:</strong> {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api</p>
-              <p><strong>Endpoint testado:</strong> /api/users</p>
+              <p><strong>Endpoint testado:</strong> /api/user</p>
               <p><strong>Método:</strong> GET</p>
             </div>
           </div>

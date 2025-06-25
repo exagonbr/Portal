@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { TVShowCollection, TVShowVideo, TVShowModuleStructure } from '@/types/collections'
 import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, FileText } from 'lucide-react'
 import SessionVideoPlayer from '@/components/SessionVideoPlayer'
+import ShowVideoPlayer from '@/components/ShowVideoPlayer'
 
 interface TVShowListItem {
   id: number
@@ -60,6 +61,8 @@ export default function TVShowsManagePage() {
 
   // Estados para o player de sessão
   const [showSessionPlayer, setShowSessionPlayer] = useState(false)
+  const [selectedShowId, setSelectedShowId] = useState<number | null>(null)
+  const [selectedShowName, setSelectedShowName] = useState<string>('')
   const [currentSessionVideos, setCurrentSessionVideos] = useState<TVShowVideo[]>([])
   const [currentSessionNumber, setCurrentSessionNumber] = useState(1)
 

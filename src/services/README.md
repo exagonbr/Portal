@@ -407,7 +407,7 @@ Todos os serviços incluem logging estruturado:
 ### Exemplo de Migração
 ```typescript
 // Código antigo
-import { getUsers as oldGetUsers } from '../api/users';
+import { getUsers as oldGetUsers } from '../api/user';
 
 // Código novo
 import { userService } from '../services';

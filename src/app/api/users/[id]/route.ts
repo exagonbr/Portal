@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/user/${params.id}`, {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });
@@ -32,7 +32,7 @@ export async function PUT(
   try {
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/user/${params.id}`, {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -55,7 +55,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/user/${params.id}`, {
       method: 'DELETE',
       headers: prepareAuthHeaders(request),
     });

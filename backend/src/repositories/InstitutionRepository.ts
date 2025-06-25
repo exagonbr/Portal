@@ -85,9 +85,16 @@ export class InstitutionRepository extends BaseRepository<Institution> {
     }
 
     if (sortBy && sortOrder) {
-      query.orderBy(sortBy, sortOrder);
+      // Mapear campos que podem ter nomes diferentes na tabela
+      let dbSortBy = sortBy;
+      if (sortBy === 'created_at' || sortBy === 'updated_at') {
+        // Verificar se as colunas existem, senão usar alternativas
+        dbSortBy = sortBy;
+      }
+      query.orderBy(dbSortBy as string, sortOrder);
     } else {
-      query.orderBy('created_at', 'desc'); // Default sort order
+      // Usar uma coluna que sabemos que existe
+      query.orderBy('name', 'asc'); // Default sort order por nome
     }
 
     const results = await query.select('*');

@@ -20,13 +20,13 @@ export async function seed(knex: Knex): Promise<void> {
   }
 
   // 2. Garantir que existe uma instituição padrão para migração
-  const defaultInstitution = await knex('institutions')
+  const defaultInstitution = await knex('institution')
     .where('code', 'DEFAULT_MIGRATED')
     .first();
 
   if (!defaultInstitution) {
     console.log('🏢 Criando instituição padrão para migração...');
-    await knex('institutions').insert({
+    await knex('institution').insert({
       name: 'Instituição Migrada do MySQL',
       code: 'DEFAULT_MIGRATED',
       description: 'Instituição padrão para dados migrados do sistema legado MySQL',
@@ -35,7 +35,7 @@ export async function seed(knex: Knex): Promise<void> {
   }
 
   // 3. Garantir que existe uma escola padrão para migração
-  const institution = await knex('institutions')
+  const institution = await knex('institution')
     .where('code', 'DEFAULT_MIGRATED')
     .first();
 

@@ -1,15 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  School as SchoolIcon, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Building2 as UnitIcon,
+  Plus,
+  Edit,
+  Trash2,
   Search,
-  MapPin,
-  Phone,
-  Mail,
   CheckCircle,
   XCircle,
   Building2,
@@ -17,9 +14,9 @@ import {
   GraduationCap,
   BookOpen
 } from 'lucide-react';
-import { schoolService, School, CreateSchoolData, UpdateSchoolData } from '@/services/schoolService';
+import { unitService } from '@/services/unitService';
 import { institutionService } from '@/services/institutionService';
-import { InstitutionResponseDto } from '@/types/api';
+import { UnitResponseDto, UnitCreateDto, UnitUpdateDto, InstitutionResponseDto } from '@/types/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion } from 'framer-motion';
@@ -73,65 +70,53 @@ const toast = {
   }
 };
 
-// Constantes para tipos de escola
-const SCHOOL_TYPES = [
-  { value: 'elementary', label: 'Fundamental I', description: 'Anos iniciais do ensino fundamental (1º ao 5º ano)' },
-  { value: 'middle', label: 'Fundamental II', description: 'Anos finais do ensino fundamental (6º ao 9º ano)' },
-  { value: 'high', label: 'Ensino Médio', description: 'Ensino médio regular (1º ao 3º ano)' },
-  { value: 'technical', label: 'Técnico', description: 'Ensino técnico e profissionalizante' }
+// Constantes para tipos de unidade
+const UNIT_TYPES = [
+  { value: 'school', label: 'Escola', description: 'Unidade escolar de ensino básico' },
+  { value: 'campus', label: 'Campus', description: 'Campus universitário ou técnico' },
+  { value: 'center', label: 'Centro', description: 'Centro de ensino especializado' },
+  { value: 'institute', label: 'Instituto', description: 'Instituto de pesquisa e ensino' },
+  { value: 'department', label: 'Departamento', description: 'Departamento acadêmico' },
+  { value: 'faculty', label: 'Faculdade', description: 'Faculdade ou escola superior' }
 ] as const;
 
-type SchoolType = typeof SCHOOL_TYPES[number]['value'];
+type UnitType = typeof UNIT_TYPES[number]['value'];
 
-interface SchoolUnit extends School {
-  principal?: string;
-  studentsCount: number;
-  teachersCount: number;
-  classesCount: number;
-  type: SchoolType;
+interface UnitExtended extends UnitResponseDto {
+  studentsCount?: number;
+  teachersCount?: number;
+  coursesCount?: number;
   status: 'active' | 'inactive';
   institutionName?: string;
-  contact: {
-    phone: string;
-    email: string;
-    website?: string;
-  };
 }
 
-interface ExtendedCreateSchoolData extends CreateSchoolData {
-  type?: SchoolType;
+interface ExtendedCreateUnitData extends UnitCreateDto {
+  type: UnitType;
 }
 
-interface ExtendedUpdateSchoolData extends UpdateSchoolData {
-  type?: SchoolType;
+interface ExtendedUpdateUnitData extends UnitUpdateDto {
+  type?: UnitType;
 }
 
-export default function SystemAdminSchoolsPage() {
+export default function SystemAdminUnitsPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const [schools, setSchools] = useState<SchoolUnit[]>([]);
+  const [units, setUnits] = useState<UnitExtended[]>([]);
   const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingInstitutions, setLoadingInstitutions] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInstitution, setSelectedInstitution] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
-  const [editingSchool, setEditingSchool] = useState<SchoolUnit | null>(null);
-  const [formData, setFormData] = useState<ExtendedCreateSchoolData>({
+  const [editingUnit, setEditingUnit] = useState<UnitExtended | null>(null);
+  const [formData, setFormData] = useState<ExtendedCreateUnitData>({
     name: '',
-    code: '',
     description: '',
     institution_id: '',
-    type: 'elementary',
-    address: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    phone: '',
-    email: '',
-    is_active: true
+    type: 'school',
+    active: true
   });
-  const [filterType, setFilterType] = useState<'all' | SchoolType>('all');
+  const [filterType, setFilterType] = useState<'all' | UnitType>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [submitting, setSubmitting] = useState(false);
 
@@ -250,37 +235,29 @@ export default function SystemAdminSchoolsPage() {
     try {
       setLoading(true);
 
-      // Carregar todas as escolas (SYSTEM_ADMIN vê todas)
+      // Carregar todas as unidades (SYSTEM_ADMIN vê todas)
       const filters = {
         institution_id: selectedInstitution !== 'all' ? selectedInstitution : undefined,
         limit: 100
       };
       
-      const response = await schoolService.list(filters);
+      const response = await unitService.list(filters);
       
-      // Converter escolas para o formato esperado pelo frontend
-      const schoolsData = response.items.map(school => {
-        const institution = institutions.find(inst => inst.id === school.institution_id);
+      // Converter unidades para o formato esperado pelo frontend
+      const unitsData = response.items.map(unit => {
+        const institution = institutions.find(inst => inst.id === unit.institution_id);
         
         return {
-          ...school,
-          principal: 'Diretor', // Valor padrão
-          studentsCount: school.studentsCount || Math.floor(Math.random() * 500),
-          teachersCount: school.teachersCount || Math.floor(Math.random() * 50),
-          classesCount: school.classesCount || Math.floor(Math.random() * 30),
-          type: (school.type || 'elementary') as SchoolType,
-          status: school.is_active ? 'active' : 'inactive' as 'active' | 'inactive',
-          active: school.is_active,
-          institutionName: institution?.name || 'Instituição não encontrada',
-          contact: {
-            phone: school.phone || '',
-            email: school.email || '',
-            website: ''
-          }
+          ...unit,
+          studentsCount: Math.floor(Math.random() * 500), // Dados simulados
+          teachersCount: Math.floor(Math.random() * 50),
+          coursesCount: Math.floor(Math.random() * 20),
+          status: unit.active ? 'active' : 'inactive' as 'active' | 'inactive',
+          institutionName: institution?.name || 'Instituição não encontrada'
         };
       });
       
-      setSchools(schoolsData);
+      setUnits(unitsData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast.error('Erro ao carregar dados');
@@ -294,12 +271,7 @@ export default function SystemAdminSchoolsPage() {
     
     // Validação básica
     if (!formData.name.trim()) {
-      toast.error('Nome da escola é obrigatório');
-      return;
-    }
-    
-    if (!formData.code?.trim()) {
-      toast.error('Código da escola é obrigatório');
+      toast.error('Nome da unidade é obrigatório');
       return;
     }
     
@@ -309,130 +281,113 @@ export default function SystemAdminSchoolsPage() {
     }
     
     if (!formData.type) {
-      toast.error('Selecione um tipo de escola');
+      toast.error('Selecione um tipo de unidade');
       return;
     }
     
     if (formData.name.length < 3) {
-      toast.error('Nome da escola deve ter pelo menos 3 caracteres');
-      return;
-    }
-    
-    if (formData.code.length < 2) {
-      toast.error('Código da escola deve ter pelo menos 2 caracteres');
+      toast.error('Nome da unidade deve ter pelo menos 3 caracteres');
       return;
     }
     
     try {
       setSubmitting(true);
       
-      if (editingSchool) {
-        await schoolService.update(editingSchool.id, formData as ExtendedUpdateSchoolData);
-        toast.success('Escola atualizada com sucesso!');
+      if (editingUnit) {
+        await unitService.update(editingUnit.id, formData as ExtendedUpdateUnitData);
+        toast.success('Unidade atualizada com sucesso!');
       } else {
-        await schoolService.create(formData);
-        toast.success('Escola criada com sucesso!');
+        await unitService.create(formData);
+        toast.success('Unidade criada com sucesso!');
       }
       
       setShowModal(false);
       resetForm();
       await loadData(); // Aguardar o carregamento
     } catch (error: any) {
-      console.error('Erro ao salvar escola:', error);
+      console.error('Erro ao salvar unidade:', error);
       
       // Tratamento de erros mais específico
       if (error.response?.status === 400) {
         toast.error(error.response?.data?.message || 'Dados inválidos. Verifique as informações.');
       } else if (error.response?.status === 409) {
-        toast.error('Já existe uma escola com este nome nesta instituição.');
+        toast.error('Já existe uma unidade com este nome nesta instituição.');
       } else if (error.response?.status === 401) {
         toast.error('Sessão expirada. Faça login novamente.');
       } else if (error.response?.status === 403) {
         toast.error('Você não tem permissão para realizar esta ação.');
       } else {
-        toast.error(error.response?.data?.message || error.message || 'Erro ao salvar escola. Tente novamente.');
+        toast.error(error.response?.data?.message || error.message || 'Erro ao salvar unidade. Tente novamente.');
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleEdit = (school: SchoolUnit) => {
-    setEditingSchool(school);
+  const handleEdit = (unit: UnitExtended) => {
+    setEditingUnit(unit);
     setFormData({
-      name: school.name,
-      code: school.code || '',
-      description: school.description || '',
-      institution_id: school.institution_id,
-      type: school.type || 'elementary',
-      address: school.address || '',
-      city: school.city || '',
-      state: school.state || '',
-      zip_code: school.zip_code || '',
-      phone: school.contact?.phone || '',
-      email: school.contact?.email || '',
-      is_active: school.is_active
+      name: unit.name,
+      description: unit.description || '',
+      institution_id: unit.institution_id,
+      type: unit.type as UnitType || 'school',
+      active: unit.active
     });
     setShowModal(true);
   };
 
-  const handleToggleActive = async (school: SchoolUnit) => {
+  const handleToggleActive = async (unit: UnitExtended) => {
     try {
-      const updateData: ExtendedUpdateSchoolData = {
-        is_active: !school.is_active
+      const updateData: ExtendedUpdateUnitData = {
+        active: !unit.active
       };
       
-      await schoolService.update(school.id, updateData);
+      await unitService.update(unit.id, updateData);
       
-      toast.success(school.is_active ? 'Escola desativada' : 'Escola ativada');
+      toast.success(unit.active ? 'Unidade desativada' : 'Unidade ativada');
       loadData();
     } catch (error) {
-      toast.error('Erro ao alterar status da escola');
+      toast.error('Erro ao alterar status da unidade');
     }
   };
 
   const resetForm = () => {
-    setEditingSchool(null);
+    setEditingUnit(null);
     setSubmitting(false);
     setFormData({
       name: '',
-      code: '',
       description: '',
       institution_id: '',
-      type: 'elementary',
-      address: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      phone: '',
-      email: '',
-      is_active: true
+      type: 'school',
+      active: true
     });
   };
 
-  const filteredSchools = schools.filter(school => {
-    const matchesSearch = school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (school.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (school.institutionName || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || school.type === filterType;
-    const matchesStatus = filterStatus === 'all' || school.status === filterStatus;
-    const matchesInstitution = selectedInstitution === 'all' || school.institution_id === selectedInstitution;
+  const filteredUnits = units.filter(unit => {
+    const matchesSearch = unit.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (unit.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (unit.institutionName || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || unit.type === filterType;
+    const matchesStatus = filterStatus === 'all' || unit.status === filterStatus;
+    const matchesInstitution = selectedInstitution === 'all' || unit.institution_id === selectedInstitution;
     
     return matchesSearch && matchesType && matchesStatus && matchesInstitution;
   });
 
   const getTypeColor = (type: string) => {
     const colors = {
-      elementary: 'bg-green-100 text-green-800',
-      middle: 'bg-blue-100 text-blue-800',
-      high: 'bg-purple-100 text-purple-800',
-      technical: 'bg-orange-100 text-orange-800'
+      school: 'bg-green-100 text-green-800',
+      campus: 'bg-blue-100 text-blue-800',
+      center: 'bg-purple-100 text-purple-800',
+      institute: 'bg-orange-100 text-orange-800',
+      department: 'bg-indigo-100 text-indigo-800',
+      faculty: 'bg-pink-100 text-pink-800'
     };
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
   const getTypeLabel = (type: string) => {
-    const typeData = SCHOOL_TYPES.find(t => t.value === type);
+    const typeData = UNIT_TYPES.find(t => t.value === type);
     return typeData ? typeData.label : type;
   };
 
@@ -445,11 +400,11 @@ export default function SystemAdminSchoolsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                  <SchoolIcon className="w-8 h-8 text-primary" />
-                  Gerenciamento de Escolas
+                  <UnitIcon className="w-8 h-8 text-primary" />
+                  Gerenciamento de Unidades
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  Administração global de todas as escolas do sistema
+                  Administração global de todas as unidades do sistema
                 </p>
               </div>
                                   <button
@@ -462,8 +417,8 @@ export default function SystemAdminSchoolsPage() {
                         loadingInstitutions 
                           ? 'Aguarde o carregamento das instituições' 
                           : institutions.length === 0 
-                            ? 'Nenhuma instituição disponível para criar escolas' 
-                            : 'Criar nova escola'
+                            ? 'Nenhuma instituição disponível para criar unidades'
+                            : 'Criar nova unidade'
                       }
                     >
                       {loadingInstitutions ? (
@@ -474,7 +429,7 @@ export default function SystemAdminSchoolsPage() {
                       ) : (
                         <>
                           <Plus className="w-4 h-4" />
-                          Nova Escola
+                          Nova Unidade
                         </>
                       )}
                     </button>
@@ -489,7 +444,7 @@ export default function SystemAdminSchoolsPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Buscar escolas..."
+                  placeholder="Buscar unidades..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -527,7 +482,7 @@ export default function SystemAdminSchoolsPage() {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
                 <option value="all">Todos os Tipos</option>
-                {SCHOOL_TYPES.map(type => (
+                {UNIT_TYPES.map(type => (
                   <option key={type.value} value={type.value}>
                     {type.label}
                   </option>
@@ -552,18 +507,18 @@ export default function SystemAdminSchoolsPage() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Escolas</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{schools.length}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Unidades</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{units.length}</p>
                 </div>
-                <SchoolIcon className="w-8 h-8 text-primary" />
+                <UnitIcon className="w-8 h-8 text-primary" />
               </div>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Escolas Ativas</p>
-                  <p className="text-2xl font-bold text-green-600">{schools.filter(s => s.status === 'active').length}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Unidades Ativas</p>
+                  <p className="text-2xl font-bold text-green-600">{units.filter(u => u.active).length}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
@@ -572,8 +527,8 @@ export default function SystemAdminSchoolsPage() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Alunos</p>
-                  <p className="text-2xl font-bold text-blue-600">{schools.reduce((acc, s) => acc + s.studentsCount, 0)}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Cursos</p>
+                  <p className="text-2xl font-bold text-blue-600">{units.reduce((acc, u) => acc + (u.coursesCount || 0), 0)}</p>
                 </div>
                 <Users className="w-8 h-8 text-blue-500" />
               </div>
@@ -582,20 +537,20 @@ export default function SystemAdminSchoolsPage() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Professores</p>
-                  <p className="text-2xl font-bold text-purple-600">{schools.reduce((acc, s) => acc + s.teachersCount, 0)}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Instituições</p>
+                  <p className="text-2xl font-bold text-purple-600">{new Set(units.map(u => u.institution_id)).size}</p>
                 </div>
-                <GraduationCap className="w-8 h-8 text-purple-500" />
+                <Building2 className="w-8 h-8 text-purple-500" />
               </div>
             </div>
           </div>
 
-          {/* Lista de Escolas */}
+          {/* Lista de Unidades */}
           {loading ? (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-2 text-gray-600 dark:text-gray-400">Carregando escolas...</span>
+                <span className="ml-2 text-gray-600 dark:text-gray-400">Carregando unidades...</span>
               </div>
             </div>
           ) : (
@@ -605,7 +560,7 @@ export default function SystemAdminSchoolsPage() {
                   <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Escola
+                        Unidade
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         Instituição
@@ -614,10 +569,10 @@ export default function SystemAdminSchoolsPage() {
                         Tipo
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Alunos
+                        Cursos
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Professores
+                        Descrição
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         Status
@@ -628,52 +583,52 @@ export default function SystemAdminSchoolsPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredSchools.map((school) => (
+                    {filteredUnits.map((unit) => (
                       <motion.tr
-                        key={school.id}
+                        key={unit.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <SchoolIcon className="w-5 h-5 text-primary mr-3" />
+                            <UnitIcon className="w-5 h-5 text-primary mr-3" />
                             <div>
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {school.name}
+                                {unit.name}
                               </div>
                               <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {school.description}
+                                {unit.description}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900 dark:text-white">
-                            {school.institutionName}
+                            {unit.institutionName}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(school.type)}`}>
-                            {getTypeLabel(school.type)}
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(unit.type)}`}>
+                            {getTypeLabel(unit.type)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {school.studentsCount}
+                          {unit.coursesCount || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {school.teachersCount}
+                          {unit.description || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() => handleToggleActive(school)}
+                            onClick={() => handleToggleActive(unit)}
                             className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full transition-colors ${
-                              school.status === 'active'
+                              unit.active
                                 ? 'bg-green-100 text-green-800 hover:bg-green-200'
                                 : 'bg-red-100 text-red-800 hover:bg-red-200'
                             }`}
                           >
-                            {school.status === 'active' ? (
+                            {unit.active ? (
                               <>
                                 <CheckCircle className="w-3 h-3 mr-1" />
                                 Ativa
@@ -689,7 +644,7 @@ export default function SystemAdminSchoolsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => handleEdit(school)}
+                              onClick={() => handleEdit(unit)}
                               className="text-primary hover:text-primary-dark transition-colors"
                             >
                               <Edit className="w-4 h-4" />
@@ -702,13 +657,13 @@ export default function SystemAdminSchoolsPage() {
                 </table>
               </div>
 
-              {filteredSchools.length === 0 && (
+              {filteredUnits.length === 0 && (
                 <div className="text-center py-8">
-                  <SchoolIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <UnitIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500 dark:text-gray-400">
                     {searchTerm || selectedInstitution !== 'all' || filterType !== 'all' || filterStatus !== 'all'
-                      ? 'Nenhuma escola encontrada com os filtros aplicados.'
-                      : 'Nenhuma escola cadastrada ainda.'}
+                      ? 'Nenhuma unidade encontrada com os filtros aplicados.'
+                      : 'Nenhuma unidade cadastrada ainda.'}
                   </p>
                 </div>
               )}
@@ -729,14 +684,14 @@ export default function SystemAdminSchoolsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-                        <SchoolIcon className="w-6 h-6 text-white" />
+                        <UnitIcon className="w-6 h-6 text-white" />
                       </div>
                       <div>
                         <h3 className="text-xl font-bold text-white">
-                          {editingSchool ? 'Editar Escola' : 'Nova Escola'}
+                          {editingUnit ? 'Editar Unidade' : 'Nova Unidade'}
                         </h3>
                         <p className="text-blue-100 text-sm">
-                          {editingSchool ? 'Atualize as informações da escola' : 'Cadastre uma nova escola no sistema'}
+                          {editingUnit ? 'Atualize as informações da unidade' : 'Cadastre uma nova unidade no sistema'}
                         </p>
                       </div>
                     </div>
@@ -765,31 +720,18 @@ export default function SystemAdminSchoolsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Nome da Escola *
+                            Nome da Unidade *
                           </label>
                           <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            placeholder="Ex: Escola Municipal João Silva"
+                            placeholder="Ex: Campus Central"
                             required
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Código *
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.code}
-                            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            placeholder="Ex: ESC-001"
-                            required
-                          />
-                        </div>
 
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -800,7 +742,7 @@ export default function SystemAdminSchoolsPage() {
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
                             rows={3}
-                            placeholder="Descreva brevemente a escola, sua missão ou características especiais..."
+                            placeholder="Descreva brevemente a unidade, sua função ou características especiais..."
                           />
                         </div>
 
@@ -869,17 +811,17 @@ export default function SystemAdminSchoolsPage() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tipo de Escola *
+                            Tipo de Unidade *
                           </label>
                           <div className="relative">
                             <select
                               value={formData.type}
-                              onChange={(e) => setFormData({ ...formData, type: e.target.value as SchoolType })}
+                              onChange={(e) => setFormData({ ...formData, type: e.target.value as UnitType })}
                               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
                               required
                             >
                               <option value="">Selecione o tipo</option>
-                              {SCHOOL_TYPES.map(type => (
+                              {UNIT_TYPES.map(type => (
                                 <option key={type.value} value={type.value}>
                                   {type.label}
                                 </option>
@@ -889,137 +831,13 @@ export default function SystemAdminSchoolsPage() {
                           </div>
                           {formData.type && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              {SCHOOL_TYPES.find(t => t.value === formData.type)?.description}
+                              {UNIT_TYPES.find(t => t.value === formData.type)?.description}
                             </p>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Informações de Localização */}
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-primary" />
-                        Localização
-                      </h4>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Endereço
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            placeholder="Rua, número, complemento"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Cidade
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            placeholder="Nome da cidade"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Estado
-                          </label>
-                          <select
-                            value={formData.state}
-                            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
-                          >
-                            <option value="">Selecione</option>
-                            <option value="AC">Acre</option>
-                            <option value="AL">Alagoas</option>
-                            <option value="AP">Amapá</option>
-                            <option value="AM">Amazonas</option>
-                            <option value="BA">Bahia</option>
-                            <option value="CE">Ceará</option>
-                            <option value="DF">Distrito Federal</option>
-                            <option value="ES">Espírito Santo</option>
-                            <option value="GO">Goiás</option>
-                            <option value="MA">Maranhão</option>
-                            <option value="MT">Mato Grosso</option>
-                            <option value="MS">Mato Grosso do Sul</option>
-                            <option value="MG">Minas Gerais</option>
-                            <option value="PA">Pará</option>
-                            <option value="PB">Paraíba</option>
-                            <option value="PR">Paraná</option>
-                            <option value="PE">Pernambuco</option>
-                            <option value="PI">Piauí</option>
-                            <option value="RJ">Rio de Janeiro</option>
-                            <option value="RN">Rio Grande do Norte</option>
-                            <option value="RS">Rio Grande do Sul</option>
-                            <option value="RO">Rondônia</option>
-                            <option value="RR">Roraima</option>
-                            <option value="SC">Santa Catarina</option>
-                            <option value="SP">São Paulo</option>
-                            <option value="SE">Sergipe</option>
-                            <option value="TO">Tocantins</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            CEP
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.zip_code}
-                            onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            placeholder="00000-000"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Informações de Contato */}
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-primary" />
-                        Contato
-                      </h4>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Telefone
-                          </label>
-                          <input
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            placeholder="(00) 0000-0000"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            E-mail
-                          </label>
-                          <input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            placeholder="contato@escola.edu.br"
-                          />
-                        </div>
-                      </div>
-                    </div>
 
                     {/* Configurações */}
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -1031,24 +849,24 @@ export default function SystemAdminSchoolsPage() {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${formData.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                              {formData.is_active ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                            <div className={`p-2 rounded-lg ${formData.active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                              {formData.active ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                             </div>
                             <div>
                               <label htmlFor="is_active" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
-                                Status da Escola
+                                Status da Unidade
                               </label>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {formData.is_active ? 'Escola ativa e operacional' : 'Escola inativa ou em manutenção'}
+                                {formData.active ? 'Unidade ativa e operacional' : 'Unidade inativa ou em manutenção'}
                               </p>
                             </div>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
                               type="checkbox"
-                              id="is_active"
-                              checked={formData.is_active}
-                              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                              id="active"
+                              checked={formData.active}
+                              onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                               className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/40 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
@@ -1079,17 +897,17 @@ export default function SystemAdminSchoolsPage() {
                         {submitting ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            {editingSchool ? 'Atualizando...' : 'Criando...'}
+                            {editingUnit ? 'Atualizando...' : 'Criando...'}
                           </>
-                        ) : editingSchool ? (
+                        ) : editingUnit ? (
                           <>
                             <Edit className="w-4 h-4" />
-                            Atualizar Escola
+                            Atualizar Unidade
                           </>
                         ) : (
                           <>
                             <Plus className="w-4 h-4" />
-                            Criar Escola
+                            Criar Unidade
                           </>
                         )}
                       </button>

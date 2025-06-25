@@ -26,20 +26,17 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('role_permissions').del();
   await knex('permissions').del();
   await knex('roles').del();
-  await knex('institutions').del();
+  await knex('institution').del();
 
   console.log('✅ Tabelas limpas com sucesso');
 
   // 1. Inserir instituições
-  const institutions = await knex('institutions').insert([
+  const institutions = await knex('institution').insert([
     {
       name: 'Sabercon Educação',
       code: 'SABERCON',
       description: 'Instituição principal do sistema Sabercon',
-      address: 'Rua da Educação, 123',
-      city: 'São Paulo',
-      state: 'SP',
-      zip_code: '01234-567',
+      type: 'UNIVERSITY',
       phone: '(11) 1234-5678',
       email: 'contato@sabercon.edu.br',
       website: 'https://sabercon.edu.br',
@@ -49,10 +46,7 @@ export async function seed(knex: Knex): Promise<void> {
       name: 'Instituto Federal de São Paulo',
       code: 'IFSP',
       description: 'Instituto Federal de São Paulo, referência em educação técnica e tecnológica',
-      address: 'Av. Principal, 456',
-      city: 'São Paulo',
-      state: 'SP',
-      zip_code: '20000-000',
+      type: 'TECH_CENTER',
       phone: '(21) 9876-5432',
       email: 'contato@ifsp.edu.br',
       status: 'active'

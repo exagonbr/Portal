@@ -258,7 +258,7 @@ export class AuthService {
       // Buscar instituição padrão se não fornecida
       let institutionId = userData.institution_id;
       if (!institutionId) {
-        const defaultInstitution = await db('institutions')
+        const defaultInstitution = await db('institution')
           .where('is_active', true)
           .first();
         institutionId = defaultInstitution?.id;

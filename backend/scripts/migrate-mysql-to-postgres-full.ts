@@ -61,8 +61,8 @@ function normalizeTableName(name: string): string {
     'usuarios': 'users',
     'usuários': 'users',
     'arquivos': 'files',
-    'instituicoes': 'institutions',
-    'instituições': 'institutions',
+    'instituicoes': 'institution',
+    'instituições': 'institution',
     'escolas': 'schools',
     'colecoes': 'collections',
     'coleções': 'collections',
@@ -80,7 +80,7 @@ function normalizeTableName(name: string): string {
     // Singular para plural - NOTA: Estes só serão aplicados se não
     // estiverem em conflito com as regras acima ou abaixo
     'user': 'users',
-    'institution': 'institutions',
+    'institution': 'institution',
     'file': 'files',
     'unit': 'schools',
     'collection': 'collections',
@@ -420,7 +420,6 @@ function getEquivalentTable(tableName: string): string {
     'user': 'user',
     'users': 'user',
     'institution': 'institution',
-    'institutions': 'institution',
     'file': 'file',
     'files': 'file',
     
@@ -626,7 +625,7 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
       throw new Error('Role TEACHER não encontrada no PostgreSQL');
     }
     
-    const defaultInstitution = await pg('institutions').where('code', 'DEFAULT_MIGRATED').first();
+    const defaultInstitution = await pg('institution').where('code', 'DEFAULT_MIGRATED').first();
     if (!defaultInstitution) {
       throw new Error('Instituição padrão para migração não encontrada');
     }

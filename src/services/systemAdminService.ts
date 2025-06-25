@@ -173,7 +173,7 @@ class SystemAdminService {
    */
   async getUsersByRole(): Promise<Record<string, number>> {
     try {
-      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`${this.baseUrl}/users/stats`);
+      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`${this.baseUrl}/user/stats`);
       
       if (response.success && response.data) {
         return response.data.data?.users_by_role || {};

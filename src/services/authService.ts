@@ -157,7 +157,7 @@ export class AuthService {
         return null;
       }
 
-      const response = await apiClient.get<UserWithRoleDto>('/users/me');
+      const response = await apiClient.get<UserWithRoleDto>('/user/me');
 
       if (!response.success || !response.data) {
         // Token pode estar expirado, limpa dados
@@ -349,7 +349,7 @@ export class AuthService {
    */
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     try {
-      const response = await apiClient.post('/users/me/change-password', {
+      const response = await apiClient.post('/user/me/change-password', {
         currentPassword,
         newPassword
       });

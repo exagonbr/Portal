@@ -257,7 +257,7 @@ export default function CreateUserForm({ onClose, onSuccess, roles, institutions
       console.log('📤 Enviando dados para o backend:', {
         ...formData,
         password: '***', // Não loggar a senha
-        endpoint: '/api/users',
+        endpoint: '/api/user',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

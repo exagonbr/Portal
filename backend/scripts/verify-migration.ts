@@ -24,7 +24,7 @@ async function verifyMigration() {
     }
 
     // 2. Verificar instituição padrão
-    const defaultInstitution = await pg('institutions')
+    const defaultInstitution = await pg('institution')
       .where('code', 'MYSQL_MIGRATED')
       .first();
     
@@ -53,7 +53,7 @@ async function verifyMigration() {
     const userCount = await pg('users').count('* as count').first();
     console.log(`   👥 ${userCount?.count || 0} usuários total`);
     
-    const institutionCount = await pg('institutions').count('* as count').first();
+    const institutionCount = await pg('institution').count('* as count').first();
     console.log(`   🏢 ${institutionCount?.count || 0} instituições`);
     
     const schoolCount = await pg('schools').count('* as count').first();

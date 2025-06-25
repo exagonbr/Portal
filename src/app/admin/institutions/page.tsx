@@ -109,15 +109,18 @@ export default function ManageInstitutions() {
         }
 
         // Mapear tipos do backend para o frontend
-        const mapInstitutionType = (backendType: string): 'PUBLIC' | 'PRIVATE' | 'MIXED' => {
+        const mapInstitutionType = (backendType: string): 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER' => {
           switch (backendType) {
             case 'SCHOOL':
+              return 'SCHOOL'
             case 'COLLEGE':
+              return 'COLLEGE'
             case 'UNIVERSITY':
+              return 'UNIVERSITY'
             case 'TECH_CENTER':
-              return 'PUBLIC' // Por padrão, mapear para público
+              return 'TECH_CENTER'
             default:
-              return 'PUBLIC'
+              return 'SCHOOL'
           }
         }
 
@@ -125,23 +128,28 @@ export default function ManageInstitutions() {
           id: institution.id,
           name: institution.name,
           code: institution.code,
-          cnpj: institution.cnpj || '', // CNPJ pode não existir na tabela atual
+          cnpj: '', // Campo não existe na tabela institution atual
           description: institution.description || '',
           address: formatAddress(institution),
           phone: institution.phone || '',
           email: institution.email || '',
           website: institution.website || '',
-          logo: institution.logo || '',
+          logo: institution.logo_url || '',
           type: mapInstitutionType(institution.type),
           created_at: institution.created_at,
           updated_at: institution.updated_at,
           created_by: institution.created_by || '',
-          active: institution.is_active ?? true,
+          active: institution.is_active ?? (institution.status === 'active'),
           users_count: institution.users_count || 0,
           courses_count: institution.courses_count || 0,
           schools_count: institution.schools_count || 0,
           settings: {},
-          schools: []
+          schools: [],
+          // Campos adicionais da tabela institution
+          city: institution.city || '',
+          state: institution.state || '',
+          zip_code: institution.zip_code || '',
+          status: institution.status || 'active'
         }
       })
       
@@ -231,7 +239,7 @@ export default function ManageInstitutions() {
         phone: data.phone,
         email: data.email,
         active: data.active,
-        type: InstitutionType.PUBLIC // Valor padrão, pode ser ajustado conforme necessário
+        type: InstitutionType.SCHOOL // Valor padrão, pode ser ajustado conforme necessário
       }
 
       if (selectedInstitution) {
@@ -294,7 +302,7 @@ export default function ManageInstitutions() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-4">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Gerenciamento de Instituição</h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">Gerencie as instituições do sistema</p>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">Gerencie a instituição do sistema</p>
               </div>
               <div className="flex-shrink-0">
                 <Button onClick={() => openModal('create')} className="flex items-center gap-2 w-full sm:w-auto justify-center">
@@ -361,7 +369,7 @@ export default function ManageInstitutions() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
-                    placeholder="Buscar instituições..."
+                    placeholder="Buscar instituição..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
@@ -399,7 +407,7 @@ export default function ManageInstitutions() {
                           </div>
                         </th>
                         <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <span>CNPJ/Código</span>
+                          <span>Código/Tipo</span>
                         </th>
                         <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           <div className="flex items-center justify-center space-x-1">
@@ -411,6 +419,11 @@ export default function ManageInstitutions() {
                           <div className="flex items-center justify-center space-x-1">
                             <Users className="w-4 h-4 text-gray-600" />
                             <span>Usuários</span>
+                          </div>
+                        </th>
+                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          <div className="flex items-center space-x-1">
+                            <span>Localização</span>
                           </div>
                         </th>
                         <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -439,7 +452,10 @@ export default function ManageInstitutions() {
                                 <div className="text-xs text-gray-500">
                                   {institution.type && (
                                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600 mr-2">
-                                      {institution.type === 'PUBLIC' ? 'Pública' : institution.type === 'PRIVATE' ? 'Privada' : institution.type === 'MIXED' ? 'Mista' : 'Pública'}
+                                      {institution.type === 'SCHOOL' ? 'Escola' :
+                                       institution.type === 'COLLEGE' ? 'Faculdade' :
+                                       institution.type === 'UNIVERSITY' ? 'Universidade' :
+                                       institution.type === 'TECH_CENTER' ? 'Centro Técnico' : 'Escola'}
                                     </span>
                                   )}
                                   ID: {institution.id.slice(0, 8)}...
@@ -449,14 +465,17 @@ export default function ManageInstitutions() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="text-sm text-gray-900">
-                              {institution.cnpj && (
-                                <div className="font-mono text-xs">{institution.cnpj}</div>
+                              {institution.code && (
+                                <div className="font-mono text-xs font-semibold">{institution.code}</div>
                               )}
-                              {institution.code && !institution.cnpj && (
-                                <div className="text-xs text-gray-600">{institution.code}</div>
-                              )}
-                              {!institution.cnpj && !institution.code && (
-                                <span className="text-xs text-gray-400">-</span>
+                              <div className="text-xs text-gray-600 mt-1">
+                                {institution.type === 'SCHOOL' ? 'Escola' :
+                                 institution.type === 'COLLEGE' ? 'Faculdade' :
+                                 institution.type === 'UNIVERSITY' ? 'Universidade' :
+                                 institution.type === 'TECH_CENTER' ? 'Centro Técnico' : 'Escola'}
+                              </div>
+                              {!institution.code && (
+                                <span className="text-xs text-gray-400">Sem código</span>
                               )}
                             </div>
                           </td>
@@ -474,6 +493,26 @@ export default function ManageInstitutions() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="text-sm text-gray-900">
+                              {institution.city && (
+                                <div className="flex items-center mb-1">
+                                  <span className="text-xs text-gray-500 mr-1">🏙️</span>
+                                  <span className="truncate max-w-32">{institution.city}</span>
+                                  {institution.state && <span className="text-gray-400 ml-1">/{institution.state}</span>}
+                                </div>
+                              )}
+                              {institution.zip_code && (
+                                <div className="flex items-center">
+                                  <span className="text-xs text-gray-500 mr-1">📮</span>
+                                  <span className="font-mono text-xs">{institution.zip_code}</span>
+                                </div>
+                              )}
+                              {!institution.city && !institution.zip_code && (
+                                <span className="text-xs text-gray-400">Sem localização</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="text-sm text-gray-900">
                               {institution.email && (
                                 <div className="flex items-center mb-1">
                                   <span className="text-xs text-gray-500 mr-1">📧</span>
@@ -481,12 +520,20 @@ export default function ManageInstitutions() {
                                 </div>
                               )}
                               {institution.phone && (
-                                <div className="flex items-center">
+                                <div className="flex items-center mb-1">
                                   <span className="text-xs text-gray-500 mr-1">📞</span>
                                   <span>{institution.phone}</span>
                                 </div>
                               )}
-                              {!institution.email && !institution.phone && (
+                              {institution.website && (
+                                <div className="flex items-center">
+                                  <span className="text-xs text-gray-500 mr-1">🌐</span>
+                                  <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-xs truncate max-w-24">
+                                    {institution.website.replace(/^https?:\/\//, '')}
+                                  </a>
+                                </div>
+                              )}
+                              {!institution.email && !institution.phone && !institution.website && (
                                 <span className="text-xs text-gray-400">Sem contato</span>
                               )}
                             </div>
@@ -549,12 +596,20 @@ export default function ManageInstitutions() {
                               <div className="flex flex-wrap items-center gap-2 mb-1">
                                 {institution.type && (
                                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                    {institution.type === 'PUBLIC' ? 'Pública' : institution.type === 'PRIVATE' ? 'Privada' : 'Mista'}
+                                    {institution.type === 'SCHOOL' ? 'Escola' :
+                                     institution.type === 'COLLEGE' ? 'Faculdade' :
+                                     institution.type === 'UNIVERSITY' ? 'Universidade' :
+                                     institution.type === 'TECH_CENTER' ? 'Centro Técnico' : 'Escola'}
+                                  </span>
+                                )}
+                                {institution.code && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-600 font-mono">
+                                    {institution.code}
                                   </span>
                                 )}
                               </div>
                               <p className="text-sm text-gray-500">
-                                {institution.cnpj ? `CNPJ: ${institution.cnpj}` : `ID: ${institution.id.slice(0, 8)}...`}
+                                ID: {institution.id.slice(0, 8)}...
                               </p>
                             </div>
                           </div>

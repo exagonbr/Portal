@@ -8,7 +8,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('level').notNullable();
     table.string('type').notNullable();
     table.boolean('active').defaultTo(true);
-    table.uuid('institution_id').notNullable().references('id').inTable('institutions').onDelete('CASCADE');
+    table.uuid('institution_id').notNullable().references('id').inTable('institution').onDelete('CASCADE');
     table.timestamp('created_at').defaultTo(knex.fn.now());
     table.timestamp('updated_at').defaultTo(knex.fn.now());
   });

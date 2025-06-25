@@ -51,7 +51,7 @@ export async function POST(
     }
 
     // Buscar uma instituição padrão (primeira ativa)
-    const defaultInstitution = await db('institutions')
+    const defaultInstitution = await db('institution')
       .where({ is_active: true })
       .first()
 
