@@ -164,6 +164,28 @@
   --spacing-md: calc(var(--spacing-base) * 4);
   --spacing-lg: calc(var(--spacing-base) * 6);
   --spacing-xl: calc(var(--spacing-base) * 8);
+}
+
+/* Utilities para line-clamp */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 
   /* Breakpoints */
   --breakpoint-sm: 640px;

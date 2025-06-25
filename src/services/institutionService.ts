@@ -22,18 +22,8 @@ import {
   ensureLegacyCompatibility
 } from '../utils/validation';
 
-// Re-exportar tipos para compatibilidade
-export { 
-  Institution, 
-  InstitutionDto,
-  CreateInstitutionDto,
-  UpdateInstitutionDto,
-  InstitutionType, 
-  INSTITUTION_TYPE_LABELS,
-  type InstitutionFilter as InstitutionFilters,
-  type InstitutionFilter as InstitutionListOptions,
-  type InstitutionFilter as InstitutionQueryParams
-};
+// Tipos importados e disponíveis para uso interno
+// Remover re-exports para evitar problemas de dependência circular
 
 const API_BASE = `${API_BASE_URL}/institutions`;
 

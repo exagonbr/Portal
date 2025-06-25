@@ -1,41 +1,40 @@
 import { Router } from 'express';
 import { TvShowCompleteController } from '../controllers/TvShowCompleteController';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { requireRole } from '../middleware/auth';
+import { validateJWTSimple, requireRole } from '../middleware/auth';
 
 const router = Router();
 const tvShowController = new TvShowCompleteController();
 
 // Aplicar middleware de autenticação globalmente
-router.use(authMiddleware);
+router.use(validateJWTSimple);
 
 // ===================== TV SHOW ROUTES =====================
 
 // GET /api/tv-shows - Listar todas as coleções (com paginação e busca)
-router.get('/', tvShowController.getAllTvShows);
+router.get('/', tvShowController.getAllTvShows.bind(tvShowController));
 
 // GET /api/tv-shows/:id - Buscar coleção por ID
-router.get('/:id', tvShowController.getTvShowById);
+router.get('/:id', tvShowController.getTvShowById.bind(tvShowController));
 
 // POST /api/tv-shows - Criar nova coleção (apenas admin/teacher)
-router.post('/', requireRole(['admin', 'teacher']), tvShowController.createTvShow);
+router.post('/', requireRole(['admin', 'teacher']), tvShowController.createTvShow.bind(tvShowController));
 
 // PUT /api/tv-shows/:id - Atualizar coleção (apenas admin/teacher)
-router.put('/:id', requireRole(['admin', 'teacher']), tvShowController.updateTvShow);
+router.put('/:id', requireRole(['admin', 'teacher']), tvShowController.updateTvShow.bind(tvShowController));
 
 // DELETE /api/tv-shows/:id - Remover coleção (apenas admin)
-router.delete('/:id', requireRole(['admin']), tvShowController.deleteTvShow);
+router.delete('/:id', requireRole(['admin']), tvShowController.deleteTvShow.bind(tvShowController));
 
 // GET /api/tv-shows/:tvShowId/stats - Estatísticas da coleção
-router.get('/:tvShowId/stats', tvShowController.getTvShowStats);
+router.get('/:tvShowId/stats', tvShowController.getTvShowStats.bind(tvShowController));
 
 // ===================== VIDEO ROUTES =====================
 
-// GET /api/tv-shows/:tvShowId/videos - Listar vídeos da coleção
-router.get('/:tvShowId/videos', tvShowController.getVideosByTvShow);
+// GET /api/tv-shows/:tvShowId/videos - Listar vídeos de uma coleção
+router.get('/:tvShowId/videos', tvShowController.getVideosByTvShow.bind(tvShowController));
 
-// GET /api/tv-shows/:tvShowId/modules - Estrutura de módulos
-router.get('/:tvShowId/modules', tvShowController.getModulesStructure);
+// GET /api/tv-shows/:tvShowId/modules - Estrutura de módulos de vídeos
+router.get('/:tvShowId/modules', tvShowController.getVideosByTvShowGrouped.bind(tvShowController));
 
 // POST /api/tv-shows/videos - Criar novo vídeo (apenas admin/teacher)
 router.post('/videos', requireRole(['admin', 'teacher']), tvShowController.createVideo);

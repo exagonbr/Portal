@@ -31,7 +31,7 @@ import {
   TvShowFile,
   TvShowVideoFile,
   TvShowAuthor,
-  TvShowTargetAudience
+  TvShowGenre
 } from '../entities/TvShowComplete';
 
 dotenv.config();
@@ -43,7 +43,7 @@ export const dataSourceOptions: DataSourceOptions = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'root',
+  password: String(process.env.DB_PASSWORD || 'root'), // Garantir que seja string para evitar erro SASL
   database: process.env.DB_NAME || 'portal_sabercon',
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   synchronize: false, // Disabled to prevent conflicts with Knex migrations
@@ -79,7 +79,7 @@ export const dataSourceOptions: DataSourceOptions = {
     TvShowFile,
     TvShowVideoFile,
     TvShowAuthor,
-    TvShowTargetAudience
+    TvShowGenre
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],

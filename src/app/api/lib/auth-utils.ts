@@ -42,7 +42,7 @@ export async function validateJWTToken(token: string) {
         };
       }
     } catch (base64Error) {
-      console.error('Both JWT and base64 validation failed:', { jwtError: jwtError.message, base64Error: base64Error.message });
+      console.error('Both JWT and base64 validation failed:', { jwtError: jwtError instanceof Error ? jwtError.message : String(jwtError), base64Error: base64Error instanceof Error ? base64Error.message : String(base64Error) });
     }
     
     return null;

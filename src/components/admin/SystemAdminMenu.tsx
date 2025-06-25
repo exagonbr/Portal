@@ -115,12 +115,6 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           icon: 'edit_note',
           label: 'Gerenciar Coleções',
           permission: 'canManageSystem'
-        },
-        {
-          href: '/portal/collections/books',
-          icon: 'book',
-          label: 'Coleção de Livros',
-          permission: 'canManageSystem'
         }
       ]
     },

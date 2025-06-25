@@ -97,6 +97,7 @@ model User {
   quiz_attempts     QuizAttempt[]
   notifications     UserNotification[]
   group_memberships GroupMember[]
+  certificates      Certificate[]
   
   @@index([email])
   @@index([role])
@@ -174,6 +175,7 @@ model Course {
   units          Unit[]
   enrollments    Enrollment[]
   classes        Class[]
+  certificates   Certificate[]
   
   @@index([slug])
   @@index([status])
@@ -558,10 +560,35 @@ model TVShow {
   manual_support_path  String?
   contract_term_end    DateTime
   created_at           DateTime @default(now())
-  updated_at           DateTime @updatedAt
+  updated_at           DateTime @default(now()) @updatedAt
 
   @@map("tv_show")
   @@index([popularity])
   @@index([vote_average])
   @@index([first_air_date])
+}
+
+model Certificate {
+  id                String   @id @default(uuid())
+  user_id           String
+  user              User     @relation(fields: [user_id], references: [id])
+  course_id         String?
+  course            Course?  @relation(fields: [course_id], references: [id])
+  title             String
+  description       String?
+  certificate_type  String   @default("COURSE_COMPLETION") // COURSE_COMPLETION, SKILL_CERTIFICATION, PARTICIPATION, ACHIEVEMENT
+  issued_date       DateTime @default(now())
+  expiry_date       DateTime?
+  certificate_url   String?  // URL para o arquivo PDF do certificado
+  verification_code String   @unique
+  metadata          Json?    // Dados adicionais como notas, horas de curso, etc.
+  is_active         Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@index([user_id])
+  @@index([course_id])
+  @@index([verification_code])
+  @@index([certificate_type])
+  @@index([issued_date])
 }

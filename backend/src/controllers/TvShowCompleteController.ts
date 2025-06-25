@@ -10,439 +10,671 @@ export class TvShowCompleteController {
 
   // ===================== TV SHOW CRUD =====================
 
-  getAllTvShows = async (req: Request, res: Response) => {
+  async getAllTvShows(req: Request, res: Response): Promise<Response> {
     try {
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 12;
-      const search = req.query.search as string;
+      const limit = parseInt(req.query.limit as string) || 10;
 
-      let result;
-      if (search) {
-        result = await this.tvShowService.searchTvShows(search, page, limit);
-      } else {
-        result = await this.tvShowService.getAllTvShows(page, limit);
-      }
+      const result = await this.tvShowService.getAllTvShows(page, limit);
 
-      res.json({
+      return res.json({
         success: true,
         data: result
       });
     } catch (error) {
-      res.status(500).json({
+      console.error('Erro no controller getAllTvShows:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao buscar coleções de TV',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  getTvShowById = async (req: Request, res: Response) => {
+  async getTvShowById(req: Request, res: Response): Promise<Response> {
     try {
-      const id = parseInt(req.params.id);
-      const tvShow = await this.tvShowService.getTvShowById(id);
+      const tvShowId = parseInt(req.params.id);
+      
+      if (isNaN(tvShowId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do TV Show inválido'
+        });
+      }
 
-      res.json({
+      const tvShow = await this.tvShowService.getTvShowById(tvShowId);
+      
+      // Buscar também os vídeos organizados por módulos
+      const modules = await this.tvShowService.getVideosByTvShowGrouped(tvShowId);
+      
+      return res.json({
         success: true,
-        data: tvShow
+        data: {
+          ...tvShow,
+          modules
+        }
       });
     } catch (error) {
-      res.status(404).json({
+      console.error('Erro no controller getTvShowById:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Coleção não encontrada',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: error instanceof Error ? error.message : 'Erro interno do servidor'
       });
     }
-  };
+  }
 
-  createTvShow = async (req: Request, res: Response) => {
+  async createTvShow(req: Request, res: Response): Promise<Response> {
     try {
       const tvShow = await this.tvShowService.createTvShow(req.body);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
-        message: 'Coleção criada com sucesso',
         data: tvShow
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller createTvShow:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao criar coleção',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  updateTvShow = async (req: Request, res: Response) => {
+  async updateTvShow(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       const tvShow = await this.tvShowService.updateTvShow(id, req.body);
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Coleção atualizada com sucesso',
         data: tvShow
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller updateTvShow:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao atualizar coleção',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  deleteTvShow = async (req: Request, res: Response) => {
+  async deleteTvShow(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       await this.tvShowService.deleteTvShow(id);
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Coleção removida com sucesso'
+        message: 'TV Show deletado com sucesso'
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller deleteTvShow:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao remover coleção',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
+
+  async searchTvShows(req: Request, res: Response): Promise<Response> {
+    try {
+      const query = req.query.q as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      if (!query) {
+        return res.status(400).json({
+          success: false,
+          message: 'Query de busca é obrigatória'
+        });
+      }
+
+      const result = await this.tvShowService.searchTvShows(query, page, limit);
+
+      return res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Erro no controller searchTvShows:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
 
   // ===================== VIDEO CRUD =====================
 
-  getVideosByTvShow = async (req: Request, res: Response) => {
+  async getVideosByTvShow(req: Request, res: Response): Promise<Response> {
     try {
       const tvShowId = parseInt(req.params.tvShowId);
+      
+      if (isNaN(tvShowId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do TV Show inválido'
+        });
+      }
+
       const videos = await this.tvShowService.getVideosByTvShow(tvShowId);
 
-      res.json({
+      return res.json({
         success: true,
         data: videos
       });
     } catch (error) {
-      res.status(500).json({
+      console.error('Erro no controller getVideosByTvShow:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao buscar vídeos',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  getModulesStructure = async (req: Request, res: Response) => {
+  async getVideosByTvShowGrouped(req: Request, res: Response): Promise<Response> {
     try {
       const tvShowId = parseInt(req.params.tvShowId);
-      const modules = await this.tvShowService.getModulesStructure(tvShowId);
+      
+      if (isNaN(tvShowId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do TV Show inválido'
+        });
+      }
 
-      res.json({
+      const moduleGroups = await this.tvShowService.getVideosByTvShowGrouped(tvShowId);
+
+      return res.json({
         success: true,
-        data: modules
+        data: moduleGroups
       });
     } catch (error) {
-      res.status(500).json({
+      console.error('Erro no controller getVideosByTvShowGrouped:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao buscar estrutura de módulos',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  getVideoById = async (req: Request, res: Response) => {
+  async getVideoById(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       const video = await this.tvShowService.getVideoById(id);
 
-      res.json({
+      return res.json({
         success: true,
         data: video
       });
     } catch (error) {
-      res.status(404).json({
+      console.error('Erro no controller getVideoById:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Vídeo não encontrado',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  createVideo = async (req: Request, res: Response) => {
+  async createVideo(req: Request, res: Response): Promise<Response> {
     try {
       const video = await this.tvShowService.createVideo(req.body);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
-        message: 'Vídeo criado com sucesso',
         data: video
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller createVideo:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao criar vídeo',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  updateVideo = async (req: Request, res: Response) => {
+  async updateVideo(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       const video = await this.tvShowService.updateVideo(id, req.body);
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Vídeo atualizado com sucesso',
         data: video
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller updateVideo:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao atualizar vídeo',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  deleteVideo = async (req: Request, res: Response) => {
+  async deleteVideo(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       await this.tvShowService.deleteVideo(id);
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Vídeo removido com sucesso'
+        message: 'Vídeo deletado com sucesso'
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller deleteVideo:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao remover vídeo',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
   // ===================== QUESTION CRUD =====================
 
-  getQuestionsByTvShow = async (req: Request, res: Response) => {
+  async getQuestionsByTvShow(req: Request, res: Response): Promise<Response> {
     try {
       const tvShowId = parseInt(req.params.tvShowId);
+      
+      if (isNaN(tvShowId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do TV Show inválido'
+        });
+      }
+
       const questions = await this.tvShowService.getQuestionsByTvShow(tvShowId);
 
-      res.json({
+      return res.json({
         success: true,
         data: questions
       });
     } catch (error) {
-      res.status(500).json({
+      console.error('Erro no controller getQuestionsByTvShow:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao buscar questões',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  getQuestionById = async (req: Request, res: Response) => {
+  async getQuestionById(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       const question = await this.tvShowService.getQuestionById(id);
 
-      res.json({
+      return res.json({
         success: true,
         data: question
       });
     } catch (error) {
-      res.status(404).json({
+      console.error('Erro no controller getQuestionById:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Questão não encontrada',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  createQuestion = async (req: Request, res: Response) => {
+  async createQuestion(req: Request, res: Response): Promise<Response> {
     try {
       const question = await this.tvShowService.createQuestion(req.body);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
-        message: 'Questão criada com sucesso',
         data: question
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller createQuestion:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao criar questão',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  updateQuestion = async (req: Request, res: Response) => {
+  async updateQuestion(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       const question = await this.tvShowService.updateQuestion(id, req.body);
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Questão atualizada com sucesso',
         data: question
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller updateQuestion:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao atualizar questão',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  deleteQuestion = async (req: Request, res: Response) => {
+  async deleteQuestion(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       await this.tvShowService.deleteQuestion(id);
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Questão removida com sucesso'
+        message: 'Questão deletada com sucesso'
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller deleteQuestion:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao remover questão',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
   // ===================== ANSWER CRUD =====================
 
-  createAnswer = async (req: Request, res: Response) => {
+  async getAnswersByQuestion(req: Request, res: Response): Promise<Response> {
+    try {
+      const questionId = parseInt(req.params.questionId);
+      
+      if (isNaN(questionId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID da questão inválido'
+        });
+      }
+
+      const answers = await this.tvShowService.getAnswersByQuestion(questionId);
+
+      return res.json({
+        success: true,
+        data: answers
+      });
+    } catch (error) {
+      console.error('Erro no controller getAnswersByQuestion:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  async createAnswer(req: Request, res: Response): Promise<Response> {
     try {
       const answer = await this.tvShowService.createAnswer(req.body);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
-        message: 'Resposta criada com sucesso',
         data: answer
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller createAnswer:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao criar resposta',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  updateAnswer = async (req: Request, res: Response) => {
+  async updateAnswer(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       const answer = await this.tvShowService.updateAnswer(id, req.body);
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Resposta atualizada com sucesso',
         data: answer
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller updateAnswer:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao atualizar resposta',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  deleteAnswer = async (req: Request, res: Response) => {
+  async deleteAnswer(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
+
       await this.tvShowService.deleteAnswer(id);
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Resposta removida com sucesso'
+        message: 'Resposta deletada com sucesso'
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller deleteAnswer:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao remover resposta',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
   // ===================== FILE CRUD =====================
 
-  getFilesByTvShow = async (req: Request, res: Response) => {
+  async getFilesByTvShow(req: Request, res: Response): Promise<Response> {
     try {
       const tvShowId = parseInt(req.params.tvShowId);
+      
+      if (isNaN(tvShowId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do TV Show inválido'
+        });
+      }
+
       const files = await this.tvShowService.getFilesByTvShow(tvShowId);
 
-      res.json({
+      return res.json({
         success: true,
         data: files
       });
     } catch (error) {
-      res.status(500).json({
+      console.error('Erro no controller getFilesByTvShow:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao buscar arquivos',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  createFile = async (req: Request, res: Response) => {
+  async createFile(req: Request, res: Response): Promise<Response> {
     try {
       const file = await this.tvShowService.createFile(req.body);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
-        message: 'Arquivo criado com sucesso',
         data: file
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller createFile:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao criar arquivo',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  deleteFile = async (req: Request, res: Response) => {
+  async updateFile(req: Request, res: Response): Promise<Response> {
     try {
       const id = parseInt(req.params.id);
-      await this.tvShowService.deleteFile(id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
 
-      res.json({
+      const file = await this.tvShowService.updateFile(id, req.body);
+
+      return res.json({
         success: true,
-        message: 'Arquivo removido com sucesso'
+        data: file
       });
     } catch (error) {
-      res.status(400).json({
+      console.error('Erro no controller updateFile:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao remover arquivo',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 
-  // ===================== UTILITY ENDPOINTS =====================
+  async deleteFile(req: Request, res: Response): Promise<Response> {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID inválido'
+        });
+      }
 
-  getTvShowStats = async (req: Request, res: Response) => {
+      await this.tvShowService.deleteFile(id);
+
+      return res.json({
+        success: true,
+        message: 'Arquivo deletado com sucesso'
+      });
+    } catch (error) {
+      console.error('Erro no controller deleteFile:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
+
+  // ===================== UTILITY METHODS =====================
+
+  async getTvShowStats(req: Request, res: Response): Promise<Response> {
     try {
       const tvShowId = parseInt(req.params.tvShowId);
+      
+      if (isNaN(tvShowId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do TV Show inválido'
+        });
+      }
+
       const stats = await this.tvShowService.getTvShowStats(tvShowId);
 
-      res.json({
+      return res.json({
         success: true,
         data: stats
       });
     } catch (error) {
-      res.status(500).json({
+      console.error('Erro no controller getTvShowStats:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Erro ao buscar estatísticas',
-        error: error instanceof Error ? error.message : 'Erro desconhecido'
+        message: 'Erro interno do servidor',
+        error: error instanceof Error ? error.message : String(error)
       });
     }
-  };
+  }
 } 

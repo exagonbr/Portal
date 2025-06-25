@@ -405,29 +405,72 @@ export const validateJWTSimple = async (
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'ExagonTech';
-    const decoded = jwt.verify(token, secret) as any;
-    
-    if (typeof decoded === 'string' || !decoded.userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Token inválido'
-      });
+    let userAuth: AuthTokenPayload;
+
+    try {
+      // Primeiro, tenta validar como JWT real
+      const secret = process.env.JWT_SECRET || 'ExagonTech';
+      const decoded = jwt.verify(token, secret) as any;
+      
+      if (typeof decoded === 'string' || !decoded.userId) {
+        throw new Error('Invalid JWT payload');
+      }
+      
+      userAuth = {
+        userId: decoded.userId,
+        email: decoded.email || '',
+        name: decoded.name || '',
+        role: decoded.role || 'user',
+        permissions: decoded.permissions || [],
+        institutionId: decoded.institutionId,
+        sessionId: decoded.sessionId,
+        iat: decoded.iat,
+        exp: decoded.exp
+      };
+    } catch (jwtError) {
+      // Se falhar na validação JWT, tenta decodificar como base64 (fallback tokens)
+      try {
+        const base64Decoded = Buffer.from(token, 'base64').toString('utf-8');
+        const fallbackData = JSON.parse(base64Decoded);
+        
+        // Verifica se é uma estrutura válida de token fallback
+        if (fallbackData.userId && fallbackData.email && fallbackData.role) {
+          // Verifica se o token não expirou
+          if (fallbackData.exp && fallbackData.exp < Math.floor(Date.now() / 1000)) {
+            return res.status(401).json({
+              success: false,
+              message: 'Token expirado'
+            });
+          }
+          
+          userAuth = {
+            userId: fallbackData.userId,
+            email: fallbackData.email,
+            name: fallbackData.name || fallbackData.userId,
+            role: fallbackData.role,
+            permissions: fallbackData.permissions || [],
+            institutionId: fallbackData.institutionId,
+            sessionId: fallbackData.sessionId,
+            iat: fallbackData.iat || Math.floor(Date.now() / 1000),
+            exp: fallbackData.exp || Math.floor(Date.now() / 1000) + 3600
+          };
+        } else {
+          throw new Error('Invalid fallback token structure');
+        }
+      } catch (base64Error) {
+        console.error('Erro na validação JWT simples - ambos JWT e base64 falharam:', { 
+          jwtError: jwtError instanceof Error ? jwtError.message : String(jwtError), 
+          base64Error: base64Error instanceof Error ? base64Error.message : String(base64Error),
+          token: token.substring(0, 20) + '...' 
+        });
+        return res.status(401).json({
+          success: false,
+          message: 'Token inválido ou expirado'
+        });
+      }
     }
     
-    // Criar objeto user mínimo sem validações complexas
-    req.user = {
-      userId: decoded.userId,
-      email: decoded.email || '',
-      name: decoded.name || '',
-      role: decoded.role || 'user',
-      permissions: decoded.permissions || [],
-      institutionId: decoded.institutionId,
-      sessionId: decoded.sessionId,
-      iat: decoded.iat,
-      exp: decoded.exp
-    };
-    
+    req.user = userAuth;
     next();
   } catch (error) {
     console.error('Erro na validação JWT simples:', error);

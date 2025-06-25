@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { institutionService, Institution } from '@/services/institutionService'
+import { institutionService } from '@/services/institutionService'
 import { InstitutionResponseDto } from '@/types/api'
+import { InstitutionType } from '@/types/common'
 import { useToast } from '@/components/ToastManager'
 import { InstitutionAddModal } from '@/components/InstitutionAddModal'
 import { InstitutionEditModal } from '@/components/InstitutionEditModal'
@@ -134,14 +135,14 @@ export default function ManageInstitutions() {
           active: institution.active ?? true,
           users_count: institution.users_count || 0,
           courses_count: institution.courses_count || 0,
-          schools_count: institution.schools_count || institution.schools?.length || 0,
-          settings: institution.settings,
-          schools: institution.schools || []
+          schools_count: institution.schools_count || 0,
+          settings: {},
+          schools: []
         }
       })
       
       setInstitutions(mappedInstitutions)
-      setTotalItems(response.pagination?.total || 0)
+      setTotalItems(response.total || 0)
       setCurrentPage(page)
 
       // Calcular estatísticas
@@ -219,14 +220,14 @@ export default function ManageInstitutions() {
   const handleSaveInstitution = async (data: any) => {
     try {
       // Converter dados do modal para o formato esperado pelo service
-      const institutionData: Partial<Institution> = {
+      const institutionData = {
         name: data.name,
         code: data.code,
         address: data.address,
         phone: data.phone,
         email: data.email,
         active: data.active,
-        type: 'PUBLIC' // Valor padrão, pode ser ajustado conforme necessário
+        type: InstitutionType.PUBLIC // Valor padrão, pode ser ajustado conforme necessário
       }
 
       if (selectedInstitution) {

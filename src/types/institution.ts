@@ -2,7 +2,6 @@ import {
   BaseEntity, 
   BaseEntityDto, 
   InstitutionType, 
-  ContactInfo, 
   BaseFilter,
   UUID,
   DateString,
@@ -11,11 +10,21 @@ import {
   INSTITUTION_TYPE_LABELS
 } from './common';
 
+// Re-export tipos importantes para garantir disponibilidade
 export { InstitutionType, INSTITUTION_TYPE_LABELS };
 
+// Cores para os tipos
+export const INSTITUTION_TYPE_COLORS: Record<InstitutionType, string> = {
+  PUBLIC: '#4CAF50',
+  PRIVATE: '#2196F3',
+  MIXED: '#FF9800'
+};
+
+// Interface principal da Instituição
 export interface Institution extends BaseEntity {
   name: string;
   code: string;
+  cnpj?: string;
   type: InstitutionType;
   description?: string;
   email?: Email;
@@ -29,9 +38,11 @@ export interface Institution extends BaseEntity {
   is_active: boolean;
 }
 
+// DTO da Instituição
 export interface InstitutionDto extends BaseEntityDto {
   name: string;
   code: string;
+  cnpj?: string;
   type: InstitutionType;
   description?: string;
   email?: Email;
@@ -42,15 +53,21 @@ export interface InstitutionDto extends BaseEntityDto {
   state?: string;
   zip_code?: string;
   logo_url?: string;
+  logo?: string; // Alias para logo_url para compatibilidade
   is_active: boolean;
+  active?: boolean; // Alias para is_active para compatibilidade
+  created_by?: string; // Campo adicional para compatibilidade
   schools_count?: number;
   users_count?: number;
   active_courses?: number;
+  courses_count?: number; // Alias para active_courses
 }
 
+// DTO para criação de Instituição
 export interface CreateInstitutionDto {
   name: string;
   code: string;
+  cnpj?: string;
   type: InstitutionType;
   description?: string;
   email?: Email;
@@ -64,9 +81,11 @@ export interface CreateInstitutionDto {
   is_active?: boolean;
 }
 
+// DTO para atualização de Instituição
 export interface UpdateInstitutionDto {
   name?: string;
   code?: string;
+  cnpj?: string;
   type?: InstitutionType;
   description?: string;
   email?: Email;
@@ -80,6 +99,7 @@ export interface UpdateInstitutionDto {
   is_active?: boolean;
 }
 
+// Interface para filtros de Instituição
 export interface InstitutionFilter extends BaseFilter {
   type?: InstitutionType;
   city?: string;
@@ -87,6 +107,7 @@ export interface InstitutionFilter extends BaseFilter {
   sortBy?: keyof Institution;
 }
 
+// Interface para estatísticas de Instituição
 export interface InstitutionStats {
   total_institutions: number;
   active_institutions: number;
@@ -97,12 +118,7 @@ export interface InstitutionStats {
   institutions_by_state: Record<string, number>;
 }
 
-export const INSTITUTION_TYPE_COLORS: Record<InstitutionType, string> = {
-  PUBLIC: '#4CAF50',
-  PRIVATE: '#2196F3',
-  MIXED: '#FF9800'
-};
-
+// Estados brasileiros
 export const BRAZILIAN_STATES = [
   { value: 'AC', label: 'Acre' },
   { value: 'AL', label: 'Alagoas' },
