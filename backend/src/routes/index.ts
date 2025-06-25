@@ -7,7 +7,7 @@ import db from '../config/database';
 // API Routes
 import pushSubscriptionRoutes from './pushSubscription';
 import notificationsRoutes from './notifications';
-import institutionsRouter from './institutions';
+import institutionsPublicRouter from './institutions.public';
 import usersRouter from './users';
 import coursesRouter from './courses';
 import modulesRouter from './modules';
@@ -69,7 +69,7 @@ router.get('/docs.json', (req, res) => {
 // API Routes
 router.use('/push-subscriptions', pushSubscriptionRoutes);
 router.use('/notifications', notificationsRoutes);
-router.use('/institutions', institutionsRouter);
+router.use('/institutions', institutionsPublicRouter);
 router.use('/users', usersRouter);
 router.use('/courses', coursesRouter);
 router.use('/modules', modulesRouter);

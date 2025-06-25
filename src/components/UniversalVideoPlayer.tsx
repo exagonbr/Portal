@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward, Settings, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatVideoTime, formatVideoDuration } from '@/utils/date';
 
 interface VideoSource {
   id: string;
@@ -162,11 +163,8 @@ export default function UniversalVideoPlayer({
     setIsFullscreen(false);
   };
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
+  // Usando a função utilitária de formatação de tempo
+  const formatTime = formatVideoTime;
 
   const getVideoSource = (video: VideoSource) => {
     switch (video.type) {
@@ -334,7 +332,7 @@ export default function UniversalVideoPlayer({
                         {video.duration && (
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            <span>{video.duration}</span>
+                            <span>{formatVideoDuration(video.duration)}</span>
                           </div>
                         )}
                         <span>Ep. {video.episode_number || index + 1}</span>
@@ -470,7 +468,7 @@ export default function UniversalVideoPlayer({
                 {currentVideo.duration && (
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    <span>{currentVideo.duration}</span>
+                    <span>{formatVideoDuration(currentVideo.duration)}</span>
                   </div>
                 )}
               </div>

@@ -5,6 +5,7 @@ import { TVShowCollection, TVShowVideo, TVShowModuleStructure } from '@/types/co
 import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, FileText } from 'lucide-react'
 import SessionVideoPlayer from '@/components/SessionVideoPlayer'
 import ShowVideoPlayer from '@/components/ShowVideoPlayer'
+import { formatDate, formatYear } from '@/utils/date'
 
 interface TVShowListItem {
   id: number
@@ -62,9 +63,6 @@ export default function TVShowsManagePage() {
   // Estados para o player de sessão
   const [showSessionPlayer, setShowSessionPlayer] = useState(false)
   const [selectedShowId, setSelectedShowId] = useState<number | null>(null)
-  const [selectedShowName, setSelectedShowName] = useState<string>('')
-  const [currentSessionVideos, setCurrentSessionVideos] = useState<TVShowVideo[]>([])
-  const [currentSessionNumber, setCurrentSessionNumber] = useState(1)
 
   useEffect(() => {
     loadTvShows()
@@ -298,10 +296,10 @@ export default function TVShowsManagePage() {
 
   // Função para abrir o player de sessão
   const handleWatchSession = (moduleKey: string, moduleVideos: TVShowVideo[]) => {
-    const sessionNumber = parseInt(moduleKey.split('_')[1]) || 1
-    setCurrentSessionVideos(moduleVideos)
-    setCurrentSessionNumber(sessionNumber)
-    setShowSessionPlayer(true)
+    if (selectedTvShow) {
+      setSelectedShowId(selectedTvShow.id)
+      setShowSessionPlayer(true)
+    }
   }
 
   if (currentView === 'videos' && selectedTvShow) {
@@ -368,7 +366,7 @@ export default function TVShowsManagePage() {
                         <div>
                           <span className="text-gray-300 text-sm">Data de Lançamento:</span>
                           <p className="text-lg font-medium">
-                            {new Date(selectedTvShow.first_air_date).toLocaleDateString('pt-BR')}
+                            {formatDate(selectedTvShow.first_air_date)}
                           </p>
                         </div>
                       )}
@@ -909,7 +907,7 @@ export default function TVShowsManagePage() {
                 {tvShow.first_air_date && (
                   <div className="mt-3 flex items-center gap-1 text-xs text-gray-500">
                     <Calendar className="w-3 h-3" />
-                    <span>{new Date(tvShow.first_air_date).getFullYear()}</span>
+                    <span>{formatYear(tvShow.first_air_date)}</span>
                   </div>
                 )}
               </div>
@@ -953,12 +951,10 @@ export default function TVShowsManagePage() {
         </div>
       )}
 
-      {/* Session Video Player */}
-      {showSessionPlayer && selectedTvShow && (
-        <SessionVideoPlayer
-          sessionVideos={currentSessionVideos}
-          sessionNumber={currentSessionNumber}
-          collectionName={selectedTvShow.name}
+      {/* Show Video Player */}
+      {showSessionPlayer && selectedShowId && (
+        <ShowVideoPlayer
+          showId={selectedShowId}
           onClose={() => setShowSessionPlayer(false)}
         />
       )}

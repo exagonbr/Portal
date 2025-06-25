@@ -33,6 +33,10 @@ export function setupRoutes(app: express.Application): void {
   // Mount API Routes
   app.use('/api', apiRoutes);
 
+  // Mount direct routes for compatibility (without /api prefix)
+  // These routes will have optional authentication for public endpoints
+  app.use('/', apiRoutes);
+
   // 404 handler
   app.use('*', (req, res) => {
     res.status(404).json({
