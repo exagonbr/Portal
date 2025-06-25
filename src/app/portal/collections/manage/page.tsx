@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { TVShowCollection, TVShowVideo, TVShowModuleStructure } from '@/types/collections'
-import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen } from 'lucide-react'
+import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, FileText } from 'lucide-react'
+import SessionVideoPlayer from '@/components/SessionVideoPlayer'
 
 interface TVShowListItem {
   id: number
@@ -56,6 +57,11 @@ export default function TVShowsManagePage() {
     sortBy: 'name' // name, date, duration, popularity
   })
   const [showFilters, setShowFilters] = useState(false)
+
+  // Estados para o player de sessão
+  const [showSessionPlayer, setShowSessionPlayer] = useState(false)
+  const [currentSessionVideos, setCurrentSessionVideos] = useState<TVShowVideo[]>([])
+  const [currentSessionNumber, setCurrentSessionNumber] = useState(1)
 
   useEffect(() => {
     loadTvShows()
@@ -287,6 +293,14 @@ export default function TVShowsManagePage() {
 
   const filteredTvShows = applyFilters()
 
+  // Função para abrir o player de sessão
+  const handleWatchSession = (moduleKey: string, moduleVideos: TVShowVideo[]) => {
+    const sessionNumber = parseInt(moduleKey.split('_')[1]) || 1
+    setCurrentSessionVideos(moduleVideos)
+    setCurrentSessionNumber(sessionNumber)
+    setShowSessionPlayer(true)
+  }
+
   if (currentView === 'videos' && selectedTvShow) {
     return (
       <div className="max-w-7xl mx-auto p-6">
@@ -402,6 +416,13 @@ export default function TVShowsManagePage() {
                           <span>Popularidade: {selectedTvShow.popularity.toFixed(1)}</span>
                         </div>
                       )}
+                      
+                      {selectedTvShow.manual_support_path && (
+                        <div className="flex items-center gap-2 text-green-300">
+                          <FileText className="w-4 h-4" />
+                          <span>E-Book disponível</span>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Descrição - Destacada */}
@@ -432,8 +453,45 @@ export default function TVShowsManagePage() {
             ) : Object.keys(modules).length === 0 ? (
               <div className="text-center py-16">
                 <Play className="w-20 h-20 text-gray-400 mx-auto mb-6" />
-                <h3 className="text-xl font-medium text-gray-600 mb-3">Nenhum vídeo encontrado</h3>
-                <p className="text-gray-500 text-lg">Esta coleção ainda não possui vídeos cadastrados</p>
+                <h3 className="text-xl font-medium text-gray-600 mb-3">Coleção Carregada com Sucesso</h3>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-2xl mx-auto">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="text-left">
+                      <h4 className="text-lg font-semibold text-blue-800 mb-2">
+                        {selectedTvShow.name}
+                      </h4>
+                      <p className="text-blue-700 mb-3">
+                        Esta coleção foi carregada com sucesso! Os vídeos estão sendo configurados e em breve estarão disponíveis.
+                      </p>
+                      <div className="space-y-2 text-sm text-blue-600">
+                        <div className="flex items-center gap-2">
+                          <Star className="w-4 h-4" />
+                          <span>Produtor: {selectedTvShow.producer || 'Sistema Portal'}</span>
+                        </div>
+                        {selectedTvShow.total_load && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>Duração: {selectedTvShow.total_load}</span>
+                          </div>
+                        )}
+                        {selectedTvShow.vote_average && selectedTvShow.vote_average > 0 && (
+                          <div className="flex items-center gap-2">
+                            <Star className="w-4 h-4" />
+                            <span>Avaliação: {selectedTvShow.vote_average}/10</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-gray-500 text-base mt-6">
+                  Em breve você poderá assistir aos vídeos organizados por sessões
+                </p>
               </div>
             ) : (
               <div className="space-y-10">
@@ -465,9 +523,29 @@ export default function TVShowsManagePage() {
                                 {moduleVideos.length} vídeo{moduleVideos.length > 1 ? 's' : ''} disponível{moduleVideos.length > 1 ? 'eis' : ''}
                               </p>
                             </div>
-                            <div className="flex items-center gap-2 text-blue-600">
-                              <Play className="w-6 h-6" />
-                              <span className="font-medium">Assistir Sessão</span>
+                            <div className="flex items-center gap-4">
+                              <button
+                                onClick={() => handleWatchSession(moduleKey, moduleVideos)}
+                                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg border border-blue-200"
+                              >
+                                <Play className="w-6 h-6" />
+                                <span className="font-medium">Assistir Sessão</span>
+                              </button>
+                              
+                              {selectedTvShow.manual_support_path ? (
+                                <button 
+                                  onClick={() => window.open(selectedTvShow.manual_support_path, '_blank')}
+                                  className="flex items-center gap-2 text-green-600 hover:text-green-800 transition-colors bg-green-50 hover:bg-green-100 px-4 py-2 rounded-lg border border-green-200"
+                                >
+                                  <FileText className="w-5 h-5" />
+                                  <span className="font-medium">E-Book</span>
+                                </button>
+                              ) : (
+                                <div className="flex items-center gap-2 text-gray-400 px-4 py-2">
+                                  <FileText className="w-5 h-5" />
+                                  <span className="font-medium text-sm">E-Book em breve</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -871,6 +949,16 @@ export default function TVShowsManagePage() {
           </p>
         </div>
       )}
+
+      {/* Session Video Player */}
+      {showSessionPlayer && selectedTvShow && (
+        <SessionVideoPlayer
+          sessionVideos={currentSessionVideos}
+          sessionNumber={currentSessionNumber}
+          collectionName={selectedTvShow.name}
+          onClose={() => setShowSessionPlayer(false)}
+        />
+      )}
     </div>
   )
-} 
+}

@@ -122,6 +122,7 @@ export class TvShowCompleteService {
         ts.contract_term_end,
         ts.poster_image_id,
         ts.backdrop_image_id,
+        ts.manual_support_path,
         ts.version,
         ts.date_created,
         ts.last_updated,
@@ -168,14 +169,51 @@ export class TvShowCompleteService {
 
   async getVideosByTvShow(id: number): Promise<any[]> {
     try {
-      // Temporariamente retornando array vazio até descobrirmos a tabela correta
-      // A tabela tv_show_video não existe no banco atual
-      console.log(`⚠️  Buscando vídeos para TV Show ID: ${id} - Tabela ainda não identificada`);
+      // Query SQL para buscar vídeos da tabela video vinculados pelo show_id
+      const query = `
+        SELECT 
+          v.id,
+          v.show_id,
+          v.title,
+          v.name,
+          v.overview as description,
+          v.season_number,
+          v.episode_number,
+          v.duration,
+          v.poster_path,
+          v.backdrop_path,
+          v.still_path,
+          v.air_date,
+          v.deleted,
+          v.date_created,
+          v.last_updated
+        FROM video v
+        WHERE v.show_id = $1 AND (v.deleted IS NULL OR v.deleted = false)
+        ORDER BY v.season_number ASC, v.episode_number ASC
+      `;
+
+      const result = await AppDataSource.query(query, [id]);
       
-      // TODO: Descobrir qual tabela realmente contém os vídeos
-      // Possíveis candidatos: video, videos, tv_show_video, episode, etc.
-      
-      return [];
+      // Formatar dados dos vídeos
+      const formattedVideos = result.map((video: any) => ({
+        id: video.id,
+        show_id: video.show_id,
+        title: video.title || video.name || 'Vídeo sem título',
+        description: video.description || 'Descrição não disponível',
+        video_url: null, // Campo não existe na tabela atual
+        module_number: video.season_number || 1,
+        session_number: video.season_number || 1, // Usar season_number como session_number
+        episode_number: video.episode_number || 1,
+        duration: video.duration || null,
+        duration_seconds: null, // Campo não existe na tabela atual
+        thumbnail_url: video.still_path || video.poster_path || video.backdrop_path || null,
+        is_active: !(video.deleted === true),
+        created_at: video.date_created,
+        updated_at: video.last_updated
+      }));
+
+      console.log(`✅ Encontrados ${formattedVideos.length} vídeos para TV Show ID: ${id}`);
+      return formattedVideos;
     } catch (error) {
       console.error('Erro ao buscar vídeos:', error);
       return []; // Retornar array vazio em caso de erro
@@ -190,10 +228,10 @@ export class TvShowCompleteService {
         return {};
       }
 
-      // Agrupar por module_number como sessão
+      // Agrupar por season_number como sessão
       const grouped = videos.reduce((acc: Record<string, any[]>, video: any) => {
-        // Usar module_number como número da sessão
-        const sessionNumber = video.module_number || 1;
+        // Usar season_number como número da sessão
+        const sessionNumber = video.session_number || 1;
         const key = `session_${sessionNumber}`;
         
         if (!acc[key]) {
@@ -220,20 +258,6 @@ export class TvShowCompleteService {
     }
   }
 
-  // Método auxiliar para formatar duração em segundos para formato legível
-  private formatDuration(seconds: number): string {
-    if (!seconds || seconds === 0) return '0:00';
-    
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    } else {
-      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-  }
 
   // ===================== PLACEHOLDER METHODS =====================
   // Métodos placeholder para manter compatibilidade com o controlador
