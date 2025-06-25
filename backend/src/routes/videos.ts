@@ -1,7 +1,11 @@
 import express from 'express';
-import { validateJWT, requireRole, requireInstitution } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole, requireInstitution } from '../middleware/auth';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -30,7 +34,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validateJWT, requireInstitution, async (req, res) => {
+router.get('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -59,7 +63,7 @@ router.get('/', validateJWT, requireInstitution, async (req, res) => {
  *       404:
  *         description: Video not found
  */
-router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -102,7 +106,7 @@ router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.post('/', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -145,7 +149,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), requireInstitut
  *       404:
  *         description: Video not found
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.put('/:id', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -170,7 +174,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstit
  *       404:
  *         description: Video not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.delete('/:id', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -218,7 +222,7 @@ router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), requireIns
  *       404:
  *         description: Video not found
  */
-router.get('/:id/stream', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id/stream', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -248,7 +252,7 @@ router.get('/:id/stream', validateJWT, requireInstitution, async (req, res) => {
  *       404:
  *         description: Video or thumbnail not found
  */
-router.get('/:id/thumbnail', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id/thumbnail', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 

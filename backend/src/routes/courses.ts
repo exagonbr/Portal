@@ -1,8 +1,12 @@
 import express from 'express';
-import { validateJWT, requireRole, requireInstitution } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole, requireInstitution } from '../middleware/auth';
 import { CourseController } from '../controllers/CourseController';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 const courseController = new CourseController();
 
 /**
@@ -32,7 +36,7 @@ const courseController = new CourseController();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validateJWT, requireInstitution, async (req, res) => {
+router.get('/', requireInstitution, async (req, res) => {
   return courseController.getAll(req, res);
 });
 
@@ -61,7 +65,7 @@ router.get('/', validateJWT, requireInstitution, async (req, res) => {
  *       404:
  *         description: Course not found
  */
-router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id', requireInstitution, async (req, res) => {
   return courseController.getById(req, res);
 });
 
@@ -101,7 +105,7 @@ router.get('/:id', validateJWT, requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.post('/', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   return courseController.create(req, res);
 });
 
@@ -141,7 +145,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), requireInstitut
  *       404:
  *         description: Course not found
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.put('/:id', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   return courseController.update(req, res);
 });
 
@@ -166,7 +170,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), requireInstit
  *       404:
  *         description: Course not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), requireInstitution, async (req, res) => {
+router.delete('/:id', requireRole(['admin', 'SYSTEM_ADMIN']), requireInstitution, async (req, res) => {
   return courseController.delete(req, res);
 });
 
@@ -197,7 +201,7 @@ router.delete('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), requi
  *       404:
  *         description: Course not found
  */
-router.get('/:id/modules', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id/modules', requireInstitution, async (req, res) => {
   return courseController.getModules(req, res);
 });
 
@@ -228,7 +232,7 @@ router.get('/:id/modules', validateJWT, requireInstitution, async (req, res) => 
  *       404:
  *         description: Course not found
  */
-router.get('/:id/books', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id/books', requireInstitution, async (req, res) => {
   return courseController.getBooks(req, res);
 });
 
@@ -259,7 +263,7 @@ router.get('/:id/books', validateJWT, requireInstitution, async (req, res) => {
  *       404:
  *         description: Course not found
  */
-router.get('/:id/videos', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id/videos', requireInstitution, async (req, res) => {
   return courseController.getVideos(req, res);
 });
 
@@ -290,7 +294,7 @@ router.get('/:id/videos', validateJWT, requireInstitution, async (req, res) => {
  *       404:
  *         description: Course not found
  */
-router.get('/:id/teachers', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id/teachers', requireInstitution, async (req, res) => {
   return courseController.getTeachers(req, res);
 });
 
@@ -321,7 +325,7 @@ router.get('/:id/teachers', validateJWT, requireInstitution, async (req, res) =>
  *       404:
  *         description: Course not found
  */
-router.get('/:id/students', validateJWT, requireInstitution, async (req, res) => {
+router.get('/:id/students', requireInstitution, async (req, res) => {
   return courseController.getStudents(req, res);
 });
 
@@ -358,7 +362,7 @@ router.get('/:id/students', validateJWT, requireInstitution, async (req, res) =>
  *       404:
  *         description: Course or teacher not found
  */
-router.post('/:id/teachers', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.post('/:id/teachers', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   return courseController.addTeacher(req, res);
 });
 
@@ -395,7 +399,7 @@ router.post('/:id/teachers', validateJWT, requireRole(['admin', 'teacher']), req
  *       404:
  *         description: Course or student not found
  */
-router.post('/:id/students', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.post('/:id/students', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   return courseController.addStudent(req, res);
 });
 
@@ -426,7 +430,7 @@ router.post('/:id/students', validateJWT, requireRole(['admin', 'teacher']), req
  *       404:
  *         description: Course or teacher not found
  */
-router.delete('/:id/teachers/:userId', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.delete('/:id/teachers/:userId', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   return courseController.removeTeacher(req, res);
 });
 
@@ -457,7 +461,7 @@ router.delete('/:id/teachers/:userId', validateJWT, requireRole(['admin', 'teach
  *       404:
  *         description: Course or student not found
  */
-router.delete('/:id/students/:userId', validateJWT, requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.delete('/:id/students/:userId', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
   return courseController.removeStudent(req, res);
 });
 

@@ -1,16 +1,20 @@
 import express from 'express';
-import { validateJWT, requireInstitution } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireInstitution } from '../middleware/auth';
 import { pushSubscriptionController } from '../controllers/pushSubscriptionController';
 
 const router = express.Router();
 
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
+
 // Subscribe to push notifications
-router.post('/', validateJWT, requireInstitution, (req, res) => pushSubscriptionController.subscribe(req, res));
+router.post('/', requireInstitution, (req, res) => pushSubscriptionController.subscribe(req, res));
 
 // Unsubscribe from push notifications
-router.delete('/:endpoint', validateJWT, requireInstitution, (req, res) => pushSubscriptionController.unsubscribe(req, res));
+router.delete('/:endpoint', requireInstitution, (req, res) => pushSubscriptionController.unsubscribe(req, res));
 
 // Send bulk notification (admin only)
-router.post('/send', validateJWT, requireInstitution, (req, res) => pushSubscriptionController.sendBulkNotification(req, res));
+router.post('/send', requireInstitution, (req, res) => pushSubscriptionController.sendBulkNotification(req, res));
 
 export default router;

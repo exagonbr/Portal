@@ -1,5 +1,6 @@
 import express from 'express';
-import { validateJWT, requireRole, validateJWTSmart, requireRoleSmart } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole, validateJWTSmart, requireRoleSmart } from '../middleware/auth';
 import { UserRepository } from '../repositories/UserRepository';
 import bcrypt from 'bcryptjs';
 
@@ -324,7 +325,7 @@ router.get('/:id', validateJWTSmart, async (req, res) => {
  *       409:
  *         description: Email already exists
  */
-router.post('/', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
+router.post('/', authMiddleware, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
   try {
     const { email, password, name, role_id, institution_id, endereco, telefone, cpf, birth_date } = req.body;
 
@@ -455,7 +456,7 @@ router.post('/', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION
  *       404:
  *         description: User not found
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
+router.put('/:id', authMiddleware, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
   try {
     const { id } = req.params;
     const { email, name, role_id, institution_id, endereco, telefone, password, cpf, birth_date } = req.body;
@@ -547,7 +548,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN', 'INSTITUTI
  *       404:
  *         description: User not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.delete('/:id', authMiddleware, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   try {
     const { id } = req.params;
 

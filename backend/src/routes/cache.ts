@@ -1,10 +1,14 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/auth';
 import { getRedisClient, TTL } from '../config/redis';
 import { RoleService } from '../services/RoleService';
 import { Logger } from '../utils/Logger';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 const logger = new Logger('CacheRoutes');
 const roleService = new RoleService();
 
@@ -29,7 +33,7 @@ const roleService = new RoleService();
  *       404:
  *         description: Cache key not found
  */
-router.get('/get', validateJWT, async (req, res) => {
+router.get('/get', async (req, res) => {
   try {
     const { key } = req.query;
     
@@ -190,7 +194,7 @@ router.get('/get', validateJWT, async (req, res) => {
  *       200:
  *         description: Value cached successfully
  */
-router.post('/set', validateJWT, async (req, res) => {
+router.post('/set', async (req, res) => {
   try {
     const { key, value, ttl } = req.body;
     
@@ -280,7 +284,7 @@ router.post('/set', validateJWT, async (req, res) => {
  *       200:
  *         description: Cache value deleted
  */
-router.post('/delete', validateJWT, async (req, res) => {
+router.post('/delete', async (req, res) => {
   try {
     const { key } = req.body;
     
@@ -354,7 +358,7 @@ router.post('/delete', validateJWT, async (req, res) => {
  *       200:
  *         description: Cache pattern invalidated successfully
  */
-router.post('/invalidate', validateJWT, async (req, res) => {
+router.post('/invalidate', async (req, res) => {
   try {
     const { pattern } = req.body;
     
@@ -437,7 +441,7 @@ router.post('/invalidate', validateJWT, async (req, res) => {
  *       200:
  *         description: Cache cleared successfully
  */
-router.post('/clear', validateJWT, requireRole(['SYSTEM_ADMIN']), async (req, res) => {
+router.post('/clear', requireRole(['SYSTEM_ADMIN']), async (req, res) => {
   try {
     const { pattern } = req.body;
     
@@ -505,7 +509,7 @@ router.post('/clear', validateJWT, requireRole(['SYSTEM_ADMIN']), async (req, re
  *       200:
  *         description: Cache statistics
  */
-router.get('/stats', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.get('/stats', requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   try {
     const stats = {
       keys: 0,

@@ -1,7 +1,11 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/auth';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -30,7 +34,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validateJWT, async (req, res) => {
+router.get('/', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -61,7 +65,7 @@ router.get('/', validateJWT, async (req, res) => {
  *       403:
  *         description: Not a participant in this chat
  */
-router.get('/:id', validateJWT, async (req, res) => {
+router.get('/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -105,7 +109,7 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', requireRole(['admin', 'teacher']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -150,7 +154,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res
  *       403:
  *         description: Not a participant in this chat
  */
-router.get('/:id/messages', validateJWT, async (req, res) => {
+router.get('/:id/messages', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -195,7 +199,7 @@ router.get('/:id/messages', validateJWT, async (req, res) => {
  *       403:
  *         description: Not a participant in this chat
  */
-router.post('/:id/messages', validateJWT, async (req, res) => {
+router.post('/:id/messages', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -228,7 +232,7 @@ router.post('/:id/messages', validateJWT, async (req, res) => {
  *       403:
  *         description: Not a participant in this chat
  */
-router.post('/:id/messages/:messageId/read', validateJWT, async (req, res) => {
+router.post('/:id/messages/:messageId/read', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -271,7 +275,7 @@ router.post('/:id/messages/:messageId/read', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to modify this chat
  */
-router.post('/:id/participants', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/:id/participants', requireRole(['admin', 'teacher']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

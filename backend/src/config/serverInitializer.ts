@@ -2,6 +2,7 @@ import express from 'express';
 import { testRedisConnection } from './redis';
 import { CacheWarmupService } from '../services/CacheWarmupService';
 import { Logger } from '../utils/Logger';
+import { AppDataSource } from './typeorm.config';
 
 /**
  * Classe responsável pela inicialização do servidor
@@ -26,11 +27,16 @@ export class ServerInitializer {
   private async testConnections(): Promise<void> {
     this.logger.info('📊 Testando conexões...');
     
-    // Teste de conexão com PostgreSQL (comentado por enquanto)
-    // const dbConnected = await testDatabaseConnection();
-    // if (!dbConnected) {
-    //   throw new Error('Falha na conexão com PostgreSQL');
-    // }
+    // Inicializar TypeORM
+    try {
+      if (!AppDataSource.isInitialized) {
+        await AppDataSource.initialize();
+        this.logger.info('✅ TypeORM inicializado com sucesso');
+      }
+    } catch (error) {
+      this.logger.error('❌ Erro ao inicializar TypeORM:', error);
+      throw new Error('Falha na inicialização do TypeORM');
+    }
     
     const redisConnected = await testRedisConnection();
     if (!redisConnected) {

@@ -1,7 +1,11 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/auth';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -37,7 +41,7 @@ const router = express.Router();
  *       403:
  *         description: Forbidden
  */
-router.get('/', validateJWT, requireRole(['admin', 'manager', 'SYSTEM_ADMIN']), async (req, res) => {
+router.get('/', requireRole(['admin', 'manager', 'SYSTEM_ADMIN']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -66,7 +70,7 @@ router.get('/', validateJWT, requireRole(['admin', 'manager', 'SYSTEM_ADMIN']), 
  *       404:
  *         description: Permission not found
  */
-router.get('/:id', validateJWT, requireRole(['admin', 'manager', 'SYSTEM_ADMIN']), async (req, res) => {
+router.get('/:id', requireRole(['admin', 'manager', 'SYSTEM_ADMIN']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -110,7 +114,7 @@ router.get('/:id', validateJWT, requireRole(['admin', 'manager', 'SYSTEM_ADMIN']
  *       409:
  *         description: Permission already exists
  */
-router.post('/', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.post('/', requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -150,7 +154,7 @@ router.post('/', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req
  *       404:
  *         description: Permission not found
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.put('/:id', requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -177,7 +181,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (r
  *       400:
  *         description: Cannot delete permission in use
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.delete('/:id', requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

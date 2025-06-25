@@ -1,8 +1,12 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/auth';
 // import { QueueService } from '../services/queueService';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 // const queueService = QueueService.getInstance();
 
 // Endpoint /next removido - não é necessário no sistema atual
@@ -19,7 +23,7 @@ const router = express.Router();
  *       200:
  *         description: Queue statistics
  */
-router.get('/stats', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.get('/stats', requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   try {
     const stats = {
       pending: 0,
@@ -54,7 +58,7 @@ router.get('/stats', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async 
  *       200:
  *         description: Queue paused
  */
-router.post('/pause', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.post('/pause', requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   try {
     res.json({
       success: true,
@@ -81,7 +85,7 @@ router.post('/pause', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async
  *       200:
  *         description: Queue resumed
  */
-router.post('/resume', validateJWT, requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
+router.post('/resume', requireRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
   try {
     res.json({
       success: true,

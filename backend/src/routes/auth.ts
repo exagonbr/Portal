@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { AuthService } from '../services/auth';
-import { validateJWT } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
@@ -261,7 +261,7 @@ router.post('/login', async (req: express.Request, res: express.Response) => {
  *       404:
  *         description: User not found
  */
-router.get('/me', validateJWT, async (req: express.Request, res: express.Response) => {
+router.get('/me', authMiddleware, async (req: express.Request, res: express.Response) => {
   try {
     const user = await AuthService.getUserById(req.user!.userId);
     
@@ -313,7 +313,7 @@ router.get('/me', validateJWT, async (req: express.Request, res: express.Respons
  *       500:
  *         description: Internal server error
  */
-router.post('/logout', validateJWT, async (req: express.Request, res: express.Response) => {
+router.post('/logout', authMiddleware, async (req: express.Request, res: express.Response) => {
   try {
     // Importação dinâmica do SessionService para evitar problemas de dependência circular
     let SessionService;

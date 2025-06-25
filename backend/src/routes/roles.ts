@@ -1,8 +1,12 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/auth';
 import { RoleController } from '../controllers/refactored/RoleController';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 const roleController = new RoleController();
 
 /**
@@ -71,7 +75,7 @@ const roleController = new RoleController();
  *       403:
  *         description: Forbidden
  */
-router.get('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getAll);
+router.get('/', requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getAll);
 
 /**
  * @swagger
@@ -149,7 +153,7 @@ router.get('/', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']
  *                     totalPages:
  *                       type: integer
  */
-router.get('/search', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.search);
+router.get('/search', requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.search);
 
 /**
  * @swagger
@@ -176,7 +180,7 @@ router.get('/search', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MAN
  *       404:
  *         description: Role not found
  */
-router.get('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getById);
+router.get('/:id', requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getById);
 
 /**
  * @swagger
@@ -207,7 +211,7 @@ router.get('/:id', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGE
  *                 totalUsers:
  *                   type: integer
  */
-router.get('/stats', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getStats);
+router.get('/stats', requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getStats);
 
 /**
  * @swagger
@@ -234,7 +238,7 @@ router.get('/stats', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANA
  *                   items:
  *                     $ref: '#/components/schemas/CustomRole'
  */
-router.get('/frontend', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getRolesForFrontend);
+router.get('/frontend', requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getRolesForFrontend);
 
 /**
  * @swagger
@@ -254,7 +258,7 @@ router.get('/frontend', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_M
  *               items:
  *                 $ref: '#/components/schemas/PermissionGroup'
  */
-router.get('/permission-groups', validateJWT, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getPermissionGroups);
+router.get('/permission-groups', requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), roleController.getPermissionGroups);
 
 /**
  * @swagger
@@ -302,7 +306,7 @@ router.get('/permission-groups', validateJWT, requireRole(['SYSTEM_ADMIN', 'INST
  *       409:
  *         description: Role name already exists
  */
-router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.create);
+router.post('/', requireRole(['SYSTEM_ADMIN']), roleController.create);
 
 /**
  * @swagger
@@ -348,7 +352,7 @@ router.post('/', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.crea
  *       404:
  *         description: Role not found
  */
-router.put('/:id', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.update);
+router.put('/:id', requireRole(['SYSTEM_ADMIN']), roleController.update);
 
 /**
  * @swagger
@@ -373,7 +377,7 @@ router.put('/:id', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.up
  *       400:
  *         description: Cannot delete system role or role with users
  */
-router.delete('/:id', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.delete);
+router.delete('/:id', requireRole(['SYSTEM_ADMIN']), roleController.delete);
 
 /**
  * @swagger
@@ -397,6 +401,6 @@ router.delete('/:id', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController
  *       404:
  *         description: TEACHER role not found
  */
-router.post('/assign-teacher-role', validateJWT, requireRole(['SYSTEM_ADMIN']), roleController.assignTeacherRoleToImportedUsers);
+router.post('/assign-teacher-role', requireRole(['SYSTEM_ADMIN']), roleController.assignTeacherRoleToImportedUsers);
 
 export default router;

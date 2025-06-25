@@ -1,7 +1,11 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/auth';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -52,7 +56,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/threads', validateJWT, async (req, res) => {
+router.get('/threads', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -81,7 +85,7 @@ router.get('/threads', validateJWT, async (req, res) => {
  *       404:
  *         description: Thread not found
  */
-router.get('/threads/:id', validateJWT, async (req, res) => {
+router.get('/threads/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -127,7 +131,7 @@ router.get('/threads/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/threads', validateJWT, async (req, res) => {
+router.post('/threads', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -175,7 +179,7 @@ router.post('/threads', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to edit this thread
  */
-router.put('/threads/:id', validateJWT, async (req, res) => {
+router.put('/threads/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -202,7 +206,7 @@ router.put('/threads/:id', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to delete this thread
  */
-router.delete('/threads/:id', validateJWT, async (req, res) => {
+router.delete('/threads/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -240,7 +244,7 @@ router.delete('/threads/:id', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to pin threads
  */
-router.post('/threads/:id/pin', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/threads/:id/pin', requireRole(['admin', 'teacher']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -278,7 +282,7 @@ router.post('/threads/:id/pin', validateJWT, requireRole(['admin', 'teacher']), 
  *       403:
  *         description: Not authorized to lock threads
  */
-router.post('/threads/:id/lock', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/threads/:id/lock', requireRole(['admin', 'teacher']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -321,7 +325,7 @@ router.post('/threads/:id/lock', validateJWT, requireRole(['admin', 'teacher']),
  *       404:
  *         description: Thread not found
  */
-router.get('/threads/:id/replies', validateJWT, async (req, res) => {
+router.get('/threads/:id/replies', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -368,7 +372,7 @@ router.get('/threads/:id/replies', validateJWT, async (req, res) => {
  *       404:
  *         description: Thread not found
  */
-router.post('/threads/:id/replies', validateJWT, async (req, res) => {
+router.post('/threads/:id/replies', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -411,7 +415,7 @@ router.post('/threads/:id/replies', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to edit this reply
  */
-router.put('/replies/:id', validateJWT, async (req, res) => {
+router.put('/replies/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -438,7 +442,7 @@ router.put('/replies/:id', validateJWT, async (req, res) => {
  *       403:
  *         description: Not authorized to delete this reply
  */
-router.delete('/replies/:id', validateJWT, async (req, res) => {
+router.delete('/replies/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 

@@ -125,6 +125,17 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
       ]
     },
     {
+      section: 'Migração de Dados',
+      items: [
+        {
+          href: '/admin/migration/mysql-postgres',
+          icon: 'sync_alt',
+          label: 'Migração MySQL → PostgreSQL',
+          permission: 'canManageSystem'
+        }
+      ]
+    },
+    {
       section: 'Monitoramento e Análise',
       items: [
         {

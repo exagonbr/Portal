@@ -23,6 +23,16 @@ import { Announcement } from '../entities/Announcement';
 import { File } from '../entities/File';
 import { VideoCollection } from '../entities/VideoCollection';
 import { VideoModule } from '../entities/VideoModule';
+import {
+  TvShowComplete,
+  TvShowVideo,
+  TvShowQuestion,
+  TvShowAnswer,
+  TvShowFile,
+  TvShowVideoFile,
+  TvShowAuthor,
+  TvShowTargetAudience
+} from '../entities/TvShowComplete';
 
 dotenv.config();
 
@@ -61,7 +71,15 @@ export const dataSourceOptions: DataSourceOptions = {
     Announcement,
     File,
     VideoCollection,
-    VideoModule
+    VideoModule,
+    TvShowComplete,
+    TvShowVideo,
+    TvShowQuestion,
+    TvShowAnswer,
+    TvShowFile,
+    TvShowVideoFile,
+    TvShowAuthor,
+    TvShowTargetAudience
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],

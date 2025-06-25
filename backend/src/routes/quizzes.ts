@@ -1,7 +1,11 @@
 import express from 'express';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/auth';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 
 /**
  * @swagger
@@ -36,7 +40,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validateJWT, async (req, res) => {
+router.get('/', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -65,7 +69,7 @@ router.get('/', validateJWT, async (req, res) => {
  *       404:
  *         description: Quiz not found
  */
-router.get('/:id', validateJWT, async (req, res) => {
+router.get('/:id', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -122,7 +126,7 @@ router.get('/:id', validateJWT, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', requireRole(['admin', 'teacher']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -173,7 +177,7 @@ router.post('/', validateJWT, requireRole(['admin', 'teacher']), async (req, res
  *       404:
  *         description: Quiz not found
  */
-router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.put('/:id', requireRole(['admin', 'teacher']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -198,7 +202,7 @@ router.put('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, r
  *       404:
  *         description: Quiz not found
  */
-router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req, res) => {
+router.delete('/:id', requireRole(['admin', 'teacher']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -229,7 +233,7 @@ router.delete('/:id', validateJWT, requireRole(['admin', 'teacher']), async (req
  *       404:
  *         description: Quiz not found
  */
-router.get('/:id/questions', validateJWT, async (req, res) => {
+router.get('/:id/questions', async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -260,7 +264,7 @@ router.get('/:id/questions', validateJWT, async (req, res) => {
  *       404:
  *         description: Quiz not found
  */
-router.post('/:id/attempts', validateJWT, requireRole(['student']), async (req, res) => {
+router.post('/:id/attempts', requireRole(['student']), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -309,7 +313,7 @@ router.post('/:id/attempts', validateJWT, requireRole(['student']), async (req, 
  *       404:
  *         description: Quiz or attempt not found
  */
-router.post('/:id/attempts/:attemptId/submit', validateJWT, requireRole(['student']), async (req, res) => {
+router.post('/:id/attempts/:attemptId/submit', requireRole(['student']), async (req, res) => {
   // Implementation will be added in the controller
 });
 

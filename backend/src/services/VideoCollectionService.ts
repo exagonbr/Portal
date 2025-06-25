@@ -111,7 +111,7 @@ export class VideoCollectionService {
       { deleted: true }
     );
 
-    return result.affected !== undefined && result.affected > 0;
+    return (result.affected ?? 0) > 0;
   }
 
   /**
@@ -143,7 +143,7 @@ export class VideoCollectionService {
    */
   async deleteVideo(id: string): Promise<boolean> {
     const result = await this.videoModuleRepository.delete({ id });
-    return result.affected !== undefined && result.affected > 0;
+    return (result.affected ?? 0) > 0;
   }
 
   /**

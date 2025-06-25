@@ -541,4 +541,27 @@ model Report {
   @@index([type])
   @@index([status])
   @@index([created_by])
-} 
+}
+
+model TVShow {
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  overview             String?
+  poster_path          String?
+  backdrop_path        String?
+  first_air_date       DateTime
+  popularity           Float?
+  vote_average         Float?
+  vote_count           Int?
+  producer             String?
+  total_load           String?
+  manual_support_path  String?
+  contract_term_end    DateTime
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  @@map("tv_show")
+  @@index([popularity])
+  @@index([vote_average])
+  @@index([first_air_date])
+}

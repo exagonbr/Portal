@@ -5,6 +5,7 @@ import { setupMiddlewares } from './config/middlewares';
 import { setupRoutes } from './config/routes';
 import { setupErrorHandling } from './config/errorHandling';
 import { ServerInitializer } from './config/serverInitializer';
+import { AppDataSource } from './config/typeorm.config';
 
 // Carrega variáveis de ambiente
 dotenv.config();
@@ -55,8 +56,18 @@ async function startServer(): Promise<void> {
  * Configuração de graceful shutdown
  */
 function setupGracefulShutdown(): void {
-  const shutdown = (signal: string) => {
+  const shutdown = async (signal: string) => {
     logger.info(`🛑 ${signal} recebido, encerrando servidor...`);
+    
+    try {
+      if (AppDataSource.isInitialized) {
+        await AppDataSource.destroy();
+        logger.info('✅ TypeORM finalizado com sucesso');
+      }
+    } catch (error) {
+      logger.error('❌ Erro ao finalizar TypeORM:', error);
+    }
+    
     process.exit(0);
   };
 

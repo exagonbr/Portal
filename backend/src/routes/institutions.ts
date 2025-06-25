@@ -1,9 +1,12 @@
 import express from 'express';
-import { validateJWT } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
 import { InstitutionController } from '../controllers/refactored/InstitutionController';
 import { body, param } from 'express-validator';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 const institutionController = new InstitutionController();
 
 const institutionTypesArray = ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER'];
@@ -208,7 +211,6 @@ const validateCodeParam = [
  */
 router.get(
   '/',
-  validateJWT,
   institutionController.getAll
 );
 
@@ -230,7 +232,6 @@ router.get(
  */
 router.get(
   '/:id',
-  validateJWT,
   validateIdParam,
   institutionController.getById
 );
@@ -258,7 +259,6 @@ router.get(
  */
 router.get(
   '/code/:code',
-  validateJWT,
   validateCodeParam,
   institutionController.getByCode
 );
@@ -281,7 +281,6 @@ router.get(
  */
 router.get(
   '/:id/stats',
-  validateJWT,
   validateIdParam,
   institutionController.getStats
 );
@@ -308,7 +307,6 @@ router.get(
  */
 router.post(
   '/',
-  validateJWT,
   validateCreateInstitution,
   institutionController.create
 );
@@ -339,7 +337,6 @@ router.post(
  */
 router.put(
   '/:id',
-  validateJWT,
   validateUpdateInstitution,
   institutionController.update
 );
@@ -362,7 +359,6 @@ router.put(
  */
 router.delete(
   '/:id',
-  validateJWT,
   validateIdParam, // Apenas validação do ID é necessária para delete
   institutionController.delete
 );

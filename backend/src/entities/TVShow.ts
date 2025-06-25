@@ -1,9 +1,7 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn
+  Column
 } from 'typeorm';
 
 @Entity('tv_show')

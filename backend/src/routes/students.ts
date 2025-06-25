@@ -1,8 +1,11 @@
 import express from 'express';
-import { validateJWT } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
 import { CourseController } from '../controllers/CourseController';
 
 const router = express.Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
 const courseController = new CourseController();
 
 /**
@@ -32,7 +35,7 @@ const courseController = new CourseController();
  *       404:
  *         description: Student not found
  */
-router.get('/:id/courses', validateJWT, async (req, res) => {
+router.get('/:id/courses', async (req, res) => {
   try {
     const { id } = req.params;
     if (!id) {

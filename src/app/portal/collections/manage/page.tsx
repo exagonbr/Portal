@@ -6,7 +6,7 @@ import CollectionForm from '@/components/collections/CollectionForm'
 import VideoModuleForm from '@/components/collections/VideoModuleForm'
 
 interface CollectionListItem {
-  id: number
+  id: string // UUID do backend
   name: string
   producer: string
   total_hours: string
@@ -34,25 +34,29 @@ export default function CollectionsManagePage() {
       const response = await fetch('/api/collections/manage')
       if (response.ok) {
         const data = await response.json()
-        setCollections(data.collections)
+        // A API retorna data.data.collections
+        setCollections(data.data?.collections || [])
       }
     } catch (error) {
       console.error('Erro ao carregar coleções:', error)
+      setCollections([]) // Garantir que collections seja sempre um array
     } finally {
       setIsLoading(false)
     }
   }
 
-  const loadCollectionDetails = async (id: number) => {
+  const loadCollectionDetails = async (id: string) => {
     try {
       setIsLoading(true)
       const response = await fetch(`/api/collections/manage/${id}`)
       if (response.ok) {
         const data = await response.json()
-        setSelectedCollection(data.collection)
+        // A API pode retornar data.data.collection ou data.collection
+        setSelectedCollection(data.data?.collection || data.collection || null)
       }
     } catch (error) {
       console.error('Erro ao carregar detalhes da coleção:', error)
+      setSelectedCollection(null)
     } finally {
       setIsLoading(false)
     }
@@ -107,7 +111,7 @@ export default function CollectionsManagePage() {
     }
   }
 
-  const handleDeleteCollection = async (id: number) => {
+  const handleDeleteCollection = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta coleção?')) return
 
     try {
@@ -199,12 +203,12 @@ export default function CollectionsManagePage() {
     }
   }
 
-  const filteredCollections = collections.filter(collection =>
-    collection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    collection.producer.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCollections = (collections || []).filter(collection =>
+    collection.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    collection.producer?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const groupedVideos = selectedCollection?.videos.reduce((acc, video) => {
+  const groupedVideos = selectedCollection?.videos?.reduce((acc, video) => {
     const moduleKey = `module_${video.module_number}`
     if (!acc[moduleKey]) {
       acc[moduleKey] = []

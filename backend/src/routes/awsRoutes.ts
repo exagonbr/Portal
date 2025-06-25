@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { Knex } from 'knex';
 import { AwsSettingsController } from '../controllers/AwsSettingsController';
-import { validateJWT, requireRole } from '../middleware/auth';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/auth';
 import { validateJWTSimple } from '../middleware/sessionMiddleware';
 
 export function createAwsRoutes(db: Knex): Router {
@@ -15,7 +16,7 @@ export function createAwsRoutes(db: Knex): Router {
       return validateJWTSimple(req as any, res, next);
     }
     // Usar middleware normal para outras rotas
-    return validateJWT(req, res, next);
+    return authMiddleware(req, res, next);
   });
 
   // Middleware de role apenas para rotas que não são stats
