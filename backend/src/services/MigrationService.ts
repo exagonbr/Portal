@@ -1,5 +1,5 @@
 import * as mysql from 'mysql2/promise';
-import { AppDataSource } from '../database/connection';
+import { AppDataSource } from '../config/typeorm.config';
 import { VideoCollection } from '../entities/VideoCollection';
 import { Repository, Not, IsNull } from 'typeorm';
 
@@ -102,14 +102,14 @@ export class MigrationService {
           collection.name = tvShow.name;
           collection.synopsis = tvShow.overview || '';
           collection.producer = tvShow.producer || '';
-          collection.release_date = tvShow.first_air_date || null;
-          collection.contract_expiry_date = tvShow.contract_term_end || null;
+          collection.release_date = tvShow.first_air_date || undefined;
+          collection.contract_expiry_date = tvShow.contract_term_end || undefined;
           collection.authors = []; // Será preenchido manualmente depois
           collection.target_audience = []; // Será preenchido manualmente depois
           collection.total_hours = this.convertTotalLoad(tvShow.total_load);
-          collection.poster_image_url = tvShow.poster_path || null;
-          collection.carousel_image_url = tvShow.backdrop_path || null;
-          collection.ebook_file_url = tvShow.manual_support_path || null;
+          collection.poster_image_url = tvShow.poster_path || undefined;
+          collection.carousel_image_url = tvShow.backdrop_path || undefined;
+          collection.ebook_file_url = tvShow.manual_support_path || undefined;
           collection.use_default_cover_for_videos = true;
           collection.popularity = tvShow.popularity || 0;
           collection.vote_average = tvShow.vote_average || 0;

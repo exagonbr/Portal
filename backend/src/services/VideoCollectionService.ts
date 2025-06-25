@@ -1,4 +1,4 @@
-import { AppDataSource } from '../database/connection';
+import { AppDataSource } from '../config/typeorm.config';
 import { VideoCollection } from '../entities/VideoCollection';
 import { VideoModule } from '../entities/VideoModule';
 import { Repository, Like, Not, IsNull } from 'typeorm';

@@ -1,5 +1,5 @@
 import { MigrationService } from '../src/services/MigrationService';
-import { AppDataSource } from '../src/database/connection';
+import { AppDataSource } from '../src/config/typeorm.config';
 
 async function testMigration() {
   try {

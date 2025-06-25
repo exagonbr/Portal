@@ -21,6 +21,8 @@ import { ForumReply } from '../entities/ForumReply';
 import { ChatMessage } from '../entities/ChatMessage';
 import { Announcement } from '../entities/Announcement';
 import { File } from '../entities/File';
+import { VideoCollection } from '../entities/VideoCollection';
+import { VideoModule } from '../entities/VideoModule';
 
 dotenv.config();
 
@@ -57,7 +59,9 @@ export const dataSourceOptions: DataSourceOptions = {
     ForumReply,
     ChatMessage,
     Announcement,
-    File
+    File,
+    VideoCollection,
+    VideoModule
   ],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],
