@@ -24,7 +24,7 @@ export class Course extends Model {
       modelClass: Institution,
       join: {
         from: 'courses.institution_id',
-        to: 'institutions.id'
+        to: 'institution.id'
       }
     },
     classes: {

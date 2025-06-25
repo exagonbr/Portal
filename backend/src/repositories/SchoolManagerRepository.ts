@@ -142,12 +142,12 @@ export class SchoolManagerRepository extends BaseRepository<SchoolManager> {
         'User.email as user_email',
         'schools.name as school_name',
         'schools.code as school_code',
-        'institutions.name as institution_name',
-        'institutions.id as institution_id'
+        'institution.name as institution_name',
+        'institution.id as institution_id'
       )
       .join('User', 'school_managers.user_id', 'User.id')
       .join('schools', 'school_managers.school_id', 'schools.id')
-      .join('institutions', 'schools.institution_id', 'institutions.id')
+      .join('institution', 'schools.institution_id', 'institution.id')
       .where('school_managers.id', managerId)
       .first();
 
@@ -236,10 +236,10 @@ export class SchoolManagerRepository extends BaseRepository<SchoolManager> {
       .select(
         'school_managers.*',
         'schools.name as school_name',
-        'institutions.name as institution_name'
+        'institution.name as institution_name'
       )
       .join('schools', 'school_managers.school_id', 'schools.id')
-      .join('institutions', 'schools.institution_id', 'institutions.id')
+      .join('institution', 'schools.institution_id', 'institution.id')
       .where('school_managers.user_id', userId)
       .orderBy('school_managers.start_date', 'desc');
 

@@ -4,7 +4,7 @@ export async function up(knex: Knex): Promise<void> {
   console.log('🚀 Executando migration unificada...');
 
   // SEÇÃO 1: TABELAS FUNDAMENTAIS
-  await knex.schema.createTable('institutions', (table) => {
+  await knex.schema.createTable('institution', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.string('name').notNullable();
     table.string('code').unique().notNullable();
@@ -64,7 +64,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('zip_code');
     table.boolean('is_active').defaultTo(true);
     table.uuid('role_id').references('id').inTable('roles').onDelete('SET NULL').defaultTo('35f57500-9a89-4318-bc9f-9acad28c2fb6');
-    table.uuid('institution_id').references('id').inTable('institutions').onDelete('SET NULL');
+    table.uuid('institution_id').references('id').inTable('institution').onDelete('SET NULL');
     table.integer('user_id_legacy').nullable().comment('Original MySQL user ID for migration tracking');
     table.index('user_id_legacy');
     table.timestamps(true, true);
@@ -81,7 +81,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('zip_code');
     table.string('phone');
     table.string('email');
-    table.uuid('institution_id').references('id').inTable('institutions').onDelete('CASCADE');
+    table.uuid('institution_id').references('id').inTable('institution').onDelete('CASCADE');
     table.enum('status', ['active', 'inactive']).defaultTo('active');
     table.timestamps(true, true);
     table.unique(['code', 'institution_id']);
@@ -99,7 +99,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('min_age');
     table.integer('max_age');
     table.integer('duration_years');
-    table.uuid('institution_id').references('id').inTable('institutions').onDelete('CASCADE');
+    table.uuid('institution_id').references('id').inTable('institution').onDelete('CASCADE');
     table.enum('status', ['active', 'inactive']).defaultTo('active');
     table.timestamps(true, true);
     table.unique(['code', 'institution_id']);
@@ -160,7 +160,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('file_url');
     table.string('file_type');
     table.integer('file_size');
-    table.uuid('institution_id').references('id').inTable('institutions').onDelete('CASCADE');
+    table.uuid('institution_id').references('id').inTable('institution').onDelete('CASCADE');
     table.uuid('file_id').references('id').inTable('files').onDelete('SET NULL');
     table.enum('status', ['available', 'unavailable']).defaultTo('available');
     table.timestamps(true, true);
@@ -182,7 +182,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('category');
     table.string('thumbnail_url');
     table.uuid('teacher_id').references('id').inTable('users').onDelete('SET NULL');
-    table.uuid('institution_id').references('id').inTable('institutions').onDelete('CASCADE');
+    table.uuid('institution_id').references('id').inTable('institution').onDelete('CASCADE');
     table.enum('status', ['draft', 'published', 'archived']).defaultTo('draft');
     table.timestamps(true, true);
     table.unique(['code', 'institution_id']);
@@ -343,7 +343,7 @@ export async function up(knex: Knex): Promise<void> {
     table.text('content').notNullable();
     table.enum('type', ['general', 'urgent', 'academic', 'administrative']).defaultTo('general');
     table.uuid('author_id').references('id').inTable('users').onDelete('CASCADE');
-    table.uuid('institution_id').references('id').inTable('institutions').onDelete('CASCADE');
+    table.uuid('institution_id').references('id').inTable('institution').onDelete('CASCADE');
     table.uuid('school_id').references('id').inTable('schools').onDelete('SET NULL');
     table.uuid('class_id').references('id').inTable('classes').onDelete('SET NULL');
     table.boolean('is_published').defaultTo(false);
@@ -358,7 +358,7 @@ export async function up(knex: Knex): Promise<void> {
     table.text('description');
     table.enum('type', ['books', 'videos', 'documents', 'mixed']).defaultTo('mixed');
     table.uuid('created_by').references('id').inTable('users').onDelete('CASCADE');
-    table.uuid('institution_id').references('id').inTable('institutions').onDelete('CASCADE');
+    table.uuid('institution_id').references('id').inTable('institution').onDelete('CASCADE');
     table.boolean('is_public').defaultTo(false);
     table.integer('items_count').defaultTo(0);
     table.specificType('tags', 'text[]').defaultTo('{}');
@@ -533,7 +533,7 @@ export async function down(knex: Knex): Promise<void> {
     'notifications', 'forum_replies', 'forum_threads', 'user_classes',
     'questions', 'quizzes', 'content', 'modules', 'courses', 'books', 'files',
     'classes', 'education_cycles', 'schools', 'users', 'role_permissions',
-    'permissions', 'roles', 'institutions'
+    'permissions', 'roles', 'institution'
   ];
 
   for (const table of tables) {

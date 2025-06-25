@@ -3,7 +3,7 @@ import { Unit } from './Unit';
 import { Course } from './Course';
 
 export class Institution extends Model {
-  static tableName = 'institutions';
+  static tableName = 'institution';
 
   id!: string;
   name!: string;
@@ -21,7 +21,7 @@ export class Institution extends Model {
       relation: Model.HasManyRelation,
       modelClass: Unit,
       join: {
-        from: 'institutions.id',
+        from: 'institution.id',
         to: 'units.institution_id'
       }
     },
@@ -29,7 +29,7 @@ export class Institution extends Model {
       relation: Model.HasManyRelation,
       modelClass: Course,
       join: {
-        from: 'institutions.id',
+        from: 'institution.id',
         to: 'courses.institution_id'
       }
     }

@@ -21,7 +21,7 @@ export class Unit extends Model {
       modelClass: Institution,
       join: {
         from: 'units.institution_id',
-        to: 'institutions.id'
+        to: 'institution.id'
       }
     }
   };

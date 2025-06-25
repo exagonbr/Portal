@@ -43,18 +43,18 @@ export class CourseRepository extends BaseRepository<Course> {
     return this.db(this.tableName)
       .select(
         'courses.*',
-        'institutions.name as institution_name'
+        'institution.name as institution_name'
       )
-      .leftJoin('institutions', 'courses.institution_id', 'institutions.id');
+      .leftJoin('institution', 'courses.institution_id', 'institution.id');
   }
 
   async getCourseWithDetails(id: string): Promise<any | null> {
     const result = await this.db(this.tableName)
       .select(
         'courses.*',
-        'institutions.name as institution_name'
+        'institution.name as institution_name'
       )
-      .leftJoin('institutions', 'courses.institution_id', 'institutions.id')
+      .leftJoin('institution', 'courses.institution_id', 'institution.id')
       .where('courses.id', id)
       .first();
 
@@ -150,7 +150,7 @@ export class CourseRepository extends BaseRepository<Course> {
   }
 
   async getInstitutionForCourse(institutionId: string): Promise<Institution | undefined> {
-    const institution = await this.db('institutions')
+    const institution = await this.db('institution')
       .where('id', institutionId)
       .first();
     return institution;
@@ -229,9 +229,9 @@ export class CourseRepository extends BaseRepository<Course> {
     return this.db('courses')
       .select(
         'courses.*',
-        'institutions.name as institution_name'
+        'institution.name as institution_name'
       )
-      .leftJoin('institutions', 'courses.institution_id', 'institutions.id')
+      .leftJoin('institution', 'courses.institution_id', 'institution.id')
       .leftJoin('course_teachers', 'courses.id', 'course_teachers.course_id')
       .where('course_teachers.user_id', teacherId);
   }
@@ -240,11 +240,11 @@ export class CourseRepository extends BaseRepository<Course> {
     return this.db('courses')
       .select(
         'courses.*',
-        'institutions.name as institution_name',
+        'institution.name as institution_name',
         'course_students.progress',
         'course_students.grades'
       )
-      .leftJoin('institutions', 'courses.institution_id', 'institutions.id')
+      .leftJoin('institution', 'courses.institution_id', 'institution.id')
       .leftJoin('course_students', 'courses.id', 'course_students.course_id')
       .where('course_students.user_id', studentId);
   }

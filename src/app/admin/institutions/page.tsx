@@ -98,41 +98,45 @@ export default function ManageInstitutions() {
       
       // Mapear Institution para InstitutionResponseDto
       const mappedInstitutions: InstitutionResponseDto[] = (response.items || []).map(institution => {
-        // Função auxiliar para formatar endereço
-        const formatAddress = (address: any) => {
-          if (typeof address === 'string') {
-            return address
+        // Função auxiliar para formatar endereço completo
+        const formatAddress = (institution: any) => {
+          const parts = []
+          if (institution.address) parts.push(institution.address)
+          if (institution.city) parts.push(institution.city)
+          if (institution.state) parts.push(institution.state)
+          if (institution.zip_code) parts.push(`CEP: ${institution.zip_code}`)
+          return parts.join(', ') || institution.address || ''
+        }
+
+        // Mapear tipos do backend para o frontend
+        const mapInstitutionType = (backendType: string): 'PUBLIC' | 'PRIVATE' | 'MIXED' => {
+          switch (backendType) {
+            case 'SCHOOL':
+            case 'COLLEGE':
+            case 'UNIVERSITY':
+            case 'TECH_CENTER':
+              return 'PUBLIC' // Por padrão, mapear para público
+            default:
+              return 'PUBLIC'
           }
-          if (typeof address === 'object' && address) {
-            const parts = []
-            if (address.street) parts.push(address.street)
-            if (address.number) parts.push(address.number)
-            if (address.complement) parts.push(address.complement)
-            if (address.neighborhood) parts.push(address.neighborhood)
-            if (address.city) parts.push(address.city)
-            if (address.state) parts.push(address.state)
-            if (address.zipCode) parts.push(`CEP: ${address.zipCode}`)
-            return parts.join(', ')
-          }
-          return ''
         }
 
         return {
           id: institution.id,
           name: institution.name,
-          code: institution.code || institution.cnpj || '',
-          cnpj: institution.cnpj,
-          description: institution.description,
-          address: formatAddress(institution.address),
-          phone: institution.phone,
-          email: institution.email,
-          website: institution.website,
-          logo: institution.logo,
-          type: institution.type,
+          code: institution.code,
+          cnpj: institution.cnpj || '', // CNPJ pode não existir na tabela atual
+          description: institution.description || '',
+          address: formatAddress(institution),
+          phone: institution.phone || '',
+          email: institution.email || '',
+          website: institution.website || '',
+          logo: institution.logo || '',
+          type: mapInstitutionType(institution.type),
           created_at: institution.created_at,
           updated_at: institution.updated_at,
-          created_by: institution.created_by,
-          active: institution.active ?? true,
+          created_by: institution.created_by || '',
+          active: institution.is_active ?? true,
           users_count: institution.users_count || 0,
           courses_count: institution.courses_count || 0,
           schools_count: institution.schools_count || 0,
@@ -289,7 +293,7 @@ export default function ManageInstitutions() {
           <div className="p-4 sm:p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-4">
               <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Gerenciamento de Instituições</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Gerenciamento de Instituição</h1>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">Gerencie as instituições do sistema</p>
               </div>
               <div className="flex-shrink-0">
@@ -307,7 +311,7 @@ export default function ManageInstitutions() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
                 <StatCard
                   icon={Building2}
-                  title="Instituições"
+                  title="Instituição"
                   value={stats.totalInstitutions}
                   subtitle={`${stats.activeInstitutions} ativas`}
                   trend="↑ 8.2%"
@@ -435,7 +439,7 @@ export default function ManageInstitutions() {
                                 <div className="text-xs text-gray-500">
                                   {institution.type && (
                                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600 mr-2">
-                                      {institution.type === 'PUBLIC' ? 'Pública' : institution.type === 'PRIVATE' ? 'Privada' : 'Mista'}
+                                      {institution.type === 'PUBLIC' ? 'Pública' : institution.type === 'PRIVATE' ? 'Privada' : institution.type === 'MIXED' ? 'Mista' : 'Pública'}
                                     </span>
                                   )}
                                   ID: {institution.id.slice(0, 8)}...

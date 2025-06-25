@@ -1420,7 +1420,7 @@ export default function ManageUsers() {
   const headerActions = (
     <div className="flex items-center gap-2">
       <span className="text-sm text-slate-500">
-        Total: {totalItems} usuários
+        Total: {totalItems} usuário
       </span>
       <button
         onClick={handleRefresh}
@@ -2050,7 +2050,7 @@ export default function ManageUsers() {
                   <GenericCRUD
                     title=""
                     entityName="Usuário"
-                    entityNamePlural="Usuários"
+                    entityNamePlural="Usuário"
                     columns={columns}
                     data={users}
                     loading={loading}
@@ -2099,7 +2099,7 @@ export default function ManageUsers() {
                     </div>
                   ) : (
                     <span>
-                      Exibindo {users.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} usuários
+                      Exibindo {users.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} usuário
                       {hasActiveFilters() && (
                         <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
                           Filtrado

@@ -3,7 +3,7 @@ import { Institution, CreateInstitutionData, UpdateInstitutionData } from '../mo
 
 export class InstitutionRepository extends BaseRepository<Institution> {
   constructor() {
-    super('institutions');
+    super('institution');
   }
 
   async findByCode(code: string): Promise<Institution | null> {
@@ -155,7 +155,7 @@ export class InstitutionRepository extends BaseRepository<Institution> {
         COUNT(DISTINCT u.id) as "totalUsers"
         -- Adicionar totalClasses se necessário: COUNT(DISTINCT cl.id) as "totalClasses"
         -- LEFT JOIN classes cl ON i.id = cl.institution_id
-      FROM institutions i
+      FROM institution i
       LEFT JOIN users u ON i.id = u.institution_id
       LEFT JOIN roles r ON u.role_id = r.id
       LEFT JOIN courses c ON i.id = c.institution_id
