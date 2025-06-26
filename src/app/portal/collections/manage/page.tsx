@@ -6,6 +6,7 @@ import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, Fil
 import { formatDate, formatYear } from '@/utils/date'
 // Importar o UniversalVideoPlayer em vez dos players customizados
 import UniversalVideoPlayer from '@/components/UniversalVideoPlayer'
+import requestMonitor from '@/utils/requestMonitor'
 
 interface TVShowListItem {
   id: number
@@ -84,6 +85,12 @@ export default function TVShowsManagePage() {
   const [playerSessionNumber, setPlayerSessionNumber] = useState<number | undefined>(undefined)
   const [playerInitialIndex, setPlayerInitialIndex] = useState<number>(0)
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set())
+  
+  // Estados para controle de requisições e evitar loops
+  const [isLoadingStats, setIsLoadingStats] = useState(false)
+  const [lastStatsUpdate, setLastStatsUpdate] = useState<number>(0)
+  const [isLoadingTvShows, setIsLoadingTvShows] = useState(false)
+  const [lastTvShowsUpdate, setLastTvShowsUpdate] = useState<number>(0)
 
   // Função para construir URL do CloudFront - MELHORADA
   const buildVideoUrl = (sha256hex: string | null, extension: string | null): string | null => {
@@ -166,7 +173,8 @@ export default function TVShowsManagePage() {
 
   useEffect(() => {
     loadTvShows().then(() => {
-      calculateStats()
+      // Calcular estatísticas usando os dados já carregados
+      calculateStats(true)
     })
   }, [])
 
@@ -239,8 +247,23 @@ export default function TVShowsManagePage() {
   }
 
   const loadTvShows = async (page = 1, search = '') => {
+    // Evitar múltiplas chamadas simultâneas
+    if (isLoadingTvShows) {
+      console.log('⚠️ loadTvShows já está executando, ignorando chamada duplicada')
+      return
+    }
+    
+    // Debounce: evitar chamadas muito frequentes (menos de 1 segundo)
+    const now = Date.now()
+    if (now - lastTvShowsUpdate < 1000) {
+      console.log('⚠️ loadTvShows chamado muito frequentemente, ignorando')
+      return
+    }
+    
     try {
       setIsLoading(true)
+      setIsLoadingTvShows(true)
+      setLastTvShowsUpdate(now)
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '12',
@@ -256,7 +279,14 @@ export default function TVShowsManagePage() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch(`/api/tv-shows?${params}`, {
+      // Verificar se deve bloquear a requisição por loop
+      const requestUrl = `/api/tv-shows?${params}`
+      if (requestMonitor.shouldBlockRequest(requestUrl)) {
+        console.error('🚨 Requisição bloqueada por loop detectado:', requestUrl)
+        return
+      }
+
+      const response = await fetch(requestUrl, {
         headers
       })
 
@@ -275,11 +305,6 @@ export default function TVShowsManagePage() {
           setTvShows(tvShowsData)
           setTotalPages(data.data?.totalPages || 1)
           setCurrentPage(data.data?.page || 1)
-          
-          // Recalcular estatísticas após carregar os dados
-          if (page === 1) {
-            setTimeout(() => calculateStats(), 100)
-          }
         }
       } else {
         console.error('Erro na resposta da API:', response.status, response.statusText)
@@ -289,29 +314,66 @@ export default function TVShowsManagePage() {
       setTvShows([])
     } finally {
       setIsLoading(false)
+      setIsLoadingTvShows(false)
     }
   }
 
-  const calculateStats = async () => {
+  const calculateStats = async (useExistingData = false) => {
+    // Evitar múltiplas chamadas simultâneas
+    if (isLoadingStats) {
+      console.log('⚠️ calculateStats já está executando, ignorando chamada duplicada')
+      return
+    }
+    
+    // Debounce: evitar chamadas muito frequentes (menos de 2 segundos)
+    const now = Date.now()
+    if (now - lastStatsUpdate < 2000) {
+      console.log('⚠️ calculateStats chamado muito frequentemente, ignorando')
+      return
+    }
+    
     try {
-      const token = getAuthToken()
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      }
+      setIsLoadingStats(true)
+      setLastStatsUpdate(now)
       
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
-      }
+      let allCollections: TVShowListItem[] = []
+      
+      if (useExistingData && tvShows.length > 0) {
+        // Usar dados já carregados se disponíveis
+        allCollections = tvShows
+      } else {
+        // Buscar TODAS as coleções para calcular estatísticas corretas
+        const token = getAuthToken()
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
 
-      // Buscar TODAS as coleções para calcular estatísticas corretas
-      const response = await fetch('/api/tv-shows?page=1&limit=10000', { headers })
+        const statsUrl = '/api/tv-shows?page=1&limit=10000'
+        if (requestMonitor.shouldBlockRequest(statsUrl)) {
+          console.error('🚨 Requisição de estatísticas bloqueada por loop detectado:', statsUrl)
+          // Usar dados existentes como fallback
+          allCollections = tvShows
+        } else {
+          const response = await fetch(statsUrl, { headers })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.data?.tvShows) {
+            allCollections = data.data.tvShows
+          }
+        } else {
+          // Em caso de erro, usar dados existentes como fallback
+          allCollections = tvShows
+        }
+        }
+      }
       
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.data?.tvShows) {
-          const allCollections = data.data.tvShows
-          
-          const totalCollections = allCollections.length
+      if (allCollections.length > 0) {
+        const totalCollections = allCollections.length
           
           // Somar TODOS os vídeos de TODAS as coleções ativas
           let totalVideos = 0
@@ -384,13 +446,12 @@ export default function TVShowsManagePage() {
           console.log('Avaliação média:', avgRating)
           console.log('========================')
           
-          setStats({
-            totalCollections,
-            totalVideos,
-            totalDuration,
-            avgRating
-          })
-        }
+        setStats({
+          totalCollections,
+          totalVideos,
+          totalDuration,
+          avgRating
+        })
       }
     } catch (error) {
       console.error('Erro ao calcular estatísticas:', error)
@@ -409,6 +470,8 @@ export default function TVShowsManagePage() {
         totalDuration: '0h 0m',
         avgRating: 0
       })
+    } finally {
+      setIsLoadingStats(false)
     }
   }
 
@@ -1745,4 +1808,5 @@ export default function TVShowsManagePage() {
 
     </div>
   )
+}
 }

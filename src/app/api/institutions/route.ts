@@ -68,7 +68,10 @@ export async function GET(request: NextRequest) {
     console.log('🔗 BACKEND_URL:', BACKEND_URL);
     
     // Construir URL do backend com parâmetros
-    const backendUrl = new URL('/institutions', BACKEND_URL);
+    // Se não houver token de autenticação, usar rota pública
+    const hasAuthToken = headers.Authorization && headers.Authorization !== 'Bearer ';
+    const routePath = hasAuthToken ? '/institutions' : '/institutions-public';
+    const backendUrl = new URL(routePath, BACKEND_URL);
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });
@@ -76,6 +79,7 @@ export async function GET(request: NextRequest) {
     console.log('🔗 Proxying to:', backendUrl.toString());
     const headers = prepareAuthHeaders(request);
     console.log('📋 Headers:', headers);
+    console.log('🔐 Using route:', hasAuthToken ? 'AUTHENTICATED' : 'PUBLIC');
 
     // Fazer requisição para o backend
     const response = await fetch(backendUrl.toString(), {
