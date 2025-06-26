@@ -1,22 +1,8 @@
-'use client';
-
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { PWAUpdateManager, UpdateProvider } from '@/components/PWAUpdateManager';
-import { PushNotificationInitializer } from '@/components/PushNotificationInitializer';
 import { AppProviders } from '@/providers/AppProviders';
-import ErrorSuppressor from '@/components/ErrorSuppressor';
-import GlobalSetup from '@/components/GlobalSetup';
-import Handtalk from '@/components/Handtalk';
-import ClientOnly from '@/components/ClientOnly';
-
-import { LoopEmergencyReset } from '@/components/LoopEmergencyReset';
-import { FirefoxCompatibilityInitializer } from '@/components/FirefoxCompatibilityInitializer';
-import ChunkErrorHandler from '@/components/ChunkErrorHandler';
-import HydrationDebugger from '@/components/HydrationDebugger';
-import { useEffect } from 'react';
-import { setupChunkErrorHandler } from '@/utils/chunk-retry';
+import ClientLayoutWrapper from '@/components/ClientLayoutWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -57,10 +43,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    setupChunkErrorHandler();
-  }, []);
-
   return (
     <html lang="pt-BR" className="h-full antialiased">
       <head>
@@ -79,31 +61,10 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
-        <ClientOnly>
-          <ErrorSuppressor />
-          <GlobalSetup />
-        </ClientOnly>
-        
         <AppProviders>
-          <UpdateProvider>
-            <ClientOnly>
-              <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
-            </ClientOnly>
-
-            <div className="flex flex-col min-h-full">
-              {children}
-            </div>
-            
-            <ClientOnly>
-              <PWAUpdateManager />
-              <PushNotificationInitializer />
-              <LoopEmergencyReset />
-              <FirefoxCompatibilityInitializer />
-              <ChunkErrorHandler />
-            </ClientOnly>
-          </UpdateProvider>
-          
-          <HydrationDebugger />
+          <ClientLayoutWrapper>
+            {children}
+          </ClientLayoutWrapper>
         </AppProviders>
       </body>
     </html>
