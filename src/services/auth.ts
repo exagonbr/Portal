@@ -1,6 +1,12 @@
 import {User, UserEssentials, Permission, UserRole} from '../types/auth';
 import { apiClient, handleApiError } from '@/lib/api-client';
 import { API_CONFIG, TOKEN_KEY, REFRESH_TOKEN_KEY, TOKEN_EXPIRY_KEY } from '@/config/constants';
+import { 
+  isFirefox, 
+  firefoxFetch, 
+  firefoxErrorHandler, 
+  FIREFOX_CONFIG 
+} from '../utils/firefox-compatibility';
 // REMOVIDO: NextAuth imports para evitar erros 404 e loops
 // import {getSession, signOut} from 'next-auth/react';
 
@@ -301,29 +307,43 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     const loginUrl = `${AUTH_CONFIG.API_URL}/auth/login`;
     console.log(`🔐 Fazendo login em: ${loginUrl}`);
 
-    // Configuração de timeout e opções específicas para mobile
-    const controller = new AbortController();
-    const timeoutMs = isMobile ? 30000 : 20000; // 30s para mobile, 20s para desktop
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, timeoutMs);
+    // Configuração de timeout e opções específicas para mobile e Firefox
+    const isFF = isFirefox();
+    const timeoutMs = isFF ? FIREFOX_CONFIG.REQUEST_TIMEOUT : (isMobile ? 30000 : 20000);
+    
+    let controller: AbortController | undefined;
+    let timeoutId: NodeJS.Timeout | undefined;
+    
+    // Não usar AbortController no Firefox para evitar NS_BINDING_ABORTED
+    if (!isFF) {
+      controller = new AbortController();
+      timeoutId = setTimeout(() => {
+        controller?.abort();
+      }, timeoutMs);
+    }
 
     try {
-      const response = await fetch(loginUrl, {
+      const fetchOptions = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          ...(isFF ? FIREFOX_CONFIG.HEADERS : {}),
         },
         body: JSON.stringify({ email, password }),
-        // Configurações específicas para mobile
-        credentials: 'same-origin', // Mudança de 'include' para 'same-origin' para melhor compatibilidade mobile
-        cache: 'no-cache',
-        signal: controller.signal,
-      });
+        credentials: 'same-origin' as RequestCredentials,
+        cache: 'no-cache' as RequestCache,
+        ...(controller ? { signal: controller.signal } : {}),
+      };
 
-      clearTimeout(timeoutId);
-      console.log(`🔐 Resposta recebida (${isMobile ? 'MOBILE' : 'DESKTOP'}), status:`, response.status);
+      const response = isFF ? 
+        await firefoxFetch(loginUrl, fetchOptions) : 
+        await fetch(loginUrl, fetchOptions);
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      console.log(`🔐 Resposta recebida (${isFF ? 'FIREFOX' : isMobile ? 'MOBILE' : 'DESKTOP'}), status:`, response.status);
       
       let result;
       try {
@@ -382,22 +402,32 @@ export const login = async (email: string, password: string): Promise<LoginRespo
         expiresAt: result.data?.expiresAt || result.expiresAt
       };
     } catch (fetchError) {
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       
-      // Tratamento específico de erros para mobile
-      if (fetchError instanceof Error) {
-        if (fetchError.name === 'AbortError') {
+      // Usar handler específico do Firefox
+      const processedError = firefoxErrorHandler(fetchError);
+      
+      // Tratamento específico de erros para mobile e Firefox
+      if (processedError instanceof Error) {
+        if (processedError.name === 'AbortError' || processedError.message.includes('timeout')) {
           console.error(`❌ Timeout no login (${timeoutMs}ms)`);
           throw new Error(`Tempo limite excedido. Verifique sua conexão e tente novamente.`);
         }
         
-        if (fetchError.message.includes('fetch') || fetchError.message.includes('network')) {
-          console.error('❌ Erro de rede no login:', fetchError);
+        if (processedError.message.includes('NS_BINDING_ABORTED')) {
+          console.error('🦊 Firefox: Erro NS_BINDING_ABORTED no login');
+          throw new Error('Conexão interrompida. Tente novamente.');
+        }
+        
+        if (processedError.message.includes('fetch') || processedError.message.includes('network')) {
+          console.error('❌ Erro de rede no login:', processedError);
           throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
         }
       }
       
-      throw fetchError;
+      throw processedError;
     }
   } catch (error) {
     console.error('❌ Erro no login:', error);

@@ -9,6 +9,7 @@ import GlobalSetup from '@/components/GlobalSetup';
 import Handtalk from '@/components/Handtalk';
 
 import { LoopEmergencyReset } from '@/components/LoopEmergencyReset';
+import { FirefoxCompatibilityInitializer } from '@/components/FirefoxCompatibilityInitializer';
 
 
 const inter = Inter({ subsets: ['latin'] });
@@ -81,6 +82,7 @@ export default function RootLayout({
           <PWARegistration />
           <PushNotificationInitializer />
           <LoopEmergencyReset />
+          <FirefoxCompatibilityInitializer />
         </AppProviders>
       </body>
     </html>

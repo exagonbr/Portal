@@ -4,6 +4,13 @@
  */
 
 import { ApiResponse, ApiError } from '@/types/api';
+import { 
+  isFirefox, 
+  firefoxFetch, 
+  firefoxErrorHandler, 
+  FIREFOX_CONFIG,
+  FirefoxAbortController
+} from '../utils/firefox-compatibility';
 
 // Configuração centralizada
 const API_CONFIG = {
@@ -257,16 +264,33 @@ class ApiClient {
         credentials: 'include',
       };
 
-      // Implementa timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      // Implementa timeout com compatibilidade Firefox
+      const isFF = isFirefox();
+      let controller: AbortController | FirefoxAbortController;
+      let timeoutId: NodeJS.Timeout | undefined;
+      
+      if (isFF) {
+        // Para Firefox, usar timeout mais longo e sem AbortController
+        console.log('🦊 Firefox detectado, usando configurações otimizadas');
+        controller = new FirefoxAbortController();
+        // Não usar AbortController no Firefox para evitar NS_BINDING_ABORTED
+      } else {
+        controller = new AbortController();
+        timeoutId = setTimeout(() => controller.abort(), timeout);
+      }
 
-      const response = await fetch(url, {
+      const fetchOptions = {
         ...requestOptions,
-        signal: controller.signal,
-      });
+        ...(isFF ? {} : { signal: controller.signal }), // Não usar signal no Firefox
+      };
 
-      clearTimeout(timeoutId);
+      const response = isFF ? 
+        await firefoxFetch(url, fetchOptions) : 
+        await fetch(url, fetchOptions);
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
       // Parse da resposta
       let responseData: ApiResponse<T>;
@@ -318,14 +342,20 @@ class ApiClient {
         throw error;
       }
 
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
+      // Usar handler específico do Firefox
+      const processedError = firefoxErrorHandler(error);
+
+      if (processedError instanceof Error) {
+        if (processedError.name === 'AbortError' || processedError.message.includes('timeout')) {
           throw new ApiClientError('Timeout da requisição', 408);
         }
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        if (processedError.name === 'TypeError' && processedError.message.includes('fetch')) {
           throw new ApiClientError('Erro de rede ao tentar acessar o recurso', 0);
         }
-        throw new ApiClientError(error.message, 0);
+        if (processedError.message.includes('NS_BINDING_ABORTED')) {
+          throw new ApiClientError('Conexão interrompida. Tente novamente.', 0);
+        }
+        throw new ApiClientError(processedError.message, 0);
       }
 
       throw new ApiClientError('Erro desconhecido', 0);
