@@ -173,7 +173,7 @@ router.post('/settings/test-email', authMiddleware, async (req: Request, res: Re
     }
 
     // Criar transporter
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host,
       port: parseInt(port),
       secure: secure || port === 465,

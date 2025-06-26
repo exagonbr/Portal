@@ -17,7 +17,7 @@ export async function testApiClientLoading(): Promise<boolean> {
       console.log('✅ Api-client carregado com sucesso');
       
       // Testar método básico
-      const token = apiClientModule.apiClient.getAuthToken?.() || null;
+      const token = (apiClientModule.apiClient as any).getAuthToken?.() || null;
       console.log('🔑 Token atual:', token ? 'Presente' : 'Ausente');
       
       return true;

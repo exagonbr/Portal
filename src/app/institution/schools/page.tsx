@@ -81,7 +81,7 @@ export default function InstitutionSchoolsPage() {
       
       // Carregar instituições
       const institutionsResponse = await institutionService.getAll();
-      setInstitutions(institutionsResponse.data || []);
+      setInstitutions(institutionsResponse || []);
 
       // Carregar unidades do tipo escola
       let unitsData;

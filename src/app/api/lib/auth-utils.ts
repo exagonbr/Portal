@@ -36,7 +36,7 @@ export async function validateJWTToken(token: string) {
   }
 
   // Check for obviously malformed tokens (containing special characters that shouldn't be there)
-  if (token.includes('') || token.includes('\0') || token.includes('\x00')) {
+      if (token.includes('\0') || token.includes('\x00')) {
     console.warn('Token contains invalid characters');
     return null;
   }

@@ -1,18 +1,37 @@
-import { ENV_CONFIG, getApiUrl } from './env';
+// API Configuration - Centralizada (sem dependência circular)
+const getApiConfig = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const apiUrl = isProduction 
+    ? '/api' 
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
+    
+  return {
+    BASE_URL: apiUrl,
+    TIMEOUT: 30000,
+    RETRY_ATTEMPTS: 3,
+    RETRY_DELAY: 1000,
+  } as const;
+};
 
-// API Configuration - Centralizada
-export const API_CONFIG = {
-  BASE_URL: ENV_CONFIG.API_BASE_URL,
-  TIMEOUT: ENV_CONFIG.API_TIMEOUT,
-  RETRY_ATTEMPTS: ENV_CONFIG.API_RETRY_ATTEMPTS,
-  RETRY_DELAY: 1000,
-} as const;
+export const API_CONFIG = getApiConfig();
 
 // Backward compatibility
 export const API_BASE_URL = API_CONFIG.BASE_URL;
 
-// Helper functions
-export { getApiUrl, getInternalApiUrl } from './env';
+// Helper functions sem dependência circular
+export const getApiUrl = (path: string = '') => {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_CONFIG.BASE_URL}${cleanPath}`;
+};
+
+export const getInternalApiUrl = (path: string = '') => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const baseUrl = isProduction 
+    ? 'http://127.0.0.1:3001' 
+    : (process.env.INTERNAL_API_URL || 'http://localhost:3001');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${cleanPath}`;
+};
 
 // Pagination defaults
 export const DEFAULT_PAGE_SIZE = 10;

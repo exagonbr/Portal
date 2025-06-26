@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../lib/auth-headers';
-
 import { getInternalApiUrl } from '@/config/env';
 
 export async function GET(request: NextRequest) {
@@ -9,7 +8,7 @@ export async function GET(request: NextRequest) {
     const searchParams = url.searchParams;
     
     // Construir URL do backend com parâmetros
-    const backendUrl = new URL('/users', BACKEND_URL);
+    const backendUrl = new URL('/users', getInternalApiUrl());
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/api/users')`, {
+    const response = await fetch(getInternalApiUrl('/users'), {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),

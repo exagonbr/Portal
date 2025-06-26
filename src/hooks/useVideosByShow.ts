@@ -89,7 +89,7 @@ export const useVideosByShow = (showId: number | null): UseVideosByShowReturn =>
 
 // Hook alternativo para buscar vídeos de um módulo específico
 export function useVideosByModule(showId: number | string, moduleKey: string): UseVideosByShowReturn {
-  const { videos, modules, loading, error, refetch } = useVideosByShow(showId);
+  const { videos, modules, loading, error, refetch } = useVideosByShow(typeof showId === 'string' ? parseInt(showId) : showId);
   
   const moduleVideos = modules[moduleKey] || [];
   

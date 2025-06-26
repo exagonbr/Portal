@@ -318,15 +318,13 @@ export const migrateDtoFields = <T extends Record<string, any>>(dto: T): T => {
   const migrated = { ...dto };
 
   // Migrar telefone -> phone
-  if ('telefone' in migrated && migrated.telefone && !migrated.phone) {
-    migrated.phone = migrated.telefone;
-    delete migrated.telefone;
+  if ('telefone' in migrated) {
+    (migrated as any).phone = (migrated as any).telefone;
   }
 
   // Migrar endereco -> address
-  if ('endereco' in migrated && migrated.endereco && !migrated.address) {
-    migrated.address = migrated.endereco;
-    delete migrated.endereco;
+  if ('endereco' in migrated) {
+    (migrated as any).address = (migrated as any).endereco;
   }
 
   return migrated;
@@ -339,12 +337,12 @@ export const ensureDtoCompatibility = <T extends Record<string, any>>(dto: T): T
   const compatible = { ...dto };
 
   // Garantir campos legados para compatibilidade
-  if ('phone' in compatible && compatible.phone && !compatible.telefone) {
-    compatible.telefone = compatible.phone;
+  if ('phone' in compatible) {
+    (compatible as any).telefone = (compatible as any).phone;
   }
 
-  if ('address' in compatible && compatible.address && !compatible.endereco) {
-    compatible.endereco = compatible.address;
+  if ('address' in compatible) {
+    (compatible as any).endereco = (compatible as any).address;
   }
 
   return compatible;

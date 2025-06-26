@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 
-export default function TVShowsManagePage() {
+export default function SimpleCollectionsManagePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [collections, setCollections] = useState<any[]>([])
@@ -80,4 +80,4 @@ export default function TVShowsManagePage() {
       </div>
     </div>
   )
-}
+} 

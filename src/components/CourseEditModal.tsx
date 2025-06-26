@@ -56,8 +56,8 @@ export function CourseEditModal({ isOpen, onClose, onSave, course, title }: Cour
     const fetchInstitutions = async () => {
       try {
         const response = await institutionService.getInstitutions();
-        if (response.data) {
-          setInstitutions(response.data.map(inst => ({
+        if (response.items) {
+          setInstitutions(response.items.map((inst: any) => ({
             id: inst.id,
             name: inst.name
           })));

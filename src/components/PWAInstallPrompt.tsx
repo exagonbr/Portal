@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaDownload, FaTimes, FaApple, FaAndroid, FaChrome, FaEyeSlash } from 'react-icons/fa';
 
 interface PWAInstallPromptProps {
@@ -14,36 +14,57 @@ interface BeforeInstallPromptEvent extends Event {
 
 type Platform = 'ios' | 'android' | 'desktop' | 'unknown';
 
+// Hook para uso seguro do localStorage
+const useLocalStorage = (key: string, defaultValue: string = '') => {
+  const getStoredValue = () => {
+    if (typeof window === 'undefined') return defaultValue;
+    return localStorage.getItem(key) || defaultValue;
+  };
+
+  const setStoredValue = (value: string) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(key, value);
+  };
+
+  const removeStoredValue = () => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(key);
+  };
+
+  return { getStoredValue, setStoredValue, removeStoredValue };
+};
+
 export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [isHttps, setIsHttps] = useState(true);
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [platform, setPlatform] = useState<Platform>('unknown');
-  const [isVisible, setIsVisible] = useState(true);
+  const [isHttps, setIsHttps] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30); // 30 segundos
+  const [timeLeft, setTimeLeft] = useState(30);
   const [showTimer, setShowTimer] = useState(true);
+  
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Hooks para localStorage
+  const pwaInstalled = useLocalStorage('pwa-installed');
+  const pwaInteracted = useLocalStorage('pwa-prompt-interacted');
+  const pwaNeverShow = useLocalStorage('pwa-prompt-never-show');
+  const pwaUpdating = useLocalStorage('pwa-updating');
+
   useEffect(() => {
-    // Detectar plataforma
+    // Só executar no cliente
+    if (typeof window === 'undefined') return;
+
     const detectPlatform = (): Platform => {
       const userAgent = navigator.userAgent.toLowerCase();
       
-      // iOS detection
-      if (/iphone|ipad|ipod/.test(userAgent) || 
-          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+      if (/iphone|ipad|ipod/.test(userAgent)) {
         return 'ios';
-      }
-      
-      // Android detection
-      if (/android/.test(userAgent)) {
+      } else if (/android/.test(userAgent)) {
         return 'android';
-      }
-      
-      // Desktop
-      if (!/mobile|tablet/.test(userAgent)) {
+      } else if (/chrome|edge/.test(userAgent)) {
         return 'desktop';
       }
       
@@ -65,18 +86,18 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     }
 
     // Verificar se já foi instalado anteriormente
-    const wasInstalled = localStorage.getItem('pwa-installed') === 'true';
+    const wasInstalled = pwaInstalled.getStoredValue() === 'true';
     if (wasInstalled) {
       setIsInstalled(true);
       return;
     }
 
     // Verificar se o usuário já interagiu com o prompt
-    const hasInteractedBefore = localStorage.getItem('pwa-prompt-interacted') === 'true';
+    const hasInteractedBefore = pwaInteracted.getStoredValue() === 'true';
     setHasInteracted(hasInteractedBefore);
 
     // Verificar se o usuário escolheu "Não exibir novamente"
-    const neverShowAgain = localStorage.getItem('pwa-prompt-never-show') === 'true';
+    const neverShowAgain = pwaNeverShow.getStoredValue() === 'true';
     if (neverShowAgain) {
       setIsVisible(false);
       setHasInteracted(true);
@@ -84,14 +105,14 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     }
 
     // Verificar se acabou de ocorrer uma atualização do PWA
-    const wasUpdating = localStorage.getItem('pwa-updating') === 'true';
+    const wasUpdating = pwaUpdating.getStoredValue() === 'true';
     if (wasUpdating) {
       // Limpar flag de atualização
-      localStorage.removeItem('pwa-updating');
+      pwaUpdating.removeStoredValue();
       // Não mostrar o prompt por 10 segundos após uma atualização
       setTimeout(() => {
         // Verificar novamente se não deve mostrar
-        const stillNeverShow = localStorage.getItem('pwa-prompt-never-show') === 'true';
+        const stillNeverShow = pwaNeverShow.getStoredValue() === 'true';
         if (!stillNeverShow && !isInstalled) {
           setIsVisible(true);
           setHasInteracted(false);
@@ -116,7 +137,7 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
         e.preventDefault();
         setIsInstalled(true);
         setDeferredPrompt(null);
-        localStorage.setItem('pwa-installed', 'true');
+        pwaInstalled.setStoredValue('true');
       });
     }
 
@@ -129,6 +150,9 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
 
   // Timer para fechar automaticamente após 30 segundos
   useEffect(() => {
+    // Só executar no cliente
+    if (typeof window === 'undefined') return;
+
     // Limpar timer anterior se existir
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -150,7 +174,7 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
           // Tempo esgotado, fechar automaticamente
           setIsVisible(false);
           setHasInteracted(true);
-          localStorage.setItem('pwa-prompt-interacted', 'true');
+          pwaInteracted.setStoredValue('true');
           
           // Limpar o timer
           if (timerRef.current) {
@@ -181,7 +205,7 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     
     setHasInteracted(true);
     setTimeLeft(0);
-    localStorage.setItem('pwa-prompt-interacted', 'true');
+    pwaInteracted.setStoredValue('true');
 
     if (!isHttps) {
       setShowInstructions(true);
@@ -196,7 +220,7 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
 
         if (choiceResult.outcome === 'accepted') {
           console.log('PWA installed successfully');
-          localStorage.setItem('pwa-installed', 'true');
+          pwaInstalled.setStoredValue('true');
         }
 
         setDeferredPrompt(null);
@@ -220,7 +244,7 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     setIsVisible(false);
     setHasInteracted(true);
     setTimeLeft(0);
-    localStorage.setItem('pwa-prompt-interacted', 'true');
+    pwaInteracted.setStoredValue('true');
   };
 
   const handleNeverShowAgain = () => {
@@ -235,10 +259,10 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     setIsVisible(false);
     setHasInteracted(true);
     setTimeLeft(0);
-    localStorage.setItem('pwa-prompt-interacted', 'true');
-    localStorage.setItem('pwa-prompt-never-show', 'true');
+    pwaInteracted.setStoredValue('true');
+    pwaNeverShow.setStoredValue('true');
     
-    console.log('PWA: Never show again set to:', localStorage.getItem('pwa-prompt-never-show'));
+    console.log('PWA: Never show again set to:', pwaNeverShow.getStoredValue());
   };
 
   const formatTime = (seconds: number) => {
@@ -296,10 +320,12 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     return null;
   }
 
-  // Verificar se o usuário escolheu "Não exibir novamente"
-  const neverShowAgain = localStorage.getItem('pwa-prompt-never-show') === 'true';
-  if (neverShowAgain) {
-    return null;
+  // Verificar se o usuário escolheu "Não exibir novamente" (apenas no cliente)
+  if (typeof window !== 'undefined') {
+    const neverShowAgain = pwaNeverShow.getStoredValue() === 'true';
+    if (neverShowAgain) {
+      return null;
+    }
   }
 
   const instructions = getInstructions();

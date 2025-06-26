@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se o usuário pode modificar esta watchlist
     if (validatedData.user_id !== session.user.id) {
-      const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SYSTEM_ADMIN'
+      const isAdmin = session.user.role === 'SYSTEM_ADMIN'
       if (!isAdmin) {
         return NextResponse.json(
           { success: false, error: 'Acesso negado' },
@@ -100,7 +100,7 @@ export async function DELETE(request: NextRequest) {
 
     // Verificar se o usuário pode modificar esta watchlist
     if (validatedData.user_id !== session.user.id) {
-      const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SYSTEM_ADMIN'
+      const isAdmin = session.user.role === 'SYSTEM_ADMIN'
       if (!isAdmin) {
         return NextResponse.json(
           { success: false, error: 'Acesso negado' },

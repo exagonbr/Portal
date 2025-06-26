@@ -16,7 +16,7 @@ export async function POST(
       );
     }
 
-    const response = await fetch(`getInternalApiUrl('/api/api/aws/settings/${params.id}/test-connection')`, {
+    const response = await fetch(`getInternalApiUrl('/api/aws/settings/${params.id}/test-connection')`, {
       method: 'POST',
       headers: {
         'Authorization': authHeader,

@@ -24,7 +24,7 @@ export default function ShowVideoPlayer({
     initialVideoIndex
   });
   
-  const { videos, loading, error } = useVideosByShow(showId);
+  const { videos, loading, error } = useVideosByShow(typeof showId === 'string' ? parseInt(showId) : showId);
   
   console.log('🎬 ShowVideoPlayer: Estado atual:', {
     videosCount: videos?.length || 0,
@@ -91,7 +91,16 @@ export default function ShowVideoPlayer({
 
   return (
     <UniversalVideoPlayer
-      videos={videos}
+      videos={videos.map(video => ({ 
+        id: video.id.toString(),
+        title: video.title,
+        url: video.video_url || '', 
+        type: 'mp4' as const,
+        thumbnail: video.thumbnail_url,
+        duration: video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : undefined,
+        description: video.description,
+        episode_number: video.episode_number
+      }))}
       initialVideoIndex={initialVideoIndex}
       collectionName={collectionName || 'Coleção de Vídeos'}
       onClose={onClose}

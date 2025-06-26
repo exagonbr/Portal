@@ -50,7 +50,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
   const loadInstitutions = async () => {
     try {
       const response = await institutionService.getAll();
-      setInstitutions(response.data);
+      setInstitutions(response);
     } catch (error) {
       console.error('Erro ao carregar instituições:', error);
     }

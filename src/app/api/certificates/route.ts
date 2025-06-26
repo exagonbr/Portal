@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = url.searchParams;
     
     // Construir URL do backend com parâmetros
-    const backendUrl = new URL('/certificates', BACKEND_URL);
+    const backendUrl = new URL('/certificates', getInternalApiUrl());
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/api/certificates')`, {
+    const response = await fetch(getInternalApiUrl('/api/certificates'), {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),

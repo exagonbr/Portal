@@ -37,7 +37,7 @@ export function InstitutionEditModal({ isOpen, onClose, onSave, institution, tit
         description: institution.description || '',
         email: institution.email || '',
         phone: institution.phone || '',
-        address: institution.address || '',
+        address: typeof institution.address === 'string' ? institution.address : '',
         active: institution.active
       })
     }

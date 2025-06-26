@@ -3,7 +3,7 @@ import { apiClient, handleApiError, ApiClientError } from '@/lib/api-client';
 export interface Unit {
   id: string;
   name: string;
-  description?: string;
+  description: string;
   type: string;
   active: boolean;
   institution_id: string;
@@ -12,6 +12,8 @@ export interface Unit {
   institution?: {
     id: string;
     name: string;
+    created_at: string;
+    updated_at: string;
   };
 }
 
@@ -28,9 +30,10 @@ export interface UpdateUnitData {
 
 export interface UnitFilters {
   name?: string;
+  search?: string;
+  type?: string;
   active?: boolean;
   institution_id?: string;
-  search?: string;
   page?: number;
   limit?: number;
 }

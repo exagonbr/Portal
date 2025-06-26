@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     
-    console.log('🔗 BACKEND_URL:', BACKEND_URL);
+    console.log('🔗 BACKEND_URL:', getInternalApiUrl());
     
     // Preparar headers de autenticação
     const headers = prepareAuthHeaders(request);
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     // Se não houver token de autenticação, usar rota pública
     const hasAuthToken = headers.Authorization && headers.Authorization !== 'Bearer ';
     const routePath = hasAuthToken ? '/institutions' : '/institutions-public';
-    const backendUrl = new URL(routePath, BACKEND_URL);
+    const backendUrl = new URL(routePath, getInternalApiUrl());
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });

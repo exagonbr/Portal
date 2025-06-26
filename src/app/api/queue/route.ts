@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
-    const url = `getInternalApiUrl('/api/queue${queryString ? ')`?${queryString}` : ''}`;
+    const url = getInternalApiUrl(`/api/queue${queryString ? `?${queryString}` : ''}`);
 
     const response = await fetch(url, {
       method: 'GET',
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
-    const url = `getInternalApiUrl('/api/queue${queryString ? ')`?${queryString}` : ''}`;
+    const url = getInternalApiUrl(`/api/queue${queryString ? `?${queryString}` : ''}`);
 
     const response = await fetch(url, {
       method: 'POST',

@@ -68,18 +68,18 @@ export default function HierarchicalDashboard() {
     try {
       setLoading(true);
       const institutionsResponse = await institutionService.getAll();
-      setInstitutions(institutionsResponse.data as any);
+      setInstitutions(institutionsResponse as any);
       
       // Calcular estatísticas gerais básicas
       let totalSchools = 0;
 
-      for (const institution of institutionsResponse.data) {
+      for (const institution of institutionsResponse) {
         const schoolsData = await schoolService.getByInstitution(institution.id);
         totalSchools += schoolsData.length;
       }
 
       setStats({
-        totalInstitutions: institutionsResponse.data.length,
+        totalInstitutions: institutionsResponse.length,
         totalSchools,
         totalClasses: 0, // Placeholder - implementar quando necessário
         totalStudents: 0, // Placeholder - implementar quando necessário
@@ -405,7 +405,7 @@ export default function HierarchicalDashboard() {
                   <strong>Estado:</strong> {selectedSchool.state || 'N/A'}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <strong>Status:</strong> {selectedSchool.is_active ? 'Ativa' : 'Inativa'}
+                  <strong>Status:</strong> {selectedSchool.status === 'active' ? 'Ativa' : 'Inativa'}
                 </p>
               </div>
 

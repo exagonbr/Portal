@@ -197,6 +197,16 @@ class SchoolService {
       throw handleApiError(error as ApiClientError);
     }
   }
+
+  async getByInstitution(institutionId: string): Promise<School[]> {
+    try {
+      const filters: SchoolFilters = { institution_id: institutionId };
+      const response = await this.list(filters);
+      return response.items;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
 }
 
 export const schoolService = new SchoolService();

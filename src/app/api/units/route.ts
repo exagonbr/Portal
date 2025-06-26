@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { getInternalApiUrl } from '@/config/env';
 
 // Schema de validação para criação de unidade
 const createUnitSchema = z.object({
@@ -35,8 +36,6 @@ const createUnitSchema = z.object({
   }).optional()
 })
 
-import { getInternalApiUrl } from '@/config/env';
-
 // GET - Listar unidades
 export async function GET(request: NextRequest) {
   try {
@@ -50,11 +49,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const queryString = searchParams.toString()
 
-    const response = await fetch(`getInternalApiUrl('/api/api/units${queryString ? ')`?${queryString}` : ''}`, {
+    const response = await fetch(getInternalApiUrl(`/api/units${queryString ? `?${queryString}` : ''}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.accessToken}`,
       },
     })
 
@@ -88,11 +86,10 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    const response = await fetch(`getInternalApiUrl('/api/api/units')`, {
+    const response = await fetch(getInternalApiUrl('/api/units'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.accessToken}`,
       },
       body: JSON.stringify(body),
     })

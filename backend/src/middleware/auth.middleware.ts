@@ -68,7 +68,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     }
 
     // Check for obviously malformed tokens
-    if (token.includes('') || token.includes('\0') || token.includes('\x00')) {
+    if (token.includes('\0') || token.includes('\x00')) {
       res.status(401).json({ error: 'Token contains invalid characters' });
       return;
     }

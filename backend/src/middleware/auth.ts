@@ -414,7 +414,7 @@ export const validateJWTSimple = async (
     }
 
     // Check for obviously malformed tokens
-    if (token.includes('') || token.includes('\0') || token.includes('\x00')) {
+    if (token.includes('\0') || token.includes('\x00')) {
       return res.status(401).json({
         success: false,
         message: 'Token contém caracteres inválidos'

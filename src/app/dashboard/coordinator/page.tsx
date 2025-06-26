@@ -88,6 +88,14 @@ export default function CoordinatorDashboardPage() {
 
 function CoordinatorDashboardContent() {
   const { user } = useAuth();
+  
+  // Mock stats - em produção seria carregado via API
+  const stats = {
+    totalTeachers: 24,
+    activeClasses: 18,
+    performanceAverage: 8.5,
+    pendingMeetings: 3
+  };
 
   return (
     <DashboardPageLayout

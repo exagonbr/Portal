@@ -376,27 +376,39 @@ class ActivityTrackingService {
           }, 0) / sessionDurations.length
         : 0
 
+      // Criar objeto inicial com todas as ActivityType keys
+      const initialActivityByType: Record<ActivityType, number> = {
+        'login': 0, 'logout': 0, 'login_failed': 0, 'page_view': 0, 'video_start': 0,
+        'video_play': 0, 'video_pause': 0, 'video_stop': 0, 'video_complete': 0, 'video_seek': 0,
+        'content_access': 0, 'quiz_start': 0, 'quiz_attempt': 0, 'quiz_complete': 0,
+        'assignment_start': 0, 'assignment_submit': 0, 'assignment_complete': 0,
+        'book_open': 0, 'book_read': 0, 'book_bookmark': 0, 'course_enroll': 0, 'course_complete': 0,
+        'lesson_start': 0, 'lesson_complete': 0, 'forum_post': 0, 'forum_reply': 0, 'chat_message': 0,
+        'file_download': 0, 'file_upload': 0, 'search': 0, 'profile_update': 0, 'settings_change': 0,
+        'notification_read': 0, 'session_timeout': 0, 'error': 0, 'system_action': 0
+      };
+
       return {
-        total_activities: parseInt(totalActivities?.count || '0'),
-        unique_users: parseInt(uniqueUsers?.count || '0'),
-        unique_sessions: parseInt(uniqueSessions?.count || '0'),
+        total_activities: parseInt(String(totalActivities?.count || '0')),
+        unique_users: parseInt(String(uniqueUsers?.count || '0')),
+        unique_sessions: parseInt(String(uniqueSessions?.count || '0')),
         average_session_duration: Math.round(averageSessionDuration),
         most_active_users: mostActiveUsers.map(user => ({
-          user_id: user.user_id,
+          user_id: String(user.user_id),
           user_name: '', // Seria necessário join com tabela users
-          activity_count: parseInt(user.activity_count)
+          activity_count: parseInt(String(user.activity_count))
         })),
         activity_by_type: activityByType.reduce((acc, item) => {
-          acc[item.activity_type as ActivityType] = parseInt(item.count)
-          return acc
-        }, {} as Record<ActivityType, number>),
+          acc[item.activity_type as ActivityType] = parseInt(String(item.count));
+          return acc;
+        }, initialActivityByType),
         activity_by_hour: activityByHour.reduce((acc, item) => {
-          acc[item.hour] = parseInt(item.count)
-          return acc
+          acc[item.hour] = parseInt(String(item.count));
+          return acc;
         }, {} as Record<string, number>),
         activity_by_day: activityByDay.reduce((acc, item) => {
-          acc[item.day] = parseInt(item.count)
-          return acc
+          acc[item.day] = parseInt(String(item.count));
+          return acc;
         }, {} as Record<string, number>)
       }
     } catch (error) {
@@ -421,7 +433,7 @@ class ActivityTrackingService {
 
       return {
         activities,
-        total: parseInt(totalResult?.count || '0')
+        total: parseInt(String(totalResult?.count || '0'))
       }
     } catch (error) {
       console.error('❌ Erro ao buscar atividades do usuário:', error)

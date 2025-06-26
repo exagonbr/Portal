@@ -1,6 +1,12 @@
 /**
  * Integração com Handtalk para acessibilidade em Língua Brasileira de Sinais (LIBRAS)
  */
+declare global {
+  interface Window {
+    HT?: any;
+  }
+}
+
 export class HT {
   private static instance: HT | null = null;
   private initialized: boolean = false;

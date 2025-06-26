@@ -186,7 +186,7 @@ class SystemSettingsService {
           await this.createSetting(trx, {
             key,
             value: this.stringifyValue(value),
-            type: typeof value === 'object' ? 'json' : typeof value,
+            type: typeof value === 'object' ? 'json' : (typeof value as 'string' | 'number' | 'boolean'),
             category: 'general',
             description: `Configuração ${key}`,
             is_public: false,
@@ -227,7 +227,7 @@ class SystemSettingsService {
       finalValue = this.encrypt(finalValue);
     }
 
-    await trx<SystemSetting>('system_settings').insert({
+    await trx('system_settings').insert({
       id: db.raw('gen_random_uuid()'),
       key: setting.key,
       value: finalValue,

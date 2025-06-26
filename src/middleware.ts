@@ -55,7 +55,7 @@ const ROUTE_CONFIG = {
  */
 function isPublicRoute(pathname: string): boolean {
   // Verificar rotas públicas exatas
-  if (ROUTE_CONFIG.PUBLIC_ROUTES.includes(pathname)) {
+  if (ROUTE_CONFIG.PUBLIC_ROUTES.includes(pathname as any)) {
     return true;
   }
   

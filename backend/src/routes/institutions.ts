@@ -1,5 +1,4 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
 import { validateTokenUltraSimple } from '../middleware/sessionMiddleware';
 import { InstitutionController } from '../controllers/refactored/InstitutionController';
 import { body, param } from 'express-validator';

@@ -6,7 +6,8 @@ import {
   CreateInstitutionDto as CreateInstitutionDtoFromInstitution,
   UpdateInstitutionDto as UpdateInstitutionDtoFromInstitution,
   InstitutionType,
-  INSTITUTION_TYPE_LABELS
+  INSTITUTION_TYPE_LABELS,
+  InstitutionNature
 } from '@/types/institution';
 import { institutionService } from '@/services/institutionService';
 
@@ -20,7 +21,8 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
   const [formData, setFormData] = useState<CreateInstitutionDtoFromInstitution>({
     name: '',
     code: '',
-    type: 'PUBLIC',
+    nature: 'PUBLIC' as InstitutionNature,
+    type: 'UNIVERSITY' as InstitutionType,
     address: '',
     phone: '',
     email: ''
@@ -31,6 +33,7 @@ export default function InstitutionModal({ institution, onClose }: InstitutionMo
       setFormData({
         name: institution.name,
         code: institution.code,
+        nature: institution.nature || 'PUBLIC' as InstitutionNature,
         type: institution.type,
         address: institution.address || '',
         phone: institution.phone || '',

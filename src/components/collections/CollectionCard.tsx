@@ -93,7 +93,7 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({
           
           <div className="flex items-center text-sm text-gray-500">
             <CalendarIcon className="w-4 h-4 mr-1 flex-shrink-0" />
-            <span>{formatDate(collection.first_air_date)}</span>
+            <span>{collection.first_air_date ? formatDate(collection.first_air_date) : 'Data não disponível'}</span>
           </div>
           
           {collection.total_load && (

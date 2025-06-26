@@ -161,14 +161,20 @@ class ApiClient {
    * Constrói URL com parâmetros
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
-    // Remover barra inicial do endpoint para evitar duplicação
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-    
-    // Garantir que baseURL termine com /
-    const baseURL = this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/';
-    
-    // Construir URL completa
-    const fullURL = baseURL + cleanEndpoint;
+    // Se o endpoint já começa com /api, usar ele diretamente
+    let fullURL: string;
+    if (endpoint.startsWith('/api/')) {
+      fullURL = endpoint;
+    } else {
+      // Remover barra inicial do endpoint para evitar duplicação
+      const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+      
+      // Garantir que baseURL termine com /
+      const baseURL = this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/';
+      
+      // Construir URL completa
+      fullURL = baseURL + cleanEndpoint;
+    }
     
     const url = new URL(fullURL, window.location.origin);
     
@@ -335,14 +341,12 @@ class ApiClient {
         console.warn('🦊 Firefox: Erro NS_BINDING_ABORTED tratado');
         return {
           success: false,
-          error: 'Request cancelled by browser',
-          message: 'A requisição foi cancelada pelo navegador'
+          message: 'Request cancelled by browser'
         };
       }
 
       return {
         success: false,
-        error: processedError.message,
         message: processedError.message
       };
     }
@@ -352,7 +356,13 @@ class ApiClient {
    * Métodos HTTP
    */
   async get<T>(endpoint: string, params?: Record<string, string | number | boolean>): Promise<ApiResponse<T>> {
-    return this.makeRequest<T>(endpoint, { method: 'GET', params });
+    const queryParams = params ? `?${new URLSearchParams(
+      Object.entries(params).reduce((acc, [key, value]) => {
+        acc[key] = String(value);
+        return acc;
+      }, {} as Record<string, string>)
+    ).toString()}` : '';
+    return this.makeRequest<T>(`${endpoint}${queryParams}`, { method: 'GET' });
   }
 
   async post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {

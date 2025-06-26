@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { PWARegistration } from '@/components/PWARegistration';
+import { PWAUpdateManager } from '@/components/PWAUpdateManager';
 import { PushNotificationInitializer } from '@/components/PushNotificationInitializer';
 import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
@@ -80,7 +80,7 @@ export default function RootLayout({
           <div className="flex flex-col min-h-full">
             {children}
           </div>
-          <PWARegistration />
+          <PWAUpdateManager />
           <PushNotificationInitializer />
           <LoopEmergencyReset />
           <FirefoxCompatibilityInitializer />

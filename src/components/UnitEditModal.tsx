@@ -53,7 +53,7 @@ export function UnitEditModal({ unit, onSave, onClose }: UnitEditModalProps) {
     const loadInstitutions = async () => {
       try {
         const response = await institutionService.getAll();
-        setInstitutions(response.data.map(inst => ({
+        setInstitutions(response.map((inst: any) => ({
           id: inst.id,
           name: inst.name
         })));

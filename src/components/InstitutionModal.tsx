@@ -33,7 +33,7 @@ export function InstitutionModal({ isOpen, onClose, onSave, institution, mode }:
         description: institution.description || '',
         email: institution.email || '',
         phone: institution.phone || '',
-        address: institution.address || '',
+        address: typeof institution.address === 'string' ? institution.address : '',
         active: institution.active ?? true
       })
     } else if (mode === 'create') {
@@ -230,7 +230,7 @@ export function InstitutionModal({ isOpen, onClose, onSave, institution, mode }:
                     {institution.address && (
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 text-green-600 mr-3" />
-                        <span className="text-green-900">{institution.address}</span>
+                        <span className="text-green-900">{typeof institution.address === 'string' ? institution.address : 'Endereço não disponível'}</span>
                       </div>
                     )}
                   </div>

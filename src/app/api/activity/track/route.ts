@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
 
     // Verificar se o usuário pode acessar as atividades
-    const isAdmin = session.user.role === 'ADMIN' || session.user.role === 'SYSTEM_ADMIN'
+    const isAdmin = session.user.role === 'SYSTEM_ADMIN'
     if (!isAdmin && userId !== session.user.id) {
       return NextResponse.json(
         { success: false, error: 'Acesso negado' },
@@ -134,8 +134,8 @@ export async function GET(request: NextRequest) {
     const filter = {
       user_id: userId,
       activity_type: activityType as ActivityType,
-      entity_type: entityType,
-      entity_id: entityId,
+      entity_type: entityType || undefined,
+      entity_id: entityId || undefined,
       date_from: dateFrom ? new Date(dateFrom) : undefined,
       date_to: dateTo ? new Date(dateTo) : undefined,
       page,

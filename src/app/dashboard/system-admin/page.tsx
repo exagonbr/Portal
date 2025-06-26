@@ -52,7 +52,9 @@ import {
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { systemAdminService } from '@/services/systemAdminService';
-import { institutionService } from '@/services/institutionService';
+import { InstitutionService } from '@/services/institutionService';
+import { InstitutionType, InstitutionNature } from '@/types/institution';
+// import { Address } from '@/types/common'; // Address não existe, usando string | object
 import { debugAuth } from '@/utils/auth-debug';
 import { StatCard, ContentCard, SimpleCard } from '@/components/ui/StandardCard';
 
@@ -133,11 +135,24 @@ interface RealUserStats {
 interface InstitutionStats {
   id: string;
   name: string;
-  type: string;
-  active: boolean;
+  code: string;
+  cnpj?: string;
+  type: InstitutionType;
+  nature?: InstitutionNature;
+  description?: string;
+  address?: string | object;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logo_url?: string;
+  active?: boolean;
   schools_count?: number;
   users_count?: number;
   created_at: string;
+  updated_at: string;
 }
 
 interface RoleStats {
@@ -186,6 +201,14 @@ function SystemAdminDashboardContent() {
   const [realUserStats, setRealUserStats] = useState<RealUserStats | null>(null);
   const [systemAnalytics, setSystemAnalytics] = useState<any>(null);
   const [engagementMetrics, setEngagementMetrics] = useState<any>(null);
+  const [institutionStats, setInstitutionStats] = useState<{
+    totalInstitutions: number;
+    activeInstitutions: number;
+    totalUsers: number;
+    totalSchools: number;
+    averageUsersPerInstitution: number;
+    recentInstitutions: number;
+  } | null>(null);
 
   useEffect(() => {
     // Executar diagnóstico de autenticação primeiro
@@ -243,13 +266,61 @@ function SystemAdminDashboardContent() {
 
   const loadInstitutions = async () => {
     try {
-      const result = await institutionService.getInstitutions({ 
+      // Carregar instituições com dados detalhados
+      const result = await InstitutionService.getInstitutions({ 
         limit: 10, 
-        filters: { active: true } 
+        is_active: true,
+        sortBy: 'name',
+        sortOrder: 'asc'
       });
-      setInstitutions(result.data || []);
+      
+      console.log('📊 Dados das instituições carregados:', result);
+      
+      // Mapear dados para incluir estatísticas adicionais
+      const institutionsWithStats = result.items.map(institution => ({
+        ...institution,
+        users_count: institution.users_count || 0,
+        schools_count: institution.schools_count || 0,
+        created_at: institution.created_at || new Date().toISOString(),
+        active: institution.active ?? true
+      }));
+      
+      setInstitutions(institutionsWithStats);
+      
+      // Calcular estatísticas das instituições
+      const stats = {
+        totalInstitutions: result.total || institutionsWithStats.length,
+        activeInstitutions: institutionsWithStats.filter(inst => inst.active === true).length,
+        totalUsers: institutionsWithStats.reduce((sum, inst) => sum + (inst.users_count || 0), 0),
+        totalSchools: institutionsWithStats.reduce((sum, inst) => sum + (inst.schools_count || 0), 0),
+        averageUsersPerInstitution: institutionsWithStats.length > 0 
+          ? Math.round(institutionsWithStats.reduce((sum, inst) => sum + (inst.users_count || 0), 0) / institutionsWithStats.length)
+          : 0,
+        recentInstitutions: institutionsWithStats.filter(inst => {
+          const createdDate = new Date(inst.created_at);
+          return (Date.now() - createdDate.getTime()) < (30 * 24 * 60 * 60 * 1000);
+        }).length
+      };
+      
+      setInstitutionStats(stats);
+      console.log('📈 Estatísticas das instituições:', stats);
     } catch (error) {
       console.error('Erro ao carregar instituições:', error);
+      // Fallback para dados básicos se a API falhar
+      try {
+        const basicResult = await InstitutionService.getActiveInstitutions();
+        const basicInstitutions = basicResult.slice(0, 10).map(institution => ({
+          ...institution,
+          users_count: 0,
+          schools_count: 0,
+          created_at: institution.created_at || new Date().toISOString(),
+          active: institution.active ?? true
+        }));
+        setInstitutions(basicInstitutions);
+      } catch (fallbackError) {
+        console.error('Erro no fallback das instituições:', fallbackError);
+        toast.error('Erro ao carregar dados das instituições');
+      }
     }
   };
 
@@ -766,9 +837,16 @@ function SystemAdminDashboardContent() {
               <Building2 className="w-4 h-4 text-slate-600" />
             </div>
             <div>
-              <p className="text-lg font-bold text-gray-800">{institutions.length}</p>
+              <p className="text-lg font-bold text-gray-800">
+                {institutionStats?.totalInstitutions || institutions.length}
+              </p>
               <p className="text-xs text-gray-600">Instituições</p>
-              <p className="text-xs text-gray-500">{institutions.filter(i => i.active).length} ativas</p>
+              <p className="text-xs text-gray-500">
+                {institutionStats?.activeInstitutions || institutions.filter(i => i.active !== false).length} ativas
+                {institutionStats?.recentInstitutions && institutionStats.recentInstitutions > 0 && (
+                  <span className="ml-1 text-blue-600">• {institutionStats.recentInstitutions} novas</span>
+                )}
+              </p>
             </div>
           </div>
         </SimpleCard>
@@ -780,11 +858,16 @@ function SystemAdminDashboardContent() {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-800">
-                {dashboardData?.schools?.total || institutions.reduce((total, inst) => total + (inst.schools_count || 0), 0)}
+                {institutionStats?.totalSchools || institutions.reduce((total, inst) => total + (inst.schools_count || 0), 0)}
               </p>
               <p className="text-xs text-gray-600">Escolas</p>
               <p className="text-xs text-gray-500">
-                {dashboardData?.schools?.active || Math.floor((dashboardData?.schools?.total || 0) * 0.91)} ativas
+                {Math.floor((institutionStats?.totalSchools || institutions.reduce((total, inst) => total + (inst.schools_count || 0), 0)) * 0.91)} ativas
+                {institutionStats?.totalInstitutions && institutionStats.totalInstitutions > 0 && (
+                  <span className="ml-1 text-indigo-600">
+                    • {Math.round((institutionStats.totalSchools || 0) / institutionStats.totalInstitutions)} por inst.
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -1258,53 +1341,161 @@ function SystemAdminDashboardContent() {
           {/* Resumo de Instituições */}
           <ContentCard
             title="Instituições Ativas"
-            subtitle={`${institutions.length} instituições cadastradas`}
+            subtitle={`${institutions.length} instituições com maior atividade`}
             icon={Building2}
             iconColor="bg-slate-500"
             actions={
-              <button 
-                onClick={() => router.push('/admin/institutions')}
-                className="text-xs text-primary hover:text-primary-dark font-medium"
-              >
-                Ver todas →
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={loadInstitutions}
+                  className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+                  title="Atualizar dados"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+                <button 
+                  onClick={() => router.push('/admin/institutions')}
+                  className="text-xs text-primary hover:text-primary-dark font-medium"
+                >
+                  Ver todas →
+                </button>
+              </div>
             }
           >
             <div className="space-y-2">
-              {institutions.slice(0, 4).map((institution) => (
-                <SimpleCard
-                  key={institution.id}
-                  className="p-2 hover:shadow-sm transition-shadow"
-                  hover={false}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-xs text-gray-800">{institution.name}</h4>
-                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-green-100 text-green-700 font-medium">
-                          Ativa
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <span className="font-medium">{institution.type}</span>
-                        {institution.schools_count && (
-                          <>
-                            <span>•</span>
-                            <span>{institution.schools_count} escolas</span>
-                          </>
-                        )}
-                        {institution.users_count && (
-                          <>
-                            <span>•</span>
-                            <span>{institution.users_count.toLocaleString('pt-BR')} usuários</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
+              {loading ? (
+                <div className="text-center py-6">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-xs text-gray-500">Carregando dados das instituições...</p>
+                </div>
+              ) : institutions.length === 0 ? (
+                <div className="text-center py-4">
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <Building2 className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-gray-600">Nenhuma instituição encontrada</p>
+                    <p className="text-xs text-gray-500">Verifique os filtros ou aguarde o carregamento</p>
                   </div>
-                </SimpleCard>
-              ))}
+                </div>
+              ) : (
+                institutions.slice(0, 5).map((institution, index) => {
+                  const totalUsers = institution.users_count || 0;
+                  const totalSchools = institution.schools_count || 0;
+                  const createdDate = new Date(institution.created_at);
+                  const isRecent = (Date.now() - createdDate.getTime()) < (30 * 24 * 60 * 60 * 1000); // 30 dias
+                  
+                  return (
+                    <SimpleCard
+                      key={institution.id}
+                      className="p-3 hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/30"
+                      hover={true}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-bold text-primary">#{index + 1}</span>
+                              <h4 className="font-semibold text-sm text-gray-800 truncate max-w-[180px]" title={institution.name}>
+                                {institution.name}
+                              </h4>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 font-medium">
+                                Ativa
+                              </span>
+                              {isRecent && (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">
+                                  Nova
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="font-medium text-gray-700 min-w-[60px]">Tipo:</span>
+                              <span className="text-gray-600 capitalize">{institution.type?.toLowerCase().replace('_', ' ') || 'N/A'}</span>
+                            </div>
+                            
+                            {(totalSchools > 0 || totalUsers > 0) && (
+                              <div className="flex items-center gap-4 text-xs">
+                                {totalSchools > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <School className="w-3 h-3 text-indigo-500" />
+                                    <span className="font-medium text-indigo-700">
+                                      {totalSchools.toLocaleString('pt-BR')} escola{totalSchools !== 1 ? 's' : ''}
+                                    </span>
+                                  </div>
+                                )}
+                                {totalUsers > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <Users className="w-3 h-3 text-blue-500" />
+                                    <span className="font-medium text-blue-700">
+                                      {totalUsers.toLocaleString('pt-BR')} usuário{totalUsers !== 1 ? 's' : ''}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center justify-between pt-1">
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Clock className="w-3 h-3" />
+                                <span>Criada em {createdDate.toLocaleDateString('pt-BR')}</span>
+                              </div>
+                              
+                              {totalUsers > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                  <span className="text-xs font-medium text-green-600">Ativa</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </SimpleCard>
+                  );
+                })
+              )}
+              
+              {institutions.length > 5 && (
+                <div className="text-center pt-2">
+                  <button 
+                    onClick={() => router.push('/admin/institutions')}
+                    className="text-xs text-primary hover:text-primary-dark font-medium flex items-center justify-center gap-1 mx-auto"
+                  >
+                    Ver mais {institutions.length - 5} instituições
+                    <Building2 className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
+            
+            {/* Resumo estatístico no rodapé */}
+            {institutions.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <p className="text-sm font-bold text-blue-600">
+                      {institutions.reduce((sum, inst) => sum + (inst.users_count || 0), 0).toLocaleString('pt-BR')}
+                    </p>
+                    <p className="text-xs text-gray-600">Total Usuários</p>
+                  </div>
+                  <div className="p-2 bg-indigo-50 rounded-lg">
+                    <p className="text-sm font-bold text-indigo-600">
+                      {institutions.reduce((sum, inst) => sum + (inst.schools_count || 0), 0).toLocaleString('pt-BR')}
+                    </p>
+                    <p className="text-xs text-gray-600">Total Escolas</p>
+                  </div>
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <p className="text-sm font-bold text-green-600">
+                      {Math.round(institutions.reduce((sum, inst) => sum + (inst.users_count || 0), 0) / institutions.length).toLocaleString('pt-BR')}
+                    </p>
+                    <p className="text-xs text-gray-600">Média/Inst.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </ContentCard>
 
           {/* Métricas de Engajamento */}

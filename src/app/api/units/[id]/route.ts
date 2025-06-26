@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { getInternalApiUrl } from '@/config/env';
 
 // Schema de validação para atualização de unidade
 const updateUnitSchema = z.object({
@@ -34,8 +35,6 @@ const updateUnitSchema = z.object({
   }).optional()
 })
 
-import { getInternalApiUrl } from '@/config/env';
-
 // GET - Buscar unidade por ID
 export async function GET(
   request: NextRequest,
@@ -48,11 +47,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const response = await fetch(`getInternalApiUrl('/api/api/units/${params.id}')`, {
+    const response = await fetch(getInternalApiUrl(`/api/units/${params.id}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.accessToken}`,
       },
     })
 
@@ -89,11 +87,10 @@ export async function PUT(
 
     const body = await request.json()
 
-    const response = await fetch(`getInternalApiUrl('/api/api/units/${params.id}')`, {
+    const response = await fetch(getInternalApiUrl(`/api/units/${params.id}`), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.accessToken}`,
       },
       body: JSON.stringify(body),
     })
@@ -129,11 +126,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const response = await fetch(`getInternalApiUrl('/api/api/units/${params.id}')`, {
+    const response = await fetch(getInternalApiUrl(`/api/units/${params.id}`), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.accessToken}`,
       },
     })
 

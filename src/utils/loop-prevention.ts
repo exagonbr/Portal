@@ -277,7 +277,7 @@ class LoopPreventionSystem {
         req => req.timestamp > oneHourAgo
       );
       
-      for (const [url, blockedUntil] of this.detector.blockedUntil.entries()) {
+      for (const [url, blockedUntil] of Array.from(this.detector.blockedUntil.entries())) {
         if (now >= blockedUntil) {
           this.detector.blockedUntil.delete(url);
         }

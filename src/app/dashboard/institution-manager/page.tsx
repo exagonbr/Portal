@@ -35,8 +35,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserRole, ROLE_COLORS } from '@/types/roles';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
-import { institutionService, Institution, InstitutionQueryParams } from '@/services/institutionService';
-import { InstitutionDto } from '@/types/institution';
+import { InstitutionService } from '@/services/institutionService';
+import { InstitutionDto, Institution, InstitutionFilter } from '@/types/institution';
 
 
 interface InstitutionStats {
@@ -85,7 +85,7 @@ export default function InstitutionManagerDashboardPage() {
   const [institutions, setInstitutions] = useState<InstitutionDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [queryParams, setQueryParams] = useState<InstitutionQueryParams>({
+  const [queryParams, setQueryParams] = useState<InstitutionFilter>({
     page: 1,
     limit: 10,
     sortBy: 'name',
@@ -100,7 +100,7 @@ export default function InstitutionManagerDashboardPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await institutionService.getInstitutions(queryParams);
+      const response = await InstitutionService.getInstitutions(queryParams);
       setInstitutions(response.items);
     } catch (err) {
       setError('Erro ao carregar instituições. Verifique se o backend está rodando.');
@@ -178,7 +178,7 @@ export default function InstitutionManagerDashboardPage() {
                     <School className="w-7 h-7 text-white drop-shadow-lg" />
                   </div>
                   <div className="text-right">
-                    <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{institutions.filter(i => i.type === 'PUBLIC').length}</p>
+                    <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{institutions.filter(i => i.nature === 'PUBLIC').length}</p>
                     <div className="flex items-center justify-end gap-2 mt-2">
                       <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
                       <span className="text-sm text-green-100 font-semibold tracking-wide">PÚBLICAS</span>
@@ -207,7 +207,7 @@ export default function InstitutionManagerDashboardPage() {
                     <Building className="w-7 h-7 text-white drop-shadow-lg" />
                   </div>
                   <div className="text-right">
-                    <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{institutions.filter(i => i.type === 'PRIVATE').length}</p>
+                    <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{institutions.filter(i => i.nature === 'PRIVATE').length}</p>
                     <div className="flex items-center justify-end gap-2 mt-2">
                       <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
                       <span className="text-sm text-purple-100 font-semibold tracking-wide">PRIVADAS</span>
@@ -236,7 +236,7 @@ export default function InstitutionManagerDashboardPage() {
                     <Shuffle className="w-7 h-7 text-white drop-shadow-lg" />
                   </div>
                   <div className="text-right">
-                    <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{institutions.filter(i => i.type === 'MIXED').length}</p>
+                    <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{institutions.filter(i => i.nature === 'MIXED').length}</p>
                     <div className="flex items-center justify-end gap-2 mt-2">
                       <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
                       <span className="text-sm text-amber-100 font-semibold tracking-wide">MISTAS</span>
@@ -271,15 +271,15 @@ export default function InstitutionManagerDashboardPage() {
                   <div key={institution.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        institution.type === 'PUBLIC' ? 'bg-blue-100' :
-                        institution.type === 'PRIVATE' ? 'bg-purple-100' :
-                        institution.type === 'MIXED' ? 'bg-green-100' :
+                                        institution.nature === 'PUBLIC' ? 'bg-blue-100' :
+                institution.nature === 'PRIVATE' ? 'bg-purple-100' :
+                institution.nature === 'MIXED' ? 'bg-green-100' :
                         'bg-orange-100'
                       }`}>
                         <School className={`w-6 h-6 ${
-                          institution.type === 'PUBLIC' ? 'text-blue-600' :
-                          institution.type === 'PRIVATE' ? 'text-purple-600' :
-                          institution.type === 'MIXED' ? 'text-green-600' :
+                          institution.nature === 'PUBLIC' ? 'text-blue-600' :
+                          institution.nature === 'PRIVATE' ? 'text-purple-600' :
+                          institution.nature === 'MIXED' ? 'text-green-600' :
                           'text-orange-600'
                         }`} />
                       </div>

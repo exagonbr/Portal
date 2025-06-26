@@ -59,7 +59,7 @@ export function initializeFirefoxCompatibility() {
   // 1. Interceptar e corrigir fetch para evitar NS_BINDING_ABORT e NetworkError
   const originalFetch = window.fetch;
   window.fetch = async function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-    const requestInit = { ...init } || {};
+    const requestInit = { ...init };
     
     // Extrair URL da requisição
     const url = typeof input === 'string' ? input : 
@@ -181,7 +181,7 @@ export const FirefoxUtils = {
   
   // Criar fetch seguro para Firefox
   safeFetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const requestInit = { ...init } || {};
+    const requestInit = { ...init };
     
     // Remover AbortController no Firefox para evitar NS_BINDING_ABORTED
     if (isFirefox() && requestInit.signal) {

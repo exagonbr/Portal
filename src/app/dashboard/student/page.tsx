@@ -134,7 +134,8 @@ function StudentDashboardContent() {
     xpPoints: 0,
     level: 0,
     streakDays: 0,
-    badges: 0
+    badges: 0,
+    nextEvaluation: 0
   });
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [recentGrades, setRecentGrades] = useState<Grade[]>([]);

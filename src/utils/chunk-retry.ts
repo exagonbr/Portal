@@ -38,7 +38,7 @@ export async function retryDynamicImport<T>(
     onFailure
   } = options;
 
-  let lastError: Error;
+  let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -74,11 +74,15 @@ export async function retryDynamicImport<T>(
     }
   }
 
-  if (onFailure) {
-    onFailure(lastError);
+  if (lastError) {
+    if (onFailure) {
+      onFailure(lastError);
+    }
+    throw lastError;
   }
   
-  throw lastError;
+  // Se chegou aqui sem erro, retornar um valor padrão
+  throw new Error('Retry function completed without success or error');
 }
 
 /**

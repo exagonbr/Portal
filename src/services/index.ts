@@ -97,11 +97,6 @@ export type {
 } from './roleService';
 
 export type {
-  InstitutionFilters,
-  InstitutionListOptions
-} from './institutionService';
-
-export type {
   CourseFilters,
   CourseListOptions
 } from './courseService';

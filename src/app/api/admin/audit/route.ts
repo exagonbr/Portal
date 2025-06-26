@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth-utils'
+import { authOptions } from '@/lib/auth'
 import { UserRole } from '@/types/roles'
 import knex from '@/config/database'
 
@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se o usuário tem permissão para ver logs de auditoria
-    const userRoles = Array.isArray(session.user.role) ? session.user.role : [session.user.role]
-    const hasPermission = userRoles.some(role => 
-      [UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER].includes(role as UserRole)
+    const userRoles = [UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER]
+    const hasPermission = userRoles.some((role: UserRole) =>
+      role === session.user.role
     )
 
     if (!hasPermission) {
