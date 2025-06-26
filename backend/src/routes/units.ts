@@ -24,9 +24,9 @@ router.get('/', authMiddleware, async (req, res) => {
     let query = db('unit')
       .select(
         'unit.*',
-        'institution.name as institution_name'
+        'institutions.name as institution_name'
       )
-      .leftJoin('institution', 'unit.institution_id', 'institution.id')
+      .leftJoin('institutions', 'unit.institution_id', 'institutions.id')
       .where('unit.deleted', false)
       .orderBy('unit.name');
 
@@ -34,7 +34,7 @@ router.get('/', authMiddleware, async (req, res) => {
     if (search) {
       query = query.where(function() {
         this.where('unit.name', 'ilike', `%${search}%`)
-          .orWhere('institution.name', 'ilike', `%${search}%`);
+          .orWhere('institutions.name', 'ilike', `%${search}%`);
       });
     }
 
@@ -83,10 +83,10 @@ router.get('/', authMiddleware, async (req, res) => {
       data: {
         items: formattedUnits,
         pagination: {
-          total: parseInt(total),
+          total: parseInt(String(total)),
           page: Number(page),
           limit: Number(limit),
-          totalPages: Math.ceil(parseInt(total) / Number(limit))
+          totalPages: Math.ceil(parseInt(String(total)) / Number(limit))
         }
       }
     });
@@ -109,9 +109,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
     const query = db('unit')
       .select(
         'unit.*',
-        'institution.name as institution_name'
+        'institutions.name as institution_name'
       )
-      .leftJoin('institution', 'unit.institution_id', 'institution.id')
+      .leftJoin('institutions', 'unit.institution_id', 'institutions.id')
       .where('unit.id', req.params.id)
       .where('unit.deleted', false);
 
