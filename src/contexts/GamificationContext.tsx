@@ -26,6 +26,7 @@ interface GamificationContextType {
 const GamificationContext = createContext<GamificationContextType | undefined>(undefined);
 
 export function GamificationProvider({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [xpProgress, setXPProgress] = useState<XPProgress>({
     currentXP: 0,
     level: 1,
@@ -40,11 +41,21 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
     receiveNotifications: true
   });
 
+  // Verificar se o componente foi montado no cliente
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const calculateLevel = (xp: number): number => {
     return XP_LEVELS.LEVEL_THRESHOLDS.findIndex(threshold => xp < threshold) || 1;
   };
 
   const addXP = async (amount: number) => {
+    // Só executar no cliente após montagem
+    if (!mounted || typeof window === 'undefined') {
+      return;
+    }
+
     const newXP = xpProgress.currentXP + amount;
     const newLevel = calculateLevel(newXP);
     const nextThreshold = XP_LEVELS.LEVEL_THRESHOLDS[newLevel] || Infinity;
@@ -60,6 +71,11 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
   };
 
   const claimReward = async (rewardId: string) => {
+    // Só executar no cliente após montagem
+    if (!mounted || typeof window === 'undefined') {
+      return;
+    }
+
     const reward = availableRewards.find(r => r.id === rewardId);
     if (!reward || xpProgress.currentXP < reward.xpCost) {
       throw new Error('Cannot claim reward');
@@ -70,6 +86,11 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
   };
 
   const toggleLeaderboardVisibility = async () => {
+    // Só executar no cliente após montagem
+    if (!mounted || typeof window === 'undefined') {
+      return;
+    }
+
     const newSettings = {
       ...settings,
       showOnLeaderboard: !settings.showOnLeaderboard
@@ -79,6 +100,11 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
   };
 
   const checkBadgeProgress = async () => {
+    // Só executar no cliente após montagem
+    if (!mounted || typeof window === 'undefined') {
+      return;
+    }
+
     const newBadges = BADGES.filter(badge => {
       if (badges.some(b => b.id === badge.id)) return false;
 
@@ -102,8 +128,13 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
 
   // Mock data loading
   useEffect(() => {
+    // Só executar no cliente após montagem
+    if (!mounted || typeof window === 'undefined') {
+      return;
+    }
+
     // TODO: Load initial data from server
-  }, []);
+  }, [mounted]);
 
   return (
     <GamificationContext.Provider

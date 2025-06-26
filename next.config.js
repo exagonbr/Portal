@@ -9,10 +9,26 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   productionBrowserSourceMaps: false,
-    eslint: {
+  eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
+  },
+  
+  // Configurações para melhorar a hidratação
+  experimental: {
+    // Melhorar a hidratação de componentes
+    optimizePackageImports: ['react-hot-toast', 'lucide-react'],
+    // Reduzir problemas de hidratação
+    serverComponentsExternalPackages: ['epubjs'],
+  },
+  
+  // Configurações de compilação para evitar problemas de hidratação
+  compiler: {
+    // Remover console.log em produção
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn']
+    } : false,
   },
   
   // Configuração de output para produção

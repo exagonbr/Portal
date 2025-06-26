@@ -7,10 +7,12 @@ import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
 import GlobalSetup from '@/components/GlobalSetup';
 import Handtalk from '@/components/Handtalk';
+import ClientOnly from '@/components/ClientOnly';
 
 import { LoopEmergencyReset } from '@/components/LoopEmergencyReset';
 import { FirefoxCompatibilityInitializer } from '@/components/FirefoxCompatibilityInitializer';
 import ChunkErrorHandler from '@/components/ChunkErrorHandler';
+import HydrationDebugger from '@/components/HydrationDebugger';
 
 
 const inter = Inter({ subsets: ['latin'] });
@@ -72,19 +74,29 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
-        <ErrorSuppressor />
-        <GlobalSetup />
+        <ClientOnly>
+          <ErrorSuppressor />
+          <GlobalSetup />
+        </ClientOnly>
+        
         <AppProviders>
-        <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
+          <ClientOnly>
+            <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
+          </ClientOnly>
 
           <div className="flex flex-col min-h-full">
             {children}
           </div>
-          <PWAUpdateManager />
-          <PushNotificationInitializer />
-          <LoopEmergencyReset />
-          <FirefoxCompatibilityInitializer />
-          <ChunkErrorHandler />
+          
+          <ClientOnly>
+            <PWAUpdateManager />
+            <PushNotificationInitializer />
+            <LoopEmergencyReset />
+            <FirefoxCompatibilityInitializer />
+            <ChunkErrorHandler />
+          </ClientOnly>
+          
+          <HydrationDebugger />
         </AppProviders>
       </body>
     </html>

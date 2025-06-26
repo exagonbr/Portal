@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useEffect, useCallback, memo } from 'react'
-import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes } from '@/types/roles'
+import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes, RolePermissions } from '@/types/roles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 import { EnhancedLoadingState } from '../ui/LoadingStates'
@@ -15,7 +15,7 @@ interface NavItem {
   href: string
   icon: string
   label: string
-  permission?: keyof typeof ROLE_PERMISSIONS[UserRole.SYSTEM_ADMIN]
+  permission?: keyof RolePermissions
 }
 
 interface NavSection {
@@ -36,8 +36,25 @@ function withErrorBoundary<T extends object>(Component: React.ComponentType<T>) 
     } catch (error) {
       console.error('Erro no sidebar:', error);
       return (
-        <div className="w-64 bg-red-100 p-4 text-red-800">
-          <p>Erro no sidebar. Recarregue a página.</p>
+        <div className="w-64 bg-red-100 p-4 text-red-800 border-r border-red-200">
+          <div className="mb-4">
+            <h3 className="font-semibold text-red-900">Erro no Sidebar</h3>
+            <p className="text-sm">Ocorreu um erro ao carregar o menu lateral.</p>
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
+          >
+            Recarregar Página
+          </button>
+          <div className="mt-4 text-xs text-red-600">
+            <details>
+              <summary className="cursor-pointer">Detalhes do erro</summary>
+              <pre className="mt-2 p-2 bg-red-50 rounded text-xs overflow-auto">
+                {error instanceof Error ? error.message : String(error)}
+              </pre>
+            </details>
+          </div>
         </div>
       );
     }
@@ -396,6 +413,21 @@ function DashboardSidebarComponent() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
+  // Verificações de segurança
+  if (!theme || !theme.colors || !theme.colors.sidebar) {
+    console.warn('Theme não está disponível ou incompleto no DashboardSidebar');
+    return (
+      <div className="w-64 bg-gray-100 p-4 text-gray-800 border-r border-gray-200">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-300 rounded mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded mb-2 w-3/4"></div>
+          <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+        </div>
+        <p className="mt-4 text-sm">Carregando tema do sidebar...</p>
+      </div>
+    );
+  }
+
   // Get user role with fallback to STUDENT
   const userRole: UserRole = (user?.role || 'STUDENT') as UserRole;
   const [selectedRole, setSelectedRole] = useState<UserRole>(userRole)
@@ -534,7 +566,12 @@ function DashboardSidebarComponent() {
     switch (selectedRole) {
       case UserRole.SYSTEM_ADMIN:
         // Usa o menu completo do SystemAdminMenu
-        roleSpecificItems = getSystemAdminMenuItems();
+        try {
+          roleSpecificItems = getSystemAdminMenuItems() || [];
+        } catch (error) {
+          console.error('Erro ao carregar menu do System Admin:', error);
+          roleSpecificItems = [];
+        }
         break;
 
       case UserRole.INSTITUTION_MANAGER:
@@ -985,9 +1022,16 @@ function DashboardSidebarComponent() {
     return [...commonItems, ...roleSpecificItems];
   }, [selectedRole]);
 
-      // Para o SYSTEM_ADMIN, apenas usamos os itens específicos do papel, sem adicionar os itens comuns
+    // Para o SYSTEM_ADMIN, apenas usamos os itens específicos do papel, sem adicionar os itens comuns
     const navItems = selectedRole === UserRole.SYSTEM_ADMIN 
-      ? getSystemAdminMenuItems() 
+      ? (() => {
+          try {
+            return getSystemAdminMenuItems() || [];
+          } catch (error) {
+            console.error('Erro ao carregar menu do System Admin:', error);
+            return [];
+          }
+        })()
       : getNavItems();
 
   return (

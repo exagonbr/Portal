@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
+import SafeDashboardSidebar from '@/components/SafeDashboardSidebar'
 import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
 interface DashboardLayoutProps {
@@ -40,6 +40,27 @@ export default function DashboardLayout({
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { theme, themeType, toggleTheme } = useTheme()
+
+  // Verificação de segurança para o tema
+  if (!theme || !theme.colors) {
+    return (
+      <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
+        <div className="w-64 bg-gray-100 border-r border-gray-200 p-4">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-300 rounded mb-4"></div>
+            <div className="h-4 bg-gray-300 rounded mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded mb-2 w-3/4"></div>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando tema...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   
   // Mock data para notificações - em produção viria de uma API
@@ -172,7 +193,7 @@ export default function DashboardLayout({
     <div className="flex h-screen w-screen overflow-hidden" style={{ backgroundColor: theme.colors.background.secondary }}>
       {/* Left Sidebar - Ajustado para ser responsivo */}
       <div className="hidden md:block">
-        <DashboardSidebar />
+        <SafeDashboardSidebar />
       </div>
       
       {/* Main Content Area */}

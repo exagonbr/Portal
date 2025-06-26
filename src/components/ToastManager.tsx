@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useToast as useToastHook } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/ui/Toast';
 
@@ -8,15 +8,23 @@ import { ToastContainer } from '@/components/ui/Toast';
 const ToastContext = createContext<ReturnType<typeof useToastHook> | undefined>(undefined);
 
 export function ToastManager({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const toastMethods = useToastHook();
+
+  // Verificar se o componente foi montado no cliente
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <ToastContext.Provider value={toastMethods}>
       {children}
-      <ToastContainer 
-        toasts={toastMethods.toasts} 
-        onRemove={toastMethods.removeToast} 
-      />
+      {mounted && (
+        <ToastContainer 
+          toasts={toastMethods.toasts} 
+          onRemove={toastMethods.removeToast} 
+        />
+      )}
     </ToastContext.Provider>
   );
 }

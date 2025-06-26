@@ -6,7 +6,7 @@ export interface AdminMenuItem {
   href: string
   icon: string
   label: string
-  permission?: keyof typeof import('@/types/roles').ROLE_PERMISSIONS[UserRole.SYSTEM_ADMIN]
+  permission?: keyof import('@/types/roles').RolePermissions
 }
 
 export interface AdminMenuSection {
@@ -15,7 +15,8 @@ export interface AdminMenuSection {
 }
 
 export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
-  return [
+  try {
+    return [
     {
       section: 'Principal',
       items: [
@@ -210,5 +211,20 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
         }
       ]
     }
-  ]
+  ];
+  } catch (error) {
+    console.error('Erro ao gerar menu do System Admin:', error);
+    return [
+      {
+        section: 'Principal',
+        items: [
+          {
+            href: '/dashboard/system-admin',
+            icon: 'dashboard',
+            label: 'Painel Principal'
+          }
+        ]
+      }
+    ];
+  }
 } 

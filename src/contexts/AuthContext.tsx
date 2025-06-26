@@ -28,10 +28,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserEssentials | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   // Estado derivado para autenticação
   const isAuthenticated = !!user;
+
+  // Verificar se o componente foi montado no cliente
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   /**
    * Limpar erro
@@ -44,6 +50,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Buscar usuário atual da sessão (cookies/localStorage)
    */
   const fetchCurrentUser = useCallback(async () => {
+    // Só executar no cliente após montagem
+    if (!mounted || typeof window === 'undefined') {
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -64,14 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mounted]);
 
   /**
    * Inicialização do contexto - verificar sessão existente
    */
   useEffect(() => {
-    fetchCurrentUser();
-  }, [fetchCurrentUser]);
+    if (mounted) {
+      fetchCurrentUser();
+    }
+  }, [mounted, fetchCurrentUser]);
 
   /**
    * Função de redirecionamento segura
