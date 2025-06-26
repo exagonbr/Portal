@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { PWAUpdateManager } from '@/components/PWAUpdateManager';
+import { PWAUpdateManager, UpdateProvider } from '@/components/PWAUpdateManager';
 import { PushNotificationInitializer } from '@/components/PushNotificationInitializer';
 import { AppProviders } from '@/providers/AppProviders';
 import ErrorSuppressor from '@/components/ErrorSuppressor';
@@ -80,21 +80,23 @@ export default function RootLayout({
         </ClientOnly>
         
         <AppProviders>
-          <ClientOnly>
-            <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
-          </ClientOnly>
+          <UpdateProvider>
+            <ClientOnly>
+              <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
+            </ClientOnly>
 
-          <div className="flex flex-col min-h-full">
-            {children}
-          </div>
-          
-          <ClientOnly>
-            <PWAUpdateManager />
-            <PushNotificationInitializer />
-            <LoopEmergencyReset />
-            <FirefoxCompatibilityInitializer />
-            <ChunkErrorHandler />
-          </ClientOnly>
+            <div className="flex flex-col min-h-full">
+              {children}
+            </div>
+            
+            <ClientOnly>
+              <PWAUpdateManager />
+              <PushNotificationInitializer />
+              <LoopEmergencyReset />
+              <FirefoxCompatibilityInitializer />
+              <ChunkErrorHandler />
+            </ClientOnly>
+          </UpdateProvider>
           
           <HydrationDebugger />
         </AppProviders>

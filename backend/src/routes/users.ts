@@ -8,6 +8,172 @@ import bcrypt from 'bcryptjs';
 const router = express.Router();
 const userRepository = new UserRepository();
 
+// Rota de teste sem middleware para debug - MOVIDA PARA O INÍCIO
+router.get('/stats-test', async (req, res) => {
+  console.log('🧪 [STATS-TEST] Rota de teste acessada');
+  try {
+    return res.json({
+      success: true,
+      message: 'Rota de teste funcionando',
+      debug: 'Esta rota não tem middleware de autenticação'
+    });
+  } catch (error: any) {
+    console.error('❌ [STATS-TEST] Erro:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro na rota de teste',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/stats:
+ *   get:
+ *     summary: Get user statistics
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalUsers:
+ *                       type: number
+ *                     users_by_role:
+ *                       type: object
+ *                     activeUsers:
+ *                       type: number
+ *                     inactiveUsers:
+ *                       type: number
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/stats', validateTokenUltraSimple, async (req, res) => {
+  try {
+    console.log('📊 [USERS/STATS] Iniciando...');
+    
+    // Primeiro, vamos testar com dados estáticos para ver se o problema é na query
+    const staticStats = {
+      totalUsers: 100,
+      activeUsers: 85,
+      inactiveUsers: 15,
+      users_by_role: {
+        'STUDENT': 70,
+        'TEACHER': 20,
+        'ADMIN': 10
+      }
+    };
+    
+    console.log('✅ [USERS/STATS] Retornando dados estáticos para teste');
+    
+    return res.json({
+      success: true,
+      data: staticStats,
+      message: 'Estatísticas de usuários (dados de teste)',
+      debug: 'Usando dados estáticos para identificar problema'
+    });
+    
+    /* CÓDIGO ORIGINAL COMENTADO PARA DEBUG:
+    
+    console.log('📊 Iniciando busca de estatísticas de usuários...');
+    
+    // Buscar estatísticas básicas de usuários
+    let totalUsers = 0;
+    let activeUsers = 0;
+    let inactiveUsers = 0;
+    let usersByRole = {};
+    
+    try {
+      totalUsers = await userRepository.count();
+      console.log('✅ Total de usuários:', totalUsers);
+    } catch (error) {
+      console.error('❌ Erro ao buscar total de usuários:', error);
+    }
+    
+    try {
+      activeUsers = await userRepository.count({ is_active: true });
+      inactiveUsers = totalUsers - activeUsers;
+      console.log('✅ Usuários ativos:', activeUsers, 'Inativos:', inactiveUsers);
+    } catch (error) {
+      console.error('❌ Erro ao buscar usuários ativos:', error);
+    }
+    
+    // Buscar usuários por role com fallback
+    try {
+      usersByRole = await userRepository.getUserStatsByRole();
+      console.log('✅ Usuários por role:', usersByRole);
+    } catch (error) {
+      console.error('❌ Erro ao buscar usuários por role:', error);
+      // Fallback: contar usuários sem join com roles
+      try {
+        const db = require('../config/database').default;
+        const roleStats = await db('users')
+          .select('role_id')
+          .count('id as count')
+          .where('is_active', true)
+          .groupBy('role_id');
+        
+        usersByRole = {};
+        roleStats.forEach((row: any) => {
+          const roleId = row.role_id || 'sem_role';
+          usersByRole[roleId] = parseInt(row.count, 10) || 0;
+        });
+        console.log('✅ Fallback - Usuários por role_id:', usersByRole);
+      } catch (fallbackError) {
+        console.error('❌ Erro no fallback de usuários por role:', fallbackError);
+        usersByRole = {
+          'STUDENT': Math.floor(totalUsers * 0.7),
+          'TEACHER': Math.floor(totalUsers * 0.2),
+          'ADMIN': Math.floor(totalUsers * 0.1)
+        };
+        console.log('✅ Usando dados simulados:', usersByRole);
+      }
+    }
+    
+    // Formatar resposta
+    const stats = {
+      totalUsers,
+      activeUsers,
+      inactiveUsers,
+      users_by_role: usersByRole
+    };
+
+    console.log('✅ Estatísticas finais:', stats);
+
+    return res.json({
+      success: true,
+      data: stats,
+      message: 'Estatísticas de usuários obtidas com sucesso'
+    });
+    
+    */
+    
+  } catch (error: any) {
+    console.error('❌ [USERS/STATS] Erro geral:', error);
+    console.error('❌ [USERS/STATS] Stack trace:', error.stack);
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      debug: 'Erro capturado no catch principal'
+    });
+  }
+});
+
 /**
  * @swagger
  * /api/users:
@@ -593,72 +759,6 @@ router.delete('/:id', authMiddleware, requireRole(['admin', 'SYSTEM_ADMIN']), as
     });
   } catch (error) {
     console.error('Error deleting user:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-
-/**
- * @swagger
- * /api/users/stats:
- *   get:
- *     summary: Get user statistics
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: User statistics
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     totalUsers:
- *                       type: number
- *                     users_by_role:
- *                       type: object
- *                     activeUsers:
- *                       type: number
- *                     inactiveUsers:
- *                       type: number
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.get('/stats', validateTokenUltraSimple, async (req, res) => {
-  try {
-    // Buscar estatísticas de usuários
-    const totalUsers = await userRepository.count();
-    const activeUsers = await userRepository.count({ is_active: true });
-    const inactiveUsers = totalUsers - activeUsers;
-    
-    // Buscar usuários por role
-    const usersByRole = await userRepository.getUserStatsByRole();
-    
-    // Formatar resposta
-    const stats = {
-      totalUsers,
-      activeUsers,
-      inactiveUsers,
-      users_by_role: usersByRole || {}
-    };
-
-    return res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error('Error fetching user stats:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

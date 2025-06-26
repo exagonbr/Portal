@@ -6,12 +6,14 @@ interface UpdateNotificationProps {
   isUpdateAvailable: boolean
   onUpdate: () => void
   isUpdating: boolean
+  hideWhenCompactVisible?: boolean
 }
 
 export function UpdateNotification({ 
   isUpdateAvailable, 
   onUpdate, 
-  isUpdating 
+  isUpdating,
+  hideWhenCompactVisible = false
 }: UpdateNotificationProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -22,7 +24,7 @@ export function UpdateNotification({
     }
   }, [isUpdateAvailable])
 
-  if (!isVisible) return null
+  if (!isVisible || hideWhenCompactVisible) return null
 
   const handleDismiss = () => {
     setIsVisible(false)

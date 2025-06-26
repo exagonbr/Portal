@@ -30,7 +30,7 @@ app.use((req, res, next) => {
     return res.status(204).end();
   }
   
-  next();
+  return next();
 });
 
 // Middlewares de segurança
@@ -88,7 +88,7 @@ app.use((req, res, next) => {
     return res.status(204).end();
   }
   
-  next();
+  return next();
 });
 
 // Compressão

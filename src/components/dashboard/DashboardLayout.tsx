@@ -6,6 +6,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import SafeDashboardSidebar from '@/components/SafeDashboardSidebar'
 import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
+import { UpdateNotificationCompact } from '@/components/UpdateNotificationCompact'
+import { useUpdateStatus } from '@/components/PWAUpdateManager'
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
@@ -40,6 +42,19 @@ export default function DashboardLayout({
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { theme, themeType, toggleTheme } = useTheme()
+  
+  // Hook para status de atualização (com fallback para quando não estiver no UpdateProvider)
+  let updateStatus = null
+  try {
+    updateStatus = useUpdateStatus()
+  } catch (error) {
+    // Se não estiver dentro do UpdateProvider, usar valores padrão
+    updateStatus = {
+      isUpdateAvailable: false,
+      isUpdating: false,
+      handleUpdate: () => {}
+    }
+  }
 
   // Verificação de segurança para o tema
   if (!theme || !theme.colors) {
@@ -596,6 +611,13 @@ export default function DashboardLayout({
                     {themeType === 'modern' ? 'light_mode' : themeType === 'corporate' ? 'contrast' : 'dark_mode'}
                   </span>
                 </button>
+
+                {/* Update Notification Compact */}
+                <UpdateNotificationCompact
+                  isUpdateAvailable={updateStatus.isUpdateAvailable}
+                  onUpdate={updateStatus.handleUpdate}
+                  isUpdating={updateStatus.isUpdating}
+                />
                 
                 {/* Avatar e Menu do Usuário - Ajustado para mobile */}
                 <div className="relative">
@@ -724,7 +746,7 @@ export default function DashboardLayout({
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden" onClick={() => setMobileMenuOpen(false)}>
           <div className="absolute inset-y-0 left-0 w-64 shadow-xl" style={{ backgroundColor: theme.colors.background.primary }} onClick={(e) => e.stopPropagation()}>
-            <DashboardSidebar />
+            <SafeDashboardSidebar />
           </div>
         </div>
       )}

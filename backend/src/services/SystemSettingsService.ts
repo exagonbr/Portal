@@ -263,8 +263,7 @@ class SystemSettingsService {
 
       Object.entries(settings).forEach(([category, categorySettings]) => {
         Object.entries(categorySettings as Record<string, any>).forEach(([key, value]) => {
-          // Remover prefixo da categoria do nome da chave se existir
-          const cleanKey = key.replace(`${category}_`, '');
+          // Usar a chave original sem modificação
           formatted[key] = value;
         });
       });

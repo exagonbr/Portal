@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { ThemeSelectorCompact } from '@/components/ui/ThemeSelector';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +12,7 @@ import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { MobileDebugInfo } from '@/components/debug/MobileDebugInfo';
+import { MotionDiv, MotionH1, MotionP, ClientOnly } from '@/components/ui/MotionWrapper';
 
 export function LoginPage() {
   const router = useRouter();
@@ -191,7 +191,7 @@ export function LoginPage() {
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.background.primary }}>
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <motion.div 
+            <MotionDiv 
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
@@ -224,7 +224,7 @@ export function LoginPage() {
       </div>
 
       {/* Content */}
-      <motion.div 
+      <MotionDiv 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -237,7 +237,7 @@ export function LoginPage() {
         }}
       >
         {/* Logo Section */}
-        <motion.div 
+        <MotionDiv 
           className="text-center"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
@@ -253,7 +253,7 @@ export function LoginPage() {
               sizes="(max-width: 768px) 192px, 192px"
             />
           </div>
-          <motion.h1 
+          <MotionH1 
             className="text-2xl font-bold"
             style={{ color: theme.colors.text.primary }}
             initial={{ opacity: 0 }}
@@ -261,8 +261,8 @@ export function LoginPage() {
             transition={{ delay: 0.3 }}
           >
             Portal Educacional
-          </motion.h1>
-          <motion.p 
+          </MotionH1>
+          <MotionP 
             className="text-sm mt-2"
             style={{ color: theme.colors.text.secondary }}
             initial={{ opacity: 0 }}
@@ -270,12 +270,12 @@ export function LoginPage() {
             transition={{ delay: 0.4 }}
           >
             Transformando a educação com tecnologia
-          </motion.p>
-        </motion.div>
+          </MotionP>
+        </MotionDiv>
 
         {/* Unauthorized Message */}
         {showUnauthorizedMessage && (
-          <motion.div 
+          <MotionDiv 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="rounded-lg p-4 border"
@@ -303,27 +303,27 @@ export function LoginPage() {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
 
         {/* Login Form */}
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
           <LoginForm />
-        </motion.div>
+        </MotionDiv>
 
         {/* Footer Links */}
-        <motion.div 
+        <MotionDiv 
           className="text-center space-y-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
         >
           <div className="flex items-center justify-center gap-4 mt-4">
-            <motion.div
+            <MotionDiv
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
@@ -333,8 +333,8 @@ export function LoginPage() {
               }}
             >
               <span className="material-symbols-outlined">school</span>
-            </motion.div>
-            <motion.div
+            </MotionDiv>
+            <MotionDiv
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
@@ -344,8 +344,8 @@ export function LoginPage() {
               }}
             >
               <span className="material-symbols-outlined">groups</span>
-            </motion.div>
-            <motion.div
+            </MotionDiv>
+            <MotionDiv
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
@@ -355,10 +355,10 @@ export function LoginPage() {
               }}
             >
               <span className="material-symbols-outlined">auto_stories</span>
-            </motion.div>
+            </MotionDiv>
           </div>
-        </motion.div>
-      </motion.div>
+        </MotionDiv>
+      </MotionDiv>
       
       {/* Debug info apenas em desenvolvimento */}
       {process.env.NODE_ENV === 'development' && <MobileDebugInfo />}

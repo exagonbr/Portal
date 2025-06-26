@@ -265,6 +265,9 @@ class ApiClient {
     let timeoutId: NodeJS.Timeout | undefined;
     
     try {
+      // Prepara headers incluindo autenticação
+      const headers = this.prepareHeaders(options.headers as Record<string, string>);
+      
       // Configuração específica para CORS e compatibilidade
       const requestOptions: RequestInit = {
         ...options,
@@ -272,13 +275,17 @@ class ApiClient {
         credentials: 'omit', // Usar 'omit' com CORS '*'
         cache: 'no-cache',
         headers: {
-          'Content-Type': 'application/json',
+          ...headers,
           'Accept': 'application/json, text/plain, */*',
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
-          ...options.headers,
         },
       };
+
+      // Serializar body se necessário
+      if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+        requestOptions.body = JSON.stringify(options.body);
+      }
 
       // Para Firefox, usar fetch seguro sem AbortController
       let response: Response;

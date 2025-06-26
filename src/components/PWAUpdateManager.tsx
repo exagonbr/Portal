@@ -1,10 +1,27 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import { UpdateNotification } from './UpdateNotification'
 import { PWAInstallPromptSubtle } from './PWAInstallPromptSubtle'
 
-export function PWAUpdateManager() {
+// Context para compartilhar estado de atualização
+interface UpdateContextType {
+  isUpdateAvailable: boolean
+  isUpdating: boolean
+  handleUpdate: () => void
+}
+
+const UpdateContext = createContext<UpdateContextType | null>(null)
+
+export const useUpdateStatus = () => {
+  const context = useContext(UpdateContext)
+  if (!context) {
+    throw new Error('useUpdateStatus deve ser usado dentro de UpdateProvider')
+  }
+  return context
+}
+
+export function UpdateProvider({ children }: { children: React.ReactNode }) {
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
@@ -70,11 +87,34 @@ export function PWAUpdateManager() {
   }
 
   return (
+    <UpdateContext.Provider value={{ isUpdateAvailable, isUpdating, handleUpdate }}>
+      {children}
+    </UpdateContext.Provider>
+  )
+}
+
+export function PWAUpdateManager() {
+  const { isUpdateAvailable, isUpdating, handleUpdate } = useUpdateStatus()
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration('/sw.js')
+        .then((reg) => {
+          if (reg) {
+            setRegistration(reg)
+          }
+        })
+    }
+  }, [])
+
+  return (
     <>
       <UpdateNotification
         isUpdateAvailable={isUpdateAvailable}
         onUpdate={handleUpdate}
         isUpdating={isUpdating}
+        hideWhenCompactVisible={true}
       />
       <PWAInstallPromptSubtle registration={registration || undefined} />
     </>

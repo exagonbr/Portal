@@ -173,7 +173,7 @@ class SystemAdminService {
    */
   async getUsersByRole(): Promise<Record<string, number>> {
     try {
-      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`users/stats`);
+      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`/api/users/stats`);
       
       if (response.success && response.data) {
         return response.data.data?.users_by_role || {};
@@ -212,7 +212,7 @@ class SystemAdminService {
     };
   }> {
     try {
-      const response = await apiClient.get<{ data: any }>(`dashboard/analytics`);
+      const response = await apiClient.get<{ data: any }>(`/api/dashboard/analytics`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -240,7 +240,7 @@ class SystemAdminService {
     topFeatures: Array<{ name: string; usage: number }>;
   }> {
     try {
-      const response = await apiClient.get<{ data: any }>(`dashboard/engagement`);
+      const response = await apiClient.get<{ data: any }>(`/api/dashboard/engagement`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -260,7 +260,7 @@ class SystemAdminService {
    */
   async getSystemDashboard(): Promise<SystemDashboardData> {
     try {
-      const response = await apiClient.get<{ data: SystemDashboardData }>(`dashboard/system`);
+      const response = await apiClient.get<{ data: SystemDashboardData }>(`/api/dashboard/system`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -374,7 +374,7 @@ class SystemAdminService {
    */
   async getDashboardSummary(): Promise<any> {
     try {
-      const response = await apiClient.get<{ data: any }>(`${this.baseUrl}/dashboard/summary`);
+      const response = await apiClient.get<{ data: any }>(`/api/dashboard/summary`);
       
       if (response.success && response.data) {
         return response.data.data;

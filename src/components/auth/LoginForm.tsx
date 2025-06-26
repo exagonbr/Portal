@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useForm } from '../../hooks/useForm';
 import { useAuth } from '../../contexts/AuthContext';
 import { getDashboardPath, isValidRole } from '../../utils/roleRedirect';
-import { motion } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LicenseValidationModal } from './LicenseValidationModal';
+import { MotionDiv, MotionSpan, MotionP, ClientOnly } from '@/components/ui/MotionWrapper';
 
 interface LoginFormData {
   email: string;
@@ -175,7 +175,7 @@ export function LoginForm() {
     <>
       <div className="space-y-6 mt-8" role="form" aria-label="Formulário de login">
         <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
@@ -225,7 +225,7 @@ export function LoginForm() {
                 placeholder="seu@email.com"
               />
               {touched.email && errors.email && (
-                <motion.p 
+                <MotionP 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-2 text-sm flex items-center gap-1" 
@@ -235,12 +235,12 @@ export function LoginForm() {
                 >
                   <span className="material-symbols-outlined text-base">error</span>
                   {errors.email}
-                </motion.p>
+                </MotionP>
               )}
             </div>
-          </motion.div>
+          </MotionDiv>
 
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -307,7 +307,7 @@ export function LoginForm() {
                 </span>
               </button>
               {touched.password && errors.password && (
-                <motion.p 
+                <MotionP 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="mt-2 text-sm flex items-center gap-1" 
@@ -317,13 +317,13 @@ export function LoginForm() {
                 >
                   <span className="material-symbols-outlined text-base">error</span>
                   {errors.password}
-                </motion.p>
+                </MotionP>
               )}
             </div>
-          </motion.div>
+          </MotionDiv>
 
           {submitError && (
-            <motion.div 
+            <MotionDiv 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="rounded-lg p-4 flex items-start gap-3" 
@@ -350,10 +350,10 @@ export function LoginForm() {
                   )}
                 </h3>
               </div>
-            </motion.div>
+            </MotionDiv>
           )}
 
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -375,13 +375,13 @@ export function LoginForm() {
             >
               {isSubmitting || loginAttemptInProgress ? (
                 <>
-                  <motion.span
+                  <MotionSpan
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     className="material-symbols-outlined"
                   >
                     progress_activity
-                  </motion.span>
+                  </MotionSpan>
                   Acessando...
                 </>
               ) : (
@@ -391,10 +391,10 @@ export function LoginForm() {
                 </>
               )}
             </button>
-          </motion.div>
+          </MotionDiv>
         </form>
 
-        <motion.div 
+        <MotionDiv 
           className="relative"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -414,9 +414,9 @@ export function LoginForm() {
               ou continue com
             </span>
           </div>
-        </motion.div>
+        </MotionDiv>
 
-        <motion.div 
+        <MotionDiv 
           className="space-y-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -454,13 +454,13 @@ export function LoginForm() {
             </svg>
             {isGoogleLoading ? (
               <>
-                <motion.span
+                <MotionSpan
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   className="material-symbols-outlined"
                 >
                   progress_activity
-                </motion.span>
+                </MotionSpan>
                 Conectando...
               </>
             ) : (
@@ -481,7 +481,7 @@ export function LoginForm() {
             <span className="material-symbols-outlined" aria-hidden="true">verified</span>
             Validar Licença
           </button>
-        </motion.div>
+        </MotionDiv>
       </div>
 
       <LicenseValidationModal 
