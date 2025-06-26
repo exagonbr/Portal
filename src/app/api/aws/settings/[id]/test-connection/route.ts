@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+import { getInternalApiUrl } from '@/config/env';
 
 export async function POST(
   request: NextRequest,
@@ -16,7 +16,7 @@ export async function POST(
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/settings/${params.id}/test-connection`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/settings/${params.id}/test-connection')`, {
       method: 'POST',
       headers: {
         'Authorization': authHeader,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
+import { getInternalApiUrl } from '@/config/env';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validar token e sessão com o backend
-    const response = await fetch(`${BACKEND_URL}/auth/validate-session`, {
+    const response = await fetch(`getInternalApiUrl('/api/auth/validate-session')`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar token e sessão com o backend
-    const response = await fetch(`${BACKEND_URL}/auth/validate-session`, {
+    const response = await fetch(`getInternalApiUrl('/api/auth/validate-session')`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

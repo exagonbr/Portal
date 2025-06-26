@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+import { getInternalApiUrl } from '@/config/env';
 
 // Simulação de banco de dados - em produção, usar um banco real
 let securitySettingsData = {

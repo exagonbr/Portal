@@ -35,7 +35,7 @@ const createUnitSchema = z.object({
   }).optional()
 })
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001'
+import { getInternalApiUrl } from '@/config/env';
 
 // GET - Listar unidades
 export async function GET(request: NextRequest) {
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const queryString = searchParams.toString()
 
-    const response = await fetch(`${BACKEND_URL}/api/units${queryString ? `?${queryString}` : ''}`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/units${queryString ? ')`?${queryString}` : ''}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    const response = await fetch(`${BACKEND_URL}/api/units`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/units')`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

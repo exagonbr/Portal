@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+import { getInternalApiUrl } from '@/config/env';
 
 export async function GET(
   request: NextRequest,
@@ -16,7 +16,7 @@ export async function GET(
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/settings/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/settings/${params.id}')`, {
       method: 'GET',
       headers: {
         'Authorization': authHeader,
@@ -52,7 +52,7 @@ export async function PUT(
 
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/settings/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/settings/${params.id}')`, {
       method: 'PUT',
       headers: {
         'Authorization': authHeader,
@@ -87,7 +87,7 @@ export async function DELETE(
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/settings/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/settings/${params.id}')`, {
       method: 'DELETE',
       headers: {
         'Authorization': authHeader,

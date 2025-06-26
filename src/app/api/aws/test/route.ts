@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+import { getInternalApiUrl } from '@/config/env';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Chamar backend para testar conexão
-    const response = await fetch(`${BACKEND_URL}/api/aws/test`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/test')`, {
       method: 'POST',
       headers: {
         'Authorization': authHeader,

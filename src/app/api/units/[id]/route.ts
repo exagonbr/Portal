@@ -34,7 +34,7 @@ const updateUnitSchema = z.object({
   }).optional()
 })
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001'
+import { getInternalApiUrl } from '@/config/env';
 
 // GET - Buscar unidade por ID
 export async function GET(
@@ -48,7 +48,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/units/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/units/${params.id}')`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ export async function PUT(
 
     const body = await request.json()
 
-    const response = await fetch(`${BACKEND_URL}/api/units/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/units/${params.id}')`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/units/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/units/${params.id}')`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../lib/auth-headers';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
+import { getInternalApiUrl } from '@/config/env';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/users/${params.id}')`, {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });
@@ -32,7 +32,7 @@ export async function PUT(
   try {
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/users/${params.id}')`, {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -55,7 +55,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/users/${params.id}`, {
+    const response = await fetch(`getInternalApiUrl('/api/users/${params.id}')`, {
       method: 'DELETE',
       headers: prepareAuthHeaders(request),
     });

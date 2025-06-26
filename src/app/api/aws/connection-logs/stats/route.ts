@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
+import { getInternalApiUrl } from '@/config/env';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/connection-logs/stats?${queryString}`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/connection-logs/stats?${queryString}')`, {
       method: 'GET',
       headers: {
         'Authorization': request.headers.get('authorization') || '',

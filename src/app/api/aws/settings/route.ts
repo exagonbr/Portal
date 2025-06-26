@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+import { getInternalApiUrl } from '@/config/env';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/settings`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/settings')`, {
       method: 'GET',
       headers: {
         'Authorization': authHeader,
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/settings`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/settings')`, {
       method: 'POST',
       headers: {
         'Authorization': authHeader,
@@ -78,7 +78,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/aws/settings`, {
+    const response = await fetch(`getInternalApiUrl('/api/api/aws/settings')`, {
       method: 'DELETE',
       headers: {
         'Authorization': authHeader,
