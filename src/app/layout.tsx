@@ -10,6 +10,7 @@ import Handtalk from '@/components/Handtalk';
 
 import { LoopEmergencyReset } from '@/components/LoopEmergencyReset';
 import { FirefoxCompatibilityInitializer } from '@/components/FirefoxCompatibilityInitializer';
+import ChunkErrorHandler from '@/components/ChunkErrorHandler';
 
 
 const inter = Inter({ subsets: ['latin'] });
@@ -83,6 +84,7 @@ export default function RootLayout({
           <PushNotificationInitializer />
           <LoopEmergencyReset />
           <FirefoxCompatibilityInitializer />
+          <ChunkErrorHandler />
         </AppProviders>
       </body>
     </html>

@@ -388,9 +388,13 @@ export const login = async (email: string, password: string): Promise<LoginRespo
         }
         
         // Importar dinamicamente o apiClient para evitar dependência circular
-        import('../lib/api-client').then(({ apiClient }) => {
-          apiClient.setAuthToken(token);
-          console.log('✅ Token configurado no apiClient');
+        import('../utils/chunk-retry').then(({ importApiClient }) => {
+          return importApiClient();
+        }).then((apiClientModule) => {
+          if (apiClientModule?.apiClient) {
+            apiClientModule.apiClient.setAuthToken(token);
+            console.log('✅ Token configurado no apiClient');
+          }
         }).catch(error => {
           console.warn('⚠️ Erro ao configurar token no apiClient:', error);
         });
@@ -517,9 +521,13 @@ export const register = async (
         }
         
         // Importar dinamicamente o apiClient para evitar dependência circular
-        import('../lib/api-client').then(({ apiClient }) => {
-          apiClient.setAuthToken(token);
-          console.log('✅ Token configurado no apiClient após registro');
+        import('../utils/chunk-retry').then(({ importApiClient }) => {
+          return importApiClient();
+        }).then((apiClientModule) => {
+          if (apiClientModule?.apiClient) {
+            apiClientModule.apiClient.setAuthToken(token);
+            console.log('✅ Token configurado no apiClient após registro');
+          }
         }).catch(error => {
           console.warn('⚠️ Erro ao configurar token no apiClient após registro:', error);
         });
@@ -573,13 +581,31 @@ export const logout = async (): Promise<void> => {
       console.log('✅ Tokens removidos do localStorage');
     }
     
-    // 3. Limpar token do apiClient
+    // 3. Limpar token do apiClient usando retry robusto
+    let apiClientCleared = false;
+    
     try {
-      const { apiClient } = await import('../lib/api-client');
-      apiClient.clearAuth();
-      console.log('✅ Auth limpo do apiClient');
+      const { importApiClient } = await import('../utils/chunk-retry');
+      const apiClientModule = await importApiClient();
+      
+      if (apiClientModule?.apiClient) {
+        apiClientModule.apiClient.clearAuth();
+        apiClientCleared = true;
+        console.log('✅ Auth limpo do apiClient');
+      }
     } catch (error) {
       console.warn('⚠️ Erro ao limpar auth do apiClient:', error);
+      
+      // Fallback: limpeza manual dos cookies
+      if (typeof window !== 'undefined') {
+        try {
+          document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          document.cookie = 'user_data=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          console.log('✅ Cookies limpos manualmente como fallback');
+        } catch (cookieError) {
+          console.warn('⚠️ Erro ao limpar cookies manualmente:', cookieError);
+        }
+      }
     }
     
     // 2. Chamar API de logout (sem bloquear se falhar)

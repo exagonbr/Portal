@@ -202,6 +202,45 @@ const nextConfig = {
       }
     });
 
+    // Configurações específicas para melhorar carregamento de chunks
+    if (!isServer) {
+      // Otimizar divisão de chunks para evitar ChunkLoadError
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          chunks: 'all',
+          cacheGroups: {
+            ...config.optimization.splitChunks?.cacheGroups,
+            // Criar chunk específico para api-client
+            apiClient: {
+              test: /[\\/]src[\\/]lib[\\/]api-client/,
+              name: 'api-client',
+              chunks: 'all',
+              priority: 20,
+              enforce: true,
+            },
+            // Chunk para serviços de autenticação
+            authServices: {
+              test: /[\\/]src[\\/]services[\\/]auth/,
+              name: 'auth-services',
+              chunks: 'all',
+              priority: 15,
+              enforce: true,
+            },
+          },
+        },
+      };
+
+      // Configurar retry automático para chunks falhados
+      config.output = {
+        ...config.output,
+        crossOriginLoading: 'anonymous',
+        // Adicionar configuração para retry de chunks
+        chunkLoadTimeout: 30000, // 30 segundos
+      };
+    }
+
     if (isServer) {
       config.externals.push({
         'oracledb': 'commonjs oracledb',
