@@ -38,6 +38,7 @@ import { UserRole, ROLE_COLORS } from '@/types/roles';
 
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion } from 'framer-motion';
+import { StatCard, ContentCard, SimpleCard } from '@/components/ui/StandardCard';
 
 interface StudentStats {
   averageGrade: number;
@@ -401,28 +402,35 @@ function StudentDashboardContent() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 max-w-7xl mx-auto">
       {/* Cabeçalho */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-center mb-6"
+        transition={{ duration: 0.5 }}
+        className="mb-4"
       >
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: theme.colors.text.primary }}>
-            <BookOpen className="w-8 h-8" style={{ color: theme.colors.primary.DEFAULT }} />
-            Portal do Estudante
-          </h1>
-          <p className="mt-2" style={{ color: theme.colors.text.secondary }}>
-            Acompanhe seu progresso acadêmico e atividades
-          </p>
-        </div>
-        <div className="flex flex-col md:flex-row gap-2">
+        <h1 className="text-xl font-bold text-gray-800 mb-1">
+          Olá, {user?.name}! 👋
+        </h1>
+        <p className="text-gray-600 text-sm">
+          Bem-vindo(a) ao seu portal educacional. Acompanhe seu progresso e organize seus estudos.
+        </p>
+      </motion.div>
+
+      {/* Navegação por Abas */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="mb-4"
+      >
+        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg w-fit">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('overview')}
-            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+            className={`px-3 py-1.5 rounded-md transition-all duration-200 text-sm ${
               selectedView === 'overview' 
                 ? 'bg-blue-600 text-white shadow-md' 
                 : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white'
@@ -434,7 +442,7 @@ function StudentDashboardContent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('academic')}
-            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+            className={`px-3 py-1.5 rounded-md transition-all duration-200 text-sm ${
               selectedView === 'academic' 
                 ? 'bg-blue-600 text-white shadow-md' 
                 : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white'
@@ -446,7 +454,7 @@ function StudentDashboardContent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('activities')}
-            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+            className={`px-3 py-1.5 rounded-md transition-all duration-200 text-sm ${
               selectedView === 'activities' 
                 ? 'bg-blue-600 text-white shadow-md' 
                 : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white'
@@ -458,7 +466,7 @@ function StudentDashboardContent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedView('calendar')}
-            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+            className={`px-3 py-1.5 rounded-md transition-all duration-200 text-sm ${
               selectedView === 'calendar' 
                 ? 'bg-blue-600 text-white shadow-md' 
                 : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white'
@@ -470,151 +478,67 @@ function StudentDashboardContent() {
       </motion.div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Card Média Geral */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-blue-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-blue-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-purple-200 rounded-full animate-ping delay-500"></div>
-          </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <TrendingUp className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.averageGrade.toFixed(1)}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-blue-100 font-semibold tracking-wide">MÉDIA</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Média Geral</h3>
-              <p className="text-blue-100 text-sm font-medium">Desempenho acadêmico</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <StatCard
+          icon={TrendingUp}
+          title="Média Geral"
+          value={stats.averageGrade.toFixed(1)}
+          subtitle="Desempenho acadêmico"
+          color="blue"
+        />
 
-        {/* Card Frequência */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-green-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-green-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-teal-200 rounded-full animate-ping delay-500"></div>
-          </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <CheckCircle className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.attendance.toFixed(1)}%</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-green-100 font-semibold tracking-wide">FREQUÊNCIA</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Frequência</h3>
-              <p className="text-green-100 text-sm font-medium">Taxa de presença</p>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          icon={CheckCircle}
+          title="Frequência"
+          value={`${stats.attendance.toFixed(1)}%`}
+          subtitle="Taxa de presença"
+          color="green"
+        />
 
-        {/* Card Tarefas Pendentes */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-amber-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-amber-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-red-200 rounded-full animate-ping delay-500"></div>
-          </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <Clock className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.pendingTasks}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-amber-100 font-semibold tracking-wide">PENDENTES</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Tarefas Pendentes</h3>
-              <p className="text-amber-100 text-sm font-medium">Para entregar</p>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          icon={Clock}
+          title="Tarefas Pendentes"
+          value={stats.pendingTasks}
+          subtitle="Para entregar"
+          color="amber"
+        />
 
-        {/* Card Próxima Avaliação */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-purple-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-purple-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-violet-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
-          </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <Calendar className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.nextEvaluation}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-purple-100 font-semibold tracking-wide">DIAS</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Próxima Avaliação</h3>
-              <p className="text-purple-100 text-sm font-medium">Em breve</p>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          icon={Calendar}
+          title="Próxima Avaliação"
+          value={stats.nextEvaluation}
+          subtitle="Em breve"
+          color="purple"
+        />
       </div>
 
       {/* Aulas do Dia */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Aulas de Hoje</h2>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
-            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-              <span className="material-symbols-outlined text-blue-600">science</span>
+      <div className="bg-white p-3 rounded-lg shadow-sm mb-3">
+        <h2 className="text-base font-semibold text-gray-700 mb-3">Aulas de Hoje</h2>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 p-2 rounded-md border border-gray-200">
+            <div className="w-8 h-8 rounded-md bg-blue-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-blue-600 text-sm">science</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-gray-700">Matemática</h3>
-              <p className="text-sm text-gray-500">Prof. Silva • 08:00 - 09:30</p>
+              <h3 className="font-medium text-gray-700 text-sm">Matemática</h3>
+              <p className="text-xs text-gray-500">Prof. Silva • 08:00 - 09:30</p>
             </div>
             <div className="text-right">
-              <div className="text-sm font-medium text-gray-700">Sala 203</div>
+              <div className="text-xs font-medium text-gray-700">Sala 203</div>
               <div className="text-xs text-green-600">Presença Confirmada</div>
             </div>
           </div>
-          <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
-            <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-              <span className="material-symbols-outlined text-green-600">menu_book</span>
+          <div className="flex items-center gap-3 p-2 rounded-md border border-gray-200">
+            <div className="w-8 h-8 rounded-md bg-green-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-green-600 text-sm">menu_book</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-gray-700">Português</h3>
-              <p className="text-sm text-gray-500">Prof. Santos • 10:00 - 11:30</p>
+              <h3 className="font-medium text-gray-700 text-sm">Português</h3>
+              <p className="text-xs text-gray-500">Prof. Santos • 10:00 - 11:30</p>
             </div>
             <div className="text-right">
-              <div className="text-sm font-medium text-gray-700">Sala 105</div>
+              <div className="text-xs font-medium text-gray-700">Sala 105</div>
               <div className="text-xs text-green-600">Presença Confirmada</div>
             </div>
           </div>
@@ -622,32 +546,32 @@ function StudentDashboardContent() {
       </div>
 
       {/* Tarefas Pendentes */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Tarefas Pendentes</h2>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
-            <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
-              <span className="material-symbols-outlined text-red-600">assignment</span>
+      <div className="bg-white p-3 rounded-lg shadow-sm mb-3">
+        <h2 className="text-base font-semibold text-gray-700 mb-3">Tarefas Pendentes</h2>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 p-2 rounded-md border border-gray-200">
+            <div className="w-8 h-8 rounded-md bg-red-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-red-600 text-sm">assignment</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-gray-700">Exercícios de Matemática</h3>
-              <p className="text-sm text-gray-500">Entrega: Hoje, 23:59</p>
+              <h3 className="font-medium text-gray-700 text-sm">Exercícios de Matemática</h3>
+              <p className="text-xs text-gray-500">Entrega: Hoje, 23:59</p>
             </div>
             <div className="text-right">
-              <div className="text-sm font-medium text-gray-700">Status</div>
+              <div className="text-xs font-medium text-gray-700">Status</div>
               <div className="text-xs text-red-600">Pendente</div>
             </div>
           </div>
-          <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-200">
-            <div className="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center">
-              <span className="material-symbols-outlined text-yellow-600">assignment</span>
+          <div className="flex items-center gap-3 p-2 rounded-md border border-gray-200">
+            <div className="w-8 h-8 rounded-md bg-yellow-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-yellow-600 text-sm">assignment</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-gray-700">Resenha de Literatura</h3>
-              <p className="text-sm text-gray-500">Entrega: Amanhã, 23:59</p>
+              <h3 className="font-medium text-gray-700 text-sm">Resenha de Literatura</h3>
+              <p className="text-xs text-gray-500">Entrega: Amanhã, 23:59</p>
             </div>
             <div className="text-right">
-              <div className="text-sm font-medium text-gray-700">Status</div>
+              <div className="text-xs font-medium text-gray-700">Status</div>
               <div className="text-xs text-yellow-600">Em Andamento</div>
             </div>
           </div>
@@ -655,36 +579,36 @@ function StudentDashboardContent() {
       </div>
 
       {/* Notas Recentes */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Notas Recentes</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600">science</span>
+      <div className="bg-white p-3 rounded-lg shadow-sm">
+        <h2 className="text-base font-semibold text-gray-700 mb-3">Notas Recentes</h2>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between p-2 rounded-md border border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-md bg-blue-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-blue-600 text-sm">science</span>
               </div>
               <div>
-                <h3 className="font-medium text-gray-700">Matemática</h3>
-                <p className="text-sm text-gray-500">Prova Bimestral</p>
+                <h3 className="font-medium text-gray-700 text-sm">Matemática</h3>
+                <p className="text-xs text-gray-500">Prova Bimestral</p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-gray-600">9.0</div>
+              <div className="text-lg font-bold text-gray-600">9.0</div>
               <div className="text-xs text-green-600">Acima da média</div>
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-green-600">menu_book</span>
+          <div className="flex items-center justify-between p-2 rounded-md border border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-md bg-green-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-green-600 text-sm">menu_book</span>
               </div>
               <div>
-                <h3 className="font-medium text-gray-700">Português</h3>
-                <p className="text-sm text-gray-500">Redação</p>
+                <h3 className="font-medium text-gray-700 text-sm">Português</h3>
+                <p className="text-xs text-gray-500">Redação</p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-gray-600">8.5</div>
+              <div className="text-lg font-bold text-gray-600">8.5</div>
               <div className="text-xs text-green-600">Acima da média</div>
             </div>
           </div>
@@ -701,33 +625,5 @@ export default function StudentDashboard() {
   );
 }
 
-// Componente de Card de Estatística
-interface StatCardProps {
-  icon: React.ElementType;
-  title: string;
-  value: string | number;
-  subtitle: string;
-  color: string;
-  trend?: string;
-}
 
-function StatCard({ icon: Icon, title, value, subtitle, color, trend }: StatCardProps) {
-  return (
-    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-5 h-5 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
-        </div>
-        {trend && (
-          <span className="text-xs text-green-600 font-medium">{trend}</span>
-        )}
-      </div>
-      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800 dark:text-black">
-        {value}
-      </p>
-      <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-600">{subtitle}</p>
-    </div>
-  );
-}
 

@@ -1215,13 +1215,13 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, title, value, subtitle, color }: StatCardProps) {
   return (
-    <div className="bg-white bg-gray-500 rounded-lg shadow-md p-4">
+    <div className="bg-white bg-gray-500 rounded-lg shadow-sm p-3">
       <div className="flex items-center justify-between mb-2">
-        <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-4 h-4 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
+        <div className={`p-1.5 rounded-md ${color} bg-opacity-10`}>
+          <Icon className={`w-3 h-3 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
         </div>
       </div>
-      <p className="text-xl font-bold text-gray-700 ">
+      <p className="text-lg font-bold text-gray-700">
         {value}
       </p>
       <p className="text-xs text-gray-600 text-gray-400">{title}</p>

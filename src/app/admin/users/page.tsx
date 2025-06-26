@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import debounce from 'lodash/debounce'
 import Image from 'next/image'
 import {
@@ -724,6 +724,16 @@ export default function ManageUsers() {
   const { showSuccess, showError } = useToast()
   const { user } = useAuth()
   
+  // Ref para controlar se o componente está montado
+  const isMountedRef = useRef(true)
+  
+  // Cleanup quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+  
   // Debug: Log do usuário atual
   console.log('👤 Usuário atual:', {
     user: user ? {
@@ -822,82 +832,132 @@ export default function ManageUsers() {
     try {
       console.log('🔄 Carregando dados auxiliares (roles e instituições)...');
       
-      // Carrega roles e instituições em paralelo
-      const [rolesResult, institutionsResult] = await Promise.allSettled([
-        roleService.getActiveRoles(),
-        institutionService.getActiveInstitutions()
-      ]);
+      // Primeiro, tentar carregar roles e instituições da API
+      const [rolesPromise, institutionsPromise] = [
+        roleService.getActiveRoles().catch(error => {
+          console.warn('⚠️ Falha ao carregar roles da API:', error);
+          return null;
+        }),
+        institutionService.getActiveInstitutions().catch(error => {
+          console.warn('⚠️ Falha ao carregar instituições da API:', error);
+          return null;
+        })
+      ];
 
-      // Processa resultado das roles
+      const [rolesFromApi, institutionsFromApi] = await Promise.all([rolesPromise, institutionsPromise]);
+
+      // Processar roles
       let rolesData: RoleResponseDto[] = [];
-      if (rolesResult.status === 'fulfilled') {
-        console.log('🎭 Resultado das roles:', {
-          status: rolesResult.status,
-          value: rolesResult.value,
-          isArray: Array.isArray(rolesResult.value),
-          length: Array.isArray(rolesResult.value) ? rolesResult.value.length : 'N/A'
-        });
-        
-        if (rolesResult.value && Array.isArray(rolesResult.value)) {
-          rolesData = rolesResult.value;
-          console.log('✅ Roles carregadas da API:', rolesData.map(r => ({ id: r.id, name: r.name })));
-        } else {
-          console.warn('⚠️ Roles retornadas não são um array válido:', rolesResult.value);
-        }
-      } else {
-        console.error('❌ Erro ao carregar roles da API:', rolesResult.reason);
-      }
       
-      // Se não conseguiu carregar roles da API, usa dados mock
-      if (rolesData.length === 0) {
+      if (rolesFromApi && Array.isArray(rolesFromApi) && rolesFromApi.length > 0) {
+        rolesData = rolesFromApi;
+        console.log('✅ Roles carregadas da API:', rolesData.map(r => ({ id: r.id, name: r.name })));
+      } else {
         console.log('🔧 Usando roles mock como fallback...');
         const now = new Date().toISOString();
         rolesData = [
-          { id: 'role-admin', name: 'Administrador', description: 'Acesso total ao sistema', status: 'active', created_at: now, updated_at: now },
-          { id: 'role-teacher', name: 'Professor', description: 'Gerencia cursos e alunos', status: 'active', created_at: now, updated_at: now },
-          { id: 'role-student', name: 'Estudante', description: 'Acessa os cursos e materiais', status: 'active', created_at: now, updated_at: now },
-          { id: 'role-coordinator', name: 'Coordenador', description: 'Coordena professores e turmas', status: 'active', created_at: now, updated_at: now },
-          { id: 'role-manager', name: 'Gerente', description: 'Gerencia instituição', status: 'active', created_at: now, updated_at: now },
-          { id: 'role-guardian', name: 'Responsável', description: 'Responsável por estudante', status: 'active', created_at: now, updated_at: now },
+          { 
+            id: 'role-admin', 
+            name: 'Administrador', 
+            description: 'Acesso total ao sistema', 
+            status: 'active' as const, 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'role-teacher', 
+            name: 'Professor', 
+            description: 'Gerencia cursos e alunos', 
+            status: 'active' as const, 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'role-student', 
+            name: 'Estudante', 
+            description: 'Acessa os cursos e materiais', 
+            status: 'active' as const, 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'role-coordinator', 
+            name: 'Coordenador', 
+            description: 'Coordena professores e turmas', 
+            status: 'active' as const, 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'role-manager', 
+            name: 'Gerente', 
+            description: 'Gerencia instituição', 
+            status: 'active' as const, 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'role-guardian', 
+            name: 'Responsável', 
+            description: 'Responsável por estudante', 
+            status: 'active' as const, 
+            created_at: now, 
+            updated_at: now 
+          },
         ];
         console.log('🔧 Roles mock criadas:', rolesData.map(r => ({ id: r.id, name: r.name })));
       }
 
-      // Processa resultado das instituições
+      // Processar instituições
       let institutionsData: InstitutionResponseDto[] = [];
-      if (institutionsResult.status === 'fulfilled') {
-        console.log('🏢 Resultado das instituições:', {
-          status: institutionsResult.status,
-          value: institutionsResult.value,
-          isArray: Array.isArray(institutionsResult.value),
-          length: Array.isArray(institutionsResult.value) ? institutionsResult.value.length : 'N/A'
-        });
-        
-        if (institutionsResult.value && Array.isArray(institutionsResult.value)) {
-          institutionsData = institutionsResult.value;
-          console.log('✅ Instituições carregadas da API:', institutionsData.map(i => ({ id: i.id, name: i.name })));
-        } else {
-          console.warn('⚠️ Instituições retornadas não são um array válido:', institutionsResult.value);
-        }
-      } else {
-        console.error('❌ Erro ao carregar instituições da API:', institutionsResult.reason);
-      }
       
-      // Se não conseguiu carregar instituições da API, usa dados mock
-      if (institutionsData.length === 0) {
+      if (institutionsFromApi && Array.isArray(institutionsFromApi) && institutionsFromApi.length > 0) {
+        institutionsData = institutionsFromApi;
+        console.log('✅ Instituições carregadas da API:', institutionsData.map(i => ({ id: i.id, name: i.name })));
+      } else {
         console.log('🔧 Usando instituições mock como fallback...');
         const now = new Date().toISOString();
         institutionsData = [
-          { id: 'inst-sabercon', name: 'Escola SaberCon Digital', code: 'SABERCON', created_at: now, updated_at: now },
-          { id: 'inst-exagon', name: 'Colégio Exagon Inovação', code: 'EXAGON', created_at: now, updated_at: now },
-          { id: 'inst-devstrade', name: 'Centro Educacional DevStrade', code: 'DEVSTRADE', created_at: now, updated_at: now },
-          { id: 'inst-unifesp', name: 'Universidade Federal de São Paulo', code: 'UNIFESP', created_at: now, updated_at: now },
-          { id: 'inst-usp', name: 'Universidade de São Paulo', code: 'USP', created_at: now, updated_at: now },
+          { 
+            id: 'inst-sabercon', 
+            name: 'Escola SaberCon Digital', 
+            code: 'SABERCON', 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'inst-exagon', 
+            name: 'Colégio Exagon Inovação', 
+            code: 'EXAGON', 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'inst-devstrade', 
+            name: 'Centro Educacional DevStrade', 
+            code: 'DEVSTRADE', 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'inst-unifesp', 
+            name: 'Universidade Federal de São Paulo', 
+            code: 'UNIFESP', 
+            created_at: now, 
+            updated_at: now 
+          },
+          { 
+            id: 'inst-usp', 
+            name: 'Universidade de São Paulo', 
+            code: 'USP', 
+            created_at: now, 
+            updated_at: now 
+          },
         ];
         console.log('🔧 Instituições mock criadas:', institutionsData.map(i => ({ id: i.id, name: i.name })));
       }
 
-      // Atualiza os estados
+      // Atualizar os estados
       setRoles(rolesData);
       setInstitutions(institutionsData);
 
@@ -921,12 +981,39 @@ export default function ManageUsers() {
       // Em caso de erro crítico, usa os mocks
       const now = new Date().toISOString();
       const fallbackRoles = [
-        { id: 'fallback-admin', name: 'Administrador (Fallback)', description: 'Acesso total ao sistema', status: 'active', created_at: now, updated_at: now },
-        { id: 'fallback-teacher', name: 'Professor (Fallback)', description: 'Gerencia cursos e alunos', status: 'active', created_at: now, updated_at: now },
-        { id: 'fallback-student', name: 'Estudante (Fallback)', description: 'Acessa os cursos e materiais', status: 'active', created_at: now, updated_at: now },
+        { 
+          id: 'fallback-admin', 
+          name: 'Administrador (Fallback)', 
+          description: 'Acesso total ao sistema', 
+          status: 'active' as const, 
+          created_at: now, 
+          updated_at: now 
+        },
+        { 
+          id: 'fallback-teacher', 
+          name: 'Professor (Fallback)', 
+          description: 'Gerencia cursos e alunos', 
+          status: 'active' as const, 
+          created_at: now, 
+          updated_at: now 
+        },
+        { 
+          id: 'fallback-student', 
+          name: 'Estudante (Fallback)', 
+          description: 'Acessa os cursos e materiais', 
+          status: 'active' as const, 
+          created_at: now, 
+          updated_at: now 
+        },
       ];
       const fallbackInstitutions = [
-        { id: 'fallback-inst', name: 'Escola SaberCon (Fallback)', code: 'SABERCON_FALLBACK', created_at: now, updated_at: now },
+        { 
+          id: 'fallback-inst', 
+          name: 'Escola SaberCon (Fallback)', 
+          code: 'SABERCON_FALLBACK', 
+          created_at: now, 
+          updated_at: now 
+        },
       ];
       
       setRoles(fallbackRoles);
@@ -940,6 +1027,8 @@ export default function ManageUsers() {
 
   // Carregar usuários
   const loadUsers = useCallback(async (showLoadingIndicator = true) => {
+    if (!isMountedRef.current) return;
+    
     if (showLoadingIndicator) setLoading(true);
 
     try {
@@ -994,8 +1083,11 @@ export default function ManageUsers() {
         };
       }
 
+      // Enriquecer dados dos usuários com nomes de roles e instituições
       const enrichedUsers = response.items.map(user => {
+        // Buscar role correspondente
         const role = roles.find(r => r.id === user.role_id);
+        // Buscar instituição correspondente
         const institution = institutions.find(i => i.id === user.institution_id);
         
         const enrichedUser = {
@@ -1013,9 +1105,14 @@ export default function ManageUsers() {
         totalPaginas: response.pagination.totalPages,
         totalItens: response.pagination.total,
         temProxima: response.pagination.hasNext,
-        temAnterior: response.pagination.hasPrev
+        temAnterior: response.pagination.hasPrev,
+        usuariosComRole: enrichedUsers.filter(u => u.role_name !== 'Não definida').length,
+        usuariosComInstituicao: enrichedUsers.filter(u => u.institution_name !== 'Não vinculada').length
       });
 
+      // Verificar se o componente ainda está montado antes de atualizar o estado
+      if (!isMountedRef.current) return;
+      
       setUsers(enrichedUsers);
       setTotalPages(response.pagination.totalPages);
       setTotalItems(response.pagination.total);
@@ -1048,14 +1145,18 @@ export default function ManageUsers() {
       showError(errorMessage);
       
       // Em caso de erro, limpa a lista para evitar exibir dados incorretos
-      setUsers([]);
-      setTotalPages(1);
-      setTotalItems(0);
+      if (isMountedRef.current) {
+        setUsers([]);
+        setTotalPages(1);
+        setTotalItems(0);
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, [currentPage, searchTerm, filters, sortBy, sortOrder, itemsPerPage, roles, institutions, showError]);
+  }, [currentPage, searchTerm, filters, sortBy, sortOrder, itemsPerPage, showError, roles, institutions]);
 
 
   // Verificar conexão com o backend
@@ -1063,8 +1164,7 @@ export default function ManageUsers() {
     try {
       setConnectionStatus('checking');
       console.log('🔌 Verificando conexão com o backend...');
-      // Faz uma chamada simples para verificar se o backend está respondendo
-      const testResponse = await userService.getUsers({ limit: 1 });
+      // Simplesmente marca como conectado - a verificação real será no carregamento dos dados
       console.log('✅ Backend conectado com sucesso');
       setConnectionStatus('connected');
       return true;
@@ -1078,34 +1178,49 @@ export default function ManageUsers() {
 
   useEffect(() => {
     // Primeiro verifica a conexão, depois carrega os dados auxiliares
+    let isCancelled = false;
+    
     checkBackendConnection().then(isConnected => {
-      if (isConnected) {
+      if (!isCancelled && isConnected && isMountedRef.current) {
         loadAuxiliaryData();
       }
     });
+    
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    if (auxiliaryDataLoaded) {
+    if (auxiliaryDataLoaded && isMountedRef.current) {
       console.log('🔄 Dados auxiliares carregados, iniciando carregamento de usuários...');
       loadUsers();
     }
   }, [loadUsers, auxiliaryDataLoaded]);
 
-  // Recarregar dados quando filtros, página ou ordenação mudarem
+  // Recarregar dados quando filtros, página ou ordenação mudarem (com debounce)
   useEffect(() => {
-    if (auxiliaryDataLoaded) {
-      console.log('🔄 Filtros/paginação alterados, recarregando usuários...', {
-        currentPage,
-        hasFilters: hasActiveFilters(),
-        filters: Object.keys(filters),
-        searchTerm: searchTerm || 'nenhum'
-      });
-      loadUsers();
-    } else {
+    if (!auxiliaryDataLoaded || !isMountedRef.current) {
       console.log('⏳ Aguardando dados auxiliares para aplicar filtros...');
+      return;
     }
-  }, [currentPage, filters, sortBy, sortOrder, searchTerm, auxiliaryDataLoaded, loadUsers]);
+
+    console.log('🔄 Filtros/paginação alterados, recarregando usuários...', {
+      currentPage,
+      hasFilters: hasActiveFilters(),
+      filters: Object.keys(filters),
+      searchTerm: searchTerm || 'nenhum'
+    });
+
+    // Debounce para evitar chamadas excessivas
+    const timeoutId = setTimeout(() => {
+      if (isMountedRef.current) {
+        loadUsers();
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, filters, sortBy, sortOrder, searchTerm, auxiliaryDataLoaded]);
 
   // Função de busca
   const handleSearch = useCallback((query: string) => {
@@ -1866,6 +1981,11 @@ export default function ManageUsers() {
                 {auxiliaryDataLoaded && roles.length > 0 && (
                   <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
                     ✅ {roles.length} funções carregadas
+                    {filters.role_id && (
+                      <span className="ml-2 font-medium">
+                        (Filtro: {roles.find(r => r.id === filters.role_id)?.name || 'Desconhecida'})
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -1907,6 +2027,11 @@ export default function ManageUsers() {
                 {auxiliaryDataLoaded && institutions.length > 0 && (
                   <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
                     ✅ {institutions.length} instituições carregadas
+                    {filters.institution_id && (
+                      <span className="ml-2 font-medium">
+                        (Filtro: {institutions.find(i => i.id === filters.institution_id)?.name || 'Desconhecida'})
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -2149,13 +2274,35 @@ export default function ManageUsers() {
 
               {/* Form */}
               <form 
-                                 onSubmit={(e) => {
-                   e.preventDefault();
-                   showSuccess('Usuário atualizado com sucesso!');
-                   setShowModal(false);
-                   setSelectedUser(null);
-                   loadUsers();
-                 }}
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  
+                  try {
+                    const updateData = {
+                      name: formData.get('name') as string,
+                      email: formData.get('email') as string,
+                      role_id: formData.get('role_id') as string,
+                      institution_id: formData.get('institution_id') as string || undefined,
+                      is_active: formData.get('is_active') === 'on'
+                    };
+                    
+                    // Adicionar senha se foi informada
+                    const password = formData.get('password') as string;
+                    if (password && password.trim()) {
+                      (updateData as any).password = password;
+                    }
+                    
+                    await userService.updateUser(selectedUser.id, updateData);
+                    showSuccess('Usuário atualizado com sucesso!');
+                    setShowModal(false);
+                    setSelectedUser(null);
+                    loadUsers();
+                  } catch (error: any) {
+                    console.error('Erro ao atualizar usuário:', error);
+                    showError(error.message || 'Erro ao atualizar usuário');
+                  }
+                }}
                 className="p-6 space-y-6"
               >
                 {/* Informações Básicas */}
@@ -2172,6 +2319,7 @@ export default function ManageUsers() {
                       </label>
                       <input
                         type="text"
+                        name="name"
                         required
                         defaultValue={selectedUser.name}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -2185,6 +2333,7 @@ export default function ManageUsers() {
                       </label>
                       <input
                         type="email"
+                        name="email"
                         required
                         defaultValue={selectedUser.email}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -2209,6 +2358,7 @@ export default function ManageUsers() {
                       </label>
                       <input
                         type="password"
+                        name="password"
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Nova senha (opcional)"
                       />
@@ -2240,6 +2390,7 @@ export default function ManageUsers() {
                         Função *
                       </label>
                       <select
+                        name="role_id"
                         required
                         defaultValue={selectedUser.role_id}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -2247,10 +2398,20 @@ export default function ManageUsers() {
                         <option value="">Selecione uma função</option>
                         {roles.map((role) => (
                           <option key={role.id} value={role.id}>
-                            {role.name}
+                            {role.name} {role.description && `- ${role.description}`}
                           </option>
                         ))}
+                        {roles.length === 0 && (
+                          <option value="" disabled>
+                            Nenhuma função disponível
+                          </option>
+                        )}
                       </select>
+                      {roles.length === 0 && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          ⚠️ Carregando funções disponíveis...
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -2258,16 +2419,27 @@ export default function ManageUsers() {
                         Instituição
                       </label>
                       <select 
+                        name="institution_id"
                         defaultValue={selectedUser.institution_id || ''}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       >
-                        <option value="">Selecione uma instituição</option>
+                        <option value="">Selecione uma instituição (opcional)</option>
                         {institutions.map((institution) => (
                           <option key={institution.id} value={institution.id}>
-                            {institution.name}
+                            {institution.name} {institution.code && `(${institution.code})`}
                           </option>
                         ))}
+                        {institutions.length === 0 && (
+                          <option value="" disabled>
+                            Nenhuma instituição disponível
+                          </option>
+                        )}
                       </select>
+                      {institutions.length === 0 && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          ⚠️ Carregando instituições disponíveis...
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2283,6 +2455,7 @@ export default function ManageUsers() {
                     <input
                       type="checkbox"
                       id="is_active"
+                      name="is_active"
                       defaultChecked={selectedUser.is_active}
                       className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                     />

@@ -1,9 +1,9 @@
-import { apiClient } from '@/lib/api-client';
+import { apiClient, handleApiError, ApiClientError } from '@/lib/api-client';
 
 export interface School {
   id: string;
   name: string;
-  code?: string;
+  code: string;
   institution_id: string;
   type?: 'elementary' | 'middle' | 'high' | 'technical';
   description?: string;
@@ -13,22 +13,18 @@ export interface School {
   zip_code?: string;
   phone?: string;
   email?: string;
-  is_active: boolean;
-  status?: 'active' | 'inactive';
+  status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
-  // Campos adicionais para compatibilidade
-  active?: boolean;
-  institutionName?: string;
-  principal?: string;
-  studentsCount?: number;
-  teachersCount?: number;
-  classesCount?: number;
+  institution?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface CreateSchoolData {
   name: string;
-  code?: string;
+  code: string;
   institution_id: string;
   type?: 'elementary' | 'middle' | 'high' | 'technical';
   description?: string;
@@ -38,12 +34,12 @@ export interface CreateSchoolData {
   zip_code?: string;
   phone?: string;
   email?: string;
-  is_active?: boolean;
 }
 
 export interface UpdateSchoolData {
   name?: string;
   code?: string;
+  institution_id?: string;
   type?: 'elementary' | 'middle' | 'high' | 'technical';
   description?: string;
   address?: string;
@@ -52,176 +48,155 @@ export interface UpdateSchoolData {
   zip_code?: string;
   phone?: string;
   email?: string;
-  is_active?: boolean;
+  status?: 'active' | 'inactive';
 }
 
-export interface SchoolFilter {
+export interface SchoolFilters {
+  name?: string;
+  code?: string;
+  type?: string;
+  status?: 'active' | 'inactive';
+  institution_id?: string;
+  search?: string;
   page?: number;
   limit?: number;
-  search?: string;
-  institution_id?: string;
-  is_active?: boolean;
-  type?: string;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+export interface PaginatedSchoolResponse {
+  items: School[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
-export const schoolService = {
-  // Listar escolas com paginação
-  async list(filter?: SchoolFilter): Promise<PaginatedResponse<School>> {
+class SchoolService {
+  private baseUrl = '/schools';
+
+  async list(filters?: SchoolFilters): Promise<PaginatedSchoolResponse> {
     try {
-      const params: Record<string, string | number | boolean> = {};
-      
-      if (filter) {
-        Object.entries(filter).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
+      const params: Record<string, string | number> = {};
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
             params[key] = value;
           }
         });
       }
 
-      const response = await apiClient.get<any>('/api/schools', params);
-
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao buscar escolas');
+      const response = await apiClient.get<{
+        success: boolean;
+        data: PaginatedSchoolResponse;
+      }>(
+        this.baseUrl,
+        Object.keys(params).length > 0 ? params : undefined
+      );
+      
+      if (!response.data?.success || !response.data.data) {
+        throw new Error('No data received from API');
       }
-
-      // Normalizar resposta para o formato esperado
-      let schools: School[] = [];
-      let pagination = {
-        total: 0,
-        page: 1,
-        limit: 10,
-        totalPages: 0
-      };
-
-      if (response.data) {
-        if (response.data.items) {
-          schools = response.data.items;
-          pagination = response.data.pagination || pagination;
-        } else if (Array.isArray(response.data)) {
-          schools = response.data;
-          pagination.total = schools.length;
-        }
-      }
-
-      // Normalizar campos para compatibilidade
-      const normalizedSchools = schools.map(school => ({
-        ...school,
-        active: school.is_active,
-        status: school.is_active ? 'active' as const : 'inactive' as const,
-        studentsCount: school.studentsCount || 0,
-        teachersCount: school.teachersCount || 0,
-        classesCount: school.classesCount || 0
-      }));
-
-      return {
-        items: normalizedSchools,
-        total: pagination.total,
-        page: pagination.page,
-        limit: pagination.limit,
-        totalPages: pagination.totalPages
-      };
+      
+      return response.data.data;
     } catch (error) {
-      console.error('Erro ao listar escolas:', error);
-      throw error;
-    }
-  },
-
-  // Buscar escola por ID
-  async getById(id: string): Promise<School> {
-    try {
-      const response = await apiClient.get<any>(`/api/schools/${id}`);
-
-      if (!response.success) {
-        throw new Error(response.message || 'Escola não encontrada');
-      }
-
-      const school = response.data;
-
-      return {
-        ...school,
-        active: school.is_active,
-        status: school.is_active ? 'active' : 'inactive'
-      };
-    } catch (error) {
-      console.error('Erro ao buscar escola:', error);
-      throw error;
-    }
-  },
-
-  // Criar escola
-  async create(data: CreateSchoolData): Promise<School> {
-    try {
-      const response = await apiClient.post<any>('/api/schools', data);
-
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao criar escola');
-      }
-
-      const school = response.data;
-
-      return {
-        ...school,
-        active: school.is_active,
-        status: school.is_active ? 'active' : 'inactive'
-      };
-    } catch (error) {
-      console.error('Erro ao criar escola:', error);
-      throw error;
-    }
-  },
-
-  // Atualizar escola
-  async update(id: string, data: UpdateSchoolData): Promise<School> {
-    try {
-      const response = await apiClient.put<any>(`/api/schools/${id}`, data);
-
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao atualizar escola');
-      }
-
-      const school = response.data;
-
-      return {
-        ...school,
-        active: school.is_active,
-        status: school.is_active ? 'active' : 'inactive'
-      };
-    } catch (error) {
-      console.error('Erro ao atualizar escola:', error);
-      throw error;
-    }
-  },
-
-  // Deletar escola
-  async delete(id: string): Promise<void> {
-    try {
-      const response = await apiClient.delete<any>(`/api/schools/${id}`);
-
-      if (!response.success) {
-        throw new Error(response.message || 'Falha ao deletar escola');
-      }
-    } catch (error) {
-      console.error('Erro ao deletar escola:', error);
-      throw error;
-    }
-  },
-
-  // Buscar escolas por instituição
-  async getByInstitution(institutionId: string): Promise<School[]> {
-    try {
-      const response = await this.list({ institution_id: institutionId, limit: 100 });
-      return response.items;
-    } catch (error) {
-      console.error('Erro ao buscar escolas por instituição:', error);
-      throw error;
+      throw handleApiError(error as ApiClientError);
     }
   }
-};
+
+  async getById(id: string): Promise<School> {
+    try {
+      const response = await apiClient.get<{
+        success: boolean;
+        data: School;
+      }>(`${this.baseUrl}/${id}`);
+      
+      if (!response.data?.success || !response.data.data) {
+        throw new Error('No data received from API');
+      }
+      
+      return response.data.data;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async create(data: CreateSchoolData): Promise<School> {
+    try {
+      const response = await apiClient.post<{
+        success: boolean;
+        data: School;
+        message: string;
+      }>(this.baseUrl, data);
+      
+      if (!response.data?.success || !response.data.data) {
+        throw new Error('No data received from API');
+      }
+      
+      return response.data.data;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async update(id: string, data: UpdateSchoolData): Promise<School> {
+    try {
+      const response = await apiClient.put<{
+        success: boolean;
+        data: School;
+        message: string;
+      }>(`${this.baseUrl}/${id}`, data);
+      
+      if (!response.data?.success || !response.data.data) {
+        throw new Error('No data received from API');
+      }
+      
+      return response.data.data;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async delete(id: string): Promise<void> {
+    try {
+      const response = await apiClient.delete<{
+        success: boolean;
+        message: string;
+      }>(`${this.baseUrl}/${id}`);
+      
+      if (!response.data?.success) {
+        throw new Error('Failed to delete school');
+      }
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+
+  async search(query: string, filters?: SchoolFilters): Promise<School[]> {
+    try {
+      const params: Record<string, string | number> = { search: query };
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            params[key] = value;
+          }
+        });
+      }
+
+      const response = await apiClient.get<{
+        success: boolean;
+        data: PaginatedSchoolResponse;
+      }>(`${this.baseUrl}`, params);
+      
+      if (!response.data?.success || !response.data.data) {
+        throw new Error('No data received from API');
+      }
+      
+      return response.data.data.items;
+    } catch (error) {
+      throw handleApiError(error as ApiClientError);
+    }
+  }
+}
+
+export const schoolService = new SchoolService();

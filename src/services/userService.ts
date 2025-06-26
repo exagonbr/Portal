@@ -26,7 +26,7 @@ interface UserListParams extends PaginationParams {
 }
 
 export class UserService {
-  private readonly baseEndpoint = '/api/user';
+  private readonly baseEndpoint = '/users';
 
   /**
    * Lista todos os usuários com filtros e paginação
@@ -748,7 +748,7 @@ export class UserService {
         query: params.query || undefined
       } as Record<string, string | number | boolean>;
 
-      const response = await apiClient.get<ListResponse<UserResponseDto>>('/api/user', queryParams);
+      const response = await apiClient.get<ListResponse<UserResponseDto>>('/api/users', queryParams);
       if (!response.success || !response.data?.items) {
         throw new Error(response.message || 'Falha ao buscar usuários');
       }
@@ -868,6 +868,28 @@ export class UserService {
     } catch (error) {
       console.error(`Erro ao resetar senha do usuário ${userId}:`, error);
       throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Busca usuários por role ID
+   */
+  async getUsersByRole(roleId: string): Promise<UserResponseDto[]> {
+    try {
+      const cacheKey = CacheKeys.USERS_BY_ROLE(roleId);
+      
+      return await withCache(cacheKey, async () => {
+        const response = await apiClient.get<ApiResponse<UserResponseDto[]>>(`${this.baseEndpoint}/by-role/${roleId}`);
+        
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Falha ao buscar usuários da função');
+        }
+        
+        return response.data.data || [];
+      }, CacheTTL.MEDIUM);
+    } catch (error) {
+      console.error(`Erro ao buscar usuários da role ${roleId}:`, error);
+      return []; // Retorna array vazio em caso de erro
     }
   }
 }

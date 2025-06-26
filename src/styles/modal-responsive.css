@@ -1,0 +1,254 @@
+/* Modal Responsive Fixes */
+
+/* Garantir que modais sempre sejam visíveis */
+.modal-container {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  max-width: 72rem; /* max-w-6xl */
+  background-color: white;
+  border-radius: 0.75rem; /* rounded-xl */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Telas muito pequenas (< 640px) */
+@media (max-width: 639px) {
+  .modal-container {
+    padding: 0.25rem; /* p-1 */
+  }
+  
+  .modal-content {
+    max-height: 98vh;
+    border-radius: 0.75rem; /* rounded-xl */
+  }
+  
+  .modal-header {
+    padding: 0.75rem; /* p-3 */
+  }
+  
+  .modal-body {
+    padding: 0.75rem; /* p-3 */
+  }
+  
+  .modal-footer {
+    padding: 0.75rem; /* p-3 */
+  }
+  
+  /* Botões em telas pequenas */
+  .modal-footer button {
+    width: 100%;
+    padding: 0.5rem 1rem; /* px-4 py-2 */
+    font-size: 0.875rem; /* text-sm */
+  }
+  
+  /* Campos de input menores */
+  .modal-input {
+    padding: 0.625rem; /* p-2.5 */
+    font-size: 0.875rem; /* text-sm */
+  }
+  
+  /* Labels menores */
+  .modal-label {
+    font-size: 0.75rem; /* text-xs */
+    margin-bottom: 0.375rem; /* mb-1.5 */
+  }
+  
+  /* Ícones menores */
+  .modal-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  /* Títulos menores */
+  .modal-title {
+    font-size: 1rem; /* text-base */
+  }
+  
+  /* Espaçamentos menores */
+  .modal-section {
+    margin-bottom: 0.625rem; /* mb-2.5 */
+  }
+  
+  .modal-field {
+    margin-bottom: 0.625rem; /* mb-2.5 */
+  }
+}
+
+/* Telas pequenas (640px - 768px) */
+@media (min-width: 640px) and (max-width: 767px) {
+  .modal-container {
+    padding: 0.5rem; /* p-2 */
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+    border-radius: 1rem; /* rounded-2xl */
+  }
+  
+  .modal-header {
+    padding: 1rem; /* p-4 */
+  }
+  
+  .modal-body {
+    padding: 1rem; /* p-4 */
+  }
+  
+  .modal-footer {
+    padding: 1rem; /* p-4 */
+  }
+}
+
+/* Telas médias e grandes (>= 768px) */
+@media (min-width: 768px) {
+  .modal-container {
+    padding: 1rem; /* p-4 */
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+    border-radius: 1rem; /* rounded-2xl */
+  }
+  
+  .modal-header {
+    padding: 1.5rem; /* p-6 */
+  }
+  
+  .modal-body {
+    padding: 1.5rem; /* p-6 */
+  }
+  
+  .modal-footer {
+    padding: 1.5rem; /* p-6 */
+  }
+}
+
+/* Altura mínima para conteúdo scrollável */
+.modal-scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Garantir que o footer seja sempre visível */
+.modal-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+/* Garantir que o header seja sempre visível */
+.modal-header {
+  flex-shrink: 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Botões sempre acessíveis */
+.modal-footer button {
+  min-height: 2.5rem; /* 40px */
+  touch-action: manipulation;
+}
+
+/* Prevenção de zoom em inputs em iOS */
+@media screen and (max-width: 767px) {
+  .modal-input,
+  .modal-select,
+  .modal-textarea {
+    font-size: 16px !important; /* Previne zoom no iOS */
+  }
+}
+
+/* Scroll suave */
+.modal-scrollable-content {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Melhor contraste em telas pequenas */
+@media (max-width: 639px) {
+  .modal-error-text {
+    font-size: 0.75rem; /* text-xs */
+    line-height: 1rem;
+  }
+  
+  .modal-help-text {
+    font-size: 0.75rem; /* text-xs */
+    line-height: 1rem;
+  }
+}
+
+/* Garantir que elementos flexíveis não quebrem */
+.modal-flex-item {
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+/* Melhor acessibilidade para touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .modal-footer button {
+    min-height: 44px; /* Tamanho mínimo recomendado para touch */
+    padding: 0.75rem 1rem;
+  }
+  
+  .modal-close-button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem;
+  }
+}
+
+/* Animações suaves */
+.modal-enter {
+  animation: modalEnter 0.2s ease-out;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Garantir que o conteúdo não vaze */
+.modal-content * {
+  box-sizing: border-box;
+}
+
+/* Melhor quebra de texto em URLs */
+.modal-url-text {
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+/* Grid responsivo */
+.modal-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .modal-grid {
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .modal-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+} 

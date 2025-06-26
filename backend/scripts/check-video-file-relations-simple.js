@@ -1,4 +1,4 @@
-const db = require('../src/config/database');
+const db = require('../src/config/database.ts').default;
 
 async function checkVideoFileRelations() {
   console.log('🔍 Verificando relações entre video, video_file e file...\n');

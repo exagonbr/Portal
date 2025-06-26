@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = url.searchParams;
     
     // Construir URL do backend com parâmetros
-    const backendUrl = new URL('/user/stats', BACKEND_URL);
+    const backendUrl = new URL('/users/stats', BACKEND_URL);
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });

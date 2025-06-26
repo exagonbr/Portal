@@ -7,7 +7,7 @@ import { ApiResponse, ApiError } from '@/types/api';
 
 // Configuração centralizada
 const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
   timeout: 30000,
   retryAttempts: 3,
   retryDelay: 1000,
@@ -320,12 +320,15 @@ class ApiClient {
 
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          throw new ApiClientError('Request timeout', 408);
+          throw new ApiClientError('Timeout da requisição', 408);
+        }
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          throw new ApiClientError('Erro de rede ao tentar acessar o recurso', 0);
         }
         throw new ApiClientError(error.message, 0);
       }
 
-      throw new ApiClientError('Unknown error occurred', 0);
+      throw new ApiClientError('Erro desconhecido', 0);
     }
   }
 

@@ -27,10 +27,37 @@ export function setupMiddlewares(app: express.Application): void {
     xXssProtection: false
   }));
 
-  // CORS - Permitir todas as origens (*)
+  // CORS - Permitir origens específicas para suportar credenciais
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://127.0.0.1:3000',
+    'http://localhost:3001',
+    'https://localhost:3001',
+    process.env.FRONTEND_URL,
+    process.env.NEXT_PUBLIC_API_URL
+  ].filter(Boolean);
+
   app.use(cors({
-    origin: '*',
-    credentials: false, // Não pode usar credentials com origin: '*'
+    origin: function (origin, callback) {
+      // Permitir requisições sem origin (ex: mobile apps, Postman)
+      if (!origin) return callback(null, true);
+      
+      // Permitir origens específicas
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Para desenvolvimento, permitir localhost em qualquer porta
+      if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
+        return callback(null, true);
+      }
+      
+      // Rejeitar outras origens
+      callback(new Error('Não permitido pelo CORS'));
+    },
+    credentials: true, // Permitir credenciais
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type', 
@@ -40,20 +67,30 @@ export function setupMiddlewares(app: express.Application): void {
       'Access-Control-Allow-Headers',
       'Access-Control-Allow-Methods',
       'Accept',
-      'Origin'
+      'Origin',
+      'Cookie'
     ],
     exposedHeaders: [
       'Access-Control-Allow-Origin',
       'Access-Control-Allow-Headers',
-      'Access-Control-Allow-Methods'
+      'Access-Control-Allow-Methods',
+      'Set-Cookie'
     ]
   }));
 
-  // Middleware adicional para garantir cabeçalhos CORS com allow *
+  // Middleware adicional para garantir cabeçalhos CORS adequados
   app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin;
+    
+    // Se a origem está na lista permitida ou é desenvolvimento
+    if (origin && (allowedOrigins.includes(origin) || 
+        (process.env.NODE_ENV === 'development' && origin.includes('localhost')))) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cookie');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     
     if (req.method === 'OPTIONS') {
       return res.status(200).end();

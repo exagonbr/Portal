@@ -26,7 +26,7 @@ export interface CourseListOptions {
 }
 
 export class CourseService {
-  private readonly baseEndpoint = '/api/courses';
+  private readonly baseEndpoint = '/courses';
 
   /**
    * Busca todos os cursos com paginação e filtros

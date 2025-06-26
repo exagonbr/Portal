@@ -104,7 +104,7 @@ export default function SendNotificationPage() {
           roles = 'STUDENT,GUARDIAN'
         }
 
-        const response = await apiClient.get(`/api/user?limit=100${roles ? `&roles=${roles}` : ''}`)
+        const response = await apiClient.get(`/api/users?limit=100${roles ? `&roles=${roles}` : ''}`)
 
         if (response.success && response.data && Array.isArray(response.data)) {
           setAvailableUsers(response.data)

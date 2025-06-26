@@ -539,41 +539,41 @@ export default function PortalBooksPage() {
         ]}
       >
         {/* Statistics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           <StatCard
             title="Total de Livros"
             value={books.length.toString()}
-            icon={<Book className="h-6 w-6 text-gray-600" />}
+            icon={<Book className="h-4 w-4 text-gray-600" />}
           />
           <StatCard
             title="Visualizações"
             value={books.reduce((acc, b) => acc + b.views, 0).toString()}
-            icon={<Eye className="h-6 w-6 text-blue-600" />}
+            icon={<Eye className="h-4 w-4 text-blue-600" />}
           />
           <StatCard
             title="Favoritos"
             value={books.filter(b => b.is_favorite).length.toString()}
-            icon={<Heart className="h-6 w-6 text-red-600" />}
+            icon={<Heart className="h-4 w-4 text-red-600" />}
           />
           <StatCard
             title="Em Leitura"
             value={books.filter(b => b.reading_progress && b.reading_progress > 0).length.toString()}
-            icon={<Bookmark className="h-6 w-6 text-green-600" />}
+            icon={<Bookmark className="h-4 w-4 text-green-600" />}
           />
         </div>
 
         {/* Quick Navigation */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-2 mb-4">
           <button
             onClick={() => {
               setShowOnlyFavorites(!showOnlyFavorites);
               setShowOnlyReading(false);
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors text-sm ${
               showOnlyFavorites ? 'bg-red-50 border-red-200 text-red-700' : 'bg-white border-gray-200 hover:bg-gray-50'
             }`}
           >
-            <Heart className="w-4 h-4" />
+            <Heart className="w-3 h-3" />
             Favoritos ({books.filter(b => b.is_favorite).length})
           </button>
           <button
@@ -582,11 +582,11 @@ export default function PortalBooksPage() {
               setShowOnlyFavorites(false);
               setShowOnlyReading(false);
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors text-sm ${
               sortBy === 'rating' && !showOnlyFavorites && !showOnlyReading ? 'bg-yellow-50 border-yellow-200 text-yellow-700' : 'bg-white border-gray-200 hover:bg-gray-50'
             }`}
           >
-            <Star className="w-4 h-4" />
+            <Star className="w-3 h-3" />
             Destaques
           </button>
           <button
@@ -594,11 +594,11 @@ export default function PortalBooksPage() {
               setShowOnlyReading(!showOnlyReading);
               setShowOnlyFavorites(false);
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors text-sm ${
               showOnlyReading ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-200 hover:bg-gray-50'
             }`}
           >
-            <PencilSquareIcon className="w-4 h-4" />
+            <PencilSquareIcon className="w-3 h-3" />
             Em Leitura ({books.filter(b => b.reading_progress && b.reading_progress > 0).length})
           </button>
           <button
@@ -607,20 +607,20 @@ export default function PortalBooksPage() {
               setShowOnlyFavorites(false);
               setShowOnlyReading(false);
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors text-sm ${
               sortBy === 'recent' && !showOnlyFavorites && !showOnlyReading ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 hover:bg-gray-50'
             }`}
           >
-            <Bookmark className="w-4 h-4" />
+            <Bookmark className="w-3 h-3" />
             Recentes
           </button>
         </div>
 
         {/* Filters and Search */}
-        <ContentSection className="mb-6">
-          <div className="space-y-4">
+        <ContentSection className="mb-4">
+          <div className="space-y-3">
             {/* Search and View Controls */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <SearchBar
                 value={searchTerm}
                 onChange={setSearchTerm}
@@ -634,26 +634,26 @@ export default function PortalBooksPage() {
                   size="sm"
                   onClick={() => setShowFilters(!showFilters)}
                 >
-                  <Filter className="h-4 w-4" />
+                  <Filter className="h-3 w-3" />
                   Filtros
                 </Button>
                 
                 <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded transition-colors ${
+                    className={`p-1.5 rounded transition-colors ${
                       viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
                     }`}
                   >
-                    <Squares2X2Icon className="w-4 h-4" />
+                    <Squares2X2Icon className="w-3 h-3" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded transition-colors ${
+                    className={`p-1.5 rounded transition-colors ${
                       viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
                     }`}
                   >
-                    <ListBulletIcon className="w-4 h-4" />
+                    <ListBulletIcon className="w-3 h-3" />
                   </button>
                 </div>
               </div>
@@ -661,15 +661,15 @@ export default function PortalBooksPage() {
 
             {/* Filter Options */}
             {showFilters && (
-              <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-200">
+              <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-200">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
                     Categoria
                   </label>
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   >
                     {['all', ...categories.map(c => c.name)].map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -678,13 +678,13 @@ export default function PortalBooksPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
                     Disciplina
                   </label>
                   <select
                     value={filterSubject}
                     onChange={(e) => setFilterSubject(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-2 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   >
                     {['all', ...uniqueSubjects].map(subject => (
                       <option key={subject} value={subject}>{subject}</option>
@@ -697,32 +697,32 @@ export default function PortalBooksPage() {
         </ContentSection>
 
         {/* Barra de ações */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
           <div className="flex w-full md:w-auto gap-2">
             <div className="relative flex-grow md:flex-grow-0">
               <input
                 type="text"
                 placeholder="Buscar livros, autores..."
-                className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-primary-dark"
+                className="pl-8 pr-3 py-1.5 border border-slate-200 rounded-md w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-primary-dark text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-2.5 top-2 h-3 w-3 text-slate-400" />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-1 px-3 py-2 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 border border-slate-200 rounded-md text-xs hover:bg-slate-50 transition-colors"
             >
-              <Filter className="h-4 w-4" />
+              <Filter className="h-3 w-3" />
               Filtros
             </button>
           </div>
           
           <div className="flex gap-2">
-            <div className="flex bg-slate-100 rounded-lg p-1">
+            <div className="flex bg-slate-100 rounded-md p-0.5">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
+                className={`px-2 py-1 rounded text-xs transition-colors ${
                   viewMode === 'grid' ? 'bg-white shadow-sm' : 'text-slate-600'
                 }`}
               >
@@ -730,7 +730,7 @@ export default function PortalBooksPage() {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
+                className={`px-2 py-1 rounded text-xs transition-colors ${
                   viewMode === 'list' ? 'bg-white shadow-sm' : 'text-slate-600'
                 }`}
               >

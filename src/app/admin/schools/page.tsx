@@ -14,9 +14,9 @@ import {
   GraduationCap,
   BookOpen
 } from 'lucide-react';
-import { unitService } from '@/services/unitService';
+import { unitService, Unit, CreateUnitData, UpdateUnitData, UnitFilters } from '@/services/unitService';
 import { institutionService } from '@/services/institutionService';
-import { UnitResponseDto, UnitCreateDto, UnitUpdateDto, InstitutionResponseDto } from '@/types/api';
+import { InstitutionResponseDto } from '@/types/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { motion } from 'framer-motion';
@@ -70,32 +70,11 @@ const toast = {
   }
 };
 
-// Constantes para tipos de unidade
-const UNIT_TYPES = [
-  { value: 'school', label: 'Escola', description: 'Unidade escolar de ensino básico' },
-  { value: 'campus', label: 'Campus', description: 'Campus universitário ou técnico' },
-  { value: 'center', label: 'Centro', description: 'Centro de ensino especializado' },
-  { value: 'institute', label: 'Instituto', description: 'Instituto de pesquisa e ensino' },
-  { value: 'department', label: 'Departamento', description: 'Departamento acadêmico' },
-  { value: 'faculty', label: 'Faculdade', description: 'Faculdade ou escola superior' }
-] as const;
-
-type UnitType = typeof UNIT_TYPES[number]['value'];
-
-interface UnitExtended extends UnitResponseDto {
+interface UnitExtended extends Unit {
   studentsCount?: number;
   teachersCount?: number;
   coursesCount?: number;
-  status: 'active' | 'inactive';
   institutionName?: string;
-}
-
-interface ExtendedCreateUnitData extends UnitCreateDto {
-  type: UnitType;
-}
-
-interface ExtendedUpdateUnitData extends UnitUpdateDto {
-  type?: UnitType;
 }
 
 export default function SystemAdminUnitsPage() {
@@ -109,14 +88,10 @@ export default function SystemAdminUnitsPage() {
   const [selectedInstitution, setSelectedInstitution] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [editingUnit, setEditingUnit] = useState<UnitExtended | null>(null);
-  const [formData, setFormData] = useState<ExtendedCreateUnitData>({
+  const [formData, setFormData] = useState<CreateUnitData>({
     name: '',
-    description: '',
-    institution_id: '',
-    type: 'school',
-    active: true
+    institution_id: ''
   });
-  const [filterType, setFilterType] = useState<'all' | UnitType>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [submitting, setSubmitting] = useState(false);
 
@@ -234,14 +209,16 @@ export default function SystemAdminUnitsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Carregando unidades...');
 
       // Carregar todas as unidades (SYSTEM_ADMIN vê todas)
-      const filters = {
+      const filters: UnitFilters = {
         institution_id: selectedInstitution !== 'all' ? selectedInstitution : undefined,
         limit: 100
       };
       
       const response = await unitService.list(filters);
+      console.log('📊 Unidades carregadas:', response);
       
       // Converter unidades para o formato esperado pelo frontend
       const unitsData = response.items.map(unit => {
@@ -252,15 +229,15 @@ export default function SystemAdminUnitsPage() {
           studentsCount: Math.floor(Math.random() * 500), // Dados simulados
           teachersCount: Math.floor(Math.random() * 50),
           coursesCount: Math.floor(Math.random() * 20),
-          status: unit.active ? 'active' : 'inactive' as 'active' | 'inactive',
-          institutionName: institution?.name || 'Instituição não encontrada'
+          institutionName: institution?.name || unit.institution?.name || 'Instituição não encontrada'
         };
       });
       
       setUnits(unitsData);
+      console.log(`✅ ${unitsData.length} unidades carregadas com sucesso`);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      toast.error('Erro ao carregar dados');
+      console.error('❌ Erro ao carregar unidades:', error);
+      toast.error('Erro ao carregar unidades');
     } finally {
       setLoading(false);
     }
@@ -280,11 +257,6 @@ export default function SystemAdminUnitsPage() {
       return;
     }
     
-    if (!formData.type) {
-      toast.error('Selecione um tipo de unidade');
-      return;
-    }
-    
     if (formData.name.length < 3) {
       toast.error('Nome da unidade deve ter pelo menos 3 caracteres');
       return;
@@ -294,7 +266,7 @@ export default function SystemAdminUnitsPage() {
       setSubmitting(true);
       
       if (editingUnit) {
-        await unitService.update(editingUnit.id, formData as ExtendedUpdateUnitData);
+        await unitService.update(editingUnit.id, formData as UpdateUnitData);
         toast.success('Unidade atualizada com sucesso!');
       } else {
         await unitService.create(formData);
@@ -328,17 +300,14 @@ export default function SystemAdminUnitsPage() {
     setEditingUnit(unit);
     setFormData({
       name: unit.name,
-      description: unit.description || '',
-      institution_id: unit.institution_id,
-      type: unit.type as UnitType || 'school',
-      active: unit.active
+      institution_id: unit.institution_id
     });
     setShowModal(true);
   };
 
   const handleToggleActive = async (unit: UnitExtended) => {
     try {
-      const updateData: ExtendedUpdateUnitData = {
+      const updateData: UpdateUnitData = {
         active: !unit.active
       };
       
@@ -351,45 +320,37 @@ export default function SystemAdminUnitsPage() {
     }
   };
 
+  const handleDelete = async (unit: UnitExtended) => {
+    if (!confirm('Tem certeza que deseja excluir esta unidade? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      await unitService.delete(unit.id);
+      toast.success('Unidade excluída com sucesso!');
+      loadData();
+    } catch (error) {
+      toast.error('Erro ao excluir unidade');
+    }
+  };
+
   const resetForm = () => {
     setEditingUnit(null);
     setSubmitting(false);
     setFormData({
       name: '',
-      description: '',
-      institution_id: '',
-      type: 'school',
-      active: true
+      institution_id: ''
     });
   };
 
   const filteredUnits = units.filter(unit => {
     const matchesSearch = unit.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (unit.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (unit.institutionName || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || unit.type === filterType;
-    const matchesStatus = filterStatus === 'all' || unit.status === filterStatus;
+    const matchesStatus = filterStatus === 'all' || (filterStatus === 'active' ? unit.active : !unit.active);
     const matchesInstitution = selectedInstitution === 'all' || unit.institution_id === selectedInstitution;
     
-    return matchesSearch && matchesType && matchesStatus && matchesInstitution;
+    return matchesSearch && matchesStatus && matchesInstitution;
   });
-
-  const getTypeColor = (type: string) => {
-    const colors = {
-      school: 'bg-green-100 text-green-800',
-      campus: 'bg-blue-100 text-blue-800',
-      center: 'bg-purple-100 text-purple-800',
-      institute: 'bg-orange-100 text-orange-800',
-      department: 'bg-indigo-100 text-indigo-800',
-      faculty: 'bg-pink-100 text-pink-800'
-    };
-    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getTypeLabel = (type: string) => {
-    const typeData = UNIT_TYPES.find(t => t.value === type);
-    return typeData ? typeData.label : type;
-  };
 
   return (
     <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
@@ -404,41 +365,41 @@ export default function SystemAdminUnitsPage() {
                   Gerenciamento de Unidades
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  Administração global de todas as unidades do sistema
+                  Administração global de todas as unidades do sistema ({units.length} unidades encontradas)
                 </p>
               </div>
-                                  <button
-                      onClick={() => setShowModal(true)}
-                      disabled={loadingInstitutions || institutions.length === 0}
-                      className={`bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                        loadingInstitutions || institutions.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                      title={
-                        loadingInstitutions 
-                          ? 'Aguarde o carregamento das instituições' 
-                          : institutions.length === 0 
-                            ? 'Nenhuma instituição disponível para criar unidades'
-                            : 'Criar nova unidade'
-                      }
-                    >
-                      {loadingInstitutions ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Carregando...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-4 h-4" />
-                          Nova Unidade
-                        </>
-                      )}
-                    </button>
+              <button
+                onClick={() => setShowModal(true)}
+                disabled={loadingInstitutions || institutions.length === 0}
+                className={`bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                  loadingInstitutions || institutions.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                title={
+                  loadingInstitutions 
+                    ? 'Aguarde o carregamento das instituições' 
+                    : institutions.length === 0 
+                      ? 'Nenhuma instituição disponível para criar unidades'
+                      : 'Criar nova unidade'
+                }
+              >
+                {loadingInstitutions ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Carregando...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Nova Unidade
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
           {/* Filtros */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Busca */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -475,20 +436,6 @@ export default function SystemAdminUnitsPage() {
                 )}
               </div>
 
-              {/* Filtro por Tipo */}
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">Todos os Tipos</option>
-                {UNIT_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-
               {/* Filtro por Status */}
               <select
                 value={filterStatus}
@@ -502,50 +449,126 @@ export default function SystemAdminUnitsPage() {
             </div>
           </div>
 
-          {/* Estatísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Unidades</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{units.length}</p>
+          {/* Cards de Estatísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Card Total de Unidades */}
+            <div className="stat-card stat-card-blue">
+              <div className="stat-card-shine"></div>
+              <div className="stat-card-particles">
+                <div className="stat-card-particle-1"></div>
+                <div className="stat-card-particle-2"></div>
+                <div className="stat-card-particle-3"></div>
+                <div className="stat-card-particle-4"></div>
+              </div>
+              <div className="stat-card-content">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="stat-card-icon-wrapper">
+                    <UnitIcon className="stat-card-icon" />
+                  </div>
+                  <div className="text-right">
+                    <p className="stat-card-value">{units.length}</p>
+                    <div className="flex items-center justify-end gap-2 mt-2">
+                      <div className="stat-card-indicator"></div>
+                      <span className="stat-card-label">UNIDADES</span>
+                    </div>
+                  </div>
                 </div>
-                <UnitIcon className="w-8 h-8 text-primary" />
+                <div>
+                  <h3 className="stat-card-title">Total de Unidades</h3>
+                  <p className="stat-card-subtitle">Registradas no sistema</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Unidades Ativas</p>
-                  <p className="text-2xl font-bold text-green-600">{units.filter(u => u.active).length}</p>
+            {/* Card Unidades Ativas */}
+            <div className="stat-card stat-card-green">
+              <div className="stat-card-shine"></div>
+              <div className="stat-card-particles">
+                <div className="stat-card-particle-1"></div>
+                <div className="stat-card-particle-2"></div>
+                <div className="stat-card-particle-3"></div>
+                <div className="stat-card-particle-4"></div>
+              </div>
+              <div className="stat-card-content">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="stat-card-icon-wrapper">
+                    <CheckCircle className="stat-card-icon" />
+                  </div>
+                  <div className="text-right">
+                    <p className="stat-card-value">{units.filter(u => u.active).length}</p>
+                    <div className="flex items-center justify-end gap-2 mt-2">
+                      <div className="stat-card-indicator"></div>
+                      <span className="stat-card-label">ATIVAS</span>
+                    </div>
+                  </div>
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
+                <div>
+                  <h3 className="stat-card-title">Unidades Ativas</h3>
+                  <p className="stat-card-subtitle">Em funcionamento</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Cursos</p>
-                  <p className="text-2xl font-bold text-blue-600">{units.reduce((acc, u) => acc + (u.coursesCount || 0), 0)}</p>
+            {/* Card Total de Cursos */}
+            <div className="stat-card stat-card-purple">
+              <div className="stat-card-shine"></div>
+              <div className="stat-card-particles">
+                <div className="stat-card-particle-1"></div>
+                <div className="stat-card-particle-2"></div>
+                <div className="stat-card-particle-3"></div>
+                <div className="stat-card-particle-4"></div>
+              </div>
+              <div className="stat-card-content">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="stat-card-icon-wrapper">
+                    <BookOpen className="stat-card-icon" />
+                  </div>
+                  <div className="text-right">
+                    <p className="stat-card-value">{units.reduce((acc, u) => acc + (u.coursesCount || 0), 0)}</p>
+                    <div className="flex items-center justify-end gap-2 mt-2">
+                      <div className="stat-card-indicator"></div>
+                      <span className="stat-card-label">CURSOS</span>
+                    </div>
+                  </div>
                 </div>
-                <Users className="w-8 h-8 text-blue-500" />
+                <div>
+                  <h3 className="stat-card-title">Total de Cursos</h3>
+                  <p className="stat-card-subtitle">Disponíveis</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Instituições</p>
-                  <p className="text-2xl font-bold text-purple-600">{new Set(units.map(u => u.institution_id)).size}</p>
+            {/* Card Total de Instituições */}
+            <div className="stat-card stat-card-amber">
+              <div className="stat-card-shine"></div>
+              <div className="stat-card-particles">
+                <div className="stat-card-particle-1"></div>
+                <div className="stat-card-particle-2"></div>
+                <div className="stat-card-particle-3"></div>
+                <div className="stat-card-particle-4"></div>
+              </div>
+              <div className="stat-card-content">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="stat-card-icon-wrapper">
+                    <Building2 className="stat-card-icon" />
+                  </div>
+                  <div className="text-right">
+                    <p className="stat-card-value">{new Set(units.map(u => u.institution_id)).size}</p>
+                    <div className="flex items-center justify-end gap-2 mt-2">
+                      <div className="stat-card-indicator"></div>
+                      <span className="stat-card-label">INSTITUIÇÕES</span>
+                    </div>
+                  </div>
                 </div>
-                <Building2 className="w-8 h-8 text-purple-500" />
+                <div>
+                  <h3 className="stat-card-title">Total de Instituições</h3>
+                  <p className="stat-card-subtitle">Vinculadas</p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Lista de Unidades */}
+          {/* Lista de Unidades em Cards */}
           {loading ? (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
               <div className="flex items-center justify-center">
@@ -554,123 +577,157 @@ export default function SystemAdminUnitsPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Unidade
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Instituição
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Tipo
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Cursos
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Descrição
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Ações
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredUnits.map((unit) => (
-                      <motion.tr
-                        key={unit.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <UnitIcon className="w-5 h-5 text-primary mr-3" />
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {unit.name}
+            <>
+              {filteredUnits.length === 0 ? (
+                <div className="text-center py-12">
+                  <UnitIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    {searchTerm || selectedInstitution !== 'all' || filterStatus !== 'all'
+                      ? 'Nenhuma unidade encontrada'
+                      : 'Nenhuma unidade cadastrada'}
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {searchTerm || selectedInstitution !== 'all' || filterStatus !== 'all'
+                      ? 'Tente ajustar os filtros para encontrar o que procura.'
+                      : 'Comece criando sua primeira unidade.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                  {filteredUnits.map((unit) => (
+                    <motion.div
+                      key={unit.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="content-card"
+                    >
+                      {/* Header com gradiente e ícone */}
+                      <div className="content-card-header">
+                        <div className="content-card-header-gradient">
+                          {/* Padrão de fundo */}
+                          <div className="content-card-header-particles">
+                            <div className="content-card-header-particle-1"></div>
+                            <div className="content-card-header-particle-2"></div>
+                            <div className="content-card-header-particle-3"></div>
+                            <div className="content-card-header-particle-4"></div>
+                          </div>
+                          
+                          {/* Conteúdo sobreposto */}
+                          <div className="content-card-header-content">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="content-card-icon-wrapper bg-blue-500">
+                                  <UnitIcon className="content-card-icon" />
+                                </div>
+                                <div>
+                                  <h3 className="content-card-title">
+                                    {unit.name}
+                                  </h3>
+                                  <p className="content-card-subtitle">
+                                    {unit.institutionName}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {unit.description}
-                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleActive(unit);
+                                }}
+                                title={`Clique para ${unit.active ? 'desativar' : 'ativar'}`}
+                              >
+                                <span className={`status-badge ${
+                                  unit.active
+                                    ? 'status-badge-active'
+                                    : 'status-badge-inactive'
+                                }`}>
+                                  {unit.active ? 'Ativa' : 'Inativa'}
+                                </span>
+                              </button>
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-white">
-                            {unit.institutionName}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(unit.type)}`}>
-                            {getTypeLabel(unit.type)}
+                        </div>
+                      </div>
+
+                      {/* Conteúdo do Card */}
+                      <div className="content-card-body">
+                        {/* Tipo da unidade */}
+                        <div className="mb-4">
+                          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                            Escola
                           </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {unit.coursesCount || 0}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {unit.description || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => handleToggleActive(unit)}
-                            className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full transition-colors ${
-                              unit.active
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                : 'bg-red-100 text-red-800 hover:bg-red-200'
-                            }`}
-                          >
-                            {unit.active ? (
-                              <>
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Ativa
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="w-3 h-3 mr-1" />
-                                Inativa
-                              </>
-                            )}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center space-x-2">
+                        </div>
+
+                        {/* Estatísticas em grid */}
+                        <div className="space-y-3 mb-4">
+                          {/* Cursos - Destaque */}
+                          <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                            <div className="p-2 bg-blue-500 rounded-lg">
+                              <BookOpen className="w-4 h-4 text-white" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-blue-700">
+                                {unit.coursesCount || 0} curso{(unit.coursesCount || 0) !== 1 ? 's' : ''}
+                              </p>
+                              <p className="text-xs text-blue-600">Disponíveis</p>
+                            </div>
+                          </div>
+                          
+                          {/* Alunos e Professores */}
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 text-sm text-gray-600 bg-green-50 px-3 py-2 rounded-lg flex-1">
+                              <Users className="w-4 h-4 text-green-500" />
+                              <span className="font-medium">{unit.studentsCount || 0} alunos</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 text-sm text-gray-600 bg-purple-50 px-3 py-2 rounded-lg flex-1">
+                              <Users className="w-4 h-4 text-purple-500" />
+                              <span className="font-medium">{unit.teachersCount || 0} prof.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer do Card */}
+                      <div className="content-card-footer">
+                        <div className="flex items-center justify-between">
+                          <div className="footer-action-text footer-action-text-blue">
+                            <span>Gerenciar unidade</span>
+                            <div className="footer-action-indicator"></div>
+                          </div>
+                          
+                          <div className="flex items-center gap-1">
                             <button
-                              onClick={() => handleEdit(unit)}
-                              className="text-primary hover:text-primary-dark transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(unit);
+                              }}
+                              className="action-button action-button-edit"
+                              title="Editar unidade"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(unit);
+                              }}
+                              className="action-button action-button-delete"
+                              title="Excluir unidade"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {filteredUnits.length === 0 && (
-                <div className="text-center py-8">
-                  <UnitIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {searchTerm || selectedInstitution !== 'all' || filterType !== 'all' || filterStatus !== 'all'
-                      ? 'Nenhuma unidade encontrada com os filtros aplicados.'
-                      : 'Nenhuma unidade cadastrada ainda.'}
-                  </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               )}
-            </div>
+            </>
           )}
 
-          {/* Modal de Criação/Edição Melhorado */}
+          {/* Modal de Criação/Edição Simplificado */}
           {showModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <motion.div
@@ -727,22 +784,8 @@ export default function SystemAdminUnitsPage() {
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            placeholder="Ex: Campus Central"
+                            placeholder="Ex: EMEF Levy Gonçalves de Oliveira"
                             required
-                          />
-                        </div>
-
-
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Descrição
-                          </label>
-                          <textarea
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
-                            rows={3}
-                            placeholder="Descreva brevemente a unidade, sua função ou características especiais..."
                           />
                         </div>
 
@@ -807,70 +850,6 @@ export default function SystemAdminUnitsPage() {
                               Carregando instituições...
                             </p>
                           )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tipo de Unidade *
-                          </label>
-                          <div className="relative">
-                            <select
-                              value={formData.type}
-                              onChange={(e) => setFormData({ ...formData, type: e.target.value as UnitType })}
-                              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors appearance-none"
-                              required
-                            >
-                              <option value="">Selecione o tipo</option>
-                              {UNIT_TYPES.map(type => (
-                                <option key={type.value} value={type.value}>
-                                  {type.label}
-                                </option>
-                              ))}
-                            </select>
-                            <GraduationCap className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                          </div>
-                          {formData.type && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                              {UNIT_TYPES.find(t => t.value === formData.type)?.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-
-                    {/* Configurações */}
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-primary" />
-                        Configurações
-                      </h4>
-                      
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${formData.active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                              {formData.active ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                            </div>
-                            <div>
-                              <label htmlFor="is_active" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
-                                Status da Unidade
-                              </label>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {formData.active ? 'Unidade ativa e operacional' : 'Unidade inativa ou em manutenção'}
-                              </p>
-                            </div>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              id="active"
-                              checked={formData.active}
-                              onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                              className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/40 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                          </label>
                         </div>
                       </div>
                     </div>

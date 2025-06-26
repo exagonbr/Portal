@@ -23,10 +23,10 @@ class RequestLoopDetector {
 
   constructor(config?: Partial<LoopDetectionConfig>) {
     this.config = {
-      maxRequestsPerWindow: 20,
+      maxRequestsPerWindow: 30,
       windowMs: 30000, // 30 segundos
-      maxSameRequestsInSequence: 5,
-      sequenceWindowMs: 10000, // 10 segundos
+      maxSameRequestsInSequence: 8,
+      sequenceWindowMs: 15000, // 15 segundos
       ...config
     };
   }
@@ -40,6 +40,18 @@ class RequestLoopDetector {
     // Limpar requisições antigas
     this.cleanOldRequests(now);
 
+    // Verificar se a URL deve ser ignorada para detecção de loops
+    if (this.shouldIgnoreUrl(url)) {
+      // Registrar a requisição mas não verificar loops
+      this.requests.push({
+        url,
+        method,
+        timestamp: now,
+        headers
+      });
+      return;
+    }
+
     // Verificar padrões de loop
     const loopDetection = this.detectLoop(url, method, now);
     if (loopDetection.isLoop) {
@@ -49,6 +61,9 @@ class RequestLoopDetector {
         reason: loopDetection.reason,
         timestamp: new Date(now).toISOString()
       });
+      
+      // Notificar callbacks sobre rate limiting
+      notifyRateLimitCallbacks(true, loopDetection.reason);
     }
 
     // Registrar a requisição
@@ -58,6 +73,22 @@ class RequestLoopDetector {
       timestamp: now,
       headers
     });
+  }
+
+  /**
+   * Verifica se uma URL deve ser ignorada para detecção de loops
+   */
+  private shouldIgnoreUrl(url: string): boolean {
+    const ignorePatterns = [
+      '/api/cache/',
+      '/api/roles',
+      '/api/users/by-role',
+      '/api/admin/',
+      '/api/institutions',
+      '/api/users/stats'
+    ];
+
+    return ignorePatterns.some(pattern => url.includes(pattern));
   }
 
   /**
@@ -98,10 +129,10 @@ class RequestLoopDetector {
       req => now - req.timestamp < 1000 // Último segundo
     );
 
-    if (veryRecentRequests.length >= 3) {
+    if (veryRecentRequests.length >= 5) {
       return {
         isLoop: true,
-        reason: 'Requisições muito frequentes (3+ por segundo)'
+        reason: 'Requisições muito frequentes (5+ por segundo)'
       };
     }
 
@@ -144,6 +175,38 @@ class RequestLoopDetector {
 
 // Instância global
 const globalDetector = new RequestLoopDetector();
+
+// Sistema de callbacks para notificar componentes sobre rate limiting
+type RateLimitCallback = (detected: boolean, reason?: string) => void;
+const rateLimitCallbacks: RateLimitCallback[] = [];
+
+/**
+ * Adiciona callback para ser notificado sobre rate limiting
+ */
+export function onRateLimitDetected(callback: RateLimitCallback): () => void {
+  rateLimitCallbacks.push(callback);
+  
+  // Retorna função para remover o callback
+  return () => {
+    const index = rateLimitCallbacks.indexOf(callback);
+    if (index > -1) {
+      rateLimitCallbacks.splice(index, 1);
+    }
+  };
+}
+
+/**
+ * Notifica todos os callbacks sobre detecção de rate limiting
+ */
+function notifyRateLimitCallbacks(detected: boolean, reason?: string): void {
+  rateLimitCallbacks.forEach(callback => {
+    try {
+      callback(detected, reason);
+    } catch (error) {
+      console.error('Erro ao executar callback de rate limiting:', error);
+    }
+  });
+}
 
 /**
  * Interceptador de fetch para detecção automática de loops (apenas logs)

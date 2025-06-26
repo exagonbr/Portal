@@ -209,6 +209,9 @@ export class CacheService {
   }
 
   private async getFromRedis<T>(key: string): Promise<T | null> {
+    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
+    // return null;
+    
     try {
       // Verificar se há token de autenticação antes de tentar acessar o Redis
       if (typeof window !== 'undefined') {
@@ -221,14 +224,18 @@ export class CacheService {
         }
       }
 
-      const response = await apiClient.get<{ value: T; exists: boolean }>(
-        '/api/cache/get',
-        { key }
-      );
+      // DESABILITADO: Chamada direta ao backend que causa CORS
+      // const response = await apiClient.get<{ value: T; exists: boolean }>(
+      //   '/api/cache/get',
+      //   { key }
+      // );
 
-      if (response.success && response.data?.exists) {
-        return response.data.value;
-      }
+      // if (response.success && response.data?.exists) {
+      //   return response.data.value;
+      // }
+      
+      console.debug('Redis cache desabilitado temporariamente');
+      return null;
     } catch (error) {
       console.debug('Redis get failed:', error);
     }
@@ -237,6 +244,9 @@ export class CacheService {
   }
 
   private async setInRedis<T>(key: string, value: T, ttl: number): Promise<void> {
+    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
+    return;
+    
     try {
       // Verificar se há token de autenticação antes de tentar acessar o Redis
       if (typeof window !== 'undefined') {
@@ -249,11 +259,13 @@ export class CacheService {
         }
       }
 
-      await apiClient.post('/api/cache/set', {
-        key,
-        value,
-        ttl
-      });
+      // DESABILITADO: await apiClient.post('/api/cache/set', {
+      //   key,
+      //   value,
+      //   ttl
+      // });
+      
+      console.debug('Redis cache set desabilitado temporariamente');
     } catch (error) {
       console.debug('Redis set failed:', error);
       // Não fazer throw do erro para não quebrar a aplicação
@@ -262,6 +274,9 @@ export class CacheService {
   }
 
   private async deleteFromRedis(key: string): Promise<void> {
+    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
+    return;
+    
     try {
       // Verificar se há token de autenticação antes de tentar acessar o Redis
       if (typeof window !== 'undefined') {
@@ -274,7 +289,8 @@ export class CacheService {
         }
       }
 
-      await apiClient.post('/api/cache/delete', { key });
+      // DESABILITADO: await apiClient.post('/api/cache/delete', { key });
+      console.debug('Redis cache delete desabilitado temporariamente');
     } catch (error) {
       console.debug('Redis delete failed:', error);
       // Não fazer throw do erro para não quebrar a aplicação
@@ -283,6 +299,9 @@ export class CacheService {
   }
 
   private async clearRedis(): Promise<void> {
+    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
+    return;
+    
     try {
       // Verificar se há token de autenticação antes de tentar acessar o Redis
       if (typeof window !== 'undefined') {
@@ -295,7 +314,8 @@ export class CacheService {
         }
       }
 
-      await apiClient.post('/api/cache/clear', { pattern: this.keyPrefix + '*' });
+      // DESABILITADO: await apiClient.post('/api/cache/clear', { pattern: this.keyPrefix + '*' });
+      console.debug('Redis cache clear desabilitado temporariamente');
     } catch (error) {
       console.debug('Redis clear failed:', error);
       // Não fazer throw do erro para não quebrar a aplicação
@@ -304,6 +324,9 @@ export class CacheService {
   }
 
   private async invalidateRedisPattern(pattern: string): Promise<void> {
+    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
+    return;
+    
     try {
       // Verificar se há token de autenticação antes de tentar acessar o Redis
       if (typeof window !== 'undefined') {
@@ -316,7 +339,8 @@ export class CacheService {
         }
       }
 
-      await apiClient.post('/api/cache/invalidate', { pattern });
+      // DESABILITADO: await apiClient.post('/api/cache/invalidate', { pattern });
+      console.debug('Redis cache invalidate desabilitado temporariamente');
     } catch (error) {
       console.debug('Redis invalidate pattern failed:', error);
       // Não fazer throw do erro para não quebrar a aplicação
@@ -372,6 +396,7 @@ export const CacheKeys = {
   USER_LIST: (filters: string) => `users:list:${filters}`,
   USER_PROFILE: (id: string) => `user:profile:${id}`,
   USER_COURSES: (id: string) => `user:courses:${id}`,
+  USERS_BY_ROLE: (roleId: string) => `users:role:${roleId}`,
   USER_STATS: 'users:stats',
 
   // Roles

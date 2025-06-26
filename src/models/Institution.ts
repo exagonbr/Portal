@@ -3,7 +3,7 @@ import { Unit } from './Unit';
 import { Course } from './Course';
 
 export class Institution extends Model {
-  static tableName = 'institution';
+  static tableName = 'institutions';
 
   id!: string;
   name!: string;

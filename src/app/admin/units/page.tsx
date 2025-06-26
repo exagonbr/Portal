@@ -37,7 +37,7 @@ export default function AdminUnitsPage() {
     const loadInstitutions = async () => {
       try {
         const response = await institutionService.getAll();
-        setInstitutions(response.data.map(inst => ({
+        setInstitutions(response.map(inst => ({
           id: inst.id,
           name: inst.name
         })));

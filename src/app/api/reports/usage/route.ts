@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import knex from '@/config/database'
+import { activityTracker } from '@/services/activityTrackingService'
+import { ActivityType } from '@/types/activity'
 
 // Schema de validação para filtros de relatório de uso
 const usageReportSchema = z.object({
@@ -11,7 +13,7 @@ const usageReportSchema = z.object({
   date_to: z.string().nullable().optional(),
   institution_id: z.string().nullable().optional(),
   role: z.enum(['all', 'STUDENT', 'TEACHER', 'MANAGER', 'PARENT', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN', 'admin', 'system_admin', 'institution_manager', 'academic_coordinator', 'manager', 'teacher', 'student', 'guardian']).default('all'),
-  activity_type: z.enum(['all', 'login', 'logout', 'page_view', 'content_access', 'quiz_attempt', 'assignment_submit', 'video']).default('all'),
+  activity_type: z.enum(['all', 'login', 'logout', 'login_failed', 'page_view', 'video_start', 'video_play', 'video_pause', 'video_stop', 'video_complete', 'video_seek', 'content_access', 'quiz_start', 'quiz_attempt', 'quiz_complete', 'assignment_start', 'assignment_submit', 'assignment_complete', 'book_open', 'book_read', 'book_bookmark', 'course_enroll', 'course_complete', 'lesson_start', 'lesson_complete', 'forum_post', 'forum_reply', 'chat_message', 'file_download', 'file_upload', 'search', 'profile_update', 'settings_change', 'notification_read', 'session_timeout', 'error', 'system_action']).default('all'),
   user_name: z.string().nullable().optional(),
   institution_name: z.string().nullable().optional()
 })
@@ -167,7 +169,7 @@ async function getUsageDataFromDatabase(filters: any): Promise<UsageStats> {
       .groupBy(knex.raw('DATE(date_created)'))
       .orderBy('date')
 
-    const timeline = timelineData.map(day => ({
+    const timeline = timelineData.map((day: any) => ({
       date: day.date,
       users: parseInt(day.users),
       sessions: parseInt(day.sessions),
@@ -190,36 +192,36 @@ async function getUsageDataFromDatabase(filters: any): Promise<UsageStats> {
       .whereBetween('date_created', [sevenDaysAgo, dateTo])
       .first()
 
-    const totalSessions = timeline.reduce((sum, day) => sum + day.sessions, 0)
+    const totalSessions = timeline.reduce((sum: number, day: any) => sum + day.sessions, 0)
 
     // Calcular duração média de sessão (estimativa baseada em atividades por sessão)
     const avgActivitiesPerSession = totalSessions > 0 ? 
-      timeline.reduce((sum, day) => sum + day.activities, 0) / totalSessions : 0
+      timeline.reduce((sum: number, day: any) => sum + day.activities, 0) / totalSessions : 0
     const averageSessionDuration = Math.round(avgActivitiesPerSession * 2.5) // Estimativa: 2.5 min por atividade
 
     const averageUsersPerDay = timeline.length > 0 ? 
-      Math.round(timeline.reduce((sum, day) => sum + day.users, 0) / timeline.length) : 0
+      Math.round(timeline.reduce((sum: number, day: any) => sum + day.users, 0) / timeline.length) : 0
 
     const averageSessionsPerDay = timeline.length > 0 ? 
-      Math.round(timeline.reduce((sum, day) => sum + day.sessions, 0) / timeline.length) : 0
+      Math.round(timeline.reduce((sum: number, day: any) => sum + day.sessions, 0) / timeline.length) : 0
 
     const averageActivitiesPerDay = timeline.length > 0 ? 
-      Math.round(timeline.reduce((sum, day) => sum + day.activities, 0) / timeline.length) : 0
+      Math.round(timeline.reduce((sum: number, day: any) => sum + day.activities, 0) / timeline.length) : 0
 
     const peakUsageDay = timeline.length > 0 ? 
-      timeline.reduce((max, day) => day.users > max.users ? day : max, timeline[0]) :
+      timeline.reduce((max: any, day: any) => day.users > max.users ? day : max, timeline[0]) :
       { date: new Date().toISOString().split('T')[0], users: 0, sessions: 0, activities: 0 }
 
     // Calcular taxa de crescimento
     const growthRate = timeline.length > 7 ? 
-      (((timeline.slice(-7).reduce((sum, day) => sum + day.users, 0) / 7) - 
-        (timeline.slice(0, 7).reduce((sum, day) => sum + day.users, 0) / 7)) / 
-       (timeline.slice(0, 7).reduce((sum, day) => sum + day.users, 0) / 7) * 100).toFixed(1) : 
+            (((timeline.slice(-7).reduce((sum: number, day: any) => sum + day.users, 0) / 7) -
+        (timeline.slice(0, 7).reduce((sum: number, day: any) => sum + day.users, 0) / 7)) /
+       (timeline.slice(0, 7).reduce((sum: number, day: any) => sum + day.users, 0) / 7) * 100).toFixed(1) : 
       '0.0'
 
     const result = {
-      totalUsers: parseInt(totalUsers?.count || '0'),
-      activeUsers: parseInt(activeUsers?.count || '0'),
+      totalUsers: parseInt(String(totalUsers?.count || '0')),
+      activeUsers: parseInt(String(activeUsers?.count || '0')),
       totalSessions,
       averageSessionDuration,
       byRole,

@@ -194,11 +194,40 @@ export default function UsageReportsPage() {
     switch (activity) {
       case 'login': return <LogIn className="w-4 h-4" />
       case 'logout': return <LogIn className="w-4 h-4" />
-      case 'video': return <Eye className="w-4 h-4" />
+      case 'login_failed': return <LogIn className="w-4 h-4" />
       case 'page_view': return <MousePointer className="w-4 h-4" />
+      case 'video_start':
+      case 'video_play':
+      case 'video_pause':
+      case 'video_stop':
+      case 'video_complete':
+      case 'video_seek': return <Eye className="w-4 h-4" />
       case 'content_access': return <FileText className="w-4 h-4" />
-      case 'quiz_attempt': return <BookOpen className="w-4 h-4" />
-      case 'assignment_submit': return <FileText className="w-4 h-4" />
+      case 'quiz_start':
+      case 'quiz_attempt':
+      case 'quiz_complete': return <BookOpen className="w-4 h-4" />
+      case 'assignment_start':
+      case 'assignment_submit':
+      case 'assignment_complete': return <FileText className="w-4 h-4" />
+      case 'book_open':
+      case 'book_read':
+      case 'book_bookmark': return <BookOpen className="w-4 h-4" />
+      case 'course_enroll':
+      case 'course_complete': return <BookOpen className="w-4 h-4" />
+      case 'lesson_start':
+      case 'lesson_complete': return <BookOpen className="w-4 h-4" />
+      case 'forum_post':
+      case 'forum_reply':
+      case 'chat_message': return <FileText className="w-4 h-4" />
+      case 'file_download':
+      case 'file_upload': return <FileText className="w-4 h-4" />
+      case 'search': return <MousePointer className="w-4 h-4" />
+      case 'profile_update':
+      case 'settings_change': return <Activity className="w-4 h-4" />
+      case 'notification_read': return <Activity className="w-4 h-4" />
+      case 'session_timeout': return <Activity className="w-4 h-4" />
+      case 'error': return <Activity className="w-4 h-4" />
+      case 'system_action': return <Activity className="w-4 h-4" />
       default: return <Activity className="w-4 h-4" />
     }
   }
@@ -207,11 +236,40 @@ export default function UsageReportsPage() {
     switch (activity) {
       case 'login': return 'Logins'
       case 'logout': return 'Logouts'
-      case 'video': return 'Visualização de Vídeos'
-      case 'page_view': return 'Visualizações'
+      case 'login_failed': return 'Falhas de Login'
+      case 'page_view': return 'Visualizações de Página'
+      case 'video_start': return 'Início de Vídeos'
+      case 'video_play': return 'Reprodução de Vídeos'
+      case 'video_pause': return 'Pausas em Vídeos'
+      case 'video_stop': return 'Paradas de Vídeos'
+      case 'video_complete': return 'Vídeos Completos'
+      case 'video_seek': return 'Buscas em Vídeos'
       case 'content_access': return 'Acesso a Conteúdo'
+      case 'quiz_start': return 'Início de Quiz'
       case 'quiz_attempt': return 'Tentativas de Quiz'
+      case 'quiz_complete': return 'Quiz Completos'
+      case 'assignment_start': return 'Início de Tarefas'
       case 'assignment_submit': return 'Envios de Tarefas'
+      case 'assignment_complete': return 'Tarefas Completas'
+      case 'book_open': return 'Abertura de Livros'
+      case 'book_read': return 'Leitura de Livros'
+      case 'book_bookmark': return 'Marcadores de Livros'
+      case 'course_enroll': return 'Matrículas em Cursos'
+      case 'course_complete': return 'Cursos Completos'
+      case 'lesson_start': return 'Início de Aulas'
+      case 'lesson_complete': return 'Aulas Completas'
+      case 'forum_post': return 'Posts no Fórum'
+      case 'forum_reply': return 'Respostas no Fórum'
+      case 'chat_message': return 'Mensagens de Chat'
+      case 'file_download': return 'Downloads de Arquivos'
+      case 'file_upload': return 'Uploads de Arquivos'
+      case 'search': return 'Pesquisas'
+      case 'profile_update': return 'Atualizações de Perfil'
+      case 'settings_change': return 'Mudanças de Configuração'
+      case 'notification_read': return 'Notificações Lidas'
+      case 'session_timeout': return 'Timeouts de Sessão'
+      case 'error': return 'Erros'
+      case 'system_action': return 'Ações do Sistema'
       default: return activity
     }
   }
@@ -282,11 +340,31 @@ export default function UsageReportsPage() {
               >
                 <option value="all">Todas as atividades</option>
                 <option value="login">🔐 Logins</option>
-                <option value="video">📺 Visualização de Vídeos</option>
-                <option value="page_view">👁️ Visualizações</option>
+                <option value="logout">🚪 Logouts</option>
+                <option value="login_failed">❌ Falhas de Login</option>
+                <option value="page_view">👁️ Visualizações de Página</option>
+                <option value="video_start">▶️ Início de Vídeos</option>
+                <option value="video_play">📺 Reprodução de Vídeos</option>
+                <option value="video_pause">⏸️ Pausas em Vídeos</option>
+                <option value="video_complete">✅ Vídeos Completos</option>
                 <option value="content_access">📖 Acesso a Conteúdo</option>
+                <option value="quiz_start">📝 Início de Quiz</option>
                 <option value="quiz_attempt">📝 Tentativas de Quiz</option>
+                <option value="quiz_complete">✅ Quiz Completos</option>
+                <option value="assignment_start">📋 Início de Tarefas</option>
                 <option value="assignment_submit">📤 Envios de Tarefas</option>
+                <option value="assignment_complete">✅ Tarefas Completas</option>
+                <option value="book_open">📚 Abertura de Livros</option>
+                <option value="book_read">📖 Leitura de Livros</option>
+                <option value="course_enroll">🎓 Matrículas em Cursos</option>
+                <option value="course_complete">🏆 Cursos Completos</option>
+                <option value="lesson_start">📚 Início de Aulas</option>
+                <option value="lesson_complete">✅ Aulas Completas</option>
+                <option value="forum_post">💬 Posts no Fórum</option>
+                <option value="chat_message">💬 Mensagens de Chat</option>
+                <option value="file_download">⬇️ Downloads</option>
+                <option value="search">🔍 Pesquisas</option>
+                <option value="error">⚠️ Erros</option>
               </select>
             </div>
 

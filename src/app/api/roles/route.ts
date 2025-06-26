@@ -14,32 +14,58 @@ const createRoleSchema = z.object({
 // GET - Listar roles
 export async function GET(request: NextRequest) {
   try {
-    const session = await getAuthentication(request)
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    // Verificar permissões
-    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
-      return NextResponse.json(
-        { error: 'Sem permissão para listar roles' },
-        { status: 403 }
-      )
-    }
-
     // Parâmetros de query
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
     const is_active = searchParams.get('is_active')
+    const public_access = searchParams.get('public') === 'true'
+
+    // Se for acesso público (para combos), não verificar autenticação
+    if (!public_access) {
+      const session = await getAuthentication(request)
+      
+      if (!session) {
+        return NextResponse.json(
+          { error: 'Não autorizado' },
+          { status: 401 }
+        )
+      }
+
+      // Verificar permissões
+      if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
+        return NextResponse.json(
+          { error: 'Sem permissão para listar roles' },
+          { status: 403 }
+        )
+      }
+    }
 
     // Buscar roles
     let roles = Array.from(mockRoles.values())
+
+    // Para acesso público, retornar apenas roles ativas básicas
+    if (public_access) {
+      roles = roles.filter(role => role.active && role.status === 'active')
+      // Retornar apenas campos essenciais para o combo
+      const publicRoles = roles.map(role => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        status: role.status,
+        created_at: role.created_at,
+        updated_at: role.updated_at
+      }))
+
+      console.log('🔓 Retornando roles públicas:', publicRoles.length, 'roles encontradas');
+      console.log('📋 Roles disponíveis:', publicRoles.map(r => ({ id: r.id, name: r.name })));
+
+      return NextResponse.json({
+        success: true,
+        data: publicRoles
+      })
+    }
 
     // Aplicar filtros de busca
     if (search) {

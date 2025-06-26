@@ -39,7 +39,7 @@ export default function AdminPerformancePage() {
       { name: 'Throughput', value: 156, change: 18.7, trend: 'up' }
     ],
     endpoints: [
-      { path: '/api/user', requests: 45678, avgTime: 89, errorRate: 0.12 },
+      { path: '/api/users', requests: 45678, avgTime: 89, errorRate: 0.12 },
       { path: '/api/courses', requests: 34521, avgTime: 156, errorRate: 0.08 },
       { path: '/api/auth/login', requests: 28945, avgTime: 234, errorRate: 0.25 },
       { path: '/api/content', requests: 23456, avgTime: 312, errorRate: 0.45 },

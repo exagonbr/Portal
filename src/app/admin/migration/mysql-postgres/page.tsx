@@ -74,6 +74,7 @@ export default function MySQLPostgresMigrationPage() {
   const [migrationProgress, setMigrationProgress] = useState(0)
   const [envConfigLoaded, setEnvConfigLoaded] = useState(false)
   const [migrationLogs, setMigrationLogs] = useState<LogEntry[]>([])
+  const [isCreatingUsers, setIsCreatingUsers] = useState(false)
 
   // Computed properties
   const selectedTables = tables.filter(t => t.selected)
@@ -83,6 +84,43 @@ export default function MySQLPostgresMigrationPage() {
   useEffect(() => {
     loadEnvConfig()
   }, [])
+
+  const createDefaultUsers = async () => {
+    setIsCreatingUsers(true)
+    addLog('info', '🚀 Iniciando criação automática de usuários padrão...')
+    
+    try {
+      const response = await fetch('/api/admin/create-default-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        addLog('success', `🎉 ${result.usersCreated} usuários padrão criados com sucesso!`)
+        
+        if (result.tablesUsed?.length > 0) {
+          addLog('info', `📊 Tabelas utilizadas: ${result.tablesUsed.join(', ')}`)
+        }
+        
+        addLog('info', '👥 Usuários disponíveis:')
+        result.users?.forEach((user: any) => {
+          const tableInfo = user.tables ? ` [${user.tables.join(', ')}]` : ''
+          const statusIcon = user.status === 'created' ? '✅' : '🔄'
+          addLog('info', `   ${statusIcon} ${user.email} (${user.role})${tableInfo}`)
+        })
+        addLog('info', '🔑 Senha padrão para todos: password123')
+        addLog('success', '✅ Sistema pronto para uso!')
+      } else {
+        addLog('error', `❌ Erro ao criar usuários: ${result.error}`)
+      }
+    } catch (error: any) {
+      addLog('error', `❌ Erro de rede: ${error.message}`)
+    } finally {
+      setIsCreatingUsers(false)
+    }
+  }
 
   const loadEnvConfig = async () => {
     try {
@@ -312,7 +350,7 @@ export default function MySQLPostgresMigrationPage() {
   }
 
   return (
-    <ProtectedRoute allowedRoles={[UserRole.SYSTEM_ADMIN]}>
+    <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
       <DashboardPageLayout
         title="Migração MySQL → PostgreSQL"
         subtitle="Migre dados completos do MySQL para PostgreSQL de forma segura e inteligente"
@@ -325,12 +363,133 @@ export default function MySQLPostgresMigrationPage() {
                 Migre dados completos do MySQL para PostgreSQL de forma segura e inteligente
               </p>
             </div>
-            <button
-              onClick={reloadEnvConfig}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              🔄 Recarregar .env
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={createDefaultUsers}
+                disabled={isCreatingUsers}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isCreatingUsers ? (
+                  <>
+                    <span className="animate-spin">🔄</span>
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <span>👥</span>
+                    Criar Usuários Padrão
+                  </>
+                )}
+              </button>
+              <button
+                onClick={reloadEnvConfig}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                🔄 Recarregar .env
+              </button>
+            </div>
+          </div>
+
+          {/* Seção de Usuários Padrão */}
+          <div className="bg-white border rounded-lg p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">👥 Usuários Padrão do Sistema</h3>
+                <p className="text-gray-600 mt-1">
+                  Crie automaticamente todos os usuários padrão nas tabelas "users" e "user" (se existirem) para garantir compatibilidade total
+                </p>
+              </div>
+              <button
+                onClick={createDefaultUsers}
+                disabled={isCreatingUsers}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isCreatingUsers ? (
+                  <>
+                    <span className="animate-spin">🔄</span>
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <span>👥</span>
+                    Criar Usuários Padrão
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">👑</span>
+                  <span className="font-semibold text-red-800">SYSTEM_ADMIN</span>
+                </div>
+                <p className="text-sm text-red-700 mb-2">admin@sabercon.edu.br</p>
+                <p className="text-xs text-red-600">Acesso completo ao sistema</p>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🏢</span>
+                  <span className="font-semibold text-blue-800">INSTITUTION_MANAGER</span>
+                </div>
+                <p className="text-sm text-blue-700 mb-2">gestor@sabercon.edu.br</p>
+                <p className="text-xs text-blue-600">Gerencia operações institucionais</p>
+              </div>
+
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">👨‍🏫</span>
+                  <span className="font-semibold text-green-800">TEACHER</span>
+                </div>
+                <p className="text-sm text-green-700 mb-2">professor@sabercon.edu.br</p>
+                <p className="text-xs text-green-600">Professor com acesso a turmas</p>
+              </div>
+
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🎓</span>
+                  <span className="font-semibold text-purple-800">STUDENT</span>
+                </div>
+                <p className="text-sm text-purple-700 mb-2">julia.c@ifsp.com</p>
+                <p className="text-xs text-purple-600">Estudante do IFSP</p>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">📚</span>
+                  <span className="font-semibold text-yellow-800">COORDINATOR</span>
+                </div>
+                <p className="text-sm text-yellow-700 mb-2">coordenador@sabercon.edu.com</p>
+                <p className="text-xs text-yellow-600">Coordena atividades acadêmicas</p>
+              </div>
+
+              <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">👨‍👩‍👧‍👦</span>
+                  <span className="font-semibold text-pink-800">GUARDIAN</span>
+                </div>
+                <p className="text-sm text-pink-700 mb-2">renato@gmail.com</p>
+                <p className="text-xs text-pink-600">Responsável por estudante</p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>🔄 Compatibilidade Garantida:</strong> Os usuários serão criados em ambas as tabelas "users" e "user" (se existirem) para garantir funcionamento com diferentes estruturas de banco
+                </p>
+              </div>
+              
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-700">
+                  <strong>🔑 Senha padrão:</strong> password123 (para todos os usuários)
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  ⚠️ Recomenda-se alterar as senhas após o primeiro login
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Status das Configurações do .env */}
@@ -916,7 +1075,7 @@ export default function MySQLPostgresMigrationPage() {
           <div className="mt-8">
             <MigrationLogViewer
               logs={migrationLogs}
-              title="Logs da Migração"
+              isActive={isMigrating}
               onClear={clearLogs}
             />
           </div>

@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react'
 import { TVShowCollection, TVShowVideo, TVShowModuleStructure } from '@/types/collections'
 import { Search, Filter, Clock, Play, Folder, Calendar, Star, Eye, BookOpen, FileText } from 'lucide-react'
-// import SessionVideoPlayer from '@/components/SessionVideoPlayer' // Removido - usando player integrado
-import ShowVideoPlayer from '@/components/ShowVideoPlayer'
 import { formatDate, formatYear } from '@/utils/date'
+// Importar o UniversalVideoPlayer em vez dos players customizados
+import UniversalVideoPlayer from '@/components/UniversalVideoPlayer'
 
 interface TVShowListItem {
   id: number
@@ -77,30 +77,42 @@ export default function TVShowsManagePage() {
   })
   const [showFilters, setShowFilters] = useState(false)
 
-  // Estados para o player de sessão
-  const [showSessionPlayer, setShowSessionPlayer] = useState(false)
-  const [selectedShowId, setSelectedShowId] = useState<number | null>(null)
-  const [sessionVideos, setSessionVideos] = useState<TVShowVideo[]>([])
-  const [currentSessionVideo, setCurrentSessionVideo] = useState<number>(0)
-  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null)
-  const [selectedVideoTitle, setSelectedVideoTitle] = useState<string | null>(null)
+  // Estados para o player universal - simplificados
+  const [showUniversalPlayer, setShowUniversalPlayer] = useState(false)
+  const [playerVideos, setPlayerVideos] = useState<any[]>([])
+  const [playerCollectionName, setPlayerCollectionName] = useState<string>('')
+  const [playerSessionNumber, setPlayerSessionNumber] = useState<number | undefined>(undefined)
+  const [playerInitialIndex, setPlayerInitialIndex] = useState<number>(0)
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set())
 
-  // Função para construir URL do CloudFront
+  // Função para construir URL do CloudFront - MELHORADA
   const buildVideoUrl = (sha256hex: string | null, extension: string | null): string | null => {
-    if (!sha256hex || !extension) return null;
-    return `https://d26a2wm7tuz2gu.cloudfront.net/upload/${sha256hex}${extension.toLowerCase()}`;
+    if (!sha256hex || !extension) {
+      console.log('⚠️ buildVideoUrl: sha256hex ou extension ausentes:', { sha256hex, extension })
+      return null;
+    }
+    
+    const cleanExtension = extension.toLowerCase().startsWith('.') ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
+    const url = `https://d26a2wm7tuz2gu.cloudfront.net/upload/${sha256hex}${cleanExtension}`;
+    
+    console.log('🔗 URL construída:', url)
+    return url;
   }
 
   // Função para buscar dados do arquivo do vídeo baseado no ID
   const fetchVideoFileData = async (videoId: string): Promise<{sha256hex: string, extension: string} | null> => {
     try {
+      console.log(`🔍 Iniciando busca de dados para vídeo ID: ${videoId}`)
+      
       const token = getAuthToken();
       if (!token) {
-        console.error('❌ Token de autenticação não encontrado');
+        console.error('❌ Token de autenticação não encontrado - usuário não está logado');
+        // Tentar redirecionar para login ou mostrar erro
         return null;
       }
 
+      console.log(`🔗 Fazendo requisição para: /api/video-file/${videoId}`)
+      
       const response = await fetch(`/api/video-file/${videoId}`, {
         method: 'GET',
         headers: {
@@ -109,8 +121,23 @@ export default function TVShowsManagePage() {
         },
       });
 
+      console.log(`📡 Resposta da API:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
       if (!response.ok) {
-        console.error(`❌ Erro ao buscar dados do arquivo do vídeo ${videoId}:`, response.status);
+        if (response.status === 401) {
+          console.error(`❌ Erro 401 - Token inválido ou expirado para vídeo ${videoId}`);
+          // Aqui poderia limpar o token e redirecionar para login
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('token');
+        } else if (response.status === 404) {
+          console.error(`❌ Erro 404 - Arquivo não encontrado para vídeo ${videoId}`);
+        } else {
+          console.error(`❌ Erro ${response.status} ao buscar dados do arquivo do vídeo ${videoId}:`, response.statusText);
+        }
         return null;
       }
 
@@ -118,15 +145,21 @@ export default function TVShowsManagePage() {
       console.log(`✅ Dados do arquivo do vídeo ${videoId}:`, data);
 
       if (data.success && data.data && data.data.sha256hex && data.data.extension) {
+        console.log(`✅ Dados válidos encontrados:`, {
+          sha256hex: data.data.sha256hex,
+          extension: data.data.extension
+        })
         return {
           sha256hex: data.data.sha256hex,
           extension: data.data.extension
         };
+      } else {
+        console.warn(`⚠️ Dados incompletos recebidos para vídeo ${videoId}:`, data);
       }
 
       return null;
     } catch (error) {
-      console.error(`❌ Erro ao buscar dados do arquivo do vídeo ${videoId}:`, error);
+      console.error(`❌ Erro na requisição para vídeo ${videoId}:`, error);
       return null;
     }
   }
@@ -150,7 +183,12 @@ export default function TVShowsManagePage() {
   }, [])
 
   const getAuthToken = (): string | null => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      console.log('🔍 getAuthToken: Executando no servidor, retornando null')
+      return null;
+    }
+    
+    console.log('🔍 Buscando token de autenticação...')
     
     let token = localStorage.getItem('auth_token') || 
                 localStorage.getItem('token') ||
@@ -158,32 +196,46 @@ export default function TVShowsManagePage() {
                 sessionStorage.getItem('token') ||
                 sessionStorage.getItem('auth_token');
     
-    if (!token) {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'auth_token' || name === 'token' || name === 'authToken') {
-          token = decodeURIComponent(value);
-          break;
+    if (token) {
+      console.log('✅ Token encontrado no storage:', token.substring(0, 20) + '...')
+      return token;
+    }
+    
+    // Buscar em cookies
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+        token = decodeURIComponent(value);
+        console.log('✅ Token encontrado nos cookies:', token.substring(0, 20) + '...')
+        return token;
+      }
+    }
+    
+    // Tentar buscar de forma mais ampla
+    const allStorageKeys = Object.keys(localStorage);
+    console.log('🔍 Chaves disponíveis no localStorage:', allStorageKeys);
+    
+    for (const key of allStorageKeys) {
+      if (key.toLowerCase().includes('token') || key.toLowerCase().includes('auth')) {
+        const value = localStorage.getItem(key);
+        if (value && value.length > 10) {
+          console.log(`✅ Token encontrado na chave '${key}':`, value.substring(0, 20) + '...')
+          return value;
         }
       }
     }
     
-    if (!token) {
-      console.warn('⚠️ Nenhum token encontrado, usando token de fallback para desenvolvimento');
-      const fallbackData = {
-        userId: 'admin',
-        email: 'admin@test.com',
-        name: 'Admin Test',
-        role: 'SYSTEM_ADMIN',
-        institutionId: 'test-institution-id',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (60 * 60)
-      };
-      token = btoa(JSON.stringify(fallbackData));
+    console.error('❌ Nenhum token de autenticação encontrado!')
+    console.log('💡 Verificando se existe sessão ativa...')
+    
+    // Em último caso, verificar se há dados de usuário logado
+    const userData = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (userData) {
+      console.log('👤 Dados de usuário encontrados:', userData.substring(0, 50) + '...')
     }
     
-    return token;
+    return null;
   }
 
   const loadTvShows = async (page = 1, search = '') => {
@@ -273,7 +325,13 @@ export default function TVShowsManagePage() {
           
           allCollections.forEach((show: TVShowListItem, index: number) => {
             // Contar vídeos - somar TODOS os vídeos de cada coleção
-            const videoCount = show.video_count || 0
+            let videoCount = show.video_count || 0
+            
+            // VALIDAÇÃO: Detectar valores absurdos e resetar para 0
+            if (videoCount > 10000) {
+              console.error(`🚨 VALOR ABSURDO DETECTADO: ${show.name} tem ${videoCount} vídeos - RESETANDO PARA 0`)
+              videoCount = 0
+            }
             
             if (videoCount > 0) {
               totalVideos += videoCount
@@ -357,6 +415,10 @@ export default function TVShowsManagePage() {
   const loadTvShowDetails = async (id: number) => {
     try {
       setIsLoading(true)
+      
+      // Limpar estados do player ao carregar nova coleção
+      closeAllPlayers()
+      
       const token = getAuthToken()
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -446,7 +508,65 @@ export default function TVShowsManagePage() {
 
   const filteredTvShows = applyFilters()
 
-  // Função para abrir o player de sessão
+  // Função para transformar TVShowVideo em formato do UniversalVideoPlayer
+  const transformVideoForPlayer = (video: TVShowVideo, index: number) => {
+    console.log(`🔄 Transformando vídeo ${video.id}:`, {
+      title: video.title,
+      video_url: video.video_url,
+      hasUrl: !!video.video_url
+    })
+    
+    return {
+      id: video.id.toString(),
+      title: video.title,
+      url: video.video_url || '',
+      type: detectVideoType(video.video_url || '') as 'mp4' | 'youtube' | 'vimeo' | 'direct',
+      thumbnail: video.thumbnail_url,
+      duration: video.duration,
+      description: video.description,
+      episode_number: video.episode_number || index + 1
+    }
+  }
+
+  // Função para detectar tipo de vídeo - MELHORADA
+  const detectVideoType = (url: string): 'mp4' | 'youtube' | 'vimeo' | 'direct' => {
+    if (!url) {
+      console.log('🔍 URL vazia, usando tipo "direct"')
+      return 'direct'
+    }
+    
+    console.log('🔍 Detectando tipo de vídeo para URL:', url)
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      console.log('✅ Tipo detectado: youtube')
+      return 'youtube'
+    }
+    
+    if (url.includes('vimeo.com')) {
+      console.log('✅ Tipo detectado: vimeo')
+      return 'vimeo'
+    }
+    
+    if (url.endsWith('.mp4') || url.includes('.mp4') || url.includes('cloudfront.net')) {
+      console.log('✅ Tipo detectado: mp4')
+      return 'mp4'
+    }
+    
+    console.log('✅ Tipo detectado: direct (fallback)')
+    return 'direct'
+  }
+
+  // Função para verificar autenticação
+  const checkAuthentication = (): boolean => {
+    const token = getAuthToken();
+    if (!token) {
+      alert('❌ Erro de Autenticação\n\nVocê precisa estar logado para assistir aos vídeos.\n\nPor favor, faça login novamente e tente novamente.');
+      return false;
+    }
+    return true;
+  }
+
+  // Função para abrir o player de sessão - MELHORADA
   const handleWatchSession = async (moduleKey: string, moduleVideos: TVShowVideo[]) => {
     console.log('🎬 Tentando abrir player de sessão:', {
       moduleKey,
@@ -455,104 +575,217 @@ export default function TVShowsManagePage() {
       selectedTvShowName: selectedTvShow?.name
     })
     
-    // Construir URLs do CloudFront para vídeos que não têm URL
+    // Verificar autenticação primeiro
+    if (!checkAuthentication()) {
+      return;
+    }
+    
+    if (!selectedTvShow) {
+      console.error('❌ Erro: selectedTvShow não está definido')
+      alert('Erro: Coleção não selecionada. Tente recarregar a página.')
+      return
+    }
+    
+    if (!moduleVideos || moduleVideos.length === 0) {
+      console.error('❌ Erro: Nenhum vídeo encontrado para esta sessão')
+      alert('Erro: Nenhum vídeo disponível nesta sessão.')
+      return
+    }
+    
+    // Processar URLs dos vídeos - agora com suporte para URLs já construídas pelo backend
     const videosWithUrls = await Promise.all(moduleVideos.map(async video => {
-      if (video.video_url) {
-        return video; // Já tem URL
+      console.log(`🔍 Processando vídeo ${video.id}: ${video.title}`)
+      
+      // Primeiro: verificar se já tem video_url válida (vinda do backend)
+      if (video.video_url && video.video_url.trim()) {
+        console.log(`✅ Vídeo ${video.id} já tem URL do backend: ${video.video_url}`)
+        return video
       }
       
-      // Tentar buscar dados do arquivo usando o ID do vídeo
-      if (video.id) {
-        console.log(`🔍 Buscando dados do arquivo para vídeo ID: ${video.id}`);
-        const fileData = await fetchVideoFileData(video.id.toString());
-        
-        if (fileData) {
-          const cloudFrontUrl = buildVideoUrl(fileData.sha256hex, fileData.extension);
-          console.log(`🔗 URL construída para vídeo ${video.id}: ${cloudFrontUrl}`);
-          return { ...video, video_url: cloudFrontUrl };
+      // Segundo: tentar usar dados diretos do arquivo se disponíveis
+      if (video.file_sha256hex && video.file_extension) {
+        const cloudFrontUrl = buildVideoUrl(video.file_sha256hex, video.file_extension)
+        if (cloudFrontUrl) {
+          console.log(`🔗 URL construída com dados diretos para vídeo ${video.id}: ${cloudFrontUrl}`)
+          return { ...video, video_url: cloudFrontUrl }
         }
       }
       
-      // Fallback: usar dados diretos se disponíveis
-      if (video.file_sha256hex && video.file_extension) {
-        const cloudFrontUrl = buildVideoUrl(video.file_sha256hex, video.file_extension);
-        console.log(`🔗 URL construída (fallback) para vídeo ${video.id}: ${cloudFrontUrl}`);
-        return { ...video, video_url: cloudFrontUrl };
+      // Terceiro: fallback - buscar dados do arquivo usando a API
+      if (video.id) {
+        console.log(`🔍 Fallback: Buscando dados do arquivo via API para vídeo ID: ${video.id}`)
+        const fileData = await fetchVideoFileData(video.id.toString())
+        
+        if (fileData) {
+          const cloudFrontUrl = buildVideoUrl(fileData.sha256hex, fileData.extension)
+          if (cloudFrontUrl) {
+            console.log(`🔗 URL construída via API para vídeo ${video.id}: ${cloudFrontUrl}`)
+            return { ...video, video_url: cloudFrontUrl }
+          }
+        }
       }
       
-      return video;
-    }));
+      console.warn(`⚠️ Não foi possível obter URL para vídeo ${video.id}: ${video.title}`)
+      return video
+    }))
+    
+    const videosWithValidUrls = videosWithUrls.filter(v => v.video_url && v.video_url.trim())
     
     console.log('📊 Vídeos processados:', {
       total: videosWithUrls.length,
-      withUrls: videosWithUrls.filter(v => v.video_url).length,
-      withoutUrls: videosWithUrls.filter(v => !v.video_url).length
-    });
+      withUrls: videosWithValidUrls.length,
+      withoutUrls: videosWithUrls.length - videosWithValidUrls.length
+    })
     
-    if (selectedTvShow) {
-      console.log('✅ Abrindo player de sessão para show ID:', selectedTvShow.id)
-      setSelectedShowId(selectedTvShow.id)
-      setSessionVideos(videosWithUrls as TVShowVideo[])
-      setCurrentSessionVideo(0)
-      setShowSessionPlayer(true)
-    } else {
-      console.error('❌ Erro: selectedTvShow não está definido')
-      alert('Erro: Coleção não selecionada. Tente recarregar a página.')
+    if (videosWithValidUrls.length === 0) {
+      console.error('❌ Erro: Nenhum vídeo com URL válida encontrado')
+      alert('Erro: Nenhum vídeo disponível para reprodução. Verifique se os arquivos foram carregados corretamente.')
+      return
     }
+    
+    console.log('✅ Abrindo player universal para sessão')
+    
+    // Transformar vídeos para formato do UniversalVideoPlayer
+    const transformedVideos = videosWithValidUrls.map((video, index) => transformVideoForPlayer(video, index))
+    
+    console.log('🎯 Vídeos transformados:', transformedVideos.map(v => ({
+      id: v.id,
+      title: v.title,
+      url: v.url,
+      type: v.type,
+      hasUrl: !!v.url
+    })))
+    
+    // Extrair número da sessão
+    const sessionNumber = parseInt(moduleKey.split('_')[1]) || 1
+    
+    console.log('🎬 Configurando player para sessão:', {
+      collectionName: selectedTvShow.name,
+      sessionNumber,
+      videosCount: transformedVideos.length,
+      initialIndex: 0
+    })
+    
+    // Configurar player
+    setPlayerVideos(transformedVideos)
+    setPlayerCollectionName(selectedTvShow.name)
+    setPlayerSessionNumber(sessionNumber)
+    setPlayerInitialIndex(0)
+    setShowUniversalPlayer(true)
+    
+    console.log('🎬 Player configurado - showUniversalPlayer definido como true')
   }
 
-  // Função para abrir player de vídeo individual
+  // Função para abrir player de vídeo individual - MELHORADA
   const handleWatchVideo = async (video: any, videoTitle: string) => {
     console.log('🎥 Tentando abrir player individual:', {
       video,
       videoTitle,
       videoId: video.id,
-      titleValid: !!videoTitle
+      titleValid: !!videoTitle,
+      hasVideoUrl: !!video.video_url,
+      hasFileData: !!(video.file_sha256hex && video.file_extension)
     })
     
-    let videoUrl = video.video_url;
-    
-    // Se não tem video_url, buscar dados do arquivo usando o ID do vídeo
-    if (!videoUrl && video.id) {
-      console.log(`🔍 Buscando dados do arquivo para vídeo ID: ${video.id}`);
-      const fileData = await fetchVideoFileData(video.id.toString());
-      
-      if (fileData) {
-        videoUrl = buildVideoUrl(fileData.sha256hex, fileData.extension);
-        console.log('🔗 URL construída do CloudFront:', videoUrl);
-      }
+    // Verificar autenticação primeiro
+    if (!checkAuthentication()) {
+      return;
     }
     
-    // Fallback: se ainda não tem URL mas tem dados de arquivo diretos
-    if (!videoUrl && video.file_sha256hex && video.file_extension) {
-      videoUrl = buildVideoUrl(video.file_sha256hex, video.file_extension);
-      console.log('🔗 URL construída do CloudFront (fallback):', videoUrl);
-    }
-    
-    if (!videoUrl) {
-      console.error('❌ Erro: URL do vídeo não encontrada e não foi possível construir')
-      alert('Erro: URL do vídeo não disponível.')
+    if (!video || !video.id) {
+      console.error('❌ Erro: Dados do vídeo inválidos')
+      alert('Erro: Dados do vídeo inválidos.')
       return
     }
     
-    if (!videoTitle) {
-      console.error('⚠️ Aviso: Título do vídeo não fornecido')
+    let videoUrl = video.video_url && video.video_url.trim() ? video.video_url : null
+    
+    // Primeiro: verificar se já tem video_url válida (vinda do backend)
+    if (videoUrl) {
+      console.log('✅ Vídeo já tem URL do backend:', videoUrl)
+    }
+    // Segundo: tentar usar dados diretos do arquivo se disponíveis
+    else if (video.file_sha256hex && video.file_extension) {
+      videoUrl = buildVideoUrl(video.file_sha256hex, video.file_extension)
+      if (videoUrl) {
+        console.log('🔗 URL construída com dados diretos:', videoUrl)
+      }
+    }
+    // Terceiro: fallback - buscar dados do arquivo usando a API
+    else if (video.id) {
+      console.log(`🔍 Fallback: Buscando dados do arquivo via API para vídeo ID: ${video.id}`)
+      const fileData = await fetchVideoFileData(video.id.toString())
+      
+      if (fileData) {
+        videoUrl = buildVideoUrl(fileData.sha256hex, fileData.extension)
+        if (videoUrl) {
+          console.log('🔗 URL construída via API:', videoUrl)
+        }
+      }
+    }
+    
+    if (!videoUrl || !videoUrl.trim()) {
+      console.error('❌ Erro: URL do vídeo não encontrada e não foi possível construir')
+      alert('Erro: URL do vídeo não disponível. Verifique se o arquivo foi carregado corretamente.')
+      return
+    }
+    
+    if (!videoTitle || !videoTitle.trim()) {
+      console.warn('⚠️ Aviso: Título do vídeo não fornecido, usando título padrão')
+      videoTitle = video.title || 'Vídeo Individual'
     }
     
     console.log('✅ Abrindo player individual com URL:', videoUrl)
-    setSelectedVideoUrl(videoUrl)
-    setSelectedVideoTitle(videoTitle || 'Vídeo sem título')
+    
+    // Criar vídeo único para o player
+    const singleVideo = {
+      ...video,
+      video_url: videoUrl
+    }
+    
+    const transformedVideo = transformVideoForPlayer(singleVideo, 0)
+    
+    console.log('🎯 Vídeo transformado:', {
+      id: transformedVideo.id,
+      title: transformedVideo.title,
+      url: transformedVideo.url,
+      type: transformedVideo.type,
+      hasUrl: !!transformedVideo.url
+    })
+    
+    console.log('🎬 Configurando player para vídeo individual:', {
+      collectionName: videoTitle,
+      sessionNumber: undefined,
+      videosCount: 1,
+      initialIndex: 0
+    })
+    
+    // Configurar player para vídeo individual
+    setPlayerVideos([transformedVideo])
+    setPlayerCollectionName(videoTitle)
+    setPlayerSessionNumber(undefined)
+    setPlayerInitialIndex(0)
+    setShowUniversalPlayer(true)
+    
+    console.log('🎬 Player configurado para vídeo individual - showUniversalPlayer definido como true')
   }
 
-  // Função para fechar todos os players
+  // Função para fechar o player - SIMPLIFICADA
   const closeAllPlayers = () => {
-    console.log('🔒 Fechando todos os players')
-    setShowSessionPlayer(false)
-    setSelectedShowId(null)
-    setSessionVideos([])
-    setCurrentSessionVideo(0)
-    setSelectedVideoUrl(null)
-    setSelectedVideoTitle(null)
+    console.log('🔒 Fechando player universal')
+    console.log('🔒 Estado atual do player:', {
+      showUniversalPlayer,
+      playerVideos: playerVideos.length,
+      playerCollectionName
+    })
+    
+    setShowUniversalPlayer(false)
+    setPlayerVideos([])
+    setPlayerCollectionName('')
+    setPlayerSessionNumber(undefined)
+    setPlayerInitialIndex(0)
+    
+    console.log('🔒 Player fechado com sucesso')
   }
 
   const toggleDescriptionExpansion = (tvShowId: number) => {
@@ -571,7 +804,11 @@ export default function TVShowsManagePage() {
     return (
       <div className="max-w-7xl mx-auto p-4">
         <button 
-          onClick={() => setCurrentView('list')}
+          onClick={() => {
+            // Limpar estados do player ao voltar para a lista
+            closeAllPlayers()
+            setCurrentView('list')
+          }}
           className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
         >
           ← Voltar para Lista
@@ -979,6 +1216,28 @@ export default function TVShowsManagePage() {
             )}
           </div>
         </div>
+
+        {/* UniversalVideoPlayer Modal - Apenas na tela de vídeos */}
+        {showUniversalPlayer && playerVideos.length > 0 && (() => {
+          console.log('🎬 RENDERIZANDO UniversalVideoPlayer:', {
+            showUniversalPlayer,
+            playerVideosCount: playerVideos.length,
+            playerCollectionName,
+            playerSessionNumber,
+            playerInitialIndex
+          })
+          
+          return (
+            <UniversalVideoPlayer
+              videos={playerVideos}
+              initialVideoIndex={playerInitialIndex}
+              collectionName={playerCollectionName}
+              sessionNumber={playerSessionNumber}
+              onClose={closeAllPlayers}
+              autoplay={true}
+            />
+          )
+        })()}
       </div>
     )
   }
@@ -1484,252 +1743,6 @@ export default function TVShowsManagePage() {
         </div>
       )}
 
-      {/* Session Video Player Modal */}
-      {showSessionPlayer && selectedShowId && (
-        <div 
-          className="fixed inset-0 z-[99999] bg-black bg-opacity-95 flex items-center justify-center backdrop-blur-sm"
-          onClick={closeAllPlayers}
-        >
-          <div 
-            className="relative w-full h-full max-w-7xl mx-auto p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header com título e botão fechar */}
-            <div className="absolute top-0 left-0 right-0 z-[100000] bg-gradient-to-b from-black via-black/50 to-transparent p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                  <h3 className="text-white text-lg font-semibold">
-                    {selectedTvShow?.name || 'Player de Sessão'}
-                  </h3>
-                  <span className="text-gray-400 text-sm">• Sessão Completa</span>
-                </div>
-                <button
-                  onClick={closeAllPlayers}
-                  className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full transition-all duration-200 flex items-center justify-center group shadow-lg hover:shadow-xl"
-                  title="Fechar player (ESC)"
-                >
-                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-                         {/* Conteúdo do Player de Sessão */}
-             <div className="w-full h-full flex items-center justify-center pt-20 pb-20">
-               <div className="relative w-full h-full max-w-6xl">
-                 {sessionVideos.length > 0 && sessionVideos[currentSessionVideo] && (
-                   <div className="w-full h-full">
-                     {/* Player de vídeo */}
-                     <video
-                       key={sessionVideos[currentSessionVideo].video_url}
-                       className="w-full h-full object-contain rounded-lg shadow-2xl bg-black"
-                       controls
-                       autoPlay
-                       preload="metadata"
-                       src={sessionVideos[currentSessionVideo].video_url || ''}
-                       onEnded={() => {
-                         // Avançar para próximo vídeo automaticamente
-                         if (currentSessionVideo < sessionVideos.length - 1) {
-                           setCurrentSessionVideo(currentSessionVideo + 1);
-                         }
-                       }}
-                     >
-                       <source src={sessionVideos[currentSessionVideo].video_url || ''} type="video/mp4" />
-                       Seu navegador não suporta o elemento de vídeo.
-                     </video>
-                     
-                     {/* Controles de navegação da sessão */}
-                     <div className="absolute bottom-4 left-4 right-4 bg-black bg-opacity-70 rounded-lg p-4">
-                       <div className="flex items-center justify-between text-white">
-                         <div className="flex-1">
-                           <h4 className="font-semibold text-sm mb-1">
-                             {sessionVideos[currentSessionVideo].title}
-                           </h4>
-                           <p className="text-xs text-gray-300">
-                             Vídeo {currentSessionVideo + 1} de {sessionVideos.length}
-                           </p>
-                         </div>
-                         
-                         <div className="flex items-center gap-2 ml-4">
-                           <button
-                             onClick={() => setCurrentSessionVideo(Math.max(0, currentSessionVideo - 1))}
-                             disabled={currentSessionVideo === 0}
-                             className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:opacity-50 rounded-full transition-colors"
-                           >
-                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                             </svg>
-                           </button>
-                           
-                           <button
-                             onClick={() => setCurrentSessionVideo(Math.min(sessionVideos.length - 1, currentSessionVideo + 1))}
-                             disabled={currentSessionVideo === sessionVideos.length - 1}
-                             className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:opacity-50 rounded-full transition-colors"
-                           >
-                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                             </svg>
-                           </button>
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 )}
-               </div>
-             </div>
-
-            {/* Footer com controles */}
-            <div className="absolute bottom-0 left-0 right-0 z-[100000] bg-gradient-to-t from-black via-black/50 to-transparent p-6">
-              <div className="flex items-center justify-center gap-6">
-                <div className="flex items-center gap-2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full border border-white/20">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  <span className="text-sm font-medium">ESC para fechar</span>
-                </div>
-                <div className="flex items-center gap-2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full border border-white/20">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                  <span className="text-sm font-medium">Player de Sessão</span>
-                </div>
-                <div className="flex items-center gap-2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full border border-white/20">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm font-medium">Clique fora para fechar</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Individual Video Player - Melhorado */}
-      {selectedVideoUrl && selectedVideoTitle && (
-        <div 
-          className="fixed inset-0 z-[99999] bg-black bg-opacity-95 flex items-center justify-center backdrop-blur-sm"
-          onClick={closeAllPlayers}
-        >
-          <div 
-            className="relative w-full h-full max-w-7xl mx-auto p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header com título e botão fechar */}
-            <div className="absolute top-0 left-0 right-0 z-[100000] bg-gradient-to-b from-black via-black/50 to-transparent p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                  <h3 className="text-white text-lg font-semibold truncate max-w-md">{selectedVideoTitle}</h3>
-                  <span className="text-gray-400 text-sm">• Vídeo Individual</span>
-                </div>
-                <button
-                  onClick={closeAllPlayers}
-                  className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full transition-all duration-200 flex items-center justify-center group shadow-lg hover:shadow-xl"
-                  title="Fechar player (ESC)"
-                >
-                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Player de vídeo */}
-            <div className="w-full h-full flex items-center justify-center pt-20 pb-20">
-              <div className="relative w-full h-full max-w-6xl">
-                <video
-                  key={selectedVideoUrl}
-                  className="w-full h-full object-contain rounded-lg shadow-2xl bg-black"
-                  controls
-                  autoPlay
-                  preload="metadata"
-                  src={selectedVideoUrl}
-                  onError={(e) => {
-                    console.error('❌ Erro ao carregar vídeo:', {
-                      url: selectedVideoUrl,
-                      title: selectedVideoTitle,
-                      error: e
-                    });
-                    const loadingEl = document.getElementById('video-loading-individual');
-                    if (loadingEl) {
-                      loadingEl.innerHTML = `
-                        <div class="text-center">
-                          <div class="text-red-400 text-6xl mb-4">⚠️</div>
-                          <h3 class="text-white text-xl font-bold mb-2">Erro ao carregar vídeo</h3>
-                          <p class="text-gray-300 mb-4">Não foi possível reproduzir este vídeo.</p>
-                          <p class="text-gray-400 text-sm">URL: ${selectedVideoUrl}</p>
-                        </div>
-                      `;
-                    }
-                  }}
-                  onLoadStart={() => {
-                    console.log('🔄 Iniciando carregamento do vídeo:', selectedVideoUrl);
-                    const loadingEl = document.getElementById('video-loading-individual');
-                    if (loadingEl) loadingEl.style.display = 'flex';
-                  }}
-                  onCanPlay={() => {
-                    console.log('✅ Vídeo pronto para reprodução');
-                    const loadingEl = document.getElementById('video-loading-individual');
-                    if (loadingEl) loadingEl.style.display = 'none';
-                  }}
-                  onPlay={() => {
-                    console.log('▶️ Vídeo iniciou reprodução');
-                    const loadingEl = document.getElementById('video-loading-individual');
-                    if (loadingEl) loadingEl.style.display = 'none';
-                  }}
-                  onPause={() => {
-                    console.log('⏸️ Vídeo pausado');
-                  }}
-                  onEnded={() => {
-                    console.log('🏁 Vídeo terminou');
-                  }}
-                >
-                  <source src={selectedVideoUrl} type="video/mp4" />
-                  <source src={selectedVideoUrl} type="video/webm" />
-                  <source src={selectedVideoUrl} type="video/ogg" />
-                  Seu navegador não suporta o elemento de vídeo.
-                </video>
-                
-                {/* Loading overlay melhorado */}
-                <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center rounded-lg" id="video-loading-individual">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mx-auto mb-6"></div>
-                    <p className="text-white text-xl font-semibold mb-2">Carregando vídeo...</p>
-                    <p className="text-gray-300 text-sm">{selectedVideoTitle}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer com controles melhorado */}
-            <div className="absolute bottom-0 left-0 right-0 z-[100000] bg-gradient-to-t from-black via-black/50 to-transparent p-6">
-              <div className="flex items-center justify-center gap-6">
-                <div className="flex items-center gap-2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full border border-white/20">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  <span className="text-sm font-medium">ESC para fechar</span>
-                </div>
-                <div className="flex items-center gap-2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full border border-white/20">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  <span className="text-sm font-medium">Player de vídeo</span>
-                </div>
-                <div className="flex items-center gap-2 bg-black bg-opacity-60 text-white px-4 py-2 rounded-full border border-white/20">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm font-medium">Clique fora para fechar</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -20,7 +20,7 @@ export interface RegisterResponse {
 }
 
 export class AuthService {
-  private readonly baseEndpoint = '/api/auth';
+  private readonly baseEndpoint = '/auth';
 
   /**
    * Realiza login no sistema

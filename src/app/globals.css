@@ -5,6 +5,12 @@
 /* Importar correções específicas para mobile */
 @import '../styles/mobile-fixes.css';
 
+/* Importar estilos de modal responsivo */
+@import '../styles/modal-responsive.css';
+
+/* Importar estilos padronizados para cards */
+@import '../styles/cards-standard.css';
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {

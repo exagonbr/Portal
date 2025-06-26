@@ -23,10 +23,10 @@ class LoopPreventionSystem {
     consecutiveErrors: new Map()
   };
 
-  private readonly MAX_REQUESTS_PER_SECOND = 10;
-  private readonly MAX_REQUESTS_PER_MINUTE = 100;
-  private readonly BLOCK_DURATION_MS = 30000; // 30 segundos
-  private readonly ERROR_THRESHOLD = 5;
+  private readonly MAX_REQUESTS_PER_SECOND = 20;
+  private readonly MAX_REQUESTS_PER_MINUTE = 200;
+  private readonly BLOCK_DURATION_MS = 15000; // 15 segundos
+  private readonly ERROR_THRESHOLD = 8;
 
   constructor() {
     this.setupInterceptor();
@@ -44,6 +44,11 @@ class LoopPreventionSystem {
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       const url = this.getUrlString(input);
       const method = init?.method || 'GET';
+      
+      // Pular verificação para URLs administrativas
+      if (this.shouldIgnoreUrl(url)) {
+        return originalFetch(input, init);
+      }
       
       // Verificar se a URL está bloqueada
       if (this.isBlocked(url)) {
@@ -126,6 +131,11 @@ class LoopPreventionSystem {
    * Verifica se URL está bloqueada
    */
   private isBlocked(url: string): boolean {
+    // Nunca bloquear URLs administrativas
+    if (this.shouldIgnoreUrl(url)) {
+      return false;
+    }
+
     const blockedUntil = this.detector.blockedUntil.get(url);
     if (!blockedUntil) return false;
     
@@ -139,9 +149,31 @@ class LoopPreventionSystem {
   }
 
   /**
+   * Verifica se uma URL deve ser ignorada pelo sistema de prevenção
+   */
+  private shouldIgnoreUrl(url: string): boolean {
+    const ignorePatterns = [
+      '/api/cache/',
+      '/api/users/by-role',
+      '/api/roles',
+      '/api/admin/',
+      '/api/users/stats',
+      '/api/institutions',
+      '/api/users?', // Parâmetros de query para listagem de usuários
+    ];
+
+    return ignorePatterns.some(pattern => url.includes(pattern));
+  }
+
+  /**
    * Detecta padrões de loop
    */
   private detectLoop(url: string, method: string): boolean {
+    // Ignorar URLs administrativas
+    if (this.shouldIgnoreUrl(url)) {
+      return false;
+    }
+
     const now = Date.now();
     
     // Limpar requisições antigas (mais de 1 minuto)
@@ -312,6 +344,15 @@ class LoopPreventionSystem {
   }
 
   /**
+   * Limpa apenas os bloqueios sem afetar dados de autenticação
+   */
+  public clearBlocks(): void {
+    this.detector.blockedUntil.clear();
+    this.detector.consecutiveErrors.clear();
+    console.log('🔄 Bloqueios de URLs limpos');
+  }
+
+  /**
    * Obtém estatísticas do sistema
    */
   public getStats(): {
@@ -359,6 +400,15 @@ export function emergencyLoopReset(): void {
   setTimeout(() => {
     window.location.href = '/login?reset=true';
   }, 2000);
+}
+
+/**
+ * Limpa apenas bloqueios sem afetar autenticação
+ */
+export function clearLoopBlocks(): void {
+  if (loopPreventionInstance) {
+    loopPreventionInstance.clearBlocks();
+  }
 }
 
 // Auto-inicializar se estiver no navegador

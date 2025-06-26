@@ -36,7 +36,7 @@ export interface RoleListOptions {
 }
 
 export class RoleService {
-  private readonly baseEndpoint = '/api/roles';
+  private readonly baseEndpoint = '/roles';
   private readonly logger: Logger;
 
   constructor() {
@@ -330,14 +330,30 @@ export class RoleService {
     try {
       this.logger.debug('Buscando roles ativas...');
 
-      // Fazer chamada direta à API sem cache para debug
-      const response = await apiClient.get<any>(this.baseEndpoint, {
+      // Primeiro tentar com autenticação normal
+      let response = await apiClient.get<any>(this.baseEndpoint, {
         active: true,
         status: 'active',
         limit: 100,
         sortBy: 'name',
         sortOrder: 'asc'
+      }).catch(error => {
+        this.logger.warn('Falha na requisição autenticada, tentando acesso público...', error);
+        return null;
       });
+
+      // Se falhar, tentar acesso público
+      if (!response || !response.success) {
+        this.logger.debug('Tentando acesso público a roles...');
+        response = await apiClient.get<any>(this.baseEndpoint, {
+          public: 'true',
+          active: true,
+          status: 'active',
+          limit: 100,
+          sortBy: 'name',
+          sortOrder: 'asc'
+        });
+      }
 
       this.logger.debug('Resposta da API de roles:', {
         success: response.success,
@@ -624,23 +640,41 @@ export class RoleService {
   /**
    * Busca permissões de uma role
    */
-  async getPermissionsForRole(roleId: string): Promise<any[]> {
+  async getPermissionsForRole(roleId: string): Promise<any> {
     try {
       const cacheKey = CacheKeys.ROLE_PERMISSIONS(roleId);
       
       return await withCache(cacheKey, async () => {
-        const response = await apiClient.get<any[]>(`${this.baseEndpoint}/${roleId}/permissions`);
+        const response = await apiClient.get<ApiResponse<any>>(`${this.baseEndpoint}/${roleId}/permissions`);
         
         if (!response.success || !response.data) {
           this.logger.warn(`Permissões não encontradas para role ${roleId}`);
-          return [];
+          return {
+            roleId,
+            roleName: '',
+            permissionGroups: [],
+            totalPermissions: 0,
+            enabledPermissions: 0
+          };
         }
         
-        return response.data;
+        return response.data.data || {
+          roleId,
+          roleName: '',
+          permissionGroups: [],
+          totalPermissions: 0,
+          enabledPermissions: 0
+        };
       }, CacheTTL.MEDIUM);
     } catch (error) {
       this.logger.error(`Erro ao buscar permissões para role ${roleId}`, error);
-      return [];
+      return {
+        roleId,
+        roleName: '',
+        permissionGroups: [],
+        totalPermissions: 0,
+        enabledPermissions: 0
+      };
     }
   }
 

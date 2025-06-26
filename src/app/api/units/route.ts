@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { authOptions } from '@/config/auth'
 import { z } from 'zod'
 
 // Schema de validação para criação de unidade
@@ -35,102 +35,43 @@ const createUnitSchema = z.object({
   }).optional()
 })
 
-// Mock database - substituir por Prisma/banco real
-const mockUnits = new Map()
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001'
 
 // GET - Listar unidades
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Parâmetros de query
+    // Extrair parâmetros de busca
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const search = searchParams.get('search') || ''
-    const course_id = searchParams.get('course_id')
-    const is_active = searchParams.get('is_active')
-    const is_published = searchParams.get('is_published')
+    const queryString = searchParams.toString()
 
-    // Buscar unidades (substituir por query real)
-    let units = Array.from(mockUnits.values())
+    const response = await fetch(`${BACKEND_URL}/api/units${queryString ? `?${queryString}` : ''}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.accessToken}`,
+      },
+    })
 
-    // Aplicar filtros baseados no role do usuário
-    const userRole = session.user?.role
-    if (userRole === 'TEACHER') {
-      // Professor vê apenas unidades dos cursos que leciona
-      // Implementar lógica de verificação
-    } else if (userRole === 'STUDENT') {
-      // Aluno vê apenas unidades publicadas dos cursos matriculados
-      units = units.filter(unit => unit.is_published && unit.is_active)
-    }
-
-    // Aplicar filtros de busca
-    if (search) {
-      const searchLower = search.toLowerCase()
-      units = units.filter(unit => 
-        unit.name.toLowerCase().includes(searchLower) ||
-        (unit.description && unit.description.toLowerCase().includes(searchLower))
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return NextResponse.json(
+        { error: errorData.message || 'Failed to fetch units' },
+        { status: response.status }
       )
     }
 
-    if (course_id) {
-      units = units.filter(unit => unit.course_id === course_id)
-    }
-
-    if (is_active !== null) {
-      units = units.filter(unit => unit.is_active === (is_active === 'true'))
-    }
-
-    if (is_published !== null) {
-      units = units.filter(unit => unit.is_published === (is_published === 'true'))
-    }
-
-    // Ordenar por curso e ordem
-    units.sort((a, b) => {
-      if (a.course_id !== b.course_id) {
-        return a.course_id.localeCompare(b.course_id)
-      }
-      return a.order - b.order
-    })
-
-    // Paginação
-    const startIndex = (page - 1) * limit
-    const endIndex = page * limit
-    const paginatedUnits = units.slice(startIndex, endIndex)
-
-    // Adicionar informações extras
-    const unitsWithInfo = paginatedUnits.map(unit => ({
-      ...unit,
-      lessons_count: unit.lessons?.length || 0,
-      completed_by: unit.completed_by?.length || 0,
-      average_score: unit.average_score || 0
-    }))
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        items: unitsWithInfo,
-        pagination: {
-          page,
-          limit,
-          total: units.length,
-          totalPages: Math.ceil(units.length / limit)
-        }
-      }
-    })
-
+    const data = await response.json()
+    return NextResponse.json(data)
   } catch (error) {
-    console.error('Erro ao listar unidades:', error)
+    console.error('Error fetching units:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
@@ -141,79 +82,35 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    // Verificar permissões
-    const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar unidades' },
-        { status: 403 }
-      )
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
 
-    // Validar dados
-    const validationResult = createUnitSchema.safeParse(body)
-    if (!validationResult.success) {
+    const response = await fetch(`${BACKEND_URL}/api/units`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.accessToken}`,
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
       return NextResponse.json(
-        { 
-          error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
-        },
-        { status: 400 }
+        { error: errorData.message || 'Failed to create unit' },
+        { status: response.status }
       )
     }
 
-    const unitData = validationResult.data
-
-    // Verificar se a ordem já existe no curso
-    const existingOrder = Array.from(mockUnits.values()).find(
-      unit => unit.course_id === unitData.course_id && 
-              unit.order === unitData.order
-    )
-
-    if (existingOrder) {
-      return NextResponse.json(
-        { error: 'Já existe uma unidade com esta ordem neste curso' },
-        { status: 409 }
-      )
-    }
-
-    // Se for professor, verificar se tem permissão no curso
-    if (userRole === 'TEACHER') {
-      // Implementar verificação se o professor leciona no curso
-      // Por enquanto, permitir
-    }
-
-    // Criar unidade
-    const newUnit = {
-      id: `unit_${Date.now()}`,
-      ...unitData,
-      lessons: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      created_by: session.user?.id
-    }
-
-    mockUnits.set(newUnit.id, newUnit)
-
-    return NextResponse.json({
-      success: true,
-      data: newUnit,
-      message: 'Unidade criada com sucesso'
-    }, { status: 201 })
-
+    const data = await response.json()
+    return NextResponse.json(data)
   } catch (error) {
-    console.error('Erro ao criar unidade:', error)
+    console.error('Error creating unit:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

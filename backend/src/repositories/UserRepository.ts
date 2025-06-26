@@ -87,11 +87,11 @@ export class UserRepository extends BaseRepository<User> {
         `${this.tableName}.created_at`,
         `${this.tableName}.updated_at`,
         'roles.name as role_name',
-        'institution.name as institution_name',
+        'institutions.name as institution_name',
         'schools.name as school_name'
       )
       .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
-      .leftJoin('institution', `${this.tableName}.institution_id`, 'institution.id')
+      .leftJoin('institutions', `${this.tableName}.institution_id`, 'institutions.id')
       .leftJoin('schools', `${this.tableName}.school_id`, 'schools.id')
       .where(`${this.tableName}.is_active`, true);
   }
@@ -113,11 +113,11 @@ export class UserRepository extends BaseRepository<User> {
         `${this.tableName}.created_at`,
         `${this.tableName}.updated_at`,
         'roles.name as role_name',
-        'institution.name as institution_name',
+        'institutions.name as institution_name',
         'schools.name as school_name'
       )
       .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
-      .leftJoin('institution', `${this.tableName}.institution_id`, 'institution.id')
+      .leftJoin('institutions', `${this.tableName}.institution_id`, 'institutions.id')
       .leftJoin('schools', `${this.tableName}.school_id`, 'schools.id')
       .where(`${this.tableName}.id`, id)
       .first();

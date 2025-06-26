@@ -33,6 +33,16 @@ export default function UniversalVideoPlayer({
   onClose,
   autoplay = true
 }: UniversalVideoPlayerProps): JSX.Element | null {
+  console.log('🎬 UniversalVideoPlayer inicializado com:', {
+    videosCount: videos?.length || 0,
+    initialVideoIndex,
+    collectionName,
+    sessionNumber,
+    autoplay,
+    firstVideoUrl: videos?.[0]?.url,
+    firstVideoTitle: videos?.[0]?.title
+  })
+  
   const [currentVideoIndex, setCurrentVideoIndex] = useState(initialVideoIndex);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -49,6 +59,17 @@ export default function UniversalVideoPlayer({
   const controlsTimeoutRef = useRef<NodeJS.Timeout>();
 
   const currentVideo = videos[currentVideoIndex];
+  
+  console.log('🎯 Vídeo atual selecionado:', {
+    index: currentVideoIndex,
+    video: currentVideo ? {
+      id: currentVideo.id,
+      title: currentVideo.title,
+      url: currentVideo.url,
+      type: currentVideo.type,
+      hasUrl: !!currentVideo.url
+    } : null
+  })
 
   useEffect(() => {
     setMounted(true);
@@ -167,16 +188,34 @@ export default function UniversalVideoPlayer({
   const formatTime = formatVideoTime;
 
   const getVideoSource = (video: VideoSource) => {
+    console.log('🎯 getVideoSource chamado para:', {
+      id: video.id,
+      title: video.title,
+      url: video.url,
+      type: video.type,
+      hasUrl: !!video.url
+    })
+    
+    if (!video.url || !video.url.trim()) {
+      console.error('❌ URL do vídeo está vazia:', video)
+      return ''
+    }
+    
     switch (video.type) {
       case 'youtube':
         const youtubeId = extractYouTubeId(video.url);
-        return `https://www.youtube.com/embed/${youtubeId}?autoplay=${autoplay ? 1 : 0}&rel=0&modestbranding=1&playsinline=1`;
+        const youtubeUrl = `https://www.youtube.com/embed/${youtubeId}?autoplay=${autoplay ? 1 : 0}&rel=0&modestbranding=1&playsinline=1`;
+        console.log('🔗 URL YouTube gerada:', youtubeUrl)
+        return youtubeUrl;
       case 'vimeo':
         const vimeoId = extractVimeoId(video.url);
-        return `https://player.vimeo.com/video/${vimeoId}?autoplay=${autoplay ? 1 : 0}`;
+        const vimeoUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=${autoplay ? 1 : 0}`;
+        console.log('🔗 URL Vimeo gerada:', vimeoUrl)
+        return vimeoUrl;
       case 'mp4':
       case 'direct':
       default:
+        console.log('🔗 URL direta retornada:', video.url)
         return video.url;
     }
   };
@@ -226,8 +265,33 @@ export default function UniversalVideoPlayer({
     );
   };
 
-  if (!mounted || !currentVideo) {
+  if (!mounted) {
     return null;
+  }
+  
+  if (!currentVideo) {
+    console.error('❌ UniversalVideoPlayer: currentVideo não está definido')
+    return null;
+  }
+  
+  if (!currentVideo.url || !currentVideo.url.trim()) {
+    console.error('❌ UniversalVideoPlayer: URL do vídeo atual está vazia:', currentVideo)
+    return createPortal(
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black">
+        <div className="text-center text-white p-8">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-4">Erro no Vídeo</h2>
+          <p className="text-lg mb-6">URL do vídeo não está disponível.</p>
+          <button
+            onClick={onClose}
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
+          >
+            Fechar Player
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
   }
 
   return createPortal(

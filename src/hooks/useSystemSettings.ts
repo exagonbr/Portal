@@ -72,35 +72,6 @@ export interface FullSystemSettings {
   notifications_digest_frequency: 'realtime' | 'hourly' | 'daily' | 'weekly'
 }
 
-const defaultSettings: SystemSettings = {
-  platformName: 'Portal Educacional',
-  systemUrl: 'https://portal.educacional.com',
-  supportEmail: 'suporte@portal.educacional.com',
-  loginBackground: {
-    type: 'video',
-    value: '/back_video4.mp4',
-    opacity: 100,
-    overlay: false
-  },
-  maintenanceMode: {
-    enabled: false,
-    message: 'Sistema em manutenção. Voltaremos em breve.'
-  },
-  security: {
-    minPasswordLength: 8,
-    requireSpecialChars: true,
-    requireNumbers: true,
-    twoFactorAuth: 'optional',
-    sessionTimeout: 30
-  },
-  email: {
-    smtpServer: '',
-    port: 587,
-    encryption: 'tls',
-    fromEmail: ''
-  }
-}
-
 const defaultFullSettings: FullSystemSettings = {
   // Configurações gerais
   site_name: 'Portal Educacional',
@@ -148,22 +119,60 @@ export function useSystemSettings() {
   const [error, setError] = useState<string | null>(null)
   const [availableVideos, setAvailableVideos] = useState<string[]>([])
 
-  useEffect(() => {
-    // Carregar configurações do localStorage
-    const savedSettings = localStorage.getItem('systemSettings')
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings)
-        setSettings({ ...defaultFullSettings, ...parsed })
-      } catch (error) {
-        console.error('Erro ao carregar configurações do sistema:', error)
-        setError('Erro ao carregar configurações')
-      }
-    }
+  // Carregar configurações da API
+  const loadSettings = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-    // Carregar lista de vídeos disponíveis
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/settings', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro ao carregar configurações: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        setSettings({ ...defaultFullSettings, ...data.data })
+        
+        // Se é fallback, salvar no localStorage
+        if (data.fallback) {
+          localStorage.setItem('systemSettings', JSON.stringify(data.data))
+        }
+      } else {
+        throw new Error(data.error || 'Erro ao carregar configurações')
+      }
+    } catch (err) {
+      console.error('Erro ao carregar configurações:', err)
+      setError(err instanceof Error ? err.message : 'Erro desconhecido')
+      
+      // Fallback para localStorage
+      const savedSettings = localStorage.getItem('systemSettings')
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings)
+          setSettings({ ...defaultFullSettings, ...parsed })
+        } catch (parseError) {
+          console.error('Erro ao carregar configurações do localStorage:', parseError)
+          setSettings(defaultFullSettings)
+        }
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadSettings()
     loadAvailableVideos()
-    setLoading(false)
   }, [])
 
   const loadAvailableVideos = async () => {
@@ -185,6 +194,8 @@ export function useSystemSettings() {
   const updateSettings = (newSettings: Partial<FullSystemSettings>) => {
     const updatedSettings = { ...settings, ...newSettings }
     setSettings(updatedSettings)
+    
+    // Salvar no localStorage como backup
     localStorage.setItem('systemSettings', JSON.stringify(updatedSettings))
   }
 
@@ -207,16 +218,34 @@ export function useSystemSettings() {
     setError(null)
     
     try {
-      // Simular salvamento no servidor
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newSettings)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro ao salvar configurações: ${response.status}`)
+      }
+
+      const data = await response.json()
       
-      updateSettings(newSettings)
-      setSaving(false)
-      return true
+      if (data.success) {
+        updateSettings(newSettings)
+        return true
+      } else {
+        throw new Error(data.error || 'Erro ao salvar configurações')
+      }
     } catch (err) {
-      setError('Erro ao salvar configurações')
-      setSaving(false)
+      console.error('Erro ao salvar configurações:', err)
+      setError(err instanceof Error ? err.message : 'Erro desconhecido')
       return false
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -230,28 +259,27 @@ export function useSystemSettings() {
     buckets?: string[]
   }> => {
     try {
-      // Simular teste de conexão AWS
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Em produção, isso faria uma chamada real para a API AWS
-      // Por enquanto, vamos simular uma resposta de sucesso
-      if (credentials.accessKeyId && credentials.secretAccessKey) {
-        return {
-          success: true,
-          message: 'Conexão com AWS estabelecida com sucesso!',
-          buckets: [
-            'portal-educacional-main',
-            'portal-educacional-backup',
-            'portal-educacional-media'
-          ]
-        }
-      } else {
-        return {
-          success: false,
-          message: 'Credenciais AWS inválidas'
-        }
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'test-aws',
+          ...credentials
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro ao testar conexão AWS: ${response.status}`)
       }
+
+      const data = await response.json()
+      return data
     } catch (error) {
+      console.error('Erro ao testar conexão AWS:', error)
       return {
         success: false,
         message: 'Erro ao testar conexão com AWS'
@@ -271,22 +299,27 @@ export function useSystemSettings() {
     message: string
   }> => {
     try {
-      // Simular teste de conexão de email
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // Em produção, isso faria uma chamada real para testar SMTP
-      if (emailConfig.host && emailConfig.user && emailConfig.password) {
-        return {
-          success: true,
-          message: 'Email de teste enviado com sucesso!'
-        }
-      } else {
-        return {
-          success: false,
-          message: 'Configurações de email incompletas'
-        }
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'test-email',
+          ...emailConfig
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro ao testar email: ${response.status}`)
       }
+
+      const data = await response.json()
+      return data
     } catch (error) {
+      console.error('Erro ao testar email:', error)
       return {
         success: false,
         message: 'Erro ao testar conexão de email'
@@ -294,9 +327,43 @@ export function useSystemSettings() {
     }
   }
 
-  const resetSettings = () => {
-    setSettings(defaultFullSettings)
-    localStorage.removeItem('systemSettings')
+  const resetSettings = async () => {
+    try {
+      setSaving(true)
+      setError(null)
+
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'reset'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro ao resetar configurações: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setSettings(defaultFullSettings)
+        localStorage.removeItem('systemSettings')
+        return true
+      } else {
+        throw new Error(data.error || 'Erro ao resetar configurações')
+      }
+    } catch (err) {
+      console.error('Erro ao resetar configurações:', err)
+      setError(err instanceof Error ? err.message : 'Erro desconhecido')
+      return false
+    } finally {
+      setSaving(false)
+    }
   }
 
   const getRandomVideo = () => {
@@ -316,6 +383,7 @@ export function useSystemSettings() {
     updateSettings,
     updateLoginBackground,
     resetSettings,
+    loadSettings,
     isLoading: loading, // Compatibilidade
     availableVideos,
     getRandomVideo

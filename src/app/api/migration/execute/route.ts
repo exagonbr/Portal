@@ -199,7 +199,7 @@ async function processTable(
     const firstRow = dataResult[0]
     Object.keys(firstRow).forEach(key => {
       const value = firstRow[key]
-      const column = columnsResult.find(col => col.Field === key)
+      const column = columnsResult.find((col: any) => col.Field === key)
       if (column && column.Type.toLowerCase().includes('bit')) {
         console.log(`  Campo ${key}: valor=${JSON.stringify(value)}, tipo=${typeof value}, tipoColuna=${column.Type}`)
       }
@@ -454,7 +454,7 @@ async function insertBatch(
         const result = await pgClient.query(singleSQL, singleValues)
         inserted += result.rowCount || 0
       } catch (singleError) {
-        console.error(`🔍 DEBUG ERRO INDIVIDUAL:`, singleError.message)
+        console.error(`🔍 DEBUG ERRO INDIVIDUAL:`, singleError instanceof Error ? singleError.message : String(singleError))
         // Ignorar erros individuais se preserveData estiver ativo
         if (!preserveData) {
           console.error(`Erro ao inserir registro individual:`, singleError)

@@ -1,19 +1,10 @@
 import { Router, Request, Response } from 'express';
-import db from '../config/database';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3';
 import nodemailer from 'nodemailer';
+import SystemSettingsService from '../services/SystemSettingsService';
 
 const router = Router();
-
-// Interface para configurações
-interface SystemSetting {
-  id: string;
-  key: string;
-  value: any;
-  category: string;
-  description?: string;
-}
 
 // GET - Buscar todas as configurações
 router.get('/settings', authMiddleware, async (req: Request, res: Response) => {
@@ -23,27 +14,42 @@ router.get('/settings', authMiddleware, async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Acesso negado' });
     }
 
-    const settings = await db<SystemSetting>('system_settings')
-      .select('*')
-      .orderBy(['category', 'key']);
+    const settings = await SystemSettingsService.getFormattedSettings();
 
-    // Organizar por categoria
-    const settingsByCategory = settings.reduce((acc, setting) => {
-      if (!acc[setting.category]) {
-        acc[setting.category] = {};
-      }
-      acc[setting.category][setting.key] = {
-        value: setting.value,
-        description: setting.description,
-        id: setting.id
-      };
-      return acc;
-    }, {} as Record<string, any>);
-
-    return res.json(settingsByCategory);
+    return res.json({
+      success: true,
+      data: settings
+    });
   } catch (error) {
     console.error('Erro ao buscar configurações:', error);
-    return res.status(500).json({ error: 'Erro ao buscar configurações' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Erro ao buscar configurações' 
+    });
+  }
+});
+
+// GET - Buscar configurações por categoria
+router.get('/settings/:category', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    // Verificar se é admin
+    if (req.user?.role !== 'SYSTEM_ADMIN') {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    const { category } = req.params;
+    const settings = await SystemSettingsService.getSettingsByCategory(category, true);
+
+    return res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    console.error('Erro ao buscar configurações por categoria:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: `Erro ao buscar configurações da categoria ${req.params.category}` 
+    });
   }
 });
 
@@ -57,22 +63,41 @@ router.put('/settings', authMiddleware, async (req: Request, res: Response) => {
 
     const updates = req.body;
 
-    // Atualizar cada configuração
-    const updatePromises = Object.entries(updates).map(([key, value]) =>
-      db('system_settings')
-        .where({ key })
-        .update({ 
-          value: JSON.stringify(value),
-          updated_at: new Date()
-        })
-    );
+    await SystemSettingsService.updateSettings(updates);
 
-    await Promise.all(updatePromises);
-
-    return res.json({ success: true });
+    return res.json({ 
+      success: true,
+      message: 'Configurações atualizadas com sucesso'
+    });
   } catch (error) {
     console.error('Erro ao atualizar configurações:', error);
-    return res.status(500).json({ error: 'Erro ao atualizar configurações' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Erro ao atualizar configurações' 
+    });
+  }
+});
+
+// POST - Resetar configurações para padrão
+router.post('/settings/reset', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    // Verificar se é admin
+    if (req.user?.role !== 'SYSTEM_ADMIN') {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    await SystemSettingsService.resetToDefaults();
+
+    return res.json({ 
+      success: true,
+      message: 'Configurações resetadas para padrão com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao resetar configurações:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: 'Erro ao resetar configurações' 
+    });
   }
 });
 
@@ -87,7 +112,10 @@ router.post('/settings/test-aws', authMiddleware, async (req: Request, res: Resp
     const { accessKeyId, secretAccessKey, region } = req.body;
 
     if (!accessKeyId || !secretAccessKey || !region) {
-      return res.status(400).json({ error: 'Credenciais AWS incompletas' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Credenciais AWS incompletas' 
+      });
     }
 
     // Configurar cliente S3
@@ -120,7 +148,10 @@ router.post('/settings/test-aws', authMiddleware, async (req: Request, res: Resp
     }
   } catch (error) {
     console.error('Erro ao testar conexão AWS:', error);
-    return res.status(500).json({ error: 'Erro ao testar conexão AWS' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Erro ao testar conexão AWS' 
+    });
   }
 });
 
@@ -135,11 +166,14 @@ router.post('/settings/test-email', authMiddleware, async (req: Request, res: Re
     const { host, port, user, password, secure, fromAddress } = req.body;
 
     if (!host || !port || !user || !password) {
-      return res.status(400).json({ error: 'Configurações de email incompletas' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Configurações de email incompletas' 
+      });
     }
 
     // Criar transporter
-    const transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransporter({
       host,
       port: parseInt(port),
       secure: secure || port === 465,
@@ -180,7 +214,28 @@ router.post('/settings/test-email', authMiddleware, async (req: Request, res: Re
     }
   } catch (error) {
     console.error('Erro ao testar email:', error);
-    return res.status(500).json({ error: 'Erro ao testar configuração de email' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Erro ao testar configuração de email' 
+    });
+  }
+});
+
+// GET - Buscar configurações públicas (para uso geral do sistema)
+router.get('/settings/public', async (req: Request, res: Response) => {
+  try {
+    const settings = await SystemSettingsService.getAllSettings(false); // Apenas públicas
+
+    return res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    console.error('Erro ao buscar configurações públicas:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: 'Erro ao buscar configurações públicas' 
+    });
   }
 });
 

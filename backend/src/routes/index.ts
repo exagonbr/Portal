@@ -8,6 +8,7 @@ import db from '../config/database';
 import pushSubscriptionRoutes from './pushSubscription';
 import notificationsRoutes from './notifications';
 import institutionsPublicRouter from './institutions.public';
+import institutionsRouter from './institutions';
 import usersRouter from './users';
 import coursesRouter from './courses';
 import modulesRouter from './modules';
@@ -35,6 +36,7 @@ import cacheRouter from './cache';
 import teachersRouter from './teachers';
 import studentsRouter from './students';
 import schoolsRouter from './schools.routes';
+import unitsRouter from './units';
 
 const router = express.Router();
 
@@ -70,7 +72,8 @@ router.get('/docs.json', (req, res) => {
 // API Routes
 router.use('/push-subscriptions', pushSubscriptionRoutes);
 router.use('/notifications', notificationsRoutes);
-router.use('/institutions', institutionsPublicRouter);
+router.use('/institutions', institutionsRouter); // Rotas administrativas (com autenticação)
+router.use('/institutions-public', institutionsPublicRouter); // Rotas públicas
 router.use('/users', usersRouter);
 router.use('/courses', coursesRouter);
 router.use('/modules', modulesRouter);
@@ -99,5 +102,6 @@ router.use('/cache', cacheRouter);
 router.use('/teachers', teachersRouter);
 router.use('/students', studentsRouter);
 router.use('/schools', schoolsRouter);
+router.use('/units', unitsRouter);
 
 export default router;

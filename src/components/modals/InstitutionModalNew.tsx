@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Building2, Mail, Phone, MapPin, Calendar, Users, School, CheckCircle, XCircle, Save, Eye, Edit3 } from 'lucide-react'
-import { InstitutionResponseDto } from '@/types/api'
+import { X, Building2, Mail, Phone, MapPin, Calendar, Users, School, CheckCircle, XCircle, Save, Eye, Edit3, AlertCircle } from 'lucide-react'
+import { InstitutionDto } from '@/types/institution'
 
 interface InstitutionModalProps {
   isOpen: boolean
   onClose: () => void
   onSave?: (data: any) => Promise<void>
-  institution?: InstitutionResponseDto | null
+  institution?: InstitutionDto | null
   mode: 'view' | 'create' | 'edit'
 }
 
@@ -16,80 +16,71 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
   const [formData, setFormData] = useState({
     name: '',
     code: '',
-    cnpj: '',
     description: '',
     email: '',
     phone: '',
     address: '',
+    city: '',
+    state: '',
+    zip_code: '',
     website: '',
-    type: 'PUBLIC' as 'PUBLIC' | 'PRIVATE' | 'MIXED',
-    active: true
+    logo_url: '',
+    type: 'SCHOOL' as 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER' | 'PUBLIC' | 'PRIVATE' | 'MIXED',
+    is_active: true
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (institution && (mode === 'edit' || mode === 'view')) {
-      // Função para extrair endereço como string
-      const getAddressString = (address: any) => {
-        if (typeof address === 'string') {
-          return address
-        }
-        if (typeof address === 'object' && address) {
-          const parts = []
-          if (address.street) parts.push(address.street)
-          if (address.number) parts.push(address.number)
-          if (address.complement) parts.push(address.complement)
-          if (address.neighborhood) parts.push(address.neighborhood)
-          if (address.city) parts.push(address.city)
-          if (address.state) parts.push(address.state)
-          if (address.zipCode) parts.push(`CEP: ${address.zipCode}`)
-          return parts.join(', ')
-        }
-        return ''
-      }
-
       setFormData({
         name: institution.name || '',
         code: institution.code || '',
-        cnpj: institution.cnpj || '',
         description: institution.description || '',
         email: institution.email || '',
         phone: institution.phone || '',
-        address: getAddressString(institution.address) || '',
+        address: institution.address || '',
+        city: institution.city || '',
+        state: institution.state || '',
+        zip_code: institution.zip_code || '',
         website: institution.website || '',
-        type: institution.type || 'PUBLIC',
-        active: institution.active ?? true
+        logo_url: institution.logo_url || '',
+        type: institution.type || 'SCHOOL',
+        is_active: institution.is_active ?? true
       })
     } else if (mode === 'create') {
       setFormData({
         name: '',
         code: '',
-        cnpj: '',
         description: '',
         email: '',
         phone: '',
         address: '',
+        city: '',
+        state: '',
+        zip_code: '',
         website: '',
-        type: 'PUBLIC',
-        active: true
+        logo_url: '',
+        type: 'SCHOOL',
+        is_active: true
       })
     }
-  }, [institution, mode])
+    setErrors({}) // Limpar erros ao abrir modal
+  }, [institution, mode, isOpen])
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
     if (!formData.name.trim()) {
       newErrors.name = 'Nome é obrigatório'
+    } else if (formData.name.length < 3) {
+      newErrors.name = 'Nome deve ter pelo menos 3 caracteres'
     }
 
-    if (!formData.code.trim() && !formData.cnpj.trim()) {
-      newErrors.code = 'Código ou CNPJ é obrigatório'
-    }
-
-    if (formData.cnpj && !/^\d{14}$/.test(formData.cnpj.replace(/\D/g, ''))) {
-      newErrors.cnpj = 'CNPJ deve ter 14 dígitos'
+    if (!formData.code.trim()) {
+      newErrors.code = 'Código é obrigatório'
+    } else if (formData.code.length < 2) {
+      newErrors.code = 'Código deve ter pelo menos 2 caracteres'
     }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -103,8 +94,16 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
       }
     }
 
-    if (formData.website && !/^https?:\/\/.+\..+/.test(formData.website)) {
-      newErrors.website = 'Website deve ser uma URL válida (https://exemplo.com)'
+    if (formData.website && formData.website.trim()) {
+      if (!/^https?:\/\/.+\..+/.test(formData.website)) {
+        newErrors.website = 'Website deve ser uma URL válida (https://exemplo.com)'
+      }
+    }
+
+    if (formData.zip_code && formData.zip_code.trim()) {
+      if (!/^\d{5}-?\d{3}$/.test(formData.zip_code)) {
+        newErrors.zip_code = 'CEP deve estar no formato 00000-000'
+      }
     }
 
     setErrors(newErrors)
@@ -133,26 +132,6 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
     }
   }
 
-  const formatCNPJ = (value: string) => {
-    // Remove todos os caracteres não numéricos
-    const numericValue = value.replace(/\D/g, '')
-    
-    // Aplica a máscara do CNPJ
-    if (numericValue.length <= 14) {
-      return numericValue
-        .replace(/(\d{2})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1/$2')
-        .replace(/(\d{4})(\d)/, '$1-$2')
-    }
-    
-    return numericValue.slice(0, 14)
-      .replace(/(\d{2})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1/$2')
-      .replace(/(\d{4})(\d)/, '$1-$2')
-  }
-
   const handleInputChange = (field: string, value: string | boolean) => {
     if (field === 'phone' && typeof value === 'string') {
       // Formatação automática do telefone
@@ -171,11 +150,16 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
         ...prev,
         [field]: formattedPhone
       }));
-    } else if (field === 'cnpj' && typeof value === 'string') {
-      const formattedCNPJ = formatCNPJ(value);
+    } else if (field === 'zip_code' && typeof value === 'string') {
+      // Formatação automática do CEP
+      let formattedZip = value.replace(/\D/g, '');
+      if (formattedZip.length <= 8) {
+        formattedZip = formattedZip.replace(/(\d{5})(\d)/, '$1-$2');
+      }
+      
       setFormData(prev => ({
         ...prev,
-        [field]: formattedCNPJ
+        [field]: formattedZip
       }));
     } else {
       setFormData(prev => ({
@@ -213,10 +197,32 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
 
   const getModalColor = () => {
     switch (mode) {
-      case 'view': return 'from-blue-500 to-blue-600'
-      case 'create': return 'from-green-500 to-green-600'
-      case 'edit': return 'from-orange-500 to-orange-600'
-      default: return 'from-blue-500 to-blue-600'
+      case 'view': return 'text-blue-600'
+      case 'create': return 'text-green-600'
+      case 'edit': return 'text-orange-600'
+      default: return 'text-blue-600'
+    }
+  }
+
+  const getModalGradient = () => {
+    switch (mode) {
+      case 'view': return 'from-blue-50 to-blue-100 border-blue-200'
+      case 'create': return 'from-green-50 to-green-100 border-green-200'
+      case 'edit': return 'from-orange-50 to-orange-100 border-orange-200'
+      default: return 'from-blue-50 to-blue-100 border-blue-200'
+    }
+  }
+
+  const getInstitutionTypeLabel = (type: string) => {
+    switch (type) {
+      case 'SCHOOL': return 'Escola'
+      case 'COLLEGE': return 'Faculdade'
+      case 'UNIVERSITY': return 'Universidade'
+      case 'TECH_CENTER': return 'Centro Técnico'
+      case 'PUBLIC': return 'Pública'
+      case 'PRIVATE': return 'Privada'
+      case 'MIXED': return 'Mista'
+      default: return type
     }
   }
 
@@ -225,383 +231,441 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
   const ModalIcon = getModalIcon()
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-1 sm:p-2 md:p-4 overflow-hidden">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-6xl h-full max-h-[98vh] sm:max-h-[95vh] flex flex-col animate-in fade-in-0 zoom-in-95 duration-200">
         {/* Header */}
-        <div className={`bg-gradient-to-r ${getModalColor()} text-white p-6`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="bg-white/20 rounded-xl p-3">
-                <ModalIcon className="w-8 h-8" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">{getModalTitle()}</h2>
-                <p className="text-white/80">
-                  {mode === 'view' && institution ? `Código: ${institution.code}` : 
-                   mode === 'create' ? 'Criar nova instituição no sistema' :
-                   mode === 'edit' && institution ? `Editando: ${institution.name}` : ''}
-                </p>
-              </div>
+        <div className={`flex items-center justify-between p-3 sm:p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r ${getModalGradient()} flex-shrink-0`}>
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            <div className={`p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white shadow-lg border-2 ${mode === 'view' ? 'border-blue-200' : mode === 'create' ? 'border-green-200' : 'border-orange-200'} flex-shrink-0`}>
+              <ModalIcon className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 ${getModalColor()}`} />
             </div>
-            <button
-              onClick={onClose}
-              className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-2 transition-all"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 truncate">{getModalTitle()}</h2>
+              <p className="text-xs sm:text-sm text-gray-600 hidden md:block">
+                {mode === 'view' ? 'Visualize os detalhes da instituição' :
+                 mode === 'create' ? 'Preencha os dados da nova instituição' :
+                 'Edite os dados da instituição'}
+              </p>
+            </div>
           </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 ml-2"
+            aria-label="Fechar modal"
+          >
+            <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+          </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          {mode === 'view' && institution ? (
-            // View Mode
-            <div className="space-y-6">
-              {/* Institution Info Card */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-blue-900 flex items-center">
-                    <Building2 className="w-5 h-5 mr-2" />
-                    Informações Básicas
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <form onSubmit={handleSubmit} className="p-3 sm:p-4 md:p-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+              {/* Informações Básicas */}
+              <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                <div className="bg-blue-50 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-blue-200">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-blue-900 mb-2.5 sm:mb-3 md:mb-4 flex items-center">
+                    <Building2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <span className="truncate">Informações Básicas</span>
                   </h3>
-                  <div className="flex items-center">
-                    {institution.active ? (
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle className="w-5 h-5 mr-1" />
-                        <span className="text-sm font-medium">Ativa</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-red-600">
-                        <XCircle className="w-5 h-5 mr-1" />
-                        <span className="text-sm font-medium">Inativa</span>
-                      </div>
-                    )}
+                  
+                  <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
+                    {/* Nome */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Nome da Instituição *
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 text-sm sm:text-base">
+                          {formData.name || 'Não informado'}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={formData.name}
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          className={`w-full p-2.5 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                            errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
+                          placeholder="Ex: Universidade Federal de São Paulo"
+                        />
+                      )}
+                      {errors.name && (
+                        <div className="flex items-center mt-1 text-red-500 text-xs sm:text-sm">
+                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+                          <span className="break-words">{errors.name}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Código */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Código da Instituição *
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 font-mono text-sm sm:text-base">
+                          {formData.code || 'Não informado'}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={formData.code}
+                          onChange={(e) => handleInputChange('code', e.target.value.toUpperCase())}
+                          className={`w-full p-2.5 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono transition-all text-sm sm:text-base ${
+                            errors.code ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
+                          placeholder="Ex: UNIFESP"
+                        />
+                      )}
+                      {errors.code && (
+                        <div className="flex items-center mt-1 text-red-500 text-xs sm:text-sm">
+                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+                          <span className="break-words">{errors.code}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tipo */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Tipo de Instituição
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 text-sm sm:text-base">
+                          {getInstitutionTypeLabel(formData.type)}
+                        </div>
+                      ) : (
+                        <select
+                          value={formData.type}
+                          onChange={(e) => handleInputChange('type', e.target.value)}
+                          className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                        >
+                          <option value="SCHOOL">Escola</option>
+                          <option value="COLLEGE">Faculdade</option>
+                          <option value="UNIVERSITY">Universidade</option>
+                          <option value="TECH_CENTER">Centro Técnico</option>
+                          <option value="PUBLIC">Pública</option>
+                          <option value="PRIVATE">Privada</option>
+                          <option value="MIXED">Mista</option>
+                        </select>
+                      )}
+                    </div>
+
+                    {/* Descrição */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Descrição
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 min-h-[60px] sm:min-h-[80px] text-sm sm:text-base">
+                          {formData.description || 'Não informado'}
+                        </div>
+                      ) : (
+                        <textarea
+                          value={formData.description}
+                          onChange={(e) => handleInputChange('description', e.target.value)}
+                          rows={2}
+                          className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm sm:text-base"
+                          placeholder="Descreva a instituição..."
+                        />
+                      )}
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Status
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="flex items-center space-x-2">
+                          {formData.is_active ? (
+                            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+                          )}
+                          <span className={`font-medium text-sm sm:text-base ${formData.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                            {formData.is_active ? 'Ativa' : 'Inativa'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-3">
+                          <label className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.is_active}
+                              onChange={(e) => handleInputChange('is_active', e.target.checked)}
+                              className="sr-only"
+                            />
+                            <div className={`relative w-10 h-5 sm:w-12 sm:h-6 rounded-full transition-colors ${
+                              formData.is_active ? 'bg-green-500' : 'bg-gray-300'
+                            }`}>
+                              <div className={`absolute top-0.5 left-0.5 sm:top-1 sm:left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                                formData.is_active ? 'translate-x-5 sm:translate-x-6' : 'translate-x-0'
+                              }`} />
+                            </div>
+                            <span className="ml-3 text-xs sm:text-sm font-medium text-gray-700">
+                              {formData.is_active ? 'Ativa' : 'Inativa'}
+                            </span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-blue-700">Nome</label>
-                    <p className="text-blue-900 font-semibold">{institution.name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-blue-700">Tipo</label>
-                    <p className="text-blue-900 font-semibold">
-                      {institution.type === 'PUBLIC' ? 'Pública' : 
-                       institution.type === 'PRIVATE' ? 'Privada' : 
-                       institution.type === 'MIXED' ? 'Mista' : 'Não informado'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-blue-700">Código</label>
-                    <p className="text-blue-900 font-semibold">{institution.code || 'Não informado'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-blue-700">CNPJ</label>
-                    <p className="text-blue-900 font-semibold font-mono">{institution.cnpj || 'Não informado'}</p>
-                  </div>
-                </div>
-                {institution.description && (
-                  <div className="mt-4">
-                    <label className="text-sm font-medium text-blue-700">Descrição</label>
-                    <p className="text-blue-900">{institution.description}</p>
-                  </div>
-                )}
               </div>
 
-              {/* Contact Info */}
-              {(institution.email || institution.phone || institution.address || institution.website) && (
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-                  <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
-                    <Mail className="w-5 h-5 mr-2" />
-                    Informações de Contato
+              {/* Contato e Localização */}
+              <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                <div className="bg-green-50 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl border border-green-200">
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-green-900 mb-2.5 sm:mb-3 md:mb-4 flex items-center">
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <span className="truncate">Contato e Localização</span>
                   </h3>
-                  <div className="space-y-3">
-                    {institution.email && (
-                      <div className="flex items-center">
-                        <Mail className="w-4 h-4 text-green-600 mr-3" />
-                        <span className="text-green-900">{institution.email}</span>
-                      </div>
-                    )}
-                    {institution.phone && (
-                      <div className="flex items-center">
-                        <Phone className="w-4 h-4 text-green-600 mr-3" />
-                        <span className="text-green-900">{institution.phone}</span>
-                      </div>
-                    )}
-                    {institution.website && (
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                        </svg>
-                        <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-green-900 hover:text-green-700 underline">
-                          {institution.website}
-                        </a>
-                      </div>
-                    )}
-                    {institution.address && (
-                      <div className="flex items-center">
-                        <MapPin className="w-4 h-4 text-green-600 mr-3" />
-                        <span className="text-green-900">{institution.address}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+                  
+                  <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
+                    {/* Email */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Email
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 break-all text-sm sm:text-base">
+                          {formData.email || 'Não informado'}
+                        </div>
+                      ) : (
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          className={`w-full p-2.5 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                            errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
+                          placeholder="contato@instituicao.edu.br"
+                        />
+                      )}
+                      {errors.email && (
+                        <div className="flex items-center mt-1 text-red-500 text-xs sm:text-sm">
+                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+                          <span className="break-words">{errors.email}</span>
+                        </div>
+                      )}
+                    </div>
 
-              {/* Statistics */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-                <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  Estatísticas
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <School className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-purple-900">{institution.schools_count || 0}</p>
-                      <p className="text-sm text-purple-600">Escolas</p>
+                    {/* Telefone */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Telefone
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 text-sm sm:text-base">
+                          {formData.phone || 'Não informado'}
+                        </div>
+                      ) : (
+                        <input
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => handleInputChange('phone', e.target.value)}
+                          className={`w-full p-2.5 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                            errors.phone ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
+                          placeholder="(11) 99999-9999"
+                        />
+                      )}
+                      {errors.phone && (
+                        <div className="flex items-center mt-1 text-red-500 text-xs sm:text-sm">
+                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+                          <span className="break-words">{errors.phone}</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-purple-900">{institution.users_count || 0}</p>
-                      <p className="text-sm text-purple-600">Usuários</p>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <Calendar className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-2xl font-bold text-purple-900">{institution.courses_count || 0}</p>
-                      <p className="text-sm text-purple-600">Cursos</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Timestamps */}
-              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div>
-                    <span className="font-medium">Criado em:</span> {new Date(institution.created_at).toLocaleDateString('pt-BR')}
-                  </div>
-                  <div>
-                    <span className="font-medium">Atualizado em:</span> {new Date(institution.updated_at).toLocaleDateString('pt-BR')}
+                    {/* Website */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Website
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 break-all text-sm sm:text-base">
+                          {formData.website ? (
+                            <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">
+                              {formData.website}
+                            </a>
+                          ) : (
+                            'Não informado'
+                          )}
+                        </div>
+                      ) : (
+                        <input
+                          type="url"
+                          value={formData.website}
+                          onChange={(e) => handleInputChange('website', e.target.value)}
+                          className={`w-full p-2.5 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base ${
+                            errors.website ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
+                          placeholder="https://www.instituicao.edu.br"
+                        />
+                      )}
+                      {errors.website && (
+                        <div className="flex items-center mt-1 text-red-500 text-xs sm:text-sm">
+                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+                          <span className="break-words">{errors.website}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Endereço */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        Endereço
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 text-sm sm:text-base">
+                          {formData.address || 'Não informado'}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={formData.address}
+                          onChange={(e) => handleInputChange('address', e.target.value)}
+                          className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                          placeholder="Rua, número, complemento"
+                        />
+                      )}
+                    </div>
+
+                    {/* Cidade e Estado */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 md:gap-4">
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                          Cidade
+                        </label>
+                        {mode === 'view' ? (
+                          <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 text-sm sm:text-base">
+                            {formData.city || 'Não informado'}
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={formData.city}
+                            onChange={(e) => handleInputChange('city', e.target.value)}
+                            className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                            placeholder="São Paulo"
+                          />
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                          Estado
+                        </label>
+                        {mode === 'view' ? (
+                          <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 text-sm sm:text-base">
+                            {formData.state || 'Não informado'}
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={formData.state}
+                            onChange={(e) => handleInputChange('state', e.target.value.toUpperCase())}
+                            className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                            placeholder="SP"
+                            maxLength={2}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* CEP */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        CEP
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 font-mono text-sm sm:text-base">
+                          {formData.zip_code || 'Não informado'}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={formData.zip_code}
+                          onChange={(e) => handleInputChange('zip_code', e.target.value)}
+                          className={`w-full p-2.5 sm:p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono transition-all text-sm sm:text-base ${
+                            errors.zip_code ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
+                          placeholder="00000-000"
+                          maxLength={9}
+                        />
+                      )}
+                      {errors.zip_code && (
+                        <div className="flex items-center mt-1 text-red-500 text-xs sm:text-sm">
+                          <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+                          <span className="break-words">{errors.zip_code}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Logo URL */}
+                    <div>
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                        URL do Logo
+                      </label>
+                      {mode === 'view' ? (
+                        <div className="p-2.5 sm:p-3 bg-white rounded-lg border border-gray-200 text-gray-900 break-all text-sm sm:text-base">
+                          {formData.logo_url ? (
+                            <a href={formData.logo_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">
+                              {formData.logo_url}
+                            </a>
+                          ) : (
+                            'Não informado'
+                          )}
+                        </div>
+                      ) : (
+                        <input
+                          type="url"
+                          value={formData.logo_url}
+                          onChange={(e) => handleInputChange('logo_url', e.target.value)}
+                          className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                          placeholder="https://exemplo.com/logo.png"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          ) : (
-            // Create/Edit Mode
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
-              <div className="bg-gray-50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Building2 className="w-5 h-5 mr-2" />
-                  Informações Básicas
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome da Instituição *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                        errors.name ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Ex: Universidade Federal de São Paulo"
-                    />
-                    {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo da Instituição
-                    </label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => handleInputChange('type', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="PUBLIC">Pública</option>
-                      <option value="PRIVATE">Privada</option>
-                      <option value="MIXED">Mista</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Código
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.code}
-                      onChange={(e) => handleInputChange('code', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                        errors.code ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Ex: UNIFESP"
-                    />
-                    {errors.code && <p className="text-red-500 text-sm mt-1">{errors.code}</p>}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      CNPJ
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.cnpj}
-                      onChange={(e) => handleInputChange('cnpj', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono ${
-                        errors.cnpj ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="00.000.000/0000-00"
-                      maxLength={18}
-                    />
-                    {errors.cnpj && <p className="text-red-500 text-sm mt-1">{errors.cnpj}</p>}
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descrição
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Descrição da instituição..."
-                  />
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div className="bg-gray-50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Mail className="w-5 h-5 mr-2" />
-                  Informações de Contato
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                        errors.email ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="email@instituicao.com"
-                    />
-                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Telefone
-                    </label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                        errors.phone ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="(11) 99999-9999"
-                      maxLength={15}
-                    />
-                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Website
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.website}
-                      onChange={(e) => handleInputChange('website', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                        errors.website ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="https://www.instituicao.edu.br"
-                    />
-                    {errors.website && <p className="text-red-500 text-sm mt-1">{errors.website}</p>}
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Endereço
-                  </label>
-                  <textarea
-                    value={formData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    rows={2}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Endereço completo da instituição..."
-                  />
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="bg-gray-50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Status</h3>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="active"
-                    checked={formData.active}
-                    onChange={(e) => handleInputChange('active', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="active" className="ml-2 text-sm font-medium text-gray-700">
-                    Instituição ativa
-                  </label>
-                </div>
-              </div>
-            </form>
-          )}
+          </form>
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-          <div className="flex justify-end space-x-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-2 sm:space-y-0 sm:space-x-3 p-3 sm:p-4 md:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            {mode === 'view' ? 'Fechar' : 'Cancelar'}
+          </button>
+          
+          {mode !== 'view' && (
             <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              type="submit"
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base text-white rounded-lg transition-colors flex items-center justify-center space-x-2 ${
+                mode === 'create' 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : 'bg-orange-600 hover:bg-orange-700'
+              } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {mode === 'view' ? 'Fechar' : 'Cancelar'}
+              {loading ? (
+                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
+              ) : (
+                <Save className="w-3 h-3 sm:w-4 sm:h-4" />
+              )}
+              <span className="truncate">{loading ? 'Salvando...' : mode === 'create' ? 'Criar Instituição' : 'Salvar Alterações'}</span>
             </button>
-            {mode !== 'view' && (
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    {mode === 'create' ? 'Criar Instituição' : 'Salvar Alterações'}
-                  </>
-                )}
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { db } from '../database/connection';
+import db from '../config/database';
 
 const router = Router();
 
@@ -24,12 +24,12 @@ router.get('/:videoId', async (req: Request, res: Response) => {
         'file.sha256hex',
         'file.extension',
         'file.name as file_name',
-        'file.mimetype',
+        'file.content_type as mimetype',
         'file.size',
         'video.title as video_title',
         'video.id as video_id'
       )
-      .leftJoin('video_file', 'video.id', 'video_file.video_id')
+      .leftJoin('video_file', 'video.id', 'video_file.video_files_id')
       .leftJoin('file', 'video_file.file_id', 'file.id')
       .where('video.id', videoId)
       .first();

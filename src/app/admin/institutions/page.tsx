@@ -3,16 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { institutionService } from '@/services/institutionService'
-import { InstitutionResponseDto } from '@/types/api'
-import { InstitutionType } from '@/types/common'
+import { InstitutionDto } from '@/types/institution'
 import { useToast } from '@/components/ToastManager'
-import { InstitutionAddModal } from '@/components/InstitutionAddModal'
-import { InstitutionEditModal } from '@/components/InstitutionEditModal'
 import { InstitutionModalNew } from '@/components/modals/InstitutionModalNew'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
-import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, UserCheck, GraduationCap, UserCog, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Eye, Building2, School, Users, UserCheck, GraduationCap, UserCog, CheckCircle, XCircle, MapPin, Phone, Mail, Globe, AlertTriangle, RefreshCw, Download, Upload } from 'lucide-react'
+import { StatCard, ContentCard } from '@/components/ui/StandardCard'
 
 // Interface para estatísticas das instituições
 interface InstitutionStats {
@@ -29,50 +27,23 @@ interface InstitutionStats {
   }
 }
 
-// Componente de Card de Estatística - Padrão Simples
-const StatCard = ({ 
-  icon: Icon, 
-  title, 
-  value, 
-  subtitle, 
-  trend
-}: {
-  icon: any
-  title: string
-  value: string | number
-  subtitle: string
-  trend?: string
-}) => (
-  <div className="bg-white p-6 rounded-lg shadow-md">
-    <div className="flex items-center justify-between mb-2">
-      <Icon className="w-6 h-6 text-gray-600" />
-      {trend && (
-        <div className="text-xs text-green-600">{trend}</div>
-      )}
-    </div>
-    <div className="text-sm font-medium text-gray-500 mb-1">{title}</div>
-    <div className="text-2xl font-bold text-gray-600">{value}</div>
-    <div className="text-xs text-gray-500 mt-2">{subtitle}</div>
-  </div>
-)
+
 
 export default function ManageInstitutions() {
   const router = useRouter()
-  const { showSuccess, showError } = useToast()
+  const { showSuccess, showError, showWarning } = useToast()
   const [loading, setLoading] = useState(true)
-  const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([])
+  const [refreshing, setRefreshing] = useState(false)
+  const [institutions, setInstitutions] = useState<InstitutionDto[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
-  const [addModalOpen, setAddModalOpen] = useState(false)
-  const [editModalOpen, setEditModalOpen] = useState(false)
-  const [selectedInstitution, setSelectedInstitution] = useState<InstitutionResponseDto | null>(null)
   
-  // Estados para o novo modal unificado
+  // Estados para o modal unificado
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view')
-  const [modalInstitution, setModalInstitution] = useState<InstitutionResponseDto | null>(null)
+  const [modalInstitution, setModalInstitution] = useState<InstitutionDto | null>(null)
   const [stats, setStats] = useState<InstitutionStats>({
     totalInstitutions: 0,
     activeInstitutions: 0,
@@ -87,8 +58,13 @@ export default function ManageInstitutions() {
     }
   })
 
-  const fetchInstitutions = async (page = 1, search = '') => {
-    setLoading(true)
+  const fetchInstitutions = async (page = 1, search = '', showLoadingIndicator = true) => {
+    if (showLoadingIndicator) {
+      setLoading(true)
+    } else {
+      setRefreshing(true)
+    }
+    
     try {
       const response = await institutionService.getInstitutions({
         page,
@@ -96,79 +72,30 @@ export default function ManageInstitutions() {
         search
       })
       
-      // Mapear Institution para InstitutionResponseDto
-      const mappedInstitutions: InstitutionResponseDto[] = (response.items || []).map(institution => {
-        // Função auxiliar para formatar endereço completo
-        const formatAddress = (institution: any) => {
-          const parts = []
-          if (institution.address) parts.push(institution.address)
-          if (institution.city) parts.push(institution.city)
-          if (institution.state) parts.push(institution.state)
-          if (institution.zip_code) parts.push(`CEP: ${institution.zip_code}`)
-          return parts.join(', ') || institution.address || ''
-        }
-
-        // Mapear tipos do backend para o frontend
-        const mapInstitutionType = (backendType: string): 'SCHOOL' | 'COLLEGE' | 'UNIVERSITY' | 'TECH_CENTER' => {
-          switch (backendType) {
-            case 'SCHOOL':
-              return 'SCHOOL'
-            case 'COLLEGE':
-              return 'COLLEGE'
-            case 'UNIVERSITY':
-              return 'UNIVERSITY'
-            case 'TECH_CENTER':
-              return 'TECH_CENTER'
-            default:
-              return 'SCHOOL'
-          }
-        }
-
-        return {
-          id: institution.id,
-          name: institution.name,
-          code: institution.code,
-          cnpj: '', // Campo não existe na tabela institution atual
-          description: institution.description || '',
-          address: formatAddress(institution),
-          phone: institution.phone || '',
-          email: institution.email || '',
-          website: institution.website || '',
-          logo: institution.logo_url || '',
-          type: mapInstitutionType(institution.type),
-          created_at: institution.created_at,
-          updated_at: institution.updated_at,
-          created_by: institution.created_by || '',
-          active: institution.is_active ?? (institution.status === 'active'),
-          users_count: institution.users_count || 0,
-          courses_count: institution.courses_count || 0,
-          schools_count: institution.schools_count || 0,
-          settings: {},
-          schools: [],
-          // Campos adicionais da tabela institution
-          city: institution.city || '',
-          state: institution.state || '',
-          zip_code: institution.zip_code || '',
-          status: institution.status || 'active'
-        }
-      })
+      console.log('📊 Response from institutionService:', response)
       
-      setInstitutions(mappedInstitutions)
+      setInstitutions(response.items || [])
       setTotalItems(response.total || 0)
       setCurrentPage(page)
 
       // Calcular estatísticas
-      calculateStats(mappedInstitutions)
+      calculateStats(response.items || [])
+      
+      if (!showLoadingIndicator) {
+        showSuccess("Atualizado", "Lista de instituições atualizada com sucesso!")
+      }
     } catch (error) {
+      console.error('❌ Erro ao carregar instituições:', error)
       showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.")
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
-  const calculateStats = (institutions: InstitutionResponseDto[]) => {
+  const calculateStats = (institutions: InstitutionDto[]) => {
     const totalInstitutions = institutions.length
-    const activeInstitutions = institutions.filter(inst => inst.active).length
+    const activeInstitutions = institutions.filter(inst => inst.is_active).length
     
     // Somar escolas reais das instituições
     const totalSchools = institutions.reduce((total, inst) => {
@@ -206,64 +133,53 @@ export default function ManageInstitutions() {
     fetchInstitutions(1, searchQuery)
   }
 
-  const handleAddInstitution = () => {
-    setAddModalOpen(true)
+  const handleRefresh = () => {
+    fetchInstitutions(currentPage, searchQuery, false)
   }
 
-  const handleEditInstitution = (institution: InstitutionResponseDto) => {
-    setSelectedInstitution(institution)
-    setEditModalOpen(true)
-  }
+  const handleDeleteInstitution = async (institution: InstitutionDto) => {
+    // Verificar se a instituição pode ser excluída
+    try {
+      const canDelete = await institutionService.canDeleteInstitution(institution.id)
+      
+      if (!canDelete) {
+        showWarning(
+          "Não é possível excluir", 
+          "Esta instituição possui usuários ou escolas vinculadas. Remova as dependências primeiro."
+        )
+        return
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro ao verificar dependências, prosseguindo com confirmação:', error)
+    }
 
-  const handleDeleteInstitution = async (institution: InstitutionResponseDto) => {
-    if (!confirm('Tem certeza que deseja excluir esta instituição?')) {
+    const confirmMessage = `Tem certeza que deseja excluir a instituição "${institution.name}"?\n\nEsta ação não pode ser desfeita.`
+    
+    if (!confirm(confirmMessage)) {
       return
     }
 
     try {
+      setLoading(true)
       await institutionService.deleteInstitution(institution.id)
       showSuccess("Instituição excluída", "A instituição foi excluída com sucesso.")
-      fetchInstitutions(currentPage, searchQuery)
+      
+      // Recarregar a lista
+      await fetchInstitutions(currentPage, searchQuery, false)
     } catch (error) {
+      console.error('❌ Erro ao excluir instituição:', error)
       showError("Erro ao excluir instituição", "Não foi possível excluir a instituição.")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleSaveInstitution = async (data: any) => {
-    try {
-      // Converter dados do modal para o formato esperado pelo service
-      const institutionData = {
-        name: data.name,
-        code: data.code,
-        address: data.address,
-        phone: data.phone,
-        email: data.email,
-        active: data.active,
-        type: InstitutionType.SCHOOL // Valor padrão, pode ser ajustado conforme necessário
-      }
-
-      if (selectedInstitution) {
-        await institutionService.updateInstitution(selectedInstitution.id, institutionData)
-        showSuccess("Instituição atualizada", "A instituição foi atualizada com sucesso.")
-      } else {
-        await institutionService.createInstitution(institutionData)
-        showSuccess("Instituição criada", "A instituição foi criada com sucesso.")
-      }
-      setAddModalOpen(false)
-      setEditModalOpen(false)
-      setSelectedInstitution(null)
-      fetchInstitutions(currentPage, searchQuery)
-    } catch (error) {
-      showError("Erro ao salvar instituição", "Não foi possível salvar a instituição.")
-    }
-  }
-
-  const handleViewInstitution = (institution: InstitutionResponseDto) => {
+  const handleViewInstitution = (institution: InstitutionDto) => {
     router.push(`/admin/institutions/${institution.id}`)
   }
 
-  // Funções para o novo modal unificado
-  const openModal = (mode: 'view' | 'create' | 'edit', institution?: InstitutionResponseDto) => {
+  // Funções para o modal unificado
+  const openModal = (mode: 'view' | 'create' | 'edit', institution?: InstitutionDto) => {
     setModalMode(mode)
     setModalInstitution(institution || null)
     setModalOpen(true)
@@ -276,18 +192,58 @@ export default function ManageInstitutions() {
 
   const handleModalSave = async (data: any) => {
     try {
+      setLoading(true)
+      
       if (modalMode === 'create') {
-        await institutionService.createInstitution(data)
+        const newInstitution = await institutionService.createInstitution(data)
         showSuccess("Sucesso", "Instituição criada com sucesso!")
+        console.log('✅ Nova instituição criada:', newInstitution)
       } else if (modalMode === 'edit' && modalInstitution) {
-        await institutionService.updateInstitution(modalInstitution.id, data)
+        const updatedInstitution = await institutionService.updateInstitution(modalInstitution.id, data)
         showSuccess("Sucesso", "Instituição atualizada com sucesso!")
+        console.log('✅ Instituição atualizada:', updatedInstitution)
       }
       
       closeModal()
-      fetchInstitutions(currentPage, searchQuery)
+      
+      // Recarregar a lista
+      await fetchInstitutions(currentPage, searchQuery, false)
     } catch (error) {
+      console.error('❌ Erro ao salvar instituição:', error)
       showError("Erro ao salvar instituição", "Não foi possível salvar a instituição.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleToggleStatus = async (institution: InstitutionDto) => {
+    try {
+      setLoading(true)
+      const updatedInstitution = await institutionService.toggleInstitutionStatus(institution.id)
+      
+      const statusText = updatedInstitution.is_active ? 'ativada' : 'desativada'
+      showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`)
+      
+      // Recarregar a lista
+      await fetchInstitutions(currentPage, searchQuery, false)
+    } catch (error) {
+      console.error('❌ Erro ao alterar status da instituição:', error)
+      showError("Erro ao alterar status", "Não foi possível alterar o status da instituição.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getInstitutionTypeLabel = (type: string) => {
+    switch (type) {
+      case 'SCHOOL': return 'Escola'
+      case 'COLLEGE': return 'Faculdade'
+      case 'UNIVERSITY': return 'Universidade'
+      case 'TECH_CENTER': return 'Centro Técnico'
+      case 'PUBLIC': return 'Pública'
+      case 'PRIVATE': return 'Privada'
+      case 'MIXED': return 'Mista'
+      default: return type || 'Não definido'
     }
   }
 
@@ -301,10 +257,19 @@ export default function ManageInstitutions() {
           <div className="p-4 sm:p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-4">
               <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Gerenciamento de Instituição</h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">Gerencie a instituição do sistema</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Gerenciamento de Instituições</h1>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">Gerencie as instituições do sistema</p>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <Button 
+                  onClick={handleRefresh} 
+                  variant="outline" 
+                  disabled={refreshing}
+                  className="flex items-center gap-2 w-full sm:w-auto justify-center"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Atualizar</span>
+                </Button>
                 <Button onClick={() => openModal('create')} className="flex items-center gap-2 w-full sm:w-auto justify-center">
                   <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">Nova Instituição</span>
@@ -313,139 +278,43 @@ export default function ManageInstitutions() {
               </div>
             </div>
 
-            {/* Cards de Estatísticas - Estilo Premium Unificado */}
+            {/* Cards de Estatísticas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {/* Card Total de Instituições - ESTILO PREMIUM */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-blue-300 transform hover:-translate-y-2 hover:scale-105">
-                {/* Efeito de brilho animado */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                
-                {/* Partículas de fundo */}
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  <div className="absolute top-8 right-12 w-1 h-1 bg-blue-200 rounded-full animate-ping"></div>
-                  <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse delay-300"></div>
-                  <div className="absolute bottom-12 right-8 w-1 h-1 bg-purple-200 rounded-full animate-ping delay-500"></div>
-                </div>
+              <StatCard
+                icon={Building2}
+                title="Total de Instituições"
+                value={stats.totalInstitutions}
+                subtitle="Todas registradas"
+                trend={`${stats.totalInstitutions} registradas`}
+                color="blue"
+              />
 
-                <div className="relative p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                      <Building2 className="w-7 h-7 text-white drop-shadow-lg" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalInstitutions}</p>
-                      <div className="flex items-center justify-end gap-2 mt-2">
-                        <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
-                        <span className="text-sm text-blue-100 font-semibold tracking-wide">REGISTRADAS</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Total de Instituições</h3>
-                    <p className="text-blue-100 text-sm font-medium">Todas registradas</p>
-                  </div>
-                </div>
-              </div>
+              <StatCard
+                icon={CheckCircle}
+                title="Ativas"
+                value={stats.activeInstitutions}
+                subtitle="Em funcionamento"
+                trend={`${Math.round((stats.activeInstitutions / (stats.totalInstitutions || 1)) * 100)}%`}
+                color="green"
+              />
 
-              {/* Card Ativas - ESTILO PREMIUM */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-green-300 transform hover:-translate-y-2 hover:scale-105">
-                {/* Efeito de brilho animado */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                
-                {/* Partículas de fundo */}
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  <div className="absolute top-8 right-12 w-1 h-1 bg-green-200 rounded-full animate-ping"></div>
-                  <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-pulse delay-300"></div>
-                  <div className="absolute bottom-12 right-8 w-1 h-1 bg-teal-200 rounded-full animate-ping delay-500"></div>
-                </div>
+              <StatCard
+                icon={XCircle}
+                title="Inativas"
+                value={stats.totalInstitutions - stats.activeInstitutions}
+                subtitle="Desabilitadas"
+                trend={`${Math.round(((stats.totalInstitutions - stats.activeInstitutions) / (stats.totalInstitutions || 1)) * 100)}%`}
+                color="red"
+              />
 
-                <div className="relative p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                      <CheckCircle className="w-7 h-7 text-white drop-shadow-lg" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.activeInstitutions}</p>
-                      <div className="flex items-center justify-end gap-2 mt-2">
-                        <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
-                        <span className="text-sm text-green-100 font-semibold tracking-wide">{Math.round((stats.activeInstitutions / stats.totalInstitutions) * 100)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Ativas</h3>
-                    <p className="text-green-100 text-sm font-medium">Em funcionamento</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Inativas - ESTILO PREMIUM */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-red-500 via-orange-600 to-yellow-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-red-300 transform hover:-translate-y-2 hover:scale-105">
-                {/* Efeito de brilho animado */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                
-                {/* Partículas de fundo */}
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  <div className="absolute top-8 right-12 w-1 h-1 bg-red-200 rounded-full animate-ping"></div>
-                  <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse delay-300"></div>
-                  <div className="absolute bottom-12 right-8 w-1 h-1 bg-yellow-200 rounded-full animate-ping delay-500"></div>
-                </div>
-
-                <div className="relative p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                      <XCircle className="w-7 h-7 text-white drop-shadow-lg" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalInstitutions - stats.activeInstitutions}</p>
-                      <div className="flex items-center justify-end gap-2 mt-2">
-                        <div className="w-3 h-3 bg-orange-400 rounded-full animate-pulse shadow-lg"></div>
-                        <span className="text-sm text-red-100 font-semibold tracking-wide">{Math.round(((stats.totalInstitutions - stats.activeInstitutions) / stats.totalInstitutions) * 100)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Inativas</h3>
-                    <p className="text-red-100 text-sm font-medium">Desabilitadas</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Estudantes - ESTILO PREMIUM */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-purple-300 transform hover:-translate-y-2 hover:scale-105">
-                {/* Efeito de brilho animado */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                
-                {/* Partículas de fundo */}
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  <div className="absolute top-8 right-12 w-1 h-1 bg-purple-200 rounded-full animate-ping"></div>
-                  <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-violet-200 rounded-full animate-pulse delay-300"></div>
-                  <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
-                </div>
-
-                <div className="relative p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                      <School className="w-7 h-7 text-white drop-shadow-lg" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.usersByRole.STUDENT}</p>
-                      <div className="flex items-center justify-end gap-2 mt-2">
-                        <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
-                        <span className="text-sm text-purple-100 font-semibold tracking-wide">ESTUDANTES</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Estudantes</h3>
-                    <p className="text-purple-100 text-sm font-medium">Total matriculados</p>
-                  </div>
-                </div>
-              </div>
+              <StatCard
+                icon={Users}
+                title="Usuários Total"
+                value={stats.totalUsers}
+                subtitle="Em todas instituições"
+                trend={`${stats.usersByRole.STUDENT} estudantes`}
+                color="purple"
+              />
             </div>
 
             {/* Search */}
@@ -477,7 +346,9 @@ export default function ManageInstitutions() {
               </div>
             ) : institutions.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500">Nenhuma instituição encontrada</p>
+                <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg mb-2">Nenhuma instituição encontrada</p>
+                <p className="text-gray-400 text-sm">Clique em "Nova Instituição" para adicionar a primeira</p>
               </div>
             ) : (
               <>
@@ -509,11 +380,13 @@ export default function ManageInstitutions() {
                         </th>
                         <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           <div className="flex items-center space-x-1">
+                            <MapPin className="w-4 h-4 text-gray-600" />
                             <span>Localização</span>
                           </div>
                         </th>
                         <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                           <div className="flex items-center space-x-1">
+                            <Phone className="w-4 h-4 text-gray-600" />
                             <span>Contato</span>
                           </div>
                         </th>
@@ -536,15 +409,12 @@ export default function ManageInstitutions() {
                               <div>
                                 <div className="text-sm font-semibold text-gray-900">{institution.name}</div>
                                 <div className="text-xs text-gray-500">
-                                  {institution.type && (
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600 mr-2">
-                                      {institution.type === 'SCHOOL' ? 'Escola' :
-                                       institution.type === 'COLLEGE' ? 'Faculdade' :
-                                       institution.type === 'UNIVERSITY' ? 'Universidade' :
-                                       institution.type === 'TECH_CENTER' ? 'Centro Técnico' : 'Escola'}
+                                  {institution.description && (
+                                    <span className="block truncate max-w-48" title={institution.description}>
+                                      {institution.description}
                                     </span>
                                   )}
-                                  ID: {institution.id.slice(0, 8)}...
+                                  <span className="text-gray-400">ID: {institution.id.slice(0, 8)}...</span>
                                 </div>
                               </div>
                             </div>
@@ -552,13 +422,12 @@ export default function ManageInstitutions() {
                           <td className="px-4 py-4">
                             <div className="text-sm text-gray-900">
                               {institution.code && (
-                                <div className="font-mono text-xs font-semibold">{institution.code}</div>
+                                <div className="font-mono text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded mb-1 inline-block">
+                                  {institution.code}
+                                </div>
                               )}
-                              <div className="text-xs text-gray-600 mt-1">
-                                {institution.type === 'SCHOOL' ? 'Escola' :
-                                 institution.type === 'COLLEGE' ? 'Faculdade' :
-                                 institution.type === 'UNIVERSITY' ? 'Universidade' :
-                                 institution.type === 'TECH_CENTER' ? 'Centro Técnico' : 'Escola'}
+                              <div className="text-xs text-gray-600">
+                                {getInstitutionTypeLabel(institution.type)}
                               </div>
                               {!institution.code && (
                                 <span className="text-xs text-gray-400">Sem código</span>
@@ -581,7 +450,7 @@ export default function ManageInstitutions() {
                             <div className="text-sm text-gray-900">
                               {institution.city && (
                                 <div className="flex items-center mb-1">
-                                  <span className="text-xs text-gray-500 mr-1">🏙️</span>
+                                  <MapPin className="w-3 h-3 text-gray-500 mr-1" />
                                   <span className="truncate max-w-32">{institution.city}</span>
                                   {institution.state && <span className="text-gray-400 ml-1">/{institution.state}</span>}
                                 </div>
@@ -592,7 +461,12 @@ export default function ManageInstitutions() {
                                   <span className="font-mono text-xs">{institution.zip_code}</span>
                                 </div>
                               )}
-                              {!institution.city && !institution.zip_code && (
+                              {!institution.city && !institution.zip_code && institution.address && (
+                                <div className="text-xs text-gray-600 truncate max-w-32" title={institution.address}>
+                                  {institution.address}
+                                </div>
+                              )}
+                              {!institution.city && !institution.zip_code && !institution.address && (
                                 <span className="text-xs text-gray-400">Sem localização</span>
                               )}
                             </div>
@@ -601,20 +475,20 @@ export default function ManageInstitutions() {
                             <div className="text-sm text-gray-900">
                               {institution.email && (
                                 <div className="flex items-center mb-1">
-                                  <span className="text-xs text-gray-500 mr-1">📧</span>
-                                  <span className="truncate max-w-32">{institution.email}</span>
+                                  <Mail className="w-3 h-3 text-gray-500 mr-1" />
+                                  <span className="truncate max-w-32" title={institution.email}>{institution.email}</span>
                                 </div>
                               )}
                               {institution.phone && (
                                 <div className="flex items-center mb-1">
-                                  <span className="text-xs text-gray-500 mr-1">📞</span>
+                                  <Phone className="w-3 h-3 text-gray-500 mr-1" />
                                   <span>{institution.phone}</span>
                                 </div>
                               )}
                               {institution.website && (
                                 <div className="flex items-center">
-                                  <span className="text-xs text-gray-500 mr-1">🌐</span>
-                                  <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-xs truncate max-w-24">
+                                  <Globe className="w-3 h-3 text-gray-500 mr-1" />
+                                  <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-xs truncate max-w-24" title={institution.website}>
                                     {institution.website.replace(/^https?:\/\//, '')}
                                   </a>
                                 </div>
@@ -625,9 +499,18 @@ export default function ManageInstitutions() {
                             </div>
                           </td>
                           <td className="px-4 py-4 text-center">
-                            <Badge variant={institution.active ? "success" : "danger"}>
-                              {institution.active ? "Ativa" : "Inativa"}
-                            </Badge>
+                            <button
+                              onClick={() => handleToggleStatus(institution)}
+                              className="group"
+                              title={`Clique para ${institution.is_active ? 'desativar' : 'ativar'}`}
+                            >
+                              <Badge 
+                                variant={institution.is_active ? "success" : "danger"}
+                                className="cursor-pointer group-hover:scale-105 transition-transform"
+                              >
+                                {institution.is_active ? "Ativa" : "Inativa"}
+                              </Badge>
+                            </button>
                           </td>
                           <td className="px-4 py-4 text-center">
                             <div className="flex items-center justify-center gap-1">
@@ -680,28 +563,35 @@ export default function ManageInstitutions() {
                             <div className="flex-1 min-w-0">
                               <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1 truncate">{institution.name}</h3>
                               <div className="flex flex-wrap items-center gap-2 mb-1">
-                                {institution.type && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                    {institution.type === 'SCHOOL' ? 'Escola' :
-                                     institution.type === 'COLLEGE' ? 'Faculdade' :
-                                     institution.type === 'UNIVERSITY' ? 'Universidade' :
-                                     institution.type === 'TECH_CENTER' ? 'Centro Técnico' : 'Escola'}
-                                  </span>
-                                )}
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                                  {getInstitutionTypeLabel(institution.type)}
+                                </span>
                                 {institution.code && (
                                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-600 font-mono">
                                     {institution.code}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-500">
+                              {institution.description && (
+                                <p className="text-sm text-gray-600 mb-1 line-clamp-2">{institution.description}</p>
+                              )}
+                              <p className="text-xs text-gray-400">
                                 ID: {institution.id.slice(0, 8)}...
                               </p>
                             </div>
                           </div>
-                          <Badge variant={institution.active ? "success" : "danger"} className="flex-shrink-0">
-                            {institution.active ? "Ativa" : "Inativa"}
-                          </Badge>
+                          <button
+                            onClick={() => handleToggleStatus(institution)}
+                            className="group flex-shrink-0"
+                            title={`Clique para ${institution.is_active ? 'desativar' : 'ativar'}`}
+                          >
+                            <Badge 
+                              variant={institution.is_active ? "success" : "danger"}
+                              className="cursor-pointer group-hover:scale-105 transition-transform"
+                            >
+                              {institution.is_active ? "Ativa" : "Inativa"}
+                            </Badge>
+                          </button>
                         </div>
                         
                         {/* Stats Grid */}
@@ -722,32 +612,48 @@ export default function ManageInstitutions() {
                           </div>
                         </div>
 
-                        {/* Contact Info */}
-                        {(institution.email || institution.phone || institution.website) && (
+                        {/* Contact & Location Info */}
+                        {(institution.email || institution.phone || institution.website || institution.city || institution.address) && (
                           <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                              <span className="mr-2">📞</span>
-                              Informações de Contato
+                              <Phone className="w-4 h-4 mr-2" />
+                              Informações de Contato e Localização
                             </h4>
                             <div className="space-y-2">
                               {institution.email && (
                                 <div className="flex items-center text-sm text-gray-600">
-                                  <span className="w-4 text-center mr-2">📧</span>
+                                  <Mail className="w-4 h-4 text-center mr-2" />
                                   <span className="break-all">{institution.email}</span>
                                 </div>
                               )}
                               {institution.phone && (
                                 <div className="flex items-center text-sm text-gray-600">
-                                  <span className="w-4 text-center mr-2">📱</span>
+                                  <Phone className="w-4 h-4 text-center mr-2" />
                                   <span>{institution.phone}</span>
                                 </div>
                               )}
                               {institution.website && (
                                 <div className="flex items-center text-sm text-gray-600">
-                                  <span className="w-4 text-center mr-2">🌐</span>
+                                  <Globe className="w-4 h-4 text-center mr-2" />
                                   <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline break-all">
                                     {institution.website}
                                   </a>
+                                </div>
+                              )}
+                              {(institution.city || institution.address) && (
+                                <div className="flex items-start text-sm text-gray-600">
+                                  <MapPin className="w-4 h-4 text-center mr-2 mt-0.5" />
+                                  <div>
+                                    {institution.city && (
+                                      <div>{institution.city}{institution.state && `, ${institution.state}`}</div>
+                                    )}
+                                    {institution.zip_code && (
+                                      <div className="font-mono text-xs">CEP: {institution.zip_code}</div>
+                                    )}
+                                    {institution.address && !institution.city && (
+                                      <div>{institution.address}</div>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -760,7 +666,7 @@ export default function ManageInstitutions() {
                             variant="ghost"
                             size="sm"
                             onClick={() => openModal('view', institution)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-xl py-3"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-xl py-3 flex flex-col items-center"
                           >
                             <Eye className="w-4 h-4 mb-1" />
                             <span className="text-xs font-medium">Ver</span>
@@ -769,7 +675,7 @@ export default function ManageInstitutions() {
                             variant="ghost"
                             size="sm"
                             onClick={() => openModal('edit', institution)}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50 border border-green-200 rounded-xl py-3"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 border border-green-200 rounded-xl py-3 flex flex-col items-center"
                           >
                             <Edit className="w-4 h-4 mb-1" />
                             <span className="text-xs font-medium">Editar</span>
@@ -778,7 +684,7 @@ export default function ManageInstitutions() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteInstitution(institution)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 rounded-xl py-3"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 rounded-xl py-3 flex flex-col items-center"
                           >
                             <Trash2 className="w-4 h-4 mb-1" />
                             <span className="text-xs font-medium">Excluir</span>
@@ -827,30 +733,7 @@ export default function ManageInstitutions() {
           )}
         </div>
 
-        {/* Modais Antigos - Manter para compatibilidade */}
-        {addModalOpen && (
-          <InstitutionAddModal
-            isOpen={addModalOpen}
-            onClose={() => setAddModalOpen(false)}
-            onSave={handleSaveInstitution}
-            title="Adicionar Instituição"
-          />
-        )}
-
-        {editModalOpen && selectedInstitution && (
-          <InstitutionEditModal
-            isOpen={editModalOpen}
-            onClose={() => {
-              setEditModalOpen(false)
-              setSelectedInstitution(null)
-            }}
-            onSave={handleSaveInstitution}
-            institution={selectedInstitution}
-            title="Editar Instituição"
-          />
-        )}
-
-        {/* Novo Modal Unificado */}
+        {/* Modal Unificado */}
         <InstitutionModalNew
           isOpen={modalOpen}
           onClose={closeModal}

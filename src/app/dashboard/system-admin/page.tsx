@@ -53,6 +53,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { systemAdminService } from '@/services/systemAdminService';
 import { institutionService } from '@/services/institutionService';
+import { StatCard, ContentCard, SimpleCard } from '@/components/ui/StandardCard';
 
 
 // Registrando os componentes necessários do Chart.js
@@ -119,6 +120,15 @@ interface SystemDashboardData {
   };
 }
 
+interface RealUserStats {
+  total_users: number;
+  active_users: number;
+  inactive_users: number;
+  users_by_role: Record<string, number>;
+  users_by_institution: Record<string, number>;
+  recent_registrations: number;
+}
+
 interface InstitutionStats {
   id: string;
   name: string;
@@ -172,6 +182,7 @@ function SystemAdminDashboardContent() {
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
   const [realUsersByRole, setRealUsersByRole] = useState<Record<string, number>>({});
+  const [realUserStats, setRealUserStats] = useState<RealUserStats | null>(null);
   const [systemAnalytics, setSystemAnalytics] = useState<any>(null);
   const [engagementMetrics, setEngagementMetrics] = useState<any>(null);
 
@@ -202,6 +213,7 @@ function SystemAdminDashboardContent() {
         loadAwsStats(),
         loadSystemAlerts(),
         loadRealUsersByRole(),
+        loadRealUserStats(),
         loadSystemAnalytics(),
         loadEngagementMetrics()
       ]);
@@ -352,6 +364,29 @@ function SystemAdminDashboardContent() {
       setRealUsersByRole(usersByRole);
     } catch (error) {
       console.error('Erro ao carregar usuários por função:', error);
+    }
+  };
+
+  const loadRealUserStats = async () => {
+    try {
+      const response = await fetch('/api/users/stats', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setRealUserStats(result.data);
+          // Atualizar também os dados por role se estiverem disponíveis
+          if (result.data.users_by_role) {
+            setRealUsersByRole(result.data.users_by_role);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas reais de usuários:', error);
     }
   };
 
@@ -584,60 +619,91 @@ function SystemAdminDashboardContent() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 max-w-7xl mx-auto">
       {/* Cabeçalho */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
-              <Shield className="w-8 h-8 text-primary" />
+            <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
+              <Shield className="w-7 h-7 text-primary" />
               Painel do Administrador do Sistema
             </h1>
-            <p className="text-gray-600 dark:text-gray-600 mt-2">
+            <p className="text-gray-600 dark:text-gray-600 mt-1">
               Monitoramento e gestão completa da plataforma Portal Sabercon
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button 
               onClick={loadRealTimeMetrics}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
+              className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2 text-sm"
             >
               <RefreshCw className="w-4 h-4" />
               Atualizar
             </button>
             <button 
               onClick={() => router.push('/admin/monitoring')}
-              className="px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+              className="px-3 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm"
             >
               <Gauge className="w-4 h-4" />
               Monitoramento
             </button>
           </div>
         </div>
+        
+        {/* Resumo Geral do Sistema */}
+        {realUserStats && (
+          <div className="mt-4">
+            <ContentCard
+              title="Resumo Geral do Sistema"
+              subtitle="Estatísticas principais em tempo real"
+              icon={BarChart3}
+              iconColor="bg-blue-500"
+            >
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xl font-bold text-blue-600">{realUserStats.total_users.toLocaleString('pt-BR')}</p>
+                  <p className="text-xs text-gray-600">Total de Usuários</p>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <p className="text-xl font-bold text-green-600">{realUserStats.active_users.toLocaleString('pt-BR')}</p>
+                  <p className="text-xs text-gray-600">Usuários Ativos</p>
+                </div>
+                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                  <p className="text-xl font-bold text-purple-600">{institutions.length}</p>
+                  <p className="text-xs text-gray-600">Instituições</p>
+                </div>
+                <div className="text-center p-3 bg-orange-50 rounded-lg">
+                  <p className="text-xl font-bold text-orange-600">{realUserStats.recent_registrations}</p>
+                  <p className="text-xs text-gray-600">Novos este Mês</p>
+                </div>
+              </div>
+            </ContentCard>
+          </div>
+        )}
       </div>
 
       {/* Alertas do Sistema */}
       {alerts.filter(a => !a.resolved).length > 0 && (
-        <div className="mb-6 space-y-3">
+        <div className="mb-4 space-y-2">
           {alerts.filter(a => !a.resolved).map(alert => (
             <div
               key={alert.id}
-              className={`p-4 rounded-lg border ${
+              className={`p-3 rounded-lg border ${
                 alert.type === 'critical' ? 'bg-red-50 border-red-200' :
                 alert.type === 'warning' ? 'bg-accent-yellow/10 border-accent-yellow/20' :
                 'bg-primary/10 border-primary/20'
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 {getAlertIcon(alert.type)}
                 <div className="flex-1">
-                  <h3 className="font-semibold">{alert.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{alert.description}</p>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <h3 className="font-semibold text-sm">{alert.title}</h3>
+                  <p className="text-xs text-gray-600 mt-1">{alert.description}</p>
+                  <p className="text-xs text-gray-500 mt-1">
                     {alert.timestamp.toLocaleString('pt-BR')}
                   </p>
                 </div>
-                <button className="text-sm text-gray-500 hover:text-gray-700">
+                <button className="text-xs text-gray-500 hover:text-gray-700">
                   Resolver
                 </button>
               </div>
@@ -647,38 +713,35 @@ function SystemAdminDashboardContent() {
       )}
 
       {/* Métricas Principais do Sistema */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <MetricCard
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
           icon={Server}
           title="Uptime do Sistema"
           value={dashboardData ? formatUptime(dashboardData.system.uptime) : 'N/A'}
           subtitle={`v${dashboardData?.system.version || 'N/A'} • ${dashboardData?.system.environment || 'N/A'}`}
-          color="bg-emerald-500"
-          status="healthy"
+          color="emerald"
         />
-        <MetricCard
+        <StatCard
           icon={Cpu}
           title="Memória Heap"
           value={dashboardData ? formatBytes(dashboardData.system.memoryUsage.heapUsed) : 'N/A'}
           subtitle={dashboardData ? `${((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100).toFixed(1)}% de ${formatBytes(dashboardData.system.memoryUsage.heapTotal)}` : 'N/A'}
-          color="bg-blue-500"
-          isRealtime
-          status={dashboardData ? 
-            ((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100) > 85 ? 'critical' :
-            ((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100) > 75 ? 'warning' : 'healthy'
-            : 'healthy'
+          color="blue"
+          trend={dashboardData ? 
+            ((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100) > 85 ? 'Crítico' :
+            ((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100) > 75 ? 'Atenção' : 'Normal'
+            : 'Normal'
           }
         />
-        <MetricCard
+        <StatCard
           icon={Users}
           title="Usuários Online"
-          value={dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || '0'}
+          value={dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || realUserStats?.active_users?.toLocaleString('pt-BR') || '0'}
           subtitle={`${dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'} sessões ativas`}
-          color="bg-indigo-500"
-          isRealtime
-          status={dashboardData?.sessions?.activeUsers && dashboardData.sessions.activeUsers > 5000 ? 'warning' : 'healthy'}
+          color="violet"
+          trend={dashboardData?.sessions?.activeUsers && dashboardData.sessions.activeUsers > 5000 ? 'Alta carga' : 'Tempo real'}
         />
-        <MetricCard
+        <StatCard
           icon={Cloud}
           title="Infraestrutura AWS"
           value={dashboardData?.infrastructure?.aws ? `${dashboardData.infrastructure.aws.performance.uptime}%` : (awsStats ? `${awsStats.success_rate.toFixed(1)}%` : 'N/A')}
@@ -686,102 +749,162 @@ function SystemAdminDashboardContent() {
             `${dashboardData.infrastructure.aws.services.length} serviços • ${dashboardData.infrastructure.aws.performance.responseTime}ms` :
             (awsStats ? `${awsStats.total_connections} conexões • ${awsStats.average_response_time.toFixed(0)}ms` : 'Conectado via .env')
           }
-          color="bg-orange-500"
-          status={dashboardData?.infrastructure?.aws ? 
-            (dashboardData.infrastructure.aws.performance.uptime < 99.5 ? 'warning' : 'healthy') :
-            (awsStats ? 
-              awsStats.success_rate < 80 ? 'critical' :
-              awsStats.success_rate < 95 ? 'warning' : 'healthy'
-              : 'healthy'
-            )
-          }
+          color="amber"
         />
       </div>
 
       {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-8 gap-4 mb-8">
-        <StatCard
-          icon={Building2}
-          title="Instituições"
-          value={institutions.length}
-          subtitle={`${institutions.filter(i => i.active).length} ativas`}
-          color="bg-slate-600"
-        />
-        <StatCard
-          icon={School}
-          title="Escolas"
-          value={dashboardData?.schools?.total || institutions.reduce((total, inst) => total + (inst.schools_count || 0), 0)}
-          subtitle={`${dashboardData?.schools?.active || Math.floor((dashboardData?.schools?.total || 0) * 0.91)} ativas`}
-          color="bg-indigo-600"
-        />
-        <StatCard
-          icon={Users}
-          title="Alunos"
-          value={realUsersByRole.STUDENT?.toLocaleString('pt-BR') || dashboardData?.users.byRole.STUDENT?.toLocaleString('pt-BR') || '0'}
-          subtitle={`${((realUsersByRole.STUDENT || dashboardData?.users.byRole.STUDENT || 0) / (Object.values(realUsersByRole).reduce((a, b) => a + b, 0) || dashboardData?.users.total || 1) * 100).toFixed(1)}% do total`}
-          color="bg-blue-600"
-        />
-        <StatCard
-          icon={UserCheck}
-          title="Professores"
-          value={realUsersByRole.TEACHER?.toLocaleString('pt-BR') || dashboardData?.users.byRole.TEACHER?.toLocaleString('pt-BR') || '0'}
-          subtitle="Educadores ativos"
-          color="bg-green-600"
-        />
-        <StatCard
-          icon={Users}
-          title="Coordenadores"
-          value={realUsersByRole.COORDINATOR?.toLocaleString('pt-BR') || dashboardData?.users.byRole.COORDINATOR?.toLocaleString('pt-BR') || '0'}
-          subtitle="Gestão pedagógica"
-          color="bg-orange-600"
-        />
-        <StatCard
-          icon={Users}
-          title="Responsáveis"
-          value={realUsersByRole.PARENT?.toLocaleString('pt-BR') || dashboardData?.users.byRole.PARENT?.toLocaleString('pt-BR') || '0'}
-          subtitle="Pais e tutores"
-          color="bg-purple-600"
-        />
-        <StatCard
-          icon={Activity}
-          title="Sessões Ativas"
-          value={dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'}
-          subtitle={`${dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || '0'} usuários online`}
-          color="bg-pink-600"
-          isRealtime
-        />
-        <StatCard
-          icon={Clock}
-          title="Tempo Médio"
-          value={dashboardData ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
-          subtitle="Por sessão"
-          color="bg-teal-600"
-        />
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+        <SimpleCard className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-slate-100 rounded-lg">
+              <Building2 className="w-4 h-4 text-slate-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-800">{institutions.length}</p>
+              <p className="text-xs text-gray-600">Instituições</p>
+              <p className="text-xs text-gray-500">{institutions.filter(i => i.active).length} ativas</p>
+            </div>
+          </div>
+        </SimpleCard>
+
+        <SimpleCard className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-indigo-100 rounded-lg">
+              <School className="w-4 h-4 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-800">
+                {dashboardData?.schools?.total || institutions.reduce((total, inst) => total + (inst.schools_count || 0), 0)}
+              </p>
+              <p className="text-xs text-gray-600">Escolas</p>
+              <p className="text-xs text-gray-500">
+                {dashboardData?.schools?.active || Math.floor((dashboardData?.schools?.total || 0) * 0.91)} ativas
+              </p>
+            </div>
+          </div>
+        </SimpleCard>
+
+        <SimpleCard className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-blue-100 rounded-lg">
+              <Users className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-800">
+                {(realUsersByRole.STUDENT || realUserStats?.users_by_role?.STUDENT || 0).toLocaleString('pt-BR')}
+              </p>
+              <p className="text-xs text-gray-600">Alunos</p>
+              <p className="text-xs text-gray-500">
+                {((realUsersByRole.STUDENT || realUserStats?.users_by_role?.STUDENT || 0) / 
+                  (realUserStats?.total_users || Object.values(realUsersByRole).reduce((a, b) => a + b, 0) || 1) * 100).toFixed(1)}% do total
+              </p>
+            </div>
+          </div>
+        </SimpleCard>
+
+        <SimpleCard className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-green-100 rounded-lg">
+              <UserCheck className="w-4 h-4 text-green-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-800">
+                {(realUsersByRole.TEACHER || realUserStats?.users_by_role?.TEACHER || 0).toLocaleString('pt-BR')}
+              </p>
+              <p className="text-xs text-gray-600">Professores</p>
+              <p className="text-xs text-gray-500">Educadores ativos</p>
+            </div>
+          </div>
+        </SimpleCard>
+
+        <SimpleCard className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-orange-100 rounded-lg">
+              <Users className="w-4 h-4 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-800">
+                {(realUsersByRole.COORDINATOR || realUserStats?.users_by_role?.COORDINATOR || 0).toLocaleString('pt-BR')}
+              </p>
+              <p className="text-xs text-gray-600">Coordenadores</p>
+              <p className="text-xs text-gray-500">Gestão pedagógica</p>
+            </div>
+          </div>
+        </SimpleCard>
+
+        <SimpleCard className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-purple-100 rounded-lg">
+              <Users className="w-4 h-4 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-800">
+                {(realUsersByRole.PARENT || realUserStats?.users_by_role?.PARENT || 0).toLocaleString('pt-BR')}
+              </p>
+              <p className="text-xs text-gray-600">Responsáveis</p>
+              <p className="text-xs text-gray-500">Pais e tutores</p>
+            </div>
+          </div>
+        </SimpleCard>
+
+        <SimpleCard className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-pink-100 rounded-lg">
+              <Activity className="w-4 h-4 text-pink-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-800">
+                {dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'}
+              </p>
+              <p className="text-xs text-gray-600">Sessões Ativas</p>
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                {dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || '0'} usuários online
+              </p>
+            </div>
+          </div>
+        </SimpleCard>
+
+        <SimpleCard className="p-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-teal-100 rounded-lg">
+              <Clock className="w-4 h-4 text-teal-600" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-gray-800">
+                {dashboardData ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
+              </p>
+              <p className="text-xs text-gray-600">Tempo Médio</p>
+              <p className="text-xs text-gray-500">Por sessão</p>
+            </div>
+          </div>
+        </SimpleCard>
       </div>
 
       {/* Layout Principal com 3 Colunas */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
         
         {/* Coluna Principal - Gráficos e Analytics */}
         <div className="xl:col-span-8">
           
           {/* Seção de Gráficos Principais */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             
             {/* Usuários por Função - Dados Reais do Backend */}
             {usersByRoleData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-500" />
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <Users className="w-4 h-4 text-blue-500" />
                     Usuários por Função
                   </h3>
-                  <div className="text-sm text-gray-500 flex items-center gap-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                     Total: {Object.values(realUsersByRole).reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}
                   </div>
                 </div>
-                <div className="h-64">
+                <div className="h-48">
                   <Pie 
                     data={usersByRoleData}
                     options={{
@@ -791,10 +914,10 @@ function SystemAdminDashboardContent() {
                         legend: {
                           position: 'bottom',
                           labels: {
-                            boxWidth: 12,
+                            boxWidth: 10,
                             usePointStyle: true,
-                            font: { size: 11 },
-                            padding: 15
+                            font: { size: 10 },
+                            padding: 10
                           }
                         },
                         tooltip: {
@@ -826,37 +949,41 @@ function SystemAdminDashboardContent() {
                     }}
                   />
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {Object.entries(realUsersByRole).map(([role, count], index) => {
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {Object.entries(realUsersByRole.length ? realUsersByRole : realUserStats?.users_by_role || {}).map(([role, count], index) => {
                     const roleNames: Record<string, string> = {
                       'STUDENT': 'Alunos',
                       'TEACHER': 'Professores', 
+                      'ACADEMIC_COORDINATOR': 'Coordenadores',
                       'COORDINATOR': 'Coordenadores',
+                      'GUARDIAN': 'Responsáveis',
                       'PARENT': 'Responsáveis',
+                      'INSTITUTION_MANAGER': 'Gestores',
                       'ADMIN': 'Administradores',
                       'SYSTEM_ADMIN': 'Super Admin'
                     };
                     const colors = ['text-blue-600', 'text-green-600', 'text-orange-600', 'text-purple-600', 'text-pink-600', 'text-emerald-600'];
                     const bgColors = ['bg-blue-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100', 'bg-pink-100', 'bg-emerald-100'];
-                    const total = Object.values(realUsersByRole).reduce((a, b) => a + b, 0);
+                    const usersByRoleData = realUsersByRole.length ? realUsersByRole : realUserStats?.users_by_role || {};
+                    const total = Object.values(usersByRoleData).reduce((a: number, b: number) => a + b, 0) || realUserStats?.total_users || 1;
                     const percentage = Math.round((count / total) * 100);
                     
                     return (
-                      <div key={role} className={`p-3 rounded-lg ${bgColors[index] || 'bg-gray-100'} hover:shadow-md transition-shadow`}>
+                      <SimpleCard key={role} className="p-2 hover:shadow-sm transition-shadow">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className={`text-lg font-bold ${colors[index] || 'text-gray-600'}`}>
+                            <p className={`text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
                               {count.toLocaleString('pt-BR')}
                             </p>
-                            <p className="text-sm font-medium text-gray-700">{roleNames[role] || role}</p>
+                            <p className="text-xs font-medium text-gray-700">{roleNames[role] || role}</p>
                           </div>
                           <div className="text-right">
-                            <p className={`text-sm font-semibold ${colors[index] || 'text-gray-600'}`}>
+                            <p className={`text-xs font-semibold ${colors[index] || 'text-gray-600'}`}>
                               {percentage}%
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </SimpleCard>
                     );
                   })}
                 </div>
@@ -865,15 +992,15 @@ function SystemAdminDashboardContent() {
 
             {/* Crescimento de Usuários */}
             {userGrowthData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-500" />
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-green-500" />
                     Crescimento de Usuários
                   </h3>
-                  <div className="text-sm text-gray-500">Últimos 6 meses</div>
+                  <div className="text-xs text-gray-500">Últimos 6 meses</div>
                 </div>
-                <div className="h-64">
+                <div className="h-48">
                   <Line 
                     data={userGrowthData}
                     options={{
@@ -883,10 +1010,10 @@ function SystemAdminDashboardContent() {
                         legend: {
                           position: 'bottom',
                           labels: {
-                            boxWidth: 12,
+                            boxWidth: 10,
                             usePointStyle: true,
-                            font: { size: 11 },
-                            padding: 15
+                            font: { size: 10 },
+                            padding: 10
                           }
                         }
                       },
@@ -896,6 +1023,7 @@ function SystemAdminDashboardContent() {
                           position: 'left',
                           grid: { color: 'rgba(0, 0, 0, 0.05)' },
                           ticks: {
+                            font: { size: 10 },
                             callback: function(value) {
                               return (value as number).toLocaleString('pt-BR');
                             }
@@ -907,6 +1035,7 @@ function SystemAdminDashboardContent() {
                           position: 'right',
                           grid: { drawOnChartArea: false },
                           ticks: {
+                            font: { size: 10 },
                             callback: function(value) {
                               return value + '%';
                             }
@@ -926,22 +1055,22 @@ function SystemAdminDashboardContent() {
           </div>
 
           {/* Seção de Gráficos Secundários */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             
             {/* Sessões por Dispositivo */}
             {sessionsByDeviceData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Monitor className="w-5 h-5 text-indigo-500" />
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <Monitor className="w-4 h-4 text-indigo-500" />
                     Sessões por Dispositivo
                   </h3>
                   <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                     <span className="text-xs text-gray-500">Tempo real</span>
                   </div>
                 </div>
-                <div className="h-56">
+                <div className="h-40">
                   <Bar 
                     data={sessionsByDeviceData}
                     options={{
@@ -971,7 +1100,7 @@ function SystemAdminDashboardContent() {
                           beginAtZero: true,
                           grid: { color: 'rgba(0, 0, 0, 0.05)' },
                           ticks: {
-                            font: { size: 10 },
+                            font: { size: 9 },
                             callback: function(value) {
                               return (value as number).toLocaleString('pt-BR');
                             }
@@ -979,7 +1108,7 @@ function SystemAdminDashboardContent() {
                         },
                         x: {
                           grid: { display: false },
-                          ticks: { font: { size: 11 } }
+                          ticks: { font: { size: 10 } }
                         }
                       },
                       animation: {
@@ -989,7 +1118,7 @@ function SystemAdminDashboardContent() {
                     }}
                   />
                 </div>
-                <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+                <div className="mt-3 grid grid-cols-3 gap-3 text-center">
                   {dashboardData && Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
                     const colors = ['text-indigo-600', 'text-green-600', 'text-orange-600', 'text-purple-600'];
                     const bgColors = ['bg-indigo-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100'];
@@ -998,15 +1127,15 @@ function SystemAdminDashboardContent() {
                     const total = Object.values(dashboardData.sessions.sessionsByDevice).reduce((a, b) => a + b, 0);
                     const percentage = Math.round((count / total) * 100);
                     return (
-                      <div key={device} className="text-center p-3 rounded-lg bg-gray-50 hover:shadow-md transition-shadow">
-                        <div className={`w-10 h-10 mx-auto mb-2 rounded-full ${bgColors[index] || 'bg-gray-100'} flex items-center justify-center`}>
-                          <Icon className={`w-5 h-5 ${colors[index] || 'text-gray-600'}`} />
+                      <div key={device} className="text-center p-2 rounded-lg bg-gray-50 hover:shadow-sm transition-shadow">
+                        <div className={`w-8 h-8 mx-auto mb-1 rounded-full ${bgColors[index] || 'bg-gray-100'} flex items-center justify-center`}>
+                          <Icon className={`w-4 h-4 ${colors[index] || 'text-gray-600'}`} />
                         </div>
-                        <p className={`text-lg font-bold ${colors[index] || 'text-gray-600'}`}>
+                        <p className={`text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
                           {count.toLocaleString('pt-BR')}
                         </p>
-                        <p className="text-sm font-medium text-gray-700">{device}</p>
-                        <p className="text-xs text-gray-500">{percentage}% do total</p>
+                        <p className="text-xs font-medium text-gray-700">{device}</p>
+                        <p className="text-xs text-gray-500">{percentage}%</p>
                       </div>
                     );
                   })}
@@ -1016,15 +1145,15 @@ function SystemAdminDashboardContent() {
 
             {/* Tendências de Sessões por Hora */}
             {sessionTrendsData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-purple-500" />
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-purple-500" />
                     Atividade por Hora
                   </h3>
-                  <div className="text-sm text-gray-500">Hoje</div>
+                  <div className="text-xs text-gray-500">Hoje</div>
                 </div>
-                <div className="h-56">
+                <div className="h-40">
                   <Line 
                     data={sessionTrendsData}
                     options={{
@@ -1038,6 +1167,7 @@ function SystemAdminDashboardContent() {
                           beginAtZero: true,
                           grid: { color: 'rgba(0, 0, 0, 0.05)' },
                           ticks: {
+                            font: { size: 9 },
                             callback: function(value) {
                               return (value as number).toLocaleString('pt-BR');
                             }
@@ -1047,6 +1177,7 @@ function SystemAdminDashboardContent() {
                           grid: { display: false },
                           ticks: { 
                             maxTicksLimit: 12,
+                            font: { size: 9 },
                             callback: function(value, index) {
                               return index % 2 === 0 ? this.getLabelForValue(value as number) : '';
                             }
@@ -1067,20 +1198,20 @@ function SystemAdminDashboardContent() {
 
           {/* Distribuição por Instituições */}
           {institutionDistributionData && (
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-slate-500" />
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-semibold flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-slate-500" />
                   Distribuição por Instituições
                 </h3>
                 <button 
                   onClick={() => router.push('/admin/institutions')}
-                  className="text-sm text-primary hover:text-primary-dark"
+                  className="text-xs text-primary hover:text-primary-dark"
                 >
                   Ver todas
                 </button>
               </div>
-              <div className="h-64">
+              <div className="h-48">
                 <Bar 
                   data={institutionDistributionData}
                   options={{
@@ -1094,6 +1225,7 @@ function SystemAdminDashboardContent() {
                         beginAtZero: true,
                         grid: { color: 'rgba(0, 0, 0, 0.05)' },
                         ticks: {
+                          font: { size: 9 },
                           callback: function(value) {
                             return (value as number).toLocaleString('pt-BR');
                           }
@@ -1103,7 +1235,7 @@ function SystemAdminDashboardContent() {
                         grid: { display: false },
                         ticks: { 
                           maxRotation: 45,
-                          font: { size: 10 }
+                          font: { size: 9 }
                         }
                       }
                     }
@@ -1116,38 +1248,40 @@ function SystemAdminDashboardContent() {
         </div>
 
         {/* Coluna Lateral - Resumos e Ações */}
-        <div className="xl:col-span-4 space-y-6">
+        <div className="xl:col-span-4 space-y-4">
           
           {/* Resumo de Instituições */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-slate-500" />
-                Instituições Ativas
-              </h3>
+          <ContentCard
+            title="Instituições Ativas"
+            subtitle={`${institutions.length} instituições cadastradas`}
+            icon={Building2}
+            iconColor="bg-slate-500"
+            actions={
               <button 
                 onClick={() => router.push('/admin/institutions')}
-                className="text-sm text-primary hover:text-primary-dark"
+                className="text-xs text-primary hover:text-primary-dark font-medium"
               >
-                Ver todas
+                Ver todas →
               </button>
-            </div>
-            <div className="space-y-3">
+            }
+          >
+            <div className="space-y-2">
               {institutions.slice(0, 4).map((institution) => (
-                <div
+                <SimpleCard
                   key={institution.id}
-                  className="p-3 bg-gray-50 rounded-lg hover:shadow-sm transition-shadow"
+                  className="p-2 hover:shadow-sm transition-shadow"
+                  hover={false}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-sm">{institution.name}</h4>
-                        <span className="px-2 py-1 text-xs rounded-full bg-accent-green/10 text-accent-green">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium text-xs text-gray-800">{institution.name}</h4>
+                        <span className="px-1.5 py-0.5 text-xs rounded-full bg-green-100 text-green-700 font-medium">
                           Ativa
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-600">
-                        <span>{institution.type}</span>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className="font-medium">{institution.type}</span>
                         {institution.schools_count && (
                           <>
                             <span>•</span>
@@ -1163,67 +1297,76 @@ function SystemAdminDashboardContent() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </SimpleCard>
               ))}
             </div>
-          </div>
+          </ContentCard>
 
           {/* Métricas de Engajamento */}
           {engagementMetrics && (
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Activity className="w-5 h-5 text-green-500" />
-                Engajamento dos Usuários
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Taxa de Retenção:</span>
-                  <span className="font-semibold text-green-600">{engagementMetrics.retentionRate}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Tempo Médio de Sessão:</span>
-                  <span className="font-semibold">{engagementMetrics.averageSessionDuration}min</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Taxa de Rejeição:</span>
-                  <span className="font-semibold text-orange-600">{engagementMetrics.bounceRate}%</span>
+            <ContentCard
+              title="Engajamento dos Usuários"
+              subtitle="Métricas de atividade e retenção"
+              icon={Activity}
+              iconColor="bg-green-500"
+            >
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-2">
+                  <SimpleCard className="p-2" hover={false}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Taxa de Retenção:</span>
+                      <span className="font-bold text-green-600 text-sm">{engagementMetrics.retentionRate}%</span>
+                    </div>
+                  </SimpleCard>
+                  <SimpleCard className="p-2" hover={false}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Tempo Médio de Sessão:</span>
+                      <span className="font-bold text-blue-600 text-sm">{engagementMetrics.averageSessionDuration}min</span>
+                    </div>
+                  </SimpleCard>
+                  <SimpleCard className="p-2" hover={false}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Taxa de Rejeição:</span>
+                      <span className="font-bold text-orange-600 text-sm">{engagementMetrics.bounceRate}%</span>
+                    </div>
+                  </SimpleCard>
                 </div>
                 <div className="mt-4">
-                  <p className="text-sm text-gray-600 mb-2">Funcionalidades Mais Usadas:</p>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">Funcionalidades Mais Usadas:</p>
                   <div className="space-y-2">
                     {engagementMetrics.topFeatures.slice(0, 3).map((feature: any, index: number) => (
-                      <div key={feature.name} className="flex justify-between items-center">
-                        <span className="text-xs text-gray-700">{feature.name}</span>
+                      <div key={feature.name} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                        <span className="text-xs font-medium text-gray-700">{feature.name}</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 bg-gray-200 rounded-full">
+                          <div className="w-16 h-1.5 bg-gray-200 rounded-full">
                             <div 
-                              className="h-2 bg-blue-500 rounded-full" 
+                              className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300" 
                               style={{ width: `${feature.usage}%` }}
                             ></div>
                           </div>
-                          <span className="text-xs font-medium">{feature.usage}%</span>
+                          <span className="text-xs font-bold text-blue-600 min-w-[25px]">{feature.usage}%</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
-            </div>
+            </ContentCard>
           )}
 
           {/* Status AWS Resumido */}
           {(dashboardData?.infrastructure?.aws || awsStats) && (
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Cloud className="w-5 h-5 text-orange-500" />
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+                <Cloud className="w-4 h-4 text-orange-500" />
                 Infraestrutura AWS
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {dashboardData?.infrastructure?.aws ? (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Uptime:</span>
-                      <span className={`font-semibold ${
+                      <span className="text-xs text-gray-600">Uptime:</span>
+                      <span className={`font-semibold text-sm ${
                         dashboardData.infrastructure.aws.performance.uptime >= 99.9 ? 'text-accent-green' : 
                         dashboardData.infrastructure.aws.performance.uptime >= 99.5 ? 'text-accent-yellow' : 'text-red-600'
                       }`}>
@@ -1231,16 +1374,16 @@ function SystemAdminDashboardContent() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Serviços Ativos:</span>
-                      <span className="font-semibold">{dashboardData.infrastructure.aws.services.length}</span>
+                      <span className="text-xs text-gray-600">Serviços Ativos:</span>
+                      <span className="font-semibold text-sm">{dashboardData.infrastructure.aws.services.length}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Tempo Resposta:</span>
-                      <span className="font-semibold">{dashboardData.infrastructure.aws.performance.responseTime}ms</span>
+                      <span className="text-xs text-gray-600">Tempo Resposta:</span>
+                      <span className="font-semibold text-sm">{dashboardData.infrastructure.aws.performance.responseTime}ms</span>
                     </div>
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="mt-3 p-2 bg-gray-50 rounded-lg">
                       <p className="text-xs text-gray-600 mb-1">Custo Mensal:</p>
-                      <p className="text-lg font-bold text-gray-800">
+                      <p className="text-base font-bold text-gray-800">
                         ${dashboardData.infrastructure.aws.costs.monthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
@@ -1248,8 +1391,8 @@ function SystemAdminDashboardContent() {
                 ) : awsStats && (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Taxa de Sucesso:</span>
-                      <span className={`font-semibold ${
+                      <span className="text-xs text-gray-600">Taxa de Sucesso:</span>
+                      <span className={`font-semibold text-sm ${
                         awsStats.success_rate >= 95 ? 'text-accent-green' : 
                         awsStats.success_rate >= 80 ? 'text-accent-yellow' : 'text-red-600'
                       }`}>
@@ -1257,15 +1400,15 @@ function SystemAdminDashboardContent() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Conexões:</span>
-                      <span className="font-semibold">{awsStats.total_connections}</span>
+                      <span className="text-xs text-gray-600">Conexões:</span>
+                      <span className="font-semibold text-sm">{awsStats.total_connections}</span>
                     </div>
                   </>
                 )}
               </div>
               <button 
                 onClick={() => router.push('/admin/aws')}
-                className="w-full mt-4 text-center text-sm text-primary hover:text-primary-dark"
+                className="w-full mt-3 text-center text-xs text-primary hover:text-primary-dark"
               >
                 Configurar AWS
               </button>
@@ -1273,33 +1416,33 @@ function SystemAdminDashboardContent() {
           )}
 
           {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Ações do Sistema</h3>
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+            <h3 className="text-base font-semibold mb-3">Ações do Sistema</h3>
             <div className="space-y-2">
               <button 
                 onClick={() => router.push('/admin/institutions')}
-                className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                className="w-full px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 <Building2 className="w-4 h-4" />
                 Gerenciar Instituições
               </button>
               <button 
                 onClick={() => router.push('/admin/users')}
-                className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                className="w-full px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 <Users className="w-4 h-4" />
                 Gerenciar Usuários
               </button>
               <button 
                 onClick={() => router.push('/admin/security')}
-                className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-3 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 <Lock className="w-4 h-4" />
                 Políticas de Segurança
               </button>
               <button 
                 onClick={() => router.push('/admin/settings')}
-                className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+                className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 <Settings className="w-4 h-4" />
                 Configurações
@@ -1308,35 +1451,35 @@ function SystemAdminDashboardContent() {
           </div>
 
           {/* Links Rápidos */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Acesso Rápido</h3>
-            <div className="space-y-2">
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+            <h3 className="text-base font-semibold mb-3">Acesso Rápido</h3>
+            <div className="space-y-1">
               <button 
                 onClick={() => router.push('/admin/analytics')}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded flex items-center gap-2"
+                className="w-full px-2 py-2 text-left text-xs hover:bg-gray-50 rounded flex items-center gap-2"
               >
-                <BarChart3 className="w-4 h-4 text-primary" />
+                <BarChart3 className="w-3 h-3 text-primary" />
                 Analytics do Sistema
               </button>
               <button 
                 onClick={() => router.push('/admin/logs')}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded flex items-center gap-2"
+                className="w-full px-2 py-2 text-left text-xs hover:bg-gray-50 rounded flex items-center gap-2"
               >
-                <Terminal className="w-4 h-4 text-primary" />
+                <Terminal className="w-3 h-3 text-primary" />
                 Logs do Sistema
               </button>
               <button 
                 onClick={() => router.push('/admin/sessions')}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded flex items-center gap-2"
+                className="w-full px-2 py-2 text-left text-xs hover:bg-gray-50 rounded flex items-center gap-2"
               >
-                <Eye className="w-4 h-4 text-primary" />
+                <Eye className="w-3 h-3 text-primary" />
                 Sessões Ativas
               </button>
               <button 
                 onClick={() => router.push('/portal/reports')}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded flex items-center gap-2"
+                className="w-full px-2 py-2 text-left text-xs hover:bg-gray-50 rounded flex items-center gap-2"
               >
-                <FileText className="w-4 h-4 text-primary" />
+                <FileText className="w-3 h-3 text-primary" />
                 Portal de Relatórios
               </button>
             </div>
@@ -1348,86 +1491,3 @@ function SystemAdminDashboardContent() {
   );
 }
 
-// Componente de Card de Métrica
-interface MetricCardProps {
-  icon: React.ElementType;
-  title: string;
-  value: string | number;
-  subtitle: string;
-  color: string;
-  isRealtime?: boolean;
-  status?: 'healthy' | 'warning' | 'critical';
-}
-
-function MetricCard({ icon: Icon, title, value, subtitle, color, isRealtime, status = 'healthy' }: MetricCardProps) {
-  const getStatusColor = () => {
-    switch (status) {
-      case 'critical': return 'bg-red-500';
-      case 'warning': return 'bg-yellow-500';
-      default: return 'bg-green-500';
-    }
-  };
-
-  const getStatusText = () => {
-    switch (status) {
-      case 'critical': return 'Crítico';
-      case 'warning': return 'Atenção';
-      default: return 'Normal';
-    }
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-6 relative">
-      {/* Indicador de status */}
-      <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${getStatusColor()}`} 
-           title={getStatusText()}></div>
-      
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-lg ${color} bg-opacity-20`}>
-          <Icon className={`w-6 h-6 text-white`} />
-        </div>
-        {isRealtime && (
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-xs text-gray-500">Tempo real</span>
-          </div>
-        )}
-      </div>
-      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800">
-        {value}
-      </p>
-      <p className="text-sm text-gray-600 dark:text-gray-600 font-medium">{title}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{subtitle}</p>
-    </div>
-  );
-}
-
-// Componente de Card de Estatística
-interface StatCardProps {
-  icon: React.ElementType;
-  title: string;
-  value: string | number;
-  subtitle: string;
-  color: string;
-  isRealtime?: boolean;
-}
-
-function StatCard({ icon: Icon, title, value, subtitle, color, isRealtime }: StatCardProps) {
-  return (
-    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-5 h-5 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
-        </div>
-        {isRealtime && (
-          <Activity className="w-3 h-3 text-accent-green animate-pulse" />
-        )}
-      </div>
-      <p className="text-xl font-bold text-gray-700 dark:text-gray-800">
-        {value}
-      </p>
-      <p className="text-sm text-gray-600 dark:text-gray-600">{title}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-500">{subtitle}</p>
-    </div>
-  );
-}

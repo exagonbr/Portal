@@ -16,7 +16,9 @@ export default function AdminSettingsPage() {
     error, 
     saveSettings, 
     testAwsConnection, 
-    testEmailConnection 
+    testEmailConnection,
+    resetSettings,
+    loadSettings
   } = useSystemSettings()
 
   // Estados locais para edição
@@ -26,9 +28,10 @@ export default function AdminSettingsPage() {
   const [testingEmail, setTestingEmail] = useState(false)
   const [awsBuckets, setAwsBuckets] = useState<string[]>([])
   const [notification, setNotification] = useState<{
-    type: 'success' | 'error'
+    type: 'success' | 'error' | 'info' | 'warning'
     message: string
   } | null>(null)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
 
   // Lista de vídeos disponíveis
   const availableVideos = [
@@ -66,10 +69,16 @@ export default function AdminSettingsPage() {
   // Sincronizar configurações carregadas com estado local
   useEffect(() => {
     if (settings) {
-      // Settings já é um objeto plano, então apenas copiamos
       setLocalSettings({ ...settings })
     }
   }, [settings])
+
+  // Mostrar erro se houver
+  useEffect(() => {
+    if (error) {
+      showNotification('error', error)
+    }
+  }, [error])
 
   // Atualizar configuração local
   const updateLocalSetting = (key: string, value: any) => {
@@ -80,7 +89,7 @@ export default function AdminSettingsPage() {
   }
 
   // Mostrar notificação
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
     setNotification({ type, message })
     setTimeout(() => setNotification(null), 5000)
   }
@@ -96,6 +105,31 @@ export default function AdminSettingsPage() {
       }
     } catch (err) {
       showNotification('error', 'Erro ao salvar configurações')
+    }
+  }
+
+  // Recarregar configurações
+  const handleReloadSettings = async () => {
+    try {
+      await loadSettings()
+      showNotification('info', 'Configurações recarregadas!')
+    } catch (err) {
+      showNotification('error', 'Erro ao recarregar configurações')
+    }
+  }
+
+  // Resetar configurações
+  const handleResetSettings = async () => {
+    try {
+      const success = await resetSettings()
+      if (success) {
+        showNotification('success', 'Configurações resetadas para padrão!')
+        setShowResetConfirm(false)
+      } else {
+        showNotification('error', 'Erro ao resetar configurações')
+      }
+    } catch (err) {
+      showNotification('error', 'Erro ao resetar configurações')
     }
   }
 
@@ -176,13 +210,27 @@ export default function AdminSettingsPage() {
             <div className={`p-4 rounded-lg ${
               notification.type === 'success' 
                 ? 'bg-green-100 text-green-700 border border-green-200' 
-                : 'bg-red-100 text-red-700 border border-red-200'
+                : notification.type === 'error'
+                ? 'bg-red-100 text-red-700 border border-red-200'
+                : notification.type === 'warning'
+                ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                : 'bg-blue-100 text-blue-700 border border-blue-200'
             }`}>
-              <div className="flex items-center">
-                <span className="material-symbols-outlined mr-2">
-                  {notification.type === 'success' ? 'check_circle' : 'error'}
-                </span>
-                {notification.message}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="material-symbols-outlined mr-2">
+                    {notification.type === 'success' ? 'check_circle' : 
+                     notification.type === 'error' ? 'error' :
+                     notification.type === 'warning' ? 'warning' : 'info'}
+                  </span>
+                  {notification.message}
+                </div>
+                <button
+                  onClick={() => setNotification(null)}
+                  className="ml-4 text-current opacity-70 hover:opacity-100"
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
               </div>
             </div>
           )}
@@ -195,7 +243,8 @@ export default function AdminSettingsPage() {
                 { id: 'appearance', label: 'Aparência', icon: 'palette' },
                 { id: 'aws', label: 'AWS', icon: 'cloud' },
                 { id: 'email', label: 'Email', icon: 'mail' },
-                { id: 'notifications', label: 'Notificações', icon: 'notifications' }
+                { id: 'notifications', label: 'Notificações', icon: 'notifications' },
+                { id: 'advanced', label: 'Avançado', icon: 'tune' }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -413,6 +462,38 @@ export default function AdminSettingsPage() {
                     />
                   </div>
                 </div>
+
+                {/* Preview do Background */}
+                <div className="p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-medium text-gray-700 mb-2">Preview do Background</h4>
+                  <div 
+                    className="w-full h-32 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden"
+                    style={{
+                      backgroundColor: localSettings.background_type === 'color' 
+                        ? localSettings.main_background 
+                        : localSettings.primary_color,
+                      backgroundImage: localSettings.background_type === 'image' 
+                        ? `url(${localSettings.main_background})` 
+                        : 'none',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  >
+                    {localSettings.background_type === 'video' && localSettings.main_background && (
+                      <video
+                        autoPlay
+                        muted
+                        loop
+                        className="absolute inset-0 w-full h-full object-cover"
+                      >
+                        <source src={localSettings.main_background} type="video/mp4" />
+                      </video>
+                    )}
+                    <div className="relative z-10 text-white font-medium text-sm bg-black/50 px-2 py-1 rounded">
+                      Preview
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -455,7 +536,7 @@ export default function AdminSettingsPage() {
                     Região
                   </label>
                   <select
-                    value={localSettings.aws_region || 'us-east-1'}
+                    value={localSettings.aws_region || 'sa-east-1'}
                     onChange={(e) => updateLocalSetting('aws_region', e.target.value)}
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
                   >
@@ -744,6 +825,95 @@ export default function AdminSettingsPage() {
                       <p>As notificações serão enviadas de acordo com as preferências individuais de cada usuário e as configurações globais definidas aqui.</p>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Configurações Avançadas */}
+          {activeTab === 'advanced' && (
+            <div className="bg-white rounded-lg shadow-md">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-600">Configurações Avançadas</h3>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <span className="material-symbols-outlined text-yellow-600 mr-2">warning</span>
+                    <div className="text-sm text-yellow-700">
+                      <p className="font-medium mb-1">Atenção</p>
+                      <p>As operações nesta seção podem afetar o funcionamento do sistema. Use com cuidado.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                    <div>
+                      <div className="font-medium text-gray-700">Recarregar Configurações</div>
+                      <div className="text-sm text-gray-500">Recarregar configurações do servidor</div>
+                    </div>
+                    <button
+                      onClick={handleReloadSettings}
+                      disabled={loading}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 flex items-center"
+                    >
+                      <span className="material-symbols-outlined mr-2 text-sm">refresh</span>
+                      Recarregar
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div>
+                      <div className="font-medium text-red-700">Resetar Configurações</div>
+                      <div className="text-sm text-red-600">Restaurar todas as configurações para os valores padrão</div>
+                    </div>
+                    <button
+                      onClick={() => setShowResetConfirm(true)}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center"
+                    >
+                      <span className="material-symbols-outlined mr-2 text-sm">restart_alt</span>
+                      Resetar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de Confirmação de Reset */}
+          {showResetConfirm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <div className="flex items-center mb-4">
+                  <span className="material-symbols-outlined text-red-600 mr-2">warning</span>
+                  <h3 className="text-lg font-medium text-gray-900">Confirmar Reset</h3>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  Tem certeza que deseja resetar todas as configurações para os valores padrão? 
+                  Esta ação não pode ser desfeita.
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowResetConfirm(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleResetSettings}
+                    disabled={saving}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Resetando...
+                      </>
+                    ) : (
+                      'Resetar'
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
