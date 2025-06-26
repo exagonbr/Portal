@@ -315,7 +315,15 @@ const nextConfig = {
       // CORREÇÃO: Plugin para melhorar carregamento de chunks
       new webpack.optimize.LimitChunkCountPlugin({
         maxChunks: 50
-      })
+      }),
+      // CORREÇÃO: Plugin para ignorar warnings específicos do Knex
+      new webpack.ContextReplacementPlugin(
+        /knex\/lib\/migrations\/util/,
+        (data) => {
+          delete data.dependencies[0].critical;
+          return data;
+        }
+      )
     );
 
     // CORREÇÃO: Configuração adicional para evitar problemas de factory

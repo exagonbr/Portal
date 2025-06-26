@@ -398,13 +398,16 @@ class ActivityTrackingService {
           user_name: '', // Seria necessário join com tabela users
           activity_count: parseInt(String(user.activity_count))
         })),
-        activity_by_type: activityByType.reduce((acc, item) => {
-          const activityType = item.activity_type as ActivityType;
-          if (activityType in acc) {
-            acc[activityType] = parseInt(String(item.count));
-          }
-          return acc;
-        }, { ...initialActivityByType } as Record<ActivityType, number>),
+        activity_by_type: (() => {
+          const result = { ...initialActivityByType };
+          activityByType.forEach(item => {
+            const activityType = item.activity_type as ActivityType;
+            if (activityType in result) {
+              result[activityType] = parseInt(String(item.count));
+            }
+          });
+          return result;
+        })(),
         activity_by_hour: activityByHour.reduce((acc, item) => {
           acc[item.hour] = parseInt(String(item.count));
           return acc;
