@@ -7,6 +7,8 @@
     "build": "next build --debug",
     "start": "next start",
     "lint": "next lint",
+    "fix:webpack": "node scripts/fix-webpack-hot-reload.js",
+    "dev:clean": "npm run fix:webpack && npm run dev",
     "verify:pwa": "node scripts/verify-pwa.js",
     "test:pwa": "node scripts/test-pwa-features.js",
     "test:redis": "node scripts/test-redis.js",

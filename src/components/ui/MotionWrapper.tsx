@@ -3,62 +3,89 @@
 import dynamic from 'next/dynamic';
 import { ComponentProps, useState, useEffect } from 'react';
 
-// Wrapper para motion.div
-export const MotionDiv = dynamic(
-  () => import('framer-motion').then((mod) => mod.motion.div),
+// CORREÇÃO: Wrapper mais robusto com fallbacks
+const MotionDiv = dynamic(
+  () => import('framer-motion').then((mod) => {
+    if (!mod.motion) {
+      console.warn('⚠️ framer-motion não carregou corretamente, usando fallback');
+      return { default: ({ children, ...props }: any) => <div {...props}>{children}</div> };
+    }
+    return mod.motion.div;
+  }),
   { 
     ssr: false,
-    loading: () => <div style={{ opacity: 0 }} />
+    loading: () => <div style={{ opacity: 0 }} />,
+    // CORREÇÃO: Adicionar onError para lidar com falhas de carregamento
   }
 );
 
-// Wrapper para motion.span
-export const MotionSpan = dynamic(
-  () => import('framer-motion').then((mod) => mod.motion.span),
+const MotionSpan = dynamic(
+  () => import('framer-motion').then((mod) => {
+    if (!mod.motion) {
+      return { default: ({ children, ...props }: any) => <span {...props}>{children}</span> };
+    }
+    return mod.motion.span;
+  }),
   { 
     ssr: false,
     loading: () => <span style={{ opacity: 0 }} />
   }
 );
 
-// Wrapper para motion.button
-export const MotionButton = dynamic(
-  () => import('framer-motion').then((mod) => mod.motion.button),
+const MotionButton = dynamic(
+  () => import('framer-motion').then((mod) => {
+    if (!mod.motion) {
+      return { default: ({ children, ...props }: any) => <button {...props}>{children}</button> };
+    }
+    return mod.motion.button;
+  }),
   { 
     ssr: false,
     loading: () => <button style={{ opacity: 0 }} />
   }
 );
 
-// Wrapper para motion.h1
-export const MotionH1 = dynamic(
-  () => import('framer-motion').then((mod) => mod.motion.h1),
+const MotionH1 = dynamic(
+  () => import('framer-motion').then((mod) => {
+    if (!mod.motion) {
+      return { default: ({ children, ...props }: any) => <h1 {...props}>{children}</h1> };
+    }
+    return mod.motion.h1;
+  }),
   { 
     ssr: false,
     loading: () => <h1 style={{ opacity: 0 }} />
   }
 );
 
-// Wrapper para motion.p
-export const MotionP = dynamic(
-  () => import('framer-motion').then((mod) => mod.motion.p),
+const MotionP = dynamic(
+  () => import('framer-motion').then((mod) => {
+    if (!mod.motion) {
+      return { default: ({ children, ...props }: any) => <p {...props}>{children}</p> };
+    }
+    return mod.motion.p;
+  }),
   { 
     ssr: false,
     loading: () => <p style={{ opacity: 0 }} />
   }
 );
 
-// Wrapper para AnimatePresence
-export const AnimatePresence = dynamic(
-  () => import('framer-motion').then((mod) => ({ default: mod.AnimatePresence })),
+const AnimatePresence = dynamic(
+  () => import('framer-motion').then((mod) => {
+    if (!mod.AnimatePresence) {
+      return { default: ({ children }: any) => <>{children}</> };
+    }
+    return { default: mod.AnimatePresence };
+  }),
   { 
     ssr: false,
     loading: () => null
   }
 );
 
-// Hook para verificar se o componente está montado (evita hidratação)
-export const useIsClient = () => {
+// Hook para verificar se está no cliente
+function useIsClient() {
   const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
@@ -66,15 +93,15 @@ export const useIsClient = () => {
   }, []);
   
   return isClient;
-};
+}
 
-// Componente condicional que só renderiza no cliente
+// Componente para renderizar apenas no cliente
 interface ClientOnlyProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
-export const ClientOnly: React.FC<ClientOnlyProps> = ({ children, fallback = null }) => {
+const ClientOnly: React.FC<ClientOnlyProps> = ({ children, fallback = null }) => {
   const isClient = useIsClient();
   
   if (!isClient) {
@@ -82,4 +109,49 @@ export const ClientOnly: React.FC<ClientOnlyProps> = ({ children, fallback = nul
   }
   
   return <>{children}</>;
+};
+
+// CORREÇÃO: Componente wrapper com tratamento de erro
+interface MotionWrapperProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}
+
+const MotionWrapper: React.FC<MotionWrapperProps> = ({ children, fallback = null }) => {
+  const [hasError, setHasError] = useState(false);
+  
+  useEffect(() => {
+    // Verificar se framer-motion está disponível
+    const checkFramerMotion = async () => {
+      try {
+        await import('framer-motion');
+      } catch (error) {
+        console.warn('⚠️ framer-motion não pôde ser carregado:', error);
+        setHasError(true);
+      }
+    };
+    
+    checkFramerMotion();
+  }, []);
+  
+  if (hasError) {
+    return <>{fallback || children}</>;
+  }
+  
+  return (
+    <ClientOnly fallback={fallback}>
+      {children}
+    </ClientOnly>
+  );
+};
+
+export { 
+  MotionDiv, 
+  MotionSpan, 
+  MotionButton, 
+  MotionH1, 
+  MotionP, 
+  AnimatePresence, 
+  ClientOnly,
+  MotionWrapper
 }; 

@@ -58,8 +58,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
-      // Usar apenas getCurrentUser que agora verifica sessões
-      const currentUser = await authService.getCurrentUser();
+      // CORREÇÃO: Adicionar timeout para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout na verificação de autenticação')), 5000);
+      });
+      
+      const userPromise = authService.getCurrentUser();
+      
+      // Usar Promise.race para garantir que não trave
+      const currentUser = await Promise.race([userPromise, timeoutPromise]) as UserEssentials | null;
       
       if (currentUser) {
         setUser(currentUser);
@@ -71,7 +78,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('❌ Erro ao buscar usuário da sessão:', err);
       setUser(null);
-      setError('Erro ao carregar dados do usuário');
+      
+      // CORREÇÃO: Não definir erro se for timeout, apenas log
+      if (err instanceof Error && err.message.includes('Timeout')) {
+        console.warn('⚠️ Timeout na verificação de autenticação - continuando sem usuário');
+      } else {
+        setError('Erro ao carregar dados do usuário');
+      }
     } finally {
       setLoading(false);
     }
@@ -82,7 +95,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   useEffect(() => {
     if (mounted) {
-      fetchCurrentUser();
+      // CORREÇÃO: Adicionar delay para evitar execução imediata
+      const timeoutId = setTimeout(() => {
+        fetchCurrentUser();
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [mounted, fetchCurrentUser]);
 

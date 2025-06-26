@@ -157,6 +157,33 @@ const nextConfig = {
           }
         ]
       },
+      // CORREÇÃO: Headers específicos para arquivos estáticos
+      {
+        source: '/_next/static/css/:path*',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'text/css'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
+      {
+        source: '/_next/static/chunks/:path*',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
       {
         source: '/:path*',
         headers: [
@@ -208,7 +235,7 @@ const nextConfig = {
     ];
   },
   
-  webpack: (config, { isServer, webpack }) => {
+  webpack: (config, { isServer, webpack, dev }) => {
     // Configuração básica para arquivos PDF
     config.module.rules.push({
       test: /\.(pdf)$/i,
@@ -220,50 +247,77 @@ const nextConfig = {
 
     // CORREÇÃO: Configuração mais robusta para evitar problemas de factory
     if (!isServer) {
-      // Configuração mais conservadora para splitChunks
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          minSize: 20000,
-          maxSize: 250000,
-          cacheGroups: {
-            default: {
-              minChunks: 2,
-              priority: -20,
-              reuseExistingChunk: true,
-            },
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              priority: -10,
-              chunks: 'all',
-              enforce: true,
-            },
-            // Separar React e Next.js em chunk próprio
-            react: {
-              test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
-              name: 'react',
-              priority: 10,
-              chunks: 'all',
-              enforce: true,
+      // CORREÇÃO: Configuração específica para desenvolvimento
+      if (dev) {
+        // Configuração simplificada para desenvolvimento
+        config.optimization = {
+          ...config.optimization,
+          splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+              default: {
+                minChunks: 2,
+                priority: -20,
+                reuseExistingChunk: true,
+              },
+              vendor: {
+                test: /[\\/]node_modules[\\/]/,
+                name: 'vendors',
+                priority: -10,
+                chunks: 'all',
+              },
             },
           },
-        },
-      };
+        };
+      } else {
+        // Configuração mais conservadora para produção
+        config.optimization = {
+          ...config.optimization,
+          splitChunks: {
+            chunks: 'all',
+            minSize: 20000,
+            maxSize: 250000,
+            cacheGroups: {
+              default: {
+                minChunks: 2,
+                priority: -20,
+                reuseExistingChunk: true,
+              },
+              vendor: {
+                test: /[\\/]node_modules[\\/]/,
+                name: 'vendors',
+                priority: -10,
+                chunks: 'all',
+                enforce: true,
+              },
+              // Separar React e Next.js em chunk próprio
+              react: {
+                test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
+                name: 'react',
+                priority: 10,
+                chunks: 'all',
+                enforce: true,
+              },
+            },
+          },
+        };
+      }
 
-      // Configuração de output mais robusta
+      // CORREÇÃO: Configuração de output mais robusta
       config.output = {
         ...config.output,
         crossOriginLoading: 'anonymous',
         chunkLoadTimeout: 60000, // Aumentar timeout para 60 segundos
         // CORREÇÃO: Configuração mais específica para evitar problemas de factory
-        chunkFilename: isDev 
+        chunkFilename: dev 
           ? 'static/chunks/[name].js' 
           : 'static/chunks/[name].[contenthash:8].js',
         // Adicionar configuração para melhor handling de erros
         globalObject: 'this',
         publicPath: '/_next/',
+        // CORREÇÃO: Adicionar configuração para HMR
+        hotUpdateChunkFilename: dev ? 'static/webpack/[id].[fullhash].hot-update.js' : undefined,
+        hotUpdateMainFilename: dev ? 'static/webpack/[fullhash].hot-update.json' : undefined,
       };
 
       // CORREÇÃO: Adicionar configuração para resolver problemas de módulos
@@ -272,6 +326,19 @@ const nextConfig = {
         symlinks: false,
         modules: ['node_modules'],
       };
+
+      // CORREÇÃO: Configuração específica para HMR em desenvolvimento
+      if (dev) {
+        config.devtool = 'eval-cheap-module-source-map';
+        
+        // Configuração para melhor HMR
+        config.optimization.runtimeChunk = 'single';
+        
+        // CORREÇÃO: Plugin para corrigir problemas de HMR
+        config.plugins.push(
+          new webpack.HotModuleReplacementPlugin()
+        );
+      }
     }
 
     // Configurações para servidor
@@ -314,7 +381,7 @@ const nextConfig = {
       }),
       // CORREÇÃO: Plugin para melhorar carregamento de chunks
       new webpack.optimize.LimitChunkCountPlugin({
-        maxChunks: 50
+        maxChunks: dev ? 20 : 50
       }),
       // CORREÇÃO: Plugin para ignorar warnings específicos do Knex
       new webpack.ContextReplacementPlugin(
