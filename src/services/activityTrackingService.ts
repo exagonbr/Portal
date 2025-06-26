@@ -408,14 +408,20 @@ class ActivityTrackingService {
           });
           return result;
         })(),
-        activity_by_hour: activityByHour.reduce((acc, item) => {
-          acc[item.hour] = parseInt(String(item.count));
-          return acc;
-        }, {} as Record<string, number>),
-        activity_by_day: activityByDay.reduce((acc, item) => {
-          acc[item.day] = parseInt(String(item.count));
-          return acc;
-        }, {} as Record<string, number>)
+        activity_by_hour: (() => {
+          const result: Record<string, number> = {};
+          activityByHour.forEach(item => {
+            result[String(item.hour)] = parseInt(String(item.count));
+          });
+          return result;
+        })(),
+        activity_by_day: (() => {
+          const result: Record<string, number> = {};
+          activityByDay.forEach(item => {
+            result[String(item.day)] = parseInt(String(item.count));
+          });
+          return result;
+        })()
       }
     } catch (error) {
       console.error('❌ Erro ao obter estatísticas de atividade:', error)
