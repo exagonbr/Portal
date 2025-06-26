@@ -83,6 +83,25 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
       return;
     }
 
+    // Verificar se acabou de ocorrer uma atualização do PWA
+    const wasUpdating = localStorage.getItem('pwa-updating') === 'true';
+    if (wasUpdating) {
+      // Limpar flag de atualização
+      localStorage.removeItem('pwa-updating');
+      // Não mostrar o prompt por 10 segundos após uma atualização
+      setTimeout(() => {
+        // Verificar novamente se não deve mostrar
+        const stillNeverShow = localStorage.getItem('pwa-prompt-never-show') === 'true';
+        if (!stillNeverShow && !isInstalled) {
+          setIsVisible(true);
+          setHasInteracted(false);
+        }
+      }, 10000);
+      setIsVisible(false);
+      setHasInteracted(true);
+      return;
+    }
+
     // Listen for the beforeinstallprompt event (só funciona em HTTPS)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -205,6 +224,8 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
   };
 
   const handleNeverShowAgain = () => {
+    console.log('PWA: handleNeverShowAgain called');
+    
     // Limpar timer quando usuário escolhe não exibir novamente
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -216,6 +237,8 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     setTimeLeft(0);
     localStorage.setItem('pwa-prompt-interacted', 'true');
     localStorage.setItem('pwa-prompt-never-show', 'true');
+    
+    console.log('PWA: Never show again set to:', localStorage.getItem('pwa-prompt-never-show'));
   };
 
   const formatTime = (seconds: number) => {
@@ -268,8 +291,14 @@ export function PWAInstallPrompt({ registration }: PWAInstallPromptProps) {
     }
   };
 
-  // Não mostrar se já está instalado ou se o usuário já fechou o prompt
-  if (isInstalled || (!isVisible && hasInteracted)) {
+  // Não mostrar se já está instalado ou se o usuário escolheu "nunca mostrar"
+  if (isInstalled) {
+    return null;
+  }
+
+  // Verificar se o usuário escolheu "Não exibir novamente"
+  const neverShowAgain = localStorage.getItem('pwa-prompt-never-show') === 'true';
+  if (neverShowAgain) {
     return null;
   }
 

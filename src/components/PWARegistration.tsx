@@ -111,6 +111,14 @@ export function PWARegistration() {
     setUpdateProgress(0);
 
     try {
+      // Preservar configurações importantes do localStorage antes da atualização
+      const pwaInstalled = localStorage.getItem('pwa-installed');
+      const pwaPromptNeverShow = localStorage.getItem('pwa-prompt-never-show');
+      const pwaPromptInteracted = localStorage.getItem('pwa-prompt-interacted');
+      
+      // Marcar que uma atualização está em progresso
+      localStorage.setItem('pwa-updating', 'true');
+      
       // Simular progresso da atualização
       const progressInterval = setInterval(() => {
         setUpdateProgress(prev => {
@@ -127,6 +135,11 @@ export function PWARegistration() {
       // Completar progresso
       setUpdateProgress(100);
       
+      // Restaurar configurações importantes após a atualização
+      if (pwaInstalled) localStorage.setItem('pwa-installed', pwaInstalled);
+      if (pwaPromptNeverShow) localStorage.setItem('pwa-prompt-never-show', pwaPromptNeverShow);
+      if (pwaPromptInteracted) localStorage.setItem('pwa-prompt-interacted', pwaPromptInteracted);
+      
       // Aguardar um pouco para mostrar 100% antes de recarregar
       setTimeout(() => {
         window.location.reload();
@@ -136,6 +149,8 @@ export function PWARegistration() {
       console.error('Failed to update service worker:', error);
       setIsUpdating(false);
       setUpdateProgress(0);
+      // Remover flag de atualização em caso de erro
+      localStorage.removeItem('pwa-updating');
     }
   };
 
@@ -164,7 +179,7 @@ export function PWARegistration() {
 
       {/* Atualização automática com visual elegante */}
       {(isUpdateAvailable || isUpdating) && (
-        <div className="fixed bottom-20 right-4 z-50 max-w-sm">
+        <div className="fixed bottom-20 right-4 z-[60] max-w-sm">
           <div className={`
             relative bg-gradient-to-r from-blue-500 via-indigo-600 to-blue-500 
             text-white rounded-2xl shadow-2xl overflow-hidden
