@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AppProviders } from '@/providers/AppProviders';
 import ClientLayoutWrapper from '@/components/ClientLayoutWrapper';
+// Importar o handler de erros de chunk (auto-inicializa)
+import '@/utils/chunk-error-handler';
 
 const inter = Inter({ subsets: ['latin'] });
 

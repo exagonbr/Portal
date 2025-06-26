@@ -218,13 +218,15 @@ const nextConfig = {
       }
     });
 
-    // CORREÇÃO: Simplificar configuração de chunks para evitar originalFactory undefined
+    // CORREÇÃO: Configuração mais robusta para evitar problemas de factory
     if (!isServer) {
-      // Configuração mais simples e estável para splitChunks
+      // Configuração mais conservadora para splitChunks
       config.optimization = {
         ...config.optimization,
         splitChunks: {
           chunks: 'all',
+          minSize: 20000,
+          maxSize: 250000,
           cacheGroups: {
             default: {
               minChunks: 2,
@@ -236,20 +238,39 @@ const nextConfig = {
               name: 'vendors',
               priority: -10,
               chunks: 'all',
+              enforce: true,
+            },
+            // Separar React e Next.js em chunk próprio
+            react: {
+              test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
+              name: 'react',
+              priority: 10,
+              chunks: 'all',
+              enforce: true,
             },
           },
         },
       };
 
-      // Configuração de output mais segura
+      // Configuração de output mais robusta
       config.output = {
         ...config.output,
         crossOriginLoading: 'anonymous',
-        chunkLoadTimeout: 30000, // 30 segundos
-        // CORREÇÃO: Adicionar configuração para evitar problemas de factory
+        chunkLoadTimeout: 60000, // Aumentar timeout para 60 segundos
+        // CORREÇÃO: Configuração mais específica para evitar problemas de factory
         chunkFilename: isDev 
           ? 'static/chunks/[name].js' 
-          : 'static/chunks/[name].[contenthash].js',
+          : 'static/chunks/[name].[contenthash:8].js',
+        // Adicionar configuração para melhor handling de erros
+        globalObject: 'this',
+        publicPath: '/_next/',
+      };
+
+      // CORREÇÃO: Adicionar configuração para resolver problemas de módulos
+      config.resolve = {
+        ...config.resolve,
+        symlinks: false,
+        modules: ['node_modules'],
       };
     }
 
@@ -285,13 +306,25 @@ const nextConfig = {
       };
     }
 
-    // Plugins para ignorar módulos problemáticos
+    // Plugins para ignorar módulos problemáticos e melhorar carregamento
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^(cardinal|encoding|pg-cloudflare)$/,
         contextRegExp: /./,
+      }),
+      // CORREÇÃO: Plugin para melhorar carregamento de chunks
+      new webpack.optimize.LimitChunkCountPlugin({
+        maxChunks: 50
       })
     );
+
+    // CORREÇÃO: Configuração adicional para evitar problemas de factory
+    if (!isServer) {
+      config.experiments = {
+        ...config.experiments,
+        topLevelAwait: true,
+      };
+    }
 
     // Regra para cloudflare:sockets
     config.module.rules.push({

@@ -399,9 +399,12 @@ class ActivityTrackingService {
           activity_count: parseInt(String(user.activity_count))
         })),
         activity_by_type: activityByType.reduce((acc, item) => {
-          acc[item.activity_type as ActivityType] = parseInt(String(item.count));
+          const activityType = item.activity_type as ActivityType;
+          if (activityType in acc) {
+            acc[activityType] = parseInt(String(item.count));
+          }
           return acc;
-        }, initialActivityByType),
+        }, { ...initialActivityByType } as Record<ActivityType, number>),
         activity_by_hour: activityByHour.reduce((acc, item) => {
           acc[item.hour] = parseInt(String(item.count));
           return acc;
