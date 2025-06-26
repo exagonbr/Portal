@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Search, Edit, FileVideo, HelpCircle, Trash2, Play, Clock } from 'lucide-react';
 
 interface TvShow {
@@ -28,6 +28,7 @@ interface Video {
   episode_number: number;
   order_in_module: number;
   tv_show_id: number;
+  episode_code?: string;
 }
 
 interface ModuleStructure {
@@ -46,10 +47,22 @@ export default function TvShowManagePage() {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
-  // Carregar TV Shows
-  const fetchTvShows = async (page = 1, search = '') => {
+  // Refs para controle de requisições
+  const fetchingRef = useRef(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Carregar TV Shows com controle de duplicação
+  const fetchTvShows = useCallback(async (page = 1, search = '') => {
+    // Evitar múltiplas requisições simultâneas
+    if (fetchingRef.current) {
+      console.log('⚠️ fetchTvShows já está executando, ignorando chamada duplicada');
+      return;
+    }
+
     try {
+      fetchingRef.current = true;
       setLoading(true);
+      
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '12',
@@ -58,9 +71,14 @@ export default function TvShowManagePage() {
 
       const response = await fetch(`/api/tv-shows?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache',
         }
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
       
@@ -68,50 +86,89 @@ export default function TvShowManagePage() {
         setTvShows(data.data.tvShows || []);
         setTotalPages(data.data.totalPages || 1);
         setCurrentPage(data.data.page || 1);
+      } else {
+        console.error('API retornou erro:', data.message);
+        setTvShows([]);
       }
     } catch (error) {
       console.error('Erro ao carregar TV Shows:', error);
       setTvShows([]);
     } finally {
       setLoading(false);
+      fetchingRef.current = false;
     }
-  };
+  }, []);
 
   // Carregar estrutura de módulos
-  const fetchModules = async (tvShowId: number) => {
+  const fetchModules = useCallback(async (tvShowId: number) => {
     try {
       const response = await fetch(`/api/tv-shows/${tvShowId}/modules`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache',
         }
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
       
       if (data.success) {
         setModules(data.data || {});
+      } else {
+        console.error('API retornou erro:', data.message);
+        setModules({});
       }
     } catch (error) {
       console.error('Erro ao carregar módulos:', error);
       setModules({});
     }
-  };
-
-  useEffect(() => {
-    fetchTvShows();
   }, []);
 
+  // Efeito inicial - carregar apenas uma vez
   useEffect(() => {
-    const delayedSearch = setTimeout(() => {
+    let mounted = true;
+    
+    const loadInitialData = async () => {
+      if (mounted) {
+        await fetchTvShows();
+      }
+    };
+
+    loadInitialData();
+
+    return () => {
+      mounted = false;
+    };
+  }, []); // Dependência vazia - executa apenas uma vez
+
+  // Efeito para busca com debounce otimizado
+  useEffect(() => {
+    // Limpar timeout anterior
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Definir novo timeout
+    searchTimeoutRef.current = setTimeout(() => {
       if (searchTerm !== '') {
         fetchTvShows(1, searchTerm);
       } else {
-        fetchTvShows(1);
+        // Só recarregar se não estiver na primeira página
+        if (currentPage !== 1 || tvShows.length === 0) {
+          fetchTvShows(1);
+        }
       }
-    }, 500);
+    }, 800); // Aumentado de 500ms para 800ms
 
-    return () => clearTimeout(delayedSearch);
-  }, [searchTerm]);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm, fetchTvShows]); // Removido currentPage e tvShows das dependências
 
   const handleSelectTvShow = async (tvShow: TvShow) => {
     setSelectedTvShow(tvShow);
@@ -139,6 +196,17 @@ export default function TvShowManagePage() {
     ];
     return colors[moduleNumber % colors.length];
   };
+
+  // Handlers otimizados
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1);
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    fetchTvShows(page, searchTerm);
+  }, [fetchTvShows, searchTerm]);
 
   if (loading) {
     return (
@@ -285,7 +353,7 @@ export default function TvShowManagePage() {
             type="text"
             placeholder="Buscar coleções..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
@@ -320,23 +388,22 @@ export default function TvShowManagePage() {
               </div>
 
               <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 text-sm">
+                  <span className="flex items-center">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {tvShow.total_load || '0h 0m'}
+                  </span>
+                  <span className="flex items-center">
+                    <Play className="w-4 h-4 mr-1" />
+                    {tvShow.vote_average || 0}/10
+                  </span>
+                </div>
                 <button
                   onClick={() => handleSelectTvShow(tvShow)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
                 >
-                  <Play className="w-4 h-4" />
-                  Ver Vídeos
+                  Ver Detalhes
                 </button>
-                <div className="flex gap-2">
-                  <button className="bg-gray-100 text-gray-700 px-3 py-2 rounded hover:bg-gray-200 flex items-center gap-1">
-                    <FileVideo className="w-4 h-4" />
-                    Arquivos
-                  </button>
-                  <button className="bg-gray-100 text-gray-700 px-3 py-2 rounded hover:bg-gray-200 flex items-center gap-1">
-                    <HelpCircle className="w-4 h-4" />
-                    Quiz
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -346,24 +413,20 @@ export default function TvShowManagePage() {
       {/* Paginação */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-8">
-          <div className="flex gap-2">
-            <button
-              onClick={() => fetchTvShows(currentPage - 1, searchTerm)}
-              disabled={currentPage <= 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Anterior
-            </button>
-            <span className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-              {currentPage} de {totalPages}
-            </span>
-            <button
-              onClick={() => fetchTvShows(currentPage + 1, searchTerm)}
-              disabled={currentPage >= totalPages}
-              className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Próximo
-            </button>
+          <div className="flex space-x-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-4 py-2 rounded ${
+                  currentPage === page
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -372,9 +435,7 @@ export default function TvShowManagePage() {
         <div className="text-center py-12">
           <FileVideo className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma coleção encontrada</h3>
-          <p className="text-gray-600 mb-4">
-            {searchTerm ? 'Tente alterar os termos de busca' : 'Comece criando sua primeira coleção'}
-          </p>
+          <p className="text-gray-600 mb-4">Comece criando sua primeira coleção de vídeos</p>
           <button
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"

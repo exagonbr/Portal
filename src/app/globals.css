@@ -631,3 +631,43 @@
     transform: translateY(0);
   }
 }
+
+/* Animações para PWA */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-12deg);
+  }
+}
+
+@keyframes wave-slow {
+  0%, 100% {
+    transform: translateY(6px) translateX(0px);
+  }
+  50% {
+    transform: translateY(2px) translateX(4px);
+  }
+}
+
+@keyframes wave-fast {
+  0%, 100% {
+    transform: translateY(6px) translateX(8px);
+  }
+  50% {
+    transform: translateY(2px) translateX(12px);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-wave-slow {
+  animation: wave-slow 3s ease-in-out infinite;
+}
+
+.animate-wave-fast {
+  animation: wave-fast 2s ease-in-out infinite;
+}

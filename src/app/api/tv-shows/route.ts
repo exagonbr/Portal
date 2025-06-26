@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../lib/auth-headers';
+import { CORS_HEADERS } from '@/config/cors';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
+
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, {
+    status: 200,
+    headers: CORS_HEADERS,
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,12 +30,24 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    return NextResponse.json(data, { status: response.status });
+    return new NextResponse(JSON.stringify(data), {
+      status: response.status,
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
   } catch (error) {
     console.error('Erro ao buscar TV Shows:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
+    return new NextResponse(
+      JSON.stringify({ success: false, message: 'Erro interno do servidor' }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...CORS_HEADERS,
+        },
+      }
     );
   }
 }
@@ -44,12 +64,24 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
 
-    return NextResponse.json(data, { status: response.status });
+    return new NextResponse(JSON.stringify(data), {
+      status: response.status,
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    });
   } catch (error) {
     console.error('Erro ao criar TV Show:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
+    return new NextResponse(
+      JSON.stringify({ success: false, message: 'Erro interno do servidor' }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...CORS_HEADERS,
+        },
+      }
     );
   }
 } 

@@ -23,56 +23,59 @@ class LoopPreventionSystem {
     consecutiveErrors: new Map()
   };
 
-  private readonly MAX_REQUESTS_PER_SECOND = 20;
-  private readonly MAX_REQUESTS_PER_MINUTE = 200;
-  private readonly BLOCK_DURATION_MS = 15000; // 15 segundos
-  private readonly ERROR_THRESHOLD = 8;
+  private readonly MAX_REQUESTS_PER_SECOND = 50;
+  private readonly MAX_REQUESTS_PER_MINUTE = 500;
+  private readonly BLOCK_DURATION_MS = 5000;
+  private readonly ERROR_THRESHOLD = 15;
+  private readonly DISABLED = true;
 
   constructor() {
-    this.setupInterceptor();
-    this.startCleanupInterval();
+    if (!this.DISABLED) {
+      this.setupInterceptor();
+      this.startCleanupInterval();
+    } else {
+      console.log('🚫 Sistema de Prevenção de Loops DESABILITADO');
+    }
   }
 
-  /**
-   * Configura interceptador global de fetch
-   */
   private setupInterceptor(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || this.DISABLED) return;
 
     const originalFetch = window.fetch;
     
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       const url = this.getUrlString(input);
       const method = init?.method || 'GET';
-      
-      // Pular verificação para URLs administrativas
-      if (this.shouldIgnoreUrl(url)) {
+
+      if (this.DISABLED) {
         return originalFetch(input, init);
       }
-      
-      // Verificar se a URL está bloqueada
+
       if (this.isBlocked(url)) {
-        console.error(`🚫 Requisição bloqueada por prevenção de loop: ${url}`);
+        const blockedUntil = this.detector.blockedUntil.get(url);
+        const remainingTime = blockedUntil ? Math.ceil((blockedUntil - Date.now()) / 1000) : 0;
+        
+        console.warn(`🚫 Requisição bloqueada: ${url} (${remainingTime}s restantes)`);
         
         return new Response(
           JSON.stringify({
             success: false,
-            message: 'Requisição bloqueada temporariamente para prevenir loop. Aguarde 30 segundos.',
-            isLoop: true,
-            blockedUntil: this.detector.blockedUntil.get(url)
+            message: `Requisição temporariamente bloqueada. Aguarde ${remainingTime} segundos.`,
+            isBlocked: true,
+            remainingTime
           }),
           {
             status: 429,
             statusText: 'Too Many Requests',
             headers: {
               'Content-Type': 'application/json',
-              'X-Loop-Prevention': 'true'
+              'X-Blocked-Until': blockedUntil?.toString() || '',
+              'Retry-After': remainingTime.toString()
             }
           }
         );
       }
 
-      // Verificar se há loop em andamento
       if (this.detectLoop(url, method)) {
         this.blockUrl(url);
         console.error(`🚨 Loop detectado e bloqueado: ${url}`);
@@ -94,17 +97,14 @@ class LoopPreventionSystem {
         );
       }
 
-      // Registrar requisição
       this.recordRequest(url, method);
 
       try {
         const response = await originalFetch(input, init);
         
-        // Verificar resposta para detectar loops
         if (response.status === 429) {
           this.handleRateLimitError(url);
         } else if (response.ok) {
-          // Limpar contador de erros consecutivos em caso de sucesso
           this.detector.consecutiveErrors.delete(url);
         }
         
@@ -118,20 +118,13 @@ class LoopPreventionSystem {
     console.log('✅ Sistema de Prevenção de Loops ativado');
   }
 
-  /**
-   * Obtém URL como string
-   */
   private getUrlString(input: RequestInfo | URL): string {
     if (typeof input === 'string') return input;
     if (input instanceof URL) return input.toString();
     return input.url;
   }
 
-  /**
-   * Verifica se URL está bloqueada
-   */
   private isBlocked(url: string): boolean {
-    // Nunca bloquear URLs administrativas
     if (this.shouldIgnoreUrl(url)) {
       return false;
     }
@@ -148,9 +141,6 @@ class LoopPreventionSystem {
     return true;
   }
 
-  /**
-   * Verifica se uma URL deve ser ignorada pelo sistema de prevenção
-   */
   private shouldIgnoreUrl(url: string): boolean {
     const ignorePatterns = [
       '/api/cache/',
@@ -159,32 +149,32 @@ class LoopPreventionSystem {
       '/api/admin/',
       '/api/users/stats',
       '/api/institutions',
-      '/api/users?', // Parâmetros de query para listagem de usuários
+      '/api/users?',
+      '/api/tv-shows',
+      '/api/auth/validate',
+      '/api/auth/me',
     ];
 
     return ignorePatterns.some(pattern => url.includes(pattern));
   }
 
-  /**
-   * Detecta padrões de loop
-   */
   private detectLoop(url: string, method: string): boolean {
-    // Ignorar URLs administrativas
+    if (this.DISABLED) {
+      return false;
+    }
+
     if (this.shouldIgnoreUrl(url)) {
       return false;
     }
 
     const now = Date.now();
     
-    // Limpar requisições antigas (mais de 1 minuto)
     this.detector.requests = this.detector.requests.filter(
       req => now - req.timestamp < 60000
     );
 
-    // Filtrar requisições para a mesma URL
     const sameUrlRequests = this.detector.requests.filter(req => req.url === url);
     
-    // Verificar requisições no último segundo
     const lastSecondRequests = sameUrlRequests.filter(
       req => now - req.timestamp < 1000
     );
@@ -194,26 +184,23 @@ class LoopPreventionSystem {
       return true;
     }
 
-    // Verificar requisições no último minuto
     if (sameUrlRequests.length >= this.MAX_REQUESTS_PER_MINUTE) {
       console.warn(`⚠️ Muitas requisições por minuto: ${sameUrlRequests.length} para ${url}`);
       return true;
     }
 
-    // Verificar erros consecutivos
     const consecutiveErrors = this.detector.consecutiveErrors.get(url) || 0;
     if (consecutiveErrors >= this.ERROR_THRESHOLD) {
       console.warn(`⚠️ Muitos erros consecutivos: ${consecutiveErrors} para ${url}`);
       return true;
     }
 
-    // Verificar padrão específico de login
     if (url.includes('/api/auth/login')) {
       const loginRequests = this.detector.requests.filter(
         req => req.url.includes('/api/auth/login') && now - req.timestamp < 5000
       );
       
-      if (loginRequests.length >= 3) {
+      if (loginRequests.length >= 5) {
         console.warn(`⚠️ Muitas tentativas de login: ${loginRequests.length} em 5 segundos`);
         return true;
       }
@@ -222,9 +209,6 @@ class LoopPreventionSystem {
     return false;
   }
 
-  /**
-   * Registra uma requisição
-   */
   private recordRequest(url: string, method: string): void {
     this.detector.requests.push({
       url,
@@ -232,28 +216,20 @@ class LoopPreventionSystem {
       timestamp: Date.now()
     });
 
-    // Manter apenas as últimas 100 requisições
-    if (this.detector.requests.length > 100) {
-      this.detector.requests = this.detector.requests.slice(-100);
+    if (this.detector.requests.length > 200) {
+      this.detector.requests = this.detector.requests.slice(-200);
     }
   }
 
-  /**
-   * Bloqueia uma URL
-   */
   private blockUrl(url: string): void {
     const blockUntil = Date.now() + this.BLOCK_DURATION_MS;
     this.detector.blockedUntil.set(url, blockUntil);
     
-    // Limpar dados de autenticação se for login
     if (url.includes('/api/auth/login')) {
       this.clearAuthData();
     }
   }
 
-  /**
-   * Trata erro de rate limit
-   */
   private handleRateLimitError(url: string): void {
     const errors = (this.detector.consecutiveErrors.get(url) || 0) + 1;
     this.detector.consecutiveErrors.set(url, errors);
@@ -264,97 +240,67 @@ class LoopPreventionSystem {
     }
   }
 
-  /**
-   * Trata erro de requisição
-   */
   private handleRequestError(url: string): void {
     const errors = (this.detector.consecutiveErrors.get(url) || 0) + 1;
     this.detector.consecutiveErrors.set(url, errors);
+    
+    if (errors >= this.ERROR_THRESHOLD) {
+      this.blockUrl(url);
+      console.error(`🚫 URL bloqueada após ${errors} erros consecutivos: ${url}`);
+    }
   }
 
-  /**
-   * Limpa dados de autenticação
-   */
   private clearAuthData(): void {
     try {
-      // Limpar localStorage
-      const authKeys = [
-        'auth_token',
-        'refresh_token',
-        'user_data',
-        'session_id',
-        'last_login_attempt',
-        'login_attempt_count'
-      ];
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('authData');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('authData');
       
-      authKeys.forEach(key => localStorage.removeItem(key));
+      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       
-      // Limpar sessionStorage
-      sessionStorage.clear();
-      
-      // Limpar cookies
-      document.cookie.split(';').forEach(cookie => {
-        const eqPos = cookie.indexOf('=');
-        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-      });
-      
-      console.log('🧹 Dados de autenticação limpos para prevenir loop');
+      console.log('🧹 Dados de autenticação limpos devido ao loop detectado');
     } catch (error) {
       console.error('Erro ao limpar dados de autenticação:', error);
     }
   }
 
-  /**
-   * Inicia intervalo de limpeza
-   */
   private startCleanupInterval(): void {
-    // Limpar dados antigos a cada minuto
     setInterval(() => {
       const now = Date.now();
+      const oneHourAgo = now - (60 * 60 * 1000);
       
-      // Limpar URLs bloqueadas expiradas
-      for (const [url, blockedUntil] of Array.from(this.detector.blockedUntil.entries())) {
+      this.detector.requests = this.detector.requests.filter(
+        req => req.timestamp > oneHourAgo
+      );
+      
+      for (const [url, blockedUntil] of this.detector.blockedUntil.entries()) {
         if (now >= blockedUntil) {
           this.detector.blockedUntil.delete(url);
         }
       }
       
-      // Limpar requisições antigas
-      this.detector.requests = this.detector.requests.filter(
-        req => now - req.timestamp < 300000 // 5 minutos
-      );
+      this.detector.consecutiveErrors.clear();
       
-      // Limpar contadores de erro antigos
-      if (this.detector.consecutiveErrors.size > 50) {
-        this.detector.consecutiveErrors.clear();
-      }
-    }, 60000); // A cada minuto
+    }, 5 * 60 * 1000);
   }
 
-  /**
-   * Força reset do sistema (para emergências)
-   */
   public forceReset(): void {
     this.detector.requests = [];
     this.detector.blockedUntil.clear();
     this.detector.consecutiveErrors.clear();
-    this.clearAuthData();
+    
     console.log('🔄 Sistema de prevenção de loops resetado');
   }
 
-  /**
-   * Limpa apenas os bloqueios sem afetar dados de autenticação
-   */
   public clearBlocks(): void {
     this.detector.blockedUntil.clear();
-    this.detector.consecutiveErrors.clear();
-    console.log('🔄 Bloqueios de URLs limpos');
+    console.log('🔓 Bloqueios de URL removidos');
   }
 
-  /**
-   * Obtém estatísticas do sistema
-   */
   public getStats(): {
     totalRequests: number;
     blockedUrls: number;
@@ -365,6 +311,14 @@ class LoopPreventionSystem {
       blockedUrls: this.detector.blockedUntil.size,
       urlsWithErrors: this.detector.consecutiveErrors.size
     };
+  }
+
+  public setEnabled(enabled: boolean): void {
+    (this as any).DISABLED = !enabled;
+    if (enabled && typeof window !== 'undefined') {
+      this.setupInterceptor();
+      this.startCleanupInterval();
+    }
   }
 }
 

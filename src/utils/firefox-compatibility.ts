@@ -59,89 +59,82 @@ export function initializeFirefoxCompatibility() {
   // 1. Interceptar e corrigir fetch para evitar NS_BINDING_ABORT e NetworkError
   const originalFetch = window.fetch;
   window.fetch = async function(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-    const requestInit = init || {};
+    const requestInit = { ...init } || {};
     
-    // Verificar se é uma requisição para API interna - não interceptar
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    // Extrair URL da requisição
+    const url = typeof input === 'string' ? input : 
+               input instanceof URL ? input.href : 
+               (input as Request).url;
+    
+    // Para requisições de API internas, aplicar apenas correções mínimas do Firefox
     if (url && (url.includes('/api/') || url.startsWith('/api'))) {
-      console.log('🌐 Requisição API interna detectada, não interceptando:', url);
-      return originalFetch(input, requestInit);
+      if (isFirefox() && requestInit.signal) {
+        console.log('🦊 Firefox: Removendo AbortController para API interna');
+        delete requestInit.signal;
+      }
+      
+      // Preservar credentials originais para APIs internas
+      const apiInit: RequestInit = {
+        ...requestInit,
+        mode: requestInit.mode || 'cors',
+        credentials: requestInit.credentials || 'include',
+      };
+      
+      return originalFetch(input, apiInit);
     }
     
-    // Para Firefox, remover AbortController se existir apenas para requisições externas
+    // Para requisições externas, aplicar configurações mais restritivas
     if (isFirefox() && requestInit.signal) {
-      console.log('🦊 Firefox: Removendo AbortController para evitar NS_BINDING_ABORTED');
+      console.log('🦊 Firefox: Removendo AbortController para requisição externa');
       delete requestInit.signal;
     }
     
-    // Configurações mais conservadoras para evitar NetworkError
+    // Configurar headers de forma mais inteligente
     const headers = new Headers(requestInit.headers || {});
     if (!headers.has('Accept')) {
       headers.set('Accept', 'application/json, text/plain, */*');
     }
-    if (!headers.has('Cache-Control')) {
-      headers.set('Cache-Control', 'no-cache');
-    }
     
-    // Configurações específicas para evitar NetworkError
+    // Configurações otimizadas para requisições externas
     const finalInit: RequestInit = {
       ...requestInit,
       headers,
       mode: 'cors',
-      credentials: 'same-origin', // Mudança: usar same-origin em vez de omit
+      credentials: 'same-origin',
       cache: 'no-cache',
       redirect: 'follow',
       referrerPolicy: 'no-referrer-when-downgrade'
     };
     
     try {
-      console.log('🌐 Fazendo requisição fetch:', input, finalInit);
-      const response = await originalFetch(input, finalInit);
-      console.log('✅ Resposta fetch recebida:', response.status, response.statusText);
-      return response;
+      return await originalFetch(input, finalInit);
     } catch (error: any) {
-      console.error('❌ Erro no fetch interceptado:', error);
-      
-      // Tratar erros específicos
-      if (isFirefox() && error.message.includes('NS_BINDING_ABORTED')) {
-        console.warn('🦊 Firefox: Erro NS_BINDING_ABORTED interceptado e ignorado');
-        return new Response(JSON.stringify({ error: 'Request aborted by Firefox' }), {
+      // Tratamento de erros específicos do Firefox
+      if (isFirefox() && error.message?.includes('NS_BINDING_ABORTED')) {
+        console.warn('🦊 Firefox: Erro NS_BINDING_ABORTED interceptado');
+        return new Response(JSON.stringify({ error: 'Request cancelled by browser' }), {
           status: 499,
           statusText: 'Client Closed Request',
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          }
+          headers: { 'Content-Type': 'application/json' }
         });
       }
       
-      // Tratar NetworkError
-      if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
-        console.warn('🌐 NetworkError detectado, tentando com configurações alternativas');
+      // Retry para NetworkError com configurações mais simples
+      if (error.message?.includes('NetworkError')) {
+        console.warn('🌐 NetworkError detectado, tentando configuração alternativa');
         
-        // Tentar novamente com configurações mais simples
         try {
-          const simpleInit: RequestInit = {
+          const retryInit: RequestInit = {
             method: requestInit.method || 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
+            headers: { 'Accept': 'application/json' },
             mode: 'cors',
             credentials: 'omit'
           };
           
-          if (requestInit.body) {
-            simpleInit.body = requestInit.body;
-          }
+          if (requestInit.body) retryInit.body = requestInit.body;
           
-          console.log('🔄 Tentativa com configurações simples:', simpleInit);
-          const retryResponse = await originalFetch(input, simpleInit);
-          console.log('✅ Sucesso na segunda tentativa');
-          return retryResponse;
+          return await originalFetch(input, retryInit);
         } catch (retryError) {
-          console.error('❌ Falha na segunda tentativa:', retryError);
-          // Retornar erro de rede mais amigável
           throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
         }
       }
@@ -188,57 +181,42 @@ export const FirefoxUtils = {
   
   // Criar fetch seguro para Firefox
   safeFetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const requestInit = init || {};
+    const requestInit = { ...init } || {};
     
-    // Configuração específica para Firefox e navegadores problemáticos
-    if (isFirefox()) {
-      // Remover AbortController
+    // Remover AbortController no Firefox para evitar NS_BINDING_ABORTED
+    if (isFirefox() && requestInit.signal) {
       delete requestInit.signal;
-      console.log('🦊 Firefox: Usando configurações seguras para fetch');
     }
     
-    // Configurações mais conservadoras para todos os navegadores
+    // Configurações seguras para todos os navegadores
     const safeInit: RequestInit = {
       ...requestInit,
-      mode: 'cors',
-      credentials: 'same-origin',
+      mode: requestInit.mode || 'cors',
+      credentials: requestInit.credentials || 'same-origin',
       cache: 'no-cache',
       redirect: 'follow',
       referrerPolicy: 'no-referrer-when-downgrade'
     };
     
     try {
-      console.log('🛡️ SafeFetch: fazendo requisição segura:', input);
-      const response = await fetch(input, safeInit);
-      console.log('✅ SafeFetch: resposta recebida:', response.status);
-      return response;
+      return await fetch(input, safeInit);
     } catch (error: any) {
-      console.error('❌ SafeFetch: erro na requisição:', error);
-      
-      // Se for NetworkError, tentar com configurações ainda mais simples
-      if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
-        console.warn('🔄 SafeFetch: tentando com configurações mínimas');
+      // Tratamento específico para NetworkError
+      if (error.message?.includes('NetworkError')) {
+        console.warn('🔄 SafeFetch: NetworkError detectado, tentando configuração mínima');
         
         try {
           const minimalInit: RequestInit = {
             method: requestInit.method || 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
+            headers: { 'Accept': 'application/json' },
             mode: 'cors',
             credentials: 'omit'
           };
           
-          if (requestInit.body) {
-            minimalInit.body = requestInit.body;
-          }
+          if (requestInit.body) minimalInit.body = requestInit.body;
           
-          const retryResponse = await fetch(input, minimalInit);
-          console.log('✅ SafeFetch: sucesso na segunda tentativa');
-          return retryResponse;
+          return await fetch(input, minimalInit);
         } catch (retryError) {
-          console.error('❌ SafeFetch: falha na segunda tentativa');
           throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
         }
       }
@@ -297,23 +275,22 @@ export function setupGlobalErrorHandling() {
   });
 }
 
-// Auto-inicializar apenas se for Firefox e estiver no browser
-if (typeof window !== 'undefined' && isFirefox()) {
-  console.log('🦊 Firefox detectado, inicializando compatibilidade...');
+// Auto-inicializar quando o módulo for carregado no browser
+if (typeof window !== 'undefined') {
+  const init = () => {
+    if (isFirefox()) {
+      console.log('🦊 Firefox detectado, inicializando compatibilidade');
+      initializeFirefoxCompatibility();
+    }
+    setupGlobalErrorHandling();
+  };
   
   // Aguardar o DOM estar pronto
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeFirefoxCompatibility();
-      setupGlobalErrorHandling();
-    });
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    initializeFirefoxCompatibility();
-    setupGlobalErrorHandling();
+    init();
   }
-} else if (typeof window !== 'undefined') {
-  console.log('🌐 Navegador não-Firefox detectado, apenas configurando tratamento de erros...');
-  setupGlobalErrorHandling();
 }
 
 /**
@@ -335,11 +312,6 @@ export const makeFirefoxRequest = async <T>(
   } = options;
 
   const isFF = isFirefox();
-  
-  if (isFF) {
-    console.log('🦊 Firefox detectado, usando configurações otimizadas');
-  }
-
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -358,20 +330,14 @@ export const makeFirefoxRequest = async <T>(
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      return data;
+      return await response.json();
 
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Erro desconhecido');
       
-      // Log específico para Firefox
-      if (isFF) {
-        console.warn(`🦊 Firefox: Erro na tentativa ${attempt}/${retries}:`, lastError.message);
-        
-        // Detecta erros específicos do Firefox
-        if (lastError.message.includes('NS_BINDING_ABORTED')) {
-          console.warn('🦊 Firefox: Detectado erro NS_BINDING_ABORTED');
-        }
+      // Para erros específicos do Firefox, não fazer retry
+      if (isFF && lastError.message.includes('NS_BINDING_ABORTED')) {
+        throw new Error('Conexão interrompida pelo navegador');
       }
 
       // Se não é a última tentativa, aguarda antes de tentar novamente
@@ -426,31 +392,9 @@ export const firefoxErrorHandler = (error: unknown): Error => {
 };
 
 /**
- * Configuração global para Firefox
+ * Alias para initializeFirefoxCompatibility para compatibilidade com código existente
  */
-export const initFirefoxCompatibility = () => {
-  if (!isFirefox()) return;
-
-  console.log('🦊 Inicializando compatibilidade com Firefox');
-
-  // Intercepta erros globais relacionados ao Firefox
-  window.addEventListener('error', (event) => {
-    if (event.error?.message?.includes('NS_BINDING_ABORTED')) {
-      console.warn('🦊 Firefox: Interceptado erro NS_BINDING_ABORTED global');
-      event.preventDefault();
-    }
-  });
-
-  // Intercepta promises rejeitadas
-  window.addEventListener('unhandledrejection', (event) => {
-    if (event.reason?.message?.includes('NS_BINDING_ABORTED')) {
-      console.warn('🦊 Firefox: Interceptado promise rejection NS_BINDING_ABORTED');
-      event.preventDefault();
-    }
-  });
-
-  console.log('✅ Compatibilidade com Firefox inicializada');
-};
+export const initFirefoxCompatibility = initializeFirefoxCompatibility;
 
 /**
  * Alias para FirefoxUtils.safeFetch para compatibilidade com código existente

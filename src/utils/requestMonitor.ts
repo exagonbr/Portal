@@ -7,13 +7,31 @@ interface RequestInfo {
 
 class RequestMonitor {
   private requests: Map<string, RequestInfo[]> = new Map();
-  private readonly MAX_REQUESTS_PER_WINDOW = 10;
+  private readonly MAX_REQUESTS_PER_WINDOW = 50; // Aumentado de 10 para 50
   private readonly TIME_WINDOW = 30000; // 30 segundos
+  private readonly DISABLED = true; // Temporariamente desabilitado
 
   /**
    * Verifica se uma requisição deve ser bloqueada por excesso de chamadas
    */
   shouldBlockRequest(url: string, method: string = 'GET'): boolean {
+    // Temporariamente desabilitado para evitar falsos positivos
+    if (this.DISABLED) {
+      return false;
+    }
+
+    // Ignorar URLs específicas que são seguras
+    const safeUrls = [
+      '/api/tv-shows',
+      '/api/auth/validate',
+      '/api/users/me',
+      '/api/cache',
+    ];
+
+    if (safeUrls.some(safeUrl => url.includes(safeUrl))) {
+      return false;
+    }
+
     const key = `${method}:${url}`;
     const now = Date.now();
     
@@ -88,6 +106,13 @@ class RequestMonitor {
     });
     
     return stats;
+  }
+
+  /**
+   * Habilita ou desabilita o monitor
+   */
+  setEnabled(enabled: boolean): void {
+    (this as any).DISABLED = !enabled;
   }
 }
 
