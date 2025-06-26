@@ -166,14 +166,14 @@ export interface AnalyticsData {
 }
 
 class SystemAdminService {
-  private baseUrl = '/api';
+  private baseUrl = '';
 
   /**
    * Obtém dados reais de usuários por função do backend
    */
   async getUsersByRole(): Promise<Record<string, number>> {
     try {
-      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`${this.baseUrl}/user/stats`);
+      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`users/stats`);
       
       if (response.success && response.data) {
         return response.data.data?.users_by_role || {};
@@ -212,7 +212,7 @@ class SystemAdminService {
     };
   }> {
     try {
-      const response = await apiClient.get<{ data: any }>(`${this.baseUrl}/dashboard/analytics`);
+      const response = await apiClient.get<{ data: any }>(`dashboard/analytics`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -240,7 +240,7 @@ class SystemAdminService {
     topFeatures: Array<{ name: string; usage: number }>;
   }> {
     try {
-      const response = await apiClient.get<{ data: any }>(`${this.baseUrl}/dashboard/engagement`);
+      const response = await apiClient.get<{ data: any }>(`dashboard/engagement`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -260,7 +260,7 @@ class SystemAdminService {
    */
   async getSystemDashboard(): Promise<SystemDashboardData> {
     try {
-      const response = await apiClient.get<{ data: SystemDashboardData }>(`${this.baseUrl}/dashboard/system`);
+      const response = await apiClient.get<{ data: SystemDashboardData }>(`dashboard/system`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -280,7 +280,7 @@ class SystemAdminService {
    */
   async getRealTimeMetrics(): Promise<RealTimeMetrics> {
     try {
-      const response = await apiClient.get<{ data: RealTimeMetrics }>(`${this.baseUrl}/dashboard/metrics/realtime`);
+      const response = await apiClient.get<{ data: RealTimeMetrics }>(`dashboard/metrics/realtime`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -310,7 +310,7 @@ class SystemAdminService {
    */
   async getSystemHealth(): Promise<SystemHealth> {
     try {
-      const response = await apiClient.get<{ data: SystemHealth }>(`${this.baseUrl}/dashboard/health`);
+      const response = await apiClient.get<{ data: SystemHealth }>(`dashboard/health`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -354,7 +354,7 @@ class SystemAdminService {
    */
   async getAnalyticsData(type: 'users' | 'sessions' | 'activity', period: 'day' | 'week' | 'month' = 'week'): Promise<AnalyticsData> {
     try {
-      const response = await apiClient.get<{ data: AnalyticsData }>(`${this.baseUrl}/dashboard/analytics`, { type, period });
+      const response = await apiClient.get<{ data: AnalyticsData }>(`dashboard/analytics`, { type, period });
       
       if (response.success && response.data) {
         return response.data.data;

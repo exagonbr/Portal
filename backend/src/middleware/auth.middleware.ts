@@ -3,6 +3,32 @@ import jwt from 'jsonwebtoken';
 import { db } from '../database/connection';
 import { AuthTokenPayload } from '../types/express';
 
+// Helper function to check if a string is valid base64
+function isValidBase64(str: string): boolean {
+  try {
+    // Check if the string has valid base64 characters
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(str)) {
+      return false;
+    }
+    // Try to decode and encode back to see if it's valid
+    const decoded = Buffer.from(str, 'base64').toString('utf-8');
+    const encoded = Buffer.from(decoded, 'utf-8').toString('base64');
+    return encoded === str;
+  } catch {
+    return false;
+  }
+}
+
+// Helper function to check if a string contains valid JSON
+function isValidJSON(str: string): boolean {
+  try {
+    JSON.parse(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Helper function to parse cookies from cookie header
 function parseCookies(cookieHeader: string): Record<string, string> {
   const cookies: Record<string, string> = {};
@@ -35,6 +61,18 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       return;
     }
 
+    // Early validation: check if token is not empty and has reasonable length
+    if (!token || token.length < 10) {
+      res.status(401).json({ error: 'Token too short or empty' });
+      return;
+    }
+
+    // Check for obviously malformed tokens
+    if (token.includes('') || token.includes('\0') || token.includes('\x00')) {
+      res.status(401).json({ error: 'Token contains invalid characters' });
+      return;
+    }
+
     let decoded: AuthTokenPayload;
 
     try {
@@ -43,7 +81,20 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     } catch (jwtError) {
       // If JWT verification fails, try to decode as base64 (fallback tokens)
       try {
+        // Validate base64 format before attempting to decode
+        if (!isValidBase64(token)) {
+          res.status(401).json({ error: 'Token is not valid base64 format' });
+          return;
+        }
+
         const base64Decoded = Buffer.from(token, 'base64').toString('utf-8');
+        
+        // Check if decoded content is valid JSON
+        if (!isValidJSON(base64Decoded)) {
+          res.status(401).json({ error: 'Decoded token is not valid JSON' });
+          return;
+        }
+
         const fallbackData = JSON.parse(base64Decoded);
         
         // Convert fallback data to AuthTokenPayload format
@@ -60,10 +111,19 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
             exp: fallbackData.exp || Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
           };
         } else {
-          throw new Error('Invalid fallback token structure');
+          res.status(401).json({ error: 'Invalid fallback token structure' });
+          return;
         }
       } catch (fallbackError) {
-        console.error('Token validation error:', fallbackError);
+        const jwtErrorMsg = jwtError instanceof Error ? jwtError.message : String(jwtError);
+        const fallbackErrorMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        
+        console.warn('Token validation failed:', { 
+          jwtError: jwtErrorMsg, 
+          fallbackError: fallbackErrorMsg,
+          tokenPreview: token.substring(0, 20) + '...'
+        });
+        
         res.status(401).json({ error: 'Invalid authentication token' });
         return;
       }

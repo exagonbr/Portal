@@ -15,6 +15,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// MIDDLEWARE PRIORITÁRIO: Tratar OPTIONS (preflight) ANTES de qualquer outro middleware
+app.use((req, res, next) => {
+  // Definir headers CORS em TODAS as respostas
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cookie, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'false');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  
+  // Responder imediatamente a requisições OPTIONS
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Content-Length', '0');
+    return res.status(204).end();
+  }
+  
+  next();
+});
+
 // Middlewares de segurança
 app.use(helmet({
   contentSecurityPolicy: {
@@ -27,7 +45,7 @@ app.use(helmet({
   },
 }));
 
-// CORS - Permitir todas as origens (*)
+// CORS - Permitir todas as origens (*) - CONFIGURAÇÃO ABERTA
 app.use(cors({
   origin: '*',
   credentials: false, // Não pode usar credentials com origin: '*'
@@ -40,15 +58,38 @@ app.use(cors({
     'Access-Control-Allow-Headers',
     'Access-Control-Allow-Methods',
     'Accept',
-    'Origin'
+    'Origin',
+    'Cookie',
+    'X-CSRF-Token',
+    'Cache-Control',
+    'Pragma'
   ],
   exposedHeaders: [
     'Access-Control-Allow-Origin',
     'Access-Control-Allow-Headers',
     'Access-Control-Allow-Methods',
-    'X-Response-Time'
-  ]
+    'X-Response-Time',
+    'Set-Cookie'
+  ],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
+
+// Middleware adicional para garantir CORS em todas as respostas
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cookie, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'false');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Content-Length', '0');
+    return res.status(204).end();
+  }
+  
+  next();
+});
 
 // Compressão
 app.use(compression());

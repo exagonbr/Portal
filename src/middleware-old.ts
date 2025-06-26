@@ -550,20 +550,11 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   MiddlewareUtils.addSessionHeaders(response, sessionId, pathname);
   
-  // Aplicar CORS headers
-  const origin = request.headers.get('origin');
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*', 'https://sabercon.com.br', 'https://www.sabercon.com.br', 'https://portal.sabercon.com.br',
-  'https://www.portal.sabercon.com.br', 'http://localhost:3000', 'http://localhost:3001'];
-
-  if (origin && allowedOrigins.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-  } else {
-    response.headers.set('Access-Control-Allow-Origin', '*');
-  }
-  
-  response.headers.set('Access-Control-Allow-Credentials', 'true');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  // Aplicar CORS headers - PERMITIR TODAS AS ORIGENS
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Credentials', 'false'); // Deve ser false com origin: '*'
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie');
   response.headers.set('Access-Control-Max-Age', '86400');
 
   // Adicionar headers de segurança
@@ -576,13 +567,14 @@ export async function middleware(request: NextRequest) {
   // Handle preflight requests
   if (request.method === 'OPTIONS') {
     const preflight = new Response(null, { 
-      status: 200, 
+      status: 204, 
       headers: {
-        'Access-Control-Allow-Origin': origin || '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Max-Age': '86400'
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie',
+        'Access-Control-Allow-Credentials': 'false',
+        'Access-Control-Max-Age': '86400',
+        'Content-Length': '0'
       } 
     });
     return preflight;

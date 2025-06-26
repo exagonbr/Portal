@@ -27,37 +27,10 @@ export function setupMiddlewares(app: express.Application): void {
     xXssProtection: false
   }));
 
-  // CORS - Permitir origens específicas para suportar credenciais
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'https://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://127.0.0.1:3000',
-    'http://localhost:3001',
-    'https://localhost:3001',
-    process.env.FRONTEND_URL,
-    process.env.NEXT_PUBLIC_API_URL
-  ].filter(Boolean);
-
+  // CORS - PERMITIR TODAS AS ORIGENS (*)
   app.use(cors({
-    origin: function (origin, callback) {
-      // Permitir requisições sem origin (ex: mobile apps, Postman)
-      if (!origin) return callback(null, true);
-      
-      // Permitir origens específicas
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      // Para desenvolvimento, permitir localhost em qualquer porta
-      if (process.env.NODE_ENV === 'development' && origin.includes('localhost')) {
-        return callback(null, true);
-      }
-      
-      // Rejeitar outras origens
-      callback(new Error('Não permitido pelo CORS'));
-    },
-    credentials: true, // Permitir credenciais
+    origin: '*', // Permitir todas as origens
+    credentials: false, // Não pode usar credentials com origin: '*'
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type', 
@@ -68,33 +41,37 @@ export function setupMiddlewares(app: express.Application): void {
       'Access-Control-Allow-Methods',
       'Accept',
       'Origin',
-      'Cookie'
+      'Cookie',
+      'X-CSRF-Token',
+      'Cache-Control',
+      'Pragma'
     ],
     exposedHeaders: [
       'Access-Control-Allow-Origin',
       'Access-Control-Allow-Headers',
       'Access-Control-Allow-Methods',
-      'Set-Cookie'
-    ]
+      'Set-Cookie',
+      'X-Response-Time'
+    ],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   }));
 
-  // Middleware adicional para garantir cabeçalhos CORS adequados
+  // Middleware adicional para garantir cabeçalhos CORS adequados em TODAS as respostas
   app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    
-    // Se a origem está na lista permitida ou é desenvolvimento
-    if (origin && (allowedOrigins.includes(origin) || 
-        (process.env.NODE_ENV === 'development' && origin.includes('localhost')))) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    
+    // Sempre permitir todas as origens
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cookie');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cookie, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'false'); // Deve ser false com origin: '*'
+    res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight por 24h
     
+    // Para requisições OPTIONS (preflight), responder imediatamente
     if (req.method === 'OPTIONS') {
-      return res.status(200).end();
+      res.setHeader('Content-Length', '0');
+      return res.status(204).end();
     }
+    
     return next();
   });
 
@@ -111,11 +88,11 @@ export function setupMiddlewares(app: express.Application): void {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-  // Content Security Policy adicional
+  // Content Security Policy simplificado para evitar conflitos
   app.use(function (req, res, next) {
     res.setHeader(
       'Content-Security-Policy',
-      "default-src 'self'; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://images.unsplash.com; script-src 'self' https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/ 'sha256-INJfZVfoUd61ITRFLf63g+S/NJAfswGDl15oK0iXgYM='; style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css; frame-src 'self' https://www.youtube.com https://youtube.com;"
+      "default-src 'self' 'unsafe-inline' 'unsafe-eval' *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src 'self' 'unsafe-inline' *; img-src 'self' data: blob: *; font-src 'self' data: *; connect-src 'self' *; media-src 'self' *; object-src 'none'; base-uri 'self'; form-action 'self' *;"
     );
     next();
   });

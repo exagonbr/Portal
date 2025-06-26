@@ -13,8 +13,30 @@ import {
 // Re-export tipos importantes para garantir disponibilidade
 export { InstitutionType, INSTITUTION_TYPE_LABELS };
 
-// Cores para os tipos
+// Enum para natureza da instituição (público/privado)
+export enum InstitutionNature {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+  MIXED = 'MIXED'
+}
+
+// Labels para natureza da instituição
+export const INSTITUTION_NATURE_LABELS: Record<InstitutionNature, string> = {
+  [InstitutionNature.PUBLIC]: 'Pública',
+  [InstitutionNature.PRIVATE]: 'Privada',
+  [InstitutionNature.MIXED]: 'Mista'
+};
+
+// Cores para os tipos de instituição
 export const INSTITUTION_TYPE_COLORS: Record<InstitutionType, string> = {
+  SCHOOL: '#4CAF50',
+  COLLEGE: '#2196F3', 
+  UNIVERSITY: '#9C27B0',
+  TECH_CENTER: '#FF9800'
+};
+
+// Cores para a natureza da instituição
+export const INSTITUTION_NATURE_COLORS: Record<InstitutionNature, string> = {
   PUBLIC: '#4CAF50',
   PRIVATE: '#2196F3',
   MIXED: '#FF9800'
@@ -26,6 +48,7 @@ export interface Institution extends BaseEntity {
   code: string;
   cnpj?: string;
   type: InstitutionType;
+  nature?: InstitutionNature; // Público, privado ou misto
   description?: string;
   email?: Email;
   phone?: Phone;
@@ -44,6 +67,7 @@ export interface InstitutionDto extends BaseEntityDto {
   code: string;
   cnpj?: string;
   type: InstitutionType;
+  nature?: InstitutionNature; // Público, privado ou misto
   description?: string;
   email?: Email;
   phone?: Phone;
@@ -69,6 +93,7 @@ export interface CreateInstitutionDto {
   code: string;
   cnpj?: string;
   type: InstitutionType;
+  nature?: InstitutionNature; // Público, privado ou misto
   description?: string;
   email?: Email;
   phone?: Phone;
@@ -87,6 +112,7 @@ export interface UpdateInstitutionDto {
   code?: string;
   cnpj?: string;
   type?: InstitutionType;
+  nature?: InstitutionNature; // Público, privado ou misto
   description?: string;
   email?: Email;
   phone?: Phone;
@@ -102,6 +128,7 @@ export interface UpdateInstitutionDto {
 // Interface para filtros de Instituição
 export interface InstitutionFilter extends BaseFilter {
   type?: InstitutionType;
+  nature?: InstitutionNature;
   city?: string;
   state?: string;
   sortBy?: keyof Institution;
@@ -115,6 +142,7 @@ export interface InstitutionStats {
   total_users: number;
   total_courses: number;
   institutions_by_type: Record<InstitutionType, number>;
+  institutions_by_nature: Record<InstitutionNature, number>;
   institutions_by_state: Record<string, number>;
 }
 

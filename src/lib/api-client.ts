@@ -6,11 +6,12 @@
 import { ApiResponse, ApiError } from '@/types/api';
 import { 
   isFirefox, 
-  firefoxFetch, 
+  FirefoxUtils, 
   firefoxErrorHandler, 
   FIREFOX_CONFIG,
-  FirefoxAbortController
+  initializeFirefoxCompatibility
 } from '../utils/firefox-compatibility';
+import { CORS_HEADERS } from '@/config/cors';
 
 // Configuração centralizada
 const API_CONFIG = {
@@ -51,14 +52,21 @@ export class ApiClientError extends Error {
   }
 }
 
+// Inicializar compatibilidade com Firefox
+if (typeof window !== 'undefined') {
+  initializeFirefoxCompatibility();
+}
+
 // Cliente API principal
 class ApiClient {
   private baseURL: string;
+  private timeout: number;
   private isRefreshing = false;
   private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
     this.baseURL = API_CONFIG.baseURL;
+    this.timeout = API_CONFIG.timeout;
   }
 
   /**
@@ -153,8 +161,16 @@ class ApiClient {
    * Constrói URL com parâmetros
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
+    // Remover barra inicial do endpoint para evitar duplicação
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-    const url = new URL(cleanEndpoint, this.baseURL);
+    
+    // Garantir que baseURL termine com /
+    const baseURL = this.baseURL.endsWith('/') ? this.baseURL : this.baseURL + '/';
+    
+    // Construir URL completa
+    const fullURL = baseURL + cleanEndpoint;
+    
+    const url = new URL(fullURL, window.location.origin);
     
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -237,128 +253,98 @@ class ApiClient {
    */
   private async makeRequest<T>(
     endpoint: string,
-    options: RequestOptions = {}
+    options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const {
-      method = 'GET',
-      headers: customHeaders,
-      body,
-      params,
-      timeout = API_CONFIG.timeout,
-      skipAuth = false
-    } = options;
-
+    const url = `${this.baseURL}${endpoint}`;
+    let timeoutId: NodeJS.Timeout | undefined;
+    
     try {
-      const url = this.buildURL(endpoint, params);
-      const headers = this.prepareHeaders(customHeaders, skipAuth);
-
-      // Remove Content-Type para FormData
-      if (body instanceof FormData) {
-        delete headers['Content-Type'];
-      }
-
+      // Configuração específica para CORS e compatibilidade
       const requestOptions: RequestInit = {
-        method,
-        headers,
-        body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
-        credentials: 'include',
+        ...options,
+        mode: 'cors',
+        credentials: 'omit', // Usar 'omit' com CORS '*'
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/plain, */*',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          ...options.headers,
+        },
       };
 
-      // Implementa timeout com compatibilidade Firefox
-      const isFF = isFirefox();
-      let controller: AbortController | FirefoxAbortController;
-      let timeoutId: NodeJS.Timeout | undefined;
-      
-      if (isFF) {
-        // Para Firefox, usar timeout mais longo e sem AbortController
-        console.log('🦊 Firefox detectado, usando configurações otimizadas');
-        controller = new FirefoxAbortController();
-        // Não usar AbortController no Firefox para evitar NS_BINDING_ABORTED
+      // Para Firefox, usar fetch seguro sem AbortController
+      let response: Response;
+      if (isFirefox()) {
+        console.log('🦊 Firefox: Usando fetch seguro');
+        // Remover signal se existir
+        delete requestOptions.signal;
+        response = await FirefoxUtils.safeFetch(url, requestOptions);
       } else {
-        controller = new AbortController();
-        timeoutId = setTimeout(() => controller.abort(), timeout);
+        // Para outros navegadores, usar AbortController com timeout
+        const controller = new AbortController();
+        timeoutId = setTimeout(() => controller.abort(), this.timeout);
+        requestOptions.signal = controller.signal;
+        
+        response = await fetch(url, requestOptions);
       }
 
-      const fetchOptions = {
-        ...requestOptions,
-        ...(isFF ? {} : { signal: controller.signal }), // Não usar signal no Firefox
-      };
-
-      const response = isFF ? 
-        await firefoxFetch(url, fetchOptions) : 
-        await fetch(url, fetchOptions);
-
+      // Limpar timeout se a requisição foi bem-sucedida
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
 
-      // Parse da resposta
-      let responseData: ApiResponse<T>;
-      const contentType = response.headers.get('content-type');
+      // Processar resposta
+      const responseText = await response.text();
+      let data: any;
+
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseError) {
+        console.warn('Resposta não é JSON válido:', responseText);
+        data = { message: responseText };
+      }
+
+      if (!response.ok) {
+        throw {
+          name: 'ApiError',
+          message: data.message || data.error || `HTTP ${response.status}`,
+          status: response.status,
+          details: data
+        } as ApiError;
+      }
+
+      return {
+        success: true,
+        data,
+        message: data.message
+      };
+
+    } catch (error: any) {
+      // Limpar timeout em caso de erro
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      // Tratar erros específicos
+      const processedError = this.processError(error);
       
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await response.json();
-      } else {
-        responseData = {
-          success: response.ok,
-          data: (await response.text()) as any,
-          message: response.ok ? 'Success' : 'Request failed'
+      // Log específico para Firefox
+      if (isFirefox() && FirefoxUtils.isNSBindingAbortError(error)) {
+        console.warn('🦊 Firefox: Erro NS_BINDING_ABORTED tratado');
+        return {
+          success: false,
+          error: 'Request cancelled by browser',
+          message: 'A requisição foi cancelada pelo navegador'
         };
       }
 
-      // Trata erro de autenticação (401) - REFRESH DESABILITADO PARA APRESENTAÇÃO
-      if (response.status === 401 && !skipAuth && !endpoint.includes('/auth/')) {
-        console.log('🔄 ApiClient: Erro 401 detectado, mas refresh automático está DESABILITADO para apresentação');
-        
-        // TODA A LÓGICA DE REFRESH DESABILITADA PARA APRESENTAÇÃO
-        // Apenas continuar sem fazer refresh ou redirecionamento
-        console.log('🔄 ApiClient: Continuando sem refresh para apresentação');
-        
-        // Não fazer nada - apenas continuar
-        // const refreshed = await this.refreshAuthToken();
-        // if (refreshed) {
-        //   return this.makeRequest<T>(endpoint, options);
-        // } else {
-        //   this.clearAuth();
-        //   if (typeof window !== 'undefined') {
-        //     window.location.href = '/login';
-        //   }
-        //   throw new ApiClientError('Sessão expirada. Por favor, faça login novamente.', 401);
-        // }
-      }
-
-      // Verifica outros erros
-      if (!response.ok) {
-        throw new ApiClientError(
-          responseData.message || `HTTP ${response.status}: ${response.statusText}`,
-          response.status,
-          responseData.errors
-        );
-      }
-
-      return responseData;
-    } catch (error) {
-      if (error instanceof ApiClientError) {
-        throw error;
-      }
-
-      // Usar handler específico do Firefox
-      const processedError = firefoxErrorHandler(error);
-
-      if (processedError instanceof Error) {
-        if (processedError.name === 'AbortError' || processedError.message.includes('timeout')) {
-          throw new ApiClientError('Timeout da requisição', 408);
-        }
-        if (processedError.name === 'TypeError' && processedError.message.includes('fetch')) {
-          throw new ApiClientError('Erro de rede ao tentar acessar o recurso', 0);
-        }
-        if (processedError.message.includes('NS_BINDING_ABORTED')) {
-          throw new ApiClientError('Conexão interrompida. Tente novamente.', 0);
-        }
-        throw new ApiClientError(processedError.message, 0);
-      }
-
-      throw new ApiClientError('Erro desconhecido', 0);
+      return {
+        success: false,
+        error: processedError.message,
+        message: processedError.message
+      };
     }
   }
 
@@ -402,6 +388,30 @@ class ApiClient {
       method: 'POST',
       body: formData,
     });
+  }
+
+  private processError(error: any): ApiError {
+    if (error instanceof ApiClientError) {
+      throw error;
+    }
+
+    // Usar handler específico do Firefox
+    const processedError = firefoxErrorHandler(error);
+
+    if (processedError instanceof Error) {
+      if (processedError.name === 'AbortError' || processedError.message.includes('timeout')) {
+        throw new ApiClientError('Timeout da requisição', 408);
+      }
+      if (processedError.name === 'TypeError' && processedError.message.includes('fetch')) {
+        throw new ApiClientError('Erro de rede ao tentar acessar o recurso', 0);
+      }
+      if (processedError.message.includes('NS_BINDING_ABORTED')) {
+        throw new ApiClientError('Conexão interrompida. Tente novamente.', 0);
+      }
+      throw new ApiClientError(processedError.message, 0);
+    }
+
+    throw new ApiClientError('Erro desconhecido', 0);
   }
 }
 

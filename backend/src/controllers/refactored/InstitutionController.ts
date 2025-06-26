@@ -53,7 +53,8 @@ export class InstitutionController extends BaseController {
     }
     
     // O ServiceResult já contém os dados paginados corretamente
-    return this.success(res, result.data!.institution, 'institution retrieved successfully', 200, result.data!.pagination);
+    // O frontend espera que 'data' seja diretamente o array de instituições
+    return this.success(res, result.data!.institution, 'Institutions retrieved successfully', 200, result.data!.pagination);
   });
 
   getById = this.asyncHandler(async (req: Request, res: Response) => {

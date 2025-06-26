@@ -53,7 +53,15 @@ export async function GET(request: NextRequest) {
       console.log('🔓 Acesso público a instituições - retornando dados mock');
       return NextResponse.json({
         success: true,
-        data: mockInstitutions
+        data: mockInstitutions,
+        pagination: {
+          page: 1,
+          limit: mockInstitutions.length,
+          total: mockInstitutions.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        }
       });
     }
     
@@ -83,14 +91,14 @@ export async function GET(request: NextRequest) {
       console.warn('⚠️ Backend falhou, usando dados mock como fallback');
       return NextResponse.json({
         success: true,
-        data: {
-          items: mockInstitutions,
-          pagination: {
-            page: 1,
-            limit: mockInstitutions.length,
-            total: mockInstitutions.length,
-            totalPages: 1
-          }
+        data: mockInstitutions,
+        pagination: {
+          page: 1,
+          limit: mockInstitutions.length,
+          total: mockInstitutions.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
         }
       });
     }
@@ -106,14 +114,14 @@ export async function GET(request: NextRequest) {
       // Retornar dados mock como fallback
       return NextResponse.json({
         success: true,
-        data: {
-          items: mockInstitutions,
-          pagination: {
-            page: 1,
-            limit: mockInstitutions.length,
-            total: mockInstitutions.length,
-            totalPages: 1
-          }
+        data: mockInstitutions,
+        pagination: {
+          page: 1,
+          limit: mockInstitutions.length,
+          total: mockInstitutions.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
         }
       });
     }
@@ -130,14 +138,14 @@ export async function GET(request: NextRequest) {
     console.log('🔧 Usando dados mock como fallback devido ao erro');
     return NextResponse.json({
       success: true,
-      data: {
-        items: mockInstitutions,
-        pagination: {
-          page: 1,
-          limit: mockInstitutions.length,
-          total: mockInstitutions.length,
-          totalPages: 1
-        }
+      data: mockInstitutions,
+      pagination: {
+        page: 1,
+        limit: mockInstitutions.length,
+        total: mockInstitutions.length,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false
       }
     });
   }

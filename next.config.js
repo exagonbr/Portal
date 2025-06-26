@@ -88,10 +88,8 @@ const nextConfig = {
     CUSTOM_KEY: 'my-value',
   },
   
-  // CORREÇÃO: Headers otimizados para evitar redirecionamentos
+  // CORREÇÃO: Headers otimizados para CORS GLOBAL - PERMITIR TODAS AS ORIGENS
   async headers() {
-    const isDev = process.env.NODE_ENV === 'development';
-    
     return [
       {
         source: '/books/:path*',
@@ -99,6 +97,18 @@ const nextConfig = {
           {
             key: 'Content-Type',
             value: 'application/epub+zip'
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie'
           }
         ]
       },
@@ -107,7 +117,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: isDev ? '*' : 'https://portal.sabercon.com.br'
+            value: '*'
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -115,11 +125,15 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token'
+            value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie'
           },
           {
             key: 'Access-Control-Allow-Credentials',
-            value: 'true'
+            value: 'false'
+          },
+          {
+            key: 'Access-Control-Max-Age',
+            value: '86400'
           },
           // CORREÇÃO: Evitar cache de redirecionamentos
           {
@@ -131,6 +145,22 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie'
+          },
+          {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'false'
+          },
           {
             key: 'X-Frame-Options',
             value: 'DENY'
@@ -146,16 +176,16 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: [
-              "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
-              "style-src 'self' 'unsafe-inline' https:",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' data: https:",
-              "connect-src 'self' https: wss:",
-              "media-src 'self' https:",
+              "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob: *",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: *",
+              "style-src 'self' 'unsafe-inline' https: *",
+              "img-src 'self' data: blob: https: *",
+              "font-src 'self' data: https: *",
+              "connect-src 'self' https: wss: *",
+              "media-src 'self' https: *",
               "object-src 'none'",
               "base-uri 'self'",
-              "form-action 'self'"
+              "form-action 'self' *"
             ].join('; ')
           }
         ]

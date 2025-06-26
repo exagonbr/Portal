@@ -4,6 +4,32 @@ import { UserRepository } from '../repositories/UserRepository';
 import { AuthTokenPayload } from '../types/express';
 import { RoleRepository } from '../repositories/RoleRepository';
 
+// Helper function to check if a string is valid base64
+function isValidBase64(str: string): boolean {
+  try {
+    // Check if the string has valid base64 characters
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(str)) {
+      return false;
+    }
+    // Try to decode and encode back to see if it's valid
+    const decoded = Buffer.from(str, 'base64').toString('utf-8');
+    const encoded = Buffer.from(decoded, 'utf-8').toString('base64');
+    return encoded === str;
+  } catch {
+    return false;
+  }
+}
+
+// Helper function to check if a string contains valid JSON
+function isValidJSON(str: string): boolean {
+  try {
+    JSON.parse(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const validateJWT = async (
   req: Request,
   res: Response,
@@ -379,6 +405,22 @@ export const validateJWTSimple = async (
       });
     }
 
+    // Early validation: check if token is not empty and has reasonable length
+    if (!token || token.length < 10) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token muito curto ou vazio'
+      });
+    }
+
+    // Check for obviously malformed tokens
+    if (token.includes('') || token.includes('\0') || token.includes('\x00')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token contém caracteres inválidos'
+      });
+    }
+
     let userAuth: AuthTokenPayload;
 
     try {
@@ -404,7 +446,24 @@ export const validateJWTSimple = async (
     } catch (jwtError) {
       // Se falhar na validação JWT, tenta decodificar como base64 (fallback tokens)
       try {
+        // Validate base64 format before attempting to decode
+        if (!isValidBase64(token)) {
+          return res.status(401).json({
+            success: false,
+            message: 'Token não está em formato base64 válido'
+          });
+        }
+
         const base64Decoded = Buffer.from(token, 'base64').toString('utf-8');
+        
+        // Check if decoded content is valid JSON
+        if (!isValidJSON(base64Decoded)) {
+          return res.status(401).json({
+            success: false,
+            message: 'Token decodificado não é JSON válido'
+          });
+        }
+
         const fallbackData = JSON.parse(base64Decoded);
         
         // Verifica se é uma estrutura válida de token fallback
@@ -429,14 +488,21 @@ export const validateJWTSimple = async (
             exp: fallbackData.exp || Math.floor(Date.now() / 1000) + 3600
           };
         } else {
-          throw new Error('Invalid fallback token structure');
+          return res.status(401).json({
+            success: false,
+            message: 'Estrutura de token fallback inválida'
+          });
         }
       } catch (base64Error) {
-        console.error('Erro na validação JWT simples - ambos JWT e base64 falharam:', { 
-          jwtError: jwtError instanceof Error ? jwtError.message : String(jwtError), 
-          base64Error: base64Error instanceof Error ? base64Error.message : String(base64Error),
-          token: token.substring(0, 20) + '...' 
+        const jwtErrorMsg = jwtError instanceof Error ? jwtError.message : String(jwtError);
+        const base64ErrorMsg = base64Error instanceof Error ? base64Error.message : String(base64Error);
+        
+        console.warn('Token validation failed:', { 
+          jwtError: jwtErrorMsg, 
+          base64Error: base64ErrorMsg,
+          tokenPreview: token.substring(0, 20) + '...'
         });
+        
         return res.status(401).json({
           success: false,
           message: 'Token inválido ou expirado'
@@ -447,10 +513,10 @@ export const validateJWTSimple = async (
     req.user = userAuth;
     next();
   } catch (error) {
-    console.error('Erro na validação JWT simples:', error);
+    console.error('Erro no middleware de validação JWT:', error);
     return res.status(401).json({
       success: false,
-      message: 'Token inválido ou expirado'
+      message: 'Falha na autenticação'
     });
   }
 };

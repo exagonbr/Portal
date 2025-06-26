@@ -3,7 +3,8 @@ import { apiClient, handleApiError } from '@/lib/api-client';
 import { API_CONFIG, TOKEN_KEY, REFRESH_TOKEN_KEY, TOKEN_EXPIRY_KEY } from '@/config/constants';
 import { 
   isFirefox, 
-  firefoxFetch, 
+  FirefoxUtils, 
+  firefoxFetch,
   firefoxErrorHandler, 
   FIREFOX_CONFIG 
 } from '../utils/firefox-compatibility';

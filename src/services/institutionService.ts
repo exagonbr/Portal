@@ -131,27 +131,33 @@ export class InstitutionService {
       }
 
       // O backend retorna: { success: true, data: [...], pagination: {...} }
-      // Verificar se data é um array de instituições
-      if (!Array.isArray(result.data)) {
+      // Verificar se data é um array de instituições ou se está dentro de result.data
+      let institutionsArray: any[] = [];
+      let paginationData = result.pagination;
+
+      if (Array.isArray(result.data)) {
+        // Formato direto: result.data é o array
+        institutionsArray = result.data;
+      } else if (result.data && Array.isArray(result.data.institution)) {
+        // Formato aninhado: result.data.institution é o array (formato atual do backend)
+        institutionsArray = result.data.institution;
+        paginationData = result.data.pagination || result.pagination;
+      } else {
         console.error('❌ Institution array not found in API response:', result.data);
         throw new Error('Array de instituições não encontrado na resposta da API');
       }
 
-      console.log(`✅ Found ${result.data.length} institutions`);
+      console.log(`✅ Found ${institutionsArray.length} institutions`);
 
       // Migrar campos legados se necessário e mapear para a estrutura esperada
       const migratedData: PaginatedResponse<InstitutionDto> = {
-        items: result.data.map((institution: any) => 
+        items: institutionsArray.map((institution: any) => 
           migrateContactFields(institution)
         ),
-        pagination: result.pagination || {
-          page: options.page || 1,
-          limit: options.limit || 10,
-          total: result.data.length,
-          totalPages: Math.ceil(result.data.length / (options.limit || 10)),
-          hasNext: false,
-          hasPrev: false
-        }
+        total: paginationData?.total || institutionsArray.length,
+        page: paginationData?.page || options.page || 1,
+        limit: paginationData?.limit || options.limit || 10,
+        totalPages: paginationData?.totalPages || Math.ceil(institutionsArray.length / (options.limit || 10))
       };
 
       return migratedData;
