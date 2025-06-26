@@ -35,7 +35,6 @@ const nextConfig = {
   output: isDev ? undefined : 'standalone',
   
   // CORREÇÃO: Configuração de proxy mais específica para evitar loops
-  // CORREÇÃO: Configuração de proxy mais específica para evitar loops
   async rewrites() {
     if (process.env.NODE_ENV === 'development') {
       const apiDestination = 'http://localhost:3001/api/:path*';
@@ -210,6 +209,7 @@ const nextConfig = {
   },
   
   webpack: (config, { isServer, webpack }) => {
+    // Configuração básica para arquivos PDF
     config.module.rules.push({
       test: /\.(pdf)$/i,
       type: 'asset/resource',
@@ -218,45 +218,42 @@ const nextConfig = {
       }
     });
 
-    // Configurações específicas para melhorar carregamento de chunks
+    // CORREÇÃO: Simplificar configuração de chunks para evitar originalFactory undefined
     if (!isServer) {
-      // Otimizar divisão de chunks para evitar ChunkLoadError
+      // Configuração mais simples e estável para splitChunks
       config.optimization = {
         ...config.optimization,
         splitChunks: {
-          ...config.optimization.splitChunks,
           chunks: 'all',
           cacheGroups: {
-            ...config.optimization.splitChunks?.cacheGroups,
-            // Criar chunk específico para api-client
-            apiClient: {
-              test: /[\\/]src[\\/]lib[\\/]api-client/,
-              name: 'api-client',
-              chunks: 'all',
-              priority: 20,
-              enforce: true,
+            default: {
+              minChunks: 2,
+              priority: -20,
+              reuseExistingChunk: true,
             },
-            // Chunk para serviços de autenticação
-            authServices: {
-              test: /[\\/]src[\\/]services[\\/]auth/,
-              name: 'auth-services',
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              priority: -10,
               chunks: 'all',
-              priority: 15,
-              enforce: true,
             },
           },
         },
       };
 
-      // Configurar retry automático para chunks falhados
+      // Configuração de output mais segura
       config.output = {
         ...config.output,
         crossOriginLoading: 'anonymous',
-        // Adicionar configuração para retry de chunks
         chunkLoadTimeout: 30000, // 30 segundos
+        // CORREÇÃO: Adicionar configuração para evitar problemas de factory
+        chunkFilename: isDev 
+          ? 'static/chunks/[name].js' 
+          : 'static/chunks/[name].[contenthash].js',
       };
     }
 
+    // Configurações para servidor
     if (isServer) {
       config.externals.push({
         'oracledb': 'commonjs oracledb',
@@ -267,7 +264,7 @@ const nextConfig = {
         'tedious': 'commonjs tedious'
       })
     } else {
-      // No lado do cliente, adicionar fallbacks para módulos de servidor
+      // Fallbacks para cliente
       config.resolve.fallback = {
         ...config.resolve.fallback,
         'oracledb': false,
@@ -279,7 +276,7 @@ const nextConfig = {
         'pg-query-stream': false,
       };
 
-      // Adicionar alias para módulos relacionados ao PostgreSQL no cliente
+      // Alias para módulos problemáticos
       config.resolve.alias = {
         ...config.resolve.alias,
         'pg-cloudflare': false,
@@ -288,7 +285,7 @@ const nextConfig = {
       };
     }
 
-    // Ignorar módulos específicos que causam problemas
+    // Plugins para ignorar módulos problemáticos
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^(cardinal|encoding|pg-cloudflare)$/,
@@ -296,7 +293,7 @@ const nextConfig = {
       })
     );
 
-    // Adicionar plugin para lidar com o esquema cloudflare:sockets
+    // Regra para cloudflare:sockets
     config.module.rules.push({
       test: /cloudflare:sockets/,
       use: 'null-loader',
@@ -304,36 +301,6 @@ const nextConfig = {
     });
 
     return config;
-  },
-  async headers() {
-    return [
-      {
-        source: '/books/:path*',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/epub+zip'
-          }
-        ]
-      },
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*'
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'X-Requested-With, Content-Type, Authorization'
-          }
-        ]
-      }
-    ];
   }
 };
 

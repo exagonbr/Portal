@@ -1,3 +1,5 @@
+'use client';
+
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -13,7 +15,8 @@ import { LoopEmergencyReset } from '@/components/LoopEmergencyReset';
 import { FirefoxCompatibilityInitializer } from '@/components/FirefoxCompatibilityInitializer';
 import ChunkErrorHandler from '@/components/ChunkErrorHandler';
 import HydrationDebugger from '@/components/HydrationDebugger';
-
+import { useEffect } from 'react';
+import { setupChunkErrorHandler } from '@/utils/chunk-retry';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -49,13 +52,15 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    setupChunkErrorHandler();
+  }, []);
+
   return (
     <html lang="pt-BR" className="h-full antialiased">
       <head>

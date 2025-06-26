@@ -11,7 +11,7 @@ export interface ChunkRetryOptions {
 }
 
 /**
- * Verifica se o erro é um ChunkLoadError
+ * Verifica se o erro é um ChunkLoadError ou originalFactory undefined
  */
 export function isChunkLoadError(error: any): boolean {
   return (
@@ -19,12 +19,14 @@ export function isChunkLoadError(error: any): boolean {
     (error.name === 'ChunkLoadError' ||
       error.message?.includes('Loading chunk') ||
       error.message?.includes('ChunkLoadError') ||
+      error.message?.includes('originalFactory is undefined') ||
+      error.message?.includes("can't access property \"call\", originalFactory is undefined") ||
       error.code === 'CHUNK_LOAD_FAILED')
   );
 }
 
 /**
- * Implementa retry para importações dinâmicas com tratamento de ChunkLoadError
+ * CORREÇÃO: Implementa retry mais robusto para importações dinâmicas
  */
 export async function retryDynamicImport<T>(
   importFn: () => Promise<T>,
@@ -42,7 +44,17 @@ export async function retryDynamicImport<T>(
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      // CORREÇÃO: Limpar cache antes de tentar novamente (exceto primeira tentativa)
+      if (attempt > 1) {
+        clearChunkCache();
+      }
+      
       const result = await importFn();
+      
+      // Verificar se o resultado é válido
+      if (!result) {
+        throw new Error('Import returned null or undefined');
+      }
       
       if (attempt > 1 && onSuccess) {
         onSuccess(attempt);
@@ -52,8 +64,15 @@ export async function retryDynamicImport<T>(
     } catch (error) {
       lastError = error as Error;
       
+      // Log do erro para debug
+      console.warn(`🔄 Tentativa ${attempt} falhou:`, {
+        error: lastError.message,
+        stack: lastError.stack?.substring(0, 200)
+      });
+      
       // Se não é um erro de chunk, não vale a pena tentar novamente
       if (!isChunkLoadError(error)) {
+        console.error('❌ Erro não relacionado a chunk loading:', lastError);
         if (onFailure) {
           onFailure(lastError);
         }
@@ -69,12 +88,14 @@ export async function retryDynamicImport<T>(
         onRetry(attempt, lastError);
       }
 
-      // Aguardar antes da próxima tentativa
-      await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+      // Aguardar antes da próxima tentativa com backoff exponencial
+      const delay = retryDelay * Math.pow(2, attempt - 1);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 
   if (lastError) {
+    console.error('❌ Todas as tentativas falharam:', lastError);
     if (onFailure) {
       onFailure(lastError);
     }
@@ -110,19 +131,43 @@ export async function importApiClient() {
 }
 
 /**
- * Limpa o cache de chunks do webpack (se disponível)
+ * CORREÇÃO: Limpa o cache de chunks do webpack de forma mais segura
  */
 export function clearChunkCache(): void {
-  if (typeof window !== 'undefined' && 'webpackChunkName' in window) {
+  if (typeof window !== 'undefined') {
     try {
       // Tentar limpar cache de chunks do webpack
       if ((window as any).__webpack_require__?.cache) {
-        Object.keys((window as any).__webpack_require__.cache).forEach(key => {
-          if (key.includes('api-client') || key.includes('auth')) {
-            delete (window as any).__webpack_require__.cache[key];
+        const cache = (window as any).__webpack_require__.cache;
+        Object.keys(cache).forEach(key => {
+          if (key.includes('api-client') || 
+              key.includes('auth') ||
+              key.includes('BookViewer') ||
+              key.includes('chunk')) {
+            try {
+              delete cache[key];
+            } catch (e) {
+              // Ignorar erros de delete
+            }
           }
         });
         console.log('🧹 Cache de chunks limpo');
+      }
+
+      // CORREÇÃO: Limpar também o cache de módulos se disponível
+      if ((window as any).__webpack_require__?.moduleCache) {
+        const moduleCache = (window as any).__webpack_require__.moduleCache;
+        Object.keys(moduleCache).forEach(key => {
+          if (key.includes('api-client') || 
+              key.includes('auth') ||
+              key.includes('BookViewer')) {
+            try {
+              delete moduleCache[key];
+            } catch (e) {
+              // Ignorar erros de delete
+            }
+          }
+        });
       }
     } catch (error) {
       console.warn('⚠️ Erro ao limpar cache de chunks:', error);
@@ -131,32 +176,57 @@ export function clearChunkCache(): void {
 }
 
 /**
- * Configura listener global para ChunkLoadError
+ * CORREÇÃO: Configura listener global mais robusto para ChunkLoadError
  */
 export function setupChunkErrorHandler(): void {
   if (typeof window !== 'undefined') {
+    // Listener para erros de script/chunk
     window.addEventListener('error', (event) => {
       if (isChunkLoadError(event.error)) {
-        console.warn('🔄 ChunkLoadError detectado, tentando recarregar página...');
+        console.warn('🔄 ChunkLoadError detectado:', event.error.message);
+        
+        // Limpar cache antes de recarregar
+        clearChunkCache();
         
         // Aguardar um pouco antes de recarregar para evitar loop
         setTimeout(() => {
+          console.log('🔄 Recarregando página devido a ChunkLoadError...');
           window.location.reload();
-        }, 1000);
+        }, 1500);
       }
     });
 
     // Listener para unhandled promise rejections
     window.addEventListener('unhandledrejection', (event) => {
       if (isChunkLoadError(event.reason)) {
-        console.warn('🔄 ChunkLoadError em promise rejeitada detectado');
+        console.warn('🔄 ChunkLoadError em promise rejeitada:', event.reason.message);
         event.preventDefault(); // Previne o erro no console
+        
+        // Limpar cache
+        clearChunkCache();
         
         // Tentar recarregar a página como último recurso
         setTimeout(() => {
+          console.log('🔄 Recarregando página devido a promise rejection...');
           window.location.reload();
         }, 2000);
       }
     });
+
+    // CORREÇÃO: Listener adicional para erros de resource loading
+    window.addEventListener('error', (event) => {
+      if (event.target && (event.target as any).tagName === 'SCRIPT') {
+        const script = event.target as HTMLScriptElement;
+        if (script.src && script.src.includes('chunk')) {
+          console.warn('🔄 Erro ao carregar script chunk:', script.src);
+          
+          // Limpar cache e tentar recarregar após um delay
+          clearChunkCache();
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      }
+    }, true);
   }
 } 
