@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../lib/auth-headers';
 import { CORS_HEADERS } from '@/config/cors';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
+import { getInternalApiUrl } from '@/config/env';
 
 export async function OPTIONS(request: NextRequest) {
   return new Response(null, {
@@ -17,7 +16,7 @@ export async function GET(request: NextRequest) {
     const searchParams = url.searchParams;
     
     // Construir URL do backend com parâmetros
-    const backendUrl = new URL(`${BACKEND_URL}/tv-shows`);
+    const backendUrl = new URL(getInternalApiUrl('/api/tv-shows'));
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/tv-shows`, {
+    const response = await fetch(getInternalApiUrl('/api/tv-shows'), {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),

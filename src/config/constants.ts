@@ -1,13 +1,18 @@
+import { ENV_CONFIG, getApiUrl } from './env';
+
 // API Configuration - Centralizada
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
-  TIMEOUT: 30000,
-  RETRY_ATTEMPTS: 3,
+  BASE_URL: ENV_CONFIG.API_BASE_URL,
+  TIMEOUT: ENV_CONFIG.API_TIMEOUT,
+  RETRY_ATTEMPTS: ENV_CONFIG.API_RETRY_ATTEMPTS,
   RETRY_DELAY: 1000,
 } as const;
 
 // Backward compatibility
 export const API_BASE_URL = API_CONFIG.BASE_URL;
+
+// Helper functions
+export { getApiUrl, getInternalApiUrl } from './env';
 
 // Pagination defaults
 export const DEFAULT_PAGE_SIZE = 10;
