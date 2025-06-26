@@ -3,119 +3,68 @@
 import { useState, useEffect } from 'react';
 
 interface VideoData {
-  id: string;
+  id: number;
   title: string;
-  video_url: string;
+  description: string;
+  video_url?: string;
   thumbnail_url?: string;
-  duration?: string;
-  description?: string;
-  episode_number?: number;
+  duration?: number;
   module_number?: number;
-  episode_code?: string;
-  created_at?: string;
-}
-
-interface VideoSource {
-  id: string;
-  title: string;
-  url: string;
-  type: 'mp4' | 'youtube' | 'vimeo' | 'direct';
-  thumbnail?: string;
-  duration?: string;
-  description?: string;
+  session_number?: number;
   episode_number?: number;
+  is_active?: boolean;
 }
 
-interface UseVideosByShowResult {
-  videos: VideoSource[];
-  groupedVideos: Record<string, VideoSource[]>;
+interface ModuleData {
+  [key: string]: VideoData[];
+}
+
+interface UseVideosByShowReturn {
+  videos: VideoData[];
+  modules: ModuleData;
   loading: boolean;
   error: string | null;
   refetch: () => void;
 }
 
-export function useVideosByShow(showId: number | string): UseVideosByShowResult {
-  const [videos, setVideos] = useState<VideoSource[]>([]);
-  const [groupedVideos, setGroupedVideos] = useState<Record<string, VideoSource[]>>({});
-  const [loading, setLoading] = useState(true);
+export const useVideosByShow = (showId: number | null): UseVideosByShowReturn => {
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [modules, setModules] = useState<ModuleData>({});
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const detectVideoType = (url: string): 'mp4' | 'youtube' | 'vimeo' | 'direct' => {
-    if (!url) return 'direct';
-    
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      return 'youtube';
-    }
-    
-    if (url.includes('vimeo.com')) {
-      return 'vimeo';
-    }
-    
-    if (url.endsWith('.mp4') || url.includes('.mp4')) {
-      return 'mp4';
-    }
-    
-    return 'direct';
-  };
-
-  const transformVideoData = (videoData: VideoData): VideoSource => {
-    return {
-      id: videoData.id,
-      title: videoData.title,
-      url: videoData.video_url,
-      type: detectVideoType(videoData.video_url),
-      thumbnail: videoData.thumbnail_url,
-      duration: videoData.duration,
-      description: videoData.description,
-      episode_number: videoData.episode_number
-    };
-  };
 
   const fetchVideos = async () => {
     if (!showId) {
-      setError('ID do show é obrigatório');
-      setLoading(false);
+      setVideos([]);
+      setModules({});
       return;
     }
 
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
-
-      // Buscar vídeos do show específico
-      const response = await fetch(`/api/tv-shows/${showId}/modules`);
+      // Buscar vídeos individuais
+      const videosResponse = await fetch(`/api/tv-shows/${showId}/videos`);
+      if (!videosResponse.ok) {
+        throw new Error('Erro ao carregar vídeos');
+      }
+      const videosData = await videosResponse.json();
       
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar vídeos: ${response.status}`);
+      if (videosData.success) {
+        setVideos(videosData.data || []);
       }
 
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Erro ao buscar vídeos');
+      // Buscar módulos agrupados
+      const modulesResponse = await fetch(`/api/tv-shows/${showId}/videos/grouped`);
+      if (!modulesResponse.ok) {
+        throw new Error('Erro ao carregar módulos');
       }
-
-      const moduleGroups = result.data || {};
+      const modulesData = await modulesResponse.json();
       
-      // Transformar os dados agrupados em uma lista plana de vídeos
-      const allVideos: VideoSource[] = [];
-      const transformedGroups: Record<string, VideoSource[]> = {};
-
-      Object.entries(moduleGroups).forEach(([moduleKey, moduleVideos]) => {
-        const videos = (moduleVideos as VideoData[]).map(transformVideoData);
-        transformedGroups[moduleKey] = videos;
-        allVideos.push(...videos);
-      });
-
-      // Ordenar vídeos por número do episódio
-      allVideos.sort((a, b) => {
-        const aEpisode = a.episode_number || 0;
-        const bEpisode = b.episode_number || 0;
-        return aEpisode - bEpisode;
-      });
-
-      setVideos(allVideos);
-      setGroupedVideos(transformedGroups);
+      if (modulesData.success) {
+        setModules(modulesData.data || {});
+      }
 
     } catch (err) {
       console.error('Erro ao buscar vídeos:', err);
@@ -131,22 +80,22 @@ export function useVideosByShow(showId: number | string): UseVideosByShowResult 
 
   return {
     videos,
-    groupedVideos,
+    modules,
     loading,
     error,
     refetch: fetchVideos
   };
-}
+};
 
 // Hook alternativo para buscar vídeos de um módulo específico
-export function useVideosByModule(showId: number | string, moduleKey: string): UseVideosByShowResult {
-  const { videos, groupedVideos, loading, error, refetch } = useVideosByShow(showId);
+export function useVideosByModule(showId: number | string, moduleKey: string): UseVideosByShowReturn {
+  const { videos, modules, loading, error, refetch } = useVideosByShow(showId);
   
-  const moduleVideos = groupedVideos[moduleKey] || [];
+  const moduleVideos = modules[moduleKey] || [];
   
   return {
     videos: moduleVideos,
-    groupedVideos: { [moduleKey]: moduleVideos },
+    modules,
     loading,
     error,
     refetch
@@ -155,7 +104,7 @@ export function useVideosByModule(showId: number | string, moduleKey: string): U
 
 // Hook para buscar um vídeo específico por ID
 export function useVideoById(videoId: string) {
-  const [video, setVideo] = useState<VideoSource | null>(null);
+  const [video, setVideo] = useState<VideoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -184,7 +133,7 @@ export function useVideoById(videoId: string) {
         }
 
         const videoData = result.data as VideoData;
-        setVideo(transformVideoData(videoData));
+        setVideo(videoData);
 
       } catch (err) {
         console.error('Erro ao buscar vídeo:', err);
@@ -196,37 +145,6 @@ export function useVideoById(videoId: string) {
 
     fetchVideo();
   }, [videoId]);
-
-  const transformVideoData = (videoData: VideoData): VideoSource => {
-    return {
-      id: videoData.id,
-      title: videoData.title,
-      url: videoData.video_url,
-      type: detectVideoType(videoData.video_url),
-      thumbnail: videoData.thumbnail_url,
-      duration: videoData.duration,
-      description: videoData.description,
-      episode_number: videoData.episode_number
-    };
-  };
-
-  const detectVideoType = (url: string): 'mp4' | 'youtube' | 'vimeo' | 'direct' => {
-    if (!url) return 'direct';
-    
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      return 'youtube';
-    }
-    
-    if (url.includes('vimeo.com')) {
-      return 'vimeo';
-    }
-    
-    if (url.endsWith('.mp4') || url.includes('.mp4')) {
-      return 'mp4';
-    }
-    
-    return 'direct';
-  };
 
   return { video, loading, error };
 }

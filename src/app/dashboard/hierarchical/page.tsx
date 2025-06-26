@@ -11,7 +11,8 @@ import {
   BookOpen,
   TrendingUp,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  CheckCircle
 } from 'lucide-react';
 import { institutionService } from '@/services/institutionService';
 import { schoolService } from '@/services/schoolService';
@@ -130,44 +131,181 @@ export default function HierarchicalDashboard() {
         </p>
       </div>
 
-      {/* Cards de Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-        <StatCard
-          icon={Building2}
-          title="Instituições"
-          value={stats.totalInstitutions}
-          color="bg-purple-500"
-        />
-        <StatCard
-          icon={School}
-          title="Escolas"
-          value={stats.totalSchools}
-          color="bg-blue-500"
-        />
-        <StatCard
-          icon={Users}
-          title="Turmas"
-          value={stats.totalClasses}
-          color="bg-green-500"
-        />
-        <StatCard
-          icon={GraduationCap}
-          title="Alunos"
-          value={stats.totalStudents}
-          color="bg-yellow-500"
-        />
-        <StatCard
-          icon={UserCheck}
-          title="Professores"
-          value={stats.totalTeachers}
-          color="bg-red-500"
-        />
-        <StatCard
-          icon={TrendingUp}
-          title="Turmas Ativas"
-          value={stats.activeClasses}
-          color="bg-indigo-500"
-        />
+      {/* Cards de Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        {/* Card Instituições */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-blue-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-blue-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-purple-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <Building2 className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalInstitutions}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-blue-100 font-semibold tracking-wide">INSTITUIÇÕES</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Instituições</h3>
+              <p className="text-blue-100 text-sm font-medium">Total gerenciadas</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Escolas */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-green-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-green-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-teal-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <School className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalSchools}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-green-100 font-semibold tracking-wide">ESCOLAS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Escolas</h3>
+              <p className="text-green-100 text-sm font-medium">Unidades ativas</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Turmas */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-purple-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-purple-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-violet-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <GraduationCap className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalClasses}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-purple-100 font-semibold tracking-wide">TURMAS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Turmas</h3>
+              <p className="text-purple-100 text-sm font-medium">Total cadastradas</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Estudantes */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-amber-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-amber-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-red-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <Users className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalStudents}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-amber-100 font-semibold tracking-wide">ESTUDANTES</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Estudantes</h3>
+              <p className="text-amber-100 text-sm font-medium">Matriculados</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Professores */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-cyan-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-cyan-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-indigo-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <UserCheck className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalTeachers}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-cyan-100 font-semibold tracking-wide">PROFESSORES</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Professores</h3>
+              <p className="text-cyan-100 text-sm font-medium">Corpo docente</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Turmas Ativas */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-rose-500 via-pink-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-rose-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-rose-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-pink-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <CheckCircle className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.activeClasses}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-rose-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-rose-100 font-semibold tracking-wide">ATIVAS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Turmas Ativas</h3>
+              <p className="text-rose-100 text-sm font-medium">Em funcionamento</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Navegação Hierárquica */}

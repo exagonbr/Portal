@@ -265,7 +265,6 @@ export class TvShowCompleteService {
     }
   }
 
-
   // ===================== PLACEHOLDER METHODS =====================
   // Métodos placeholder para manter compatibilidade com o controlador
 

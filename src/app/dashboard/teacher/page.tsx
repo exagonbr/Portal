@@ -27,7 +27,8 @@ import {
   Upload,
   Heart,
   Brain,
-  Lightbulb
+  Lightbulb,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { classService } from '@/services/classService';
@@ -41,12 +42,12 @@ import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
 interface TeacherStats {
   totalClasses: number;
   totalStudents: number;
-  pendingAssignments: number;
-  upcomingClasses: number;
+  totalActivities: number;
+  totalMessages: number;
+  upcomingEvents: number;
+  pendingTasks: number;
   averageGrade: number;
-  completionRate: number;
   attendanceRate: number;
-  parentEngagement: number;
 }
 
 interface StudentProgress {
@@ -99,12 +100,12 @@ function TeacherDashboardContent() {
   const [stats, setStats] = useState<TeacherStats>({
     totalClasses: 0,
     totalStudents: 0,
-    pendingAssignments: 0,
-    upcomingClasses: 0,
+    totalActivities: 0,
+    totalMessages: 0,
+    upcomingEvents: 0,
+    pendingTasks: 0,
     averageGrade: 0,
-    completionRate: 0,
-    attendanceRate: 0,
-    parentEngagement: 0
+    attendanceRate: 0
   });
   const [studentProgress, setStudentProgress] = useState<StudentProgress[]>([]);
   const [upcomingClasses, setUpcomingClasses] = useState<UpcomingClass[]>([]);
@@ -156,12 +157,12 @@ function TeacherDashboardContent() {
       setStats({
         totalClasses: 2,
         totalStudents: 58,
-        pendingAssignments: 12,
-        upcomingClasses: 3,
+        totalActivities: 100,
+        totalMessages: 50,
+        upcomingEvents: 3,
+        pendingTasks: 12,
         averageGrade: 7.8,
-        completionRate: 85,
-        attendanceRate: 92.5,
-        parentEngagement: 78
+        attendanceRate: 92.5
       });
 
       // Progresso dos alunos
@@ -388,63 +389,241 @@ function TeacherDashboardContent() {
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-8">
-        <StatCard
-          icon={Users}
-          title="Turmas"
-          value={stats.totalClasses}
-          subtitle="ativas"
-          color="bg-primary-light"
-        />
-        <StatCard
-          icon={Users}
-          title="Alunos"
-          value={stats.totalStudents}
-          subtitle="matriculados"
-          color="bg-accent-green"
-        />
-        <StatCard
-          icon={FileText}
-          title="Tarefas"
-          value={stats.pendingAssignments}
-          subtitle="pendentes"
-          color="bg-accent-yellow"
-        />
-        <StatCard
-          icon={Calendar}
-          title="Aulas"
-          value={stats.upcomingClasses}
-          subtitle="hoje"
-          color="bg-accent-purple"
-        />
-        <StatCard
-          icon={TrendingUp}
-          title="Média"
-          value={stats.averageGrade.toFixed(1)}
-          subtitle="geral"
-          color="bg-primary-dark"
-        />
-        <StatCard
-          icon={Award}
-          title="Conclusão"
-          value={`${stats.completionRate}%`}
-          subtitle="tarefas"
-          color="bg-accent-purple"
-        />
-        <StatCard
-          icon={UserCheck}
-          title="Presença"
-          value={`${stats.attendanceRate}%`}
-          subtitle="média"
-          color="bg-accent-green"
-        />
-        <StatCard
-          icon={Heart}
-          title="Pais"
-          value={`${stats.parentEngagement}%`}
-          subtitle="engajados"
-          color="bg-accent-orange"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Card Turmas */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-blue-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-blue-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-purple-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <GraduationCap className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalClasses}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-blue-100 font-semibold tracking-wide">TURMAS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Turmas</h3>
+              <p className="text-blue-100 text-sm font-medium">Minhas turmas ativas</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Estudantes */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-green-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-green-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-teal-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <Users className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalStudents}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-green-100 font-semibold tracking-wide">ESTUDANTES</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Estudantes</h3>
+              <p className="text-green-100 text-sm font-medium">Total sob minha orientação</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Atividades */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-purple-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-purple-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-violet-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <BookOpen className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalActivities}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-purple-100 font-semibold tracking-wide">ATIVIDADES</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Atividades</h3>
+              <p className="text-purple-100 text-sm font-medium">Criadas e aplicadas</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Notas */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-amber-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-amber-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-red-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <Award className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.averageGrade.toFixed(1)}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-amber-100 font-semibold tracking-wide">MÉDIA</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Notas</h3>
+              <p className="text-amber-100 text-sm font-medium">Média geral das turmas</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Segunda linha de cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Card Frequência */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-cyan-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-cyan-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-indigo-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <CheckCircle className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.attendanceRate.toFixed(1)}%</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-cyan-100 font-semibold tracking-wide">FREQUÊNCIA</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Frequência</h3>
+              <p className="text-cyan-100 text-sm font-medium">Taxa média de presença</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Mensagens */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-rose-500 via-pink-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-rose-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-rose-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-pink-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <MessageSquare className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalMessages}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-rose-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-rose-100 font-semibold tracking-wide">MENSAGENS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Mensagens</h3>
+              <p className="text-rose-100 text-sm font-medium">Trocadas com estudantes</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Eventos */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-violet-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-violet-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-purple-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-indigo-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <Calendar className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.upcomingEvents}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-violet-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-violet-100 font-semibold tracking-wide">EVENTOS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Eventos</h3>
+              <p className="text-violet-100 text-sm font-medium">Próximos agendados</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Tarefas */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-emerald-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-emerald-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-teal-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-cyan-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <ClipboardList className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.pendingTasks}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-emerald-100 font-semibold tracking-wide">TAREFAS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Tarefas</h3>
+              <p className="text-emerald-100 text-sm font-medium">Pendentes para correção</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Seletor de Turma e Ações Rápidas */}

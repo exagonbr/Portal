@@ -52,6 +52,12 @@ export interface TVShowVideo {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  // Campos para construção de URL do CloudFront
+  file_sha256hex?: string;
+  file_extension?: string;
+  file_name?: string;
+  file_mimetype?: string;
+  file_size?: number;
 }
 
 export interface TVShowModuleStructure {

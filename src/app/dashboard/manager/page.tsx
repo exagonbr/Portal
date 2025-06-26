@@ -19,7 +19,8 @@ import {
   Clock,
   Target,
   Award,
-  Activity
+  Activity,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { schoolService } from '@/services/schoolService';
@@ -284,40 +285,123 @@ export default function ManagerDashboard() {
         </select>
       </div>
 
-      {/* Cards de Estatísticas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          icon={Users}
-          title="Total de Alunos"
-          value={stats.totalStudents}
-          trend="+5%"
-          trendUp={true}
-          color="bg-primary"
-        />
-        <StatCard
-          icon={UserCheck}
-          title="Professores Ativos"
-          value={stats.totalTeachers}
-          trend="+2"
-          trendUp={true}
-          color="bg-accent-green"
-        />
-        <StatCard
-          icon={BookOpen}
-          title="Turmas Ativas"
-          value={`${stats.activeClasses}/${stats.totalClasses}`}
-          trend="89%"
-          trendUp={true}
-          color="bg-accent-purple"
-        />
-        <StatCard
-          icon={Activity}
-          title="Frequência Média"
-          value={`${stats.averageAttendance}%`}
-          trend="-2%"
-          trendUp={false}
-          color="bg-accent-yellow"
-        />
+      {/* Cards de Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Card Total de Estudantes */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-blue-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-blue-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-purple-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <Users className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalStudents}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-blue-100 font-semibold tracking-wide">ESTUDANTES</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Total de Estudantes</h3>
+              <p className="text-blue-100 text-sm font-medium">Matriculados na escola</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Professores Ativos */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-green-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-green-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-teal-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <GraduationCap className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalTeachers}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-green-100 font-semibold tracking-wide">PROFESSORES</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Professores Ativos</h3>
+              <p className="text-green-100 text-sm font-medium">Lecionando atualmente</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Turmas Ativas */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-purple-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-purple-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-violet-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <School className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.activeClasses}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-purple-100 font-semibold tracking-wide">TURMAS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Turmas Ativas</h3>
+              <p className="text-purple-100 text-sm font-medium">Em funcionamento</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Frequência Média */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-amber-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-amber-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-red-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <CheckCircle className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.averageAttendance.toFixed(1)}%</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-amber-100 font-semibold tracking-wide">FREQUÊNCIA</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Frequência Média</h3>
+              <p className="text-amber-100 text-sm font-medium">Taxa geral de presença</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Indicadores Financeiros */}
@@ -519,35 +603,6 @@ export default function ManagerDashboard() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Componente de Card de Estatística
-interface StatCardProps {
-  icon: React.ElementType;
-  title: string;
-  value: string | number;
-  trend: string;
-  trendUp: boolean;
-  color: string;
-}
-
-function StatCard({ icon: Icon, title, value, trend, trendUp, color }: StatCardProps) {
-  return (
-    <div className="bg-white bg-gray-800 rounded-lg shadow-md p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
-          <Icon className={`w-5 h-5 ${color?.replace('bg-', 'text-') || 'text-gray-500'}`} />
-        </div>
-        <span className={`text-sm font-medium ${trendUp ? 'text-green-600' : 'text-red-600'}`}>
-          {trend}
-        </span>
-      </div>
-      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800-dark text-gray-600">
-        {value}
-      </p>
-      <p className="text-sm text-gray-600 text-gray-400">{title}</p>
     </div>
   );
 }

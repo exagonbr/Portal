@@ -24,6 +24,8 @@ export function LoginPage() {
 
   useEffect(() => {
     const error = searchParams?.get('error');
+    const logout = searchParams?.get('logout');
+    
     if (error === 'unauthorized') {
       setShowUnauthorizedMessage(true);
       
@@ -33,9 +35,18 @@ export function LoginPage() {
       }).catch((error) => {
         console.error('❌ Erro durante limpeza de dados:', error);
       });
-      
+    }
+    
+    if (logout === 'true') {
+      // Mostrar mensagem de logout bem-sucedido
+      console.log('✅ Logout realizado com sucesso');
+    }
+    
+    // Limpar parâmetros da URL após processar
+    if (error || logout) {
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
+      url.searchParams.delete('logout');
       window.history.replaceState({}, '', url.toString());
     }
   }, [searchParams]);

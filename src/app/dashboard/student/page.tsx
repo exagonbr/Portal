@@ -26,7 +26,8 @@ import {
   Flame,
   Shield,
   Gem,
-  Activity
+  Activity,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -49,6 +50,7 @@ interface StudentStats {
   level: number;
   streakDays: number;
   badges: number;
+  nextEvaluation: number;
 }
 
 interface Assignment {
@@ -178,7 +180,8 @@ function StudentDashboardContent() {
         xpPoints: 2450,
         level: 12,
         streakDays: 7,
-        badges: 8
+        badges: 8,
+        nextEvaluation: 3
       });
 
       // Tarefas
@@ -466,78 +469,122 @@ function StudentDashboardContent() {
         </div>
       </motion.div>
 
-      {/* Barra de Progresso e Gamificação */}
-      <div className="bg-gradient-to-r from-accent-purple to-primary text-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-                <span className="text-2xl font-bold">{stats.level}</span>
+      {/* Cards de Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Card Média Geral */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-blue-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-blue-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-purple-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <TrendingUp className="w-7 h-7 text-white drop-shadow-lg" />
               </div>
-              <div className="absolute -bottom-1 -right-1 bg-yellow-400 rounded-full p-1">
-                <Star className="w-4 h-4 text-yellow-900" />
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.averageGrade.toFixed(1)}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-blue-100 font-semibold tracking-wide">MÉDIA</span>
+                </div>
               </div>
             </div>
             <div>
-              <h2 className="text-xl font-bold">Nível {stats.level} - Explorador</h2>
-              <p className="text-blue-100">
-                {stats.xpPoints} XP • Próximo nível em {(stats.level + 1) * 250 - stats.xpPoints} XP
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-center">
-              <div className="flex items-center gap-1 mb-1">
-                <Flame className="w-5 h-5 text-orange-300" />
-                <span className="text-2xl font-bold">{stats.streakDays}</span>
-              </div>
-              <p className="text-xs text-blue-100">dias seguidos</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center gap-1 mb-1">
-                <Trophy className="w-5 h-5 text-yellow-300" />
-                <span className="text-2xl font-bold">{stats.badges}</span>
-              </div>
-              <p className="text-xs text-blue-100">conquistas</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center gap-1 mb-1">
-                <Users className="w-5 h-5 text-green-300" />
-                <span className="text-2xl font-bold">{stats.ranking}º</span>
-              </div>
-              <p className="text-xs text-blue-100">no ranking</p>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Média Geral</h3>
+              <p className="text-blue-100 text-sm font-medium">Desempenho acadêmico</p>
             </div>
           </div>
         </div>
-        <div className="w-full bg-white/20 rounded-full h-3">
-          <div
-            className="bg-white h-3 rounded-full transition-all duration-500"
-            style={{ width: `${(stats.xpPoints % 250) / 250 * 100}%` }}
-          />
-        </div>
-      </div>
 
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="text-sm font-medium text-gray-500 mb-1">Média Geral</div>
-          <div className="text-2xl font-bold text-gray-600">8.7</div>
-          <div className="text-xs text-green-600 mt-2">↑ 0.2 este bimestre</div>
+        {/* Card Frequência */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-green-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-green-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-teal-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <CheckCircle className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.attendance.toFixed(1)}%</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-green-100 font-semibold tracking-wide">FREQUÊNCIA</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Frequência</h3>
+              <p className="text-green-100 text-sm font-medium">Taxa de presença</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="text-sm font-medium text-gray-500 mb-1">Presença</div>
-          <div className="text-2xl font-bold text-gray-600">96%</div>
-          <div className="text-xs text-green-600 mt-2">↑ 1% este mês</div>
+
+        {/* Card Tarefas Pendentes */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-amber-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-amber-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-red-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <Clock className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.pendingTasks}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-amber-100 font-semibold tracking-wide">PENDENTES</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Tarefas Pendentes</h3>
+              <p className="text-amber-100 text-sm font-medium">Para entregar</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="text-sm font-medium text-gray-500 mb-1">Tarefas Pendentes</div>
-          <div className="text-2xl font-bold text-gray-600">2</div>
-          <div className="text-xs text-red-600 mt-2">1 para hoje</div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="text-sm font-medium text-gray-500 mb-1">Próxima Avaliação</div>
-          <div className="text-2xl font-bold text-gray-600">15/05</div>
-          <div className="text-xs text-blue-600 mt-2">Matemática</div>
+
+        {/* Card Próxima Avaliação */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-purple-300 transform hover:-translate-y-2 hover:scale-105">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <div className="absolute top-8 right-12 w-1 h-1 bg-purple-200 rounded-full animate-ping"></div>
+            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-violet-200 rounded-full animate-pulse delay-300"></div>
+            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+          </div>
+          <div className="relative p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                <Calendar className="w-7 h-7 text-white drop-shadow-lg" />
+              </div>
+              <div className="text-right">
+                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.nextEvaluation}</p>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                  <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
+                  <span className="text-sm text-purple-100 font-semibold tracking-wide">DIAS</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Próxima Avaliação</h3>
+              <p className="text-purple-100 text-sm font-medium">Em breve</p>
+            </div>
+          </div>
         </div>
       </div>
 

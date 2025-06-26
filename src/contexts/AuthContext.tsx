@@ -80,13 +80,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (typeof window !== 'undefined') {
         console.log(`🎯 AuthContext: Redirecionando para ${path}`);
-        // Usar replace para evitar loops de navegação
-        window.location.replace(path);
+        
+        // Evitar redirecionamentos circulares
+        const currentPath = window.location.pathname;
+        if (currentPath === path) {
+          console.log('🔄 Redirecionamento circular evitado:', path);
+          return;
+        }
+        
+        // Usar router.push para melhor integração com Next.js
+        router.push(path);
       }
     } catch (error) {
       console.error('❌ Erro no redirecionamento:', error);
-      // Fallback para router.push
-      router.push(path);
+      // Fallback para window.location
+      if (typeof window !== 'undefined') {
+        window.location.href = path;
+      }
     }
   }, [router]);
 
@@ -224,9 +234,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Aguardar um pouco para garantir limpeza
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Redirecionar para login
+      // Redirecionar para login com parâmetro de logout
       console.log('🎯 Redirecionando para login após logout');
-      safeRedirect('/login');
+      safeRedirect('/login?logout=true');
       
     } catch (err: any) {
       console.error('❌ Erro no logout:', err);
@@ -236,7 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       
       // Redirecionar mesmo com erro
-      safeRedirect('/login');
+      safeRedirect('/login?logout=true');
     } finally {
       setLoading(false);
     }

@@ -1,129 +1,75 @@
 /**
  * Middleware Simplificado para Portal Sabercon
- * Remove complexidade desnecessária e foca no essencial
+ * Focado apenas nas rotas essenciais que precisam de proteção
  */
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { API_CONFIG } from '@/config/constants';
 
-// Configuração simplificada
-const MIDDLEWARE_CONFIG = {
-  COOKIES: {
-    AUTH_TOKEN: 'auth_token',
-    USER_DATA: 'user_data',
-  },
-  ROUTES: {
-    PUBLIC: [
-      '/api',
-      '/login',
-      '/register',
-      '/portal',
-      '/test-',
-      '/debug-',
-      '/_next',
-      '/favicon.ico',
-    ],
-    PROTECTED: [
-      '/dashboard',
-      '/admin',
-      '/profile',
-      '/settings',
-    ],
-  },
+// Configuração simplificada de rotas
+const ROUTE_CONFIG = {
+  // Rotas completamente públicas (não precisam de verificação)
+  PUBLIC_ROUTES: [
+    '/',
+    '/login',
+    '/register', 
+    '/forgot-password',
+    '/portal',
+    '/portal/books',
+    '/portal/videos',
+    '/portal/courses',
+    '/portal/assignments',
+    '/portal/dashboard',
+    '/portal/student',
+    '/portal/reports'
+  ],
+  
+  // Rotas de teste e debug (sempre públicas)
+  TEST_ROUTES: [
+    '/test-',
+    '/debug-',
+    '/test-simple',
+    '/test-dashboard',
+    '/test-student',
+    '/test-auth-integration',
+    '/test-julia-login',
+    '/test-dashboard-simple'
+  ],
+  
+  // Rotas de assets e API (sempre públicas)
+  ASSET_ROUTES: [
+    '/api',
+    '/_next',
+    '/favicon.ico',
+    '/manifest.json',
+    '/icons',
+    '/public',
+    '/back_video',
+    '/handtalk',
+    '/kookit'
+  ]
 } as const;
 
 /**
  * Verifica se uma rota é pública
  */
 function isPublicRoute(pathname: string): boolean {
-  return MIDDLEWARE_CONFIG.ROUTES.PUBLIC.some(route => pathname.startsWith(route));
-}
-
-/**
- * Verifica se uma rota é protegida
- */
-function isProtectedRoute(pathname: string): boolean {
-  return MIDDLEWARE_CONFIG.ROUTES.PROTECTED.some(route => pathname.startsWith(route));
-}
-
-/**
- * Valida token com o backend (com cache simples)
- */
-const tokenCache = new Map<string, { valid: boolean; timestamp: number }>();
-const CACHE_TTL = 30000; // 30 segundos
-
-async function validateToken(token: string): Promise<boolean> {
-  // Verificar cache
-  const cached = tokenCache.get(token);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.valid;
+  // Verificar rotas públicas exatas
+  if (ROUTE_CONFIG.PUBLIC_ROUTES.includes(pathname)) {
+    return true;
   }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-    const response = await fetch(`${API_CONFIG.BASE_URL}/auth/validate-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ token }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    const isValid = response.ok;
-    
-    // Salvar no cache
-    tokenCache.set(token, { valid: isValid, timestamp: Date.now() });
-    
-    return isValid;
-  } catch (error) {
-    console.warn('Erro ao validar token:', error);
-    // Em caso de erro, assumir que o token é inválido
-    tokenCache.set(token, { valid: false, timestamp: Date.now() });
-    return false;
+  
+  // Verificar rotas de teste (começam com prefixo)
+  if (ROUTE_CONFIG.TEST_ROUTES.some(prefix => pathname.startsWith(prefix))) {
+    return true;
   }
-}
-
-/**
- * Cria resposta de redirecionamento
- */
-function createRedirect(url: string, request: NextRequest): NextResponse {
-  const response = NextResponse.redirect(new URL(url, request.url));
   
-  // Headers para evitar cache
-  response.headers.set('Cache-Control', 'no-store');
+  // Verificar rotas de assets (começam com prefixo)
+  if (ROUTE_CONFIG.ASSET_ROUTES.some(prefix => pathname.startsWith(prefix))) {
+    return true;
+  }
   
-  return response;
-}
-
-/**
- * Limpa cookies de autenticação
- */
-function clearAuthCookies(response: NextResponse): void {
-  response.cookies.delete(MIDDLEWARE_CONFIG.COOKIES.AUTH_TOKEN);
-  response.cookies.delete(MIDDLEWARE_CONFIG.COOKIES.USER_DATA);
-}
-
-/**
- * Obtém o dashboard correto baseado na role do usuário
- */
-function getDashboardForRole(role: string): string {
-  const roleMap: Record<string, string> = {
-    'SYSTEM_ADMIN': '/dashboard/system-admin',
-    'INSTITUTION_ADMIN': '/dashboard/institution-admin',
-    'SCHOOL_MANAGER': '/dashboard/school-manager',
-    'TEACHER': '/dashboard/teacher',
-    'STUDENT': '/dashboard/student',
-    'GUARDIAN': '/dashboard/guardian',
-  };
-
-  return roleMap[role.toUpperCase()] || '/dashboard/student';
+  return false;
 }
 
 /**
@@ -132,22 +78,27 @@ function getDashboardForRole(role: string): string {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Log apenas uma vez por rota para debug
-  console.log(`🔧 Middleware: ${pathname}`);
+  // Log apenas para debug quando necessário
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔧 Middleware: ${pathname}`);
+  }
 
-  // Como o matcher já filtra apenas rotas protegidas específicas,
-  // e estamos usando ClientAuthGuard no lado do cliente,
-  // simplesmente permitir todas as requisições que chegam aqui
+  // Se é rota pública, permitir acesso
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Para todas as outras rotas, a proteção é feita pelos componentes do lado do cliente
+  // Isso evita loops e problemas de SSR
   return NextResponse.next();
 }
 
 /**
- * Configuração do matcher - DESABILITADO para evitar loops
- * A autenticação é gerenciada pelos componentes do lado do cliente
+ * Configuração do matcher - Apenas para rotas que realmente precisam de verificação
  */
 export const config = {
   matcher: [
-    // Matcher vazio para desabilitar o middleware completamente
-    // A proteção de rotas é feita pelos componentes ProtectedRoute e RoleGuard
+    // Não aplicar middleware para assets estáticos
+    '/((?!_next/static|_next/image|favicon.ico|icons|manifest.json).*)',
   ],
 }; 

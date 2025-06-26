@@ -108,18 +108,147 @@ export default function ExampleDashboard() {
         ))}
       </motion.div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid com Estilo Premium */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 * (index + 1) }}
-          >
-            <StatCard {...stat} />
-          </motion.div>
-        ))}
+        {/* Card Total de Alunos */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-blue-300 transform hover:-translate-y-2 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <div className="absolute top-8 right-12 w-1 h-1 bg-blue-200 rounded-full animate-ping"></div>
+              <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse delay-300"></div>
+              <div className="absolute bottom-12 right-8 w-1 h-1 bg-purple-200 rounded-full animate-ping delay-500"></div>
+            </div>
+            <div className="relative p-6 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                  <span className="material-symbols-outlined text-white drop-shadow-lg text-2xl">groups</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">1,234</p>
+                  <div className="flex items-center justify-end gap-2 mt-2">
+                    <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
+                    <span className="text-sm text-blue-100 font-semibold tracking-wide">ALUNOS</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Total de Alunos</h3>
+                <p className="text-blue-100 text-sm font-medium">↑ 12% este mês</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Card Taxa de Aprovação */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-green-300 transform hover:-translate-y-2 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <div className="absolute top-8 right-12 w-1 h-1 bg-green-200 rounded-full animate-ping"></div>
+              <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-pulse delay-300"></div>
+              <div className="absolute bottom-12 right-8 w-1 h-1 bg-teal-200 rounded-full animate-ping delay-500"></div>
+            </div>
+            <div className="relative p-6 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                  <span className="material-symbols-outlined text-white drop-shadow-lg text-2xl">school</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">87%</p>
+                  <div className="flex items-center justify-end gap-2 mt-2">
+                    <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
+                    <span className="text-sm text-green-100 font-semibold tracking-wide">APROVAÇÃO</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Taxa de Aprovação</h3>
+                <p className="text-green-100 text-sm font-medium">↑ 5% este período</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Card Aulas Hoje */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-purple-300 transform hover:-translate-y-2 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <div className="absolute top-8 right-12 w-1 h-1 bg-purple-200 rounded-full animate-ping"></div>
+              <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-violet-200 rounded-full animate-pulse delay-300"></div>
+              <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+            </div>
+            <div className="relative p-6 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                  <span className="material-symbols-outlined text-white drop-shadow-lg text-2xl">event</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">24</p>
+                  <div className="flex items-center justify-end gap-2 mt-2">
+                    <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
+                    <span className="text-sm text-purple-100 font-semibold tracking-wide">AULAS</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Aulas Hoje</h3>
+                <p className="text-purple-100 text-sm font-medium">-2 que ontem</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Card Mensagens */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-amber-300 transform hover:-translate-y-2 hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <div className="absolute top-8 right-12 w-1 h-1 bg-amber-200 rounded-full animate-ping"></div>
+              <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse delay-300"></div>
+              <div className="absolute bottom-12 right-8 w-1 h-1 bg-red-200 rounded-full animate-ping delay-500"></div>
+            </div>
+            <div className="relative p-6 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
+                  <span className="material-symbols-outlined text-white drop-shadow-lg text-2xl">mail</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">48</p>
+                  <div className="flex items-center justify-end gap-2 mt-2">
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
+                    <span className="text-sm text-amber-100 font-semibold tracking-wide">MENSAGENS</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Mensagens</h3>
+                <p className="text-amber-100 text-sm font-medium">↑ 18 novas hoje</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Content Grid */}

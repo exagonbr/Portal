@@ -1,113 +1,224 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useTheme } from '@/contexts/ThemeContext';
+import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
+
+const ERROR_MESSAGES = {
+  unauthorized: {
+    title: 'Acesso Não Autorizado',
+    message: 'Sua sessão expirou ou você não tem permissão para acessar esta área.',
+    action: 'Faça login novamente para continuar.'
+  },
+  forbidden: {
+    title: 'Acesso Negado',
+    message: 'Você não tem permissão para acessar este recurso.',
+    action: 'Entre em contato com o administrador se precisar de acesso.'
+  },
+  session_expired: {
+    title: 'Sessão Expirada',
+    message: 'Sua sessão expirou por motivos de segurança.',
+    action: 'Faça login novamente para continuar usando o sistema.'
+  },
+  invalid_token: {
+    title: 'Token Inválido',
+    message: 'Seu token de autenticação é inválido ou foi corrompido.',
+    action: 'Faça login novamente para obter um novo token.'
+  },
+  default: {
+    title: 'Erro de Autenticação',
+    message: 'Ocorreu um erro durante a autenticação.',
+    action: 'Tente fazer login novamente.'
+  }
+};
 
 export default function AuthErrorPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [errorType, setErrorType] = useState<string>('unknown');
-  const [countdown, setCountdown] = useState(10);
+  const { theme } = useTheme();
+  const [isClearing, setIsClearing] = useState(false);
+
+  const errorType = searchParams?.get('type') || 'default';
+  const errorInfo = ERROR_MESSAGES[errorType as keyof typeof ERROR_MESSAGES] || ERROR_MESSAGES.default;
 
   useEffect(() => {
-    const type = searchParams.get('type') || 'unknown';
-    setErrorType(type);
+    // Limpar dados quando chegar na página de erro
+    const clearData = async () => {
+      setIsClearing(true);
+      try {
+        await clearAllDataForUnauthorized();
+        console.log('✅ Dados limpos na página de erro de autenticação');
+      } catch (error) {
+        console.error('❌ Erro ao limpar dados:', error);
+      } finally {
+        setIsClearing(false);
+      }
+    };
 
-    // Configurar contador regressivo para redirecionamento automático
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          // Limpar cookies de autenticação e redirecionamento
-          document.cookie = 'auth_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-          document.cookie = 'refresh_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-          document.cookie = 'session_id=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-          document.cookie = 'user_data=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-          document.cookie = 'redirect_count=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-          
-          // Redirecionar para login
-          window.location.href = '/login?error=session_error';
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    clearData();
+  }, []);
 
-    return () => clearInterval(timer);
-  }, [searchParams]);
-
-  // Mensagens de erro específicas
-  const errorMessages: Record<string, { title: string; message: string }> = {
-    redirect_loop: {
-      title: 'Problema de Redirecionamento Detectado',
-      message: 'O sistema detectou um problema ao tentar validar sua sessão. Isso pode ocorrer devido a um problema com os cookies ou sessão.'
-    },
-    session_expired: {
-      title: 'Sessão Expirada',
-      message: 'Sua sessão expirou. Por favor, faça login novamente.'
-    },
-    unauthorized: {
-      title: 'Acesso Não Autorizado',
-      message: 'Você não tem permissão para acessar este recurso.'
-    },
-    unknown: {
-      title: 'Erro de Autenticação',
-      message: 'Ocorreu um erro desconhecido durante a autenticação.'
-    }
+  const handleReturnToLogin = () => {
+    router.push('/login');
   };
 
-  const { title, message } = errorMessages[errorType] || errorMessages.unknown;
-
-  const handleLogout = () => {
-    // Limpar cookies
-    document.cookie = 'auth_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-    document.cookie = 'refresh_token=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-    document.cookie = 'session_id=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-    document.cookie = 'user_data=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-    document.cookie = 'redirect_count=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-    
-    // Redirecionar para login
-    window.location.href = '/login?error=session_error';
+  const handleGoHome = () => {
+    router.push('/');
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-        <div className="mb-6 text-center">
-          <h1 className="mb-2 text-2xl font-bold text-red-600">{title}</h1>
-          <p className="text-gray-700">{message}</p>
-        </div>
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: theme.colors.background.primary }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-md w-full p-8 rounded-xl text-center"
+        style={{ 
+          backgroundColor: theme.colors.background.card,
+          boxShadow: theme.shadows.lg
+        }}
+      >
+        {/* Ícone de erro */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+        >
+          <span 
+            className="material-symbols-outlined text-6xl mb-4 block"
+            style={{ color: theme.colors.status.error }}
+          >
+            error
+          </span>
+        </motion.div>
 
-        <div className="mb-6 rounded-md bg-yellow-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                Você será redirecionado para a página de login em <span className="font-bold">{countdown}</span> segundos.
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Título */}
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="text-2xl font-bold mb-4"
+          style={{ color: theme.colors.text.primary }}
+        >
+          {errorInfo.title}
+        </motion.h1>
 
-        <div className="flex flex-col space-y-3">
+        {/* Mensagem */}
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mb-2"
+          style={{ color: theme.colors.text.secondary }}
+        >
+          {errorInfo.message}
+        </motion.p>
+
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mb-8"
+          style={{ color: theme.colors.text.tertiary }}
+        >
+          {errorInfo.action}
+        </motion.p>
+
+        {/* Indicador de limpeza de dados */}
+        {isClearing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-6"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm" style={{ color: theme.colors.text.secondary }}>
+                Limpando dados...
+              </span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Botões de ação */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="space-y-4"
+        >
           <button
-            onClick={handleLogout}
-            className="w-full rounded-md bg-blue-600 py-2 px-4 text-center text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            onClick={handleReturnToLogin}
+            disabled={isClearing}
+            className="w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ 
+              backgroundColor: theme.colors.primary.DEFAULT,
+              color: theme.colors.primary.contrast
+            }}
+            onMouseEnter={(e) => {
+              if (!isClearing) {
+                e.currentTarget.style.backgroundColor = theme.colors.primary.dark;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isClearing) {
+                e.currentTarget.style.backgroundColor = theme.colors.primary.DEFAULT;
+              }
+            }}
           >
-            Ir para Login
+            Fazer Login
           </button>
-          
-          <Link
-            href="/portal/videos"
-            className="w-full rounded-md border border-gray-300 bg-white py-2 px-4 text-center text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+
+          <button
+            onClick={handleGoHome}
+            disabled={isClearing}
+            className="w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 border disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ 
+              borderColor: theme.colors.border.DEFAULT,
+              color: theme.colors.text.secondary,
+              backgroundColor: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              if (!isClearing) {
+                e.currentTarget.style.backgroundColor = theme.colors.background.hover;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isClearing) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
           >
-            Acessar Portal Público
-          </Link>
-        </div>
-      </div>
+            Página Inicial
+          </button>
+        </motion.div>
+
+        {/* Link de suporte */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-6 pt-6 border-t"
+          style={{ borderColor: theme.colors.border.light }}
+        >
+          <p className="text-sm" style={{ color: theme.colors.text.tertiary }}>
+            Problemas persistindo?{' '}
+            <Link 
+              href="/support" 
+              className="underline hover:no-underline"
+              style={{ color: theme.colors.primary.DEFAULT }}
+            >
+              Entre em contato com o suporte
+            </Link>
+          </p>
+        </motion.div>
+      </motion.div>
     </div>
   );
 } 
