@@ -26,12 +26,19 @@ class PushNotificationService {
     }
 
     try {
-      // Register service worker
-      this.swRegistration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
-      });
-      
-      console.log('Service Worker registered successfully');
+      // Tentar registrar service worker melhorado primeiro, fallback para o padrão
+      try {
+        this.swRegistration = await navigator.serviceWorker.register('/sw-improved.js', {
+          scope: '/'
+        });
+        console.log('✅ Service Worker melhorado registrado com sucesso');
+      } catch (improvedError) {
+        console.warn('⚠️ Falha ao registrar SW melhorado, usando padrão:', improvedError);
+        this.swRegistration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/'
+        });
+        console.log('✅ Service Worker padrão registrado com sucesso');
+      }
 
       // Wait for service worker to be ready
       await navigator.serviceWorker.ready;
@@ -69,7 +76,39 @@ class PushNotificationService {
       return 'denied';
     }
 
-    return await Notification.requestPermission();
+    // A permissão só deve ser requisitada a partir de um manipulador de eventos do usuário
+    // Por isso, não vamos requisitar automaticamente aqui
+    console.log('⚠️ Push Notification: Permissão deve ser solicitada via interação do usuário');
+    return 'default';
+  }
+
+  /**
+   * Solicita permissão para notificações (deve ser chamado em resposta a uma ação do usuário)
+   */
+  async requestPermissionFromUser(): Promise<NotificationPermission> {
+    if (!('Notification' in window)) {
+      console.warn('Notifications not supported');
+      return 'denied';
+    }
+
+    if (Notification.permission !== 'default') {
+      return Notification.permission;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      console.log('🔔 Push Notification: Permissão solicitada:', permission);
+      
+      if (permission === 'granted') {
+        // Tentar subscrever após permissão concedida
+        await this.subscribeToPushNotifications();
+      }
+      
+      return permission;
+    } catch (error) {
+      console.error('❌ Erro ao solicitar permissão para notificações:', error);
+      return 'denied';
+    }
   }
 
   private async subscribeToPushNotifications(): Promise<void> {

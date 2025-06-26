@@ -377,83 +377,17 @@ export class InstitutionService {
     try {
       console.log('🏢 Buscando instituições ativas...');
 
-      // Primeiro tentar com autenticação normal através do apiClient
-      let response = await this.getInstitutions({
+      const response = await this.getInstitutions({
         is_active: true,
         limit: 1000
-      }).catch(error => {
-        console.warn('⚠️ Falha na requisição autenticada:', error);
-        return null;
       });
 
-      // Se conseguir resposta válida, usar ela
-      if (response && response.items && response.items.length > 0) {
-        console.log('✅ Instituições carregadas com sucesso:', response.items.length);
-        return response.items;
-      }
-
-      // Se falhar, usar dados mock diretamente (sem chamadas fetch que causam CORS)
-      console.log('🔧 Usando dados mock como fallback...');
-      const now = new Date().toISOString();
-      return [
-        {
-          id: 'inst-sabercon',
-          name: 'Escola SaberCon Digital',
-          code: 'SABERCON',
-          is_active: true,
-          created_at: now,
-          updated_at: now
-        },
-        {
-          id: 'inst-exagon',
-          name: 'Colégio Exagon Inovação',
-          code: 'EXAGON',
-          is_active: true,
-          created_at: now,
-          updated_at: now
-        },
-        {
-          id: 'inst-devstrade',
-          name: 'Centro Educacional DevStrade',
-          code: 'DEVSTRADE',
-          is_active: true,
-          created_at: now,
-          updated_at: now
-        },
-        {
-          id: 'inst-unifesp',
-          name: 'Universidade Federal de São Paulo',
-          code: 'UNIFESP',
-          is_active: true,
-          created_at: now,
-          updated_at: now
-        },
-        {
-          id: 'inst-usp',
-          name: 'Universidade de São Paulo',
-          code: 'USP',
-          is_active: true,
-          created_at: now,
-          updated_at: now
-        },
-      ] as InstitutionDto[];
+      console.log('✅ Instituições ativas carregadas com sucesso:', response.items.length);
+      return response.items;
       
     } catch (error) {
       console.error('❌ Erro ao obter instituições ativas:', error);
-      
-      // Em caso de erro, retornar dados mock
-      console.log('🔧 Usando dados mock devido ao erro...');
-      const now = new Date().toISOString();
-      return [
-        {
-          id: 'inst-fallback',
-          name: 'Escola SaberCon (Fallback)',
-          code: 'SABERCON_FALLBACK',
-          is_active: true,
-          created_at: now,
-          updated_at: now
-        }
-      ] as InstitutionDto[];
+      throw error;
     }
   }
 

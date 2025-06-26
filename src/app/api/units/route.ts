@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/config/auth'
+import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
 // Schema de validação para criação de unidade

@@ -822,203 +822,54 @@ export default function ManageUsers() {
   }
 
   // Carregar dados auxiliares (roles e instituições)
-  // Esta função foi otimizada para:
-  // 1. Fazer chamadas paralelas para roles e instituições
-  // 2. Tratar erros individualmente sem falhar completamente
-  // 3. Usar dados mock como fallback quando a API falha
-  // 4. Fornecer logs detalhados para debug
-  // 5. Garantir que os filtros só funcionem após o carregamento
   const loadAuxiliaryData = async () => {
     try {
       console.log('🔄 Carregando dados auxiliares (roles e instituições)...');
       
-      // Primeiro, tentar carregar roles e instituições da API
-      const [rolesPromise, institutionsPromise] = [
-        roleService.getActiveRoles().catch(error => {
-          console.warn('⚠️ Falha ao carregar roles da API:', error);
-          return null;
-        }),
-        institutionService.getActiveInstitutions().catch(error => {
-          console.warn('⚠️ Falha ao carregar instituições da API:', error);
-          return null;
-        })
-      ];
-
-      const [rolesFromApi, institutionsFromApi] = await Promise.all([rolesPromise, institutionsPromise]);
+      // Carregar roles e instituições da API em paralelo
+      const [rolesFromApi, institutionsFromApi] = await Promise.all([
+        roleService.getActiveRoles(),
+        institutionService.getActiveInstitutions()
+      ]);
 
       // Processar roles
-      let rolesData: RoleResponseDto[] = [];
-      
-      if (rolesFromApi && Array.isArray(rolesFromApi) && rolesFromApi.length > 0) {
-        rolesData = rolesFromApi;
-        console.log('✅ Roles carregadas da API:', rolesData.map(r => ({ id: r.id, name: r.name })));
-      } else {
-        console.log('🔧 Usando roles mock como fallback...');
-        const now = new Date().toISOString();
-        rolesData = [
-          { 
-            id: 'role-admin', 
-            name: 'Administrador', 
-            description: 'Acesso total ao sistema', 
-            status: 'active' as const, 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'role-teacher', 
-            name: 'Professor', 
-            description: 'Gerencia cursos e alunos', 
-            status: 'active' as const, 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'role-student', 
-            name: 'Estudante', 
-            description: 'Acessa os cursos e materiais', 
-            status: 'active' as const, 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'role-coordinator', 
-            name: 'Coordenador', 
-            description: 'Coordena professores e turmas', 
-            status: 'active' as const, 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'role-manager', 
-            name: 'Gerente', 
-            description: 'Gerencia instituição', 
-            status: 'active' as const, 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'role-guardian', 
-            name: 'Responsável', 
-            description: 'Responsável por estudante', 
-            status: 'active' as const, 
-            created_at: now, 
-            updated_at: now 
-          },
-        ];
-        console.log('🔧 Roles mock criadas:', rolesData.map(r => ({ id: r.id, name: r.name })));
+      if (!rolesFromApi || !Array.isArray(rolesFromApi)) {
+        throw new Error('Dados de roles inválidos recebidos da API');
       }
+      
+      console.log('✅ Roles carregadas da API:', rolesFromApi.map(r => ({ id: r.id, name: r.name })));
 
       // Processar instituições
-      let institutionsData: InstitutionResponseDto[] = [];
-      
-      if (institutionsFromApi && Array.isArray(institutionsFromApi) && institutionsFromApi.length > 0) {
-        institutionsData = institutionsFromApi;
-        console.log('✅ Instituições carregadas da API:', institutionsData.map(i => ({ id: i.id, name: i.name })));
-      } else {
-        console.log('🔧 Usando instituições mock como fallback...');
-        const now = new Date().toISOString();
-        institutionsData = [
-          { 
-            id: 'inst-sabercon', 
-            name: 'Escola SaberCon Digital', 
-            code: 'SABERCON', 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'inst-exagon', 
-            name: 'Colégio Exagon Inovação', 
-            code: 'EXAGON', 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'inst-devstrade', 
-            name: 'Centro Educacional DevStrade', 
-            code: 'DEVSTRADE', 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'inst-unifesp', 
-            name: 'Universidade Federal de São Paulo', 
-            code: 'UNIFESP', 
-            created_at: now, 
-            updated_at: now 
-          },
-          { 
-            id: 'inst-usp', 
-            name: 'Universidade de São Paulo', 
-            code: 'USP', 
-            created_at: now, 
-            updated_at: now 
-          },
-        ];
-        console.log('🔧 Instituições mock criadas:', institutionsData.map(i => ({ id: i.id, name: i.name })));
+      if (!institutionsFromApi || !Array.isArray(institutionsFromApi)) {
+        throw new Error('Dados de instituições inválidos recebidos da API');
       }
+      
+      console.log('✅ Instituições carregadas da API:', institutionsFromApi.map(i => ({ id: i.id, name: i.name })));
 
       // Atualizar os estados
-      setRoles(rolesData);
-      setInstitutions(institutionsData);
+      setRoles(rolesFromApi);
+      setInstitutions(institutionsFromApi);
 
-      console.log('📊 Dados auxiliares finais carregados:', {
+      console.log('📊 Dados auxiliares carregados:', {
         roles: {
-          count: rolesData.length,
-          items: rolesData.map(r => ({ id: r.id, name: r.name }))
+          count: rolesFromApi.length,
+          items: rolesFromApi.map(r => ({ id: r.id, name: r.name }))
         },
         institutions: {
-          count: institutionsData.length,
-          items: institutionsData.map(i => ({ id: i.id, name: i.name }))
+          count: institutionsFromApi.length,
+          items: institutionsFromApi.map(i => ({ id: i.id, name: i.name }))
         }
       });
 
       console.log('✅ Dados auxiliares carregados com sucesso');
 
     } catch (error) {
-      console.error('❌ Erro crítico ao carregar dados auxiliares:', error);
-      showError('Falha ao carregar dados de apoio. Usando valores padrão.');
+      console.error('❌ Erro ao carregar dados auxiliares:', error);
+      showError('Falha ao carregar dados de apoio (roles e instituições). Verifique se o backend está funcionando.');
       
-      // Em caso de erro crítico, usa os mocks
-      const now = new Date().toISOString();
-      const fallbackRoles = [
-        { 
-          id: 'fallback-admin', 
-          name: 'Administrador (Fallback)', 
-          description: 'Acesso total ao sistema', 
-          status: 'active' as const, 
-          created_at: now, 
-          updated_at: now 
-        },
-        { 
-          id: 'fallback-teacher', 
-          name: 'Professor (Fallback)', 
-          description: 'Gerencia cursos e alunos', 
-          status: 'active' as const, 
-          created_at: now, 
-          updated_at: now 
-        },
-        { 
-          id: 'fallback-student', 
-          name: 'Estudante (Fallback)', 
-          description: 'Acessa os cursos e materiais', 
-          status: 'active' as const, 
-          created_at: now, 
-          updated_at: now 
-        },
-      ];
-      const fallbackInstitutions = [
-        { 
-          id: 'fallback-inst', 
-          name: 'Escola SaberCon (Fallback)', 
-          code: 'SABERCON_FALLBACK', 
-          created_at: now, 
-          updated_at: now 
-        },
-      ];
-      
-      setRoles(fallbackRoles);
-      setInstitutions(fallbackInstitutions);
-      console.log('🆘 Usando dados de fallback');
+      // Em caso de erro, não carregar dados mock - deixar arrays vazios
+      setRoles([]);
+      setInstitutions([]);
     } finally {
       setAuxiliaryDataLoaded(true);
       console.log('🏁 Carregamento de dados auxiliares finalizado');
@@ -1872,38 +1723,7 @@ export default function ManageUsers() {
                     Limpar filtros
                   </Button>
                 )}
-                {/* Debug button - remover em produção */}
-                {process.env.NODE_ENV === 'development' && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      console.log('🔍 DEBUG - Estado atual:', {
-                        auxiliaryDataLoaded,
-                        roles: {
-                          count: roles.length,
-                          items: roles.map(r => ({ id: r.id, name: r.name }))
-                        },
-                        institutions: {
-                          count: institutions.length,
-                          items: institutions.map(i => ({ id: i.id, name: i.name, code: i.code }))
-                        },
-                        filters,
-                        users: users.length,
-                        totalItems,
-                        currentPage,
-                        totalPages,
-                        connectionStatus
-                      });
-                      
-                      // Testa o carregamento novamente
-                      console.log('🔄 Recarregando dados auxiliares...');
-                      loadAuxiliaryData();
-                    }}
-                    className="flex items-center gap-2 bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
-                  >
-                    🐛 Debug & Reload
-                  </Button>
-                )}
+
               </div>
             </div>
             
@@ -1975,7 +1795,7 @@ export default function ManageUsers() {
                 )}
                 {auxiliaryDataLoaded && roles.length === 0 && (
                   <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                    ⚠️ Nenhuma função disponível
+                    ⚠️ Nenhuma função disponível. Verifique se o backend está funcionando.
                   </div>
                 )}
                 {auxiliaryDataLoaded && roles.length > 0 && (
@@ -2021,7 +1841,7 @@ export default function ManageUsers() {
                 )}
                 {auxiliaryDataLoaded && institutions.length === 0 && (
                   <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                    ⚠️ Nenhuma instituição disponível
+                    ⚠️ Nenhuma instituição disponível. Verifique se o backend está funcionando.
                   </div>
                 )}
                 {auxiliaryDataLoaded && institutions.length > 0 && (
@@ -2403,13 +2223,13 @@ export default function ManageUsers() {
                         ))}
                         {roles.length === 0 && (
                           <option value="" disabled>
-                            Nenhuma função disponível
+                            Nenhuma função disponível - Verifique o backend
                           </option>
                         )}
                       </select>
                       {roles.length === 0 && (
                         <p className="text-xs text-amber-600 mt-1">
-                          ⚠️ Carregando funções disponíveis...
+                          ⚠️ Nenhuma função disponível - Verifique se o backend está funcionando
                         </p>
                       )}
                     </div>
@@ -2431,13 +2251,13 @@ export default function ManageUsers() {
                         ))}
                         {institutions.length === 0 && (
                           <option value="" disabled>
-                            Nenhuma instituição disponível
+                            Nenhuma instituição disponível - Verifique o backend
                           </option>
                         )}
                       </select>
                       {institutions.length === 0 && (
                         <p className="text-xs text-amber-600 mt-1">
-                          ⚠️ Carregando instituições disponíveis...
+                          ⚠️ Nenhuma instituição disponível - Verifique se o backend está funcionando
                         </p>
                       )}
                     </div>

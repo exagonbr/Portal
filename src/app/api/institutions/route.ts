@@ -3,69 +3,17 @@ import { prepareAuthHeaders } from '../lib/auth-headers';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api';
 
-// Mock data para instituições (fallback)
-const mockInstitutions = [
-  {
-    id: 'inst-sabercon',
-    name: 'Escola SaberCon Digital',
-    code: 'SABERCON',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'inst-exagon',
-    name: 'Colégio Exagon Inovação',
-    code: 'EXAGON',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'inst-devstrade',
-    name: 'Centro Educacional DevStrade',
-    code: 'DEVSTRADE',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'inst-unifesp',
-    name: 'Universidade Federal de São Paulo',
-    code: 'UNIFESP',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'inst-usp',
-    name: 'Universidade de São Paulo',
-    code: 'USP',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+
 
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
-    const public_access = searchParams.get('public') === 'true';
-    
-    // Se for acesso público, retornar dados mock
-    if (public_access) {
-      console.log('🔓 Acesso público a instituições - retornando dados mock');
-      return NextResponse.json({
-        success: true,
-        data: mockInstitutions,
-        pagination: {
-          page: 1,
-          limit: mockInstitutions.length,
-          total: mockInstitutions.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrev: false
-        }
-      });
-    }
     
     console.log('🔗 BACKEND_URL:', BACKEND_URL);
+    
+    // Preparar headers de autenticação
+    const headers = prepareAuthHeaders(request);
     
     // Construir URL do backend com parâmetros
     // Se não houver token de autenticação, usar rota pública
@@ -77,7 +25,6 @@ export async function GET(request: NextRequest) {
     });
 
     console.log('🔗 Proxying to:', backendUrl.toString());
-    const headers = prepareAuthHeaders(request);
     console.log('📋 Headers:', headers);
     console.log('🔐 Using route:', hasAuthToken ? 'AUTHENTICATED' : 'PUBLIC');
 
@@ -90,21 +37,14 @@ export async function GET(request: NextRequest) {
     console.log('📡 Backend response status:', response.status);
     console.log('📡 Backend response headers:', response.headers);
     
-    // Se falhar, retornar dados mock como fallback
+    // Se falhar, retornar erro
     if (!response.ok) {
-      console.warn('⚠️ Backend falhou, usando dados mock como fallback');
-      return NextResponse.json({
-        success: true,
-        data: mockInstitutions,
-        pagination: {
-          page: 1,
-          limit: mockInstitutions.length,
-          total: mockInstitutions.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrev: false
-        }
-      });
+      const errorText = await response.text();
+      console.error('❌ Backend error:', errorText);
+      return NextResponse.json(
+        { success: false, message: `Erro no backend: ${response.status} ${response.statusText}` },
+        { status: response.status }
+      );
     }
     
     // Verificar se a resposta é JSON
@@ -114,20 +54,10 @@ export async function GET(request: NextRequest) {
     if (!contentType || !contentType.includes('application/json')) {
       const textResponse = await response.text();
       console.error('❌ Resposta não é JSON:', textResponse);
-      
-      // Retornar dados mock como fallback
-      return NextResponse.json({
-        success: true,
-        data: mockInstitutions,
-        pagination: {
-          page: 1,
-          limit: mockInstitutions.length,
-          total: mockInstitutions.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrev: false
-        }
-      });
+      return NextResponse.json(
+        { success: false, message: 'Resposta do backend não é JSON válido' },
+        { status: 500 }
+      );
     }
     
     const data = await response.json();
@@ -138,20 +68,10 @@ export async function GET(request: NextRequest) {
     console.error('❌ Erro ao buscar instituições:', error);
     console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
     
-    // Em caso de erro, retornar dados mock
-    console.log('🔧 Usando dados mock como fallback devido ao erro');
-    return NextResponse.json({
-      success: true,
-      data: mockInstitutions,
-      pagination: {
-        page: 1,
-        limit: mockInstitutions.length,
-        total: mockInstitutions.length,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false
-      }
-    });
+    return NextResponse.json(
+      { success: false, message: 'Erro interno do servidor ao buscar instituições' },
+      { status: 500 }
+    );
   }
 }
 
