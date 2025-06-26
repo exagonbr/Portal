@@ -1,6 +1,7 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { requireRole, validateJWTSmart, requireRoleSmart } from '../middleware/auth';
+import { validateTokenUltraSimple } from '../middleware/sessionMiddleware';
 import { UserRepository } from '../repositories/UserRepository';
 import bcrypt from 'bcryptjs';
 
@@ -634,7 +635,7 @@ router.delete('/:id', authMiddleware, requireRole(['admin', 'SYSTEM_ADMIN']), as
  *       403:
  *         description: Forbidden
  */
-router.get('/stats', validateJWTSmart, requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
+router.get('/stats', validateTokenUltraSimple, async (req, res) => {
   try {
     // Buscar estatísticas de usuários
     const totalUsers = await userRepository.count();

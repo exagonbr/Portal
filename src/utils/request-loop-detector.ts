@@ -85,7 +85,10 @@ class RequestLoopDetector {
       '/api/users/by-role',
       '/api/admin/',
       '/api/institutions',
-      '/api/users/stats'
+      '/api/users/stats',
+      '/api/settings',
+      '/api/dashboard/metrics/realtime',
+      '/api/tv-shows'
     ];
 
     return ignorePatterns.some(pattern => url.includes(pattern));

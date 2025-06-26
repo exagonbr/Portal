@@ -53,6 +53,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { systemAdminService } from '@/services/systemAdminService';
 import { institutionService } from '@/services/institutionService';
+import { debugAuth } from '@/utils/auth-debug';
 import { StatCard, ContentCard, SimpleCard } from '@/components/ui/StandardCard';
 
 
@@ -187,6 +188,10 @@ function SystemAdminDashboardContent() {
   const [engagementMetrics, setEngagementMetrics] = useState<any>(null);
 
   useEffect(() => {
+    // Executar diagnóstico de autenticação primeiro
+    console.log('🔍 Executando diagnóstico de autenticação...');
+    debugAuth();
+    
     loadDashboardData();
     
     // Auto-refresh a cada 30 segundos para métricas em tempo real

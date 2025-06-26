@@ -660,4 +660,107 @@ export const withTimeout = (middleware: any, timeoutMs: number = 5000) => {
       return validateJWTSimple(req, res, next);
     }
   };
+};
+
+/**
+ * Middleware ultra-simples para validar apenas JWT (para debug e casos críticos)
+ */
+export const validateTokenUltraSimple = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    // Log para debug
+    console.log('🔍 validateTokenUltraSimple - Header:', authHeader ? 'Present' : 'Missing');
+    
+    if (!authHeader) {
+      console.log('❌ No authorization header');
+      return res.status(401).json({
+        success: false,
+        error: 'Token de autorização não fornecido',
+        debug: 'No authorization header'
+      });
+    }
+    
+    if (!authHeader.startsWith('Bearer ')) {
+      console.log('❌ Invalid authorization format');
+      return res.status(401).json({
+        success: false,
+        error: 'Formato de token inválido',
+        debug: 'Authorization header does not start with Bearer'
+      });
+    }
+
+    const token = authHeader.substring(7);
+    console.log('🔍 Token length:', token ? token.length : 0);
+    
+    if (!token) {
+      console.log('❌ Empty token');
+      return res.status(401).json({
+        success: false,
+        error: 'Token vazio',
+        debug: 'Token is empty after Bearer prefix'
+      });
+    }
+    
+    if (token.length < 10) {
+      console.log('❌ Token too short:', token.length);
+      return res.status(401).json({
+        success: false,
+        error: 'Token muito curto',
+        debug: `Token length: ${token.length}`
+      });
+    }
+
+    // Tentar decodificar o token
+    const secret = process.env.JWT_SECRET || 'ExagonTech';
+    let decoded;
+    
+    try {
+      decoded = jwt.verify(token, secret) as any;
+      console.log('✅ Token decoded successfully for user:', decoded.email);
+    } catch (jwtError: any) {
+      console.log('❌ JWT verification failed:', jwtError.message);
+      return res.status(401).json({
+        success: false,
+        error: 'Token inválido ou expirado',
+        debug: jwtError.message
+      });
+    }
+    
+    if (typeof decoded === 'string' || !decoded.userId) {
+      console.log('❌ Invalid token payload');
+      return res.status(401).json({
+        success: false,
+        error: 'Payload do token inválido',
+        debug: 'Token payload is invalid'
+      });
+    }
+
+    // Criar objeto user mínimo
+    req.user = {
+      userId: decoded.userId,
+      email: decoded.email,
+      name: decoded.name,
+      role: decoded.role,
+      permissions: decoded.permissions || [],
+      institutionId: decoded.institutionId,
+      sessionId: decoded.sessionId,
+      iat: decoded.iat,
+      exp: decoded.exp
+    };
+
+    console.log('✅ User authenticated:', decoded.email, 'Role:', decoded.role);
+    next();
+  } catch (error: any) {
+    console.error('❌ validateTokenUltraSimple error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno na validação do token',
+      debug: error.message
+    });
+  }
 }; 

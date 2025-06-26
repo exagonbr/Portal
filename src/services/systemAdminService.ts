@@ -280,7 +280,7 @@ class SystemAdminService {
    */
   async getRealTimeMetrics(): Promise<RealTimeMetrics> {
     try {
-      const response = await apiClient.get<{ data: RealTimeMetrics }>(`dashboard/metrics/realtime`);
+      const response = await apiClient.get<{ data: RealTimeMetrics }>(`/api/dashboard/metrics/realtime`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -310,7 +310,7 @@ class SystemAdminService {
    */
   async getSystemHealth(): Promise<SystemHealth> {
     try {
-      const response = await apiClient.get<{ data: SystemHealth }>(`dashboard/health`);
+      const response = await apiClient.get<{ data: SystemHealth }>(`/api/dashboard/health`);
       
       if (response.success && response.data) {
         return response.data.data;
@@ -354,7 +354,7 @@ class SystemAdminService {
    */
   async getAnalyticsData(type: 'users' | 'sessions' | 'activity', period: 'day' | 'week' | 'month' = 'week'): Promise<AnalyticsData> {
     try {
-      const response = await apiClient.get<{ data: AnalyticsData }>(`dashboard/analytics`, { type, period });
+      const response = await apiClient.get<{ data: AnalyticsData }>(`/api/dashboard/analytics`, { type, period });
       
       if (response.success && response.data) {
         return response.data.data;

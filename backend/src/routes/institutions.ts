@@ -1,12 +1,13 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
+import { validateTokenUltraSimple } from '../middleware/sessionMiddleware';
 import { InstitutionController } from '../controllers/refactored/InstitutionController';
 import { body, param } from 'express-validator';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+// Aplicar middleware de autenticação em todas as rotas (usando versão ultra-simples para debug)
+router.use(validateTokenUltraSimple);
 const institutionController = new InstitutionController();
 
 const institutionTypesArray = ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER'];

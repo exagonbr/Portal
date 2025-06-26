@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 export interface BackgroundSettings {
   type: 'video' | 'image' | 'color'
@@ -118,19 +118,44 @@ export function useSystemSettings() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [availableVideos, setAvailableVideos] = useState<string[]>([])
+  
+  // Refs para controle de requisições
+  const loadingRef = useRef(false)
+  const lastLoadTimeRef = useRef(0)
+  const CACHE_DURATION = 30000 // 30 segundos de cache
 
-  // Carregar configurações da API
-  const loadSettings = async () => {
+  // Carregar configurações da API com controle de cache
+  const loadSettings = useCallback(async (forceReload = false) => {
+    // Evitar múltiplas requisições simultâneas
+    if (loadingRef.current) {
+      console.log('⚠️ Requisição de settings já em andamento, ignorando...')
+      return
+    }
+
+    // Verificar cache (não recarregar se foi feito recentemente)
+    const now = Date.now()
+    if (!forceReload && (now - lastLoadTimeRef.current) < CACHE_DURATION) {
+      console.log('⚡ Usando cache de settings (carregado há menos de 30s)')
+      return
+    }
+
     try {
+      loadingRef.current = true
       setLoading(true)
       setError(null)
 
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/settings', {
+      
+      // Adicionar timestamp para evitar cache do navegador
+      const url = `/api/settings?_t=${now}`
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         }
       })
 
@@ -142,6 +167,7 @@ export function useSystemSettings() {
       
       if (data.success && data.data) {
         setSettings({ ...defaultFullSettings, ...data.data })
+        lastLoadTimeRef.current = now
         
         // Se é fallback, salvar no localStorage
         if (data.fallback) {
@@ -167,13 +193,15 @@ export function useSystemSettings() {
       }
     } finally {
       setLoading(false)
+      loadingRef.current = false
     }
-  }
+  }, [])
 
+  // Carregar apenas uma vez na inicialização
   useEffect(() => {
     loadSettings()
     loadAvailableVideos()
-  }, [])
+  }, [loadSettings])
 
   const loadAvailableVideos = async () => {
     try {
