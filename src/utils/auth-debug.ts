@@ -888,6 +888,7 @@ if (typeof window !== 'undefined') {
   (window as any).syncAuthData = syncAuthData;
   (window as any).repairAuth = repairAuth;
   (window as any).convertBase64TokenToJWT = convertBase64TokenToJWT;
+  (window as any).initializeAuthCleanup = initializeAuthCleanup;
   
   // Função de conveniência para resolver o problema atual
   (window as any).fixAuthToken = () => {
@@ -901,4 +902,7 @@ if (typeof window !== 'undefined') {
       debugAuth();
     }
   };
+  
+  // Inicializar sistema de limpeza automática
+  initializeAuthCleanup();
 } 

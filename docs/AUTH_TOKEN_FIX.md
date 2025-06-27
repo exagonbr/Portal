@@ -1,179 +1,277 @@
-# Correção de Problemas de Token de Autenticação
+# Correção de Problemas de Autenticação - Portal Sabercon
 
-## Problema Identificado
+## 📋 Resumo do Problema
 
-O erro "❌ [DASHBOARD] Token de autenticação inválido! 'Erro desconhecido'" estava ocorrendo devido a inconsistências no gerenciamento de tokens de autenticação entre diferentes storages (localStorage, sessionStorage, cookies).
+O erro "Token inválido ou expirado" estava aparecendo no console como um erro não tratado, causando confusão e logs desnecessários. Este documento descreve as correções implementadas para resolver este e outros problemas relacionados à autenticação.
 
-## Causa Raiz
+## 🐛 Problema Original
 
-1. **Inconsistência de Armazenamento**: Tokens sendo armazenados em diferentes chaves (`auth_token`, `token`, `authToken`)
-2. **Falta de Sincronização**: Diferentes partes do sistema procurando tokens em locais diferentes
-3. **Tratamento de Erro Inadequado**: Mensagens de erro genéricas não identificavam a causa específica
-4. **Validação Insuficiente**: Tokens não eram validados adequadamente antes do uso
+```
+Error: Erro: "Token inválido ou expirado"
+    at createConsoleError (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/errors/console-error.js:27:71)
+    at handleConsoleError (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/errors/use-error-handler.js:47:54)
+    at console.error (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/globals/intercept-console-error.js:47:57)
+    at eval (webpack-internal:///(app-pages-browser)/./src/utils/auth-debug.ts:219:35)
+```
 
-## Correções Implementadas
+## 🔧 Correções Implementadas
 
-### 1. Melhorias no API Client (`src/lib/api-client.ts`)
+### 1. Melhor Tratamento de Erros no Debug (`src/utils/auth-debug.ts`)
 
-#### Método `getAuthToken()` Aprimorado
-- Busca tokens em ordem de prioridade: localStorage → sessionStorage → cookies
-- Validação de formato e expiração de JWT
-- Logs detalhados para debugging
-- Verificação de tokens vazios ou inválidos
+**Antes:**
+```typescript
+if (result.error) console.error('Erro:', result.error);
+```
 
-#### Método `setAuthToken()` Robusto
-- Armazenamento em múltiplas chaves para compatibilidade
-- Limpeza de tokens antigos
-- Verificação de sucesso na operação
-- Configuração adequada de cookies
+**Depois:**
+```typescript
+// Tratar o erro de forma mais elegante para evitar logs desnecessários
+if (result.error) {
+  // Se o erro é sobre token inválido/expirado, tratar como informação, não erro
+  if (result.error.includes('Token inválido ou expirado') || result.error.includes('invalid') || result.error.includes('expired')) {
+    console.warn('⚠️ Token de autenticação:', result.error);
+    console.info('💡 Isso é normal se você não estiver logado ou o token expirou');
+  } else {
+    console.warn('❌ Erro na API:', result.error);
+  }
+}
+```
 
-#### Método `clearAuth()` Completo
-- Limpeza de todos os storages
-- Remoção de cookies em diferentes domínios
-- Logs de confirmação
+### 2. Limpeza Automática de Tokens Expirados
 
-#### Tratamento de Erros Melhorado
-- Detecção específica de erros de autenticação (401)
-- Mensagens de erro mais descritivas
-- Informações de debug detalhadas
+**Nova função:**
+```typescript
+export function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return true; // Se não é JWT válido, considerar expirado
+    }
+    
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.exp) {
+      return false; // Se não tem expiração, considerar válido
+    }
+    
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp < now;
+  } catch (error) {
+    console.warn('Erro ao verificar expiração do token:', error);
+    return true; // Em caso de erro, considerar expirado por segurança
+  }
+}
 
-### 2. Melhorias no System Admin Service (`src/services/systemAdminService.ts`)
+export function cleanExpiredTokens(): void {
+  if (typeof window === 'undefined') return;
+  
+  const tokenKeys = ['auth_token', 'token', 'authToken'];
+  let cleanedTokens = 0;
+  
+  for (const key of tokenKeys) {
+    const token = localStorage.getItem(key);
+    if (token && isTokenExpired(token)) {
+      localStorage.removeItem(key);
+      cleanedTokens++;
+      console.log(`🧹 Token expirado removido: ${key}`);
+    }
+  }
+  
+  if (cleanedTokens > 0) {
+    console.log(`🧹 ${cleanedTokens} token(s) expirado(s) foram limpos automaticamente`);
+  }
+}
+```
 
-#### Método `testAuthentication()` Aprimorado
-- Análise detalhada de tipos de erro
-- Diferenciação entre problemas de rede e autenticação
-- Logs mais informativos
-- Melhor tratamento de timeouts
+### 3. Sistema de Inicialização Automática
 
-### 3. Utilitário de Sincronização (`src/utils/auth-debug.ts`)
+**Nova função:**
+```typescript
+export function initializeAuthCleanup(): void {
+  if (typeof window === 'undefined') return;
+  
+  // Limpar tokens expirados imediatamente
+  cleanExpiredTokens();
+  
+  // Configurar limpeza periódica (a cada 5 minutos)
+  const cleanupInterval = setInterval(() => {
+    cleanExpiredTokens();
+  }, 5 * 60 * 1000); // 5 minutos
+  
+  // Limpar o interval quando a página for descarregada
+  window.addEventListener('beforeunload', () => {
+    clearInterval(cleanupInterval);
+  });
+  
+  console.log('🔧 Sistema de limpeza automática de tokens inicializado');
+}
+```
 
-#### Função `syncAuthData()` Completa
-- Busca tokens em todas as localizações possíveis
-- Validação de JWT e verificação de expiração
-- Sincronização automática entre storages
-- Limpeza de dados expirados
-- Sincronização de dados do usuário
+### 4. Melhor Tratamento de Erros na API (`src/utils/auth-debug.ts`)
 
-### 4. Script de Diagnóstico (`scripts/fix-auth-token.js`)
+**Melhorias:**
+```typescript
+// Capturar qualquer erro da promise para evitar unhandled rejections
+}).catch(error => {
+  console.group('🧪 TESTE DA API - ERRO');
+  console.warn('❌ Erro inesperado durante o teste da API:', error);
+  console.info('💡 Isso pode indicar um problema de rede ou configuração');
+  console.groupEnd();
+});
+```
 
-#### Ferramenta de Debug Interativa
-- Diagnóstico completo de problemas de autenticação
-- Correção automática de inconsistências
-- Teste de conectividade com API
-- Instruções claras para o usuário
+### 5. Diagnóstico Aprimorado
 
-### 5. Melhorias no Dashboard (`src/app/dashboard/system-admin/page.tsx`)
+**Melhorias no diagnóstico:**
+- Verificação automática de expiração de tokens
+- Limpeza automática antes do diagnóstico
+- Recomendações mais específicas baseadas no tipo de problema
+- Logs informativos em vez de erros para casos normais
 
-#### Inicialização Robusta
-- Sincronização automática de tokens na inicialização
-- Aguardo após sincronização antes de carregar dados
-- Melhor tratamento de erros de carregamento
+## 🚀 Como Usar
 
-## Como Usar as Correções
+### 1. Diagnóstico Manual
 
-### 1. Diagnóstico Automático
-O sistema agora executa diagnóstico e sincronização automática quando:
-- A página do dashboard é carregada
-- Há inconsistências detectadas nos tokens
-- Ocorrem erros de autenticação
+No console do navegador:
+```javascript
+// Importar as funções (se não estiverem globais)
+import { debugAuth, cleanExpiredTokens, initializeAuthCleanup } from '@/utils/auth-debug';
 
-### 2. Diagnóstico Manual
-Para diagnosticar problemas manualmente:
+// Executar diagnóstico completo
+debugAuth();
 
+// Limpar tokens expirados manualmente
+cleanExpiredTokens();
+
+// Inicializar limpeza automática
+initializeAuthCleanup();
+```
+
+### 2. Inicialização Automática
+
+Adicione no seu arquivo principal (`layout.tsx` ou `app.tsx`):
+```typescript
+import { initializeAuthCleanup } from '@/utils/auth-debug';
+
+// No useEffect ou componentDidMount
+useEffect(() => {
+  initializeAuthCleanup();
+}, []);
+```
+
+### 3. Script de Verificação
+
+Execute o script de verificação:
 ```bash
 node scripts/fix-auth-token.js
 ```
 
-Siga as instruções para executar o código no DevTools do navegador.
+## 📊 Benefícios das Correções
 
-### 3. Função de Sincronização
-Para sincronizar tokens programaticamente:
+### 1. **Redução de Logs Desnecessários**
+- Tokens expirados não geram mais `console.error`
+- Mensagens informativas em vez de erros assustadores
+- Contexto claro sobre o que está acontecendo
 
+### 2. **Limpeza Automática**
+- Tokens expirados são removidos automaticamente
+- Evita acúmulo de dados inválidos no localStorage
+- Melhora a performance e reduz confusão
+
+### 3. **Diagnóstico Melhorado**
+- Informações mais precisas sobre problemas
+- Recomendações específicas para cada tipo de erro
+- Verificação automática de expiração
+
+### 4. **Experiência do Desenvolvedor**
+- Logs mais limpos e informativos
+- Ferramentas de debug mais úteis
+- Menos tempo perdido investigando "erros" normais
+
+## 🔍 Tipos de Problemas Resolvidos
+
+### 1. **Token Expirado**
+**Antes:** `Error: Token inválido ou expirado`
+**Depois:** `⚠️ Token de autenticação: Token inválido ou expirado` + `💡 Isso é normal se você não estiver logado ou o token expirou`
+
+### 2. **Token com Formato Inválido**
+**Antes:** Erro genérico
+**Depois:** `⚠️ Token com formato inválido - Faça login novamente`
+
+### 3. **Token Não Encontrado**
+**Antes:** Erro ou comportamento inconsistente
+**Depois:** `❌ Token não encontrado - Faça login novamente` + `💡 Faça login para obter um token de autenticação`
+
+## 📝 Melhores Práticas Implementadas
+
+### 1. **Tratamento de Erro Elegante**
+- Use `console.warn` para situações esperadas
+- Use `console.info` para dicas úteis
+- Reserve `console.error` para erros reais e inesperados
+
+### 2. **Limpeza Proativa**
+- Verifique expiração antes de usar tokens
+- Limpe dados inválidos automaticamente
+- Configure limpeza periódica
+
+### 3. **Feedback Informativo**
+- Forneça contexto sobre o que está acontecendo
+- Ofereça sugestões de como resolver problemas
+- Use emojis e formatação para melhor legibilidade
+
+### 4. **Robustez**
+- Trate casos extremos (tokens malformados, etc.)
+- Use fallbacks seguros
+- Capture e trate exceções adequadamente
+
+## 🧪 Testes
+
+### 1. **Teste Manual**
 ```javascript
-import { syncAuthData } from '@/utils/auth-debug';
-
-// Sincronizar dados de autenticação
-syncAuthData();
+// No console do navegador
+debugAuth(); // Deve mostrar diagnóstico completo sem erros desnecessários
 ```
 
-### 4. Limpeza Completa
-Para limpar todos os dados de autenticação:
-
+### 2. **Teste de Token Expirado**
 ```javascript
-import { clearAllAuth } from '@/utils/auth-debug';
-
-// Limpar todos os dados de autenticação
-clearAllAuth();
+// Simular token expirado
+localStorage.setItem('auth_token', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MDAwMDAwMDB9.invalid');
+cleanExpiredTokens(); // Deve remover o token
 ```
 
-## Logs de Debug
-
-O sistema agora fornece logs detalhados para facilitar o debugging:
-
-```
-🔍 [API-CLIENT] getAuthToken: Procurando token...
-✅ [API-CLIENT] Token encontrado em localStorage.auth_token: eyJhbGciOiJIUzI1NiI...
-✅ [API-CLIENT] Token parece ser um JWT válido
-✅ [API-CLIENT] Token JWT válido e não expirado
-✅ [API-CLIENT] Retornando token de localStorage.auth_token: eyJhbGciOiJIUzI1NiI...
+### 3. **Teste de Limpeza Automática**
+```javascript
+initializeAuthCleanup(); // Deve configurar limpeza automática
+// Verificar no console que o sistema foi inicializado
 ```
 
-## Prevenção de Problemas Futuros
+## 📚 Arquivos Modificados
 
-### 1. Padronização
-- Uso consistente da chave `auth_token` como padrão
-- Chaves alternativas mantidas apenas para compatibilidade
+1. **`src/utils/auth-debug.ts`** - Principais correções
+2. **`scripts/fix-auth-token.js`** - Script de verificação
+3. **`docs/AUTH_TOKEN_FIX.md`** - Esta documentação
 
-### 2. Validação
-- Verificação automática de expiração de tokens
-- Validação de formato JWT
-- Limpeza automática de tokens inválidos
+## 🔄 Próximos Passos
 
-### 3. Sincronização
-- Sincronização automática entre storages
-- Detecção e correção de inconsistências
-- Logs detalhados para monitoramento
+1. **Monitoramento** - Acompanhar logs para verificar efetividade
+2. **Integração** - Adicionar inicialização automática em mais pontos
+3. **Extensão** - Aplicar padrões similares a outros sistemas
+4. **Documentação** - Manter documentação atualizada
 
-### 4. Tratamento de Erros
-- Mensagens de erro específicas e úteis
-- Informações de debug adequadas
-- Sugestões de correção para o usuário
+## ❓ Solução de Problemas
 
-## Teste das Correções
+### Se ainda ver erros de token:
+1. Execute `debugAuth()` no console
+2. Verifique se `initializeAuthCleanup()` foi chamado
+3. Limpe o localStorage manualmente se necessário
+4. Faça login novamente para obter token válido
 
-Para testar se as correções estão funcionando:
+### Se a limpeza automática não funcionar:
+1. Verifique se não há interferência de outros scripts
+2. Confirme que o navegador suporta `setInterval` e `addEventListener`
+3. Verifique se não há erros JavaScript que impeçam a execução
 
-1. **Faça login no sistema**
-2. **Abra o DevTools (F12)**
-3. **Execute no console:**
-   ```javascript
-   // Testar diagnóstico
-   import('@/utils/auth-debug').then(({ diagnoseAuth }) => {
-     console.log(diagnoseAuth());
-   });
-   
-   // Testar sincronização
-   import('@/utils/auth-debug').then(({ syncAuthData }) => {
-     syncAuthData();
-   });
-   ```
-
-4. **Verifique os logs** para confirmar que não há erros
-5. **Acesse o dashboard** e confirme que carrega sem erros
-
-## Monitoramento
-
-Os logs agora incluem:
-- ✅ Operações bem-sucedidas
-- ❌ Erros específicos
-- 🔍 Informações de debug
-- ⚠️ Avisos importantes
-- 🔄 Operações de sincronização
-
-Isso facilita a identificação e correção de problemas futuros.
-
----
-
-**Autor:** Sistema de Debug de Autenticação  
-**Data:** Janeiro 2025  
-**Versão:** 1.0 
+### Para desenvolvedores:
+1. Use as ferramentas de debug fornecidas
+2. Mantenha logs informativos, não assustadores
+3. Trate tokens expirados como casos normais, não erros
+4. Implemente limpeza proativa em novos recursos
