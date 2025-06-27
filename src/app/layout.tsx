@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-// Comentando temporariamente para isolar o problema
-// import { AppProviders } from '@/providers/AppProviders';
-// import ClientLayoutWrapper from '@/components/ClientLayoutWrapper';
+import { AppProviders } from '@/providers/AppProviders';
 // Importar o handler de erros de chunk (auto-inicializa)
 import '@/utils/chunk-error-handler';
 
@@ -65,16 +63,17 @@ export default function RootLayout({
         {/* Remover preload de fontes específicas para evitar avisos */}
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
-        <div className="flex flex-col min-h-screen w-full">
-          {children}
-        </div>
-        {/* Temporariamente removido para isolar o problema:
-        <AppProviders fallback={<LayoutFallback>{children}</LayoutFallback>}>
-          <ClientLayoutWrapper fallback={<LayoutFallback>{children}</LayoutFallback>}>
+        <AppProviders 
+          fallback={
+            <div className="flex flex-col min-h-screen w-full">
+              {children}
+            </div>
+          }
+        >
+          <div className="flex flex-col min-h-screen w-full">
             {children}
-          </ClientLayoutWrapper>
+          </div>
         </AppProviders>
-        */}
       </body>
     </html>
   );
