@@ -1,7 +1,6 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import AuthenticatedDashboardLayout from '@/components/dashboard/AuthenticatedDashboardLayout'
 
 // Rotas que não devem usar o layout de dashboard (completamente públicas)
 const publicRoutes = [
@@ -31,29 +30,15 @@ const publicRoutes = [
   '/test-login'
 ]
 
-// Rotas de dashboard que têm seu próprio layout interno
-const dashboardRoutesWithOwnLayout = [
-  '/dashboard/system-admin',
-  '/dashboard/institution-manager',
-  '/dashboard/coordinator',
-  '/dashboard/teacher',
-  '/dashboard/student',
-  '/dashboard/guardian',
-  '/dashboard/admin',
-  '/dashboard/manager',
-  '/dashboard/institution-admin',
-  // Rotas de roles específicas
-  '/institution',
-  '/student',
-  '/guardian',
-  '/teacher',
-  '/coordinator',
-  '/admin'
-]
-
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
+  // Por enquanto, renderizar apenas o children sem layout complexo
+  // para evitar problemas de carregamento de chunks
+  return <div className="h-full w-full">{children}</div>
+  
+  // Código comentado temporariamente:
+  /*
   // Não usar layout de dashboard para rotas públicas
   if (pathname && publicRoutes.includes(pathname)) {
     return <div className="h-full w-full">{children}</div>
@@ -71,4 +56,5 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   // Usar layout de dashboard autenticado para todas as outras rotas
   return <AuthenticatedDashboardLayout>{children}</AuthenticatedDashboardLayout>
+  */
 }
