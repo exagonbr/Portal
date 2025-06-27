@@ -1,53 +1,89 @@
-// Utilitário para tratar erros de carregamento de chunks
-export function handleChunkLoadError() {
-  if (typeof window !== 'undefined') {
-    // Detectar erros de carregamento de chunks
+/**
+ * Handler específico para erros de chunk loading e originalFactory
+ * Importado automaticamente no layout.tsx
+ */
+
+// Verificar se já foi inicializado para evitar múltiplas inicializações
+let initialized = false;
+
+function isChunkError(error: any): boolean {
+  if (!error) return false;
+  
+  const errorMessage = error.message || error.toString();
+  
+  return (
+    error.name === 'ChunkLoadError' ||
+    errorMessage.includes('Loading chunk') ||
+    errorMessage.includes('ChunkLoadError') ||
+    errorMessage.includes('originalFactory is undefined') ||
+    errorMessage.includes("can't access property \"call\", originalFactory is undefined") ||
+    errorMessage.includes('Loading CSS chunk') ||
+    error.code === 'CHUNK_LOAD_FAILED'
+  );
+}
+
+function handleChunkError(error: any, source: string) {
+  if (!isChunkError(error)) return false;
+  
+  console.warn(`🔄 Erro de chunk detectado (${source}):`, error.message);
+  
+  // Tentar recarregar a página após um pequeno delay
+  setTimeout(() => {
+    console.log('🔄 Recarregando página devido a erro de chunk...');
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  }, 1000);
+  
+  return true;
+}
+
+function setupChunkErrorHandler() {
+  if (typeof window === 'undefined' || initialized) return;
+  
+  try {
+    // Handler para erros globais
     window.addEventListener('error', (event) => {
-      const target = event.target || event.srcElement;
-      
-      // Verificar se é um erro de carregamento de script
-      if (target && (target as any).tagName === 'SCRIPT') {
-        const src = (target as HTMLScriptElement).src;
-        
-        // Se for um chunk do Next.js que falhou
-        if (src && src.includes('/_next/static/chunks/')) {
-          console.warn('🔄 Erro de carregamento de chunk detectado, tentando recarregar...', src);
-          
-          // Tentar recarregar a página após um pequeno delay
+      if (handleChunkError(event.error, 'global error')) {
+        event.preventDefault();
+      }
+    });
+
+    // Handler para promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      if (handleChunkError(event.reason, 'unhandled rejection')) {
+        event.preventDefault();
+      }
+    });
+
+    // Handler para erros de script loading
+    window.addEventListener('error', (event) => {
+      if (event.target && (event.target as any).tagName === 'SCRIPT') {
+        const script = event.target as HTMLScriptElement;
+        if (script.src && (script.src.includes('chunk') || script.src.includes('_next'))) {
+          console.warn('🔄 Erro ao carregar script:', script.src);
           setTimeout(() => {
             window.location.reload();
           }, 1000);
         }
       }
-    });
+    }, true);
 
-    // Detectar erros de promise rejection não tratados (relacionados a chunks)
-    window.addEventListener('unhandledrejection', (event) => {
-      const reason = event.reason;
-      
-      // Verificar se é um erro relacionado a carregamento de módulos
-      if (reason && typeof reason === 'object' && reason.message) {
-        const message = reason.message.toLowerCase();
-        
-        if (message.includes('loading chunk') || 
-            message.includes('factory') || 
-            message.includes('webpack')) {
-          console.warn('🔄 Erro de carregamento de módulo detectado:', reason.message);
-          
-          // Prevenir que o erro seja mostrado no console
-          event.preventDefault();
-          
-          // Tentar recarregar após delay
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
-        }
-      }
-    });
+    initialized = true;
+    console.log('✅ Handler de chunk errors inicializado');
+    
+  } catch (error) {
+    console.error('❌ Erro ao configurar handler de chunk errors:', error);
   }
 }
 
-// Auto-inicializar quando o módulo for carregado
+// Auto-inicializar quando o módulo for importado
 if (typeof window !== 'undefined') {
-  handleChunkLoadError();
-} 
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupChunkErrorHandler);
+  } else {
+    setupChunkErrorHandler();
+  }
+}
+
+export { setupChunkErrorHandler, isChunkError, handleChunkError }; 
