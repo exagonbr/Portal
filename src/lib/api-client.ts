@@ -12,6 +12,7 @@ import {
   initializeFirefoxCompatibility
 } from '../utils/firefox-compatibility';
 import { CORS_HEADERS } from '@/config/cors';
+import { logHttp500Error } from '../utils/debug-http-500';
 
 // Configuração centralizada
 const API_CONFIG = {
@@ -56,6 +57,8 @@ export class ApiClientError extends Error {
 if (typeof window !== 'undefined') {
   initializeFirefoxCompatibility();
 }
+
+// Sistema de debug para HTTP 500 movido para utils/debug-http-500.ts
 
 // Cliente API principal
 class ApiClient {
@@ -388,10 +391,12 @@ class ApiClient {
     console.log('🔍 [API-CLIENT] makeRequest - URL construída:', url);
     console.log('🔍 [API-CLIENT] makeRequest - Endpoint:', endpoint);
     console.log('🔍 [API-CLIENT] makeRequest - BaseURL:', this.baseURL);
+    console.log('🔍 [API-CLIENT] makeRequest - Options originais:', options);
     
     try {
       // Prepara headers incluindo autenticação
       const headers = this.prepareHeaders(options.headers as Record<string, string>);
+      console.log('🔍 [API-CLIENT] makeRequest - Headers preparados:', headers);
       
       // Configuração específica para CORS e compatibilidade
       const requestOptions: RequestInit = {
@@ -410,22 +415,40 @@ class ApiClient {
       // Serializar body se necessário
       if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
         requestOptions.body = JSON.stringify(options.body);
+        console.log('🔍 [API-CLIENT] makeRequest - Body serializado:', requestOptions.body);
       }
+      
+      console.log('🔍 [API-CLIENT] makeRequest - Request options finais:', {
+        ...requestOptions,
+        body: requestOptions.body ? 'BODY_PRESENT' : 'NO_BODY'
+      });
 
       // Para Firefox, usar fetch seguro sem AbortController
       let response: Response;
+      console.log('🔍 [API-CLIENT] Iniciando requisição fetch...');
+      console.log('🔍 [API-CLIENT] URL final:', url);
+      console.log('🔍 [API-CLIENT] Timeout configurado:', this.timeout);
+      
       if (isFirefox()) {
         console.log('🦊 Firefox: Usando fetch seguro');
         // Remover signal se existir
         delete requestOptions.signal;
+        console.log('🦊 Firefox: Chamando FirefoxUtils.safeFetch...');
         response = await FirefoxUtils.safeFetch(url, requestOptions);
+        console.log('🦊 Firefox: Resposta recebida:', response);
       } else {
+        console.log('🌐 Outros navegadores: Usando fetch com AbortController');
         // Para outros navegadores, usar AbortController com timeout
         const controller = new AbortController();
-        timeoutId = setTimeout(() => controller.abort(), this.timeout);
+        timeoutId = setTimeout(() => {
+          console.log('⏰ [API-CLIENT] Timeout atingido, abortando requisição');
+          controller.abort();
+        }, this.timeout);
         requestOptions.signal = controller.signal;
         
+        console.log('🌐 Chamando fetch padrão...');
         response = await fetch(url, requestOptions);
+        console.log('🌐 Resposta recebida:', response);
       }
 
       // Limpar timeout se a requisição foi bem-sucedida
@@ -434,23 +457,82 @@ class ApiClient {
       }
 
       // Processar resposta
+      console.log('🔍 [API-CLIENT] Processando resposta HTTP...');
+      console.log('🔍 [API-CLIENT] Response status:', response.status);
+      console.log('🔍 [API-CLIENT] Response ok:', response.ok);
+      console.log('🔍 [API-CLIENT] Response headers:', Object.fromEntries(response.headers.entries()));
+      
       const responseText = await response.text();
+      console.log('🔍 [API-CLIENT] Response text:', responseText);
+      
       let data: any;
 
       try {
         data = responseText ? JSON.parse(responseText) : {};
+        console.log('🔍 [API-CLIENT] Parsed data:', data);
       } catch (parseError) {
         console.warn('Resposta não é JSON válido:', responseText);
+        console.warn('Parse error:', parseError);
         data = { message: responseText };
       }
 
-      if (!response.ok) {
-        throw {
-          name: 'ApiError',
-          message: data.message || data.error || `HTTP ${response.status}`,
-          status: response.status,
-          details: data
-        } as ApiError;
+      // Log específico para erros HTTP 500
+      if (response.status === 500) {
+        console.error('🚨 [API-CLIENT] ERRO HTTP 500 DETECTADO!');
+        console.error('🚨 [API-CLIENT] URL da requisição:', url);
+        console.error('🚨 [API-CLIENT] Método HTTP:', options.method || 'GET');
+        console.error('🚨 [API-CLIENT] Headers da requisição:', options.headers);
+        console.error('🚨 [API-CLIENT] Body da requisição:', options.body ? 'PRESENTE' : 'AUSENTE');
+        console.error('🚨 [API-CLIENT] Response Headers:', Object.fromEntries(response.headers.entries()));
+        console.error('🚨 [API-CLIENT] Response Text completo:', responseText);
+        
+        // Registrar erro no sistema de debug
+        logHttp500Error(
+          url, 
+          options.method || 'GET', 
+          endpoint, 
+          response.status, 
+          data, 
+          responseText,
+          options.headers as Record<string, string>,
+          Object.fromEntries(response.headers.entries())
+        );
+        
+        // Tentar identificar o tipo de erro 500
+        if (data.message && data.message.includes('Erro interno do servidor')) {
+          console.error('🚨 [API-CLIENT] Erro genérico do backend detectado');
+        } else if (data.message && data.message.includes('database')) {
+          console.error('🚨 [API-CLIENT] Possível erro de banco de dados');
+        } else if (data.message && data.message.includes('timeout')) {
+          console.error('🚨 [API-CLIENT] Possível timeout no backend');
+        }
+      }
+      
+      const errorToThrow = {
+        message: data.message || data.error || `HTTP ${response.status}`,
+        status: response.status,
+        details: data
+      } as ApiError;
+      
+      console.error('🔍 [API-CLIENT] Erro a ser lançado:', errorToThrow);
+      console.error('🔍 [API-CLIENT] Tipo do erro a ser lançado:', typeof errorToThrow);
+      console.error('🔍 [API-CLIENT] Keys do erro a ser lançado:', Object.keys(errorToThrow));
+      
+      // Teste para verificar se o erro está sendo perdido
+      console.error('🔍 [API-CLIENT] Antes do throw - erro ainda existe:', !!errorToThrow);
+      console.error('🔍 [API-CLIENT] Antes do throw - erro.message:', errorToThrow.message);
+      console.error('🔍 [API-CLIENT] Antes do throw - erro.status:', errorToThrow.status);
+      
+      // Tentar diferentes formas de lançar o erro para garantir que não seja perdido
+      try {
+        throw errorToThrow;
+      } catch (throwError) {
+        // Se o throw falhou, criar um erro mais básico
+        console.error('🚨 [API-CLIENT] Erro no throw original, criando erro básico');
+        const basicError = new Error(errorToThrow.message || `HTTP ${response.status}`);
+        (basicError as any).status = response.status;
+        (basicError as any).details = data;
+        throw basicError;
       }
 
       return {
@@ -465,8 +547,54 @@ class ApiClient {
         clearTimeout(timeoutId);
       }
 
+      // Log detalhado do erro antes de processar
+      console.error('❌ [API-CLIENT] Erro capturado no makeRequest:', {
+        url,
+        endpoint,
+        method: options.method || 'GET',
+        errorType: typeof error,
+        errorName: error?.name,
+        errorMessage: error?.message,
+        errorStatus: error?.status,
+        errorStack: error?.stack,
+        fullError: error,
+        isNetworkError: error?.name === 'TypeError' && error?.message?.includes('fetch'),
+        isTimeoutError: error?.name === 'AbortError' || error?.message?.includes('timeout'),
+        isAuthError: error?.status === 401 || error?.message?.includes('401'),
+        requestHeaders: options.headers
+      });
+
+      // Log específico para erro vazio
+      const isEmptyError = !error || (typeof error === 'object' && Object.keys(error).length === 0);
+      const hasEmptyProperties = error && typeof error === 'object' && 
+        Object.keys(error).length > 0 && 
+        Object.values(error).every(val => val === undefined || val === null || val === '');
+      
+      if (isEmptyError || hasEmptyProperties) {
+        console.error('🚨 [API-CLIENT] ERRO VAZIO/MALFORMADO DETECTADO!');
+        console.error('🚨 [API-CLIENT] Error is null/undefined:', error === null || error === undefined);
+        console.error('🚨 [API-CLIENT] Error is empty object:', typeof error === 'object' && Object.keys(error).length === 0);
+        console.error('🚨 [API-CLIENT] Error has empty properties:', hasEmptyProperties);
+        console.error('🚨 [API-CLIENT] Error stringified:', JSON.stringify(error));
+        console.error('🚨 [API-CLIENT] Error valueOf:', error?.valueOf?.());
+        console.error('🚨 [API-CLIENT] Error prototype:', Object.getPrototypeOf(error));
+        console.error('🚨 [API-CLIENT] Error constructor:', error?.constructor);
+        
+        // Tentar capturar o stack trace atual
+        const currentStack = new Error('Stack trace atual').stack;
+        console.error('🚨 [API-CLIENT] Stack trace atual:', currentStack);
+        
+        // Se o erro está vazio, criar um erro mais informativo
+        if (isEmptyError) {
+          console.error('🚨 [API-CLIENT] Criando erro substituto para erro vazio');
+          error = new Error('Erro vazio capturado - possível problema de serialização');
+        }
+      }
+
       // Tratar erros específicos
       const processedError = this.processError(error);
+      
+      console.log('🔍 [API-CLIENT] Erro processado:', processedError);
       
       // Log específico para Firefox
       if (isFirefox() && FirefoxUtils.isNSBindingAbortError(error)) {
@@ -534,6 +662,9 @@ class ApiClient {
 
   private processError(error: any): ApiError {
     console.log('🔍 [API-CLIENT] processError chamado com:', error);
+    console.log('🔍 [API-CLIENT] processError - tipo:', typeof error);
+    console.log('🔍 [API-CLIENT] processError - constructor:', error?.constructor?.name);
+    console.log('🔍 [API-CLIENT] processError - keys:', error ? Object.keys(error) : 'no keys');
     
     if (error instanceof ApiClientError) {
       console.log('🔍 [API-CLIENT] Erro já é ApiClientError:', error.message);
@@ -557,7 +688,6 @@ class ApiClient {
         tokenPreview,
         errorDetails: error.details || {},
         errorMessage: error.message || 'sem mensagem',
-        errorName: error.name || 'sem nome',
         errorStack: error.stack || 'sem stack',
         fullError: error,
         localStorage: typeof window !== 'undefined' ? {
@@ -598,7 +728,7 @@ class ApiClient {
       if (processedError.name === 'AbortError' || processedError.message.includes('timeout')) {
         console.log('🔍 [API-CLIENT] Erro de timeout detectado');
         return {
-          name: 'ApiError',
+          name: 'TimeoutError',
           message: 'Timeout da requisição',
           status: 408,
           details: processedError
@@ -607,7 +737,7 @@ class ApiClient {
       if (processedError.name === 'TypeError' && processedError.message.includes('fetch')) {
         console.log('🔍 [API-CLIENT] Erro de rede detectado');
         return {
-          name: 'ApiError',
+          name: 'NetworkError',
           message: 'Erro de rede ao tentar acessar o recurso',
           status: 0,
           details: processedError
@@ -616,7 +746,7 @@ class ApiClient {
       if (processedError.message.includes('NS_BINDING_ABORTED')) {
         console.log('🔍 [API-CLIENT] Erro NS_BINDING_ABORTED detectado');
         return {
-          name: 'ApiError',
+          name: 'ConnectionError',
           message: 'Conexão interrompida. Tente novamente.',
           status: 0,
           details: processedError
@@ -636,13 +766,56 @@ class ApiClient {
     console.log('🔍 [API-CLIENT] Erro desconhecido, tipo:', typeof error, error);
     console.log('🔍 [API-CLIENT] Error keys:', error ? Object.keys(error) : 'no keys');
     console.log('🔍 [API-CLIENT] Error stack:', error?.stack);
+    console.log('🔍 [API-CLIENT] Error valueOf:', error?.valueOf ? error.valueOf() : 'no valueOf');
+    console.log('🔍 [API-CLIENT] Error toString:', error?.toString ? error.toString() : 'no toString');
     
-    const errorMessage = error?.message || error?.toString() || 'Sem detalhes disponíveis';
-    const errorType = error?.name || typeof error;
+    // Tentar obter informações mais detalhadas do erro
+    let errorMessage = 'Sem detalhes disponíveis';
+    let errorType = typeof error;
+    
+    if (error?.message) {
+      errorMessage = error.message;
+    } else if (error?.toString && typeof error.toString === 'function') {
+      try {
+        const stringified = error.toString();
+        if (stringified !== '[object Object]') {
+          errorMessage = stringified;
+        }
+      } catch (e) {
+        console.log('🔍 [API-CLIENT] Erro ao tentar toString:', e);
+      }
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error && typeof error === 'object') {
+      // Tentar extrair informações úteis do objeto
+      const possibleMessageKeys = ['message', 'error', 'description', 'detail', 'reason'];
+      for (const key of possibleMessageKeys) {
+        if (error[key] && typeof error[key] === 'string') {
+          errorMessage = error[key];
+          break;
+        }
+      }
+      
+      if (errorMessage === 'Sem detalhes disponíveis') {
+        errorMessage = `Objeto de erro: ${JSON.stringify(error, null, 2).substring(0, 200)}`;
+      }
+    }
+    
+    if (error?.name) {
+      errorType = error.name;
+    } else if (error?.constructor?.name) {
+      errorType = error.constructor.name;
+    }
+    
+    const finalMessage = errorMessage === 'Sem detalhes disponíveis' 
+      ? `Erro ${errorType} sem detalhes específicos` 
+      : `Erro ${errorType}: ${errorMessage}`;
+    
+    console.log('🔍 [API-CLIENT] Mensagem final do erro:', finalMessage);
     
     return {
       name: 'ApiError',
-      message: `Erro ${errorType}: ${errorMessage}`,
+      message: finalMessage,
       status: error?.status || 0,
       details: error
     };

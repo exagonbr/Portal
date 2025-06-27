@@ -302,9 +302,11 @@ export interface CourseUpdateDto {
 
 // Tipos de erro da API
 export interface ApiError {
+  name: string;
   message: string;
   status: number;
   errors?: string[];
+  details?: any;
 }
 
 // Tipos de filtro genérico

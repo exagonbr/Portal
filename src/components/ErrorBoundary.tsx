@@ -80,7 +80,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Verificar se é erro de chunk loading - APENAS LOGAR, SEM RECARREGAR
+    // Verificar se é erro de chunk loading - APENAS LOGAR, NÃO MOSTRAR TELA
     const isChunkError = error.message?.includes('Loading chunk') || 
                         error.message?.includes('ChunkLoadError') ||
                         error.message?.includes('originalFactory') ||
@@ -89,8 +89,9 @@ export class ErrorBoundary extends Component<Props, State> {
                         error.name === 'ChunkLoadError';
     
     if (isChunkError) {
-      console.warn('⚠️ Erro de chunk detectado pelo ErrorBoundary - aguardando ação manual do usuário');
-      // REMOVIDO: Não recarregar mais automaticamente
+      console.warn('⚠️ Erro de chunk detectado - falhando silenciosamente');
+      // Para erros de chunk, não mostrar tela de erro
+      return { hasError: false };
     }
 
     return { hasError: true, error };
@@ -98,6 +99,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary capturou um erro:', error, errorInfo);
+    
+    // Para erros de chunk, apenas logar e não fazer nada
+    const isChunkError = error.message?.includes('Loading chunk') || 
+                        error.message?.includes('ChunkLoadError') ||
+                        error.message?.includes('originalFactory') ||
+                        error.message?.includes('Cannot read properties of undefined') ||
+                        error.message?.includes('MIME type') ||
+                        error.name === 'ChunkLoadError';
+    
+    if (isChunkError) {
+      console.warn('⚠️ Erro de chunk ignorado pelo ErrorBoundary');
+      return;
+    }
     
     // Chamar callback personalizado se fornecido
     if (this.props.onError) {
@@ -118,60 +132,26 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      // Fallback padrão
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-          <div className="max-w-md w-full text-center">
-            <div className="text-red-500 mb-6">
-              <svg 
-                className="w-16 h-16 mx-auto" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={1.5} 
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
-                />
-              </svg>
-            </div>
-            
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Erro de carregamento
-            </h1>
-            
-            <p className="text-gray-600 mb-6">
-              Ocorreu um problema ao carregar a aplicação. Clique no botão abaixo para recarregar a página.
+      // Para desenvolvimento, mostrar erro simples
+      if (process.env.NODE_ENV === 'development') {
+        return (
+          <div className="p-4 bg-red-50 border border-red-200 rounded">
+            <h3 className="text-red-800 font-medium">Erro de desenvolvimento</h3>
+            <p className="text-red-600 text-sm mt-1">
+              {this.state.error?.message || 'Erro desconhecido'}
             </p>
-            
-            <div className="space-y-3">
-              <button 
-                onClick={this.handleReload}
-                className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
-              >
-                Recarregar página
-              </button>
-              
-              <p className="text-sm text-gray-500">
-                Se o problema persistir, limpe o cache do navegador ou contate o suporte.
-              </p>
-            </div>
-            
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-6 text-left">
-                <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">
-                  Detalhes técnicos
-                </summary>
-                <pre className="mt-2 p-3 bg-gray-100 rounded text-xs text-gray-800 overflow-auto max-h-40">
-                  {this.state.error.stack}
-                </pre>
-              </details>
-            )}
+            <button 
+              onClick={() => this.setState({ hasError: false })}
+              className="mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+            >
+              Tentar novamente
+            </button>
           </div>
-        </div>
-      );
+        );
+      }
+
+      // Em produção, falhar silenciosamente (não mostrar nada)
+      return null;
     }
 
     return this.props.children;
@@ -201,35 +181,24 @@ export function ErrorMessage({
   actionText?: string
 }) {
   return (
-    <div className="rounded-md bg-error-light/20 p-4">
+    <div className="rounded-md bg-red-50 p-4">
       <div className="flex">
         <div className="flex-shrink-0">
-          <svg
-            className="h-5 w-5 text-error-DEFAULT"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
+          <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
           </svg>
         </div>
         <div className="ml-3">
-          <h3 className="text-sm font-medium text-error-dark">Erro</h3>
-          <div className="mt-2 text-sm text-error-text">
-            <p>{message}</p>
-          </div>
+          <h3 className="text-sm font-medium text-red-800">
+            {message}
+          </h3>
           {action && (
             <div className="mt-4">
               <div className="-mx-2 -my-1.5 flex">
                 <button
                   type="button"
                   onClick={action}
-                  className="bg-error-light/30 px-2 py-1.5 rounded-md text-sm font-medium text-error-dark hover:bg-error-light/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-error-light focus:ring-error-DEFAULT"
+                  className="rounded-md bg-red-50 px-2 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-red-50"
                 >
                   {actionText}
                 </button>
@@ -247,28 +216,33 @@ export function NotFound({
   message = 'Desculpe, não encontramos a página que você está procurando.',
   actionText = 'Voltar para Início',
   actionHref = '/'
+}: {
+  title?: string
+  message?: string
+  actionText?: string
+  actionHref?: string
 }) {
-  const router = useRouter()
-
   return (
-    <div className="min-h-screen bg-background-primary px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
+    <div className="min-h-screen bg-white px-4 py-16 sm:px-6 sm:py-24 md:grid md:place-items-center lg:px-8">
       <div className="max-w-max mx-auto">
         <main className="sm:flex">
-          <p className="text-4xl font-extrabold text-primary-DEFAULT sm:text-5xl">404</p>
+          <p className="text-4xl font-extrabold text-indigo-600 sm:text-5xl">404</p>
           <div className="sm:ml-6">
-            <div className="sm:border-l sm:border-border-DEFAULT sm:pl-6">
-              <h1 className="text-4xl font-extrabold text-text-primary tracking-tight sm:text-5xl">
+            <div className="sm:border-l sm:border-gray-200 sm:pl-6">
+              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
                 {title}
               </h1>
-              <p className="mt-1 text-base text-text-secondary">{message}</p>
+              <p className="mt-1 text-base text-gray-500">
+                {message}
+              </p>
             </div>
             <div className="mt-10 flex space-x-3 sm:border-l sm:border-transparent sm:pl-6">
-              <button
-                onClick={() => router.push(actionHref)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-DEFAULT hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light"
+              <a
+                href={actionHref}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 {actionText}
-              </button>
+              </a>
             </div>
           </div>
         </main>

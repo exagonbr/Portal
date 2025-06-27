@@ -164,22 +164,18 @@ const KookitBookViewer: React.FC<KookitBookViewerProps> = ({ book, onClose }) =>
           )}
           
           {error && (
-            <div className="absolute inset-0 z-10">
-              <EnhancedErrorState
-                title="Erro ao carregar livro"
-                message={error}
-                onRetry={() => {
-                  setError('');
-                  setIsLoading(true);
-                  // Recarregar o componente sem refresh da página
-                  window.location.reload();
-                }}
-                onCancel={onClose}
-                retryText="🔄 Recarregar"
-                cancelText="← Voltar"
-                showRefresh={true}
-                details="💡 Verifique se o arquivo existe e está no formato correto"
-              />
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <div className="text-center p-4">
+                <p className="text-red-600 mb-4">{error}</p>
+                {onClose && (
+                  <button 
+                    onClick={onClose}
+                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                  >
+                    ← Voltar
+                  </button>
+                )}
+              </div>
             </div>
           )}
           

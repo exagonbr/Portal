@@ -1926,16 +1926,6 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
             )}
             
             <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button
-                onClick={() => {
-                  setState(prev => ({ ...prev, error: null }));
-                  window.location.reload();
-                }}
-                className="koodo-btn primary"
-              >
-                🔄 Tentar Novamente
-              </button>
-              
               {onBack && (
                 <button onClick={onBack} className="koodo-btn">
                   ← Voltar

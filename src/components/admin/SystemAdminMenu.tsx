@@ -16,7 +16,7 @@ export interface AdminMenuSection {
 
 export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
   try {
-    return [
+    const menu = [
     {
       section: 'Principal',
       items: [
@@ -218,6 +218,18 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
       ]
     }
   ];
+  
+  // Debug temporário
+  console.log('🔍 Menu gerado pelo getSystemAdminMenuItems:', menu);
+  const gestaoConteudo = menu.find(section => section.section === 'Gestão de Conteúdo');
+  console.log('🔍 Seção Gestão de Conteúdo:', gestaoConteudo);
+  if (gestaoConteudo) {
+    console.log('🔍 Itens na seção:', gestaoConteudo.items);
+    const adminItem = gestaoConteudo.items.find(item => item.href === '/portal/collections/admin');
+    console.log('🔍 Item admin encontrado:', adminItem);
+  }
+  
+  return menu;
   } catch (error) {
     console.error('Erro ao gerar menu do System Admin:', error);
     return [

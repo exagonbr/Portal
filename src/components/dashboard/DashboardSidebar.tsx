@@ -10,6 +10,7 @@ import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRo
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 import { EnhancedLoadingState } from '../ui/LoadingStates'
+import SidebarDebug from '../debug/SidebarDebug'
 
 interface NavItem {
   href: string
@@ -28,33 +29,25 @@ const SIDEBAR_WIDTH = '16rem'
 const COLLAPSED_WIDTH = '4rem'
 const MOBILE_BREAKPOINT = 768
 
-// Error boundary wrapper
+// Error boundary wrapper simplificado
 function withErrorBoundary<T extends object>(Component: React.ComponentType<T>) {
   return function WrappedComponent(props: T) {
     try {
       return <Component {...props} />;
     } catch (error) {
       console.error('Erro no sidebar:', error);
+      // Retornar um sidebar básico em caso de erro
       return (
-        <div className="w-64 bg-red-100 p-4 text-red-800 border-r border-red-200">
-          <div className="mb-4">
-            <h3 className="font-semibold text-red-900">Erro no Sidebar</h3>
-            <p className="text-sm">Ocorreu um erro ao carregar o menu lateral.</p>
+        <div className="w-64 bg-blue-900 border-r border-blue-800 flex flex-col h-screen">
+          <div className="p-4 border-b border-blue-800">
+            <div className="text-white font-bold text-lg">Portal</div>
           </div>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
-          >
-            Recarregar Página
-          </button>
-          <div className="mt-4 text-xs text-red-600">
-            <details>
-              <summary className="cursor-pointer">Detalhes do erro</summary>
-              <pre className="mt-2 p-2 bg-red-50 rounded text-xs overflow-auto">
-                {error instanceof Error ? error.message : String(error)}
-              </pre>
-            </details>
-          </div>
+          <nav className="flex-1 p-4">
+            <a href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-white hover:bg-blue-800 rounded">
+              <span className="material-symbols-outlined text-sm">dashboard</span>
+              <span>Dashboard</span>
+            </a>
+          </nav>
         </div>
       );
     }
@@ -430,6 +423,8 @@ function DashboardSidebarComponent() {
   // Get user role with fallback to STUDENT
   const userRole: UserRole = (user?.role || 'STUDENT') as UserRole;
   const [selectedRole, setSelectedRole] = useState<UserRole>(userRole)
+
+
 
   // Check if current role is SYSTEM_ADMIN for compact styling
   const isSystemAdmin = selectedRole === UserRole.SYSTEM_ADMIN;
@@ -1077,6 +1072,9 @@ function DashboardSidebarComponent() {
 
   return (
     <>
+      {/* Debug Component */}
+      <SidebarDebug />
+      
       {/* Loading State para Logout */}
       {isLoggingOut && (
         <EnhancedLoadingState

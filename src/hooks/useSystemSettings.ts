@@ -296,12 +296,15 @@ export function useSystemSettings() {
         },
         body: JSON.stringify({
           action: 'test-aws',
-          ...credentials
+          accessKeyId: credentials.accessKeyId,
+          secretAccessKey: credentials.secretAccessKey,
+          region: credentials.region
         })
       })
 
       if (!response.ok) {
-        throw new Error(`Erro ao testar conexão AWS: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Erro ao testar conexão AWS: ${response.status}`)
       }
 
       const data = await response.json()
@@ -310,7 +313,7 @@ export function useSystemSettings() {
       console.error('Erro ao testar conexão AWS:', error)
       return {
         success: false,
-        message: 'Erro ao testar conexão com AWS'
+        message: error instanceof Error ? error.message : 'Erro ao testar conexão com AWS'
       }
     }
   }
@@ -336,12 +339,18 @@ export function useSystemSettings() {
         },
         body: JSON.stringify({
           action: 'test-email',
-          ...emailConfig
+          host: emailConfig.host,
+          port: emailConfig.port,
+          user: emailConfig.user,
+          password: emailConfig.password,
+          secure: emailConfig.secure,
+          fromAddress: emailConfig.fromAddress
         })
       })
 
       if (!response.ok) {
-        throw new Error(`Erro ao testar email: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || `Erro ao testar email: ${response.status}`)
       }
 
       const data = await response.json()
@@ -350,7 +359,7 @@ export function useSystemSettings() {
       console.error('Erro ao testar email:', error)
       return {
         success: false,
-        message: 'Erro ao testar conexão de email'
+        message: error instanceof Error ? error.message : 'Erro ao testar conexão de email'
       }
     }
   }

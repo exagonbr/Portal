@@ -417,9 +417,27 @@ export default function SendNotificationPage() {
         
         if (!pingResponse.ok) {
           console.error('❌ [NOTIFICATIONS] Falha na conectividade básica:', pingResponse.status, pingText)
+          
+          // Se a conectividade básica falhou, não tente o apiClient
+          if (pingResponse.status === 401) {
+            throw new Error('Sessão expirada. Faça login novamente.')
+          } else if (pingResponse.status >= 500) {
+            throw new Error('Servidor indisponível. Tente novamente mais tarde.')
+          } else {
+            throw new Error(`Erro de conectividade: ${pingResponse.status} - ${pingText}`)
+          }
+        } else {
+          console.log('✅ [NOTIFICATIONS] Conectividade básica OK')
         }
       } catch (pingError) {
         console.error('❌ [NOTIFICATIONS] Erro no teste de conectividade:', pingError)
+        
+        // Se o teste de conectividade falhou completamente, não tente o apiClient
+        if (pingError instanceof Error) {
+          throw pingError
+        } else {
+          throw new Error('Erro de conectividade com o servidor')
+        }
       }
       
       const response = await apiClient.post('/api/notifications/email/test', {

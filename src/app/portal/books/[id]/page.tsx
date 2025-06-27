@@ -8,39 +8,18 @@ import { Book } from '@/constants/mockData';
 import { Annotation, Highlight, Bookmark } from '@/components/books/BookViewer/types';
 import UnifiedBookViewer from '@/components/books/BookViewer/UnifiedBookViewer'
 
-// CORREÇÃO: Importação dinâmica mais segura com tratamento de erro
+// Importação dinâmica sem telas de erro problemáticas
 const KoodoViewer = dynamic(
   () => import('@/components/books/BookViewer').catch(error => {
     console.error('Erro ao carregar BookViewer:', error);
-    // Retornar um componente de fallback em caso de erro
+    // Retornar um componente vazio em caso de erro
     return {
-      default: () => (
-        <div className="flex items-center justify-center h-screen bg-gray-900">
-          <div className="text-center">
-            <div className="text-red-500 text-4xl mb-4">⚠️</div>
-            <h3 className="text-xl font-semibold mb-2 text-white">Erro ao carregar visualizador</h3>
-            <p className="text-gray-400 mb-4">Por favor, recarregue a página</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Recarregar
-            </button>
-          </div>
-        </div>
-      )
+      default: () => null
     };
   }),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-screen bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">Carregando visualizador...</p>
-        </div>
-      </div>
-    ),
+    loading: () => null
   }
 );
 

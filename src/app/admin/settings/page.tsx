@@ -26,6 +26,7 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState('general')
   const [testingAws, setTestingAws] = useState(false)
   const [testingEmail, setTestingEmail] = useState(false)
+  const [reconfiguringEmail, setReconfiguringEmail] = useState(false)
   const [awsBuckets, setAwsBuckets] = useState<string[]>([])
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info' | 'warning'
@@ -183,6 +184,31 @@ export default function AdminSettingsPage() {
     }
   }
 
+  // Reconfigurar serviço de email
+  const handleReconfigureEmail = async () => {
+    setReconfiguringEmail(true)
+    try {
+      const response = await fetch('/api/settings/reconfigure-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        showNotification('success', 'Serviço de email reconfigurado com sucesso!')
+      } else {
+        showNotification('error', result.error || 'Erro ao reconfigurar serviço de email')
+      }
+    } catch (err) {
+      showNotification('error', 'Erro ao reconfigurar serviço de email')
+    } finally {
+      setReconfiguringEmail(false)
+    }
+  }
+
   if (loading) {
     return (
       <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN]}>
@@ -204,17 +230,18 @@ export default function AdminSettingsPage() {
         title="Configurações do Sistema"
         subtitle="Gerencie as configurações globais do sistema"
       >
-        <div className="space-y-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
+          <div className="max-w-7xl mx-auto space-y-6">
           {/* Notificações */}
           {notification && (
-            <div className={`p-4 rounded-lg ${
+            <div className={`p-4 rounded-xl shadow-lg ${
               notification.type === 'success' 
-                ? 'bg-green-100 text-green-700 border border-green-200' 
+                ? 'bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-800 border border-emerald-200' 
                 : notification.type === 'error'
-                ? 'bg-red-100 text-red-700 border border-red-200'
+                ? 'bg-gradient-to-r from-red-50 to-rose-50 text-red-800 border border-red-200'
                 : notification.type === 'warning'
-                ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
-                : 'bg-blue-100 text-blue-700 border border-blue-200'
+                ? 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-800 border border-amber-200'
+                : 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-800 border border-blue-200'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -227,7 +254,7 @@ export default function AdminSettingsPage() {
                 </div>
                 <button
                   onClick={() => setNotification(null)}
-                  className="ml-4 text-current opacity-70 hover:opacity-100"
+                  className="ml-4 text-current opacity-70 hover:opacity-100 transition-opacity"
                 >
                   <span className="material-symbols-outlined text-sm">close</span>
                 </button>
@@ -236,8 +263,8 @@ export default function AdminSettingsPage() {
           )}
 
           {/* Tabs */}
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
+            <nav className="flex space-x-2">
               {[
                 { id: 'general', label: 'Geral', icon: 'settings' },
                 { id: 'appearance', label: 'Aparência', icon: 'palette' },
@@ -249,10 +276,10 @@ export default function AdminSettingsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200 ${
+                  className={`py-3 px-4 rounded-lg font-medium text-sm flex items-center space-x-2 transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                   }`}
                 >
                   <span className="material-symbols-outlined text-sm">{tab.icon}</span>
@@ -264,9 +291,12 @@ export default function AdminSettingsPage() {
 
           {/* Configurações Gerais */}
           {activeTab === 'general' && (
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-600">Configurações Gerais</h3>
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <span className="material-symbols-outlined mr-2 text-blue-600">settings</span>
+                  Configurações Gerais
+                </h3>
               </div>
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -278,7 +308,7 @@ export default function AdminSettingsPage() {
                       type="text"
                       value={localSettings.site_name || ''}
                       onChange={(e) => updateLocalSetting('site_name', e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   
@@ -290,7 +320,7 @@ export default function AdminSettingsPage() {
                       type="text"
                       value={localSettings.site_title || ''}
                       onChange={(e) => updateLocalSetting('site_title', e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -303,7 +333,7 @@ export default function AdminSettingsPage() {
                     type="url"
                     value={localSettings.site_url || ''}
                     onChange={(e) => updateLocalSetting('site_url', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
 
@@ -315,21 +345,27 @@ export default function AdminSettingsPage() {
                     value={localSettings.site_description || ''}
                     onChange={(e) => updateLocalSetting('site_description', e.target.value)}
                     rows={3}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-accent-yellow/10 rounded-lg border border-accent-yellow/20">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200 shadow-sm">
                   <div>
-                    <div className="font-medium text-gray-700">Modo de Manutenção</div>
-                    <div className="text-sm text-gray-500">Ativar para bloquear acesso de usuários</div>
+                    <div className="font-semibold text-amber-800 flex items-center">
+                      <span className="material-symbols-outlined mr-2 text-amber-600">warning</span>
+                      Modo de Manutenção
+                    </div>
+                    <div className="text-sm text-amber-700">Ativar para bloquear acesso de usuários</div>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={localSettings.maintenance_mode || false}
-                    onChange={(e) => updateLocalSetting('maintenance_mode', e.target.checked)}
-                    className="w-4 h-4 text-primary"
-                  />
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={localSettings.maintenance_mode || false}
+                      onChange={(e) => updateLocalSetting('maintenance_mode', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-purple-600"></div>
+                  </label>
                 </div>
               </div>
             </div>
@@ -337,9 +373,12 @@ export default function AdminSettingsPage() {
 
           {/* Configurações de Aparência */}
           {activeTab === 'appearance' && (
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-600">Configurações de Aparência</h3>
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-xl">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <span className="material-symbols-outlined mr-2 text-purple-600">palette</span>
+                  Configurações de Aparência
+                </h3>
               </div>
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -352,7 +391,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.logo_light || ''}
                       onChange={(e) => updateLocalSetting('logo_light', e.target.value)}
                       placeholder="/logo-light.png"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   
@@ -365,7 +404,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.logo_dark || ''}
                       onChange={(e) => updateLocalSetting('logo_dark', e.target.value)}
                       placeholder="/logo-dark.png"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -378,7 +417,7 @@ export default function AdminSettingsPage() {
                     <select
                       value={localSettings.background_type || 'video'}
                       onChange={(e) => updateLocalSetting('background_type', e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                       {backgroundTypes.map(type => (
                         <option key={type.value} value={type.value}>
@@ -396,7 +435,7 @@ export default function AdminSettingsPage() {
                       <select
                         value={localSettings.main_background || ''}
                         onChange={(e) => updateLocalSetting('main_background', e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
                         {availableVideos.map(video => (
                           <option key={video} value={video}>
@@ -417,7 +456,7 @@ export default function AdminSettingsPage() {
                         value={localSettings.main_background || ''}
                         onChange={(e) => updateLocalSetting('main_background', e.target.value)}
                         placeholder="/background.jpg"
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                   )}
@@ -431,7 +470,7 @@ export default function AdminSettingsPage() {
                         type="color"
                         value={localSettings.main_background || '#1e3a8a'}
                         onChange={(e) => updateLocalSetting('main_background', e.target.value)}
-                        className="w-full h-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full h-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
                   )}
@@ -446,7 +485,7 @@ export default function AdminSettingsPage() {
                       type="color"
                       value={localSettings.primary_color || '#1e3a8a'}
                       onChange={(e) => updateLocalSetting('primary_color', e.target.value)}
-                      className="w-full h-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full h-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   
@@ -458,7 +497,7 @@ export default function AdminSettingsPage() {
                       type="color"
                       value={localSettings.secondary_color || '#3b82f6'}
                       onChange={(e) => updateLocalSetting('secondary_color', e.target.value)}
-                      className="w-full h-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full h-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -500,9 +539,12 @@ export default function AdminSettingsPage() {
 
           {/* Configurações AWS */}
           {activeTab === 'aws' && (
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-600">Configurações AWS</h3>
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-xl">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <span className="material-symbols-outlined mr-2 text-orange-600">cloud</span>
+                  Configurações AWS
+                </h3>
               </div>
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -514,7 +556,7 @@ export default function AdminSettingsPage() {
                       type="text"
                       value={localSettings.aws_access_key || ''}
                       onChange={(e) => updateLocalSetting('aws_access_key', e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   
@@ -526,7 +568,7 @@ export default function AdminSettingsPage() {
                       type="password"
                       value={localSettings.aws_secret_key || ''}
                       onChange={(e) => updateLocalSetting('aws_secret_key', e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -538,7 +580,7 @@ export default function AdminSettingsPage() {
                   <select
                     value={localSettings.aws_region || 'sa-east-1'}
                     onChange={(e) => updateLocalSetting('aws_region', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     {awsRegions.map(region => (
                       <option key={region.value} value={region.value}>
@@ -548,11 +590,11 @@ export default function AdminSettingsPage() {
                   </select>
                 </div>
 
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-gray-100">
                   <button
                     onClick={handleTestAws}
                     disabled={testingAws}
-                    className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/80 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     {testingAws ? (
                       <>
@@ -569,12 +611,16 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {awsBuckets.length > 0 && (
-                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                    <h4 className="font-medium text-green-800 mb-2">Buckets Disponíveis:</h4>
+                  <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl border border-emerald-200 shadow-sm">
+                    <h4 className="font-semibold text-emerald-800 mb-2 flex items-center">
+                      <span className="material-symbols-outlined mr-2 text-emerald-600">check_circle</span>
+                      Buckets Disponíveis:
+                    </h4>
                     <div className="space-y-2">
                       {awsBuckets.map(bucket => (
-                        <div key={bucket} className="text-sm text-green-700">
-                          • {bucket}
+                        <div key={bucket} className="text-sm text-emerald-700 flex items-center">
+                          <span className="material-symbols-outlined mr-2 text-xs">folder</span>
+                          {bucket}
                         </div>
                       ))}
                     </div>
@@ -593,7 +639,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.aws_bucket_main || ''}
                       onChange={(e) => updateLocalSetting('aws_bucket_main', e.target.value)}
                       placeholder="meu-bucket-principal"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
 
@@ -606,7 +652,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.aws_bucket_backup || ''}
                       onChange={(e) => updateLocalSetting('aws_bucket_backup', e.target.value)}
                       placeholder="meu-bucket-backup"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
 
@@ -619,7 +665,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.aws_bucket_media || ''}
                       onChange={(e) => updateLocalSetting('aws_bucket_media', e.target.value)}
                       placeholder="meu-bucket-media"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -629,9 +675,12 @@ export default function AdminSettingsPage() {
 
           {/* Configurações de Email */}
           {activeTab === 'email' && (
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-600">Configurações de Email</h3>
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <span className="material-symbols-outlined mr-2 text-green-600">mail</span>
+                  Configurações de Email
+                </h3>
               </div>
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -644,7 +693,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.email_smtp_host || ''}
                       onChange={(e) => updateLocalSetting('email_smtp_host', e.target.value)}
                       placeholder="smtp.gmail.com"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   
@@ -656,7 +705,7 @@ export default function AdminSettingsPage() {
                       type="number"
                       value={localSettings.email_smtp_port || 587}
                       onChange={(e) => updateLocalSetting('email_smtp_port', parseInt(e.target.value))}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -671,7 +720,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.email_smtp_user || ''}
                       onChange={(e) => updateLocalSetting('email_smtp_user', e.target.value)}
                       placeholder="seu-email@gmail.com"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   
@@ -683,7 +732,7 @@ export default function AdminSettingsPage() {
                       type="password"
                       value={localSettings.email_smtp_password || ''}
                       onChange={(e) => updateLocalSetting('email_smtp_password', e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -698,7 +747,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.email_from_name || ''}
                       onChange={(e) => updateLocalSetting('email_from_name', e.target.value)}
                       placeholder="Portal Educacional"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   
@@ -711,7 +760,7 @@ export default function AdminSettingsPage() {
                       value={localSettings.email_from_address || ''}
                       onChange={(e) => updateLocalSetting('email_from_address', e.target.value)}
                       placeholder="noreply@portal.com"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -725,15 +774,15 @@ export default function AdminSettingsPage() {
                     type="checkbox"
                     checked={localSettings.email_smtp_secure || false}
                     onChange={(e) => updateLocalSetting('email_smtp_secure', e.target.checked)}
-                    className="w-4 h-4 text-primary"
+                    className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
                   />
                 </div>
 
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-gray-100">
                   <button
                     onClick={handleTestEmail}
                     disabled={testingEmail}
-                    className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-accent-blue/80 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     {testingEmail ? (
                       <>
@@ -754,9 +803,12 @@ export default function AdminSettingsPage() {
 
           {/* Configurações de Notificações */}
           {activeTab === 'notifications' && (
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-600">Configurações de Notificações</h3>
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-t-xl">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <span className="material-symbols-outlined mr-2 text-cyan-600">notifications</span>
+                  Configurações de Notificações
+                </h3>
               </div>
               <div className="p-6 space-y-6">
                 <div className="space-y-4">
@@ -769,7 +821,7 @@ export default function AdminSettingsPage() {
                       type="checkbox"
                       checked={localSettings.notifications_email_enabled || false}
                       onChange={(e) => updateLocalSetting('notifications_email_enabled', e.target.checked)}
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
                     />
                   </div>
                   
@@ -782,7 +834,7 @@ export default function AdminSettingsPage() {
                       type="checkbox"
                       checked={localSettings.notifications_sms_enabled || false}
                       onChange={(e) => updateLocalSetting('notifications_sms_enabled', e.target.checked)}
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
                     />
                   </div>
                   
@@ -795,7 +847,7 @@ export default function AdminSettingsPage() {
                       type="checkbox"
                       checked={localSettings.notifications_push_enabled || false}
                       onChange={(e) => updateLocalSetting('notifications_push_enabled', e.target.checked)}
-                      className="w-4 h-4 text-primary"
+                      className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
                     />
                   </div>
                 </div>
@@ -807,7 +859,7 @@ export default function AdminSettingsPage() {
                   <select
                     value={localSettings.notifications_digest_frequency || 'daily'}
                     onChange={(e) => updateLocalSetting('notifications_digest_frequency', e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     {digestFrequencies.map(freq => (
                       <option key={freq.value} value={freq.value}>
@@ -817,11 +869,11 @@ export default function AdminSettingsPage() {
                   </select>
                 </div>
 
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm">
                   <div className="flex items-start">
                     <span className="material-symbols-outlined text-blue-600 mr-2">info</span>
-                    <div className="text-sm text-blue-700">
-                      <p className="font-medium mb-1">Sobre as Notificações</p>
+                    <div className="text-sm text-blue-800">
+                      <p className="font-semibold mb-1">Sobre as Notificações</p>
                       <p>As notificações serão enviadas de acordo com as preferências individuais de cada usuário e as configurações globais definidas aqui.</p>
                     </div>
                   </div>
@@ -832,16 +884,19 @@ export default function AdminSettingsPage() {
 
           {/* Configurações Avançadas */}
           {activeTab === 'advanced' && (
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-600">Configurações Avançadas</h3>
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-gray-50 rounded-t-xl">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <span className="material-symbols-outlined mr-2 text-slate-600">tune</span>
+                  Configurações Avançadas
+                </h3>
               </div>
               <div className="p-6 space-y-6">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-4 shadow-sm">
                   <div className="flex items-start">
-                    <span className="material-symbols-outlined text-yellow-600 mr-2">warning</span>
-                    <div className="text-sm text-yellow-700">
-                      <p className="font-medium mb-1">Atenção</p>
+                    <span className="material-symbols-outlined text-red-600 mr-2">warning</span>
+                    <div className="text-sm text-red-800">
+                      <p className="font-semibold mb-1">⚠️ Atenção</p>
                       <p>As operações nesta seção podem afetar o funcionamento do sistema. Use com cuidado.</p>
                     </div>
                   </div>
@@ -856,21 +911,24 @@ export default function AdminSettingsPage() {
                     <button
                       onClick={handleReloadSettings}
                       disabled={loading}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 flex items-center"
+                      className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center shadow-md hover:shadow-lg transform hover:scale-105"
                     >
                       <span className="material-symbols-outlined mr-2 text-sm">refresh</span>
                       Recarregar
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl border border-red-200 shadow-sm">
                     <div>
-                      <div className="font-medium text-red-700">Resetar Configurações</div>
-                      <div className="text-sm text-red-600">Restaurar todas as configurações para os valores padrão</div>
+                      <div className="font-semibold text-red-800 flex items-center">
+                        <span className="material-symbols-outlined mr-2 text-red-600">restart_alt</span>
+                        Resetar Configurações
+                      </div>
+                      <div className="text-sm text-red-700">Restaurar todas as configurações para os valores padrão</div>
                     </div>
                     <button
                       onClick={() => setShowResetConfirm(true)}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center"
+                      className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-5 py-2.5 rounded-xl transition-all duration-200 flex items-center shadow-md hover:shadow-lg transform hover:scale-105"
                     >
                       <span className="material-symbols-outlined mr-2 text-sm">restart_alt</span>
                       Resetar
@@ -883,11 +941,13 @@ export default function AdminSettingsPage() {
 
           {/* Modal de Confirmação de Reset */}
           {showResetConfirm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-100">
                 <div className="flex items-center mb-4">
-                  <span className="material-symbols-outlined text-red-600 mr-2">warning</span>
-                  <h3 className="text-lg font-medium text-gray-900">Confirmar Reset</h3>
+                  <div className="p-2 bg-red-100 rounded-full mr-3">
+                    <span className="material-symbols-outlined text-red-600">warning</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Confirmar Reset</h3>
                 </div>
                 <p className="text-gray-600 mb-6">
                   Tem certeza que deseja resetar todas as configurações para os valores padrão? 
@@ -896,14 +956,14 @@ export default function AdminSettingsPage() {
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={() => setShowResetConfirm(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    className="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleResetSettings}
                     disabled={saving}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center"
+                    className="px-6 py-2.5 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-xl disabled:opacity-50 flex items-center transition-all duration-200 shadow-lg font-medium"
                   >
                     {saving ? (
                       <>
@@ -920,17 +980,17 @@ export default function AdminSettingsPage() {
           )}
 
           {/* Botões de Ação */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end space-x-4 bg-white p-6 rounded-xl shadow-lg border border-gray-100">
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+              className="px-8 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
             >
               Cancelar
             </button>
             <button 
               onClick={handleSaveSettings}
               disabled={saving}
-              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
             >
               {saving ? (
                 <>
@@ -944,6 +1004,7 @@ export default function AdminSettingsPage() {
                 </>
               )}
             </button>
+          </div>
           </div>
         </div>
       </DashboardPageLayout>

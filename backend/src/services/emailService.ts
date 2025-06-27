@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env } from '../config/env';
+import SystemSettingsService from './SystemSettingsService';
 
 export interface EmailOptions {
   to: string | string[];
@@ -22,6 +23,19 @@ export interface EmailTemplate {
   text?: string;
 }
 
+interface SMTPConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth?: {
+    user: string;
+    pass: string;
+  };
+  tls: {
+    rejectUnauthorized: boolean;
+  };
+}
+
 class EmailService {
   private transporter: nodemailer.Transporter | null = null;
   private templates: Map<string, EmailTemplate> = new Map();
@@ -29,33 +43,39 @@ class EmailService {
   private initializationError: string | null = null;
 
   constructor() {
-    this.setupTransporter();
+    this.initializeService();
     this.loadTemplates();
   }
 
-  private setupTransporter() {
+  private async initializeService() {
     try {
-      // Verificar se as configurações mínimas estão presentes
-      if (!env.SMTP_HOST || env.SMTP_HOST === 'localhost') {
+      await this.setupTransporter();
+    } catch (error) {
+      console.error('Erro na inicialização do serviço de email:', error);
+    }
+  }
+
+  private async setupTransporter() {
+    try {
+      // Primeiro, tentar usar configurações das variáveis de ambiente
+      let smtpConfig = await this.getEmailConfigFromEnv();
+      
+      // Se não houver configuração válida no .env, tentar buscar do banco de dados
+      if (!smtpConfig.host || smtpConfig.host === 'localhost') {
+        console.log('⚠️  Configuração SMTP não encontrada no .env, tentando buscar do banco de dados...');
+        const dbConfig = await this.getEmailConfigFromDatabase();
+        if (dbConfig.host && dbConfig.host !== 'localhost') {
+          smtpConfig = dbConfig;
+        }
+      }
+
+      // Verificar se temos configuração válida
+      if (!smtpConfig.host || smtpConfig.host === 'localhost') {
         this.isEmailEnabled = false;
         this.initializationError = 'Configuração de email não encontrada (SMTP_HOST não configurado)';
         console.log('⚠️  Email desabilitado: Configuração SMTP não encontrada. O sistema continuará funcionando sem envio de emails.');
         return;
       }
-
-      // Configuração do transporter baseada nas variáveis de ambiente
-      const smtpConfig = {
-        host: env.SMTP_HOST,
-        port: parseInt(env.SMTP_PORT),
-        secure: env.SMTP_SECURE === 'true', // true para 465, false para outras portas
-        auth: env.SMTP_USER && env.SMTP_PASS ? {
-          user: env.SMTP_USER,
-          pass: env.SMTP_PASS
-        } : undefined,
-        tls: {
-          rejectUnauthorized: env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false'
-        }
-      };
 
       this.transporter = nodemailer.createTransport(smtpConfig);
 
@@ -68,6 +88,70 @@ class EmailService {
       console.log('⚠️  Email desabilitado: Erro na configuração do transporter. O sistema continuará funcionando sem envio de emails.');
       console.log('Detalhes do erro:', error);
     }
+  }
+
+  private async getEmailConfigFromEnv(): Promise<SMTPConfig> {
+    return {
+      host: env.SMTP_HOST || 'localhost',
+      port: parseInt(env.SMTP_PORT || '587'),
+      secure: env.SMTP_SECURE === 'true',
+      auth: env.SMTP_USER && env.SMTP_PASS ? {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS
+      } : undefined,
+      tls: {
+        rejectUnauthorized: env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false'
+      }
+    };
+  }
+
+  private async getEmailConfigFromDatabase(): Promise<SMTPConfig> {
+    try {
+      console.log('🔍 Buscando configurações de email do banco de dados...');
+      
+      const emailSettings = await SystemSettingsService.getSettingsByCategory('email', true);
+      
+      if (!emailSettings || !emailSettings.email_smtp_host) {
+        console.log('⚠️  Configurações de email não encontradas no banco de dados');
+        return { 
+          host: 'localhost',
+          port: 587,
+          secure: false,
+          auth: undefined,
+          tls: { rejectUnauthorized: false }
+        };
+      }
+
+      console.log('✅ Configurações de email encontradas no banco de dados');
+      
+      return {
+        host: emailSettings.email_smtp_host,
+        port: parseInt(emailSettings.email_smtp_port?.toString() || '587'),
+        secure: emailSettings.email_smtp_secure === true || emailSettings.email_smtp_secure === 'true',
+        auth: emailSettings.email_smtp_user && emailSettings.email_smtp_password ? {
+          user: emailSettings.email_smtp_user,
+          pass: emailSettings.email_smtp_password
+        } : undefined,
+        tls: {
+          rejectUnauthorized: true
+        }
+      };
+    } catch (error) {
+      console.error('Erro ao buscar configurações de email do banco:', error);
+      return { 
+        host: 'localhost',
+        port: 587,
+        secure: false,
+        auth: undefined,
+        tls: { rejectUnauthorized: false }
+      };
+    }
+  }
+
+  // Método público para reconfigurar o email quando as configurações mudarem
+  async reconfigure() {
+    console.log('🔄 Reconfigurando serviço de email...');
+    await this.setupTransporter();
   }
 
   private async verifyConnectionAsync() {

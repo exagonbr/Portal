@@ -272,7 +272,7 @@ export function EnhancedRedirectState({
   );
 }
 
-// Componente de Erro melhorado
+// Componente de Erro simplificado - não mostra telas problemáticas
 export function EnhancedErrorState({
   title = 'Ops! Algo deu errado',
   message,
@@ -280,125 +280,47 @@ export function EnhancedErrorState({
   onCancel,
   retryText = 'Tentar Novamente',
   cancelText = 'Voltar',
-  showRefresh = true,
+  showRefresh = false, // Desabilitado por padrão
   details
 }: ErrorStateProps) {
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
-  const isOnline = useNetworkStatus();
+  // Para erros de carregamento comuns, não mostrar nada
+  if (message?.includes('Erro de carregamento') || 
+      message?.includes('erro ao carregar') || 
+      message?.includes('Loading chunk') ||
+      message?.includes('ChunkLoadError')) {
+    console.warn('⚠️ Erro de carregamento detectado - não mostrando tela de erro');
+    return null;
+  }
 
-  const handleRetry = useCallback(async () => {
-    if (onRetry) {
-      setIsRetrying(true);
-      try {
-        await onRetry();
-      } finally {
-        setIsRetrying(false);
-      }
-    }
-  }, [onRetry]);
+  // Em produção, apenas logar o erro e não mostrar tela
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Erro capturado:', { title, message, details });
+    return null;
+  }
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
+  // Em desenvolvimento, mostrar erro simples
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="fixed inset-0 flex items-center justify-center bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-50 p-4"
-    >
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-lg mx-auto border border-gray-200 dark:border-gray-700">
-        <div className="text-center">
-          {/* Ícone de erro */}
-          <div className="mb-6">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
-              <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
-            </div>
-          </div>
-
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {title}
-          </h3>
-
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {message}
-          </p>
-
-          {!isOnline && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
-              <p className="text-yellow-700 dark:text-yellow-300 text-sm">
-                ⚠️ Verifique sua conexão com a internet
-              </p>
-            </div>
+    <div className="fixed bottom-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 max-w-sm shadow-lg z-50">
+      <div className="flex items-start gap-3">
+        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <h4 className="text-sm font-medium text-red-800">{title}</h4>
+          {message && (
+            <p className="text-sm text-red-600 mt-1">{message}</p>
           )}
-
-          {details && (
-            <div className="mb-4">
-              <button
-                onClick={() => setShowDetails(!showDetails)}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline"
-              >
-                {showDetails ? 'Ocultar detalhes' : 'Ver detalhes'}
-              </button>
-              
-              <AnimatePresence>
-                {showDetails && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg text-left"
-                  >
-                    <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                      {details}
-                    </pre>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-
-          <div className="flex gap-3 justify-center flex-wrap">
+          <div className="flex gap-2 mt-3">
             {onRetry && (
               <button
-                onClick={handleRetry}
-                disabled={isRetrying}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                onClick={onRetry}
+                className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
               >
-                {isRetrying ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                    />
-                    Tentando...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4" />
-                    {retryText}
-                  </>
-                )}
+                {retryText}
               </button>
             )}
-
-            {showRefresh && (
-              <button
-                onClick={handleRefresh}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Recarregar Página
-              </button>
-            )}
-
             {onCancel && (
               <button
                 onClick={onCancel}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
               >
                 {cancelText}
               </button>
@@ -406,7 +328,7 @@ export function EnhancedErrorState({
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

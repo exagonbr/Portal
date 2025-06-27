@@ -2,9 +2,12 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { SimpleProviders } from '@/providers/SimpleProviders';
-// import { ErrorBoundary } from '@/components/ErrorBoundary';
-// Importar o handler de erros de chunk (auto-inicializa)
-import '@/utils/chunk-error-handler';
+import ConnectivityDiagnosticWrapper from '@/components/debug/ConnectivityDiagnosticWrapper';
+
+// Importar debugger HTTP 500 em desenvolvimento
+if (process.env.NODE_ENV === 'development') {
+  import('@/utils/debug-http-500');
+}
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -69,6 +72,7 @@ export default function RootLayout({
             {children}
           </div>
         </SimpleProviders>
+        <ConnectivityDiagnosticWrapper />
       </body>
     </html>
   );
