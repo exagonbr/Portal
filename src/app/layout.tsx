@@ -1,22 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import dynamic from 'next/dynamic';
+import { AppProviders } from '@/providers/AppProviders';
+import ClientLayoutWrapper from '@/components/ClientLayoutWrapper';
 // Importar o handler de erros de chunk (auto-inicializa)
 import '@/utils/chunk-error-handler';
 
 const inter = Inter({ subsets: ['latin'] });
-
-// Importações dinâmicas para evitar problemas de inicialização
-const AppProviders = dynamic(() => import('@/providers/AppProviders').then(mod => ({ default: mod.AppProviders })), {
-  ssr: false,
-  loading: () => null
-});
-
-const ClientLayoutWrapper = dynamic(() => import('@/components/ClientLayoutWrapper'), {
-  ssr: false,
-  loading: () => null
-});
 
 export const metadata: Metadata = {
   title: 'Portal Educacional',
