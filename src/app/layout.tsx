@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { SimpleProviders } from '@/providers/SimpleProviders';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 // Importar o handler de erros de chunk (auto-inicializa)
 import '@/utils/chunk-error-handler';
 
@@ -63,11 +64,13 @@ export default function RootLayout({
         {/* Remover preload de fontes específicas para evitar avisos */}
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
-        <SimpleProviders>
-          <div className="flex flex-col min-h-screen w-full">
-            {children}
-          </div>
-        </SimpleProviders>
+        <ErrorBoundary>
+          <SimpleProviders>
+            <div className="flex flex-col min-h-screen w-full">
+              {children}
+            </div>
+          </SimpleProviders>
+        </ErrorBoundary>
       </body>
     </html>
   );

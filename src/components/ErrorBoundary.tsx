@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import React from 'react'
+import React, { Component, ReactNode } from 'react'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
@@ -11,6 +11,18 @@ interface ErrorBoundaryProps {
 interface ErrorDisplayProps {
   error: Error | null
   resetError: () => void
+}
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: any) => void;
+}
+
+interface State {
+  hasError: boolean;
+  error?: Error;
+  errorInfo?: any;
 }
 
 function ErrorDisplay({ error, resetError }: ErrorDisplayProps) {
@@ -63,37 +75,124 @@ function ErrorDisplay({ error, resetError }: ErrorDisplayProps) {
   )
 }
 
-// React Error Boundary tradicional para capturar erros de renderização
-class ReactErrorBoundary extends React.Component<
-  { children: React.ReactNode; onError?: (error: Error, errorInfo: React.ErrorInfo) => void },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode; onError?: (error: Error, errorInfo: React.ErrorInfo) => void }) {
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): { hasError: boolean; error: Error } {
-    console.error('🚨 React Error Boundary capturou erro:', error);
+  static getDerivedStateFromError(error: Error): State {
+    // Verificar se é erro de chunk loading
+    const isChunkError = error.message?.includes('Loading chunk') || 
+                        error.message?.includes('ChunkLoadError') ||
+                        error.message?.includes('originalFactory') ||
+                        error.message?.includes('Cannot read properties of undefined') ||
+                        error.message?.includes('MIME type') ||
+                        error.name === 'ChunkLoadError';
+    
+    if (isChunkError) {
+      console.warn('🔄 Erro de chunk detectado pelo ErrorBoundary, recarregando página...');
+      // Recarregar a página após um pequeno delay
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
+      }, 1000);
+    }
+
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.group('🚨 React Error Boundary - Erro de Componente');
-    console.error('Erro:', error);
-    console.error('Stack de componentes:', errorInfo.componentStack);
-    console.groupEnd();
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('❌ Erro capturado pelo ErrorBoundary:', error, errorInfo);
     
-    this.props.onError?.(error, errorInfo);
+    this.setState({ errorInfo });
+    
+    // Chamar callback personalizado se fornecido
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
   }
+
+  handleReload = () => {
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
 
   render() {
     if (this.state.hasError) {
+      // Usar fallback personalizado se fornecido
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      // Fallback padrão
       return (
-        <ErrorDisplay 
-          error={this.state.error} 
-          resetError={() => this.setState({ hasError: false, error: null })} 
-        />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <div className="max-w-md w-full text-center">
+            <div className="text-red-500 mb-6">
+              <svg 
+                className="w-16 h-16 mx-auto" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={1.5} 
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+                />
+              </svg>
+            </div>
+            
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Erro de carregamento
+            </h1>
+            
+            <p className="text-gray-600 mb-6">
+              Ocorreu um problema ao carregar a aplicação. Isso pode ser devido a uma atualização do sistema.
+            </p>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={this.handleReload}
+                className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              >
+                Recarregar página
+              </button>
+              
+              <p className="text-sm text-gray-500">
+                Se o problema persistir, limpe o cache do navegador ou contate o suporte.
+              </p>
+            </div>
+            
+            {/* Mostrar detalhes do erro apenas em desenvolvimento */}
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="mt-6 text-left">
+                <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+                  Detalhes técnicos
+                </summary>
+                <div className="mt-2 p-3 bg-gray-100 rounded text-xs font-mono text-gray-700 overflow-auto">
+                  <div className="mb-2">
+                    <strong>Erro:</strong> {this.state.error.message}
+                  </div>
+                  <div className="mb-2">
+                    <strong>Stack:</strong>
+                    <pre className="whitespace-pre-wrap">{this.state.error.stack}</pre>
+                  </div>
+                  {this.state.errorInfo && (
+                    <div>
+                      <strong>Component Stack:</strong>
+                      <pre className="whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre>
+                    </div>
+                  )}
+                </div>
+              </details>
+            )}
+          </div>
+        </div>
       );
     }
 
@@ -101,110 +200,18 @@ class ReactErrorBoundary extends React.Component<
   }
 }
 
-export function ErrorBoundary({ children }: ErrorBoundaryProps) {
-  const [error, setError] = useState<Error | null>(null)
-  const [errorCount, setErrorCount] = useState(0)
-
-  useEffect(() => {
-    const handleError = (event: ErrorEvent) => {
-      // Evitar loop infinito de erros
-      if (errorCount >= 3) {
-        console.warn('Muitos erros detectados, parando captura para evitar loop infinito');
-        return;
-      }
-
-      // Log detalhado do evento de erro
-      console.group('🚨 Error Boundary - Erro Capturado');
-      console.log('Event:', event);
-      console.log('Error:', event.error);
-      console.log('Filename:', event.filename);
-      console.log('Lineno:', event.lineno);
-      console.log('Colno:', event.colno);
-      console.log('Stack trace:', event.error?.stack);
-      console.groupEnd();
-
-      // Verificar se o erro é válido
-      const errorToCapture = event.error;
-      
-      if (errorToCapture === null || errorToCapture === undefined) {
-        console.warn('Error boundary capturou erro null/undefined. Detalhes do evento:', {
-          filename: event.filename,
-          lineno: event.lineno,
-          colno: event.colno,
-          message: event.message,
-          type: event.type
-        });
-        
-        // Criar um erro mais descritivo baseado nas informações disponíveis
-        const errorMessage = event.message || event.filename 
-          ? `Erro indefinido em ${event.filename}:${event.lineno}:${event.colno} - ${event.message || 'Sem mensagem'}`
-          : 'Erro indefinido capturado pelo Error Boundary';
-        
-        const syntheticError = new Error(errorMessage);
-        syntheticError.stack = `Synthetic Error\n    at handleError (${event.filename}:${event.lineno}:${event.colno})`;
-        setError(syntheticError);
-      } else if (errorToCapture instanceof Error) {
-        console.error('Error caught by boundary:', errorToCapture);
-        setError(errorToCapture);
-      } else {
-        // Converter outros tipos de erro para Error
-        const convertedError = new Error(`Erro não-padrão: ${String(errorToCapture)}`);
-        console.error('Error caught by boundary (converted):', convertedError);
-        setError(convertedError);
-      }
-      
-      setErrorCount(prev => prev + 1);
-    }
-
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      // Evitar loop infinito
-      if (errorCount >= 3) return;
-
-      console.group('🚨 Error Boundary - Promise Rejection');
-      console.log('Event:', event);
-      console.log('Reason:', event.reason);
-      console.groupEnd();
-
-      const reason = event.reason;
-      let errorToSet: Error;
-
-      if (reason instanceof Error) {
-        errorToSet = reason;
-      } else if (reason === null || reason === undefined) {
-        errorToSet = new Error('Promise rejeitada com valor null/undefined');
-      } else {
-        errorToSet = new Error(`Promise rejeitada: ${String(reason)}`);
-      }
-
-      console.error('Unhandled promise rejection caught by boundary:', errorToSet);
-      setError(errorToSet);
-      setErrorCount(prev => prev + 1);
-    }
-
-    window.addEventListener('error', handleError)
-    window.addEventListener('unhandledrejection', handleUnhandledRejection)
-    
-    return () => {
-      window.removeEventListener('error', handleError)
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
-    }
-  }, [errorCount])
-
-  const resetError = () => {
-    setError(null)
-    setErrorCount(0)
-  }
-
-  if (error) {
-    return <ErrorDisplay error={error} resetError={resetError} />
-  }
-
-  return (
-    <ReactErrorBoundary onError={(error) => setError(error)}>
-      {children}
-    </ReactErrorBoundary>
-  )
+// Hook para resetar o error boundary
+export function useErrorBoundary() {
+  const [, setState] = React.useState();
+  
+  return React.useCallback((error: Error) => {
+    setState(() => {
+      throw error;
+    });
+  }, []);
 }
+
+export default ErrorBoundary;
 
 export function ErrorMessage({
   message,

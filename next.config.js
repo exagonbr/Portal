@@ -15,18 +15,51 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Configurações para melhorar a hidratação
+  // Configurações para melhorar a hidratação e carregamento de chunks
   experimental: {
     // Melhorar a hidratação de componentes
     optimizePackageImports: ['react-hot-toast', 'lucide-react'],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
+    // Desabilitar turbo temporariamente para evitar problemas de chunk
+    turbo: false,
+    // Melhorar o carregamento de chunks
+    esmExternals: 'loose',
+  },
+  
+  // Configurações webpack para melhorar o carregamento de chunks
+  webpack: (config, { dev, isServer }) => {
+    // Melhorar o splitting de chunks
+    if (!isServer) {
+      config.optimization.splitChunks = {
+        ...config.optimization.splitChunks,
+        chunks: 'all',
+        cacheGroups: {
+          ...config.optimization.splitChunks.cacheGroups,
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+            priority: 10,
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            chunks: 'all',
+            priority: 5,
+            reuseExistingChunk: true,
+          },
         },
-      },
-    },
+      };
+    }
+    
+    // Configurar resolução de módulos
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+    };
+    
+    return config;
   },
   
   // Configurações de compilação para evitar problemas de hidratação
@@ -171,11 +204,15 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Type',
-            value: 'text/css'
+            value: 'text/css; charset=utf-8'
           },
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
           }
         ]
       },
@@ -184,11 +221,28 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Type',
-            value: 'application/javascript'
+            value: 'application/javascript; charset=utf-8'
           },
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          }
+        ]
+      },
+      {
+        source: '/_next/static/media/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
           }
         ]
       },

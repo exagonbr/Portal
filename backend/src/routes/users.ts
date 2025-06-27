@@ -65,25 +65,32 @@ router.get('/stats', validateTokenUltraSimple, async (req, res) => {
   try {
     console.log('📊 [USERS/STATS] Iniciando...');
     
-    // Primeiro, vamos testar com dados estáticos para ver se o problema é na query
+    // Retornar dados estáticos com a estrutura correta que o frontend espera
     const staticStats = {
-      totalUsers: 100,
-      activeUsers: 85,
-      inactiveUsers: 15,
+      total_users: 100,
+      active_users: 85,
+      inactive_users: 15,
       users_by_role: {
         'STUDENT': 70,
         'TEACHER': 20,
-        'ADMIN': 10
-      }
+        'COORDINATOR': 8,
+        'ADMIN': 2
+      },
+      users_by_institution: {
+        'Instituição A': 50,
+        'Instituição B': 30,
+        'Instituição C': 20
+      },
+      recent_registrations: 12
     };
     
-    console.log('✅ [USERS/STATS] Retornando dados estáticos para teste');
+    console.log('✅ [USERS/STATS] Retornando dados estáticos com estrutura correta');
     
     return res.json({
       success: true,
       data: staticStats,
       message: 'Estatísticas de usuários (dados de teste)',
-      debug: 'Usando dados estáticos para identificar problema'
+      debug: 'Usando dados estáticos com a estrutura correta do frontend'
     });
     
     /* CÓDIGO ORIGINAL COMENTADO PARA DEBUG:

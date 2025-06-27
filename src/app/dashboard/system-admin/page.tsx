@@ -473,24 +473,47 @@ function SystemAdminDashboardContent() {
 
   const loadRealUserStats = async () => {
     try {
+      console.log('📊 [FRONTEND] Carregando estatísticas de usuários...');
+      
       const response = await fetch('/api/users/stats', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
+      console.log('📊 [FRONTEND] Resposta da API:', response.status, response.statusText);
+
       if (response.ok) {
         const result = await response.json();
+        console.log('📊 [FRONTEND] Dados recebidos:', result);
+        
         if (result.success && result.data) {
-          setRealUserStats(result.data);
-          // Atualizar também os dados por role se estiverem disponíveis
-          if (result.data.users_by_role) {
-            setRealUsersByRole(result.data.users_by_role);
+          // Verificar se os dados têm a estrutura esperada
+          const data = result.data;
+          const hasRequiredFields = 
+            data.total_users !== undefined &&
+            data.active_users !== undefined &&
+            data.users_by_role !== undefined &&
+            data.recent_registrations !== undefined;
+
+          if (hasRequiredFields) {
+            console.log('✅ [FRONTEND] Dados válidos, atualizando estado...');
+            setRealUserStats(data);
+            // Atualizar também os dados por role se estiverem disponíveis
+            if (data.users_by_role) {
+              setRealUsersByRole(data.users_by_role);
+            }
+          } else {
+            console.warn('⚠️ [FRONTEND] Dados recebidos não têm a estrutura esperada:', data);
           }
+        } else {
+          console.warn('⚠️ [FRONTEND] Resposta da API não contém dados válidos:', result);
         }
+      } else {
+        console.error('❌ [FRONTEND] Erro na resposta da API:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas reais de usuários:', error);
+      console.error('❌ [FRONTEND] Erro ao carregar estatísticas reais de usuários:', error);
     }
   };
 
@@ -756,7 +779,7 @@ function SystemAdminDashboardContent() {
         </div>
         
         {/* Resumo Geral do Sistema */}
-        {realUserStats && (
+        {realUserStats && realUserStats.total_users !== undefined && (
           <div className="mt-4">
             <ContentCard
               title="Resumo Geral do Sistema"
@@ -766,11 +789,11 @@ function SystemAdminDashboardContent() {
             >
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xl font-bold text-blue-600">{realUserStats.total_users.toLocaleString('pt-BR')}</p>
+                  <p className="text-xl font-bold text-blue-600">{(realUserStats.total_users || 0).toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-gray-600">Total de Usuários</p>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <p className="text-xl font-bold text-green-600">{realUserStats.active_users.toLocaleString('pt-BR')}</p>
+                  <p className="text-xl font-bold text-green-600">{(realUserStats.active_users || 0).toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-gray-600">Usuários Ativos</p>
                 </div>
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
@@ -778,7 +801,7 @@ function SystemAdminDashboardContent() {
                   <p className="text-xs text-gray-600">Instituições</p>
                 </div>
                 <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <p className="text-xl font-bold text-orange-600">{realUserStats.recent_registrations}</p>
+                  <p className="text-xl font-bold text-orange-600">{realUserStats.recent_registrations || 0}</p>
                   <p className="text-xs text-gray-600">Novos este Mês</p>
                 </div>
               </div>
