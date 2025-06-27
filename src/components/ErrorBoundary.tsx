@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { Component, ReactNode, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import React, { Component, ReactNode } from 'react'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
@@ -202,9 +201,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
 // Hook para resetar o error boundary
 export function useErrorBoundary() {
-  const [, setState] = React.useState();
+  const [, setState] = useState();
   
-  return React.useCallback((error: Error) => {
+  return useCallback((error: Error) => {
     setState(() => {
       throw error;
     });
