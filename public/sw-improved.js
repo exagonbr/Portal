@@ -65,6 +65,13 @@ self.addEventListener('fetch', (event) => {
       return;
     }
     
+    // CORREÇÃO: Não interceptar requisições de API para evitar URLs duplicadas
+    // O ServiceWorker não deve interceptar chamadas de API internas
+    if (url.pathname.startsWith('/api/')) {
+      console.log('🔄 SW: Ignorando requisição de API:', url.pathname);
+      return;
+    }
+    
     // Ignorar requisições não-GET para evitar problemas
     if (request.method !== 'GET') {
       return;
@@ -173,11 +180,6 @@ async function handleRequest(request) {
       return await cacheFirst(request);
     }
     
-    // Para APIs, usar network first
-    if (isApiRequest(url)) {
-      return await networkFirst(request);
-    }
-    
     // Para páginas, usar stale while revalidate
     return await staleWhileRevalidate(request);
     
@@ -197,11 +199,6 @@ function isStaticAsset(url) {
   const staticExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2'];
   return staticExtensions.some(ext => url.pathname.endsWith(ext)) && 
          !url.pathname.startsWith('/_next/static/'); // Next.js assets são tratados separadamente
-}
-
-// Verificar se é uma requisição de API
-function isApiRequest(url) {
-  return url.pathname.startsWith('/api/');
 }
 
 // Estratégia Cache First
@@ -224,31 +221,6 @@ async function cacheFirst(request) {
     return networkResponse;
   } catch (error) {
     console.warn('⚠️ Cache First falhou:', request.url, error);
-    throw error;
-  }
-}
-
-// Estratégia Network First
-async function networkFirst(request) {
-  try {
-    const networkResponse = await fetch(request, {
-      mode: 'cors'
-    });
-    
-    if (networkResponse.ok) {
-      const cache = await caches.open(API_CACHE);
-      await cache.put(request, networkResponse.clone());
-    }
-    
-    return networkResponse;
-  } catch (error) {
-    console.warn('⚠️ Network falhou, tentando cache:', request.url, error);
-    
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
     throw error;
   }
 }
