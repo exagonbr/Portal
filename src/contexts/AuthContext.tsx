@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [mounted, fetchCurrentUser]);
 
   /**
-   * Função de redirecionamento segura
+   * Função de redirecionamento segura com controle de loop
    */
   const safeRedirect = useCallback((path: string) => {
     try {
@@ -118,6 +118,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('🔄 Redirecionamento circular evitado:', path);
           return;
         }
+        
+        // Controle de loop mais robusto
+        const redirectKey = 'auth_redirect_count';
+        const redirectCountStr = sessionStorage.getItem(redirectKey) || '0';
+        const redirectCount = parseInt(redirectCountStr);
+        
+        // Se já redirecionou muitas vezes, usar rota de emergência
+        if (redirectCount >= 3) {
+          console.warn('🚨 Muitos redirecionamentos detectados, usando rota de emergência');
+          sessionStorage.removeItem(redirectKey);
+          
+          // Rota de emergência baseada no contexto
+          const emergencyRoute = currentPath.includes('/login') ? '/portal/books' : '/login?reset=true';
+          window.location.href = emergencyRoute;
+          return;
+        }
+        
+        // Incrementar contador de redirecionamentos
+        sessionStorage.setItem(redirectKey, (redirectCount + 1).toString());
+        
+        // Limpar contador após 30 segundos
+        setTimeout(() => {
+          sessionStorage.removeItem(redirectKey);
+        }, 30000);
         
         // Usar router.push para melhor integração com Next.js
         router.push(path);

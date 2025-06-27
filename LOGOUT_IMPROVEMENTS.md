@@ -196,4 +196,110 @@ As melhorias implementadas garantem:
 3. **Performance otimizada** com Service Worker inteligente
 4. **Confiabilidade** através de múltiplas camadas de segurança
 
-O sistema agora oferece uma experiência de logout robusta e segura, removendo completamente todos os vestígios de dados do usuário do navegador. 
+O sistema agora oferece uma experiência de logout robusta e segura, removendo completamente todos os vestígios de dados do usuário do navegador.
+
+# Correções para Loop Infinito de Redirecionamento
+
+## Problema Identificado
+
+O sistema está enfrentando um loop infinito entre a tela de login e redirecionamento, causado por:
+
+1. **Erro de cookies()**: Next.js 15 requer `await` antes de `cookies()`
+2. **Múltiplos redirecionamentos simultâneos**: Vários componentes tentando redirecionar ao mesmo tempo
+3. **Falta de controle de estado**: Não há prevenção adequada contra loops
+4. **Timeout excessivo do backend**: 27+ segundos para resposta
+
+## Correções Implementadas
+
+### 1. Correção dos Cookies (Next.js 15)
+
+**Problema**: `cookies().set()` sem await causa erro
+**Solução**: Adicionar `await` antes de `cookies()`
+
+**Status dos arquivos:**
+- ✅ `src/app/api/auth/login/route.ts` (linha 421)
+- ✅ `src/app/api/auth/logout/route.ts` (linha 11)
+- ✅ `src/app/api/auth/refresh/route.ts` (linha 11)
+- ✅ `src/app/api/auth/validate/route.ts` (linhas 8, 57)
+- ❌ `src/app/api/auth/register/route.ts` (linha 38) **PENDENTE**
+
+### 2. Correções Pendentes Urgentes
+
+#### A. Corrigir cookies() no register
+```typescript
+// src/app/api/auth/register/route.ts - linha 38
+// ANTES:
+const cookieStore = cookies();
+
+// DEPOIS:
+const cookieStore = await cookies();
+```
+
+#### B. Implementar timeout no login
+```typescript
+// src/app/api/auth/login/route.ts - adicionar timeout
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s
+
+try {
+  response = await fetch(`${API_CONFIG.BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    signal: controller.signal,
+    cache: 'no-store'
+  });
+  clearTimeout(timeoutId);
+} catch (error) {
+  clearTimeout(timeoutId);
+  if (error.name === 'AbortError') {
+    console.log('🚫 BACKEND TIMEOUT: Fallback para autenticação local');
+    // Continuar com fallback
+  }
+  throw error;
+}
+```
+
+#### C. Adicionar controle de loop
+```typescript
+// Criar src/utils/redirect-control.ts
+let redirectCount = 0;
+let lastRedirect = '';
+const MAX_REDIRECTS = 3;
+
+export function canRedirect(path: string): boolean {
+  if (lastRedirect === path) {
+    redirectCount++;
+    if (redirectCount >= MAX_REDIRECTS) {
+      console.warn('🔄 Loop detectado, bloqueando redirecionamento para:', path);
+      return false;
+    }
+  } else {
+    redirectCount = 0;
+    lastRedirect = path;
+  }
+  return true;
+}
+
+export function resetRedirectControl(): void {
+  redirectCount = 0;
+  lastRedirect = '';
+}
+```
+
+## Implementação Imediata
+
+### Passo 1: Corrigir arquivo register
+Editar `src/app/api/auth/register/route.ts` linha 38
+
+### Passo 2: Adicionar timeout ao backend
+Modificar `src/app/api/auth/login/route.ts` para timeout de 10s
+
+### Passo 3: Implementar controle de loop
+Criar sistema de prevenção de loops
+
+## Resultado Esperado
+1. ✅ Cookies funcionarão sem erro
+2. ✅ Login não travará por 27+ segundos  
+3. ✅ Fim dos loops de redirecionamento
+4. ✅ Fluxo normal: login → dashboard 
