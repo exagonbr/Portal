@@ -1,10 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { AlertCircle, CheckCircle, RefreshCw, Trash2, Bug } from 'lucide-react';
 
 interface ServiceWorkerStatus {
   supported: boolean;
@@ -204,20 +200,36 @@ export default function ServiceWorkerDebug() {
       '/api/dashboard/engagement'
     ];
 
+    // Verificar se há token de autenticação
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      addLog('⚠️ Nenhum token de autenticação encontrado!');
+    } else {
+      addLog(`🔐 Token encontrado (${token.length} caracteres)`);
+    }
+
     for (const endpoint of apiEndpoints) {
       try {
         addLog(`🔬 Testando: ${endpoint}`);
+        const headers: Record<string, string> = {
+          'Accept': 'application/json'
+        };
+
+        // Adicionar token se disponível
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(endpoint, {
           cache: 'no-cache',
-          headers: {
-            'Accept': 'application/json'
-          }
+          headers
         });
 
         if (response.ok) {
           addLog(`✅ API OK: ${endpoint} (${response.status})`);
         } else {
-          addLog(`❌ API falhou: ${endpoint} (${response.status})`);
+          const errorText = await response.text();
+          addLog(`❌ API falhou: ${endpoint} (${response.status}) - ${errorText}`);
         }
       } catch (error) {
         addLog(`❌ Erro na API: ${endpoint} - ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
@@ -233,17 +245,34 @@ export default function ServiceWorkerDebug() {
     window.location.reload();
   };
 
+  const runAuthDebug = () => {
+    addLog('🔍 Executando diagnóstico de autenticação...');
+    // Importar e executar as funções de debug de auth
+    import('@/utils/auth-debug').then(({ debugAuth, testTokenDirectly, testMultipleEndpoints }) => {
+      debugAuth();
+      testTokenDirectly();
+      testMultipleEndpoints();
+    });
+  };
+
+  const clearAuthData = () => {
+    addLog('🧹 Limpando dados de autenticação...');
+    import('@/utils/auth-debug').then(({ clearAllAuth }) => {
+      clearAllAuth();
+      addLog('✅ Dados de autenticação limpos');
+    });
+  };
+
   useEffect(() => {
     checkServiceWorkerStatus();
   }, []);
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <Card className="p-6">
+      <div className="bg-white shadow-lg rounded-lg p-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
-            <Bug className="h-6 w-6" />
-            Diagnóstico do Service Worker
+            🐛 Diagnóstico do Service Worker
           </h2>
           <p className="text-gray-600">
             Ferramenta para diagnosticar e resolver problemas com o Service Worker
@@ -254,33 +283,21 @@ export default function ServiceWorkerDebug() {
           {/* Status */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-2">
-              {status.supported ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-500" />
-              )}
+              <span className={`w-3 h-3 rounded-full ${status.supported ? 'bg-green-500' : 'bg-red-500'}`}></span>
               <span className="text-sm">Suportado</span>
             </div>
             <div className="flex items-center gap-2">
-              {status.registered ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-500" />
-              )}
+              <span className={`w-3 h-3 rounded-full ${status.registered ? 'bg-green-500' : 'bg-red-500'}`}></span>
               <span className="text-sm">Registrado</span>
             </div>
             <div className="flex items-center gap-2">
-              {status.active ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-red-500" />
-              )}
+              <span className={`w-3 h-3 rounded-full ${status.active ? 'bg-green-500' : 'bg-red-500'}`}></span>
               <span className="text-sm">Ativo</span>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">
+              <span className="bg-gray-200 text-gray-800 text-xs px-2 py-1 rounded">
                 {status.cacheCount} Caches
-              </Badge>
+              </span>
             </div>
           </div>
 
@@ -299,7 +316,7 @@ export default function ServiceWorkerDebug() {
               <h4 className="font-medium text-red-600 mb-2">Assets Problemáticos:</h4>
               <div className="space-y-1">
                 {status.problematicUrls.map((item, index) => (
-                  <div key={index} className="text-sm bg-red-50 p-2 rounded">
+                  <div key={index} className="text-sm bg-red-50 p-2 rounded border-l-4 border-red-400">
                     <strong>{item.url}</strong>
                     {item.status && <span className="text-red-600"> - Status: {item.status}</span>}
                     {item.error && <span className="text-red-600"> - Erro: {item.error}</span>}
@@ -315,7 +332,7 @@ export default function ServiceWorkerDebug() {
               <h4 className="font-medium text-orange-600 mb-2">APIs com Problemas:</h4>
               <div className="space-y-1">
                 {status.apiUrls.map((item, index) => (
-                  <div key={index} className="text-sm bg-orange-50 p-2 rounded">
+                  <div key={index} className="text-sm bg-orange-50 p-2 rounded border-l-4 border-orange-400">
                     <strong>{item.url}</strong>
                     {item.status && <span className="text-orange-600"> - Status: {item.status}</span>}
                     {item.error && <span className="text-orange-600"> - Erro: {item.error}</span>}
@@ -327,66 +344,78 @@ export default function ServiceWorkerDebug() {
 
           {/* Ações */}
           <div className="flex flex-wrap gap-2">
-            <Button
+            <button
               onClick={checkServiceWorkerStatus}
               disabled={isLoading}
-              variant="outline"
-              size="sm"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className={isLoading ? 'animate-spin' : ''}>🔄</span>
               Verificar Status
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={clearServiceWorkerCache}
               disabled={isLoading}
-              variant="destructive"
-              size="sm"
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Limpar Cache
-            </Button>
-            <Button
+              🗑️ Limpar Cache
+            </button>
+            <button
               onClick={reloadProblematicAssets}
               disabled={isLoading}
-              variant="secondary"
-              size="sm"
+              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Recarregar Assets
-            </Button>
-            <Button
+              🔄 Recarregar Assets
+            </button>
+            <button
               onClick={testApiEndpoints}
               disabled={isLoading}
-              variant="outline"
-              size="sm"
+              className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <Bug className="h-4 w-4 mr-2" />
-              Testar APIs
-            </Button>
-            <Button
+              🔬 Testar APIs
+            </button>
+            <button
               onClick={forceReload}
               disabled={isLoading}
-              variant="primary"
-              size="sm"
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Recarregar Página
-            </Button>
+              🔄 Recarregar Página
+            </button>
+          </div>
+
+          {/* Seção de Debug de Autenticação */}
+          <div className="border-t pt-4">
+            <h4 className="font-medium mb-2 text-gray-700">🔐 Debug de Autenticação</h4>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={runAuthDebug}
+                disabled={isLoading}
+                className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                🔍 Diagnosticar Auth
+              </button>
+              <button
+                onClick={clearAuthData}
+                disabled={isLoading}
+                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                🧹 Limpar Auth
+              </button>
+            </div>
           </div>
 
           {/* Logs */}
           {logs.length > 0 && (
             <div>
               <h4 className="font-medium mb-2">Logs:</h4>
-              <div className="bg-gray-100 p-3 rounded text-sm font-mono max-h-40 overflow-y-auto">
+              <div className="bg-gray-100 p-3 rounded text-sm font-mono max-h-40 overflow-y-auto border">
                 {logs.map((log, index) => (
-                  <div key={index}>{log}</div>
+                  <div key={index} className="py-1">{log}</div>
                 ))}
               </div>
             </div>
           )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 } 
