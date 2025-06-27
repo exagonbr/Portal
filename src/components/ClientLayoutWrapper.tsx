@@ -18,78 +18,56 @@ interface ClientLayoutWrapperProps {
   fallback?: React.ReactNode;
 }
 
-export default function ClientLayoutWrapper({ children, fallback }: ClientLayoutWrapperProps) {
-  const [mounted, setMounted] = useState(false);
-  const [hasError, setHasError] = useState(false);
-
-  const defaultFallback = fallback || (
+// Componente de fallback simples
+function SimpleWrapper({ children }: { children: React.ReactNode }) {
+  return (
     <div className="flex flex-col min-h-full">
       {children}
     </div>
   );
+}
+
+export default function ClientLayoutWrapper({ children, fallback }: ClientLayoutWrapperProps) {
+  const [mounted, setMounted] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  const defaultFallback = fallback || <SimpleWrapper>{children}</SimpleWrapper>;
 
   useEffect(() => {
     try {
-      // Configurar handler de chunk errors primeiro
-      setupChunkErrorHandler();
+      // Configurar handler de chunk errors de forma mais simples
+      const handleChunkError = (event: ErrorEvent) => {
+        if (event.error?.message?.includes('originalFactory') || 
+            event.error?.message?.includes('ChunkLoadError')) {
+          console.warn('🔄 Erro de chunk detectado no ClientLayoutWrapper')
+          setHasError(true)
+          event.preventDefault()
+        }
+      }
+
+      window.addEventListener('error', handleChunkError)
       
-      // Aguardar um pouco para garantir que tudo está inicializado
+      // Marcar como montado após um pequeno delay
       const timer = setTimeout(() => {
         setMounted(true);
-      }, 50);
+      }, 100);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('error', handleChunkError)
+      };
     } catch (error) {
       console.error('❌ Erro na inicialização do ClientLayoutWrapper:', error);
       setHasError(true);
-      // Mesmo com erro, marcar como montado para renderizar o conteúdo
       setMounted(true);
     }
   }, []);
 
-  // Se não montou ainda, renderizar fallback
-  if (!mounted) {
+  // Se não montou ainda ou houve erro, renderizar fallback
+  if (!mounted || hasError) {
     return <>{defaultFallback}</>;
   }
 
-  // Se houve erro, renderizar fallback
-  if (hasError) {
-    console.warn('⚠️ ClientLayoutWrapper em modo de fallback devido a erro');
-    return <>{defaultFallback}</>;
-  }
-
-  try {
-    return (
-      <>
-        <ClientOnly>
-          <ErrorSuppressor />
-          <GlobalSetup />
-        </ClientOnly>
-        
-        <UpdateProvider>
-          <ClientOnly>
-            <Handtalk token="fe964e92fd91396436b25c2ee95b3976" />
-          </ClientOnly>
-
-          <div className="flex flex-col min-h-full">
-            {children}
-          </div>
-          
-          <ClientOnly>
-            <PWAUpdateManager />
-            <PushNotificationInitializer />
-            <LoopEmergencyReset />
-            <FirefoxCompatibilityInitializer />
-            <ChunkErrorHandler />
-          </ClientOnly>
-        </UpdateProvider>
-        
-        <HydrationDebugger />
-      </>
-    );
-  } catch (error) {
-    console.error('❌ Erro ao renderizar ClientLayoutWrapper:', error);
-    // Fallback para versão simplificada
-    return <>{defaultFallback}</>;
-  }
+  // Por enquanto, renderizar apenas o wrapper simples
+  return <SimpleWrapper>{children}</SimpleWrapper>;
 } 
