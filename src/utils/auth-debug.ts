@@ -727,7 +727,8 @@ export function syncAuthData(): void {
       
       console.log('✅ Dados do usuário sincronizados');
     } catch (error) {
-      console.error('❌ Erro ao sincronizar dados do usuário:', error);
+      console.warn('⚠️ Erro ao sincronizar dados do usuário:', error);
+      console.info('💡 Dados do usuário podem estar corrompidos');
     }
   }
 }
@@ -803,7 +804,8 @@ export function repairAuth(): void {
             console.log('✅ Token Base64 convertido para JWT com sucesso!');
           }
         } catch (error) {
-          console.error('❌ Erro ao converter token Base64:', error);
+          console.warn('⚠️ Erro ao converter token Base64:', error);
+          console.info('💡 Token pode não estar em formato Base64 válido');
         }
       }
     }
@@ -814,8 +816,8 @@ export function repairAuth(): void {
     if (result.success) {
       console.log('✅ Reparo bem-sucedido! Autenticação funcionando.');
     } else {
-      console.error('❌ Reparo não resolveu o problema:', result.error);
-      console.log('💡 Recomendação: Execute clearAllAuth() e faça login novamente');
+      console.warn('⚠️ Reparo não resolveu o problema:', result.error);
+      console.info('💡 Recomendação: Execute clearAllAuth() e faça login novamente');
     }
   });
   
