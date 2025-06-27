@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 
+const withPWA = require('@ducanh2912/next-pwa').default({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+});
+
 const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig = {
@@ -23,6 +30,8 @@ const nextConfig = {
     turbo: false,
     // Melhorar o carregamento de chunks
     esmExternals: 'loose',
+    // CORREÇÃO: Forçar configurações específicas para CSS
+    forceSwcTransforms: true,
   },
   
   // Configurações webpack para melhorar o carregamento de chunks
@@ -34,6 +43,14 @@ const nextConfig = {
         chunks: 'all',
         cacheGroups: {
           ...config.optimization.splitChunks.cacheGroups,
+          // CORREÇÃO: Separar CSS vendors especificamente
+          cssVendor: {
+            test: /[\\/]node_modules[\\/].*\.(css|scss|sass)$/,
+            name: 'css-vendors',
+            chunks: 'all',
+            priority: 20,
+            enforce: true,
+          },
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
@@ -50,6 +67,20 @@ const nextConfig = {
         },
       };
     }
+    
+    // CORREÇÃO: Configurar loaders específicos para CSS
+    config.module.rules.push({
+      test: /\.css$/,
+      use: [
+        'style-loader',
+        {
+          loader: 'css-loader',
+          options: {
+            importLoaders: 1,
+          },
+        },
+      ],
+    });
     
     // Configurar resolução de módulos
     config.resolve.fallback = {
@@ -90,6 +121,18 @@ const nextConfig = {
     }
     
     return [];
+  },
+  
+  // CORREÇÃO: Redirects para evitar conflitos de CSS
+  async redirects() {
+    return [
+      // Redirecionar arquivos CSS mal formados
+      {
+        source: '/_next/static/css/:path*.js',
+        destination: '/_next/static/css/:path*.css',
+        permanent: false,
+      },
+    ];
   },
   
   images: {
@@ -198,7 +241,7 @@ const nextConfig = {
           }
         ]
       },
-      // CORREÇÃO: Headers específicos para arquivos estáticos
+      // CORREÇÃO: Headers mais específicos e agressivos para arquivos CSS
       {
         source: '/_next/static/css/:path*',
         headers: [
@@ -213,6 +256,10 @@ const nextConfig = {
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff'
+          },
+          {
+            key: 'Content-Disposition',
+            value: 'inline'
           }
         ]
       },
@@ -246,6 +293,24 @@ const nextConfig = {
           }
         ]
       },
+      // CORREÇÃO: Headers globais para todos os arquivos estáticos
+      {
+        source: '/_next/:path*',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          }
+        ]
+      },
       {
         source: '/:path*',
         headers: [
@@ -260,37 +325,6 @@ const nextConfig = {
           {
             key: 'Access-Control-Allow-Headers',
             value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie'
-          },
-          {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'false'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob: *",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: *",
-              "style-src 'self' 'unsafe-inline' https: *",
-              "img-src 'self' data: blob: https: *",
-              "font-src 'self' data: https: *",
-              "connect-src 'self' https: wss: *",
-              "media-src 'self' https: *",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self' *"
-            ].join('; ')
           }
         ]
       }
@@ -417,26 +451,7 @@ const nextConfig = {
     return config;
   },
 
-  // Configuração do PWA
-  pwa: {
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-    sw: 'sw.js',
-    runtimeCaching: [
-      {
-        urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-        handler: 'CacheFirst',
-        options: {
-          cacheName: 'google-fonts',
-          expiration: {
-            maxEntries: 4,
-            maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
-          }
-        }
-      }
-    ]
-  },
+
 
   // Movido de experimental para raiz
   serverExternalPackages: [
@@ -451,4 +466,4 @@ const nextConfig = {
 };
 
 // This ensures the PWA configuration is properly recognized
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);

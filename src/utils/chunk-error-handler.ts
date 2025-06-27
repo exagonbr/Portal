@@ -136,6 +136,52 @@ function setupChunkErrorHandler() {
       originalConsoleError.apply(console, args);
     };
 
+    // Interceptar o MutationObserver para detectar scripts CSS malformados
+    const originalObserver = window.MutationObserver;
+    window.MutationObserver = class extends originalObserver {
+      constructor(callback) {
+        super((mutations) => {
+          mutations.forEach(mutation => {
+            if (mutation.type === 'childList') {
+              mutation.addedNodes.forEach(node => {
+                if (node.tagName === 'SCRIPT' && node.src && node.src.includes('.css')) {
+                  console.warn('🔄 Script CSS malformado detectado:', node.src);
+                  setTimeout(() => window.location.reload(), 100);
+                }
+              });
+            }
+          });
+          callback(mutations);
+        });
+      }
+    };
+
+    // Interceptar fetch para detectar requests CSS malformados
+    const originalFetch = window.fetch;
+    window.fetch = function(input, init) {
+      const url = typeof input === 'string' ? input : input.url;
+      
+      if (url.includes('/_next/static/css/') && url.includes('.css')) {
+        console.log('🔍 Interceptando request CSS:', url);
+        
+        return originalFetch(input, {
+          ...init,
+          headers: {
+            ...init?.headers,
+            'Accept': 'text/css,*/*;q=0.1',
+          }
+        }).catch(error => {
+          if (error.message.includes('MIME') || error.message.includes('css')) {
+            console.warn('🔄 Erro de CSS fetch detectado, recarregando...');
+            setTimeout(() => window.location.reload(), 100);
+          }
+          throw error;
+        });
+      }
+      
+      return originalFetch(input, init);
+    };
+
     initialized = true;
     console.log('✅ Handler de chunk errors aprimorado inicializado');
     
