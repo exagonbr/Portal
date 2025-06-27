@@ -10,7 +10,7 @@ interface NotificationAPI {
 // Simple API implementation that doesn't depend on notificationService
 const notificationAPI: NotificationAPI = {
   async createNotification(notification: CreateNotificationDto): Promise<Notification> {
-    const response = await apiClient.post<{ data: Notification }>('/api/notifications', notification);
+    const response = await apiClient.post<{ data: Notification }>('notifications', notification);
     if (!response.success || !response.data) {
       throw new Error('Failed to create notification');
     }
@@ -18,7 +18,7 @@ const notificationAPI: NotificationAPI = {
   },
   
   async updateNotification(id: number, updates: any): Promise<Notification> {
-    const response = await apiClient.patch<{ data: Notification }>(`/api/notifications/${id}`, updates);
+    const response = await apiClient.patch<{ data: Notification }>(`notifications/${id}`, updates);
     if (!response.success || !response.data) {
       throw new Error(`Failed to update notification with id ${id}`);
     }

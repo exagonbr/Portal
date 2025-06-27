@@ -73,7 +73,12 @@ class ApiClient {
    * Obtém o token de autenticação
    */
   private getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      console.log('🔍 [API-CLIENT] getAuthToken: Executando no servidor, retornando null');
+      return null;
+    }
+    
+    console.log('🔍 [API-CLIENT] getAuthToken: Procurando token...');
     
     // Tentar obter token de localStorage
     let token = localStorage.getItem('auth_token') || 
@@ -82,16 +87,27 @@ class ApiClient {
                 sessionStorage.getItem('token') ||
                 sessionStorage.getItem('auth_token');
     
+    if (token) {
+      console.log('✅ [API-CLIENT] Token encontrado no localStorage/sessionStorage:', token.substring(0, 20) + '...');
+      return token;
+    }
+    
     // Se não encontrar no storage, tentar obter dos cookies
-    if (!token) {
-      const cookies = document.cookie.split(';');
-      for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'auth_token' || name === 'token' || name === 'authToken') {
-          token = value;
-          break;
-        }
+    console.log('🔍 [API-CLIENT] Procurando token nos cookies...');
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+        token = value;
+        console.log('✅ [API-CLIENT] Token encontrado nos cookies:', token.substring(0, 20) + '...');
+        break;
       }
+    }
+    
+    if (!token) {
+      console.warn('❌ [API-CLIENT] Nenhum token encontrado!');
+      console.log('🔍 [API-CLIENT] localStorage keys:', Object.keys(localStorage));
+      console.log('🔍 [API-CLIENT] cookies:', document.cookie);
     }
     
     return token;
@@ -193,6 +209,8 @@ class ApiClient {
    * Prepara headers da requisição
    */
   private prepareHeaders(customHeaders?: Record<string, string>, skipAuth = false): Record<string, string> {
+    console.log('🔍 [API-CLIENT] prepareHeaders: skipAuth =', skipAuth);
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -206,9 +224,15 @@ class ApiClient {
         headers.Authorization = `Bearer ${token}`;
         // Também adicionar como header customizado para o middleware
         headers['X-Auth-Token'] = token;
+        console.log('✅ [API-CLIENT] Token adicionado aos headers:', token.substring(0, 20) + '...');
+      } else {
+        console.warn('❌ [API-CLIENT] Nenhum token disponível para adicionar aos headers');
       }
+    } else {
+      console.log('🔍 [API-CLIENT] Autenticação ignorada (skipAuth = true)');
     }
 
+    console.log('🔍 [API-CLIENT] Headers finais:', Object.keys(headers));
     return headers;
   }
 
@@ -408,27 +432,68 @@ class ApiClient {
   }
 
   private processError(error: any): ApiError {
+    console.log('🔍 [API-CLIENT] processError chamado com:', error);
+    
     if (error instanceof ApiClientError) {
-      throw error;
+      console.log('🔍 [API-CLIENT] Erro já é ApiClientError:', error.message);
+      return {
+        name: 'ApiClientError',
+        message: error.message,
+        status: error.status,
+        details: error
+      };
     }
 
     // Usar handler específico do Firefox
     const processedError = firefoxErrorHandler(error);
+    console.log('🔍 [API-CLIENT] Erro processado pelo Firefox handler:', processedError);
 
     if (processedError instanceof Error) {
       if (processedError.name === 'AbortError' || processedError.message.includes('timeout')) {
-        throw new ApiClientError('Timeout da requisição', 408);
+        console.log('🔍 [API-CLIENT] Erro de timeout detectado');
+        return {
+          name: 'ApiError',
+          message: 'Timeout da requisição',
+          status: 408,
+          details: processedError
+        };
       }
       if (processedError.name === 'TypeError' && processedError.message.includes('fetch')) {
-        throw new ApiClientError('Erro de rede ao tentar acessar o recurso', 0);
+        console.log('🔍 [API-CLIENT] Erro de rede detectado');
+        return {
+          name: 'ApiError',
+          message: 'Erro de rede ao tentar acessar o recurso',
+          status: 0,
+          details: processedError
+        };
       }
       if (processedError.message.includes('NS_BINDING_ABORTED')) {
-        throw new ApiClientError('Conexão interrompida. Tente novamente.', 0);
+        console.log('🔍 [API-CLIENT] Erro NS_BINDING_ABORTED detectado');
+        return {
+          name: 'ApiError',
+          message: 'Conexão interrompida. Tente novamente.',
+          status: 0,
+          details: processedError
+        };
       }
-      throw new ApiClientError(processedError.message, 0);
+      
+      console.log('🔍 [API-CLIENT] Retornando erro genérico com mensagem:', processedError.message);
+      return {
+        name: 'ApiError',
+        message: processedError.message,
+        status: 0,
+        details: processedError
+      };
     }
 
-    throw new ApiClientError('Erro desconhecido', 0);
+    // Se chegou até aqui, é um erro desconhecido mesmo
+    console.log('🔍 [API-CLIENT] Erro desconhecido, tipo:', typeof error, error);
+    return {
+      name: 'ApiError',
+      message: `Erro desconhecido: ${error?.message || error?.toString() || 'Sem detalhes'}`,
+      status: 0,
+      details: error
+    };
   }
 }
 

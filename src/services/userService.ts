@@ -748,7 +748,7 @@ export class UserService {
         query: params.query || undefined
       } as Record<string, string | number | boolean>;
 
-      const response = await apiClient.get<ListResponse<UserResponseDto>>('/api/users', queryParams);
+      const response = await apiClient.get<ListResponse<UserResponseDto>>('users', queryParams);
       if (!response.success || !response.data?.items) {
         throw new Error(response.message || 'Falha ao buscar usuários');
       }

@@ -56,16 +56,32 @@ export function diagnoseAuth(): AuthDiagnostic {
 
   // Verificar localStorage
   if (typeof window !== 'undefined') {
-    diagnostic.localStorage.authToken = localStorage.getItem('auth_token');
-    diagnostic.localStorage.userSession = localStorage.getItem('user_session');
+    // Verificar múltiplas chaves possíveis para o token
+    const possibleTokenKeys = ['auth_token', 'token', 'authToken'];
+    let foundToken = null;
+    let tokenSource = 'none';
+    
+    for (const key of possibleTokenKeys) {
+      const token = localStorage.getItem(key);
+      if (token) {
+        foundToken = token;
+        tokenSource = `localStorage.${key}`;
+        break;
+      }
+    }
+    
+    diagnostic.localStorage.authToken = foundToken;
+    diagnostic.localStorage.userSession = localStorage.getItem('user_session') || localStorage.getItem('userSession');
     
     // Verificar token
-    const token = diagnostic.localStorage.authToken;
-    if (token) {
+    if (foundToken) {
       diagnostic.token.present = true;
-      diagnostic.token.length = token.length;
-      diagnostic.token.source = 'localStorage';
-      diagnostic.token.valid = token.length > 10 && token.includes('.');
+      diagnostic.token.length = foundToken.length;
+      diagnostic.token.source = tokenSource;
+      
+      // Melhor validação de JWT
+      const parts = foundToken.split('.');
+      diagnostic.token.valid = parts.length === 3 && foundToken.length > 50;
     }
     
     // Verificar sessão
@@ -124,13 +140,16 @@ export async function testApiCall(endpoint: string = '/api/users/stats'): Promis
   error?: string;
 }> {
   try {
-    const token = localStorage.getItem('auth_token');
+    // Usar a mesma lógica de busca de token que outras partes do sistema
+    let token = localStorage.getItem('auth_token') || 
+                localStorage.getItem('token') ||
+                localStorage.getItem('authToken');
     
     if (!token) {
       return {
         success: false,
         status: 0,
-        error: 'Token não encontrado'
+        error: 'Token não encontrado em nenhuma das chaves possíveis (auth_token, token, authToken)'
       };
     }
 
@@ -254,18 +273,51 @@ export function debugAuth(): void {
     // Se deu erro 401, vamos investigar mais
     if (result.status === 401) {
       console.group('🔍 INVESTIGAÇÃO DO ERRO 401');
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        console.log('Token encontrado no localStorage');
-        console.log('Tamanho do token:', token.length);
-        console.log('Primeiros 20 caracteres:', token.substring(0, 20));
-        console.log('Últimos 20 caracteres:', token.substring(token.length - 20));
+      
+      // Verificar todas as possíveis chaves de token
+      const possibleTokenKeys = ['auth_token', 'token', 'authToken'];
+      let foundToken = null;
+      let foundKey = null;
+      
+      for (const key of possibleTokenKeys) {
+        const token = localStorage.getItem(key);
+        if (token) {
+          foundToken = token;
+          foundKey = key;
+          break;
+        }
+      }
+      
+      if (foundToken && foundKey) {
+        console.log(`Token encontrado no localStorage com chave: ${foundKey}`);
+        console.log('Tamanho do token:', foundToken.length);
+        console.log('Primeiros 20 caracteres:', foundToken.substring(0, 20));
+        console.log('Últimos 20 caracteres:', foundToken.substring(foundToken.length - 20));
         
         // Verificar se o token está sendo enviado corretamente
         console.log('Headers que seriam enviados:');
-        console.log('Authorization: Bearer ' + token.substring(0, 20) + '...');
+        console.log('Authorization: Bearer ' + foundToken.substring(0, 20) + '...');
+        
+        // Verificar se é um JWT válido
+        const parts = foundToken.split('.');
+        console.log('Número de partes do JWT:', parts.length);
+        if (parts.length === 3) {
+          console.log('✅ Token tem formato JWT válido');
+        } else {
+          console.error('❌ Token não tem formato JWT válido (deveria ter 3 partes)');
+        }
       } else {
         console.error('❌ Nenhum token encontrado no localStorage!');
+        console.log('Chaves verificadas:', possibleTokenKeys);
+        
+        // Mostrar todas as chaves do localStorage para debug
+        console.log('Todas as chaves no localStorage:');
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key) {
+            console.log(`- ${key}: ${localStorage.getItem(key)?.substring(0, 50)}...`);
+          }
+        }
       }
       console.groupEnd();
     }
@@ -313,10 +365,14 @@ export async function testMultipleEndpoints(): Promise<void> {
  * Testa se o problema está no token ou na comunicação com o backend
  */
 export async function testTokenDirectly(): Promise<void> {
-  const token = localStorage.getItem('auth_token');
+  // Verificar todas as possíveis chaves de token
+  let token = localStorage.getItem('auth_token') || 
+              localStorage.getItem('token') ||
+              localStorage.getItem('authToken');
   
   if (!token) {
     console.error('❌ Nenhum token encontrado para testar');
+    console.log('Chaves verificadas: auth_token, token, authToken');
     return;
   }
 
@@ -354,6 +410,123 @@ export async function testTokenDirectly(): Promise<void> {
   console.groupEnd();
 }
 
+/**
+ * Sincroniza dados de autenticação entre diferentes chaves no localStorage
+ * Esta função corrige inconsistências entre authToken e auth_token
+ */
+export function syncAuthData(): void {
+  if (typeof window === 'undefined') return;
+  
+  console.group('🔄 SINCRONIZAÇÃO DE DADOS DE AUTENTICAÇÃO');
+  
+  // 1. Encontrar o token válido
+  const possibleTokenKeys = ['authToken', 'auth_token', 'token'];
+  let validToken = null;
+  let validTokenKey = null;
+  
+  for (const key of possibleTokenKeys) {
+    const token = localStorage.getItem(key);
+    if (token && token.length > 50) {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        validToken = token;
+        validTokenKey = key;
+        console.log(`✅ Token JWT válido encontrado em: ${key}`);
+        break;
+      }
+    }
+  }
+  
+  if (!validToken) {
+    console.error('❌ Nenhum token JWT válido encontrado para sincronizar');
+    console.groupEnd();
+    return;
+  }
+  
+  // 2. Sincronizar token em todas as chaves padrão
+  const standardKeys = ['auth_token', 'authToken'];
+  for (const key of standardKeys) {
+    const currentValue = localStorage.getItem(key);
+    if (currentValue !== validToken) {
+      localStorage.setItem(key, validToken);
+      console.log(`🔄 Token sincronizado para chave: ${key}`);
+    }
+  }
+  
+  // 3. Verificar e sincronizar dados do usuário
+  const userSessionData = localStorage.getItem('userSession');
+  const userDataCookie = document.cookie
+    .split(';')
+    .find(cookie => cookie.trim().startsWith('userData='));
+  
+  if (userSessionData && userDataCookie) {
+    try {
+      const sessionData = JSON.parse(userSessionData);
+      const cookieData = JSON.parse(decodeURIComponent(userDataCookie.split('=')[1]));
+      
+      // Verificar se os dados estão consistentes
+      if (sessionData.user?.id === cookieData.id) {
+        console.log('✅ Dados de usuário consistentes entre localStorage e cookies');
+      } else {
+        console.warn('⚠️ Inconsistência detectada nos dados do usuário');
+        console.log('SessionData:', sessionData.user);
+        console.log('CookieData:', cookieData);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar consistência dos dados do usuário:', error);
+    }
+  }
+  
+  console.log('✅ Sincronização concluída');
+  console.groupEnd();
+}
+
+/**
+ * Função de reparo automático para problemas de autenticação
+ */
+export function repairAuth(): void {
+  console.group('🔧 REPARO AUTOMÁTICO DE AUTENTICAÇÃO');
+  
+  // 1. Sincronizar dados
+  syncAuthData();
+  
+  // 2. Executar diagnóstico
+  const diagnostic = diagnoseAuth();
+  
+  // 3. Aplicar correções específicas baseadas no diagnóstico
+  if (diagnostic.token.present && !diagnostic.token.valid) {
+    console.log('🔧 Tentando reparar token inválido...');
+    
+    // Verificar se o token está na chave errada
+    const allTokens = [
+      localStorage.getItem('authToken'),
+      localStorage.getItem('auth_token'), 
+      localStorage.getItem('token')
+    ].filter(Boolean);
+    
+    for (const token of allTokens) {
+      if (token && token.split('.').length === 3) {
+        console.log('🔧 Token JWT válido encontrado, sincronizando...');
+        localStorage.setItem('auth_token', token);
+        localStorage.setItem('authToken', token);
+        break;
+      }
+    }
+  }
+  
+  // 4. Testar após reparo
+  testApiCall('/api/auth/validate').then(result => {
+    if (result.success) {
+      console.log('✅ Reparo bem-sucedido! Autenticação funcionando.');
+    } else {
+      console.error('❌ Reparo não resolveu o problema:', result.error);
+      console.log('💡 Recomendação: Execute clearAllAuth() e faça login novamente');
+    }
+  });
+  
+  console.groupEnd();
+}
+
 // Expor globalmente para debug
 if (typeof window !== 'undefined') {
   (window as any).debugAuth = debugAuth;
@@ -361,4 +534,6 @@ if (typeof window !== 'undefined') {
   (window as any).forceRelogin = forceRelogin;
   (window as any).testMultipleEndpoints = testMultipleEndpoints;
   (window as any).testTokenDirectly = testTokenDirectly;
+  (window as any).syncAuthData = syncAuthData;
+  (window as any).repairAuth = repairAuth;
 } 

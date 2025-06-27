@@ -66,7 +66,7 @@ export class QueueService {
         timeout: options.timeout || 30000
       };
 
-      const response = await apiClient.post<{ jobId: string }>('/api/queue/add', jobData);
+      const response = await apiClient.post<{ jobId: string }>('queue/add', jobData);
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha ao adicionar job à fila');
@@ -172,7 +172,7 @@ export class QueueService {
    */
   private async markJobProcessing(jobId: string): Promise<void> {
     try {
-      await apiClient.patch(`/api/queue/${jobId}/processing`);
+      await apiClient.patch(`queue/${jobId}/processing`);
     } catch (error) {
       console.error('Erro ao marcar job como processando:', error);
     }
@@ -183,7 +183,7 @@ export class QueueService {
    */
   private async markJobCompleted(jobId: string): Promise<void> {
     try {
-      await apiClient.patch(`/api/queue/${jobId}/completed`);
+      await apiClient.patch(`queue/${jobId}/completed`);
     } catch (error) {
       console.error('Erro ao marcar job como completado:', error);
     }
@@ -194,7 +194,7 @@ export class QueueService {
    */
   private async markJobFailed(jobId: string, error: string): Promise<void> {
     try {
-      await apiClient.patch(`/api/queue/${jobId}/failed`, { error });
+      await apiClient.patch(`queue/${jobId}/failed`, { error });
     } catch (err) {
       console.error('Erro ao marcar job como falhado:', err);
     }
@@ -232,7 +232,7 @@ export class QueueService {
       const params: any = { limit, offset };
       if (status) params.status = status;
 
-      const response = await apiClient.get<QueueJob[]>('/api/queue/jobs', params);
+      const response = await apiClient.get<QueueJob[]>('queue/jobs', params);
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha ao listar jobs');
@@ -250,7 +250,7 @@ export class QueueService {
    */
   async getJob(jobId: string): Promise<QueueJob | null> {
     try {
-      const response = await apiClient.get<QueueJob>(`/api/queue/jobs/${jobId}`);
+      const response = await apiClient.get<QueueJob>(`queue/jobs/${jobId}`);
 
       if (!response.success) {
         return null;
@@ -268,7 +268,7 @@ export class QueueService {
    */
   async cancelJob(jobId: string): Promise<boolean> {
     try {
-      const response = await apiClient.delete(`/api/queue/jobs/${jobId}`);
+      const response = await apiClient.delete(`queue/jobs/${jobId}`);
       return response.success;
     } catch (error) {
       console.error(`Erro ao cancelar job ${jobId}:`, error);
@@ -281,7 +281,7 @@ export class QueueService {
    */
   async retryJob(jobId: string): Promise<boolean> {
     try {
-      const response = await apiClient.post(`/api/queue/jobs/${jobId}/retry`);
+      const response = await apiClient.post(`queue/jobs/${jobId}/retry`);
       return response.success;
     } catch (error) {
       console.error(`Erro ao reprocessar job ${jobId}:`, error);
@@ -299,7 +299,7 @@ export class QueueService {
         params.olderThan = olderThan.toISOString();
       }
 
-      const response = await apiClient.post<{ cleaned: number }>('/api/queue/clean', params);
+      const response = await apiClient.post<{ cleaned: number }>('queue/clean', params);
 
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha ao limpar jobs');
