@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { AppProviders } from '@/providers/AppProviders';
-import ClientLayoutWrapper from '@/components/ClientLayoutWrapper';
+// Comentando temporariamente para isolar o problema
+// import { AppProviders } from '@/providers/AppProviders';
+// import ClientLayoutWrapper from '@/components/ClientLayoutWrapper';
 // Importar o handler de erros de chunk (auto-inicializa)
 import '@/utils/chunk-error-handler';
 
@@ -40,15 +41,6 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-// Componente de fallback simples
-function LayoutFallback({ children }: { children: React.ReactNode }) {
-  return (
-    <div className={`${inter.className} m-0 p-0 h-full w-full flex flex-col min-h-screen`}>
-      {children}
-    </div>
-  );
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -70,14 +62,19 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
           rel="stylesheet"
         />
+        {/* Remover preload de fontes específicas para evitar avisos */}
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
-        {/* Usar componente de fallback se os providers não carregarem */}
+        <div className="flex flex-col min-h-screen w-full">
+          {children}
+        </div>
+        {/* Temporariamente removido para isolar o problema:
         <AppProviders fallback={<LayoutFallback>{children}</LayoutFallback>}>
           <ClientLayoutWrapper fallback={<LayoutFallback>{children}</LayoutFallback>}>
             {children}
           </ClientLayoutWrapper>
         </AppProviders>
+        */}
       </body>
     </html>
   );
