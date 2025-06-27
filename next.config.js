@@ -245,99 +245,52 @@ const nextConfig = {
       }
     });
 
-    // CORREÇÃO: Configuração mais robusta para evitar problemas de factory
+    // CORREÇÃO: Configuração mais simples e robusta
     if (!isServer) {
-      // CORREÇÃO: Configuração específica para desenvolvimento
-      if (dev) {
-        // Configuração simplificada para desenvolvimento
-        config.optimization = {
-          ...config.optimization,
-          splitChunks: {
-            chunks: 'all',
-            cacheGroups: {
-              default: {
-                minChunks: 2,
-                priority: -20,
-                reuseExistingChunk: true,
-              },
-              vendor: {
-                test: /[\\/]node_modules[\\/]/,
-                name: 'vendors',
-                priority: -10,
-                chunks: 'all',
-              },
+      // Configuração de splitChunks mais conservadora
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          minSize: 20000,
+          maxSize: dev ? 500000 : 250000,
+          cacheGroups: {
+            default: {
+              minChunks: 2,
+              priority: -20,
+              reuseExistingChunk: true,
+            },
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              priority: -10,
+              chunks: 'all',
+              enforce: true,
             },
           },
-        };
-      } else {
-        // Configuração mais conservadora para produção
-        config.optimization = {
-          ...config.optimization,
-          splitChunks: {
-            chunks: 'all',
-            minSize: 20000,
-            maxSize: 250000,
-            cacheGroups: {
-              default: {
-                minChunks: 2,
-                priority: -20,
-                reuseExistingChunk: true,
-              },
-              vendor: {
-                test: /[\\/]node_modules[\\/]/,
-                name: 'vendors',
-                priority: -10,
-                chunks: 'all',
-                enforce: true,
-              },
-              // Separar React e Next.js em chunk próprio
-              react: {
-                test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
-                name: 'react',
-                priority: 10,
-                chunks: 'all',
-                enforce: true,
-              },
-            },
-          },
-        };
-      }
+        },
+      };
 
-      // CORREÇÃO: Configuração de output mais robusta
+      // CORREÇÃO: Configuração de output simplificada
       config.output = {
         ...config.output,
         crossOriginLoading: 'anonymous',
-        chunkLoadTimeout: 60000, // Aumentar timeout para 60 segundos
-        // CORREÇÃO: Configuração mais específica para evitar problemas de factory
-        chunkFilename: dev 
-          ? 'static/chunks/[name].js' 
-          : 'static/chunks/[name].[contenthash:8].js',
-        // Adicionar configuração para melhor handling de erros
+        chunkLoadTimeout: 30000,
         globalObject: 'this',
         publicPath: '/_next/',
-        // CORREÇÃO: Adicionar configuração para HMR
-        hotUpdateChunkFilename: dev ? 'static/webpack/[id].[fullhash].hot-update.js' : undefined,
-        hotUpdateMainFilename: dev ? 'static/webpack/[fullhash].hot-update.json' : undefined,
       };
 
-      // CORREÇÃO: Adicionar configuração para resolver problemas de módulos
+      // CORREÇÃO: Resolver configuração
       config.resolve = {
         ...config.resolve,
         symlinks: false,
         modules: ['node_modules'],
       };
 
-      // CORREÇÃO: Configuração específica para HMR em desenvolvimento
+      // CORREÇÃO: Configuração específica para desenvolvimento
       if (dev) {
         config.devtool = 'eval-cheap-module-source-map';
-        
-        // Configuração para melhor HMR
         config.optimization.runtimeChunk = 'single';
-        
-        // CORREÇÃO: Plugin para corrigir problemas de HMR
-        config.plugins.push(
-          new webpack.HotModuleReplacementPlugin()
-        );
       }
     }
 
@@ -373,28 +326,19 @@ const nextConfig = {
       };
     }
 
-    // Plugins para ignorar módulos problemáticos e melhorar carregamento
+    // Plugins essenciais
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^(cardinal|encoding|pg-cloudflare)$/,
         contextRegExp: /./,
       }),
-      // CORREÇÃO: Plugin para melhorar carregamento de chunks
       new webpack.optimize.LimitChunkCountPlugin({
-        maxChunks: dev ? 20 : 50
-      }),
-      // CORREÇÃO: Plugin para ignorar warnings específicos do Knex
-      new webpack.ContextReplacementPlugin(
-        /knex\/lib\/migrations\/util/,
-        (data) => {
-          delete data.dependencies[0].critical;
-          return data;
-        }
-      )
+        maxChunks: dev ? 15 : 30
+      })
     );
 
-    // CORREÇÃO: Configuração adicional para evitar problemas de factory
-    if (!isServer) {
+    // CORREÇÃO: Configuração para evitar problemas de factory
+    if (!isServer && !dev) {
       config.experiments = {
         ...config.experiments,
         topLevelAwait: true,
