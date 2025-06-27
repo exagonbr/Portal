@@ -7,7 +7,7 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   reactStrictMode: true,
-  swcMinify: true,
+
   productionBrowserSourceMaps: false,
   eslint: {
     // Warning: This allows production builds to successfully complete even if
@@ -19,8 +19,14 @@ const nextConfig = {
   experimental: {
     // Melhorar a hidratação de componentes
     optimizePackageImports: ['react-hot-toast', 'lucide-react'],
-    // Reduzir problemas de hidratação
-    serverComponentsExternalPackages: ['epubjs'],
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
   
   // Configurações de compilação para evitar problemas de hidratação
@@ -97,7 +103,9 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'localhost'
       }
-    ]
+    ],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   env: {
     CUSTOM_KEY: 'my-value',
@@ -353,7 +361,39 @@ const nextConfig = {
     });
 
     return config;
-  }
+  },
+
+  // Configuração do PWA
+  pwa: {
+    dest: 'public',
+    register: true,
+    skipWaiting: true,
+    sw: 'sw.js',
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'google-fonts',
+          expiration: {
+            maxEntries: 4,
+            maxAgeSeconds: 365 * 24 * 60 * 60 // 365 days
+          }
+        }
+      }
+    ]
+  },
+
+  // Movido de experimental para raiz
+  serverExternalPackages: [
+    'knex',
+    'mysql2',
+    'pg',
+    'sqlite3',
+    'better-sqlite3',
+    'oracledb',
+    'tedious'
+  ],
 };
 
 // This ensures the PWA configuration is properly recognized

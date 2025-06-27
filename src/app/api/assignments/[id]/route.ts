@@ -47,7 +47,7 @@ const mockAssignments = new Map()
 // GET - Buscar tarefa por ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -59,6 +59,7 @@ export async function GET(
       )
     }
 
+    const params = await context.params
     const assignmentId = params.id
 
     // Buscar tarefa
@@ -128,7 +129,7 @@ export async function GET(
 // PUT - Atualizar tarefa
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -140,6 +141,7 @@ export async function PUT(
       )
     }
 
+    const params = await context.params
     const assignmentId = params.id
     const body = await request.json()
 
@@ -235,7 +237,7 @@ export async function PUT(
 // DELETE - Remover tarefa
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -247,6 +249,7 @@ export async function DELETE(
       )
     }
 
+    const params = await context.params
     const assignmentId = params.id
 
     // Buscar tarefa
