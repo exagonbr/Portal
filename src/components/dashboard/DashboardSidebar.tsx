@@ -10,7 +10,6 @@ import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRo
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 import { EnhancedLoadingState } from '../ui/LoadingStates'
-import SidebarDebug from '../debug/SidebarDebug'
 
 interface NavItem {
   href: string
@@ -1072,9 +1071,6 @@ function DashboardSidebarComponent() {
 
   return (
     <>
-      {/* Debug Component */}
-      <SidebarDebug />
-      
       {/* Loading State para Logout */}
       {isLoggingOut && (
         <EnhancedLoadingState
