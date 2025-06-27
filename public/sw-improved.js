@@ -56,38 +56,112 @@ self.addEventListener('activate', (event) => {
 // Interceptar requisições
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
   
-  // Ignorar URLs específicas
-  if (shouldIgnoreUrl(request.url)) {
-    return;
-  }
-  
-  // Ignorar requisições não-GET para evitar problemas
-  if (request.method !== 'GET') {
-    return;
-  }
-  
-  // Ignorar requisições para o próprio service worker
-  if (url.pathname.endsWith('sw.js') || url.pathname.endsWith('sw-improved.js')) {
-    return;
-  }
-  
-  event.respondWith(
-    handleRequest(request).catch((error) => {
-      console.warn('⚠️ Service Worker: Erro ao processar requisição:', error);
-      
-      // Fallback: tentar fetch direto
-      return fetch(request).catch(() => {
-        // Se tudo falhar, retornar resposta de erro
-        return new Response('Network error', {
-          status: 408,
-          statusText: 'Request Timeout'
+  try {
+    const url = new URL(request.url);
+    
+    // Ignorar URLs específicas
+    if (shouldIgnoreUrl(request.url)) {
+      return;
+    }
+    
+    // Ignorar requisições não-GET para evitar problemas
+    if (request.method !== 'GET') {
+      return;
+    }
+    
+    // Ignorar requisições para o próprio service worker
+    if (url.pathname.endsWith('sw.js') || url.pathname.endsWith('sw-improved.js')) {
+      return;
+    }
+    
+    // Para arquivos CSS do Next.js com parâmetros de versão, usar estratégia especial
+    if (isNextJSAsset(url)) {
+      event.respondWith(handleNextJSAsset(request));
+      return;
+    }
+    
+    event.respondWith(
+      handleRequest(request).catch((error) => {
+        console.warn('⚠️ Service Worker: Erro ao processar requisição:', request.url, error);
+        
+        // Fallback: tentar fetch direto sem cache
+        return fetch(request, { 
+          cache: 'no-cache',
+          mode: 'cors'
+        }).catch((fetchError) => {
+          console.error('⚠️ Service Worker: Fetch direto também falhou:', request.url, fetchError);
+          
+          // Se tudo falhar, retornar resposta de erro apropriada
+          if (request.destination === 'style' || request.url.includes('.css')) {
+            return new Response('/* CSS loading failed */', {
+              status: 200,
+              headers: { 'Content-Type': 'text/css' }
+            });
+          }
+          
+          return new Response('Network error', {
+            status: 408,
+            statusText: 'Request Timeout'
+          });
         });
-      });
-    })
-  );
+      })
+    );
+  } catch (error) {
+    console.error('⚠️ Service Worker: Erro crítico no fetch listener:', error);
+    // Não interceptar se houver erro crítico
+    return;
+  }
 });
+
+// Verificar se é um asset do Next.js
+function isNextJSAsset(url) {
+  return url.pathname.startsWith('/_next/static/') && 
+         (url.pathname.endsWith('.css') || url.pathname.endsWith('.js'));
+}
+
+// Tratar assets do Next.js de forma especial
+async function handleNextJSAsset(request) {
+  try {
+    // Para assets do Next.js, sempre tentar buscar da rede primeiro
+    // pois eles têm versionamento próprio
+    const networkResponse = await fetch(request, {
+      cache: 'no-cache',
+      mode: 'cors'
+    });
+    
+    if (networkResponse.ok) {
+      // Cachear apenas se a resposta for bem-sucedida
+      try {
+        const cache = await caches.open(STATIC_CACHE);
+        await cache.put(request, networkResponse.clone());
+      } catch (cacheError) {
+        console.warn('⚠️ Falha ao cachear asset do Next.js:', cacheError);
+      }
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.warn('⚠️ Falha ao buscar asset do Next.js:', request.url, error);
+    
+    // Tentar buscar do cache como fallback
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      console.log('✅ Usando versão cacheada do asset Next.js:', request.url);
+      return cachedResponse;
+    }
+    
+    // Se não há cache, retornar erro apropriado
+    if (request.url.includes('.css')) {
+      return new Response('/* CSS loading failed from service worker */', {
+        status: 200,
+        headers: { 'Content-Type': 'text/css' }
+      });
+    }
+    
+    throw error;
+  }
+}
 
 // Lidar com requisições
 async function handleRequest(request) {
@@ -108,22 +182,26 @@ async function handleRequest(request) {
     return await staleWhileRevalidate(request);
     
   } catch (error) {
-    console.warn('⚠️ Service Worker: Erro na estratégia de cache:', error);
+    console.warn('⚠️ Service Worker: Erro na estratégia de cache:', request.url, error);
     
     // Fallback para fetch direto
-    return fetch(request);
+    return fetch(request, { 
+      cache: 'no-cache',
+      mode: 'cors'
+    });
   }
 }
 
 // Verificar se é um recurso estático
 function isStaticAsset(url) {
   const staticExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2'];
-  return staticExtensions.some(ext => url.pathname.endsWith(ext));
+  return staticExtensions.some(ext => url.pathname.endsWith(ext)) && 
+         !url.pathname.startsWith('/_next/static/'); // Next.js assets são tratados separadamente
 }
 
 // Verificar se é uma requisição de API
 function isApiRequest(url) {
-  return url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/');
+  return url.pathname.startsWith('/api/');
 }
 
 // Estratégia Cache First
@@ -134,16 +212,18 @@ async function cacheFirst(request) {
       return cachedResponse;
     }
     
-    const networkResponse = await fetch(request);
+    const networkResponse = await fetch(request, {
+      mode: 'cors'
+    });
     
     if (networkResponse.ok) {
       const cache = await caches.open(STATIC_CACHE);
-      cache.put(request, networkResponse.clone());
+      await cache.put(request, networkResponse.clone());
     }
     
     return networkResponse;
   } catch (error) {
-    console.warn('⚠️ Cache First falhou:', error);
+    console.warn('⚠️ Cache First falhou:', request.url, error);
     throw error;
   }
 }
@@ -151,16 +231,18 @@ async function cacheFirst(request) {
 // Estratégia Network First
 async function networkFirst(request) {
   try {
-    const networkResponse = await fetch(request);
+    const networkResponse = await fetch(request, {
+      mode: 'cors'
+    });
     
     if (networkResponse.ok) {
       const cache = await caches.open(API_CACHE);
-      cache.put(request, networkResponse.clone());
+      await cache.put(request, networkResponse.clone());
     }
     
     return networkResponse;
   } catch (error) {
-    console.warn('⚠️ Network falhou, tentando cache:', error);
+    console.warn('⚠️ Network falhou, tentando cache:', request.url, error);
     
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
@@ -176,13 +258,15 @@ async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
   const cachedResponse = await cache.match(request);
   
-  const fetchPromise = fetch(request).then((networkResponse) => {
+  const fetchPromise = fetch(request, {
+    mode: 'cors'
+  }).then((networkResponse) => {
     if (networkResponse.ok) {
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;
   }).catch((error) => {
-    console.warn('⚠️ Revalidação falhou:', error);
+    console.warn('⚠️ Revalidação falhou:', request.url, error);
     return null;
   });
   
