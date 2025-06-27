@@ -280,6 +280,7 @@ class SystemAdminService {
    */
   async getRealTimeMetrics(): Promise<RealTimeMetrics> {
     try {
+      // Tentar primeiro a rota do backend
       const response = await apiClient.get<{ data: RealTimeMetrics }>(`/api/dashboard/metrics/realtime`);
       
       if (response.success && response.data) {
@@ -288,19 +289,50 @@ class SystemAdminService {
       
       throw new Error(response.message || 'Falha ao carregar métricas em tempo real');
     } catch (error) {
-      console.error('Erro ao carregar métricas em tempo real:', error);
+      console.error('Erro ao carregar métricas em tempo real do backend:', error);
       
-      // Fallback com dados simulados
+      // Se falhar, tentar a rota local como fallback
+      try {
+        console.log('🔄 Tentando rota local como fallback...');
+        const localResponse = await fetch('/api/dashboard/metrics/realtime');
+        
+        if (localResponse.ok) {
+          const localData = await localResponse.json();
+          if (localData.success && localData.data) {
+            return localData.data;
+          }
+        }
+      } catch (localError) {
+        console.error('Erro na rota local de fallback:', localError);
+      }
+      
+      console.warn('🎭 Usando dados simulados para métricas em tempo real');
+      
+      // Fallback com dados simulados mais realistas
+      const now = new Date();
+      const hour = now.getHours();
+      
+      // Simular variação baseada no horário do dia
+      const isBusinessHours = hour >= 8 && hour <= 18;
+      const baseMultiplier = isBusinessHours ? 1.0 : 0.6;
+      
+      // Simular picos de uso no meio da manhã e tarde
+      const peakHour = hour === 10 || hour === 14;
+      const peakMultiplier = peakHour ? 1.3 : 1.0;
+      
+      const finalMultiplier = baseMultiplier * peakMultiplier;
+      
       return {
-        activeUsers: Math.floor(Math.random() * 1000) + 2000,
-        activeSessions: Math.floor(Math.random() * 1500) + 2500,
+        activeUsers: Math.floor((1200 + Math.random() * 300) * finalMultiplier),
+        activeSessions: Math.floor((1500 + Math.random() * 400) * finalMultiplier),
         memoryUsage: {
           rss: 104857600 + Math.floor(Math.random() * 10485760),
           heapTotal: 83886080 + Math.floor(Math.random() * 8388608),
           heapUsed: 67108864 + Math.floor(Math.random() * 6710886),
           external: 8388608 + Math.floor(Math.random() * 838860),
           arrayBuffers: 1048576 + Math.floor(Math.random() * 104857)
-        }
+        },
+        redisMemory: Math.floor(45 + Math.random() * 15) // MB
       };
     }
   }

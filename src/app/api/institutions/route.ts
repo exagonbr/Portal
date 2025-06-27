@@ -3,8 +3,6 @@ import { prepareAuthHeaders } from '../lib/auth-headers';
 
 import { getInternalApiUrl } from '@/config/env';
 
-
-
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -15,32 +13,68 @@ export async function GET(request: NextRequest) {
     // Preparar headers de autenticação
     const headers = prepareAuthHeaders(request);
     
+    // Verificar se há um token válido de autenticação
+    const authHeader = headers.Authorization;
+    const hasValidAuthToken = authHeader && 
+                              authHeader.startsWith('Bearer ') && 
+                              authHeader.length > 'Bearer '.length &&
+                              authHeader !== 'Bearer ';
+    
     // Construir URL do backend com parâmetros
-    // Se não houver token de autenticação, usar rota pública
-    const hasAuthToken = headers.Authorization && headers.Authorization !== 'Bearer ';
-    const routePath = hasAuthToken ? '/institutions' : '/institutions-public';
+    // Se não houver token de autenticação válido, usar rota pública
+    const routePath = hasValidAuthToken ? '/api/institutions' : '/api/institutions-public';
     const backendUrl = new URL(routePath, getInternalApiUrl());
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });
 
     console.log('🔗 Proxying to:', backendUrl.toString());
-    console.log('📋 Headers:', headers);
-    console.log('🔐 Using route:', hasAuthToken ? 'AUTHENTICATED' : 'PUBLIC');
+    console.log('📋 Auth Header:', authHeader ? 'Present' : 'Missing');
+    console.log('🔐 Using route:', hasValidAuthToken ? 'AUTHENTICATED (/api/institutions)' : 'PUBLIC (/api/institutions-public)');
+
+    // Preparar headers para a requisição
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Só incluir Authorization header se estivermos usando a rota autenticada
+    if (hasValidAuthToken && authHeader) {
+      requestHeaders['Authorization'] = authHeader;
+    }
 
     // Fazer requisição para o backend
     const response = await fetch(backendUrl.toString(), {
       method: 'GET',
-      headers,
+      headers: requestHeaders,
     });
 
     console.log('📡 Backend response status:', response.status);
-    console.log('📡 Backend response headers:', response.headers);
     
     // Se falhar, retornar erro
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Backend error:', errorText);
+      
+      // Se for erro 401 na rota autenticada, tentar rota pública como fallback
+      if (response.status === 401 && hasValidAuthToken) {
+        console.log('🔄 Tentando fallback para rota pública...');
+        const publicUrl = new URL('/api/institutions-public', getInternalApiUrl());
+        searchParams.forEach((value, key) => {
+          publicUrl.searchParams.append(key, value);
+        });
+        
+        const fallbackResponse = await fetch(publicUrl.toString(), {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          console.log('✅ Fallback para rota pública funcionou');
+          return NextResponse.json(fallbackData, { status: fallbackResponse.status });
+        }
+      }
+      
       return NextResponse.json(
         { success: false, message: `Erro no backend: ${response.status} ${response.statusText}` },
         { status: response.status }
@@ -61,7 +95,7 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
-    console.log('📄 Backend response data:', data);
+    console.log('📄 Backend response data keys:', Object.keys(data));
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
@@ -79,7 +113,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/api/institutions')`, {
+    const response = await fetch(`${getInternalApiUrl()}/api/institutions`, {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
