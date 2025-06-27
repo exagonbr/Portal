@@ -343,7 +343,7 @@ export class QueueService {
    */
   async pauseQueue(): Promise<void> {
     try {
-      await apiClient.post('/api/queue/pause');
+      await apiClient.post('queue/pause');
       this.stopProcessing();
     } catch (error) {
       console.error('Erro ao pausar fila:', error);
@@ -356,7 +356,7 @@ export class QueueService {
    */
   async resumeQueue(): Promise<void> {
     try {
-      await apiClient.post('/api/queue/resume');
+      await apiClient.post('queue/resume');
       this.startProcessing();
     } catch (error) {
       console.error('Erro ao resumir fila:', error);

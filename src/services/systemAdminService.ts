@@ -169,6 +169,71 @@ class SystemAdminService {
   private baseUrl = '';
 
   /**
+   * Método de teste para verificar autenticação
+   */
+  async testAuthentication(): Promise<{
+    hasToken: boolean;
+    tokenValid: boolean;
+    apiWorking: boolean;
+    error?: string;
+  }> {
+    console.log('🧪 [SYSTEM-ADMIN] Testando autenticação...');
+    
+    // Verificar se há token no localStorage
+    let hasToken = false;
+    let token = null;
+    
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('auth_token') || 
+              localStorage.getItem('token') ||
+              localStorage.getItem('authToken');
+      hasToken = !!token;
+      
+      console.log('🔍 [SYSTEM-ADMIN] Token encontrado:', hasToken);
+      if (hasToken && token) {
+        console.log('🔍 [SYSTEM-ADMIN] Token preview:', token.substring(0, 20) + '...');
+      }
+    }
+    
+    // Testar uma requisição simples para verificar se a API está funcionando
+    let apiWorking = false;
+    let tokenValid = false;
+    let error = undefined;
+    
+    try {
+      console.log('🧪 [SYSTEM-ADMIN] Testando requisição para /api/users/stats...');
+      const response = await apiClient.get<any>('/api/users/stats');
+      
+      if (response.success) {
+        apiWorking = true;
+        tokenValid = true;
+        console.log('✅ [SYSTEM-ADMIN] API funcionando e token válido');
+      } else {
+        apiWorking = true;
+        tokenValid = false;
+        error = response.message || 'Token inválido';
+        console.log('❌ [SYSTEM-ADMIN] API funcionando mas token inválido:', error);
+      }
+    } catch (err: any) {
+      console.error('❌ [SYSTEM-ADMIN] Erro na requisição de teste:', err);
+      error = err.message || 'Erro na requisição';
+      
+      // Se o erro for de autenticação, a API está funcionando
+      if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+        apiWorking = true;
+        tokenValid = false;
+      }
+    }
+    
+    return {
+      hasToken,
+      tokenValid,
+      apiWorking,
+      error
+    };
+  }
+
+  /**
    * Obtém dados reais de usuários por função do backend
    */
   async getUsersByRole(): Promise<Record<string, number>> {

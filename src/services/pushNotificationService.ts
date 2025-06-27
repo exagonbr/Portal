@@ -207,7 +207,7 @@ class PushNotificationService {
         await subscription.unsubscribe();
         
         try {
-          await apiClient.delete(`/api/push-subscriptions/${encodeURIComponent(subscription.endpoint)}`);
+          await apiClient.delete(`push-subscriptions/${encodeURIComponent(subscription.endpoint)}`);
           console.log('Successfully unsubscribed from push notifications');
         } catch (error) {
           // Se backend não está disponível, apenas remove localmente

@@ -233,6 +233,25 @@ function SystemAdminDashboardContent() {
     try {
       setLoading(true);
       
+      // Testar autenticação primeiro para debugar problemas
+      console.log('🧪 [DASHBOARD] Testando autenticação antes de carregar dados...');
+      const authTest = await systemAdminService.testAuthentication();
+      console.log('🧪 [DASHBOARD] Resultado do teste de autenticação:', authTest);
+      
+      if (!authTest.hasToken) {
+        console.error('❌ [DASHBOARD] Usuário não tem token de autenticação!');
+        toast.error('Erro de autenticação: Token não encontrado');
+        return;
+      }
+      
+      if (!authTest.tokenValid) {
+        console.error('❌ [DASHBOARD] Token de autenticação inválido!', authTest.error);
+        toast.error('Erro de autenticação: Token inválido');
+        return;
+      }
+      
+      console.log('✅ [DASHBOARD] Autenticação OK, carregando dados...');
+      
       // Carregar dados em paralelo
       await Promise.all([
         loadSystemDashboard(),
