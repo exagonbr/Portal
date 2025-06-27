@@ -551,11 +551,21 @@ class ApiClient {
       const hasToken = !!currentToken;
       const tokenPreview = currentToken ? currentToken.substring(0, 20) + '...' : 'nenhum';
       
+      // Log detalhado para debug
       console.error('❌ [API-CLIENT] Erro 401 - Detalhes de autenticação:', {
         hasToken,
         tokenPreview,
-        errorDetails: error.details,
-        errorMessage: error.message
+        errorDetails: error.details || {},
+        errorMessage: error.message || 'sem mensagem',
+        errorName: error.name || 'sem nome',
+        errorStack: error.stack || 'sem stack',
+        fullError: error,
+        localStorage: typeof window !== 'undefined' ? {
+          auth_token: !!localStorage.getItem('auth_token'),
+          token: !!localStorage.getItem('token'),
+          authToken: !!localStorage.getItem('authToken')
+        } : 'server-side',
+        cookies: typeof window !== 'undefined' ? document.cookie : 'server-side'
       });
       
       let message = 'Token de autenticação inválido! "Erro desconhecido"';

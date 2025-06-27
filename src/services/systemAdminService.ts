@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client';
+import { isAuthenticated, getCurrentToken, validateToken, syncTokenWithApiClient, clearAllTokens } from '@/utils/token-validator';
 
 // Interfaces para dados do dashboard do sistema
 export interface SystemDashboardData {
@@ -167,6 +168,35 @@ export interface AnalyticsData {
 
 class SystemAdminService {
   private baseUrl = '';
+
+  /**
+   * Verifica o status da autenticação usando o novo validador
+   */
+  async checkAuthenticationStatus(): Promise<{
+    hasToken: boolean;
+    tokenValid: boolean;
+    needsRefresh: boolean;
+    error?: string;
+  }> {
+    try {
+      const authStatus = isAuthenticated();
+      const token = getCurrentToken();
+      
+      return {
+        hasToken: !!token,
+        tokenValid: authStatus.authenticated,
+        needsRefresh: authStatus.needsRefresh,
+        error: authStatus.error
+      };
+    } catch (error) {
+      return {
+        hasToken: false,
+        tokenValid: false,
+        needsRefresh: true,
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      };
+    }
+  }
 
   /**
    * Método de teste para verificar autenticação
@@ -395,16 +425,91 @@ class SystemAdminService {
    */
   async getRealTimeMetrics(): Promise<RealTimeMetrics> {
     try {
+      console.log('🔍 [SYSTEM-ADMIN] Carregando métricas em tempo real...');
+      
+      // Verificar autenticação usando o novo validador
+      const authStatus = isAuthenticated();
+      if (!authStatus.authenticated) {
+        console.warn('⚠️ [SYSTEM-ADMIN] Usuário não autenticado:', authStatus.error);
+        clearAllTokens(); // Limpar tokens inválidos
+        throw new Error('Token de autenticação inválido. Faça login novamente.');
+      }
+      
+      const token = getCurrentToken();
+      if (!token) {
+        console.warn('⚠️ [SYSTEM-ADMIN] Nenhum token encontrado após validação');
+        throw new Error('Token de autenticação não encontrado. Faça login novamente.');
+      }
+      
+      console.log('🔍 [SYSTEM-ADMIN] Token válido encontrado:', token.substring(0, 20) + '...');
+      
+      // Validar token específico
+      const tokenValidation = validateToken(token);
+      if (!tokenValidation.isValid) {
+        console.error('❌ [SYSTEM-ADMIN] Token inválido:', tokenValidation.error);
+        clearAllTokens();
+        throw new Error('Token de autenticação inválido. Faça login novamente.');
+      }
+      
+      if (tokenValidation.needsRefresh) {
+        console.warn('⚠️ [SYSTEM-ADMIN] Token precisa ser renovado em breve');
+      }
+      
+      // Sincronizar token com apiClient
+      const syncSuccess = await syncTokenWithApiClient(token);
+      if (!syncSuccess) {
+        console.warn('⚠️ [SYSTEM-ADMIN] Falha ao sincronizar token com apiClient');
+      }
+      
       // Tentar primeiro a rota do backend
       const response = await apiClient.get<{ data: RealTimeMetrics }>(`dashboard/metrics/realtime`);
       
+      console.log('🔍 [SYSTEM-ADMIN] Resposta da API:', response);
+      
       if (response.success && response.data) {
+        console.log('✅ [SYSTEM-ADMIN] Métricas carregadas com sucesso');
         return response.data.data;
       }
       
-      throw new Error(response.message || 'Falha ao carregar métricas em tempo real');
-    } catch (error) {
-      console.error('Erro ao carregar métricas em tempo real do backend:', error);
+      // Se chegou aqui, a resposta não foi bem-sucedida
+      const errorMessage = response.message || 'Falha ao carregar métricas em tempo real';
+      console.error('❌ [SYSTEM-ADMIN] Erro na resposta da API:', errorMessage);
+      
+      // Verificar se é erro de autenticação
+      if (errorMessage.includes('Token') || errorMessage.includes('autenticação') || errorMessage.includes('autorização')) {
+        throw new Error('Token de autenticação inválido. Faça login novamente.');
+      }
+      
+      throw new Error(errorMessage);
+    } catch (error: any) {
+      console.error('❌ [SYSTEM-ADMIN] Erro ao carregar métricas em tempo real do backend:', error);
+      
+      // Verificar se é erro de autenticação específico
+      if (error?.message?.includes('Token') || 
+          error?.message?.includes('autenticação') || 
+          error?.message?.includes('autorização') ||
+          error?.message?.includes('401') ||
+          error?.status === 401) {
+        
+        console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado, limpando sessão...');
+        
+        // Usar o utilitário para limpar todos os tokens
+        clearAllTokens();
+        
+        // Tentar limpar apiClient também
+        try {
+          const { importApiClient } = await import('../utils/chunk-retry');
+          const apiClientModule = await importApiClient();
+          
+          if (apiClientModule?.apiClient) {
+            apiClientModule.apiClient.clearAuth();
+          }
+        } catch (clearError) {
+          console.warn('⚠️ [SYSTEM-ADMIN] Erro ao limpar auth do apiClient:', clearError);
+        }
+        
+        throw new Error('Token de autenticação inválido. Faça login novamente.');
+      }
       
       // Se falhar, tentar a rota local como fallback
       try {

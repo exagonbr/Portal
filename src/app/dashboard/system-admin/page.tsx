@@ -642,7 +642,7 @@ function SystemAdminDashboardContent() {
             </button>
             <button 
               onClick={() => router.push('/admin/monitoring')}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
+              className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm"
             >
               <Gauge className="w-4 h-4" />
               Monitoramento

@@ -251,7 +251,7 @@ export default function ManageInstitutions() {
 
   return (
     <AuthenticatedLayout>
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-3 sm:py-4 lg:py-8">
         <div className="bg-white rounded-lg shadow-md">
           {/* Header */}
           <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -279,7 +279,7 @@ export default function ManageInstitutions() {
             </div>
 
             {/* Cards de Estatísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-8">
               <StatCard
                 icon={Building2}
                 title="Total de Instituições"
@@ -338,7 +338,7 @@ export default function ManageInstitutions() {
           </div>
 
           {/* Table Container */}
-          <div className="overflow-x-auto">
+          <div>
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -352,65 +352,66 @@ export default function ManageInstitutions() {
               </div>
             ) : (
               <>
-                {/* Desktop Table */}
-                <div className="hidden lg:block">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <div className="flex items-center space-x-2">
-                            <Building2 className="w-4 h-4 text-gray-600" />
-                            <span>Instituição</span>
-                          </div>
-                        </th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <span>Código/Tipo</span>
-                        </th>
-                        <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <div className="flex items-center justify-center space-x-1">
-                            <School className="w-4 h-4 text-gray-600" />
-                            <span>Escolas</span>
-                          </div>
-                        </th>
-                        <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <div className="flex items-center justify-center space-x-1">
-                            <Users className="w-4 h-4 text-gray-600" />
-                            <span>Usuários</span>
-                          </div>
-                        </th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="w-4 h-4 text-gray-600" />
-                            <span>Localização</span>
-                          </div>
-                        </th>
-                        <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          <div className="flex items-center space-x-1">
-                            <Phone className="w-4 h-4 text-gray-600" />
-                            <span>Contato</span>
-                          </div>
-                        </th>
-                        <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                          Ações
-                        </th>
-                      </tr>
-                    </thead>
+                {/* Desktop Table - Full */}
+                <div className="hidden xl:block">
+                  <div className="min-w-full overflow-x-auto">
+                    <table className="w-full divide-y divide-gray-200" style={{minWidth: '1200px'}}>
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                        <tr>
+                          <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '25%'}}>
+                            <div className="flex items-center space-x-2">
+                              <Building2 className="w-4 h-4 text-gray-600" />
+                              <span>Instituição</span>
+                            </div>
+                          </th>
+                          <th className="px-3 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '12%'}}>
+                            <span>Código/Tipo</span>
+                          </th>
+                          <th className="px-2 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '8%'}}>
+                            <div className="flex items-center justify-center space-x-1">
+                              <School className="w-4 h-4 text-gray-600" />
+                              <span className="hidden 2xl:inline">Escolas</span>
+                            </div>
+                          </th>
+                          <th className="px-2 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '8%'}}>
+                            <div className="flex items-center justify-center space-x-1">
+                              <Users className="w-4 h-4 text-gray-600" />
+                              <span className="hidden 2xl:inline">Usuários</span>
+                            </div>
+                          </th>
+                          <th className="px-3 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '15%'}}>
+                            <div className="flex items-center space-x-1">
+                              <MapPin className="w-4 h-4 text-gray-600" />
+                              <span>Local</span>
+                            </div>
+                          </th>
+                          <th className="px-3 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '15%'}}>
+                            <div className="flex items-center space-x-1">
+                              <Phone className="w-4 h-4 text-gray-600" />
+                              <span>Contato</span>
+                            </div>
+                          </th>
+                          <th className="px-2 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '8%'}}>
+                            Status
+                          </th>
+                          <th className="px-2 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '9%'}}>
+                            Ações
+                          </th>
+                        </tr>
+                      </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {institutions.map((institution) => (
                         <tr key={institution.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-4">
                             <div className="flex items-center">
-                              <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
-                                <Building2 className="w-5 h-5 text-white" />
+                              <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-2">
+                                <Building2 className="w-4 h-4 text-white" />
                               </div>
-                              <div>
-                                <div className="text-sm font-semibold text-gray-900">{institution.name}</div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-semibold text-gray-900 truncate">{institution.name}</div>
                                 <div className="text-xs text-gray-500">
                                   {institution.description && (
-                                    <span className="block truncate max-w-48" title={institution.description}>
+                                    <span className="block truncate" title={institution.description}>
                                       {institution.description}
                                     </span>
                                   )}
@@ -419,106 +420,107 @@ export default function ManageInstitutions() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="text-sm text-gray-900">
+                          <td className="px-3 py-4">
+                            <div className="text-xs text-gray-900">
                               {institution.code && (
-                                <div className="font-mono text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded mb-1 inline-block">
+                                <div className="font-mono text-xs font-semibold bg-blue-100 text-blue-800 px-1 py-0.5 rounded mb-1 inline-block truncate">
                                   {institution.code}
                                 </div>
                               )}
-                              <div className="text-xs text-gray-600">
+                              <div className="text-xs text-gray-600 truncate">
                                 {getInstitutionTypeLabel(institution.type)}
                               </div>
                               {!institution.code && (
-                                <span className="text-xs text-gray-400">Sem código</span>
+                                <span className="text-xs text-gray-400">N/A</span>
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4 text-center">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                          <td className="px-2 py-4 text-center">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                               <School className="w-3 h-3 mr-1" />
                               {institution.schools_count || 0}
                             </span>
                           </td>
-                          <td className="px-4 py-4 text-center">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                          <td className="px-2 py-4 text-center">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                               <Users className="w-3 h-3 mr-1" />
                               {institution.users_count || 0}
                             </span>
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="text-sm text-gray-900">
+                          <td className="px-3 py-4">
+                            <div className="text-xs text-gray-900">
                               {institution.city && (
                                 <div className="flex items-center mb-1">
                                   <MapPin className="w-3 h-3 text-gray-500 mr-1" />
-                                  <span className="truncate max-w-32">{institution.city}</span>
+                                  <span className="truncate">{institution.city}</span>
                                   {institution.state && <span className="text-gray-400 ml-1">/{institution.state}</span>}
                                 </div>
                               )}
                               {institution.zip_code && (
-                                <div className="flex items-center">
-                                  <span className="text-xs text-gray-500 mr-1">📮</span>
-                                  <span className="font-mono text-xs">{institution.zip_code}</span>
-                                </div>
+                                <div className="font-mono text-xs text-gray-500 truncate">{institution.zip_code}</div>
                               )}
                               {!institution.city && !institution.zip_code && institution.address && (
-                                <div className="text-xs text-gray-600 truncate max-w-32" title={institution.address}>
+                                <div className="text-xs text-gray-600 truncate" title={institution.address}>
                                   {institution.address}
                                 </div>
                               )}
                               {!institution.city && !institution.zip_code && !institution.address && (
-                                <span className="text-xs text-gray-400">Sem localização</span>
+                                <span className="text-xs text-gray-400">N/A</span>
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="text-sm text-gray-900">
+                          <td className="px-3 py-4">
+                            <div className="text-xs text-gray-900">
                               {institution.email && (
                                 <div className="flex items-center mb-1">
                                   <Mail className="w-3 h-3 text-gray-500 mr-1" />
-                                  <span className="truncate max-w-32" title={institution.email}>{institution.email}</span>
+                                  <span className="truncate" title={institution.email}>{institution.email}</span>
                                 </div>
                               )}
                               {institution.phone && (
                                 <div className="flex items-center mb-1">
                                   <Phone className="w-3 h-3 text-gray-500 mr-1" />
-                                  <span>{institution.phone}</span>
+                                  <span className="truncate">{institution.phone}</span>
                                 </div>
                               )}
                               {institution.website && (
                                 <div className="flex items-center">
                                   <Globe className="w-3 h-3 text-gray-500 mr-1" />
-                                  <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-xs truncate max-w-24" title={institution.website}>
+                                  <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline text-xs truncate" title={institution.website}>
                                     {institution.website.replace(/^https?:\/\//, '')}
                                   </a>
                                 </div>
                               )}
                               {!institution.email && !institution.phone && !institution.website && (
-                                <span className="text-xs text-gray-400">Sem contato</span>
+                                <span className="text-xs text-gray-400">N/A</span>
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4 text-center">
+                          <td className="px-2 py-4 text-center">
                             <button
                               onClick={() => handleToggleStatus(institution)}
                               className="group"
                               title={`Clique para ${institution.is_active ? 'desativar' : 'ativar'}`}
                             >
-                              <Badge 
-                                variant={institution.is_active ? "success" : "danger"}
-                                className="cursor-pointer group-hover:scale-105 transition-transform"
-                              >
+                              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
+                                institution.is_active 
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200' 
+                                  : 'bg-red-100 text-red-800 border border-red-200 hover:bg-red-200'
+                              }`}>
+                                <div className={`w-2 h-2 rounded-full mr-2 ${
+                                  institution.is_active ? 'bg-emerald-500' : 'bg-red-500'
+                                }`}></div>
                                 {institution.is_active ? "Ativa" : "Inativa"}
-                              </Badge>
+                              </div>
                             </button>
                           </td>
-                          <td className="px-4 py-4 text-center">
+                          <td className="px-2 py-4 text-center">
                             <div className="flex items-center justify-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openModal('view', institution)}
-                                className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-1"
+                                className="group/action w-8 h-8 p-0 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200 hover:scale-110"
                                 title="Visualizar"
                               >
                                 <Eye className="w-4 h-4" />
@@ -527,7 +529,7 @@ export default function ManageInstitutions() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openModal('edit', institution)}
-                                className="text-green-600 hover:text-green-900 hover:bg-green-50 p-1"
+                                className="group/action w-8 h-8 p-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 border border-emerald-200 hover:border-emerald-300 rounded-lg transition-all duration-200 hover:scale-110"
                                 title="Editar"
                               >
                                 <Edit className="w-4 h-4" />
@@ -536,7 +538,7 @@ export default function ManageInstitutions() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteInstitution(institution)}
-                                className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1"
+                                className="group/action w-8 h-8 p-0 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-lg transition-all duration-200 hover:scale-110"
                                 title="Excluir"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -548,147 +550,321 @@ export default function ManageInstitutions() {
                     </tbody>
                   </table>
                 </div>
+              </div>
 
-                {/* Mobile/Tablet Cards */}
+                {/* Tablet Table - Compact */}
+                <div className="hidden lg:block xl:hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full divide-y divide-gray-200" style={{minWidth: '900px'}}>
+                      <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '35%'}}>
+                            <div className="flex items-center space-x-2">
+                              <Building2 className="w-4 h-4 text-gray-600" />
+                              <span>Instituição</span>
+                            </div>
+                          </th>
+                          <th className="px-2 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '12%'}}>
+                            <div className="flex items-center justify-center space-x-1">
+                              <School className="w-4 h-4 text-gray-600" />
+                              <span className="hidden lg:inline">Escolas</span>
+                            </div>
+                          </th>
+                          <th className="px-2 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '12%'}}>
+                            <div className="flex items-center justify-center space-x-1">
+                              <Users className="w-4 h-4 text-gray-600" />
+                              <span className="hidden lg:inline">Usuários</span>
+                            </div>
+                          </th>
+                          <th className="px-2 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '18%'}}>
+                            <div className="flex items-center space-x-1">
+                              <MapPin className="w-4 h-4 text-gray-600" />
+                              <span className="hidden lg:inline">Local</span>
+                            </div>
+                          </th>
+                          <th className="px-2 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '12%'}}>
+                            Status
+                          </th>
+                          <th className="px-2 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider" style={{width: '11%'}}>
+                            Ações
+                          </th>
+                        </tr>
+                      </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {institutions.map((institution) => (
+                        <tr key={institution.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
+                                <Building2 className="w-4 h-4 text-white" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-semibold text-gray-900 truncate">{institution.name}</div>
+                                <div className="text-xs text-gray-500">
+                                  {institution.code && (
+                                    <span className="font-mono bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-xs mr-2">
+                                      {institution.code}
+                                    </span>
+                                  )}
+                                  <span className="truncate">{getInstitutionTypeLabel(institution.type)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-2 py-3 text-center">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                              <School className="w-3 h-3 mr-1" />
+                              {institution.schools_count || 0}
+                            </span>
+                          </td>
+                          <td className="px-2 py-3 text-center">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                              <Users className="w-3 h-3 mr-1" />
+                              {institution.users_count || 0}
+                            </span>
+                          </td>
+                          <td className="px-2 py-3">
+                            <div className="text-xs text-gray-900">
+                              {institution.city ? (
+                                <div className="flex items-center">
+                                  <MapPin className="w-3 h-3 text-gray-500 mr-1" />
+                                  <span className="truncate">{institution.city}</span>
+                                  {institution.state && <span className="text-gray-400 ml-1">/{institution.state}</span>}
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">N/A</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-2 py-3 text-center">
+                            <button
+                              onClick={() => handleToggleStatus(institution)}
+                              className="group"
+                              title={`Clique para ${institution.is_active ? 'desativar' : 'ativar'}`}
+                            >
+                              <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
+                                institution.is_active 
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200' 
+                                  : 'bg-red-100 text-red-800 border border-red-200 hover:bg-red-200'
+                              }`}>
+                                <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                  institution.is_active ? 'bg-emerald-500' : 'bg-red-500'
+                                }`}></div>
+                                {institution.is_active ? "Ativa" : "Inativa"}
+                              </div>
+                            </button>
+                          </td>
+                          <td className="px-2 py-3 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openModal('view', institution)}
+                                className="group/action w-7 h-7 p-0 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200 hover:scale-110"
+                                title="Visualizar"
+                              >
+                                <Eye className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openModal('edit', institution)}
+                                className="group/action w-7 h-7 p-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 border border-emerald-200 hover:border-emerald-300 rounded-lg transition-all duration-200 hover:scale-110"
+                                title="Editar"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteInstitution(institution)}
+                                className="group/action w-7 h-7 p-0 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-lg transition-all duration-200 hover:scale-110"
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+                {/* Enhanced Cards for All Screens */}
                 <div className="lg:hidden">
                   <div className="space-y-6 p-4">
                     {institutions.map((institution) => (
-                      <div key={institution.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:border-gray-200 transition-all duration-300">
-                        {/* Header */}
-                        <div className="flex items-start justify-between mb-6">
-                          <div className="flex items-center flex-1 pr-4">
-                            <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
-                              <Building2 className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1 truncate">{institution.name}</h3>
-                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
-                                  {getInstitutionTypeLabel(institution.type)}
-                                </span>
-                                {institution.code && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-600 font-mono">
-                                    {institution.code}
+                      <div key={institution.id} className="group bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:border-blue-300 transition-all duration-500 transform hover:-translate-y-1">
+                        {/* Header with Gradient Background */}
+                        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 p-6 text-white relative overflow-hidden">
+                          <div className="absolute inset-0 bg-black/10"></div>
+                          <div className="relative z-10 flex items-start justify-between">
+                            <div className="flex items-center flex-1 pr-4">
+                              <div className="flex-shrink-0 w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-4 shadow-xl border border-white/30">
+                                <Building2 className="w-8 h-8 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-xl font-bold leading-tight mb-2 truncate">{institution.name}</h3>
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-white/20 text-white backdrop-blur-sm border border-white/30">
+                                    {getInstitutionTypeLabel(institution.type)}
                                   </span>
+                                  {institution.code && (
+                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-yellow-400/20 text-yellow-100 font-mono backdrop-blur-sm border border-yellow-300/30">
+                                      {institution.code}
+                                    </span>
+                                  )}
+                                </div>
+                                {institution.description && (
+                                  <p className="text-sm text-blue-100 line-clamp-2 leading-relaxed">{institution.description}</p>
                                 )}
                               </div>
-                              {institution.description && (
-                                <p className="text-sm text-gray-600 mb-1 line-clamp-2">{institution.description}</p>
-                              )}
-                              <p className="text-xs text-gray-400">
-                                ID: {institution.id.slice(0, 8)}...
-                              </p>
                             </div>
-                          </div>
-                          <button
-                            onClick={() => handleToggleStatus(institution)}
-                            className="group flex-shrink-0"
-                            title={`Clique para ${institution.is_active ? 'desativar' : 'ativar'}`}
-                          >
-                            <Badge 
-                              variant={institution.is_active ? "success" : "danger"}
-                              className="cursor-pointer group-hover:scale-105 transition-transform"
+                            <button
+                              onClick={() => handleToggleStatus(institution)}
+                              className="group/status flex-shrink-0 ml-4"
+                              title={`Clique para ${institution.is_active ? 'desativar' : 'ativar'}`}
                             >
-                              {institution.is_active ? "Ativa" : "Inativa"}
-                            </Badge>
-                          </button>
-                        </div>
-                        
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                            <div className="flex items-center justify-between mb-2">
-                              <School className="w-5 h-5 text-blue-600" />
-                              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Escolas</span>
-                            </div>
-                            <p className="text-2xl font-bold text-blue-800">{institution.schools_count || 0}</p>
-                          </div>
-                          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                            <div className="flex items-center justify-between mb-2">
-                              <Users className="w-5 h-5 text-green-600" />
-                              <span className="text-xs font-semibold text-green-600 uppercase tracking-wide">Usuários</span>
-                            </div>
-                            <p className="text-2xl font-bold text-green-800">{institution.users_count || 0}</p>
+                              <div className={`px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300 border-2 ${
+                                institution.is_active 
+                                  ? 'bg-green-500/20 text-green-100 border-green-400/50 hover:bg-green-400/30' 
+                                  : 'bg-red-500/20 text-red-100 border-red-400/50 hover:bg-red-400/30'
+                              }`}>
+                                {institution.is_active ? "✓ Ativa" : "✗ Inativa"}
+                              </div>
+                            </button>
                           </div>
                         </div>
 
-                        {/* Contact & Location Info */}
-                        {(institution.email || institution.phone || institution.website || institution.city || institution.address) && (
-                          <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                              <Phone className="w-4 h-4 mr-2" />
-                              Informações de Contato e Localização
-                            </h4>
-                            <div className="space-y-2">
-                              {institution.email && (
-                                <div className="flex items-center text-sm text-gray-600">
-                                  <Mail className="w-4 h-4 text-center mr-2" />
-                                  <span className="break-all">{institution.email}</span>
+                        {/* Content Body */}
+                        <div className="p-6">
+                          {/* Enhanced Stats Grid */}
+                          <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-4 border border-blue-200/50 group-hover:shadow-md transition-all duration-300">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                                  <School className="w-5 h-5 text-white" />
                                 </div>
-                              )}
-                              {institution.phone && (
-                                <div className="flex items-center text-sm text-gray-600">
-                                  <Phone className="w-4 h-4 text-center mr-2" />
-                                  <span>{institution.phone}</span>
+                                <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Escolas</span>
+                              </div>
+                              <p className="text-3xl font-black text-blue-900 mb-1">{institution.schools_count || 0}</p>
+                              <p className="text-xs text-blue-600">Unidades cadastradas</p>
+                            </div>
+                            <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-2xl p-4 border border-emerald-200/50 group-hover:shadow-md transition-all duration-300">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                                  <Users className="w-5 h-5 text-white" />
                                 </div>
-                              )}
-                              {institution.website && (
-                                <div className="flex items-center text-sm text-gray-600">
-                                  <Globe className="w-4 h-4 text-center mr-2" />
-                                  <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline break-all">
-                                    {institution.website}
-                                  </a>
+                                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Usuários</span>
+                              </div>
+                              <p className="text-3xl font-black text-emerald-900 mb-1">{institution.users_count || 0}</p>
+                              <p className="text-xs text-emerald-600">Pessoas ativas</p>
+                            </div>
+                          </div>
+
+                          {/* Enhanced Contact & Location */}
+                          {(institution.email || institution.phone || institution.website || institution.city || institution.address) && (
+                            <div className="mb-6 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-2xl border border-gray-200/50">
+                              <h4 className="text-sm font-bold text-gray-800 mb-4 flex items-center">
+                                <div className="w-6 h-6 bg-gray-600 rounded-lg flex items-center justify-center mr-3">
+                                  <Phone className="w-3 h-3 text-white" />
                                 </div>
-                              )}
-                              {(institution.city || institution.address) && (
-                                <div className="flex items-start text-sm text-gray-600">
-                                  <MapPin className="w-4 h-4 text-center mr-2 mt-0.5" />
-                                  <div>
-                                    {institution.city && (
-                                      <div>{institution.city}{institution.state && `, ${institution.state}`}</div>
-                                    )}
-                                    {institution.zip_code && (
-                                      <div className="font-mono text-xs">CEP: {institution.zip_code}</div>
-                                    )}
-                                    {institution.address && !institution.city && (
-                                      <div>{institution.address}</div>
-                                    )}
+                                Informações de Contato
+                              </h4>
+                              <div className="grid grid-cols-1 gap-3">
+                                {institution.email && (
+                                  <div className="flex items-center p-3 bg-white rounded-xl border border-gray-100 hover:border-blue-300 transition-colors">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                      <Mail className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                    <span className="text-sm text-gray-700 break-all">{institution.email}</span>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                                {institution.phone && (
+                                  <div className="flex items-center p-3 bg-white rounded-xl border border-gray-100 hover:border-green-300 transition-colors">
+                                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                      <Phone className="w-4 h-4 text-green-600" />
+                                    </div>
+                                    <span className="text-sm text-gray-700">{institution.phone}</span>
+                                  </div>
+                                )}
+                                {institution.website && (
+                                  <div className="flex items-center p-3 bg-white rounded-xl border border-gray-100 hover:border-purple-300 transition-colors">
+                                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                      <Globe className="w-4 h-4 text-purple-600" />
+                                    </div>
+                                    <a href={institution.website} target="_blank" rel="noopener noreferrer" className="text-sm text-purple-600 hover:text-purple-800 underline break-all">
+                                      {institution.website}
+                                    </a>
+                                  </div>
+                                )}
+                                {(institution.city || institution.address) && (
+                                  <div className="flex items-start p-3 bg-white rounded-xl border border-gray-100 hover:border-orange-300 transition-colors">
+                                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3 mt-0.5">
+                                      <MapPin className="w-4 h-4 text-orange-600" />
+                                    </div>
+                                    <div className="text-sm text-gray-700">
+                                      {institution.city && (
+                                        <div className="font-medium">{institution.city}{institution.state && `, ${institution.state}`}</div>
+                                      )}
+                                      {institution.zip_code && (
+                                        <div className="font-mono text-xs text-gray-500 mt-1">CEP: {institution.zip_code}</div>
+                                      )}
+                                      {institution.address && !institution.city && (
+                                        <div>{institution.address}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {/* Action Buttons */}
-                        <div className="grid grid-cols-3 gap-3">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openModal('view', institution)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-xl py-3 flex flex-col items-center"
-                          >
-                            <Eye className="w-4 h-4 mb-1" />
-                            <span className="text-xs font-medium">Ver</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openModal('edit', institution)}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50 border border-green-200 rounded-xl py-3 flex flex-col items-center"
-                          >
-                            <Edit className="w-4 h-4 mb-1" />
-                            <span className="text-xs font-medium">Editar</span>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteInstitution(institution)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 rounded-xl py-3 flex flex-col items-center"
-                          >
-                            <Trash2 className="w-4 h-4 mb-1" />
-                            <span className="text-xs font-medium">Excluir</span>
-                          </Button>
+                          {/* Enhanced Action Buttons */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openModal('view', institution)}
+                              className="group/btn bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 hover:text-blue-800 border-2 border-blue-200 hover:border-blue-300 rounded-2xl py-4 flex flex-col items-center transition-all duration-300 hover:shadow-lg hover:scale-105"
+                            >
+                              <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center mb-2 group-hover/btn:bg-blue-600 transition-colors shadow-lg">
+                                <Eye className="w-5 h-5 text-white" />
+                              </div>
+                              <span className="text-xs font-bold">Visualizar</span>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openModal('edit', institution)}
+                              className="group/btn bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 text-emerald-700 hover:text-emerald-800 border-2 border-emerald-200 hover:border-emerald-300 rounded-2xl py-4 flex flex-col items-center transition-all duration-300 hover:shadow-lg hover:scale-105"
+                            >
+                              <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center mb-2 group-hover/btn:bg-emerald-600 transition-colors shadow-lg">
+                                <Edit className="w-5 h-5 text-white" />
+                              </div>
+                              <span className="text-xs font-bold">Editar</span>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteInstitution(institution)}
+                              className="group/btn bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 text-red-700 hover:text-red-800 border-2 border-red-200 hover:border-red-300 rounded-2xl py-4 flex flex-col items-center transition-all duration-300 hover:shadow-lg hover:scale-105"
+                            >
+                              <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center mb-2 group-hover/btn:bg-red-600 transition-colors shadow-lg">
+                                <Trash2 className="w-5 h-5 text-white" />
+                              </div>
+                              <span className="text-xs font-bold">Excluir</span>
+                            </Button>
+                          </div>
+
+                          {/* ID Badge */}
+                          <div className="mt-4 text-center">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-500 font-mono">
+                              ID: {institution.id.slice(0, 8)}...
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
