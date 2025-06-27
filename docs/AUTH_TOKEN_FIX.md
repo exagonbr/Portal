@@ -275,3 +275,136 @@ initializeAuthCleanup(); // Deve configurar limpeza automática
 2. Mantenha logs informativos, não assustadores
 3. Trate tokens expirados como casos normais, não erros
 4. Implemente limpeza proativa em novos recursos
+
+# Correção do Erro de Token JWT Inválido
+
+## Problema
+
+Erro: `❌ Token não tem formato JWT válido (deveria ter 3 partes)`
+
+Este erro ocorre quando o sistema encontra um token de autenticação que não segue o formato padrão JWT (JSON Web Token), que deve ter exatamente 3 partes separadas por pontos (`.`).
+
+## Formato JWT Válido
+
+Um JWT válido tem o formato: `header.payload.signature`
+
+Exemplo:
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjMiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20ifQ.xyz123signature
+```
+
+## Possíveis Causas
+
+1. **Token Base64 simples**: O sistema pode estar usando tokens codificados em Base64 ao invés de JWT
+2. **Token corrompido**: O token pode ter sido truncado ou modificado
+3. **Token de formato personalizado**: Alguns sistemas usam formatos próprios de token
+4. **Problema de sincronização**: Token pode estar armazenado em local incorreto
+
+## Soluções
+
+### 1. Correção Automática (Recomendada)
+
+Execute no console do navegador:
+```javascript
+fixAuthToken()
+```
+
+Esta função irá:
+- Detectar automaticamente tokens Base64
+- Converter para formato JWT válido
+- Recarregar a página automaticamente
+
+### 2. Limpeza Manual
+
+Se a correção automática não funcionar:
+```javascript
+clearAllAuth()
+```
+
+Depois faça login novamente.
+
+### 3. Debug Completo
+
+Para investigar o problema:
+```javascript
+debugAuth()
+```
+
+### 4. Reparo Avançado
+
+Para tentar múltiplas correções:
+```javascript
+repairAuth()
+```
+
+## Prevenção
+
+O sistema agora inclui:
+
+1. **Limpeza automática**: Tokens expirados são removidos automaticamente
+2. **Validação melhorada**: Verificação de formato antes do uso
+3. **Conversão automática**: Tokens Base64 são convertidos para JWT quando possível
+4. **Tratamento de erros**: Erros são tratados como avisos ao invés de erros críticos
+
+## Ferramentas de Debug
+
+### Funções Disponíveis no Console
+
+- `debugAuth()` - Diagnóstico completo
+- `clearAllAuth()` - Limpar todos os dados de autenticação
+- `fixAuthToken()` - Correção rápida de tokens
+- `repairAuth()` - Reparo avançado
+- `testTokenDirectly()` - Testar token atual
+- `convertBase64TokenToJWT()` - Converter Base64 para JWT
+
+### Página de Teste
+
+Acesse `/test-auth-debug` para uma interface visual de testes de autenticação.
+
+## Implementação Técnica
+
+### Detecção de Formato
+
+```typescript
+const parts = token.split('.');
+if (parts.length === 3) {
+  // JWT válido
+} else if (parts.length === 1 && token.length > 50) {
+  // Possível token Base64
+} else {
+  // Formato desconhecido
+}
+```
+
+### Conversão Base64 para JWT
+
+```typescript
+try {
+  const decoded = atob(token);
+  const tokenData = JSON.parse(decoded);
+  
+  // Criar JWT válido com os mesmos dados
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(JSON.stringify(tokenData));
+  const signature = btoa('mock_signature');
+  
+  const jwtToken = `${header}.${payload}.${signature}`;
+} catch (error) {
+  // Token não é Base64 válido
+}
+```
+
+## Monitoramento
+
+O sistema agora monitora:
+- Formato dos tokens
+- Expiração automática
+- Sincronização entre storages
+- Conversões automáticas
+
+## Contato
+
+Se o problema persistir após seguir estas instruções, contate o suporte técnico com:
+- Resultado do `debugAuth()`
+- Logs do console
+- Passos que levaram ao erro

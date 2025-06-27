@@ -465,7 +465,7 @@ export function debugAuth(): void {
           }
         }
       } else {
-        console.error('❌ Nenhum token encontrado no localStorage!');
+        console.warn('⚠️ Nenhum token encontrado no localStorage');
         console.log('Chaves verificadas:', possibleTokenKeys);
         console.info('💡 Faça login para obter um token de autenticação');
         
@@ -536,8 +536,9 @@ export async function testTokenDirectly(): Promise<void> {
               localStorage.getItem('authToken');
   
   if (!token) {
-    console.error('❌ Nenhum token encontrado para testar');
+    console.warn('⚠️ Nenhum token encontrado para testar');
     console.log('Chaves verificadas: auth_token, token, authToken');
+    console.info('💡 Faça login para obter um token de autenticação');
     return;
   }
 
@@ -561,15 +562,18 @@ export async function testTokenDirectly(): Promise<void> {
       console.log('🕐 Agora:', new Date());
       
       if (isExpired) {
-        console.error('❌ TOKEN EXPIRADO! Este é provavelmente o problema.');
+        console.warn('⏰ TOKEN EXPIRADO! Este é provavelmente o problema.');
+        console.info('💡 Faça login novamente para obter um token válido');
       } else {
         console.log('✅ Token ainda válido pelo tempo de expiração');
       }
     } else {
-      console.error('❌ Token não tem formato JWT válido');
+      console.warn('⚠️ Token não tem formato JWT válido');
+      console.info('💡 Pode ser um token personalizado ou corrompido');
     }
   } catch (error) {
-    console.error('❌ Erro ao decodificar token:', error);
+    console.warn('⚠️ Erro ao decodificar token:', error);
+    console.info('💡 Token pode estar corrompido ou em formato não reconhecido');
   }
   
   console.groupEnd();
@@ -678,7 +682,8 @@ export function syncAuthData(): void {
       }
       
     } catch (error) {
-      console.error('❌ Erro ao sincronizar token:', error);
+      console.warn('⚠️ Erro ao sincronizar token:', error);
+      console.info('💡 Tente limpar o cache do navegador ou fazer login novamente');
     }
     
   } else {

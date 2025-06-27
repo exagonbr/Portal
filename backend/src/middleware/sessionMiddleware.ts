@@ -455,7 +455,11 @@ export const validateJWTSimple = async (
       const decoded = jwt.verify(token, secret) as any;
       
       if (typeof decoded === 'string' || !decoded.userId) {
-        throw new Error('Invalid JWT payload');
+        console.warn('⚠️ Invalid JWT payload detected:', { decoded: typeof decoded, hasUserId: !!decoded?.userId });
+        return res.status(401).json({
+          success: false,
+          message: 'Payload do token inválido'
+        });
       }
       
       userAuth = {
@@ -724,7 +728,12 @@ export const validateTokenUltraSimple = async (
       console.log('✅ Token decoded as JWT successfully for user:', decoded.email);
       
       if (typeof decoded === 'string' || !decoded.userId) {
-        throw new Error('Invalid JWT payload');
+        console.warn('⚠️ Invalid JWT payload detected in ultra-simple validation:', { decoded: typeof decoded, hasUserId: !!decoded?.userId });
+        return res.status(401).json({
+          success: false,
+          error: 'Payload do token inválido',
+          debug: 'JWT payload missing userId or is string'
+        });
       }
       
       userAuth = {

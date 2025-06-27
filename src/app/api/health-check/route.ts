@@ -2,23 +2,45 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
+    const timestamp = new Date().toISOString();
+    
     return NextResponse.json({
-      success: true,
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'unknown',
-      message: 'API está funcionando'
-    });
+      status: 'ok',
+      message: 'API está funcionando',
+      timestamp,
+      path: request.nextUrl.pathname,
+      method: 'GET'
+    }, { status: 200 });
+    
   } catch (error) {
-    console.error('Erro no health-check:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        status: 'unhealthy',
-        error: 'Erro interno do servidor',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
-    );
+    console.error('Erro na rota health-check:', error);
+    
+    return NextResponse.json({
+      status: 'error',
+      message: 'Erro interno do servidor',
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    
+    return NextResponse.json({
+      status: 'ok',
+      message: 'Health check POST funcionando',
+      timestamp: new Date().toISOString(),
+      receivedData: body
+    }, { status: 200 });
+    
+  } catch (error) {
+    console.error('Erro na rota health-check POST:', error);
+    
+    return NextResponse.json({
+      status: 'error',
+      message: 'Erro interno do servidor',
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    }, { status: 500 });
   }
 } 

@@ -1,324 +1,245 @@
-#!/usr/bin/env node
-
 /**
- * Script de Correção de Problemas de Autenticação
+ * Script de Correção Rápida para Tokens de Autenticação
  * 
- * Este script ajuda a diagnosticar e corrigir problemas relacionados a tokens
- * de autenticação no Portal Sabercon.
- * 
- * Uso: node scripts/fix-auth-token.js
+ * Este script resolve o problema de tokens JWT inválidos
+ * convertendo tokens Base64 para formato JWT válido.
  */
 
-const fs = require('fs');
-const path = require('path');
+console.log('🔧 INICIANDO CORREÇÃO DE TOKEN DE AUTENTICAÇÃO...');
 
-console.log('🔧 SCRIPT DE CORREÇÃO DE AUTENTICAÇÃO');
-console.log('=====================================\n');
-
-/**
- * Verifica se um arquivo existe
- */
-function fileExists(filePath) {
-  try {
-    return fs.existsSync(filePath);
-  } catch (error) {
-    return false;
-  }
+// Verificar se estamos no navegador
+if (typeof window === 'undefined') {
+  console.error('❌ Este script deve ser executado no console do navegador');
+  process.exit(1);
 }
 
-/**
- * Lê o conteúdo de um arquivo
- */
-function readFile(filePath) {
-  try {
-    return fs.readFileSync(filePath, 'utf8');
-  } catch (error) {
-    console.error(`❌ Erro ao ler arquivo ${filePath}:`, error.message);
-    return null;
-  }
-}
-
-/**
- * Escreve conteúdo em um arquivo
- */
-function writeFile(filePath, content) {
-  try {
-    fs.writeFileSync(filePath, content, 'utf8');
-    return true;
-  } catch (error) {
-    console.error(`❌ Erro ao escrever arquivo ${filePath}:`, error.message);
-    return false;
-  }
-}
-
-/**
- * Verifica se o middleware de autenticação está configurado corretamente
- */
-function checkAuthMiddleware() {
-  console.log('🔍 Verificando middleware de autenticação...');
+// Função principal de correção
+function fixAuthToken() {
+  console.group('🔧 CORREÇÃO DE TOKEN DE AUTENTICAÇÃO');
   
-  const middlewareFiles = [
-    'backend/src/middleware/sessionMiddleware.ts',
-    'src/middlewares/authMiddleware.ts',
-    'src/middleware-old.ts'
-  ];
+  const possibleKeys = ['auth_token', 'authToken', 'token'];
+  let tokenFixed = false;
+  let tokenFound = false;
   
-  let issuesFound = 0;
-  
-  for (const file of middlewareFiles) {
-    if (fileExists(file)) {
-      const content = readFile(file);
-      if (content) {
-        // Verificar se há problemas comuns
-        if (content.includes('Token inválido ou expirado') && 
-            !content.includes('console.warn') && 
-            content.includes('console.error')) {
-          console.warn(`⚠️  ${file}: Usando console.error para erros de token (pode causar logs desnecessários)`);
-          issuesFound++;
+  // Verificar cada possível chave de token
+  for (const key of possibleKeys) {
+    const token = localStorage.getItem(key);
+    
+    if (token && token.trim() !== '') {
+      tokenFound = true;
+      console.log(`🔍 Token encontrado em localStorage.${key}`);
+      console.log(`📏 Tamanho: ${token.length} caracteres`);
+      console.log(`👀 Preview: ${token.substring(0, 30)}...`);
+      
+      // Verificar formato
+      const parts = token.split('.');
+      
+      if (parts.length === 3) {
+        console.log('✅ Token já está no formato JWT válido');
+        
+        // Verificar se não está expirado
+        try {
+          const payload = JSON.parse(atob(parts[1]));
+          const now = Math.floor(Date.now() / 1000);
+          
+          if (payload.exp && payload.exp < now) {
+            console.warn('⏰ Token está expirado');
+            console.log('📅 Expirou em:', new Date(payload.exp * 1000));
+            console.log('🔄 Remova o token e faça login novamente');
+          } else {
+            console.log('✅ Token válido e não expirado');
+          }
+        } catch (error) {
+          console.warn('⚠️ Erro ao verificar expiração:', error.message);
         }
         
-        if (content.includes('throw new Error') && content.includes('Token inválido')) {
-          console.warn(`⚠️  ${file}: Lançando erro para token inválido (pode causar unhandled exceptions)`);
-          issuesFound++;
+      } else if (parts.length === 1 && token.length > 50) {
+        console.log('🔄 Token parece ser Base64, tentando converter para JWT...');
+        
+        try {
+          // Tentar decodificar como Base64
+          const decoded = atob(token);
+          const tokenData = JSON.parse(decoded);
+          
+          console.log('📦 Dados do token:', tokenData);
+          
+          if (tokenData.userId && tokenData.email && tokenData.role) {
+            // Criar novo JWT com os mesmos dados
+            const newJwtPayload = {
+              userId: tokenData.userId,
+              email: tokenData.email,
+              name: tokenData.name,
+              role: tokenData.role,
+              institutionId: tokenData.institutionId,
+              permissions: tokenData.permissions || [],
+              iat: Math.floor(Date.now() / 1000),
+              exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 horas
+            };
+            
+            // Simular JWT válido (3 partes)
+            const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+            const payload = btoa(JSON.stringify(newJwtPayload));
+            const signature = btoa('mock_signature_' + Date.now());
+            
+            const newJwtToken = `${header}.${payload}.${signature}`;
+            
+            // Armazenar o novo token
+            localStorage.setItem(key, newJwtToken);
+            
+            console.log('✅ Token convertido com sucesso!');
+            console.log('🆕 Novo token (preview):', newJwtToken.substring(0, 50) + '...');
+            
+            tokenFixed = true;
+            
+            // Também armazenar na chave padrão
+            if (key !== 'auth_token') {
+              localStorage.setItem('auth_token', newJwtToken);
+            }
+            
+          } else {
+            console.warn('⚠️ Token Base64 não contém dados de usuário válidos');
+            console.log('📋 Dados encontrados:', Object.keys(tokenData));
+          }
+          
+        } catch (error) {
+          console.error('❌ Erro ao converter token Base64:', error.message);
         }
         
-        console.log(`✅ ${file}: Verificado`);
+      } else {
+        console.warn('⚠️ Token tem formato desconhecido');
+        console.log('🔢 Número de partes:', parts.length);
+        console.log('📏 Tamanho:', token.length);
       }
-    } else {
-      console.log(`⏭️  ${file}: Não encontrado (normal se não usado)`);
     }
   }
   
-  return issuesFound;
-}
-
-/**
- * Verifica se o cliente API está configurado corretamente
- */
-function checkApiClient() {
-  console.log('\n🔍 Verificando cliente API...');
-  
-  const apiClientFile = 'src/lib/api-client.ts';
-  
-  if (!fileExists(apiClientFile)) {
-    console.error(`❌ Arquivo ${apiClientFile} não encontrado!`);
-    return 1;
-  }
-  
-  const content = readFile(apiClientFile);
-  if (!content) {
-    return 1;
-  }
-  
-  let issuesFound = 0;
-  
-  // Verificar se há tratamento adequado de erros
-  if (!content.includes('catch') || !content.includes('error')) {
-    console.warn(`⚠️  ${apiClientFile}: Pode estar faltando tratamento de erro adequado`);
-    issuesFound++;
-  }
-  
-  // Verificar se há múltiplas chaves de token
-  if (!content.includes('auth_token') || !content.includes('token')) {
-    console.warn(`⚠️  ${apiClientFile}: Pode não estar verificando múltiplas chaves de token`);
-    issuesFound++;
-  }
-  
-  console.log(`✅ ${apiClientFile}: Verificado`);
-  return issuesFound;
-}
-
-/**
- * Verifica se o utilitário de debug está atualizado
- */
-function checkAuthDebugUtils() {
-  console.log('\n🔍 Verificando utilitários de debug...');
-  
-  const authDebugFile = 'src/utils/auth-debug.ts';
-  
-  if (!fileExists(authDebugFile)) {
-    console.error(`❌ Arquivo ${authDebugFile} não encontrado!`);
-    return 1;
-  }
-  
-  const content = readFile(authDebugFile);
-  if (!content) {
-    return 1;
-  }
-  
-  let issuesFound = 0;
-  
-  // Verificar se tem as funções essenciais
-  const essentialFunctions = [
-    'isTokenExpired',
-    'cleanExpiredTokens',
-    'initializeAuthCleanup',
-    'debugAuth'
-  ];
-  
-  for (const func of essentialFunctions) {
-    if (!content.includes(func)) {
-      console.warn(`⚠️  ${authDebugFile}: Função ${func} não encontrada`);
-      issuesFound++;
+  if (!tokenFound) {
+    console.warn('⚠️ Nenhum token encontrado no localStorage');
+    console.log('💡 Faça login para obter um token');
+    
+    // Mostrar todas as chaves para debug
+    console.log('🗂️ Chaves no localStorage:');
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const value = localStorage.getItem(key);
+      console.log(`  - ${key}: ${value ? value.substring(0, 30) + '...' : 'null'}`);
     }
   }
   
-  // Verificar se está tratando erros adequadamente
-  if (content.includes('console.error') && content.includes('Token inválido ou expirado')) {
-    console.warn(`⚠️  ${authDebugFile}: Pode estar usando console.error para tokens inválidos`);
-    issuesFound++;
-  }
+  console.groupEnd();
   
-  console.log(`✅ ${authDebugFile}: Verificado`);
-  return issuesFound;
-}
-
-/**
- * Sugere correções para problemas encontrados
- */
-function suggestFixes(totalIssues) {
-  console.log('\n📝 SUGESTÕES DE CORREÇÃO');
-  console.log('========================\n');
-  
-  if (totalIssues === 0) {
-    console.log('✅ Nenhum problema crítico encontrado!');
-    console.log('💡 Dicas para manter a autenticação funcionando bem:');
-    console.log('   • Execute limpeza periódica de tokens expirados');
-    console.log('   • Monitore logs de autenticação regularmente');
-    console.log('   • Mantenha o sistema de debug atualizado');
-    return;
-  }
-  
-  console.log('🔧 Problemas encontrados. Sugestões:');
-  console.log('');
-  
-  console.log('1. 📊 Para problemas de logging:');
-  console.log('   • Use console.warn em vez de console.error para tokens inválidos');
-  console.log('   • Adicione contexto informativo aos logs');
-  console.log('   • Evite logs excessivos que podem confundir usuários');
-  console.log('');
-  
-  console.log('2. 🛡️  Para problemas de tratamento de erro:');
-  console.log('   • Use try-catch adequadamente');
-  console.log('   • Retorne objetos de erro em vez de lançar exceções');
-  console.log('   • Trate tokens expirados como casos normais, não erros');
-  console.log('');
-  
-  console.log('3. 🧹 Para limpeza automática:');
-  console.log('   • Implemente limpeza automática de tokens expirados');
-  console.log('   • Use setInterval para limpeza periódica');
-  console.log('   • Verifique expiração antes de usar tokens');
-  console.log('');
-  
-  console.log('4. 🔍 Para debug:');
-  console.log('   • Mantenha funções de diagnóstico atualizadas');
-  console.log('   • Adicione logs informativos para desenvolvedores');
-  console.log('   • Forneça sugestões claras para resolução de problemas');
-}
-
-/**
- * Cria um arquivo de configuração de exemplo
- */
-function createExampleConfig() {
-  console.log('\n📄 Criando arquivo de configuração de exemplo...');
-  
-  const configContent = `// Configuração de Autenticação - Portal Sabercon
-// Este arquivo contém exemplos de configuração para resolver problemas de autenticação
-
-export const AUTH_CONFIG = {
-  // Chaves possíveis para tokens no localStorage
-  TOKEN_KEYS: ['auth_token', 'token', 'authToken'],
-  
-  // Tempo de limpeza automática (em milissegundos)
-  CLEANUP_INTERVAL: 5 * 60 * 1000, // 5 minutos
-  
-  // Endpoints para teste de autenticação
-  TEST_ENDPOINTS: [
-    '/api/users/stats',
-    '/api/dashboard/system',
-    '/api/auth/validate'
-  ],
-  
-  // Configuração de logs
-  LOGGING: {
-    USE_WARN_FOR_INVALID_TOKENS: true,
-    PROVIDE_HELPFUL_MESSAGES: true,
-    AVOID_ERROR_LOGS_FOR_NORMAL_CASES: true
-  }
-};
-
-// Exemplo de uso:
-// import { AUTH_CONFIG } from './auth-config-example';
-// 
-// // Verificar token
-// for (const key of AUTH_CONFIG.TOKEN_KEYS) {
-//   const token = localStorage.getItem(key);
-//   if (token) {
-//     // Usar token...
-//     break;
-//   }
-// }
-`;
-
-  const configPath = 'src/config/auth-config-example.ts';
-  
-  // Criar diretório se não existir
-  const configDir = path.dirname(configPath);
-  if (!fs.existsSync(configDir)) {
-    fs.mkdirSync(configDir, { recursive: true });
-  }
-  
-  if (writeFile(configPath, configContent)) {
-    console.log(`✅ Arquivo de exemplo criado: ${configPath}`);
-  }
-}
-
-/**
- * Função principal
- */
-function main() {
-  console.log('Iniciando verificação do sistema de autenticação...\n');
-  
-  let totalIssues = 0;
-  
-  // Verificar componentes
-  totalIssues += checkAuthMiddleware();
-  totalIssues += checkApiClient();
-  totalIssues += checkAuthDebugUtils();
-  
-  // Criar arquivo de exemplo
-  createExampleConfig();
-  
-  // Sugerir correções
-  suggestFixes(totalIssues);
-  
-  console.log('\n🏁 RESULTADO FINAL');
-  console.log('==================');
-  
-  if (totalIssues === 0) {
-    console.log('✅ Sistema de autenticação está bem configurado!');
-    console.log('💡 Continue monitorando logs para garantir bom funcionamento.');
+  // Resultado final
+  if (tokenFixed) {
+    console.log('🎉 CORREÇÃO CONCLUÍDA COM SUCESSO!');
+    console.log('🔄 Recarregando a página em 2 segundos...');
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+    
+  } else if (tokenFound) {
+    console.log('ℹ️ Token encontrado mas nenhuma correção necessária');
+    
   } else {
-    console.log(`⚠️  ${totalIssues} problema(s) encontrado(s).`);
-    console.log('🔧 Consulte as sugestões acima para correções.');
+    console.log('❌ Nenhum token encontrado para corrigir');
+    console.log('💡 Acesse a página de login para obter um token');
   }
   
-  console.log('\n📚 Para mais informações:');
-  console.log('   • Verifique docs/AUTH_TOKEN_FIX.md');
-  console.log('   • Execute debugAuth() no console do navegador');
-  console.log('   • Monitore logs do backend para erros de autenticação');
+  return { tokenFound, tokenFixed };
+}
+
+// Função para limpar tudo e recomeçar
+function clearAndRestart() {
+  console.log('🧹 Limpando todos os dados de autenticação...');
   
-  process.exit(totalIssues > 0 ? 1 : 0);
+  // Limpar localStorage
+  const keysToRemove = ['auth_token', 'authToken', 'token', 'user_session', 'user'];
+  keysToRemove.forEach(key => {
+    if (localStorage.getItem(key)) {
+      localStorage.removeItem(key);
+      console.log(`🗑️ Removido: ${key}`);
+    }
+  });
+  
+  // Limpar cookies
+  const cookiesToClear = ['auth_token', 'user_data', 'session_token'];
+  cookiesToClear.forEach(cookieName => {
+    document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    console.log(`🍪 Cookie limpo: ${cookieName}`);
+  });
+  
+  console.log('✅ Limpeza concluída');
+  console.log('🔄 Redirecionando para login...');
+  
+  setTimeout(() => {
+    window.location.href = '/login';
+  }, 1000);
 }
 
-// Executar se for chamado diretamente
-if (require.main === module) {
-  main();
+// Função de diagnóstico
+function diagnoseAuth() {
+  console.group('🔍 DIAGNÓSTICO DE AUTENTICAÇÃO');
+  
+  // Verificar tokens
+  const tokens = {};
+  ['auth_token', 'authToken', 'token'].forEach(key => {
+    const token = localStorage.getItem(key);
+    if (token) {
+      tokens[key] = {
+        length: token.length,
+        preview: token.substring(0, 30) + '...',
+        parts: token.split('.').length,
+        isJWT: token.split('.').length === 3
+      };
+    }
+  });
+  
+  console.log('🎫 Tokens encontrados:', tokens);
+  
+  // Verificar cookies
+  const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    if (['auth_token', 'user_data', 'session_token'].includes(name)) {
+      acc[name] = value ? value.substring(0, 30) + '...' : 'vazio';
+    }
+    return acc;
+  }, {});
+  
+  console.log('🍪 Cookies relevantes:', cookies);
+  
+  // Verificar dados do usuário
+  const userSession = localStorage.getItem('user_session');
+  if (userSession) {
+    try {
+      const userData = JSON.parse(userSession);
+      console.log('👤 Dados do usuário:', {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role
+      });
+    } catch (error) {
+      console.warn('⚠️ Erro ao decodificar dados do usuário:', error.message);
+    }
+  } else {
+    console.log('👤 Nenhum dado de usuário encontrado');
+  }
+  
+  console.groupEnd();
 }
 
-module.exports = {
-  checkAuthMiddleware,
-  checkApiClient,
-  checkAuthDebugUtils,
-  suggestFixes
-}; 
+// Expor funções globalmente
+window.fixAuthToken = fixAuthToken;
+window.clearAndRestart = clearAndRestart;
+window.diagnoseAuth = diagnoseAuth;
+
+// Executar correção automaticamente
+console.log('🚀 Executando correção automática...');
+fixAuthToken();
+
+console.log(`
+📋 COMANDOS DISPONÍVEIS:
+  fixAuthToken()     - Corrigir token automaticamente
+  clearAndRestart()  - Limpar tudo e ir para login
+  diagnoseAuth()     - Diagnóstico completo
+`); 

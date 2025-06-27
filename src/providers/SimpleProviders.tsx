@@ -4,6 +4,7 @@ import { ReactNode, useState, useEffect } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { GamificationProvider } from '@/contexts/GamificationContext'
+import { ToastManager } from '@/components/ToastManager'
 
 /**
  * Providers simplificados para evitar problemas de carregamento de chunks
@@ -22,14 +23,16 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
       <ThemeProvider>
         <AuthProvider>
           <GamificationProvider>
-            {mounted ? children : (
-              <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-600">Carregando...</p>
+            <ToastManager>
+              {mounted ? children : (
+                <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600">Carregando...</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </ToastManager>
           </GamificationProvider>
         </AuthProvider>
       </ThemeProvider>
