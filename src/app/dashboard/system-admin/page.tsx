@@ -604,8 +604,7 @@ function SystemAdminDashboardContent() {
         'rgba(236, 72, 153, 1)',
         'rgba(34, 197, 94, 1)'
       ],
-      hoverBorderWidth: 3,
-      hoverOffset: 8
+      hoverBorderWidth: 3
     }]
   } : null;
 
