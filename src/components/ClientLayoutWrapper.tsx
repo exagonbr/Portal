@@ -15,11 +15,18 @@ import { setupChunkErrorHandler } from '@/utils/chunk-retry';
 
 interface ClientLayoutWrapperProps {
   children: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
-export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperProps) {
+export default function ClientLayoutWrapper({ children, fallback }: ClientLayoutWrapperProps) {
   const [mounted, setMounted] = useState(false);
   const [hasError, setHasError] = useState(false);
+
+  const defaultFallback = fallback || (
+    <div className="flex flex-col min-h-full">
+      {children}
+    </div>
+  );
 
   useEffect(() => {
     try {
@@ -40,23 +47,15 @@ export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperPro
     }
   }, []);
 
-  // Se não montou ainda, renderizar apenas o children
+  // Se não montou ainda, renderizar fallback
   if (!mounted) {
-    return (
-      <div className="flex flex-col min-h-full">
-        {children}
-      </div>
-    );
+    return <>{defaultFallback}</>;
   }
 
-  // Se houve erro, renderizar versão simplificada
+  // Se houve erro, renderizar fallback
   if (hasError) {
     console.warn('⚠️ ClientLayoutWrapper em modo de fallback devido a erro');
-    return (
-      <div className="flex flex-col min-h-full">
-        {children}
-      </div>
-    );
+    return <>{defaultFallback}</>;
   }
 
   try {
@@ -91,10 +90,6 @@ export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperPro
   } catch (error) {
     console.error('❌ Erro ao renderizar ClientLayoutWrapper:', error);
     // Fallback para versão simplificada
-    return (
-      <div className="flex flex-col min-h-full">
-        {children}
-      </div>
-    );
+    return <>{defaultFallback}</>;
   }
 } 

@@ -1,12 +1,22 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { AppProviders } from '@/providers/AppProviders';
-import ClientLayoutWrapper from '@/components/ClientLayoutWrapper';
+import dynamic from 'next/dynamic';
 // Importar o handler de erros de chunk (auto-inicializa)
 import '@/utils/chunk-error-handler';
 
 const inter = Inter({ subsets: ['latin'] });
+
+// Importações dinâmicas para evitar problemas de inicialização
+const AppProviders = dynamic(() => import('@/providers/AppProviders').then(mod => ({ default: mod.AppProviders })), {
+  ssr: false,
+  loading: () => null
+});
+
+const ClientLayoutWrapper = dynamic(() => import('@/components/ClientLayoutWrapper'), {
+  ssr: false,
+  loading: () => null
+});
 
 export const metadata: Metadata = {
   title: 'Portal Educacional',
@@ -40,6 +50,15 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+// Componente de fallback simples
+function LayoutFallback({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={`${inter.className} m-0 p-0 h-full w-full flex flex-col min-h-screen`}>
+      {children}
+    </div>
+  );
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -63,8 +82,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
-        <AppProviders>
-          <ClientLayoutWrapper>
+        {/* Usar componente de fallback se os providers não carregarem */}
+        <AppProviders fallback={<LayoutFallback>{children}</LayoutFallback>}>
+          <ClientLayoutWrapper fallback={<LayoutFallback>{children}</LayoutFallback>}>
             {children}
           </ClientLayoutWrapper>
         </AppProviders>
