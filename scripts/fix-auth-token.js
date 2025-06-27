@@ -1,245 +1,550 @@
+#!/usr/bin/env node
+
 /**
- * Script de Correção Rápida para Tokens de Autenticação
- * 
- * Este script resolve o problema de tokens JWT inválidos
- * convertendo tokens Base64 para formato JWT válido.
+ * Script para diagnosticar e corrigir problemas de token de autenticação
+ * Uso: node scripts/fix-auth-token.js
  */
 
-console.log('🔧 INICIANDO CORREÇÃO DE TOKEN DE AUTENTICAÇÃO...');
+const fs = require('fs');
+const path = require('path');
 
-// Verificar se estamos no navegador
-if (typeof window === 'undefined') {
-  console.error('❌ Este script deve ser executado no console do navegador');
-  process.exit(1);
+console.log('🔧 SCRIPT DE CORREÇÃO DE AUTENTICAÇÃO');
+console.log('=====================================');
+console.log('');
+
+// Instruções para o usuário
+console.log('📋 INSTRUÇÕES:');
+console.log('1. Este script verifica a configuração do sistema de autenticação');
+console.log('2. Para diagnóstico no navegador, use o código JavaScript fornecido');
+console.log('3. Siga as recomendações para corrigir problemas encontrados');
+console.log('');
+
+/**
+ * Verifica se um arquivo existe
+ */
+function fileExists(filePath) {
+  try {
+    return fs.existsSync(filePath);
+  } catch (error) {
+    return false;
+  }
 }
 
-// Função principal de correção
-function fixAuthToken() {
-  console.group('🔧 CORREÇÃO DE TOKEN DE AUTENTICAÇÃO');
+/**
+ * Lê o conteúdo de um arquivo
+ */
+function readFile(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    console.error(`❌ Erro ao ler arquivo ${filePath}:`, error.message);
+    return null;
+  }
+}
+
+/**
+ * Verifica se o middleware de autenticação está configurado corretamente
+ */
+function checkAuthMiddleware() {
+  console.log('🔍 Verificando middleware de autenticação...');
   
-  const possibleKeys = ['auth_token', 'authToken', 'token'];
-  let tokenFixed = false;
-  let tokenFound = false;
+  const middlewareFiles = [
+    'backend/src/middleware/sessionMiddleware.ts',
+    'src/middlewares/authMiddleware.ts',
+    'src/middleware-old.ts'
+  ];
   
-  // Verificar cada possível chave de token
+  let issuesFound = 0;
+  
+  for (const file of middlewareFiles) {
+    if (fileExists(file)) {
+      const content = readFile(file);
+      if (content) {
+        // Verificar se há problemas comuns
+        if (content.includes('throw new Error') && content.includes('Invalid JWT payload')) {
+          console.warn(`⚠️  ${file}: Lançando erro para payload JWT inválido (pode causar unhandled exceptions)`);
+          issuesFound++;
+        }
+        
+        if (content.includes('console.error') && content.includes('Token inválido')) {
+          console.warn(`⚠️  ${file}: Usando console.error para tokens inválidos (pode causar logs desnecessários)`);
+          issuesFound++;
+        }
+        
+        console.log(`✅ ${file}: Verificado`);
+      }
+    } else {
+      console.log(`⏭️  ${file}: Não encontrado (normal se não usado)`);
+    }
+  }
+  
+  return issuesFound;
+}
+
+/**
+ * Verifica se o cliente API está configurado corretamente
+ */
+function checkApiClient() {
+  console.log('\n🔍 Verificando cliente API...');
+  
+  const apiClientFile = 'src/lib/api-client.ts';
+  
+  if (!fileExists(apiClientFile)) {
+    console.error(`❌ Arquivo ${apiClientFile} não encontrado!`);
+    return 1;
+  }
+  
+  const content = readFile(apiClientFile);
+  if (!content) {
+    return 1;
+  }
+  
+  let issuesFound = 0;
+  
+  // Verificar se há tratamento adequado de erros
+  if (!content.includes('getAuthToken') || !content.includes('setAuthToken')) {
+    console.warn(`⚠️  ${apiClientFile}: Pode estar faltando métodos de gerenciamento de token`);
+    issuesFound++;
+  }
+  
+  // Verificar se há múltiplas chaves de token
+  if (!content.includes('auth_token') || !content.includes('token')) {
+    console.warn(`⚠️  ${apiClientFile}: Pode não estar verificando múltiplas chaves de token`);
+    issuesFound++;
+  }
+  
+  console.log(`✅ ${apiClientFile}: Verificado`);
+  return issuesFound;
+}
+
+/**
+ * Verifica se o utilitário de debug está atualizado
+ */
+function checkAuthDebugUtils() {
+  console.log('\n🔍 Verificando utilitários de debug...');
+  
+  const authDebugFile = 'src/utils/auth-debug.ts';
+  
+  if (!fileExists(authDebugFile)) {
+    console.error(`❌ Arquivo ${authDebugFile} não encontrado!`);
+    return 1;
+  }
+  
+  const content = readFile(authDebugFile);
+  if (!content) {
+    return 1;
+  }
+  
+  let issuesFound = 0;
+  
+  // Verificar se tem as funções essenciais
+  const essentialFunctions = [
+    'isTokenExpired',
+    'cleanExpiredTokens',
+    'initializeAuthCleanup',
+    'debugAuth'
+  ];
+  
+  for (const func of essentialFunctions) {
+    if (!content.includes(func)) {
+      console.warn(`⚠️  ${authDebugFile}: Função ${func} não encontrada`);
+      issuesFound++;
+    }
+  }
+  
+  // Verificar se ainda está usando console.error para tokens inválidos
+  const errorLines = content.split('\n').filter(line => 
+    line.includes('console.error') && 
+    (line.includes('token') || line.includes('Token'))
+  );
+  
+  if (errorLines.length > 0) {
+    console.warn(`⚠️  ${authDebugFile}: Ainda usando console.error para tokens (${errorLines.length} ocorrências)`);
+    issuesFound++;
+  }
+  
+  console.log(`✅ ${authDebugFile}: Verificado`);
+  return issuesFound;
+}
+
+/**
+ * Cria um script de diagnóstico para o navegador
+ */
+function createBrowserDiagnosticScript() {
+  console.log('\n📄 Criando script de diagnóstico para o navegador...');
+  
+  const browserScript = `
+// ===== DIAGNÓSTICO DE AUTENTICAÇÃO NO NAVEGADOR =====
+// Cole este código no console do navegador (F12)
+
+console.log('🔍 INICIANDO DIAGNÓSTICO DE AUTENTICAÇÃO...');
+
+function diagnoseAuthInBrowser() {
+  console.group('📊 DIAGNÓSTICO COMPLETO');
+  
+  // 1. Verificar tokens em localStorage
+  console.log('🔍 1. Verificando localStorage:');
+  const localStorageTokens = {};
+  const possibleKeys = ['auth_token', 'token', 'authToken'];
+  
+  possibleKeys.forEach(key => {
+    const value = localStorage.getItem(key);
+    localStorageTokens[key] = value ? value.substring(0, 20) + '...' : null;
+    console.log(\`   \${key}: \${value ? '✅ Presente' : '❌ Ausente'}\`);
+  });
+  
+  // 2. Verificar tokens em sessionStorage
+  console.log('🔍 2. Verificando sessionStorage:');
+  const sessionStorageTokens = {};
+  
+  possibleKeys.forEach(key => {
+    const value = sessionStorage.getItem(key);
+    sessionStorageTokens[key] = value ? value.substring(0, 20) + '...' : null;
+    console.log(\`   \${key}: \${value ? '✅ Presente' : '❌ Ausente'}\`);
+  });
+  
+  // 3. Verificar cookies
+  console.log('🔍 3. Verificando cookies:');
+  const cookies = document.cookie.split(';');
+  const cookieTokens = {};
+  
+  possibleKeys.forEach(key => {
+    const cookie = cookies.find(c => c.trim().startsWith(key + '='));
+    cookieTokens[key] = cookie ? cookie.split('=')[1].substring(0, 20) + '...' : null;
+    console.log(\`   \${key}: \${cookie ? '✅ Presente' : '❌ Ausente'}\`);
+  });
+  
+  // 4. Encontrar o melhor token
+  let bestToken = null;
+  let bestTokenSource = null;
+  
+  // Prioridade: localStorage > sessionStorage > cookies
   for (const key of possibleKeys) {
-    const token = localStorage.getItem(key);
-    
-    if (token && token.trim() !== '') {
-      tokenFound = true;
-      console.log(`🔍 Token encontrado em localStorage.${key}`);
-      console.log(`📏 Tamanho: ${token.length} caracteres`);
-      console.log(`👀 Preview: ${token.substring(0, 30)}...`);
-      
-      // Verificar formato
-      const parts = token.split('.');
-      
-      if (parts.length === 3) {
-        console.log('✅ Token já está no formato JWT válido');
-        
-        // Verificar se não está expirado
-        try {
-          const payload = JSON.parse(atob(parts[1]));
-          const now = Math.floor(Date.now() / 1000);
-          
-          if (payload.exp && payload.exp < now) {
-            console.warn('⏰ Token está expirado');
-            console.log('📅 Expirou em:', new Date(payload.exp * 1000));
-            console.log('🔄 Remova o token e faça login novamente');
-          } else {
-            console.log('✅ Token válido e não expirado');
-          }
-        } catch (error) {
-          console.warn('⚠️ Erro ao verificar expiração:', error.message);
-        }
-        
-      } else if (parts.length === 1 && token.length > 50) {
-        console.log('🔄 Token parece ser Base64, tentando converter para JWT...');
-        
-        try {
-          // Tentar decodificar como Base64
-          const decoded = atob(token);
-          const tokenData = JSON.parse(decoded);
-          
-          console.log('📦 Dados do token:', tokenData);
-          
-          if (tokenData.userId && tokenData.email && tokenData.role) {
-            // Criar novo JWT com os mesmos dados
-            const newJwtPayload = {
-              userId: tokenData.userId,
-              email: tokenData.email,
-              name: tokenData.name,
-              role: tokenData.role,
-              institutionId: tokenData.institutionId,
-              permissions: tokenData.permissions || [],
-              iat: Math.floor(Date.now() / 1000),
-              exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 horas
-            };
-            
-            // Simular JWT válido (3 partes)
-            const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-            const payload = btoa(JSON.stringify(newJwtPayload));
-            const signature = btoa('mock_signature_' + Date.now());
-            
-            const newJwtToken = `${header}.${payload}.${signature}`;
-            
-            // Armazenar o novo token
-            localStorage.setItem(key, newJwtToken);
-            
-            console.log('✅ Token convertido com sucesso!');
-            console.log('🆕 Novo token (preview):', newJwtToken.substring(0, 50) + '...');
-            
-            tokenFixed = true;
-            
-            // Também armazenar na chave padrão
-            if (key !== 'auth_token') {
-              localStorage.setItem('auth_token', newJwtToken);
-            }
-            
-          } else {
-            console.warn('⚠️ Token Base64 não contém dados de usuário válidos');
-            console.log('📋 Dados encontrados:', Object.keys(tokenData));
-          }
-          
-        } catch (error) {
-          console.error('❌ Erro ao converter token Base64:', error.message);
-        }
-        
-      } else {
-        console.warn('⚠️ Token tem formato desconhecido');
-        console.log('🔢 Número de partes:', parts.length);
-        console.log('📏 Tamanho:', token.length);
+    const lsToken = localStorage.getItem(key);
+    if (lsToken && lsToken.trim() !== '') {
+      bestToken = lsToken.trim();
+      bestTokenSource = \`localStorage.\${key}\`;
+      break;
+    }
+  }
+  
+  if (!bestToken) {
+    for (const key of possibleKeys) {
+      const ssToken = sessionStorage.getItem(key);
+      if (ssToken && ssToken.trim() !== '') {
+        bestToken = ssToken.trim();
+        bestTokenSource = \`sessionStorage.\${key}\`;
+        break;
       }
     }
   }
   
-  if (!tokenFound) {
-    console.warn('⚠️ Nenhum token encontrado no localStorage');
-    console.log('💡 Faça login para obter um token');
-    
-    // Mostrar todas as chaves para debug
-    console.log('🗂️ Chaves no localStorage:');
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      const value = localStorage.getItem(key);
-      console.log(`  - ${key}: ${value ? value.substring(0, 30) + '...' : 'null'}`);
+  if (!bestToken) {
+    for (const key of possibleKeys) {
+      const cookie = cookies.find(c => c.trim().startsWith(key + '='));
+      if (cookie) {
+        const cookieValue = cookie.split('=')[1];
+        if (cookieValue && cookieValue.trim() !== '') {
+          bestToken = cookieValue.trim();
+          bestTokenSource = \`cookie.\${key}\`;
+          break;
+        }
+      }
     }
+  }
+  
+  console.log('');
+  console.log('🎯 RESULTADO DO DIAGNÓSTICO:');
+  
+  if (bestToken) {
+    console.log(\`✅ Token encontrado em: \${bestTokenSource}\`);
+    console.log(\`📏 Tamanho do token: \${bestToken.length} caracteres\`);
+    
+    // Verificar se é JWT
+    const jwtParts = bestToken.split('.');
+    if (jwtParts.length === 3) {
+      console.log('✅ Token é um JWT válido');
+      
+      try {
+        const payload = JSON.parse(atob(jwtParts[1]));
+        const isExpired = payload.exp && payload.exp < Math.floor(Date.now() / 1000);
+        
+        console.log(\`⏰ Token expira em: \${new Date(payload.exp * 1000).toLocaleString()}\`);
+        console.log(\`🔄 Token \${isExpired ? '❌ EXPIRADO' : '✅ VÁLIDO'}\`);
+        
+        if (payload.email) console.log(\`👤 Email: \${payload.email}\`);
+        if (payload.role) console.log(\`🎭 Role: \${payload.role}\`);
+        
+      } catch (error) {
+        console.log('⚠️ Erro ao decodificar payload do JWT');
+      }
+    } else {
+      console.log('⚠️ Token não é um JWT padrão');
+    }
+  } else {
+    console.log('❌ NENHUM TOKEN ENCONTRADO!');
   }
   
   console.groupEnd();
   
-  // Resultado final
-  if (tokenFixed) {
-    console.log('🎉 CORREÇÃO CONCLUÍDA COM SUCESSO!');
-    console.log('🔄 Recarregando a página em 2 segundos...');
-    
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
-    
-  } else if (tokenFound) {
-    console.log('ℹ️ Token encontrado mas nenhuma correção necessária');
-    
-  } else {
-    console.log('❌ Nenhum token encontrado para corrigir');
-    console.log('💡 Acesse a página de login para obter um token');
-  }
-  
-  return { tokenFound, tokenFixed };
+  return {
+    bestToken,
+    bestTokenSource,
+    localStorageTokens,
+    sessionStorageTokens,
+    cookieTokens
+  };
 }
 
-// Função para limpar tudo e recomeçar
-function clearAndRestart() {
-  console.log('🧹 Limpando todos os dados de autenticação...');
+// Função para corrigir problemas
+function fixAuthIssues() {
+  console.log('');
+  console.group('🔧 CORREÇÃO DE PROBLEMAS');
   
-  // Limpar localStorage
-  const keysToRemove = ['auth_token', 'authToken', 'token', 'user_session', 'user'];
-  keysToRemove.forEach(key => {
-    if (localStorage.getItem(key)) {
+  const diagnosis = diagnoseAuthInBrowser();
+  
+  if (!diagnosis.bestToken) {
+    console.log('❌ Não é possível corrigir: nenhum token válido encontrado');
+    console.log('💡 Solução: Faça login novamente');
+    console.groupEnd();
+    return false;
+  }
+  
+  console.log('🔄 Sincronizando token em todos os storages...');
+  
+  try {
+    // Limpar storages primeiro
+    const keysToClean = ['auth_token', 'token', 'authToken'];
+    
+    keysToClean.forEach(key => {
       localStorage.removeItem(key);
-      console.log(`🗑️ Removido: ${key}`);
+      sessionStorage.removeItem(key);
+    });
+    
+    // Limpar cookies
+    keysToClean.forEach(key => {
+      document.cookie = \`\${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT\`;
+    });
+    
+    // Configurar token principal
+    localStorage.setItem('auth_token', diagnosis.bestToken);
+    localStorage.setItem('token', diagnosis.bestToken); // Compatibilidade
+    
+    // Configurar cookie
+    const maxAge = 7 * 24 * 60 * 60; // 7 dias
+    document.cookie = \`auth_token=\${diagnosis.bestToken}; path=/; max-age=\${maxAge}; SameSite=Lax\`;
+    
+    console.log('✅ Token sincronizado com sucesso!');
+    
+    // Verificar se funcionou
+    const verifyToken = localStorage.getItem('auth_token');
+    if (verifyToken === diagnosis.bestToken) {
+      console.log('✅ Verificação: Token armazenado corretamente');
+    } else {
+      console.log('❌ Verificação: Falha na sincronização');
+      return false;
     }
-  });
-  
-  // Limpar cookies
-  const cookiesToClear = ['auth_token', 'user_data', 'session_token'];
-  cookiesToClear.forEach(cookieName => {
-    document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-    console.log(`🍪 Cookie limpo: ${cookieName}`);
-  });
-  
-  console.log('✅ Limpeza concluída');
-  console.log('🔄 Redirecionando para login...');
-  
-  setTimeout(() => {
-    window.location.href = '/login';
-  }, 1000);
+    
+    console.groupEnd();
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Erro ao corrigir problemas:', error);
+    console.groupEnd();
+    return false;
+  }
 }
 
-// Função de diagnóstico
-function diagnoseAuth() {
-  console.group('🔍 DIAGNÓSTICO DE AUTENTICAÇÃO');
+// Função para testar API
+async function testApiConnection() {
+  console.log('');
+  console.group('🧪 TESTE DE CONEXÃO COM API');
   
-  // Verificar tokens
-  const tokens = {};
-  ['auth_token', 'authToken', 'token'].forEach(key => {
-    const token = localStorage.getItem(key);
-    if (token) {
-      tokens[key] = {
-        length: token.length,
-        preview: token.substring(0, 30) + '...',
-        parts: token.split('.').length,
-        isJWT: token.split('.').length === 3
-      };
+  const token = localStorage.getItem('auth_token');
+  if (!token) {
+    console.log('❌ Nenhum token disponível para teste');
+    console.groupEnd();
+    return;
+  }
+  
+  try {
+    console.log('🔄 Testando conexão com /api/users/stats...');
+    
+    const response = await fetch('/api/users/stats', {
+      method: 'GET',
+      headers: {
+        'Authorization': \`Bearer \${token}\`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log(\`📡 Status: \${response.status} \${response.statusText}\`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ API funcionando corretamente!');
+      console.log('📊 Dados recebidos:', data);
+    } else {
+      const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+      console.log('❌ Erro na API:', errorData.message);
+      
+      if (response.status === 401) {
+        console.log('🔐 Problema de autenticação detectado');
+        console.log('💡 Solução: Faça login novamente');
+      }
     }
-  });
-  
-  console.log('🎫 Tokens encontrados:', tokens);
-  
-  // Verificar cookies
-  const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-    const [name, value] = cookie.trim().split('=');
-    if (['auth_token', 'user_data', 'session_token'].includes(name)) {
-      acc[name] = value ? value.substring(0, 30) + '...' : 'vazio';
-    }
-    return acc;
-  }, {});
-  
-  console.log('🍪 Cookies relevantes:', cookies);
-  
-  // Verificar dados do usuário
-  const userSession = localStorage.getItem('user_session');
-  if (userSession) {
-    try {
-      const userData = JSON.parse(userSession);
-      console.log('👤 Dados do usuário:', {
-        id: userData.id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role
-      });
-    } catch (error) {
-      console.warn('⚠️ Erro ao decodificar dados do usuário:', error.message);
-    }
-  } else {
-    console.log('👤 Nenhum dado de usuário encontrado');
+    
+  } catch (error) {
+    console.error('❌ Erro na requisição:', error.message);
   }
   
   console.groupEnd();
 }
+
+// Função principal
+async function runFullDiagnosis() {
+  console.log('🚀 EXECUTANDO DIAGNÓSTICO COMPLETO...');
+  console.log('');
+  
+  // 1. Diagnosticar
+  const diagnosis = diagnoseAuthInBrowser();
+  
+  // 2. Corrigir se necessário
+  if (diagnosis.bestToken) {
+    const fixed = fixAuthIssues();
+    
+    if (fixed) {
+      // 3. Testar API
+      await testApiConnection();
+      
+      console.log('');
+      console.log('🎉 DIAGNÓSTICO CONCLUÍDO!');
+      console.log('💡 Se ainda houver problemas, tente recarregar a página');
+    }
+  } else {
+    console.log('');
+    console.log('❌ DIAGNÓSTICO CONCLUÍDO COM PROBLEMAS');
+    console.log('💡 Faça login novamente para resolver os problemas');
+  }
+}
+
+// Executar diagnóstico
+runFullDiagnosis();
 
 // Expor funções globalmente
-window.fixAuthToken = fixAuthToken;
-window.clearAndRestart = clearAndRestart;
-window.diagnoseAuth = diagnoseAuth;
+window.diagnoseAuthInBrowser = diagnoseAuthInBrowser;
+window.fixAuthIssues = fixAuthIssues;
+window.testApiConnection = testApiConnection;
+window.runFullDiagnosis = runFullDiagnosis;
 
-// Executar correção automaticamente
-console.log('🚀 Executando correção automática...');
-fixAuthToken();
+console.log('');
+console.log('✅ Funções disponíveis globalmente:');
+console.log('  - diagnoseAuthInBrowser() - Diagnóstico completo');
+console.log('  - fixAuthIssues() - Corrigir problemas encontrados');
+console.log('  - testApiConnection() - Testar conexão com API');
+console.log('  - runFullDiagnosis() - Executar tudo automaticamente');
+`;
 
-console.log(`
-📋 COMANDOS DISPONÍVEIS:
-  fixAuthToken()     - Corrigir token automaticamente
-  clearAndRestart()  - Limpar tudo e ir para login
-  diagnoseAuth()     - Diagnóstico completo
-`); 
+  const scriptPath = 'scripts/browser-auth-diagnostic.js';
+  
+  try {
+    fs.writeFileSync(scriptPath, browserScript.trim(), 'utf8');
+    console.log(`✅ Script de diagnóstico criado: ${scriptPath}`);
+  } catch (error) {
+    console.error(`❌ Erro ao criar script: ${error.message}`);
+  }
+}
+
+/**
+ * Sugere correções para problemas encontrados
+ */
+function suggestFixes(totalIssues) {
+  console.log('\n📝 SUGESTÕES DE CORREÇÃO');
+  console.log('========================\n');
+  
+  if (totalIssues === 0) {
+    console.log('✅ Nenhum problema crítico encontrado!');
+    console.log('💡 Dicas para manter a autenticação funcionando bem:');
+    console.log('   • Execute limpeza periódica de tokens expirados');
+    console.log('   • Monitore logs de autenticação regularmente');
+    console.log('   • Mantenha o sistema de debug atualizado');
+    return;
+  }
+  
+  console.log('🔧 Problemas encontrados. Sugestões:');
+  console.log('');
+  
+  console.log('1. 📊 Para problemas de logging:');
+  console.log('   • Use console.warn em vez de console.error para tokens inválidos');
+  console.log('   • Adicione contexto informativo aos logs');
+  console.log('   • Evite logs excessivos que podem confundir usuários');
+  console.log('');
+  
+  console.log('2. 🛡️  Para problemas de tratamento de erro:');
+  console.log('   • Use try-catch adequadamente');
+  console.log('   • Retorne objetos de erro em vez de lançar exceções');
+  console.log('   • Trate tokens expirados como casos normais, não erros');
+  console.log('');
+  
+  console.log('3. 🧹 Para limpeza automática:');
+  console.log('   • Implemente limpeza automática de tokens expirados');
+  console.log('   • Use setInterval para limpeza periódica');
+  console.log('   • Verifique expiração antes de usar tokens');
+  console.log('');
+  
+  console.log('4. 🔍 Para debug no navegador:');
+  console.log('   • Abra o DevTools (F12)');
+  console.log('   • Vá para a aba Console');
+  console.log('   • Cole o código do arquivo scripts/browser-auth-diagnostic.js');
+  console.log('   • Execute runFullDiagnosis() para diagnóstico completo');
+}
+
+/**
+ * Função principal
+ */
+function main() {
+  console.log('Iniciando verificação do sistema de autenticação...\n');
+  
+  let totalIssues = 0;
+  
+  // Verificar componentes
+  totalIssues += checkAuthMiddleware();
+  totalIssues += checkApiClient();
+  totalIssues += checkAuthDebugUtils();
+  
+  // Criar script de diagnóstico para o navegador
+  createBrowserDiagnosticScript();
+  
+  // Sugerir correções
+  suggestFixes(totalIssues);
+  
+  console.log('\n🏁 RESULTADO FINAL');
+  console.log('==================');
+  
+  if (totalIssues === 0) {
+    console.log('✅ Sistema de autenticação está bem configurado!');
+    console.log('💡 Continue monitorando logs para garantir bom funcionamento.');
+  } else {
+    console.log(`⚠️  ${totalIssues} problema(s) encontrado(s).`);
+    console.log('🔧 Consulte as sugestões acima para correções.');
+  }
+  
+  console.log('\n📚 Para mais informações:');
+  console.log('   • Verifique docs/AUTH_TOKEN_FIX.md');
+  console.log('   • Use scripts/browser-auth-diagnostic.js no navegador');
+  console.log('   • Monitore logs do backend para erros de autenticação');
+  
+  process.exit(totalIssues > 0 ? 1 : 0);
+}
+
+// Executar se for chamado diretamente
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  checkAuthMiddleware,
+  checkApiClient,
+  checkAuthDebugUtils,
+  suggestFixes
+}; 
