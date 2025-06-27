@@ -100,10 +100,114 @@ export default function TestAuthDebugPage() {
     } catch (error: any) {
       addResult('Direct API Call Test', {
         success: false,
+        message: error.message || error.toString()
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testBackendConnectivity = async () => {
+    setLoading(true);
+    try {
+      console.log('🧪 Testando conectividade com o backend...');
+      
+      // Testar rota sem autenticação primeiro
+      const testResponse = await fetch('/api/users/stats-test');
+      const testData = await testResponse.json();
+      
+      addResult('Backend Connectivity Test', {
+        success: testResponse.ok,
+        status: testResponse.status,
+        data: testData,
+        message: testData.message || 'Teste de conectividade'
+      });
+      
+    } catch (error: any) {
+      addResult('Backend Connectivity Test', {
+        success: false,
         error: error.message || error.toString()
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const testRawFetch = async () => {
+    setLoading(true);
+    try {
+      console.log('🧪 Testando fetch direto com token...');
+      
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        addResult('Raw Fetch Test', {
+          success: false,
+          error: 'Nenhum token encontrado'
+        });
+        return;
+      }
+      
+      const response = await fetch('/api/users/stats', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      addResult('Raw Fetch Test', {
+        success: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+      
+    } catch (error: any) {
+      addResult('Raw Fetch Test', {
+        success: false,
+        error: error.message || error.toString()
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testTokenDecoding = () => {
+    console.log('🧪 Testando decodificação de token...');
+    
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      addResult('Token Decoding Test', {
+        success: false,
+        error: 'Nenhum token encontrado'
+      });
+      return;
+    }
+    
+    try {
+      // Tentar decodificar como base64
+      const decoded = atob(token);
+      const tokenData = JSON.parse(decoded);
+      
+      addResult('Token Decoding Test', {
+        success: true,
+        tokenLength: token.length,
+        decodedLength: decoded.length,
+        tokenData: tokenData,
+        isExpired: tokenData.exp ? tokenData.exp < Math.floor(Date.now() / 1000) : false,
+        timeUntilExpiry: tokenData.exp ? tokenData.exp - Math.floor(Date.now() / 1000) : null
+      });
+      
+    } catch (error: any) {
+      addResult('Token Decoding Test', {
+        success: false,
+        tokenLength: token.length,
+        error: error.message || error.toString(),
+        tokenPreview: token.substring(0, 50) + '...'
+      });
     }
   };
 
@@ -139,6 +243,68 @@ export default function TestAuthDebugPage() {
     setTimeout(() => {
       testTokenStorage();
     }, 500);
+  };
+
+  const testApiConfiguration = () => {
+    console.log('🧪 Testando configuração da API...');
+    
+    try {
+      // Importar configuração
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      
+      addResult('API Configuration Test', {
+        success: true,
+        environment: process.env.NODE_ENV || 'unknown',
+        apiBaseUrl: apiBaseUrl,
+        windowLocation: typeof window !== 'undefined' ? window.location.origin : 'server-side',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error: any) {
+      addResult('API Configuration Test', {
+        success: false,
+        error: error.message || error.toString()
+      });
+    }
+  };
+
+  const testNetworkConnectivity = async () => {
+    setLoading(true);
+    try {
+      console.log('🧪 Testando conectividade de rede...');
+      
+      // Testar conectividade básica
+      const startTime = Date.now();
+      const response = await fetch('/api/health-check', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      const endTime = Date.now();
+      
+      const data = await response.text();
+      
+      addResult('Network Connectivity Test', {
+        success: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        responseTime: endTime - startTime,
+        response: data,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+      
+    } catch (error: any) {
+      addResult('Network Connectivity Test', {
+        success: false,
+        error: error.message || error.toString(),
+        errorType: error.name,
+        stack: error.stack
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -188,6 +354,46 @@ export default function TestAuthDebugPage() {
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
             >
               {loading ? 'Testando...' : 'Testar Chamada Direta'}
+            </button>
+            
+            <button
+              onClick={testBackendConnectivity}
+              disabled={loading}
+              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50"
+            >
+              {loading ? 'Testando...' : 'Testar Conectividade Backend'}
+            </button>
+            
+            <button
+              onClick={testRawFetch}
+              disabled={loading}
+              className="px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600 disabled:opacity-50"
+            >
+              {loading ? 'Testando...' : 'Testar Fetch Direto'}
+            </button>
+            
+            <button
+              onClick={testTokenDecoding}
+              disabled={loading}
+              className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 disabled:opacity-50"
+            >
+              {loading ? 'Testando...' : 'Testar Decodificação Token'}
+            </button>
+            
+            <button
+              onClick={testApiConfiguration}
+              disabled={loading}
+              className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+            >
+              {loading ? 'Testando...' : 'Testar Configuração API'}
+            </button>
+            
+            <button
+              onClick={testNetworkConnectivity}
+              disabled={loading}
+              className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 disabled:opacity-50"
+            >
+              {loading ? 'Testando...' : 'Testar Conectividade de Rede'}
             </button>
             
             <button

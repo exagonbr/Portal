@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { API_CONFIG } from '@/config/constants';
+import jwt from 'jsonwebtoken';
 
 // Rate limiting inteligente para evitar loops
 const requestCounts = new Map<string, { count: number; lastReset: number; lastRequest: number; pattern: string[]; consecutiveRequests: number; blockedUntil?: number; isMobile?: boolean }>();
@@ -375,8 +376,10 @@ export async function POST(request: NextRequest) {
       if (mockUser && mockUser.password === password) {
         console.log(`✅ FALLBACK LOGIN SUCCESS for ${email}`);
         
-        // Gerar token mock JWT-like
-        const mockToken = Buffer.from(JSON.stringify({
+        // Gerar token JWT válido
+        const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
+        
+        const mockToken = jwt.sign({
           userId: mockUser.user.id,
           email: mockUser.user.email,
           name: mockUser.user.name,
@@ -385,7 +388,7 @@ export async function POST(request: NextRequest) {
           permissions: mockUser.user.permissions,
           iat: Math.floor(Date.now() / 1000),
           exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24h
-        })).toString('base64');
+        }, JWT_SECRET);
 
         data = {
           success: true,

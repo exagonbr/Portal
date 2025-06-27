@@ -80,36 +80,89 @@ class ApiClient {
     
     console.log('🔍 [API-CLIENT] getAuthToken: Procurando token...');
     
-    // Tentar obter token de localStorage
-    let token = localStorage.getItem('auth_token') || 
-                localStorage.getItem('token') ||
-                localStorage.getItem('authToken') ||
-                sessionStorage.getItem('token') ||
-                sessionStorage.getItem('auth_token');
+    // Tentar obter token de localStorage com prioridade
+    const possibleKeys = ['auth_token', 'token', 'authToken'];
+    let token = null;
+    let tokenSource = '';
     
-    if (token) {
-      console.log('✅ [API-CLIENT] Token encontrado no localStorage/sessionStorage:', token.substring(0, 20) + '...');
-      return token;
-    }
-    
-    // Se não encontrar no storage, tentar obter dos cookies
-    console.log('🔍 [API-CLIENT] Procurando token nos cookies...');
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
-        token = value;
-        console.log('✅ [API-CLIENT] Token encontrado nos cookies:', token.substring(0, 20) + '...');
+    for (const key of possibleKeys) {
+      const storedToken = localStorage.getItem(key);
+      if (storedToken && storedToken.trim() !== '') {
+        token = storedToken.trim();
+        tokenSource = `localStorage.${key}`;
+        console.log(`✅ [API-CLIENT] Token encontrado em ${tokenSource}:`, token.substring(0, 20) + '...');
         break;
       }
     }
     
+    // Se não encontrar no localStorage, tentar sessionStorage
     if (!token) {
-      console.warn('❌ [API-CLIENT] Nenhum token encontrado!');
-      console.log('🔍 [API-CLIENT] localStorage keys:', Object.keys(localStorage));
-      console.log('🔍 [API-CLIENT] cookies:', document.cookie);
+      for (const key of possibleKeys) {
+        const storedToken = sessionStorage.getItem(key);
+        if (storedToken && storedToken.trim() !== '') {
+          token = storedToken.trim();
+          tokenSource = `sessionStorage.${key}`;
+          console.log(`✅ [API-CLIENT] Token encontrado em ${tokenSource}:`, token.substring(0, 20) + '...');
+          break;
+        }
+      }
     }
     
+    // Se não encontrar nos storages, tentar obter dos cookies
+    if (!token) {
+      console.log('🔍 [API-CLIENT] Procurando token nos cookies...');
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (['auth_token', 'token', 'authToken'].includes(name) && value && value.trim() !== '') {
+          token = value.trim();
+          tokenSource = `cookie.${name}`;
+          console.log(`✅ [API-CLIENT] Token encontrado em ${tokenSource}:`, token.substring(0, 20) + '...');
+          break;
+        }
+      }
+    }
+    
+    if (!token) {
+      console.warn('❌ [API-CLIENT] Nenhum token válido encontrado!');
+      console.log('🔍 [API-CLIENT] Debug info:', {
+        localStorageKeys: Object.keys(localStorage),
+        sessionStorageKeys: Object.keys(sessionStorage),
+        cookies: document.cookie,
+        cookieCount: document.cookie.split(';').length
+      });
+      return null;
+    }
+    
+    // Validar formato básico do token
+    if (token.length < 10) {
+      console.warn('❌ [API-CLIENT] Token muito curto, provavelmente inválido:', token.length);
+      return null;
+    }
+    
+    // Verificar se é um JWT válido (3 partes separadas por ponto)
+    const jwtParts = token.split('.');
+    if (jwtParts.length === 3) {
+      console.log('✅ [API-CLIENT] Token parece ser um JWT válido');
+      
+      try {
+        // Tentar decodificar o payload para verificar expiração
+        const payload = JSON.parse(atob(jwtParts[1]));
+        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+          console.warn('⏰ [API-CLIENT] Token JWT expirado:', new Date(payload.exp * 1000));
+          // Não retornar token expirado, mas não limpar ainda (deixar para o refresh)
+          return token; // Ainda retornar para tentar refresh
+        }
+        console.log('✅ [API-CLIENT] Token JWT válido e não expirado');
+      } catch (error) {
+        console.warn('⚠️ [API-CLIENT] Erro ao decodificar payload JWT:', error);
+        // Ainda retornar o token, pode ser válido mesmo com erro de decode
+      }
+    } else {
+      console.log('🔍 [API-CLIENT] Token não é JWT, pode ser token customizado');
+    }
+    
+    console.log(`✅ [API-CLIENT] Retornando token de ${tokenSource}:`, token.substring(0, 20) + '...');
     return token;
   }
 
@@ -117,22 +170,51 @@ class ApiClient {
    * Define o token de autenticação
    */
   setAuthToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
+    if (typeof window !== 'undefined' && token && token.trim() !== '') {
+      const cleanToken = token.trim();
+      
+      console.log('🔐 [API-CLIENT] Configurando token de autenticação:', cleanToken.substring(0, 20) + '...');
+      
+      // Armazenar em localStorage com chave principal
+      localStorage.setItem('auth_token', cleanToken);
+      
+      // Também armazenar com chaves alternativas para compatibilidade
+      localStorage.setItem('token', cleanToken);
+      
+      // Limpar possíveis tokens antigos em sessionStorage
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('authToken');
       
       // Configurar cookie para o middleware com configuração mais robusta
       try {
-        // Limpar cookie existente primeiro
-        document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        // Limpar cookies existentes primeiro
+        const cookiesToClear = ['auth_token', 'token', 'authToken'];
+        cookiesToClear.forEach(cookieName => {
+          document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        });
         
-        // Definir novo cookie
-        const cookieValue = `auth_token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        // Definir novo cookie principal
+        const maxAge = 7 * 24 * 60 * 60; // 7 dias
+        const cookieValue = `auth_token=${cleanToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = cookieValue;
         
-        console.log('🍪 Token configurado nos cookies e localStorage');
+        console.log('✅ [API-CLIENT] Token configurado com sucesso em localStorage e cookies');
+        
+        // Verificar se foi configurado corretamente
+        const verifyToken = localStorage.getItem('auth_token');
+        if (verifyToken === cleanToken) {
+          console.log('✅ [API-CLIENT] Verificação: Token armazenado corretamente');
+        } else {
+          console.error('❌ [API-CLIENT] Verificação: Falha ao armazenar token');
+        }
+        
       } catch (error) {
-        console.error('❌ Erro ao configurar cookie auth_token:', error);
+        console.error('❌ [API-CLIENT] Erro ao configurar cookie auth_token:', error);
+        // Mesmo com erro no cookie, o localStorage ainda funciona
       }
+    } else {
+      console.error('❌ [API-CLIENT] Token inválido fornecido para setAuthToken:', token);
     }
   }
 
@@ -163,13 +245,28 @@ class ApiClient {
    */
   clearAuth(): void {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      console.log('🧹 [API-CLIENT] Limpando dados de autenticação...');
+      
+      // Limpar localStorage
+      const localStorageKeys = ['auth_token', 'token', 'authToken', 'user', 'user_session', 'userSession'];
+      localStorageKeys.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      
+      // Limpar sessionStorage
+      const sessionStorageKeys = ['auth_token', 'token', 'authToken', 'user', 'user_session', 'userSession'];
+      sessionStorageKeys.forEach(key => {
+        sessionStorage.removeItem(key);
+      });
       
       // Limpar cookies
-      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      document.cookie = 'user_data=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      const cookiesToClear = ['auth_token', 'token', 'authToken', 'user_data', 'session_token', 'refresh_token', 'session_id'];
+      cookiesToClear.forEach(cookieName => {
+        document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        document.cookie = `${cookieName}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      });
+      
+      console.log('✅ [API-CLIENT] Dados de autenticação limpos');
     }
   }
 
@@ -285,8 +382,12 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = this.buildURL(endpoint);
     let timeoutId: NodeJS.Timeout | undefined;
+    
+    console.log('🔍 [API-CLIENT] makeRequest - URL construída:', url);
+    console.log('🔍 [API-CLIENT] makeRequest - Endpoint:', endpoint);
+    console.log('🔍 [API-CLIENT] makeRequest - BaseURL:', this.baseURL);
     
     try {
       // Prepara headers incluindo autenticação
@@ -444,6 +545,41 @@ class ApiClient {
       };
     }
 
+    // Tratar erros de autenticação específicos
+    if (error.status === 401) {
+      const currentToken = this.getAuthToken();
+      const hasToken = !!currentToken;
+      const tokenPreview = currentToken ? currentToken.substring(0, 20) + '...' : 'nenhum';
+      
+      console.error('❌ [API-CLIENT] Erro 401 - Detalhes de autenticação:', {
+        hasToken,
+        tokenPreview,
+        errorDetails: error.details,
+        errorMessage: error.message
+      });
+      
+      let message = 'Token de autenticação inválido! "Erro desconhecido"';
+      
+      if (!hasToken) {
+        message = 'Token de autenticação não encontrado. Faça login novamente.';
+      } else if (error.details?.message?.includes('expirado') || error.details?.message?.includes('expired')) {
+        message = 'Token de autenticação expirado. Faça login novamente.';
+      } else if (error.details?.message?.includes('inválido') || error.details?.message?.includes('invalid')) {
+        message = 'Token de autenticação inválido. Faça login novamente.';
+      } else if (error.message) {
+        message = `Token de autenticação inválido! "${error.message}"`;
+      } else if (error.details?.message) {
+        message = `Token de autenticação inválido! "${error.details.message}"`;
+      }
+      
+      return {
+        name: 'AuthError',
+        message,
+        status: 401,
+        details: error
+      };
+    }
+
     // Usar handler específico do Firefox
     const processedError = firefoxErrorHandler(error);
     console.log('🔍 [API-CLIENT] Erro processado pelo Firefox handler:', processedError);
@@ -488,10 +624,16 @@ class ApiClient {
 
     // Se chegou até aqui, é um erro desconhecido mesmo
     console.log('🔍 [API-CLIENT] Erro desconhecido, tipo:', typeof error, error);
+    console.log('🔍 [API-CLIENT] Error keys:', error ? Object.keys(error) : 'no keys');
+    console.log('🔍 [API-CLIENT] Error stack:', error?.stack);
+    
+    const errorMessage = error?.message || error?.toString() || 'Sem detalhes disponíveis';
+    const errorType = error?.name || typeof error;
+    
     return {
       name: 'ApiError',
-      message: `Erro desconhecido: ${error?.message || error?.toString() || 'Sem detalhes'}`,
-      status: 0,
+      message: `Erro ${errorType}: ${errorMessage}`,
+      status: error?.status || 0,
       details: error
     };
   }

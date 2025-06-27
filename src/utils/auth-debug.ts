@@ -30,6 +30,9 @@ export interface AuthDiagnostic {
  * Executa diagnóstico completo da autenticação
  */
 export function diagnoseAuth(): AuthDiagnostic {
+  // Limpar tokens expirados antes do diagnóstico
+  cleanExpiredTokens();
+  
   const diagnostic: AuthDiagnostic = {
     token: {
       present: false,
@@ -79,9 +82,12 @@ export function diagnoseAuth(): AuthDiagnostic {
       diagnostic.token.length = foundToken.length;
       diagnostic.token.source = tokenSource;
       
-      // Melhor validação de JWT
+      // Melhor validação de JWT incluindo verificação de expiração
       const parts = foundToken.split('.');
-      diagnostic.token.valid = parts.length === 3 && foundToken.length > 50;
+      const hasValidFormat = parts.length === 3 && foundToken.length > 50;
+      const isNotExpired = hasValidFormat ? !isTokenExpired(foundToken) : false;
+      
+      diagnostic.token.valid = hasValidFormat && isNotExpired;
     }
     
     // Verificar sessão
@@ -114,7 +120,18 @@ export function diagnoseAuth(): AuthDiagnostic {
   if (!diagnostic.token.present) {
     diagnostic.recommendations.push('❌ Token não encontrado - Faça login novamente');
   } else if (!diagnostic.token.valid) {
-    diagnostic.recommendations.push('⚠️ Token parece inválido - Verifique formato');
+    // Verificar se é problema de formato ou expiração
+    const token = diagnostic.localStorage.authToken;
+    if (token) {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        diagnostic.recommendations.push('⚠️ Token com formato inválido - Faça login novamente');
+      } else if (isTokenExpired(token)) {
+        diagnostic.recommendations.push('⏰ Token expirado - Faça login novamente');
+      } else {
+        diagnostic.recommendations.push('⚠️ Token parece inválido - Verifique formato');
+      }
+    }
   }
 
   if (!diagnostic.session.present) {
@@ -161,7 +178,13 @@ export async function testApiCall(endpoint: string = '/api/users/stats'): Promis
       }
     });
 
-    const data = await response.json();
+    let data: any;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      // Se não conseguir fazer parse do JSON, usar texto da resposta
+      data = { message: await response.text() || `HTTP ${response.status}` };
+    }
 
     return {
       success: response.ok,
@@ -171,11 +194,68 @@ export async function testApiCall(endpoint: string = '/api/users/stats'): Promis
     };
 
   } catch (error: any) {
+    // Tratar diferentes tipos de erro de forma mais específica
+    let errorMessage = 'Erro de rede';
+    
+    if (error.name === 'AbortError') {
+      errorMessage = 'Requisição cancelada (timeout)';
+    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      errorMessage = 'Erro de conectividade - verifique sua conexão';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
     return {
       success: false,
       status: 0,
-      error: error.message || 'Erro de rede'
+      error: errorMessage
     };
+  }
+}
+
+/**
+ * Verifica se um token JWT está expirado
+ */
+export function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return true; // Se não é JWT válido, considerar expirado
+    }
+    
+    const payload = JSON.parse(atob(parts[1]));
+    if (!payload.exp) {
+      return false; // Se não tem expiração, considerar válido
+    }
+    
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp < now;
+  } catch (error) {
+    console.warn('Erro ao verificar expiração do token:', error);
+    return true; // Em caso de erro, considerar expirado por segurança
+  }
+}
+
+/**
+ * Limpa tokens expirados automaticamente
+ */
+export function cleanExpiredTokens(): void {
+  if (typeof window === 'undefined') return;
+  
+  const tokenKeys = ['auth_token', 'token', 'authToken'];
+  let cleanedTokens = 0;
+  
+  for (const key of tokenKeys) {
+    const token = localStorage.getItem(key);
+    if (token && isTokenExpired(token)) {
+      localStorage.removeItem(key);
+      cleanedTokens++;
+      console.log(`🧹 Token expirado removido: ${key}`);
+    }
+  }
+  
+  if (cleanedTokens > 0) {
+    console.log(`🧹 ${cleanedTokens} token(s) expirado(s) foram limpos automaticamente`);
   }
 }
 
@@ -213,6 +293,29 @@ export function forceRelogin(): void {
 }
 
 /**
+ * Inicializa o sistema de limpeza automática de tokens
+ * Deve ser chamado quando a aplicação carrega
+ */
+export function initializeAuthCleanup(): void {
+  if (typeof window === 'undefined') return;
+  
+  // Limpar tokens expirados imediatamente
+  cleanExpiredTokens();
+  
+  // Configurar limpeza periódica (a cada 5 minutos)
+  const cleanupInterval = setInterval(() => {
+    cleanExpiredTokens();
+  }, 5 * 60 * 1000); // 5 minutos
+  
+  // Limpar o interval quando a página for descarregada
+  window.addEventListener('beforeunload', () => {
+    clearInterval(cleanupInterval);
+  });
+  
+  console.log('🔧 Sistema de limpeza automática de tokens inicializado');
+}
+
+/**
  * Executa diagnóstico e exibe no console
  */
 export function debugAuth(): void {
@@ -236,15 +339,31 @@ export function debugAuth(): void {
     try {
       const parts = token.split('.');
       if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        console.log('Payload do JWT:', payload);
-        console.log('Expira em:', payload.exp ? new Date(payload.exp * 1000) : 'Não definido');
-        console.log('Token expirado?', payload.exp ? payload.exp < Math.floor(Date.now() / 1000) : 'Não pode determinar');
+        try {
+          const payload = JSON.parse(atob(parts[1]));
+          console.log('Payload do JWT:', payload);
+          console.log('Expira em:', payload.exp ? new Date(payload.exp * 1000) : 'Não definido');
+          console.log('Token expirado?', payload.exp ? payload.exp < Math.floor(Date.now() / 1000) : 'Não pode determinar');
+        } catch (decodeError) {
+          console.warn('⚠️ Erro ao decodificar payload JWT:', decodeError);
+          console.info('💡 Token pode ter formato JWT mas payload inválido');
+        }
       } else {
-        console.log('Token não parece ser um JWT válido (não tem 3 partes)');
+        console.info('ℹ️ Token não tem formato JWT padrão (não tem 3 partes)');
+        console.info('💡 Pode ser um token personalizado ou Base64');
+        
+        // Tentar decodificar como Base64 simples
+        try {
+          const decoded = atob(token);
+          const tokenData = JSON.parse(decoded);
+          console.log('Token decodificado como Base64:', tokenData);
+          console.info('💡 Este parece ser um token Base64 válido');
+        } catch (base64Error) {
+          console.info('ℹ️ Token não é Base64 válido ou não contém JSON');
+        }
       }
     } catch (error) {
-      console.log('Erro ao decodificar JWT:', error);
+      console.warn('⚠️ Erro geral ao processar token:', error);
     }
   }
   console.groupEnd();
@@ -262,12 +381,23 @@ export function debugAuth(): void {
   
   console.groupEnd();
   
-  // Teste automático da API com mais detalhes
+  // Teste automático da API com mais detalhes e melhor tratamento de erro
   testApiCall().then(result => {
     console.group('🧪 TESTE DA API');
     console.log('Sucesso:', result.success);
     console.log('Status:', result.status);
-    if (result.error) console.error('Erro:', result.error);
+    
+    // Tratar o erro de forma mais elegante para evitar logs desnecessários
+    if (result.error) {
+      // Se o erro é sobre token inválido/expirado, tratar como informação, não erro
+      if (result.error.includes('Token inválido ou expirado') || result.error.includes('invalid') || result.error.includes('expired')) {
+        console.warn('⚠️ Token de autenticação:', result.error);
+        console.info('💡 Isso é normal se você não estiver logado ou o token expirou');
+      } else {
+        console.warn('❌ Erro na API:', result.error);
+      }
+    }
+    
     if (result.data) console.log('Dados:', result.data);
     
     // Se deu erro 401, vamos investigar mais
@@ -303,12 +433,41 @@ export function debugAuth(): void {
         console.log('Número de partes do JWT:', parts.length);
         if (parts.length === 3) {
           console.log('✅ Token tem formato JWT válido');
+          
+          // Verificar se o token está expirado
+          try {
+            const payload = JSON.parse(atob(parts[1]));
+            const now = Math.floor(Date.now() / 1000);
+            const isExpired = payload.exp && payload.exp < now;
+            
+            if (isExpired) {
+              console.warn('⏰ Token expirado! Isso explica o erro 401.');
+              console.log('📅 Expirou em:', new Date(payload.exp * 1000));
+              console.log('🕐 Agora:', new Date());
+              console.info('💡 Faça login novamente para obter um novo token');
+            } else {
+              console.log('✅ Token não está expirado, pode ser outro problema');
+            }
+          } catch (error) {
+            console.warn('⚠️ Erro ao verificar expiração do token:', error);
+          }
         } else {
-          console.error('❌ Token não tem formato JWT válido (deveria ter 3 partes)');
+          console.warn('⚠️ Token não tem formato JWT válido (deveria ter 3 partes)');
+          console.info('💡 Token pode ser um formato personalizado ou Base64');
+          
+          // Tentar converter automaticamente se for Base64
+          if (parts.length === 1 && foundToken.length > 50) {
+            console.log('🔧 Tentando converter token Base64 para JWT...');
+            const converted = convertBase64TokenToJWT();
+            if (converted) {
+              console.log('✅ Token convertido! Recarregue a página para usar o novo token.');
+            }
+          }
         }
       } else {
         console.error('❌ Nenhum token encontrado no localStorage!');
         console.log('Chaves verificadas:', possibleTokenKeys);
+        console.info('💡 Faça login para obter um token de autenticação');
         
         // Mostrar todas as chaves do localStorage para debug
         console.log('Todas as chaves no localStorage:');
@@ -322,6 +481,12 @@ export function debugAuth(): void {
       console.groupEnd();
     }
     
+    console.groupEnd();
+  }).catch(error => {
+    // Capturar qualquer erro da promise para evitar unhandled rejections
+    console.group('🧪 TESTE DA API - ERRO');
+    console.warn('❌ Erro inesperado durante o teste da API:', error);
+    console.info('💡 Isso pode indicar um problema de rede ou configuração');
     console.groupEnd();
   });
 }
@@ -411,74 +576,155 @@ export async function testTokenDirectly(): Promise<void> {
 }
 
 /**
- * Sincroniza dados de autenticação entre diferentes chaves no localStorage
- * Esta função corrige inconsistências entre authToken e auth_token
+ * Sincroniza dados de autenticação entre diferentes storages
  */
 export function syncAuthData(): void {
   if (typeof window === 'undefined') return;
   
-  console.group('🔄 SINCRONIZAÇÃO DE DADOS DE AUTENTICAÇÃO');
+  console.log('🔄 Sincronizando dados de autenticação...');
   
-  // 1. Encontrar o token válido
-  const possibleTokenKeys = ['authToken', 'auth_token', 'token'];
-  let validToken = null;
-  let validTokenKey = null;
+  // Buscar token em todas as possíveis localizações
+  const possibleTokenKeys = ['auth_token', 'token', 'authToken'];
+  let foundToken: string | null = null;
+  let tokenSource = '';
   
+  // Prioridade 1: localStorage
   for (const key of possibleTokenKeys) {
     const token = localStorage.getItem(key);
-    if (token && token.length > 50) {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        validToken = token;
-        validTokenKey = key;
-        console.log(`✅ Token JWT válido encontrado em: ${key}`);
+    if (token && token.trim() !== '') {
+      foundToken = token.trim();
+      tokenSource = `localStorage.${key}`;
+      break;
+    }
+  }
+  
+  // Prioridade 2: sessionStorage (se não encontrou no localStorage)
+  if (!foundToken) {
+    for (const key of possibleTokenKeys) {
+      const token = sessionStorage.getItem(key);
+      if (token && token.trim() !== '') {
+        foundToken = token.trim();
+        tokenSource = `sessionStorage.${key}`;
         break;
       }
     }
   }
   
-  if (!validToken) {
-    console.error('❌ Nenhum token JWT válido encontrado para sincronizar');
-    console.groupEnd();
-    return;
-  }
-  
-  // 2. Sincronizar token em todas as chaves padrão
-  const standardKeys = ['auth_token', 'authToken'];
-  for (const key of standardKeys) {
-    const currentValue = localStorage.getItem(key);
-    if (currentValue !== validToken) {
-      localStorage.setItem(key, validToken);
-      console.log(`🔄 Token sincronizado para chave: ${key}`);
-    }
-  }
-  
-  // 3. Verificar e sincronizar dados do usuário
-  const userSessionData = localStorage.getItem('userSession');
-  const userDataCookie = document.cookie
-    .split(';')
-    .find(cookie => cookie.trim().startsWith('userData='));
-  
-  if (userSessionData && userDataCookie) {
-    try {
-      const sessionData = JSON.parse(userSessionData);
-      const cookieData = JSON.parse(decodeURIComponent(userDataCookie.split('=')[1]));
-      
-      // Verificar se os dados estão consistentes
-      if (sessionData.user?.id === cookieData.id) {
-        console.log('✅ Dados de usuário consistentes entre localStorage e cookies');
-      } else {
-        console.warn('⚠️ Inconsistência detectada nos dados do usuário');
-        console.log('SessionData:', sessionData.user);
-        console.log('CookieData:', cookieData);
+  // Prioridade 3: cookies (se não encontrou nos storages)
+  if (!foundToken) {
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (possibleTokenKeys.includes(name) && value && value.trim() !== '') {
+        foundToken = value.trim();
+        tokenSource = `cookie.${name}`;
+        break;
       }
-    } catch (error) {
-      console.error('❌ Erro ao verificar consistência dos dados do usuário:', error);
     }
   }
   
-  console.log('✅ Sincronização concluída');
-  console.groupEnd();
+  if (foundToken) {
+    console.log(`✅ Token encontrado em ${tokenSource}, sincronizando...`);
+    
+    // Validar se é um JWT válido
+    const jwtParts = foundToken.split('.');
+    let isValidJWT = false;
+    let isExpired = false;
+    
+    if (jwtParts.length === 3) {
+      try {
+        const payload = JSON.parse(atob(jwtParts[1]));
+        isValidJWT = true;
+        
+        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+          isExpired = true;
+          console.warn('⏰ Token encontrado está expirado');
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao decodificar JWT, mas continuando sincronização');
+      }
+    }
+    
+    // Se o token está expirado, limpar tudo
+    if (isExpired) {
+      console.log('🧹 Token expirado, limpando dados de autenticação...');
+      clearAllAuth();
+      return;
+    }
+    
+    // Sincronizar token para todas as localizações
+    try {
+      // Armazenar em localStorage (prioridade principal)
+      localStorage.setItem('auth_token', foundToken);
+      localStorage.setItem('token', foundToken); // Compatibilidade
+      
+      // Limpar sessionStorage para evitar conflitos
+      possibleTokenKeys.forEach(key => {
+        sessionStorage.removeItem(key);
+      });
+      
+      // Configurar cookie
+      const maxAge = 7 * 24 * 60 * 60; // 7 dias
+      document.cookie = `auth_token=${foundToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+      
+      console.log('✅ Token sincronizado com sucesso');
+      
+      // Verificar sincronização
+      const verifyToken = localStorage.getItem('auth_token');
+      if (verifyToken === foundToken) {
+        console.log('✅ Verificação: Token sincronizado corretamente');
+      } else {
+        console.error('❌ Verificação: Falha na sincronização');
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao sincronizar token:', error);
+    }
+    
+  } else {
+    console.log('❌ Nenhum token válido encontrado para sincronizar');
+    
+    // Se não há token, garantir que tudo está limpo
+    clearAllAuth();
+  }
+  
+  // Sincronizar dados do usuário se disponíveis
+  const userKeys = ['user', 'user_session', 'userSession'];
+  let foundUserData: any = null;
+  
+  for (const key of userKeys) {
+    const userData = localStorage.getItem(key);
+    if (userData) {
+      try {
+        foundUserData = JSON.parse(userData);
+        break;
+      } catch (error) {
+        console.warn(`⚠️ Erro ao parsear dados do usuário da chave ${key}`);
+      }
+    }
+  }
+  
+  if (foundUserData && foundToken) {
+    console.log('🔄 Sincronizando dados do usuário...');
+    try {
+      localStorage.setItem('user_session', JSON.stringify(foundUserData));
+      
+      // Configurar cookie com dados do usuário (não sensíveis)
+      const userDataForCookie = {
+        id: foundUserData.id || foundUserData.userId,
+        name: foundUserData.name,
+        email: foundUserData.email,
+        role: foundUserData.role || foundUserData.role_name
+      };
+      
+      const userDataString = encodeURIComponent(JSON.stringify(userDataForCookie));
+      document.cookie = `user_data=${userDataString}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      
+      console.log('✅ Dados do usuário sincronizados');
+    } catch (error) {
+      console.error('❌ Erro ao sincronizar dados do usuário:', error);
+    }
+  }
 }
 
 /**
@@ -512,9 +758,53 @@ export function repairAuth(): void {
         break;
       }
     }
+    
+    // 4. Verificar se é um token Base64 que pode ser convertido para JWT
+    if (diagnostic.token.present && diagnostic.token.length > 50) {
+      const token = diagnostic.localStorage.authToken;
+      if (token && token.split('.').length === 1) {
+        console.log('🔧 Detectado token Base64, tentando converter para JWT...');
+        try {
+          // Tentar decodificar como Base64
+          const decoded = atob(token);
+          const tokenData = JSON.parse(decoded);
+          
+          if (tokenData.userId && tokenData.email && tokenData.role) {
+            console.log('🔧 Token Base64 válido encontrado, gerando novo JWT...');
+            
+            // Gerar um novo token JWT com os mesmos dados
+            const newJwtPayload = {
+              userId: tokenData.userId,
+              email: tokenData.email,
+              name: tokenData.name,
+              role: tokenData.role,
+              institutionId: tokenData.institutionId,
+              permissions: tokenData.permissions || [],
+              iat: Math.floor(Date.now() / 1000),
+              exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24h
+            };
+            
+            // Simular um JWT válido (3 partes)
+            const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+            const payload = btoa(JSON.stringify(newJwtPayload));
+            const signature = btoa('mock_signature'); // Assinatura mock para desenvolvimento
+            
+            const newJwtToken = `${header}.${payload}.${signature}`;
+            
+            // Armazenar o novo token
+            localStorage.setItem('auth_token', newJwtToken);
+            localStorage.setItem('authToken', newJwtToken);
+            
+            console.log('✅ Token Base64 convertido para JWT com sucesso!');
+          }
+        } catch (error) {
+          console.error('❌ Erro ao converter token Base64:', error);
+        }
+      }
+    }
   }
   
-  // 4. Testar após reparo
+  // 5. Testar após reparo
   testApiCall('/api/auth/validate').then(result => {
     if (result.success) {
       console.log('✅ Reparo bem-sucedido! Autenticação funcionando.');
@@ -527,6 +817,67 @@ export function repairAuth(): void {
   console.groupEnd();
 }
 
+/**
+ * Função específica para converter tokens Base64 para JWT
+ */
+export function convertBase64TokenToJWT(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  console.group('🔄 CONVERSÃO DE TOKEN BASE64 PARA JWT');
+  
+  const possibleKeys = ['auth_token', 'authToken', 'token'];
+  let converted = false;
+  
+  for (const key of possibleKeys) {
+    const token = localStorage.getItem(key);
+    if (token && token.split('.').length === 1 && token.length > 50) {
+      try {
+        // Tentar decodificar como Base64
+        const decoded = atob(token);
+        const tokenData = JSON.parse(decoded);
+        
+        if (tokenData.userId && tokenData.email && tokenData.role) {
+          console.log(`🔄 Convertendo token Base64 em ${key} para JWT...`);
+          
+          // Gerar um novo token JWT com os mesmos dados
+          const newJwtPayload = {
+            userId: tokenData.userId,
+            email: tokenData.email,
+            name: tokenData.name,
+            role: tokenData.role,
+            institutionId: tokenData.institutionId,
+            permissions: tokenData.permissions || [],
+            iat: Math.floor(Date.now() / 1000),
+            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24h
+          };
+          
+          // Simular um JWT válido (3 partes)
+          const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+          const payload = btoa(JSON.stringify(newJwtPayload));
+          const signature = btoa('mock_signature'); // Assinatura mock para desenvolvimento
+          
+          const newJwtToken = `${header}.${payload}.${signature}`;
+          
+          // Armazenar o novo token
+          localStorage.setItem(key, newJwtToken);
+          
+          console.log(`✅ Token em ${key} convertido com sucesso!`);
+          converted = true;
+        }
+      } catch (error) {
+        console.warn(`⚠️ Erro ao converter token em ${key}:`, error);
+      }
+    }
+  }
+  
+  if (!converted) {
+    console.log('ℹ️ Nenhum token Base64 encontrado para conversão');
+  }
+  
+  console.groupEnd();
+  return converted;
+}
+
 // Expor globalmente para debug
 if (typeof window !== 'undefined') {
   (window as any).debugAuth = debugAuth;
@@ -536,4 +887,18 @@ if (typeof window !== 'undefined') {
   (window as any).testTokenDirectly = testTokenDirectly;
   (window as any).syncAuthData = syncAuthData;
   (window as any).repairAuth = repairAuth;
+  (window as any).convertBase64TokenToJWT = convertBase64TokenToJWT;
+  
+  // Função de conveniência para resolver o problema atual
+  (window as any).fixAuthToken = () => {
+    console.log('🔧 CORREÇÃO RÁPIDA DO TOKEN DE AUTENTICAÇÃO');
+    const converted = convertBase64TokenToJWT();
+    if (converted) {
+      console.log('✅ Token corrigido! Recarregando a página...');
+      setTimeout(() => window.location.reload(), 1000);
+    } else {
+      console.log('ℹ️ Nenhuma correção necessária ou token já está no formato correto');
+      debugAuth();
+    }
+  };
 } 

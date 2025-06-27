@@ -211,11 +211,20 @@ function SystemAdminDashboardContent() {
   } | null>(null);
 
   useEffect(() => {
-    // Executar diagnóstico de autenticação primeiro
+    // Executar diagnóstico e sincronização de autenticação primeiro
     console.log('🔍 Executando diagnóstico de autenticação...');
     debugAuth();
     
-    loadDashboardData();
+    // Sincronizar dados de autenticação para resolver inconsistências
+    console.log('🔄 Sincronizando dados de autenticação...');
+    import('@/utils/auth-debug').then(({ syncAuthData }) => {
+      syncAuthData();
+      
+      // Aguardar um pouco após sincronização antes de carregar dados
+      setTimeout(() => {
+        loadDashboardData();
+      }, 500);
+    });
     
     // Auto-refresh a cada 30 segundos para métricas em tempo real
     const interval = setInterval(() => {
@@ -965,10 +974,10 @@ function SystemAdminDashboardContent() {
                 {dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'}
               </p>
               <p className="text-xs text-gray-600">Sessões Ativas</p>
-              <p className="text-xs text-gray-500 flex items-center gap-1">
+              <div className="text-xs text-gray-500 flex items-center gap-1">
                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                {dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || '0'} usuários online
-              </p>
+                <span>{dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || '0'} usuários online</span>
+              </div>
             </div>
           </div>
         </SimpleCard>

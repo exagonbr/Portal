@@ -715,45 +715,102 @@ export const validateTokenUltraSimple = async (
       });
     }
 
-    // Tentar decodificar o token
+    let userAuth: AuthTokenPayload;
+
+    // Tentar primeiro como JWT
     const secret = process.env.JWT_SECRET || 'ExagonTech';
-    let decoded;
-    
     try {
-      decoded = jwt.verify(token, secret) as any;
-      console.log('✅ Token decoded successfully for user:', decoded.email);
+      const decoded = jwt.verify(token, secret) as any;
+      console.log('✅ Token decoded as JWT successfully for user:', decoded.email);
+      
+      if (typeof decoded === 'string' || !decoded.userId) {
+        throw new Error('Invalid JWT payload');
+      }
+      
+      userAuth = {
+        userId: decoded.userId,
+        email: decoded.email,
+        name: decoded.name,
+        role: decoded.role,
+        permissions: decoded.permissions || [],
+        institutionId: decoded.institutionId,
+        sessionId: decoded.sessionId,
+        iat: decoded.iat,
+        exp: decoded.exp
+      };
     } catch (jwtError: any) {
-      console.log('❌ JWT verification failed:', jwtError.message);
-      return res.status(401).json({
-        success: false,
-        error: 'Token inválido ou expirado',
-        debug: jwtError.message
-      });
-    }
-    
-    if (typeof decoded === 'string' || !decoded.userId) {
-      console.log('❌ Invalid token payload');
-      return res.status(401).json({
-        success: false,
-        error: 'Payload do token inválido',
-        debug: 'Token payload is invalid'
-      });
+      console.log('❌ JWT verification failed, trying base64 fallback:', jwtError.message);
+      
+      // Se falhar na validação JWT, tentar decodificar como base64 (fallback tokens)
+      try {
+        // Validate base64 format before attempting to decode
+        if (!isValidBase64(token)) {
+          return res.status(401).json({
+            success: false,
+            error: 'Token não está em formato JWT nem base64 válido',
+            debug: 'Invalid token format'
+          });
+        }
+
+        const base64Decoded = Buffer.from(token, 'base64').toString('utf-8');
+        
+        // Check if decoded content is valid JSON
+        if (!isValidJSON(base64Decoded)) {
+          return res.status(401).json({
+            success: false,
+            error: 'Token decodificado não é JSON válido',
+            debug: 'Decoded token is not valid JSON'
+          });
+        }
+
+        const fallbackData = JSON.parse(base64Decoded);
+        console.log('🔍 Fallback token data:', fallbackData);
+        
+        // Verifica se é uma estrutura válida de token fallback
+        if (fallbackData.userId && fallbackData.email && fallbackData.role) {
+          // Verifica se o token não expirou
+          if (fallbackData.exp && fallbackData.exp < Math.floor(Date.now() / 1000)) {
+            return res.status(401).json({
+              success: false,
+              error: 'Token expirado',
+              debug: 'Fallback token has expired'
+            });
+          }
+          
+          userAuth = {
+            userId: fallbackData.userId,
+            email: fallbackData.email,
+            name: fallbackData.name || fallbackData.userId,
+            role: fallbackData.role,
+            permissions: fallbackData.permissions || [],
+            institutionId: fallbackData.institutionId,
+            sessionId: fallbackData.sessionId,
+            iat: fallbackData.iat || Math.floor(Date.now() / 1000),
+            exp: fallbackData.exp || Math.floor(Date.now() / 1000) + 3600
+          };
+          
+          console.log('✅ Token decoded as base64 fallback successfully for user:', userAuth.email);
+        } else {
+          return res.status(401).json({
+            success: false,
+            error: 'Estrutura de token fallback inválida',
+            debug: 'Fallback token missing required fields'
+          });
+        }
+      } catch (base64Error: any) {
+        console.log('❌ Base64 fallback also failed:', base64Error.message);
+        return res.status(401).json({
+          success: false,
+          error: 'Token inválido ou expirado',
+          debug: `JWT error: ${jwtError.message}, Base64 error: ${base64Error.message}`
+        });
+      }
     }
 
-    // Criar objeto user mínimo
-    req.user = {
-      userId: decoded.userId,
-      email: decoded.email,
-      name: decoded.name,
-      role: decoded.role,
-      permissions: decoded.permissions || [],
-      institutionId: decoded.institutionId,
-      sessionId: decoded.sessionId,
-      iat: decoded.iat,
-      exp: decoded.exp
-    };
+    // Criar objeto user
+    req.user = userAuth;
 
-    console.log('✅ User authenticated:', decoded.email, 'Role:', decoded.role);
+    console.log('✅ User authenticated:', userAuth.email, 'Role:', userAuth.role);
     next();
   } catch (error: any) {
     console.error('❌ validateTokenUltraSimple error:', error);

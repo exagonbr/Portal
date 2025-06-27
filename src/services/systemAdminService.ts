@@ -216,12 +216,29 @@ class SystemAdminService {
       }
     } catch (err: any) {
       console.error('❌ [SYSTEM-ADMIN] Erro na requisição de teste:', err);
-      error = err.message || 'Erro na requisição';
       
-      // Se o erro for de autenticação, a API está funcionando
-      if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+      // Analisar o tipo de erro mais detalhadamente
+      if (err.name === 'AuthError' || err.status === 401) {
         apiWorking = true;
         tokenValid = false;
+        error = err.message || 'Token de autenticação inválido';
+        console.log('🔍 [SYSTEM-ADMIN] Erro de autenticação detectado:', error);
+      } else if (err.name === 'NetworkError' || err.status === 0) {
+        apiWorking = false;
+        tokenValid = false;
+        error = 'Erro de conectividade com a API';
+        console.log('🔍 [SYSTEM-ADMIN] Erro de rede detectado:', error);
+      } else if (err.name === 'TimeoutError' || err.status === 408) {
+        apiWorking = false;
+        tokenValid = false;
+        error = 'Timeout na requisição para a API';
+        console.log('🔍 [SYSTEM-ADMIN] Timeout detectado:', error);
+      } else {
+        // Para outros erros, assumir que a API pode estar funcionando
+        apiWorking = true;
+        tokenValid = false;
+        error = err.message || 'Erro desconhecido na requisição';
+        console.log('🔍 [SYSTEM-ADMIN] Erro genérico:', error);
       }
     }
     

@@ -159,7 +159,6 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme, isSystemAdm
     <Link
       href={item.href}
       prefetch={true}
-      locale={false}
       className={`flex items-center gap-2 px-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
         ${isCollapsed ? 'justify-center' : ''}
         py-1.5 min-h-[32px]`}
