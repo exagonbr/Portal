@@ -248,36 +248,201 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [safeRedirect]);
 
   /**
-   * Logout do usuário - Simplificado
+   * Logout do usuário - Limpeza completa melhorada
    */
   const logout = useCallback(async () => {
     try {
-      console.log('🔐 AuthContext: Iniciando logout...');
+      console.log('🔐 AuthContext: Iniciando logout completo...');
       setLoading(true);
       
       // Limpar estado local primeiro
       setUser(null);
       setError(null);
       
-      // Chamar serviço de logout (limpa sessão e cookies)
-      await authService.logout();
+      // Função para limpeza completa de dados
+      const performCompleteCleanup = async () => {
+        if (typeof window === 'undefined') return;
+        
+        console.log('🧹 Iniciando limpeza completa de dados...');
+        
+        // 1. Limpar localStorage
+        try {
+          const localStorageKeys = [
+            'auth_token',
+            'refresh_token',
+            'session_id',
+            'user',
+            'user_data',
+            'auth_expires_at',
+            'next-auth.session-token',
+            'next-auth.csrf-token',
+            '__Secure-next-auth.session-token',
+            '__Host-next-auth.csrf-token',
+            'selectedRole',
+            'theme',
+            'user_preferences',
+            'cached_data',
+            'app_cache'
+          ];
+          
+          localStorageKeys.forEach(key => {
+            localStorage.removeItem(key);
+          });
+          
+          console.log('✅ localStorage limpo');
+        } catch (error) {
+          console.warn('⚠️ Erro ao limpar localStorage:', error);
+          // Fallback: limpar tudo
+          try {
+            localStorage.clear();
+          } catch (fallbackError) {
+            console.error('❌ Erro no fallback do localStorage:', fallbackError);
+          }
+        }
+        
+        // 2. Limpar sessionStorage
+        try {
+          sessionStorage.clear();
+          console.log('✅ sessionStorage limpo');
+        } catch (error) {
+          console.warn('⚠️ Erro ao limpar sessionStorage:', error);
+        }
+        
+        // 3. Limpar cookies de forma abrangente
+        try {
+          const cookiesToClear = [
+            'auth_token',
+            'refresh_token',
+            'session_id',
+            'user_data',
+            'next-auth.session-token',
+            'next-auth.csrf-token',
+            '__Secure-next-auth.session-token',
+            '__Host-next-auth.csrf-token',
+            'redirect_count',
+            'theme',
+            'user_preferences'
+          ];
+          
+          cookiesToClear.forEach(cookieName => {
+            // Limpar para diferentes configurações de path e domain
+            const domains = ['', window.location.hostname, `.${window.location.hostname}`];
+            const paths = ['/', ''];
+            
+            domains.forEach(domain => {
+              paths.forEach(path => {
+                const domainPart = domain ? `;domain=${domain}` : '';
+                const pathPart = path ? `;path=${path}` : '';
+                
+                // Limpar com diferentes configurações de segurança
+                document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart}`;
+                document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart};secure`;
+                document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart};httponly`;
+                document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT${pathPart}${domainPart};secure;httponly`;
+              });
+            });
+          });
+          
+          console.log('✅ Cookies limpos');
+        } catch (error) {
+          console.warn('⚠️ Erro ao limpar cookies:', error);
+        }
+        
+        // 4. Limpar caches do navegador (se suportado)
+        try {
+          if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+              cacheNames.map(cacheName => caches.delete(cacheName))
+            );
+            console.log('✅ Caches do navegador limpos');
+          }
+        } catch (error) {
+          console.warn('⚠️ Erro ao limpar caches do navegador:', error);
+        }
+        
+        // 5. Limpar IndexedDB (se existir)
+        try {
+          if ('indexedDB' in window) {
+            // Tentar limpar databases conhecidos
+            const dbNames = ['app_cache', 'user_data', 'offline_data'];
+            for (const dbName of dbNames) {
+              try {
+                const deleteRequest = indexedDB.deleteDatabase(dbName);
+                await new Promise((resolve, reject) => {
+                  deleteRequest.onsuccess = () => resolve(undefined);
+                  deleteRequest.onerror = () => reject(deleteRequest.error);
+                });
+              } catch (dbError) {
+                console.warn(`⚠️ Erro ao limpar IndexedDB ${dbName}:`, dbError);
+              }
+            }
+            console.log('✅ IndexedDB limpo');
+          }
+        } catch (error) {
+          console.warn('⚠️ Erro ao limpar IndexedDB:', error);
+        }
+        
+        // 6. Invalidar Service Worker cache
+        try {
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'CLEAR_CACHE',
+              payload: { reason: 'logout' }
+            });
+            console.log('✅ Service Worker notificado para limpar cache');
+          }
+        } catch (error) {
+          console.warn('⚠️ Erro ao notificar Service Worker:', error);
+        }
+        
+        console.log('✅ Limpeza completa de dados finalizada');
+      };
       
-      // Aguardar um pouco para garantir limpeza
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Executar limpeza completa
+      await performCompleteCleanup();
+      
+      // Chamar serviço de logout (limpa sessão no backend)
+      try {
+        await authService.logout();
+        console.log('✅ Logout no backend realizado');
+      } catch (backendError) {
+        console.warn('⚠️ Erro no logout do backend:', backendError);
+        // Continuar mesmo se o backend falhar
+      }
+      
+      // Aguardar um pouco para garantir que tudo foi processado
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Redirecionar para login com parâmetro de logout
-      console.log('🎯 Redirecionando para login após logout');
+      console.log('🎯 Redirecionando para login após logout completo');
       safeRedirect('/login?logout=true');
       
     } catch (err: any) {
       console.error('❌ Erro no logout:', err);
       
-      // Garantir limpeza mesmo com erro
-      setUser(null);
-      setError(null);
+      // Garantir limpeza de emergência mesmo com erro
+      try {
+        setUser(null);
+        setError(null);
+        
+        if (typeof window !== 'undefined') {
+          // Limpeza de emergência
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Limpar cookies principais
+          const mainCookies = ['auth_token', 'session_id', 'user_data'];
+          mainCookies.forEach(cookie => {
+            document.cookie = `${cookie}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+          });
+        }
+      } catch (cleanupError) {
+        console.error('❌ Erro na limpeza de emergência:', cleanupError);
+      }
       
       // Redirecionar mesmo com erro
-      safeRedirect('/login?logout=true');
+      safeRedirect('/login?logout=true&error=cleanup_failed');
     } finally {
       setLoading(false);
     }

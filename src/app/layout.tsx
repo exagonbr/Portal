@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { SimpleProviders } from '@/providers/SimpleProviders';
-import ConnectivityDiagnosticWrapper from '@/components/debug/ConnectivityDiagnosticWrapper';
 
 // Importar debugger HTTP 500 em desenvolvimento
 if (process.env.NODE_ENV === 'development') {
@@ -65,6 +64,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
         {/* Remover preload de fontes específicas para evitar avisos */}
+        
+        {/* Service Worker personalizado para limpeza de cache */}
+        <script src="/register-sw.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`}>
         <SimpleProviders>
@@ -72,7 +74,6 @@ export default function RootLayout({
             {children}
           </div>
         </SimpleProviders>
-        <ConnectivityDiagnosticWrapper />
       </body>
     </html>
   );

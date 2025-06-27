@@ -11,7 +11,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
-import { MobileDebugInfo } from '@/components/debug/MobileDebugInfo';
 import { MotionDiv, MotionH1, MotionP, ClientOnly } from '@/components/ui/MotionWrapper';
 
 export function LoginPage() {
@@ -359,9 +358,6 @@ export function LoginPage() {
           </div>
         </MotionDiv>
       </MotionDiv>
-      
-      {/* Debug info apenas em desenvolvimento */}
-      {process.env.NODE_ENV === 'development' && <MobileDebugInfo />}
     </div>
   );
 } 
