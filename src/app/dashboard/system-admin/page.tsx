@@ -105,7 +105,7 @@ interface SystemDashboardData {
       };
     };
   };
-  sessions: {
+  sessions?: {
     activeUsers: number;
     totalActiveSessions: number;
     sessionsByDevice: Record<string, number>;
@@ -523,7 +523,9 @@ function SystemAdminDashboardContent() {
           sessions: {
             ...prev.sessions,
             activeUsers: metrics.activeUsers,
-            totalActiveSessions: metrics.activeSessions
+            totalActiveSessions: metrics.activeSessions,
+            sessionsByDevice: prev.sessions?.sessionsByDevice || {},
+            averageSessionDuration: prev.sessions?.averageSessionDuration || 0
           },
           system: {
             ...prev.system,
@@ -607,7 +609,7 @@ function SystemAdminDashboardContent() {
     }]
   } : null;
 
-  const sessionsByDeviceData = dashboardData ? {
+  const sessionsByDeviceData = dashboardData?.sessions?.sessionsByDevice ? {
     labels: Object.keys(dashboardData.sessions.sessionsByDevice),
     datasets: [{
       label: 'Sessões Ativas',
@@ -840,8 +842,8 @@ function SystemAdminDashboardContent() {
         <StatCard
           icon={Users}
           title="Usuários Online"
-          value={dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || realUserStats?.active_users?.toLocaleString('pt-BR') || '0'}
-          subtitle={`${dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'} sessões ativas`}
+          value={dashboardData?.sessions?.activeUsers?.toLocaleString('pt-BR') || realUserStats?.active_users?.toLocaleString('pt-BR') || '0'}
+          subtitle={`${dashboardData?.sessions?.totalActiveSessions?.toLocaleString('pt-BR') || '0'} sessões ativas`}
           color="violet"
           trend={dashboardData?.sessions?.activeUsers && dashboardData.sessions.activeUsers > 5000 ? 'Alta carga' : 'Tempo real'}
         />
@@ -971,12 +973,12 @@ function SystemAdminDashboardContent() {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-800">
-                {dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'}
+                {dashboardData?.sessions?.totalActiveSessions?.toLocaleString('pt-BR') || '0'}
               </p>
               <p className="text-xs text-gray-600">Sessões Ativas</p>
               <div className="text-xs text-gray-500 flex items-center gap-1">
                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span>{dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || '0'} usuários online</span>
+                <span>{dashboardData?.sessions?.activeUsers?.toLocaleString('pt-BR') || '0'} usuários online</span>
               </div>
             </div>
           </div>
@@ -989,7 +991,7 @@ function SystemAdminDashboardContent() {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-800">
-                {dashboardData ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
+                {dashboardData?.sessions?.averageSessionDuration ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
               </p>
               <p className="text-xs text-gray-600">Tempo Médio</p>
               <p className="text-xs text-gray-500">Por sessão</p>
@@ -1235,7 +1237,7 @@ function SystemAdminDashboardContent() {
                   />
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-                  {dashboardData && Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
+                  {dashboardData?.sessions?.sessionsByDevice && Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
                     const colors = ['text-indigo-600', 'text-green-600', 'text-orange-600', 'text-purple-600'];
                     const bgColors = ['bg-indigo-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100'];
                     const icons = [Monitor, Smartphone, Tablet];
