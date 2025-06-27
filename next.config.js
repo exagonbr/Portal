@@ -25,7 +25,6 @@ const nextConfig = {
   // Configurações experimentais simplificadas
   experimental: {
     optimizePackageImports: ['react-hot-toast', 'lucide-react'],
-    esmExternals: 'loose',
   },
   
   // Configuração webpack simplificada
@@ -41,15 +40,18 @@ const nextConfig = {
 
     // Configurações apenas para o cliente
     if (!isServer) {
-      // Configuração de splitChunks simplificada
+      // Configuração de splitChunks otimizada para evitar erros de originalFactory
       config.optimization.splitChunks = {
         chunks: 'all',
+        maxInitialRequests: 25,
+        maxAsyncRequests: 25,
         cacheGroups: {
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             chunks: 'all',
             priority: 10,
+            enforce: true,
           },
           common: {
             name: 'common',
@@ -57,9 +59,21 @@ const nextConfig = {
             chunks: 'all',
             priority: 5,
             reuseExistingChunk: true,
+            enforce: true,
+          },
+          // Chunk específico para React e dependências críticas
+          react: {
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            name: 'react',
+            chunks: 'all',
+            priority: 20,
+            enforce: true,
           },
         },
       };
+
+      // Configuração adicional para evitar erros de chunk
+      config.optimization.runtimeChunk = 'single';
 
       // Fallbacks para cliente
       config.resolve.fallback = {
@@ -93,6 +107,12 @@ const nextConfig = {
         contextRegExp: /./,
       })
     );
+
+    // Configurações adicionais para evitar erros de originalFactory
+    if (!isServer) {
+      // Não sobrescrever alias do React para evitar conflitos com jsx-runtime
+      // O Next.js já gerencia isso corretamente
+    }
 
     return config;
   },
@@ -149,7 +169,7 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
-  // Headers simplificados
+  // Headers corrigidos para resolver problema de MIME type CSS
   async headers() {
     return [
       {
@@ -169,9 +189,50 @@ const nextConfig = {
           },
         ]
       },
+      // CORREÇÃO: Headers específicos para CSS do Next.js
+      {
+        source: '/_next/static/css/:path*.css',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'text/css; charset=utf-8'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          },
+        ]
+      },
+      // CORREÇÃO: Headers para chunks JavaScript
+      {
+        source: '/_next/static/chunks/:path*.js',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          },
+        ]
+      },
+      // Headers genéricos para assets estáticos
       {
         source: '/_next/static/:path*',
         headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable'

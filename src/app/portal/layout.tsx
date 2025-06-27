@@ -1,6 +1,7 @@
 'use client';
 
 import RoleGuard from '@/components/auth/RoleGuard';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout';
 import { UserRole } from '@/types/roles';
 
@@ -11,9 +12,9 @@ export default function PortalLayout({
 }) {
   return (
     <RoleGuard allowedRoles={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR, UserRole.TEACHER, UserRole.STUDENT]}>
-      <DashboardPageLayout title="">
+      <DashboardLayout >
         {children}
-      </DashboardPageLayout>
+      </DashboardLayout>
     </RoleGuard>
   )
 } 

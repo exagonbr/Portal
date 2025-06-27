@@ -177,8 +177,17 @@ export function clearChunkCache(): void {
 
 /**
  * CORREÇÃO: Configura listener global mais robusto para ChunkLoadError
+ * DESABILITADO para evitar recarregamentos automáticos excessivos
  */
 export function setupChunkErrorHandler(): void {
+  // DESABILITADO: Não configurar mais handlers automáticos
+  console.log('⚠️ Chunk error handler (chunk-retry) DESABILITADO para evitar recarregamentos excessivos');
+  
+  // Apenas logar que foi desabilitado
+  return;
+  
+  // CÓDIGO ORIGINAL COMENTADO:
+  /*
   if (typeof window !== 'undefined') {
     // Listener para erros de script/chunk
     window.addEventListener('error', (event) => {
@@ -229,4 +238,5 @@ export function setupChunkErrorHandler(): void {
       }
     }, true);
   }
+  */
 } 

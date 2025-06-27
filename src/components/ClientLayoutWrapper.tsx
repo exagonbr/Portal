@@ -9,9 +9,7 @@ import Handtalk from '@/components/Handtalk';
 import ClientOnly from '@/components/ClientOnly';
 import { LoopEmergencyReset } from '@/components/LoopEmergencyReset';
 import { FirefoxCompatibilityInitializer } from '@/components/FirefoxCompatibilityInitializer';
-import ChunkErrorHandler from '@/components/ChunkErrorHandler';
 import HydrationDebugger from '@/components/HydrationDebugger';
-import { setupChunkErrorHandler } from '@/utils/chunk-retry';
 
 interface ClientLayoutWrapperProps {
   children: React.ReactNode;
@@ -29,23 +27,13 @@ function SimpleWrapper({ children }: { children: React.ReactNode }) {
 
 export default function ClientLayoutWrapper({ children, fallback }: ClientLayoutWrapperProps) {
   const [mounted, setMounted] = useState(false);
-  const [hasError, setHasError] = useState(false);
 
   const defaultFallback = fallback || <SimpleWrapper>{children}</SimpleWrapper>;
 
   useEffect(() => {
     try {
-      // Configurar handler de chunk errors de forma mais simples
-      const handleChunkError = (event: ErrorEvent) => {
-        if (event.error?.message?.includes('originalFactory') || 
-            event.error?.message?.includes('ChunkLoadError')) {
-          console.warn('🔄 Erro de chunk detectado no ClientLayoutWrapper')
-          setHasError(true)
-          event.preventDefault()
-        }
-      }
-
-      window.addEventListener('error', handleChunkError)
+      // DESABILITADO: Não configurar mais handlers de chunk error
+      console.log('⚠️ ClientLayoutWrapper sem handlers automáticos de chunk error');
       
       // Marcar como montado após um pequeno delay
       const timer = setTimeout(() => {
@@ -54,20 +42,18 @@ export default function ClientLayoutWrapper({ children, fallback }: ClientLayout
 
       return () => {
         clearTimeout(timer);
-        window.removeEventListener('error', handleChunkError)
       };
     } catch (error) {
       console.error('❌ Erro na inicialização do ClientLayoutWrapper:', error);
-      setHasError(true);
       setMounted(true);
     }
   }, []);
 
-  // Se não montou ainda ou houve erro, renderizar fallback
-  if (!mounted || hasError) {
+  // Se não montou ainda, renderizar fallback
+  if (!mounted) {
     return <>{defaultFallback}</>;
   }
 
-  // Por enquanto, renderizar apenas o wrapper simples
+  // Renderizar apenas o wrapper simples
   return <SimpleWrapper>{children}</SimpleWrapper>;
 } 

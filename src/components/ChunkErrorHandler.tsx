@@ -4,9 +4,15 @@ import { useEffect } from 'react';
 
 /**
  * Componente para configurar o handler global de ChunkLoadError
+ * DESABILITADO para evitar recarregamentos automáticos excessivos
  */
 export default function ChunkErrorHandler() {
   useEffect(() => {
+    // DESABILITADO: Não configurar mais handlers automáticos
+    console.log('⚠️ ChunkErrorHandler DESABILITADO para evitar recarregamentos excessivos');
+    
+    // CÓDIGO ORIGINAL COMENTADO:
+    /*
     // Importar e configurar o handler de chunk errors
     import('../utils/chunk-retry').then(({ setupChunkErrorHandler }) => {
       setupChunkErrorHandler();
@@ -31,6 +37,7 @@ export default function ChunkErrorHandler() {
         // Ignore cleanup errors
       });
     };
+    */
   }, []);
 
   return null; // Componente invisível

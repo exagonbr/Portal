@@ -638,8 +638,20 @@ function DashboardSidebarComponent() {
               },
               {
                 href: '/portal/videos',
-                icon: 'person_outline',
-                label: 'Portal do Videos',
+                icon: 'play_circle',
+                label: 'Portal de Vídeos',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/collections',
+                icon: 'video_library',
+                label: 'Coleções',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/collections/manage',
+                icon: 'edit_note',
+                label: 'Gerenciar Coleções',
                 permission: 'canAccessLearningMaterials'
               }
             ]
@@ -763,6 +775,18 @@ function DashboardSidebarComponent() {
                 permission: 'canAccessLearningMaterials'
               },
               {
+                href: '/portal/collections',
+                icon: 'video_library',
+                label: 'Coleções',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/collections/manage',
+                icon: 'edit_note',
+                label: 'Gerenciar Coleções',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
                 href: '/portal/student',
                 icon: 'person_outline',
                 label: 'Portal do Aluno',
@@ -843,6 +867,18 @@ function DashboardSidebarComponent() {
                 permission: 'canUploadResources'
               },
               {
+                href: '/portal/collections',
+                icon: 'video_library',
+                label: 'Coleções',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/collections/manage',
+                icon: 'edit_note',
+                label: 'Gerenciar Coleções',
+                permission: 'canUploadResources'
+              },
+              {
                 href: '/portal/books',
                 icon: 'auto_stories',
                 label: 'Portal de Literatura',
@@ -915,6 +951,12 @@ function DashboardSidebarComponent() {
                 href: '/portal/videos',
                 icon: 'play_circle',
                 label: 'Portal de Vídeos',
+                permission: 'canAccessLearningMaterials'
+              },
+              {
+                href: '/portal/collections',
+                icon: 'video_library',
+                label: 'Coleções',
                 permission: 'canAccessLearningMaterials'
               },
               {

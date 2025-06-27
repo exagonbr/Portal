@@ -26,7 +26,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
 
-    const response = await fetch(`getInternalApiUrl('/api/aws/connection-logs/stats?${queryString}')`, {
+    const apiUrl = queryString 
+      ? `${getInternalApiUrl('/api/aws/connection-logs/stats')}?${queryString}`
+      : getInternalApiUrl('/api/aws/connection-logs/stats');
+
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Authorization': request.headers.get('authorization') || '',

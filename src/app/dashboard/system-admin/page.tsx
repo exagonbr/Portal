@@ -35,93 +35,17 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
-import { Line, Pie, Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { systemAdminService } from '@/services/systemAdminService';
+import { systemAdminService, SystemDashboardData as ServiceSystemDashboardData } from '@/services/systemAdminService';
 import { InstitutionService } from '@/services/institutionService';
 import { InstitutionType, InstitutionNature } from '@/types/institution';
-// import { Address } from '@/types/common'; // Address não existe, usando string | object
 import { debugAuth } from '@/utils/auth-debug';
 import { StatCard, ContentCard, SimpleCard } from '@/components/ui/StandardCard';
 
-
-// Registrando os componentes necessários do Chart.js
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
-
-// Interfaces para dados reais da API
-interface SystemDashboardData {
-  users: {
-    total: number;
-    active: number;
-    newThisMonth: number;
-    byRole: Record<string, number>;
-    byInstitution: Record<string, number>;
-  };
-  schools?: {
-    total: number;
-    active: number;
-    byType: Record<string, number>;
-    byRegion: Record<string, number>;
-  };
-  infrastructure?: {
-    aws: {
-      status: string;
-      services: string[];
-      costs: {
-        monthly: number;
-        storage: number;
-        compute: number;
-        network: number;
-      };
-      performance: {
-        uptime: number;
-        responseTime: number;
-        dataTransfer: string;
-      };
-    };
-  };
-  sessions?: {
-    activeUsers: number;
-    totalActiveSessions: number;
-    sessionsByDevice: Record<string, number>;
-    averageSessionDuration: number;
-  };
-  system: {
-    uptime: number;
-    memoryUsage: NodeJS.MemoryUsage;
-    version: string;
-    environment: string;
-  };
-  recent: {
-    registrations: any[];
-    logins: any[];
-  };
-}
+// Usar a interface do serviço diretamente
+type SystemDashboardData = ServiceSystemDashboardData;
 
 interface RealUserStats {
   total_users: number;
@@ -211,20 +135,11 @@ function SystemAdminDashboardContent() {
   } | null>(null);
 
   useEffect(() => {
-    // Executar diagnóstico e sincronização de autenticação primeiro
+    // Executar diagnóstico de autenticação primeiro
     console.log('🔍 Executando diagnóstico de autenticação...');
     debugAuth();
     
-    // Sincronizar dados de autenticação para resolver inconsistências
-    console.log('🔄 Sincronizando dados de autenticação...');
-    import('@/utils/auth-debug').then(({ syncAuthData }) => {
-      syncAuthData();
-      
-      // Aguardar um pouco após sincronização antes de carregar dados
-      setTimeout(() => {
-        loadDashboardData();
-      }, 500);
-    });
+    loadDashboardData();
     
     // Auto-refresh a cada 30 segundos para métricas em tempo real
     const interval = setInterval(() => {
@@ -241,25 +156,6 @@ function SystemAdminDashboardContent() {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Testar autenticação primeiro para debugar problemas
-      console.log('🧪 [DASHBOARD] Testando autenticação antes de carregar dados...');
-      const authTest = await systemAdminService.testAuthentication();
-      console.log('🧪 [DASHBOARD] Resultado do teste de autenticação:', authTest);
-      
-      if (!authTest.hasToken) {
-        console.error('❌ [DASHBOARD] Usuário não tem token de autenticação!');
-        toast.error('Erro de autenticação: Token não encontrado');
-        return;
-      }
-      
-      if (!authTest.tokenValid) {
-        console.error('❌ [DASHBOARD] Token de autenticação inválido!', authTest.error);
-        toast.error('Erro de autenticação: Token inválido');
-        return;
-      }
-      
-      console.log('✅ [DASHBOARD] Autenticação OK, carregando dados...');
       
       // Carregar dados em paralelo
       await Promise.all([
@@ -391,7 +287,7 @@ function SystemAdminDashboardContent() {
     const systemAlerts: SystemAlert[] = [];
     
     // Verificar uso de memória real se disponível
-    if (dashboardData?.system.memoryUsage) {
+    if (dashboardData?.system?.memoryUsage) {
       const memoryUsagePercent = (dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100;
       
       if (memoryUsagePercent > 85) {
@@ -473,47 +369,24 @@ function SystemAdminDashboardContent() {
 
   const loadRealUserStats = async () => {
     try {
-      console.log('📊 [FRONTEND] Carregando estatísticas de usuários...');
-      
       const response = await fetch('/api/users/stats', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      console.log('📊 [FRONTEND] Resposta da API:', response.status, response.statusText);
-
       if (response.ok) {
         const result = await response.json();
-        console.log('📊 [FRONTEND] Dados recebidos:', result);
-        
         if (result.success && result.data) {
-          // Verificar se os dados têm a estrutura esperada
-          const data = result.data;
-          const hasRequiredFields = 
-            data.total_users !== undefined &&
-            data.active_users !== undefined &&
-            data.users_by_role !== undefined &&
-            data.recent_registrations !== undefined;
-
-          if (hasRequiredFields) {
-            console.log('✅ [FRONTEND] Dados válidos, atualizando estado...');
-            setRealUserStats(data);
-            // Atualizar também os dados por role se estiverem disponíveis
-            if (data.users_by_role) {
-              setRealUsersByRole(data.users_by_role);
-            }
-          } else {
-            console.warn('⚠️ [FRONTEND] Dados recebidos não têm a estrutura esperada:', data);
+          setRealUserStats(result.data);
+          // Atualizar também os dados por role se estiverem disponíveis
+          if (result.data.users_by_role) {
+            setRealUsersByRole(result.data.users_by_role);
           }
-        } else {
-          console.warn('⚠️ [FRONTEND] Resposta da API não contém dados válidos:', result);
         }
-      } else {
-        console.error('❌ [FRONTEND] Erro na resposta da API:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('❌ [FRONTEND] Erro ao carregar estatísticas reais de usuários:', error);
+      console.error('Erro ao carregar estatísticas reais de usuários:', error);
     }
   };
 
@@ -546,14 +419,12 @@ function SystemAdminDashboardContent() {
           sessions: {
             ...prev.sessions,
             activeUsers: metrics.activeUsers,
-            totalActiveSessions: metrics.activeSessions,
-            sessionsByDevice: prev.sessions?.sessionsByDevice || {},
-            averageSessionDuration: prev.sessions?.averageSessionDuration || 0
+            totalActiveSessions: metrics.activeSessions
           },
-          system: {
+          system: prev.system ? {
             ...prev.system,
             memoryUsage: metrics.memoryUsage
-          }
+          } : undefined
         } : prev);
       }
     } catch (error) {
@@ -627,11 +498,12 @@ function SystemAdminDashboardContent() {
         'rgba(236, 72, 153, 1)',
         'rgba(34, 197, 94, 1)'
       ],
-      hoverBorderWidth: 3
+      hoverBorderWidth: 3,
+      hoverOffset: 8
     }]
   } : null;
 
-  const sessionsByDeviceData = dashboardData?.sessions?.sessionsByDevice ? {
+  const sessionsByDeviceData = dashboardData ? {
     labels: Object.keys(dashboardData.sessions.sessionsByDevice),
     datasets: [{
       label: 'Sessões Ativas',
@@ -770,7 +642,7 @@ function SystemAdminDashboardContent() {
             </button>
             <button 
               onClick={() => router.push('/admin/monitoring')}
-              className="px-3 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm"
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm"
             >
               <Gauge className="w-4 h-4" />
               Monitoramento
@@ -779,7 +651,7 @@ function SystemAdminDashboardContent() {
         </div>
         
         {/* Resumo Geral do Sistema */}
-        {realUserStats && realUserStats.total_users !== undefined && (
+        {realUserStats && (
           <div className="mt-4">
             <ContentCard
               title="Resumo Geral do Sistema"
@@ -789,11 +661,11 @@ function SystemAdminDashboardContent() {
             >
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xl font-bold text-blue-600">{(realUserStats.total_users || 0).toLocaleString('pt-BR')}</p>
+                  <p className="text-xl font-bold text-blue-600">{realUserStats.total_users.toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-gray-600">Total de Usuários</p>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <p className="text-xl font-bold text-green-600">{(realUserStats.active_users || 0).toLocaleString('pt-BR')}</p>
+                  <p className="text-xl font-bold text-green-600">{realUserStats.active_users.toLocaleString('pt-BR')}</p>
                   <p className="text-xs text-gray-600">Usuários Ativos</p>
                 </div>
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
@@ -801,7 +673,7 @@ function SystemAdminDashboardContent() {
                   <p className="text-xs text-gray-600">Instituições</p>
                 </div>
                 <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <p className="text-xl font-bold text-orange-600">{realUserStats.recent_registrations || 0}</p>
+                  <p className="text-xl font-bold text-orange-600">{realUserStats.recent_registrations}</p>
                   <p className="text-xs text-gray-600">Novos este Mês</p>
                 </div>
               </div>
@@ -845,17 +717,17 @@ function SystemAdminDashboardContent() {
         <StatCard
           icon={Server}
           title="Uptime do Sistema"
-          value={dashboardData ? formatUptime(dashboardData.system.uptime) : 'N/A'}
-          subtitle={`v${dashboardData?.system.version || 'N/A'} • ${dashboardData?.system.environment || 'N/A'}`}
+          value={dashboardData?.system ? formatUptime(dashboardData.system.uptime) : 'N/A'}
+          subtitle={`v${dashboardData?.system?.version || 'N/A'} • ${dashboardData?.system?.environment || 'N/A'}`}
           color="emerald"
         />
         <StatCard
           icon={Cpu}
           title="Memória Heap"
-          value={dashboardData ? formatBytes(dashboardData.system.memoryUsage.heapUsed) : 'N/A'}
-          subtitle={dashboardData ? `${((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100).toFixed(1)}% de ${formatBytes(dashboardData.system.memoryUsage.heapTotal)}` : 'N/A'}
+          value={dashboardData?.system ? formatBytes(dashboardData.system.memoryUsage.heapUsed) : 'N/A'}
+          subtitle={dashboardData?.system ? `${((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100).toFixed(1)}% de ${formatBytes(dashboardData.system.memoryUsage.heapTotal)}` : 'N/A'}
           color="blue"
-          trend={dashboardData ? 
+          trend={dashboardData?.system ? 
             ((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100) > 85 ? 'Crítico' :
             ((dashboardData.system.memoryUsage.heapUsed / dashboardData.system.memoryUsage.heapTotal) * 100) > 75 ? 'Atenção' : 'Normal'
             : 'Normal'
@@ -864,8 +736,8 @@ function SystemAdminDashboardContent() {
         <StatCard
           icon={Users}
           title="Usuários Online"
-          value={dashboardData?.sessions?.activeUsers?.toLocaleString('pt-BR') || realUserStats?.active_users?.toLocaleString('pt-BR') || '0'}
-          subtitle={`${dashboardData?.sessions?.totalActiveSessions?.toLocaleString('pt-BR') || '0'} sessões ativas`}
+          value={dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || realUserStats?.active_users?.toLocaleString('pt-BR') || '0'}
+          subtitle={`${dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'} sessões ativas`}
           color="violet"
           trend={dashboardData?.sessions?.activeUsers && dashboardData.sessions.activeUsers > 5000 ? 'Alta carga' : 'Tempo real'}
         />
@@ -995,13 +867,13 @@ function SystemAdminDashboardContent() {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-800">
-                {dashboardData?.sessions?.totalActiveSessions?.toLocaleString('pt-BR') || '0'}
+                {dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'}
               </p>
               <p className="text-xs text-gray-600">Sessões Ativas</p>
-              <div className="text-xs text-gray-500 flex items-center gap-1">
+              <p className="text-xs text-gray-500 flex items-center gap-1">
                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span>{dashboardData?.sessions?.activeUsers?.toLocaleString('pt-BR') || '0'} usuários online</span>
-              </div>
+                {dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || '0'} usuários online
+              </p>
             </div>
           </div>
         </SimpleCard>
@@ -1013,7 +885,7 @@ function SystemAdminDashboardContent() {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-800">
-                {dashboardData?.sessions?.averageSessionDuration ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
+                {dashboardData ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
               </p>
               <p className="text-xs text-gray-600">Tempo Médio</p>
               <p className="text-xs text-gray-500">Por sessão</p>
@@ -1044,50 +916,12 @@ function SystemAdminDashboardContent() {
                     Total: {Object.values(realUsersByRole).reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}
                   </div>
                 </div>
-                <div className="h-48">
-                  <Pie 
-                    data={usersByRoleData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                          labels: {
-                            boxWidth: 10,
-                            usePointStyle: true,
-                            font: { size: 10 },
-                            padding: 10
-                          }
-                        },
-                        tooltip: {
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          titleColor: 'white',
-                          bodyColor: 'white',
-                          borderColor: 'rgba(255, 255, 255, 0.1)',
-                          borderWidth: 1,
-                          cornerRadius: 8,
-                          displayColors: true,
-                          callbacks: {
-                            label: function(context) {
-                              const total = (context.chart.data.datasets[0].data as number[]).reduce((a: number, b: number) => a + b, 0);
-                              const percentage = Math.round((context.raw as number / total) * 100);
-                              return `${context.label}: ${(context.raw as number).toLocaleString('pt-BR')} (${percentage}%)`;
-                            }
-                          }
-                        }
-                      },
-                      animation: {
-                        animateRotate: true,
-                        animateScale: true,
-                        duration: 1200,
-                        easing: 'easeInOutQuart'
-                      },
-                      interaction: {
-                        intersect: false
-                      }
-                    }}
-                  />
+                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <PieChart className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Gráfico de Usuários por Função</p>
+                    <p className="text-xs text-gray-400">Em manutenção</p>
+                  </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {Object.entries(realUsersByRole.length ? realUsersByRole : realUserStats?.users_by_role || {}).map(([role, count], index) => {
@@ -1140,54 +974,12 @@ function SystemAdminDashboardContent() {
                   </h3>
                   <div className="text-xs text-gray-500">Últimos 6 meses</div>
                 </div>
-                <div className="h-48">
-                  <Line 
-                    data={userGrowthData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                          labels: {
-                            boxWidth: 10,
-                            usePointStyle: true,
-                            font: { size: 10 },
-                            padding: 10
-                          }
-                        }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: false,
-                          position: 'left',
-                          grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                          ticks: {
-                            font: { size: 10 },
-                            callback: function(value) {
-                              return (value as number).toLocaleString('pt-BR');
-                            }
-                          }
-                        },
-                        y1: {
-                          type: 'linear',
-                          display: true,
-                          position: 'right',
-                          grid: { drawOnChartArea: false },
-                          ticks: {
-                            font: { size: 10 },
-                            callback: function(value) {
-                              return value + '%';
-                            }
-                          }
-                        }
-                      },
-                      interaction: {
-                        intersect: false,
-                        mode: 'index'
-                      }
-                    }}
-                  />
+                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Gráfico de Crescimento</p>
+                    <p className="text-xs text-gray-400">Em manutenção</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -1210,56 +1002,15 @@ function SystemAdminDashboardContent() {
                     <span className="text-xs text-gray-500">Tempo real</span>
                   </div>
                 </div>
-                <div className="h-40">
-                  <Bar 
-                    data={sessionsByDeviceData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          titleColor: 'white',
-                          bodyColor: 'white',
-                          borderColor: 'rgba(255, 255, 255, 0.1)',
-                          borderWidth: 1,
-                          cornerRadius: 8,
-                          displayColors: true,
-                          callbacks: {
-                            label: function(context) {
-                              const total = (context.chart.data.datasets[0].data as number[]).reduce((a: number, b: number) => a + b, 0);
-                              const percentage = Math.round((context.raw as number / total) * 100);
-                              return `${context.label}: ${(context.raw as number).toLocaleString('pt-BR')} (${percentage}%)`;
-                            }
-                          }
-                        }
-                      },
-                      scales: {
-                        y: { 
-                          beginAtZero: true,
-                          grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                          ticks: {
-                            font: { size: 9 },
-                            callback: function(value) {
-                              return (value as number).toLocaleString('pt-BR');
-                            }
-                          }
-                        },
-                        x: {
-                          grid: { display: false },
-                          ticks: { font: { size: 10 } }
-                        }
-                      },
-                      animation: {
-                        duration: 1000,
-                        easing: 'easeInOutQuart'
-                      }
-                    }}
-                  />
+                <div className="h-40 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Sessões por Dispositivo</p>
+                    <p className="text-xs text-gray-400">Em manutenção</p>
+                  </div>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-                  {dashboardData?.sessions?.sessionsByDevice && Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
+                  {dashboardData && Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
                     const colors = ['text-indigo-600', 'text-green-600', 'text-orange-600', 'text-purple-600'];
                     const bgColors = ['bg-indigo-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100'];
                     const icons = [Monitor, Smartphone, Tablet];
@@ -1293,43 +1044,12 @@ function SystemAdminDashboardContent() {
                   </h3>
                   <div className="text-xs text-gray-500">Hoje</div>
                 </div>
-                <div className="h-40">
-                  <Line 
-                    data={sessionTrendsData}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: { display: false }
-                      },
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                          ticks: {
-                            font: { size: 9 },
-                            callback: function(value) {
-                              return (value as number).toLocaleString('pt-BR');
-                            }
-                          }
-                        },
-                        x: {
-                          grid: { display: false },
-                          ticks: { 
-                            maxTicksLimit: 12,
-                            font: { size: 9 },
-                            callback: function(value, index) {
-                              return index % 2 === 0 ? this.getLabelForValue(value as number) : '';
-                            }
-                          }
-                        }
-                      },
-                      interaction: {
-                        intersect: false,
-                        mode: 'index'
-                      }
-                    }}
-                  />
+                <div className="h-40 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <Activity className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Atividade por Hora</p>
+                    <p className="text-xs text-gray-400">Em manutenção</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -1351,36 +1071,12 @@ function SystemAdminDashboardContent() {
                   Ver todas
                 </button>
               </div>
-              <div className="h-48">
-                <Bar 
-                  data={institutionDistributionData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: { display: false }
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                        ticks: {
-                          font: { size: 9 },
-                          callback: function(value) {
-                            return (value as number).toLocaleString('pt-BR');
-                          }
-                        }
-                      },
-                      x: {
-                        grid: { display: false },
-                        ticks: { 
-                          maxRotation: 45,
-                          font: { size: 9 }
-                        }
-                      }
-                    }
-                  }}
-                />
+              <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="text-center">
+                  <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Distribuição por Instituições</p>
+                  <p className="text-xs text-gray-400">Em manutenção</p>
+                </div>
               </div>
             </div>
           )}

@@ -113,7 +113,7 @@ export interface SystemDashboardData {
     sessionsByDevice: Record<string, number>;
     averageSessionDuration: number;
   };
-  system: {
+  system?: {
     uptime: number;
     memoryUsage: NodeJS.MemoryUsage;
     version: string;
@@ -201,8 +201,8 @@ class SystemAdminService {
     let error = undefined;
     
     try {
-      console.log('🧪 [SYSTEM-ADMIN] Testando requisição para /api/users/stats...');
-      const response = await apiClient.get<any>('/api/users/stats');
+      console.log('🧪 [SYSTEM-ADMIN] Testando requisição para users/stats...');
+      const response = await apiClient.get<any>('users/stats');
       
       if (response.success) {
         apiWorking = true;
@@ -255,17 +255,50 @@ class SystemAdminService {
    */
   async getUsersByRole(): Promise<Record<string, number>> {
     try {
-      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`users/stats`);
+      console.log('📊 [SYSTEM-ADMIN-SERVICE] Iniciando getUsersByRole...');
       
-      if (response.success && response.data) {
-        return response.data.data?.users_by_role || {};
+      // Verificar se há token disponível
+      const hasToken = typeof window !== 'undefined' && (
+        localStorage.getItem('auth_token') || 
+        localStorage.getItem('token') || 
+        sessionStorage.getItem('auth_token')
+      );
+      
+      if (!hasToken) {
+        console.warn('❌ [SYSTEM-ADMIN-SERVICE] Token de autenticação não encontrado');
+        throw new Error('Token de autorização não fornecido');
       }
       
-      throw new Error(response.message || 'Falha ao carregar dados de usuários');
-    } catch (error) {
-      console.error('Erro ao carregar usuários por função:', error);
+      console.log('✅ [SYSTEM-ADMIN-SERVICE] Token encontrado, fazendo requisição...');
       
-      // Fallback com dados simulados mais realistas
+      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`users/stats`);
+      
+      console.log('📊 [SYSTEM-ADMIN-SERVICE] Resposta recebida:', response);
+      
+      if (response.success && response.data) {
+        const usersData = response.data.data?.users_by_role || response.data.users_by_role || {};
+        console.log('✅ [SYSTEM-ADMIN-SERVICE] Dados de usuários por função:', usersData);
+        return usersData;
+      }
+      
+      const errorMessage = response.message || 'Falha ao carregar dados de usuários';
+      console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro na resposta:', errorMessage);
+      throw new Error(errorMessage);
+    } catch (error) {
+      console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro ao carregar usuários por função:', error);
+      
+      // Se for erro de autenticação, propagar o erro
+      if (error instanceof Error && (
+        error.message.includes('Token de autorização não fornecido') ||
+        error.message.includes('Token de autenticação inválido') ||
+        error.message.includes('401') ||
+        error.message.includes('Unauthorized')
+      )) {
+        throw error;
+      }
+      
+      // Para outros erros, usar fallback
+      console.warn('⚠️ [SYSTEM-ADMIN-SERVICE] Usando dados de fallback devido ao erro:', error);
       return {
         'STUDENT': 14890,
         'TEACHER': 2456,

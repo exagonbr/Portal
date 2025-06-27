@@ -333,23 +333,23 @@ function TeacherDashboardContent() {
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold  text-gray-600 mb-2 flex items-center gap-3">
-              <BookOpen className="w-8 h-8 text-primary" />
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+              <BookOpen className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               Painel do Professor
             </h1>
-            <p className="text-gray-600 text-gray-400">
+            <p className="text-gray-600 dark:text-gray-400">
               Bem-vindo(a), {user?.name}! Acompanhe o progresso dos seus alunos.
             </p>
           </div>
-          <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedView('overview')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'overview'
-                  ? 'bg-primary text-white'
-                    : 'bg-primary-dark text-white'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               Visão Geral
@@ -358,8 +358,8 @@ function TeacherDashboardContent() {
               onClick={() => setSelectedView('students')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'students'
-                  ? 'bg-primary text-white'
-                    : 'bg-primary-dark text-white'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               Alunos
@@ -368,8 +368,8 @@ function TeacherDashboardContent() {
               onClick={() => setSelectedView('resources')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'resources'
-                  ? 'bg-primary text-white'
-                    : 'bg-primary-dark text-white'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               Recursos
@@ -378,8 +378,8 @@ function TeacherDashboardContent() {
               onClick={() => setSelectedView('communication')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 selectedView === 'communication'
-                  ? 'bg-primary text-white'
-                    : 'bg-primary-dark text-white'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               Comunicação
@@ -391,118 +391,70 @@ function TeacherDashboardContent() {
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Card Turmas */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-blue-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-blue-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-indigo-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-purple-200 rounded-full animate-ping delay-500"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <GraduationCap className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalClasses}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Turmas</p>
+            </div>
           </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <GraduationCap className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalClasses}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-blue-100 font-semibold tracking-wide">TURMAS</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Turmas</h3>
-              <p className="text-blue-100 text-sm font-medium">Minhas turmas ativas</p>
-            </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Turmas Ativas</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Minhas turmas em andamento</p>
           </div>
         </div>
 
         {/* Card Estudantes */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-green-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-green-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-emerald-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-teal-200 rounded-full animate-ping delay-500"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalStudents}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Estudantes</p>
+            </div>
           </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <Users className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalStudents}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-lime-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-green-100 font-semibold tracking-wide">ESTUDANTES</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Estudantes</h3>
-              <p className="text-green-100 text-sm font-medium">Total sob minha orientação</p>
-            </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Total de Alunos</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Sob minha orientação</p>
           </div>
         </div>
 
         {/* Card Atividades */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-purple-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-purple-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-violet-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <BookOpen className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalActivities}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Atividades</p>
+            </div>
           </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <BookOpen className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalActivities}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-pink-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-purple-100 font-semibold tracking-wide">ATIVIDADES</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Atividades</h3>
-              <p className="text-purple-100 text-sm font-medium">Criadas e aplicadas</p>
-            </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Atividades</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Criadas e aplicadas</p>
           </div>
         </div>
 
-        {/* Card Notas */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 via-orange-600 to-red-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-amber-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-amber-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-orange-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-red-200 rounded-full animate-ping delay-500"></div>
+        {/* Card Média */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+              <Award className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.averageGrade.toFixed(1)}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Média</p>
+            </div>
           </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <Award className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.averageGrade.toFixed(1)}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-amber-100 font-semibold tracking-wide">MÉDIA</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Notas</h3>
-              <p className="text-amber-100 text-sm font-medium">Média geral das turmas</p>
-            </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notas</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Média geral das turmas</p>
           </div>
         </div>
       </div>
@@ -510,131 +462,83 @@ function TeacherDashboardContent() {
       {/* Segunda linha de cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Card Frequência */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-cyan-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-cyan-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-blue-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-indigo-200 rounded-full animate-ping delay-500"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.attendanceRate.toFixed(1)}%</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Frequência</p>
+            </div>
           </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <CheckCircle className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.attendanceRate.toFixed(1)}%</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-cyan-100 font-semibold tracking-wide">FREQUÊNCIA</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Frequência</h3>
-              <p className="text-cyan-100 text-sm font-medium">Taxa média de presença</p>
-            </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Presença</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Taxa média de presença</p>
           </div>
         </div>
 
         {/* Card Mensagens */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-rose-500 via-pink-600 to-fuchsia-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-rose-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-rose-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-pink-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-fuchsia-200 rounded-full animate-ping delay-500"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-pink-100 dark:bg-pink-900/30 rounded-lg">
+              <MessageSquare className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalMessages}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Mensagens</p>
+            </div>
           </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <MessageSquare className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.totalMessages}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-rose-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-rose-100 font-semibold tracking-wide">MENSAGENS</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Mensagens</h3>
-              <p className="text-rose-100 text-sm font-medium">Trocadas com estudantes</p>
-            </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Comunicação</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Trocadas com estudantes</p>
           </div>
         </div>
 
         {/* Card Eventos */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-violet-500 via-purple-600 to-indigo-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-violet-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-violet-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-purple-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-indigo-200 rounded-full animate-ping delay-500"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+              <Calendar className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.upcomingEvents}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Eventos</p>
+            </div>
           </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <Calendar className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.upcomingEvents}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-violet-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-violet-100 font-semibold tracking-wide">EVENTOS</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Eventos</h3>
-              <p className="text-violet-100 text-sm font-medium">Próximos agendados</p>
-            </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Agenda</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Próximos agendados</p>
           </div>
         </div>
 
         {/* Card Tarefas */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 border-2 border-emerald-300 transform hover:-translate-y-2 hover:scale-105">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-4 left-8 w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <div className="absolute top-8 right-12 w-1 h-1 bg-emerald-200 rounded-full animate-ping"></div>
-            <div className="absolute bottom-8 left-12 w-1.5 h-1.5 bg-teal-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-12 right-8 w-1 h-1 bg-cyan-200 rounded-full animate-ping delay-500"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <ClipboardList className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.pendingTasks}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Tarefas</p>
+            </div>
           </div>
-          <div className="relative p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-4 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-white/30">
-                <ClipboardList className="w-7 h-7 text-white drop-shadow-lg" />
-              </div>
-              <div className="text-right">
-                <p className="text-5xl font-bold text-white drop-shadow-lg tracking-tight">{stats.pendingTasks}</p>
-                <div className="flex items-center justify-end gap-2 mt-2">
-                  <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg"></div>
-                  <span className="text-sm text-emerald-100 font-semibold tracking-wide">TAREFAS</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Tarefas</h3>
-              <p className="text-emerald-100 text-sm font-medium">Pendentes para correção</p>
-            </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pendências</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Para correção</p>
           </div>
         </div>
       </div>
 
       {/* Seletor de Turma e Ações Rápidas */}
-      <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6 mb-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <label className="text-sm font-medium">Turma:</label>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6 border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-4 w-full lg:w-auto">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Turma:</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="px-4 py-2 border border-white rounded-lg focus:ring-2 focus:ring-primary bg-gray-100"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Todas as turmas</option>
               {myClasses.map((classItem) => (
@@ -645,16 +549,16 @@ function TeacherDashboardContent() {
             </select>
           </div>
 
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm">
               <Video className="w-4 h-4" />
               Iniciar Aula
             </button>
-            <button className="px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm">
               <FileText className="w-4 h-4" />
               Nova Tarefa
             </button>
-            <button className="px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-sm">
               <MessageSquare className="w-4 h-4" />
               Avisos
             </button>
@@ -667,38 +571,38 @@ function TeacherDashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Próximas Aulas */}
         <div className="lg:col-span-2">
-          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-primary" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-white">
+              <Clock className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
               Próximas Aulas
             </h2>
             <div className="space-y-3">
               {upcomingClasses.map((upClass) => (
                 <div
                   key={upClass.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 bg-gray-300 rounded-lg hover:bg-gray-100 hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border border-gray-200 dark:border-gray-600"
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-gray-700 dark:text-gray-800">{upClass.time}</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white">{upClass.time}</p>
                     </div>
                     <div>
-                      <p className="font-medium">{upClass.className}</p>
-                      <p className="text-sm text-gray-600 text-gray-400">
+                      <p className="font-medium text-gray-900 dark:text-white">{upClass.className}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {upClass.topic}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
                         {upClass.room} • {upClass.students} alunos
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {upClass.materials && (
-                      <span className="px-2 py-1 text-xs bg-green-100 text-green-800 bg-green-300 text-green-300 rounded-full">
+                      <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full">
                         Material pronto
                       </span>
                     )}
-                    <button className="px-3 py-1 bg-primary/10 text-primary bg-primary/30 text-primary rounded-lg hover:bg-primary/20 hover:bg-primary/40 transition-colors">
+                    <button className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
                       Iniciar
                     </button>
                   </div>
@@ -708,25 +612,25 @@ function TeacherDashboardContent() {
           </div>
 
           {/* Alunos que Precisam de Atenção */}
-          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6 mt-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2 text-accent-yellow" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-white">
+              <AlertCircle className="w-5 h-5 mr-2 text-yellow-600 dark:text-yellow-400" />
               Alunos que Precisam de Atenção
             </h2>
             <div className="space-y-4">
               {studentProgress.filter(s => s.needsAttention).map((student) => (
                 <div
                   key={student.id}
-                  className="p-4 border border-yellow-200 border-yellow-800 bg-yellow-50 bg-yellow-900/20 rounded-lg"
+                  className="p-4 border border-yellow-300 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="font-semibold">{student.name}</h3>
-                      <p className="text-sm text-gray-600 text-gray-400">{student.class}</p>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{student.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{student.class}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-red-600">{student.currentGrade.toFixed(1)}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-lg font-bold text-red-600 dark:text-red-400">{student.currentGrade.toFixed(1)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
                         {student.trend === 'down' ? '↓' : student.trend === 'up' ? '↑' : '→'}
                         {student.previousGrade.toFixed(1)}
                       </p>
@@ -734,24 +638,24 @@ function TeacherDashboardContent() {
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                     <div>
-                      <p className="text-gray-500">Presença</p>
-                      <p className="font-medium">{student.attendance}%</p>
+                      <p className="text-gray-500 dark:text-gray-400">Presença</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{student.attendance}%</p>
                     </div>
                     <div>
-                      <p className="text-gray-500">Tarefas</p>
-                      <p className="font-medium">{student.assignments}%</p>
+                      <p className="text-gray-500 dark:text-gray-400">Tarefas</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{student.assignments}%</p>
                     </div>
                   </div>
                   <div className="text-sm">
-                    <p className="text-gray-600 text-gray-400 mb-1">
+                    <p className="text-gray-600 dark:text-gray-400 mb-1">
                       <span className="font-medium">Desafios:</span> {student.challenges.join(', ')}
                     </p>
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <button className="text-sm px-3 py-1 bg-primary text-white rounded hover:bg-primary-dark">
+                    <button className="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
                       Plano de Ação
                     </button>
-                    <button className="text-sm px-3 py-1 bg-gray-200 bg-gray-300 rounded hover:bg-gray-300 hover:bg-gray-600">
+                    <button className="text-sm px-3 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
                       Contatar Pais
                     </button>
                   </div>
@@ -764,22 +668,22 @@ function TeacherDashboardContent() {
         {/* Painel Lateral */}
         <div className="space-y-6">
           {/* Ações Rápidas */}
-          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Ações Pedagógicas</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Ações Pedagógicas</h3>
             <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
                 <PenTool className="w-4 h-4" />
                 Criar Atividade
               </button>
-              <button className="w-full px-4 py-2 bg-accent-green text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
                 <ClipboardList className="w-4 h-4" />
                 Lançar Notas
               </button>
-              <button className="w-full px-4 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
                 <UserCheck className="w-4 h-4" />
                 Registrar Presença
               </button>
-              <button className="w-full px-4 py-2 bg-accent-yellow text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2">
+              <button className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
                 <MessageSquare className="w-4 h-4" />
                 Enviar Comunicado
               </button>
@@ -787,61 +691,61 @@ function TeacherDashboardContent() {
           </div>
 
           {/* Recursos Mais Usados */}
-          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
-              <Lightbulb className="w-5 h-5 mr-2 text-accent-yellow" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-900 dark:text-white">
+              <Lightbulb className="w-5 h-5 mr-2 text-yellow-600 dark:text-yellow-400" />
               Recursos Populares
             </h3>
             <div className="space-y-3">
               {learningResources.slice(0, 3).map((resource) => (
                 <div
                   key={resource.id}
-                  className="p-3 bg-gray-50 bg-gray-300 rounded-lg hover:bg-gray-100 hover:bg-gray-600 cursor-pointer"
+                  className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border border-gray-200 dark:border-gray-600"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="font-medium text-sm">{resource.title}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">{resource.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {resource.subject} • {resource.duration}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-500">{resource.usage} usos</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{resource.usage} usos</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <button className="w-full mt-3 text-sm text-primary hover:text-primary-dark">
+            <button className="w-full mt-3 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
               Ver biblioteca completa
             </button>
           </div>
 
           {/* Atividades Recentes */}
-          <div className="bg-white bg-gray-300 rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center">
-              <Bell className="w-5 h-5 mr-2 text-accent-orange" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-white">
+              <Bell className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />
               Notificações
             </h2>
             <div className="space-y-3">
               {recentActivities.map((activity) => (
                 <div
                   key={activity.id}
-                  className={`p-3 rounded-lg ${
-                    activity.priority === 'high' ? 'bg-red-50 bg-red-900/20' :
-                    activity.priority === 'medium' ? 'bg-yellow-50 bg-yellow-900/20' :
-                    'bg-gray-50 bg-gray-300'
+                  className={`p-3 rounded-lg border ${
+                    activity.priority === 'high' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                    activity.priority === 'medium' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' :
+                    'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div className={`p-2 rounded-lg ${
-                        activity.type === 'assignment' ? 'bg-primary/20 text-primary' :
-                        activity.type === 'grade' ? 'bg-accent-green/20 text-accent-green' :
-                        activity.type === 'message' ? 'bg-accent-purple/20 text-accent-purple' :
-                        activity.type === 'parent' ? 'bg-primary-dark/20 text-primary-dark' :
-                        activity.type === 'behavior' ? 'bg-accent-green/20 text-accent-green' :
-                        'bg-accent-orange/20 text-accent-orange'
+                        activity.type === 'assignment' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                        activity.type === 'grade' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                        activity.type === 'message' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
+                        activity.type === 'parent' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
+                        activity.type === 'behavior' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                        'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                       }`}>
                         {activity.type === 'assignment' ? <FileText className="w-4 h-4" /> :
                          activity.type === 'grade' ? <Award className="w-4 h-4" /> :
@@ -851,17 +755,17 @@ function TeacherDashboardContent() {
                          <Bell className="w-4 h-4" />}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{activity.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{activity.description}</p>
-                        <p className="text-xs text-gray-400 mt-2">{activity.time}</p>
+                        <p className="font-medium text-sm text-gray-900 dark:text-white">{activity.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.description}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{activity.time}</p>
                       </div>
                     </div>
                     {activity.status && (
                       <div>
                         {activity.status === 'completed' ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />
                         ) : (
-                          <AlertCircle className="w-4 h-4 text-yellow-500" />
+                          <AlertCircle className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />
                         )}
                       </div>
                     )}

@@ -171,6 +171,19 @@ export class PushSubscriptionController {
         }
     }
 
+    async getUserSubscriptions(userId: string): Promise<PushSubscription[]> {
+        try {
+            const subscriptions = await db<PushSubscription>('push_subscriptions')
+                .where('user_id', userId)
+                .where('is_active', true);
+
+            return subscriptions;
+        } catch (error) {
+            console.error('Error getting user subscriptions:', error);
+            throw error;
+        }
+    }
+
     async sendBulkNotification(req: Request, res: Response): Promise<Response> {
         try {
             const user = await getUserFromRequest(req);

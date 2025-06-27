@@ -56,6 +56,11 @@ export default function SendNotificationPage() {
     permission: NotificationPermission
     subscribed: boolean
   } | null>(null)
+  const [testResults, setTestResults] = useState<{
+    email?: { success: boolean; message: string; timestamp?: string }
+    push?: { success: boolean; message: string; timestamp?: string }
+  }>({})
+  const [testEmail, setTestEmail] = useState('')
 
   // Verificar permissões - apenas GUARDIAN e STUDENT não podem acessar
   useEffect(() => {
@@ -85,6 +90,13 @@ export default function SendNotificationPage() {
 
     checkPushStatus()
   }, [])
+
+  // Inicializar testEmail com o email do usuário quando disponível
+  useEffect(() => {
+    if (user?.email && !testEmail) {
+      setTestEmail(user.email)
+    }
+  }, [user?.email, testEmail])
 
   // Carregar usuários disponíveis
   useEffect(() => {
@@ -236,22 +248,116 @@ export default function SendNotificationPage() {
   }
 
   const handleTestEmail = async () => {
-    if (!user?.email) return
+    const emailToTest = testEmail.trim()
+    
+    if (!emailToTest) {
+      setTestResults(prev => ({
+        ...prev,
+        email: { success: false, message: 'Digite um email válido para teste' }
+      }))
+      return
+    }
+
+    // Validação básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(emailToTest)) {
+      setTestResults(prev => ({
+        ...prev,
+        email: { success: false, message: 'Formato de email inválido' }
+      }))
+      return
+    }
 
     try {
       setLoading(true)
+      setTestResults(prev => ({ ...prev, email: undefined }))
+
+      console.log('Testando email para:', emailToTest)
+
+      // Primeiro verificar se o email está configurado
+      try {
+        const verifyResponse = await apiClient.get('/api/notifications/email/verify')
+        
+        if (!verifyResponse.success) {
+          // Se a verificação falhou, pode ser problema de autenticação
+          if ((verifyResponse as any).status === 401) {
+            throw new Error('Sessão expirada. Faça login novamente.')
+          }
+          console.warn('Verificação de email falhou:', verifyResponse.message)
+        }
+        
+        if (verifyResponse.success && !(verifyResponse.data as any)?.enabled) {
+          throw new Error((verifyResponse.data as any)?.message || 'Serviço de email não está habilitado')
+        }
+      } catch (verifyError) {
+        // Se a verificação falhou, tenta enviar o teste mesmo assim
+        console.warn('Verificação de email falhou, tentando enviar teste:', verifyError)
+      }
+
+      // Enviar email de teste
       const response = await apiClient.post('/api/notifications/email/test', {
-        to: user.email
+        to: emailToTest
       })
 
       if (response.success) {
-        alert('Email de teste enviado com sucesso! Verifique sua caixa de entrada.')
+        setTestResults(prev => ({
+          ...prev,
+          email: { 
+            success: true, 
+            message: `Email de teste enviado com sucesso para ${emailToTest}! Verifique a caixa de entrada.`,
+            timestamp: new Date().toLocaleString('pt-BR')
+          }
+        }))
       } else {
-        throw new Error(response.message || 'Erro ao enviar email de teste')
+        // Verificar se há informações de erro específicas na resposta
+        const errorMessage = response.message || 'Erro ao enviar email de teste'
+        console.error('Erro na resposta da API:', response)
+        
+        // Se é erro de autenticação, verificar diferentes formas
+        if (response.message?.includes('401') || 
+            response.message?.includes('Unauthorized') || 
+            response.message?.includes('not authenticated') ||
+            response.message?.includes('Token de autenticação')) {
+          throw new Error('Sessão expirada. Faça login novamente.')
+        }
+        
+        throw new Error(errorMessage)
       }
     } catch (error) {
       console.error('Error sending test email:', error)
-      alert('Erro ao enviar email de teste: ' + (error instanceof Error ? error.message : 'Erro desconhecido'))
+      let errorMessage = 'Erro desconhecido ao enviar email de teste'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+        console.log('Erro capturado (Error):', error.message)
+      } else if (typeof error === 'object' && error !== null) {
+        const errorObj = error as any
+        console.log('Erro capturado (Object):', errorObj)
+        
+        if (errorObj.status === 401 || 
+            errorObj.message?.includes('401') ||
+            errorObj.message?.includes('Unauthorized') ||
+            errorObj.message?.includes('Token de autenticação')) {
+          errorMessage = 'Sessão expirada. Faça login novamente.'
+        } else if (errorObj.message) {
+          errorMessage = errorObj.message
+        } else if (errorObj.error) {
+          errorMessage = errorObj.error
+        } else {
+          errorMessage = 'Erro de comunicação com o servidor'
+        }
+      } else {
+        console.log('Erro capturado (Outro tipo):', typeof error, error)
+        errorMessage = 'Erro inesperado ao enviar email de teste'
+      }
+      
+      setTestResults(prev => ({
+        ...prev,
+        email: { 
+          success: false, 
+          message: errorMessage
+        }
+      }))
     } finally {
       setLoading(false)
     }
@@ -259,27 +365,112 @@ export default function SendNotificationPage() {
 
   const handleTestPushNotification = async () => {
     try {
-      await pushNotificationService.sendTestNotification()
-      alert('Notificação push de teste enviada!')
+      setLoading(true)
+      setTestResults(prev => ({ ...prev, push: undefined }))
+
+      // Primeiro verificar se as push notifications estão configuradas
+      try {
+        const verifyResponse = await apiClient.get('/api/notifications/push/verify')
+        
+        if (!verifyResponse.success) {
+          if ((verifyResponse as any).status === 401) {
+            throw new Error('Sessão expirada. Faça login novamente.')
+          }
+          throw new Error(verifyResponse.message || 'Falha ao verificar configuração de push notifications')
+        }
+        
+        if (!(verifyResponse.data as any)?.hasActiveSubscriptions) {
+          throw new Error((verifyResponse.data as any)?.message || 'Push notifications não estão configuradas para este usuário')
+        }
+      } catch (verifyError) {
+        // Se a verificação falhou, tenta enviar o teste mesmo assim
+        console.warn('Verificação de push notifications falhou, tentando enviar teste:', verifyError)
+      }
+
+      // Enviar push notification de teste via API
+      const response = await apiClient.post('/api/notifications/push/test', {
+        userId: user?.id
+      })
+
+      if (response.success) {
+        setTestResults(prev => ({
+          ...prev,
+          push: { 
+            success: true, 
+            message: 'Push notification de teste enviada com sucesso!',
+            timestamp: new Date().toLocaleString('pt-BR')
+          }
+        }))
+              } else {
+        // Verificar se é erro de autenticação baseado na mensagem
+        const errorMsg = response.message || 'Erro ao enviar push notification de teste'
+        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || errorMsg.includes('not authenticated')) {
+          throw new Error('Sessão expirada. Faça login novamente.')
+        }
+        throw new Error(errorMsg)
+      }
     } catch (error) {
       console.error('Error sending test push notification:', error)
-      alert('Erro ao enviar notificação push de teste')
+      let errorMessage = 'Erro desconhecido ao enviar push notification de teste'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+      } else if (typeof error === 'object' && error !== null) {
+        const errorObj = error as any
+        if (errorObj.status === 401) {
+          errorMessage = 'Sessão expirada. Faça login novamente.'
+        } else if (errorObj.message) {
+          errorMessage = errorObj.message
+        }
+      }
+      
+      setTestResults(prev => ({
+        ...prev,
+        push: { 
+          success: false, 
+          message: errorMessage
+        }
+      }))
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleEnablePushNotifications = async () => {
     try {
+      setLoading(true)
       const success = await pushNotificationService.requestPermissionAndSubscribe()
       if (success) {
         const status = await pushNotificationService.getSubscriptionStatus()
         setPushStatus(status)
-        alert('Push notifications habilitadas com sucesso!')
+        setTestResults(prev => ({
+          ...prev,
+          push: { 
+            success: true, 
+            message: 'Push notifications habilitadas com sucesso!',
+            timestamp: new Date().toLocaleString('pt-BR')
+          }
+        }))
       } else {
-        alert('Não foi possível habilitar as push notifications')
+        setTestResults(prev => ({
+          ...prev,
+          push: { 
+            success: false, 
+            message: 'Não foi possível habilitar as push notifications. Verifique as permissões do navegador.'
+          }
+        }))
       }
     } catch (error) {
       console.error('Error enabling push notifications:', error)
-      alert('Erro ao habilitar push notifications')
+      setTestResults(prev => ({
+        ...prev,
+        push: { 
+          success: false, 
+          message: 'Erro ao habilitar push notifications: ' + (error instanceof Error ? error.message : 'Erro desconhecido')
+        }
+      }))
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -312,7 +503,7 @@ export default function SendNotificationPage() {
   // Verificar se o usuário pode acessar esta página
   if (!user || [UserRole.GUARDIAN, UserRole.STUDENT].includes(user.role as UserRole)) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-96">
+      <div className="container-responsive spacing-y-responsive">
         <div className="text-center">
           <span className="material-symbols-outlined text-4xl text-gray-400 mb-4">block</span>
           <h3 className="text-lg font-medium text-gray-700 mb-2">Acesso Negado</h3>
@@ -329,28 +520,19 @@ export default function SendNotificationPage() {
   }
 
   return (
-    <div className="p-6">
-      {/* Header da Página */}
-      <div className="mb-6">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <span className="material-symbols-outlined text-gray-600">
-              arrow_back
-            </span>
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Enviar Notificação</h1>
-            <p className="text-sm text-gray-500">
-              Criar e enviar notificações para usuários
-            </p>
+    <div className="container-responsive spacing-y-responsive">
+      <div className="max-w-4xl mx-auto">
+        {/* Header da Página */}
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-800">Enviar Notificação</h1>
+              <p className="text-sm text-gray-500">
+                Criar e enviar notificações para usuários
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-4xl">
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center">
@@ -412,22 +594,159 @@ export default function SendNotificationPage() {
         {/* Botões de Teste */}
         <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <h3 className="text-sm font-medium text-gray-700 mb-3">Testes de Configuração</h3>
-          <div className="flex space-x-4">
-            <button
-              onClick={handleTestEmail}
-              disabled={loading}
-              className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
-              Testar Email
-            </button>
-            {pushStatus?.supported && pushStatus?.subscribed && (
+          
+          {/* Debug Info */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs">
+            <h4 className="font-medium text-blue-900 mb-2">ℹ️ Informações de Debug</h4>
+            <div className="space-y-1 text-blue-800">
+              <div>API Base URL: {process.env.NEXT_PUBLIC_API_URL || '/api'}</div>
+              <div>Usuário logado: {user?.email || 'Não identificado'}</div>
+              <div>Papel do usuário: {user?.role || 'Não identificado'}</div>
+              <div>Timestamp: {new Date().toLocaleString('pt-BR')}</div>
+            </div>
+          </div>
+          
+                      <div className="space-y-4">
+            {/* Verificação de Configuração de Email */}
+            <div className="border-b border-gray-200 pb-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">1. Verificação de Configuração</h4>
               <button
-                onClick={handleTestPushNotification}
-                className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+                onClick={async () => {
+                  try {
+                    setLoading(true)
+                    const response = await apiClient.get('/api/notifications/email/verify')
+                    console.log('Verificação de email:', response)
+                    
+                    if (response.success) {
+                      const data = response.data as any
+                      alert(`✅ Configuração: ${data?.message || 'OK'}\nConectado: ${data?.connected ? 'Sim' : 'Não'}\nHabilitado: ${data?.enabled ? 'Sim' : 'Não'}`)
+                    } else {
+                      alert(`❌ Erro na verificação: ${response.message}`)
+                    }
+                  } catch (error) {
+                    console.error('Erro na verificação:', error)
+                    alert(`❌ Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+                  } finally {
+                    setLoading(false)
+                  }
+                }}
+                disabled={loading}
+                className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
               >
-                Testar Push Notification
+                <span className="material-symbols-outlined text-sm">settings</span>
+                <span>Verificar Configuração</span>
               </button>
-            )}
+            </div>
+
+            {/* Teste de Email */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">2. Teste de Envio de Email</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Email para teste
+                    </label>
+                    <input
+                      type="email"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      placeholder="Digite o email para receber o teste"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+                  <button
+                    onClick={handleTestEmail}
+                    disabled={loading || !testEmail.trim()}
+                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center space-x-2 mt-5"
+                  >
+                    {loading && testResults.email === undefined ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <span className="material-symbols-outlined text-sm">email</span>
+                    )}
+                    <span>Testar Email</span>
+                  </button>
+                </div>
+                
+                {testResults.email && (
+                  <div className={`flex items-center space-x-2 text-sm ${
+                    testResults.email.success ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <span className="material-symbols-outlined text-sm">
+                      {testResults.email.success ? 'check_circle' : 'error'}
+                    </span>
+                    <span>{testResults.email.success ? 'Sucesso' : 'Erro'}</span>
+                    {testResults.email.timestamp && (
+                      <span className="text-gray-500">({testResults.email.timestamp})</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {testResults.email && (
+                <div className={`p-3 rounded-lg text-sm mt-2 ${
+                  testResults.email.success 
+                    ? 'bg-green-50 border border-green-200 text-green-800' 
+                    : 'bg-red-50 border border-red-200 text-red-800'
+                }`}>
+                  {testResults.email.message}
+                </div>
+              )}
+            </div>
+
+            {/* Teste de Push Notification */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">3. Teste de Push Notification</h4>
+              <div className="flex items-center space-x-4 mb-2">
+                <button
+                  onClick={handleTestPushNotification}
+                  disabled={loading || !pushStatus?.supported}
+                  className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
+                >
+                  {loading && testResults.push === undefined ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">notifications</span>
+                  )}
+                  <span>Testar Push Notification</span>
+                </button>
+                
+                {!pushStatus?.supported && (
+                  <span className="text-sm text-gray-500">
+                    (Não suportado neste navegador)
+                  </span>
+                )}
+                
+                {testResults.push && (
+                  <div className={`flex items-center space-x-2 text-sm ${
+                    testResults.push.success ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <span className="material-symbols-outlined text-sm">
+                      {testResults.push.success ? 'check_circle' : 'error'}
+                    </span>
+                    <span>{testResults.push.success ? 'Sucesso' : 'Erro'}</span>
+                    {testResults.push.timestamp && (
+                      <span className="text-gray-500">({testResults.push.timestamp})</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              {testResults.push && (
+                <div className={`p-3 rounded-lg text-sm ${
+                  testResults.push.success 
+                    ? 'bg-green-50 border border-green-200 text-green-800' 
+                    : 'bg-red-50 border border-red-200 text-red-800'
+                }`}>
+                  {testResults.push.message}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="mt-4 text-xs text-gray-500">
+            <p>💡 Use os testes para verificar se as configurações de email e push notifications estão funcionando corretamente antes de enviar notificações para todos os usuários.</p>
           </div>
         </div>
 

@@ -885,6 +885,65 @@ export function convertBase64TokenToJWT(): boolean {
   return converted;
 }
 
+/**
+ * Sincroniza o token do localStorage com o apiClient
+ */
+export const syncTokenWithApiClient = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') {
+    console.log('🔍 [AUTH-DEBUG] syncTokenWithApiClient: Executando no servidor, retornando false');
+    return false;
+  }
+
+  console.log('🔄 [AUTH-DEBUG] Sincronizando token com apiClient...');
+
+  // Tentar obter token de localStorage com prioridade
+  const possibleKeys = ['auth_token', 'token', 'authToken'];
+  let token = null;
+  let tokenSource = '';
+
+  for (const key of possibleKeys) {
+    const storedToken = localStorage.getItem(key);
+    if (storedToken && storedToken.trim() !== '') {
+      token = storedToken.trim();
+      tokenSource = `localStorage.${key}`;
+      console.log(`✅ [AUTH-DEBUG] Token encontrado em ${tokenSource}:`, token.substring(0, 20) + '...');
+      break;
+    }
+  }
+
+  // Se não encontrar no localStorage, tentar sessionStorage
+  if (!token) {
+    for (const key of possibleKeys) {
+      const storedToken = sessionStorage.getItem(key);
+      if (storedToken && storedToken.trim() !== '') {
+        token = storedToken.trim();
+        tokenSource = `sessionStorage.${key}`;
+        console.log(`✅ [AUTH-DEBUG] Token encontrado em ${tokenSource}:`, token.substring(0, 20) + '...');
+        break;
+      }
+    }
+  }
+
+  if (!token) {
+    console.warn('❌ [AUTH-DEBUG] Nenhum token válido encontrado para sincronização');
+    return false;
+  }
+
+  try {
+    // Importar dinamicamente o apiClient para evitar dependência circular
+    const { apiClient } = await import('@/lib/api-client');
+    
+    // Configurar o token no apiClient
+    apiClient.setAuthToken(token);
+    
+    console.log(`✅ [AUTH-DEBUG] Token sincronizado com apiClient de ${tokenSource}`);
+    return true;
+  } catch (error) {
+    console.error('❌ [AUTH-DEBUG] Erro ao sincronizar token com apiClient:', error);
+    return false;
+  }
+};
+
 // Expor globalmente para debug
 if (typeof window !== 'undefined') {
   (window as any).debugAuth = debugAuth;
@@ -896,6 +955,7 @@ if (typeof window !== 'undefined') {
   (window as any).repairAuth = repairAuth;
   (window as any).convertBase64TokenToJWT = convertBase64TokenToJWT;
   (window as any).initializeAuthCleanup = initializeAuthCleanup;
+  (window as any).syncTokenWithApiClient = syncTokenWithApiClient;
   
   // Função de conveniência para resolver o problema atual
   (window as any).fixAuthToken = () => {

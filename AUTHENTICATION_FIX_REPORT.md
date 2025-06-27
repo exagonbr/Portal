@@ -415,3 +415,138 @@ As correções implementadas garantem que o sistema continue funcionando mesmo c
 **Status:** ✅ **CORRIGIDO**
 **Data:** 2024-01-20
 **Impacto:** Alto - Sistema agora é resiliente a falhas de API 
+
+# Relatório de Correção: Erro de Token de Autenticação
+
+## Problema Identificado
+Erro: "Token de autenticação inválido! Token de autorização não fornecido" na função `getUsersByRole` do `systemAdminService.ts`.
+
+## Causa Raiz
+1. **Falta de sincronização entre localStorage e apiClient**: O token estava sendo armazenado no localStorage mas não estava sendo configurado corretamente no apiClient.
+2. **Validação inadequada de token**: Não havia verificação prévia se o token estava disponível antes de fazer requisições.
+3. **Tratamento de erro insuficiente**: Erros de autenticação não eram tratados adequadamente no dashboard.
+
+## Correções Aplicadas
+
+### 1. Melhorias no `systemAdminService.ts`
+- ✅ Adicionada verificação prévia de token antes de fazer requisições
+- ✅ Melhorado o tratamento de erros com logs detalhados
+- ✅ Diferenciação entre erros de autenticação e outros tipos de erro
+- ✅ Correção da URL na função `testAuthentication` (removido `/api/` desnecessário)
+
+### 2. Melhorias no Dashboard (`system-admin/page.tsx`)
+- ✅ Adicionada verificação de usuário autenticado no useEffect
+- ✅ Implementado tratamento específico para erros de autenticação
+- ✅ Redirecionamento automático para login em caso de erro de auth
+- ✅ Mensagens de toast informativas para o usuário
+
+### 3. Nova Função de Sincronização (`auth-debug.ts`)
+- ✅ Criada função `syncTokenWithApiClient()` para sincronizar token
+- ✅ Busca em múltiplas fontes (localStorage, sessionStorage)
+- ✅ Configuração automática do token no apiClient
+- ✅ Logs detalhados para debugging
+
+### 4. Fluxo de Autenticação Melhorado
+1. Verificação de usuário autenticado
+2. Sincronização de dados de auth
+3. Sincronização do token com apiClient
+4. Verificação de sucesso da sincronização
+5. Carregamento dos dados do dashboard
+
+## Benefícios das Correções
+
+### ✅ Resolução do Erro Principal
+- O erro "Token de autorização não fornecido" foi eliminado
+- Requisições agora incluem o token de autenticação corretamente
+
+### ✅ Melhor Experiência do Usuário
+- Redirecionamento automático para login quando necessário
+- Mensagens claras sobre problemas de autenticação
+- Fallback para dados simulados em caso de erro não-crítico
+
+### ✅ Debugging Aprimorado
+- Logs detalhados em cada etapa do processo
+- Identificação clara da fonte do token
+- Rastreamento de erros específicos
+
+### ✅ Robustez do Sistema
+- Tratamento diferenciado para tipos de erro
+- Verificações múltiplas de token
+- Sincronização automática entre componentes
+
+## Código de Exemplo - Antes vs Depois
+
+### Antes (Problemático)
+```typescript
+async getUsersByRole(): Promise<Record<string, number>> {
+  try {
+    const response = await apiClient.get(`users/stats`);
+    if (response.success && response.data) {
+      return response.data.data?.users_by_role || {};
+    }
+    throw new Error(response.message || 'Falha ao carregar dados');
+  } catch (error) {
+    console.error('Erro:', error);
+    return fallbackData;
+  }
+}
+```
+
+### Depois (Corrigido)
+```typescript
+async getUsersByRole(): Promise<Record<string, number>> {
+  try {
+    console.log('📊 Iniciando getUsersByRole...');
+    
+    // Verificar token disponível
+    const hasToken = typeof window !== 'undefined' && (
+      localStorage.getItem('auth_token') || 
+      localStorage.getItem('token') || 
+      sessionStorage.getItem('auth_token')
+    );
+    
+    if (!hasToken) {
+      console.warn('❌ Token de autenticação não encontrado');
+      throw new Error('Token de autorização não fornecido');
+    }
+    
+    const response = await apiClient.get(`users/stats`);
+    
+    if (response.success && response.data) {
+      const usersData = response.data.data?.users_by_role || response.data.users_by_role || {};
+      return usersData;
+    }
+    
+    throw new Error(response.message || 'Falha ao carregar dados');
+  } catch (error) {
+    // Tratamento diferenciado para erros de auth
+    if (error instanceof Error && (
+      error.message.includes('Token de autorização não fornecido') ||
+      error.message.includes('401')
+    )) {
+      throw error; // Propagar erro de auth
+    }
+    
+    // Fallback para outros erros
+    return fallbackData;
+  }
+}
+```
+
+## Status: ✅ RESOLVIDO
+
+O erro de token de autenticação foi completamente corrigido com as implementações acima. O sistema agora:
+
+1. ✅ Verifica tokens antes de fazer requisições
+2. ✅ Sincroniza automaticamente tokens com o apiClient  
+3. ✅ Trata erros de autenticação adequadamente
+4. ✅ Redireciona usuários não autenticados
+5. ✅ Fornece feedback claro ao usuário
+6. ✅ Mantém logs detalhados para debugging
+
+**Data da Correção**: 2025-01-27
+**Arquivos Modificados**: 
+- `src/services/systemAdminService.ts`
+- `src/app/dashboard/system-admin/page.tsx`  
+- `src/utils/auth-debug.ts`
+- `AUTHENTICATION_FIX_REPORT.md` 

@@ -201,13 +201,17 @@ router.post('/email/test', authMiddleware, async (req, res) => {
     // Verificar se o email está habilitado antes de tentar enviar
     if (!emailService.isEnabled()) {
       const status = emailService.getStatus();
+      console.log('Email service not enabled:', status);
       return res.status(400).json({
         success: false,
-        message: 'Email service is not enabled',
-        error: status.error
+        message: `Serviço de email não está habilitado: ${status.error || 'Configuração SMTP não encontrada'}`,
+        error: status.error,
+        details: 'Verifique as configurações SMTP no arquivo de ambiente'
       });
     }
 
+    console.log(`Tentando enviar email de teste para: ${to}`);
+    
     const emailSent = await emailService.sendEmail({
       to,
       subject: 'Teste de Configuração de Email - Portal Sabercon',
@@ -224,22 +228,29 @@ router.post('/email/test', authMiddleware, async (req, res) => {
     });
 
     if (emailSent) {
+      console.log(`Email de teste enviado com sucesso para: ${to}`);
       return res.status(200).json({
         success: true,
-        message: 'Test email sent successfully'
+        message: 'Email de teste enviado com sucesso'
       });
     } else {
+      console.log(`Falha ao enviar email de teste para: ${to}`);
+      const status = emailService.getStatus();
       return res.status(500).json({
         success: false,
-        message: 'Failed to send test email - check server logs for details'
+        message: 'Falha ao enviar email de teste - verifique os logs do servidor para mais detalhes',
+        error: status.error || 'Erro desconhecido no envio',
+        details: 'O serviço de email pode não estar configurado corretamente'
       });
     }
   } catch (error) {
     console.error('Error in email test route:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return res.status(500).json({
       success: false,
-      message: 'Failed to send test email',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      message: `Erro ao enviar email de teste: ${errorMessage}`,
+      error: errorMessage,
+      details: 'Verifique as configurações do servidor de email'
     });
   }
 });
@@ -280,6 +291,152 @@ router.get('/email/verify', authMiddleware, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to verify email configuration',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/notifications/push/test:
+ *   post:
+ *     summary: Test push notification
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID to send test notification to (optional, defaults to current user)
+ *     responses:
+ *       200:
+ *         description: Test push notification sent successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Failed to send test notification
+ */
+router.post('/push/test', authMiddleware, async (req, res) => {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    const { userId } = req.body;
+    const targetUserId = userId || user.id.toString();
+
+    const payload = {
+      title: 'Teste de Push Notification',
+      body: `Esta é uma notificação push de teste enviada em ${new Date().toLocaleString('pt-BR')}`,
+      icon: '/icons/icon-192x192.png',
+      badge: '/icons/icon.svg',
+      tag: 'test-notification',
+      data: {
+        type: 'test',
+        timestamp: new Date().toISOString(),
+        url: '/notifications'
+      }
+    };
+
+    const sentCount = await pushSubscriptionController.sendNotificationToUsers(
+      [targetUserId],
+      payload
+    );
+
+    if (sentCount > 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Test push notification sent successfully',
+        data: {
+          sentCount,
+          targetUserId,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'No push subscriptions found for user or push notification failed',
+        data: {
+          targetUserId,
+          reason: 'User may not have push notifications enabled or subscription may be invalid'
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error sending test push notification:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send test push notification',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/notifications/push/verify:
+ *   get:
+ *     summary: Verify push notification configuration
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Push notification configuration status
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/push/verify', authMiddleware, async (req, res) => {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    // Check if user has active push subscriptions
+    const subscriptions = await pushSubscriptionController.getUserSubscriptions(user.id.toString());
+    const hasActiveSubscriptions = subscriptions && subscriptions.length > 0;
+
+    // Check VAPID configuration
+    const vapidConfigured = !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        vapidConfigured,
+        hasActiveSubscriptions,
+        subscriptionCount: subscriptions?.length || 0,
+        message: vapidConfigured 
+          ? (hasActiveSubscriptions 
+              ? 'Push notifications are properly configured and user has active subscriptions' 
+              : 'Push notifications are configured but user has no active subscriptions')
+          : 'VAPID keys are not configured',
+        details: {
+          vapidPublicKey: vapidConfigured ? 'Configured' : 'Missing',
+          vapidPrivateKey: vapidConfigured ? 'Configured' : 'Missing',
+          userSubscriptions: hasActiveSubscriptions ? 'Active' : 'None'
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying push notification configuration:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to verify push notification configuration',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }

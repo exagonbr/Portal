@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Component, ReactNode, useState, useCallback } from 'react'
+import React, { Component, ReactNode, useState, useCallback, ErrorInfo } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface ErrorBoundaryProps {
@@ -15,13 +15,12 @@ interface ErrorDisplayProps {
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: any) => void;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
   hasError: boolean;
   error?: Error;
-  errorInfo?: any;
 }
 
 function ErrorDisplay({ error, resetError }: ErrorDisplayProps) {
@@ -81,7 +80,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Verificar se é erro de chunk loading
+    // Verificar se é erro de chunk loading - APENAS LOGAR, SEM RECARREGAR
     const isChunkError = error.message?.includes('Loading chunk') || 
                         error.message?.includes('ChunkLoadError') ||
                         error.message?.includes('originalFactory') ||
@@ -90,22 +89,15 @@ export class ErrorBoundary extends Component<Props, State> {
                         error.name === 'ChunkLoadError';
     
     if (isChunkError) {
-      console.warn('🔄 Erro de chunk detectado pelo ErrorBoundary, recarregando página...');
-      // Recarregar a página após um pequeno delay
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          window.location.reload();
-        }
-      }, 1000);
+      console.warn('⚠️ Erro de chunk detectado pelo ErrorBoundary - aguardando ação manual do usuário');
+      // REMOVIDO: Não recarregar mais automaticamente
     }
 
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
-    console.error('❌ Erro capturado pelo ErrorBoundary:', error, errorInfo);
-    
-    this.setState({ errorInfo });
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary capturou um erro:', error, errorInfo);
     
     // Chamar callback personalizado se fornecido
     if (this.props.onError) {
@@ -151,7 +143,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </h1>
             
             <p className="text-gray-600 mb-6">
-              Ocorreu um problema ao carregar a aplicação. Isso pode ser devido a uma atualização do sistema.
+              Ocorreu um problema ao carregar a aplicação. Clique no botão abaixo para recarregar a página.
             </p>
             
             <div className="space-y-3">
@@ -167,27 +159,14 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
             </div>
             
-            {/* Mostrar detalhes do erro apenas em desenvolvimento */}
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+                <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">
                   Detalhes técnicos
                 </summary>
-                <div className="mt-2 p-3 bg-gray-100 rounded text-xs font-mono text-gray-700 overflow-auto">
-                  <div className="mb-2">
-                    <strong>Erro:</strong> {this.state.error.message}
-                  </div>
-                  <div className="mb-2">
-                    <strong>Stack:</strong>
-                    <pre className="whitespace-pre-wrap">{this.state.error.stack}</pre>
-                  </div>
-                  {this.state.errorInfo && (
-                    <div>
-                      <strong>Component Stack:</strong>
-                      <pre className="whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre>
-                    </div>
-                  )}
-                </div>
+                <pre className="mt-2 p-3 bg-gray-100 rounded text-xs text-gray-800 overflow-auto max-h-40">
+                  {this.state.error.stack}
+                </pre>
               </details>
             )}
           </div>
