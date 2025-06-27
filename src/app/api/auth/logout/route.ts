@@ -5,7 +5,43 @@ import { getInternalApiUrl } from '@/config/env';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    console.log('🚪 LOGOUT: Iniciando processo de logout');
+    
+    // Limpar todos os cookies relacionados à autenticação
+    const cookieStore = await cookies();
+    
+    // Lista de cookies para limpar
+    const cookiesToClear = [
+      'auth_token',
+      'refresh_token', 
+      'session_id',
+      'user_data',
+      'authToken', // fallback names
+      'token',
+      'sessionId'
+    ];
+
+    cookiesToClear.forEach(cookieName => {
+      cookieStore.set(cookieName, '', {
+        httpOnly: false, // Para user_data que precisa ser acessível via JS
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 0,
+        path: '/',
+        expires: new Date(0)
+      });
+      
+      // Também limpar versão httpOnly
+      cookieStore.set(cookieName, '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 0,
+        path: '/',
+        expires: new Date(0)
+      });
+    });
+
     const authToken = cookieStore.get('auth_token')?.value;
     const sessionId = cookieStore.get('session_id')?.value;
 
@@ -30,19 +66,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Limpar todos os cookies de autenticação independentemente da resposta do backend
-    const cookiesToClear = [
-      'auth_token',
-      'refresh_token',
-      'session_id',
-      'user_data',
-      'next-auth.session-token',
-      'next-auth.csrf-token',
-      '__Secure-next-auth.session-token',
-      '__Host-next-auth.csrf-token',
-      'redirect_count', // Limpar contador de redirecionamentos
-    ];
-    
     // Criar resposta antes de limpar cookies
     const response = NextResponse.json(
       { success: true, message: 'Logout realizado com sucesso' },

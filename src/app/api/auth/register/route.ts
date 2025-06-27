@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     // Se o registro foi bem-sucedido e retornou token, configurar cookies
     if (data.token) {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       
       // Token de acesso
       cookieStore.set('auth_token', data.token, {

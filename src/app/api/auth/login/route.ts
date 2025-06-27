@@ -419,7 +419,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Configurar cookies com os tokens recebidos do backend
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     
     console.log(`🍪 SETTING COOKIES for user ${data.user.email}`);
     

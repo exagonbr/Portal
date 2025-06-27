@@ -8,7 +8,7 @@ import { getInternalApiUrl } from '@/config/env';
  */
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const refreshToken = cookieStore.get('refresh_token')?.value;
     const sessionId = cookieStore.get('session_id')?.value;
 
