@@ -155,7 +155,7 @@ getLoopPrevention()?.setEnabled(true);
 - ✅ `https://portal.sabercon.com.br`
 - ✅ `https://portal.sabercon.com.br/api`
 - ✅ `http://localhost:3001`
-- ✅ `http://localhost:3001/api`
+- ✅ `https://portal.sabercon.com.br/api`
 - ✅ `http://localhost:3000`
 
 ### Headers CORS Configurados:

@@ -41,7 +41,7 @@ const nextConfig = {
   // CORREÇÃO: Configuração de proxy mais específica para evitar loops
   async rewrites() {
     if (process.env.NODE_ENV === 'development') {
-      const apiDestination = 'http://localhost:3001/api/:path*';
+      const apiDestination = 'https://portal.sabercon.com.br/api/:path*';
       
       console.log(`🔄 Proxy configurado para : ${apiDestination}`);
       

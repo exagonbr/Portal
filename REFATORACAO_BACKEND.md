@@ -85,7 +85,7 @@ NEXTAUTH_SECRET=ExagonTech
 # ===========================================
 # API / BACKEND
 # ===========================================
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_API_URL=https://portal.sabercon.com.br/api
 
 # ===========================================
 # AUTENTICAÇÃO

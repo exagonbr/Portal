@@ -564,7 +564,9 @@ function SystemAdminDashboardContent() {
               sessions: {
                 ...prev.sessions,
                 activeUsers: Number(metrics.activeUsers) || 0,
-                totalActiveSessions: Number(metrics.activeSessions) || 0
+                totalActiveSessions: Number(metrics.activeSessions) || 0,
+                // Preserve existing sessionsByDevice if it exists
+                sessionsByDevice: prev.sessions?.sessionsByDevice || {}
               },
               system: prev.system ? {
                 ...prev.system,

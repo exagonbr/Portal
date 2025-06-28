@@ -30,7 +30,7 @@ export interface RegisterResponse {
 // Configuration constants - usando configuração centralizada
 const AUTH_CONFIG = {
   API_URL: API_CONFIG.BASE_URL,
-  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/api',
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'https://portal.sabercon.com.br/api',
   COOKIES: {
     SESSION_TOKEN: 'session_token',
     USER_DATA: 'user_data',

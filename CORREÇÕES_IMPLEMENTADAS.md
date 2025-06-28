@@ -82,8 +82,8 @@ debugAuth();
 ### **Passo 3: Testar APIs Diretamente**
 ```bash
 # Com token válido do localStorage
-curl -H "Authorization: Bearer SEU_TOKEN_AQUI" http://localhost:3001/api/institutions
-curl -H "Authorization: Bearer SEU_TOKEN_AQUI" http://localhost:3001/api/users/stats
+curl -H "Authorization: Bearer SEU_TOKEN_AQUI" https://portal.sabercon.com.br/api/institutions
+curl -H "Authorization: Bearer SEU_TOKEN_AQUI" https://portal.sabercon.com.br/api/users/stats
 ```
 
 ## 📊 RESULTADOS ESPERADOS

@@ -27,9 +27,9 @@ const getBaseUrls = () => {
   }
   
   // Desenvolvimento
-  const nextPublicApiUrl = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) || 'http://localhost:3001/api';
+  const nextPublicApiUrl = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) || 'https://portal.sabercon.com.br/api';
   const nextAuthUrl = (typeof process !== 'undefined' && process.env?.NEXTAUTH_URL) || 'http://localhost:3000';
-  const internalApiUrl = (typeof process !== 'undefined' && process.env?.INTERNAL_API_URL) || 'http://localhost:3001';
+  const internalApiUrl = (typeof process !== 'undefined' && process.env?.INTERNAL_API_URL) || 'https://portal.sabercon.com.br';
   
   return {
     FRONTEND_URL: nextAuthUrl,
@@ -47,9 +47,9 @@ try {
   console.warn('Erro ao inicializar URLs base, usando fallback:', error);
   BASE_URLS = {
     FRONTEND_URL: 'http://localhost:3000',
-    BACKEND_URL: 'http://localhost:3001/api',
-    API_BASE_URL: 'http://localhost:3001/api',
-    INTERNAL_API_URL: 'http://localhost:3001'
+    BACKEND_URL: 'https://portal.sabercon.com.br/api',
+    API_BASE_URL: 'https://portal.sabercon.com.br/api',
+    INTERNAL_API_URL: 'https://portal.sabercon.com.br'
   };
 }
 
@@ -91,7 +91,7 @@ export const getApiUrl = (path: string = '') => {
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter API URL, usando fallback:', error);
-    return `http://localhost:3001/api${path.startsWith('/') ? path : `/${path}`}`;
+    return `https://portal.sabercon.com.br/api${path.startsWith('/') ? path : `/${path}`}`;
   }
 };
 
@@ -103,7 +103,7 @@ export const getInternalApiUrl = (path: string = '') => {
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter Internal API URL, usando fallback:', error);
-    return `http://localhost:3001${path.startsWith('/') ? path : `/${path}`}`;
+    return `https://portal.sabercon.com.br${path.startsWith('/') ? path : `/${path}`}`;
   }
 };
 

@@ -13,7 +13,7 @@
 **Evidências**:
 ```bash
 # Teste direto da API retorna erro de token
-curl -H "Authorization: Bearer test" http://localhost:3001/api/institutions
+curl -H "Authorization: Bearer test" https://portal.sabercon.com.br/api/institutions
 # Resultado: {"error":"Token too short or empty"}
 ```
 
