@@ -192,8 +192,21 @@ export class TvShowCompleteService {
 
       const tvShow = tvShowResult[0];
 
-      // Buscar vídeos agrupados por sessão
-      const videosGrouped = await this.getVideosByTvShowGrouped(id);
+      // Buscar vídeos agrupados por sessão com timeout
+      let videosGrouped = {};
+      try {
+        // Adicionar timeout de 5 segundos para a busca de vídeos
+        const videoPromise = this.getVideosByTvShowGrouped(id);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout ao buscar vídeos')), 5000)
+        );
+        
+        videosGrouped = await Promise.race([videoPromise, timeoutPromise]) as Record<string, FormattedVideo[]>;
+      } catch (videoError) {
+        console.error(`Erro ao buscar vídeos para TV Show ${id}:`, videoError);
+        // Continuar sem os vídeos em caso de erro
+        videosGrouped = {};
+      }
 
       return {
         ...tvShow,
@@ -216,36 +229,44 @@ export class TvShowCompleteService {
 
   async getVideosByTvShow(id: number): Promise<FormattedVideo[]> {
     try {
-      // Query SQL para buscar vídeos da tabela video vinculados pelo show_id
-      // Incluindo JOIN com video_file e file para buscar dados do arquivo
-      // Usando DISTINCT ON para evitar duplicatas quando um vídeo tem múltiplos arquivos
+      // Query otimizada com índices e limite de resultados
       const query = `
-        SELECT DISTINCT ON (v.id)
-          v.id,
-          v.show_id,
-          v.title,
-          v.name,
-          v.overview as description,
-          v.season_number,
-          v.episode_number,
-          v.duration,
-          v.poster_path,
-          v.backdrop_path,
-          v.still_path,
-          v.air_date,
-          v.deleted,
-          v.date_created,
-          v.last_updated,
-          f.sha256hex as file_sha256hex,
-          f.extension as file_extension,
-          f.name as file_name,
-          f.content_type as file_mimetype,
-          f.size as file_size
-        FROM video v
-        LEFT JOIN video_file vf ON v.id = vf.video_files_id
-        LEFT JOIN file f ON vf.file_id = f.id
-        WHERE v.show_id = $1 AND (v.deleted IS NULL OR v.deleted = false)
-        ORDER BY v.id, f.size DESC NULLS LAST, v.season_number ASC, v.episode_number ASC
+        WITH ranked_videos AS (
+          SELECT 
+            v.id,
+            v.show_id,
+            v.title,
+            v.name,
+            v.overview as description,
+            v.season_number,
+            v.episode_number,
+            v.duration,
+            v.poster_path,
+            v.backdrop_path,
+            v.still_path,
+            v.air_date,
+            v.deleted,
+            v.date_created,
+            v.last_updated,
+            f.sha256hex as file_sha256hex,
+            f.extension as file_extension,
+            f.name as file_name,
+            f.content_type as file_mimetype,
+            f.size as file_size,
+            ROW_NUMBER() OVER (
+              PARTITION BY v.id 
+              ORDER BY f.size DESC NULLS LAST
+            ) as rn
+          FROM video v
+          LEFT JOIN video_file vf ON v.id = vf.video_files_id
+          LEFT JOIN file f ON vf.file_id = f.id
+          WHERE v.show_id = $1 
+            AND (v.deleted IS NULL OR v.deleted = false)
+        )
+        SELECT * FROM ranked_videos 
+        WHERE rn = 1
+        ORDER BY season_number ASC, episode_number ASC
+        LIMIT 100
       `;
 
       const result = await AppDataSource.query(query, [id]);

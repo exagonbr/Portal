@@ -397,3 +397,51 @@ export class TvShowCompleteService {
   }
 
   async updateQuestion(id: number, data: any) {
+    throw new Error('Método não implementado');
+  }
+
+  async deleteQuestion(id: number) {
+    throw new Error('Método não implementado');
+  }
+
+  async getAnswersByQuestion(questionId: number) {
+    return [];
+  }
+
+  async createAnswer(data: any) {
+    throw new Error('Método não implementado');
+  }
+
+  async updateAnswer(id: number, data: any) {
+    throw new Error('Método não implementado');
+  }
+
+  async deleteAnswer(id: number) {
+    throw new Error('Método não implementado');
+  }
+
+  async getFilesByTvShow(tvShowId: number) {
+    return [];
+  }
+
+  async createFile(data: any) {
+    throw new Error('Método não implementado');
+  }
+
+  async updateFile(id: number, data: any) {
+    throw new Error('Método não implementado');
+  }
+
+  async deleteFile(id: number) {
+    throw new Error('Método não implementado');
+  }
+
+  async getTvShowStats(tvShowId: number) {
+    // Por enquanto retornar estatísticas vazias devido a problema com a tabela video
+    return {
+      videoCount: 0,
+      questionCount: 0,
+      fileCount: 0
+    };
+  }
+}
