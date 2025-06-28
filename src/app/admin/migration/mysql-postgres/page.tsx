@@ -340,10 +340,62 @@ export default function MySQLPostgresMigrationPage() {
     return 'text' // Fallback
   }
 
+  const addRoleMapping = () => {
+    const newMapping: RoleMapping = {
+      mysqlRole: '',
+      postgresRole: 'STUDENT',
+      fallbackRole: 'STUDENT'
+    }
+    setRoleMappings(prev => [...prev, newMapping])
+  }
+
+  const updateRoleMapping = (index: number, field: keyof RoleMapping, value: string) => {
+    setRoleMappings(prev => prev.map((mapping, i) => 
+      i === index ? { ...mapping, [field]: value } : mapping
+    ))
+  }
+
+  const removeRoleMapping = (index: number) => {
+    setRoleMappings(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const addTableStructureMapping = (tableName: string) => {
+    const newMapping: TableStructureMapping = {
+      mysqlTable: tableName,
+      postgresTable: normalizeTableName(tableName),
+      columns: [],
+      recreateStructure: false
+    }
+    setStructureMappings(prev => [...prev, newMapping])
+    setSelectedTableForMapping(tableName)
+    setShowMappingModal(true)
+  }
+
+  const updateStructureMapping = (tableName: string, mapping: Partial<TableStructureMapping>) => {
+    setStructureMappings(prev => prev.map(sm => 
+      sm.mysqlTable === tableName ? { ...sm, ...mapping } : sm
+    ))
+  }
+
   const executeMigration = async () => {
     setIsMigrating(true)
     setMigrationProgress(0)
     addLog('info', `🚀 Iniciando migração de ${selectedTables.length} tabelas...`)
+    
+    // Log dos mapeamentos configurados
+    if (roleMappings.length > 0) {
+      addLog('info', `🎭 Mapeamentos de roles configurados: ${roleMappings.length}`)
+      roleMappings.forEach(rm => {
+        addLog('info', `   • ${rm.mysqlRole} → ${rm.postgresRole}`)
+      })
+    }
+    
+    if (structureMappings.length > 0) {
+      addLog('info', `🗂️ Mapeamentos de estrutura configurados: ${structureMappings.length}`)
+      structureMappings.forEach(sm => {
+        addLog('info', `   • ${sm.mysqlTable} → ${sm.postgresTable} (${sm.columns.length} colunas)`)
+      })
+    }
     
     try {
       const response = await fetch('/api/migration/execute', {
@@ -355,7 +407,9 @@ export default function MySQLPostgresMigrationPage() {
             mysqlTable: t.name,
             postgresTable: t.postgresName
           })),
-          options: migrationOptions
+          options: migrationOptions,
+          roleMappings,
+          structureMappings
         })
       })
       
@@ -579,6 +633,20 @@ export default function MySQLPostgresMigrationPage() {
                   disabled={selectedTables.length === 0}
                 >
                   🗂️ Mapear Colunas
+                </button>
+                <button
+                  onClick={() => setActiveTab('mapping')}
+                  className={`px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 ${
+                    activeTab === 'mapping' ? 'bg-blue-50 border-blue-300' : ''
+                  }`}
+                  disabled={selectedTables.length === 0}
+                >
+                  🎭 Mapeamento Avançado
+                  {(roleMappings.length > 0 || structureMappings.length > 0) && (
+                    <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                      {roleMappings.length + structureMappings.length}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('migration')}
@@ -927,7 +995,190 @@ export default function MySQLPostgresMigrationPage() {
               </div>
             )}
 
-            {/* Tab 4: Executar Migração */}
+            {/* Tab 4: Mapeamento Avançado */}
+            {activeTab === 'mapping' && selectedTables.length > 0 && (
+              <div className="space-y-6">
+                {/* Seção de Mapeamento de Roles */}
+                <div className="bg-white border rounded-lg p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">🎭 Mapeamento de Roles</h3>
+                      <p className="text-gray-600 mt-1">
+                        Configure como os roles do MySQL devem ser convertidos para PostgreSQL
+                      </p>
+                    </div>
+                    <button
+                      onClick={addRoleMapping}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    >
+                      + Adicionar Mapeamento
+                    </button>
+                  </div>
+
+                  {roleMappings.length === 0 ? (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                      <div className="text-gray-500 mb-2">🎭</div>
+                      <p className="text-gray-600 mb-3">Nenhum mapeamento de role configurado</p>
+                      <p className="text-sm text-gray-500">
+                        O sistema usará mapeamento automático baseado em padrões comuns
+                      </p>
+                      <button
+                        onClick={addRoleMapping}
+                        className="mt-3 px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                      >
+                        Configurar Mapeamento Manual
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {roleMappings.map((mapping, index) => (
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border border-gray-200 rounded-lg">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Role MySQL</label>
+                            <input
+                              type="text"
+                              value={mapping.mysqlRole}
+                              onChange={(e) => updateRoleMapping(index, 'mysqlRole', e.target.value)}
+                              placeholder="Ex: admin, professor, 1"
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Role PostgreSQL</label>
+                            <select
+                              value={mapping.postgresRole}
+                              onChange={(e) => updateRoleMapping(index, 'postgresRole', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+                            >
+                              <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
+                              <option value="INSTITUTION_MANAGER">INSTITUTION_MANAGER</option>
+                              <option value="TEACHER">TEACHER</option>
+                              <option value="STUDENT">STUDENT</option>
+                              <option value="GUARDIAN">GUARDIAN</option>
+                              <option value="COORDINATOR">COORDINATOR</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Fallback</label>
+                            <select
+                              value={mapping.fallbackRole || 'STUDENT'}
+                              onChange={(e) => updateRoleMapping(index, 'fallbackRole', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+                            >
+                              <option value="STUDENT">STUDENT</option>
+                              <option value="TEACHER">TEACHER</option>
+                              <option value="GUARDIAN">GUARDIAN</option>
+                            </select>
+                          </div>
+                          <div className="flex items-end">
+                            <button
+                              onClick={() => removeRoleMapping(index)}
+                              className="px-3 py-2 text-red-600 hover:bg-red-50 rounded text-sm"
+                            >
+                              🗑️ Remover
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-blue-800 mb-2">💡 Mapeamento Automático Ativo</h4>
+                        <div className="text-sm text-blue-700 grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <div>• admin → SYSTEM_ADMIN</div>
+                          <div>• professor → TEACHER</div>
+                          <div>• aluno → STUDENT</div>
+                          <div>• gestor → INSTITUTION_MANAGER</div>
+                          <div>• pai/responsavel → GUARDIAN</div>
+                          <div>• coordenador → COORDINATOR</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Seção de Mapeamento de Estrutura de Tabelas */}
+                <div className="bg-white border rounded-lg p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">🗂️ Estrutura de Tabelas</h3>
+                      <p className="text-gray-600 mt-1">
+                        Personalize a estrutura das tabelas PostgreSQL ou adicione colunas necessárias
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {selectedTables.map((table) => {
+                      const hasMapping = structureMappings.some(sm => sm.mysqlTable === table.name)
+                      return (
+                        <div key={table.name} className={`p-4 border rounded-lg ${hasMapping ? 'border-green-300 bg-green-50' : 'border-gray-200'}`}>
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <div className="font-medium text-gray-900">{table.name}</div>
+                              <div className="text-sm text-gray-500">→ {table.postgresName}</div>
+                            </div>
+                            {hasMapping && <span className="text-green-600 text-sm">✅ Configurado</span>}
+                          </div>
+                          <button
+                            onClick={() => addTableStructureMapping(table.name)}
+                            className={`w-full px-3 py-2 text-sm rounded ${
+                              hasMapping 
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            }`}
+                          >
+                            {hasMapping ? '🔧 Editar Estrutura' : '⚙️ Configurar Estrutura'}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {structureMappings.length > 0 && (
+                    <div className="mt-6 bg-gray-50 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-800 mb-3">📋 Estruturas Configuradas</h4>
+                      <div className="space-y-2">
+                        {structureMappings.map((mapping) => (
+                          <div key={mapping.mysqlTable} className="flex justify-between items-center p-3 bg-white rounded border">
+                            <div>
+                              <span className="font-medium">{mapping.mysqlTable}</span>
+                              <span className="text-gray-500 mx-2">→</span>
+                              <span className="text-blue-600">{mapping.postgresTable}</span>
+                              <span className="text-sm text-gray-500 ml-2">
+                                ({mapping.columns.length} colunas)
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => addTableStructureMapping(mapping.mysqlTable)}
+                              className="text-blue-600 hover:text-blue-800 text-sm"
+                            >
+                              Editar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between pt-6">
+                  <button
+                    onClick={() => setActiveTab('columns')}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    ← Voltar
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('migration')}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Próximo →
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 5: Executar Migração */}
             {activeTab === 'migration' && selectedTables.length > 0 && (
               <div className="bg-white border rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 Executar Migração</h3>
@@ -1054,7 +1305,7 @@ export default function MySQLPostgresMigrationPage() {
 
                 <div className="flex justify-between pt-6">
                   <button
-                    onClick={() => setActiveTab('columns')}
+                    onClick={() => setActiveTab('mapping')}
                     disabled={isMigrating}
                     className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                   >
@@ -1091,6 +1342,142 @@ export default function MySQLPostgresMigrationPage() {
               onClear={clearLogs}
             />
           </div>
+
+          {/* Modal de Configuração de Estrutura */}
+          {showMappingModal && selectedTableForMapping && (
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        🗂️ Configurar Estrutura: {selectedTableForMapping}
+                      </h3>
+                      <p className="text-gray-600 mt-1">
+                        Personalize a estrutura da tabela PostgreSQL ou adicione colunas necessárias
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowMappingModal(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Opções de Estrutura */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-800 mb-3">⚙️ Opções de Estrutura</h4>
+                      <div className="space-y-3">
+                        <label className="flex items-center gap-3">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 text-blue-600"
+                            onChange={(e) => {
+                              const mapping = structureMappings.find(sm => sm.mysqlTable === selectedTableForMapping)
+                              if (mapping) {
+                                updateStructureMapping(selectedTableForMapping, { recreateStructure: e.target.checked })
+                              }
+                            }}
+                          />
+                          <div>
+                            <span className="font-medium text-blue-800">Recriar estrutura customizada</span>
+                            <p className="text-sm text-blue-600">
+                              Use estrutura personalizada em vez de copiar do MySQL
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Colunas Essenciais para Sistema */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-green-800 mb-3">✅ Colunas Recomendadas para o Sistema</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h5 className="font-medium text-green-700 mb-2">Para tabela 'users':</h5>
+                          <div className="text-sm text-green-600 space-y-1">
+                            <div>• id (integer, auto-increment)</div>
+                            <div>• email (varchar, unique)</div>
+                            <div>• password (varchar)</div>
+                            <div>• name (varchar)</div>
+                            <div>• role_id (integer, FK)</div>
+                            <div>• institution_id (integer, FK)</div>
+                            <div>• is_active (boolean, default true)</div>
+                            <div>• created_at (timestamp)</div>
+                            <div>• updated_at (timestamp)</div>
+                          </div>
+                        </div>
+                        <div>
+                          <h5 className="font-medium text-green-700 mb-2">Para tabela 'roles':</h5>
+                          <div className="text-sm text-green-600 space-y-1">
+                            <div>• id (integer, auto-increment)</div>
+                            <div>• name (varchar, unique)</div>
+                            <div>• description (text)</div>
+                            <div>• permissions (jsonb)</div>
+                            <div>• is_active (boolean, default true)</div>
+                            <div>• created_at (timestamp)</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SQL Customizado */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        SQL Customizado (Opcional)
+                      </label>
+                      <textarea
+                        rows={10}
+                        placeholder={`CREATE TABLE IF NOT EXISTS "{tableName}" (
+  "id" integer GENERATED BY DEFAULT AS IDENTITY NOT NULL,
+  "email" varchar(255) NOT NULL,
+  "password" varchar(255) NOT NULL,
+  "name" varchar(255) NOT NULL,
+  "role_id" integer,
+  "institution_id" integer,
+  "is_active" boolean DEFAULT true,
+  "created_at" timestamp DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY ("id"),
+  UNIQUE ("email")
+);`}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) => {
+                          updateStructureMapping(selectedTableForMapping, { customSQL: e.target.value })
+                        }}
+                      />
+                      <p className="text-sm text-gray-500 mt-2">
+                        Use <code>{"{tableName}"}</code> como placeholder para o nome da tabela
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
+                    <button
+                      onClick={() => setShowMappingModal(false)}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Criar mapeamento se não existir
+                        if (!structureMappings.some(sm => sm.mysqlTable === selectedTableForMapping)) {
+                          addTableStructureMapping(selectedTableForMapping)
+                        }
+                        setShowMappingModal(false)
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Salvar Configuração
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </DashboardPageLayout>
     </ProtectedRoute>

@@ -58,7 +58,7 @@ export function shouldUseLocalBackend(): boolean {
   }
   
   // Verificar se há um backend local configurado explicitamente
-  const localUrls = ['http://localhost:3001', 'http://127.0.0.1:3001'];
+  const localUrls = ['http://localhost:3001', 'http://127.0.0.1:3001', 'https://portal.sabercon.com.br'];
   return localUrls.some(url => 
     process.env.BACKEND_URL?.includes(url) || 
     process.env.INTERNAL_API_URL?.includes(url)
