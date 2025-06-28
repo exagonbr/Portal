@@ -104,6 +104,8 @@ export default function MySQLPostgresMigrationPage() {
   const [envConfigLoaded, setEnvConfigLoaded] = useState(false)
   const [migrationLogs, setMigrationLogs] = useState<LogEntry[]>([])
   const [isCreatingUsers, setIsCreatingUsers] = useState(false)
+  const [availableRoles, setAvailableRoles] = useState<string[]>([])
+  const [isLoadingRoles, setIsLoadingRoles] = useState(false)
 
   // Computed properties
   const selectedTables = tables.filter(t => t.selected)
@@ -112,7 +114,33 @@ export default function MySQLPostgresMigrationPage() {
   // Carregar configurações do .env ao montar o componente
   useEffect(() => {
     loadEnvConfig()
+    loadAvailableRoles()
   }, [])
+
+  const loadAvailableRoles = async () => {
+    setIsLoadingRoles(true)
+    try {
+      const response = await fetch('/api/migration/get-postgres-roles')
+      const data = await response.json()
+      
+      if (data.success) {
+        const roleNames = data.roles.map((role: any) => role.name)
+        setAvailableRoles(roleNames)
+        addLog('info', `🎭 ${roleNames.length} roles encontrados no PostgreSQL: ${roleNames.join(', ')}`)
+      } else {
+        addLog('warning', '⚠️ Não foi possível carregar roles do PostgreSQL')
+        // Definir roles padrão
+        setAvailableRoles(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER', 'STUDENT', 'GUARDIAN', 'COORDINATOR'])
+      }
+    } catch (error) {
+      console.error('Erro ao carregar roles:', error)
+      addLog('error', '❌ Erro ao carregar roles do PostgreSQL')
+      // Definir roles padrão em caso de erro
+      setAvailableRoles(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER', 'STUDENT', 'GUARDIAN', 'COORDINATOR'])
+    } finally {
+      setIsLoadingRoles(false)
+    }
+  }
 
   const createDefaultUsers = async () => {
     setIsCreatingUsers(true)
@@ -375,6 +403,60 @@ export default function MySQLPostgresMigrationPage() {
     setStructureMappings(prev => prev.map(sm => 
       sm.mysqlTable === tableName ? { ...sm, ...mapping } : sm
     ))
+  }
+
+  const detectMySQLRoles = async () => {
+    if (!connectionTested) {
+      addLog('warning', '⚠️ Teste a conexão MySQL primeiro')
+      return
+    }
+
+    addLog('info', '🔍 Detectando roles no MySQL...')
+    
+    try {
+      // Buscar roles na tabela 'user' (se existir)
+      const userRolesResponse = await fetch('/api/migration/mysql-columns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...mysqlConnection, tableName: 'user' })
+      })
+      
+      if (userRolesResponse.ok) {
+        const userRolesData = await userRolesResponse.json()
+        if (userRolesData.success) {
+          // Buscar valores únicos da coluna role
+          const dataResponse = await fetch('/api/migration/mysql-tables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mysqlConnection)
+          })
+          
+          if (dataResponse.ok) {
+            const dataResult = await dataResponse.json()
+            // Aqui você pode processar os dados para extrair roles únicos
+            addLog('success', '✅ Detecção de roles MySQL concluída')
+            addLog('info', '💡 Adicione os mapeamentos manualmente com base nos dados encontrados')
+          }
+        }
+      }
+      
+      // Buscar na tabela 'role' ou 'roles' se existir
+      const roleTableResponse = await fetch('/api/migration/mysql-columns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...mysqlConnection, tableName: 'role' })
+      })
+      
+      if (roleTableResponse.ok) {
+        const roleTableData = await roleTableResponse.json()
+        if (roleTableData.success) {
+          addLog('info', '📋 Tabela "role" encontrada no MySQL')
+        }
+      }
+      
+    } catch (error: any) {
+      addLog('error', `❌ Erro na detecção: ${error.message}`)
+    }
   }
 
   const executeMigration = async () => {
@@ -1007,12 +1089,21 @@ export default function MySQLPostgresMigrationPage() {
                         Configure como os roles do MySQL devem ser convertidos para PostgreSQL
                       </p>
                     </div>
-                    <button
-                      onClick={addRoleMapping}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-                    >
-                      + Adicionar Mapeamento
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={detectMySQLRoles}
+                        disabled={!connectionTested}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm disabled:opacity-50"
+                      >
+                        🔍 Detectar Roles MySQL
+                      </button>
+                      <button
+                        onClick={addRoleMapping}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                      >
+                        + Adicionar Manual
+                      </button>
+                    </div>
                   </div>
 
                   {roleMappings.length === 0 ? (
@@ -1050,12 +1141,13 @@ export default function MySQLPostgresMigrationPage() {
                               onChange={(e) => updateRoleMapping(index, 'postgresRole', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
                             >
-                              <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
-                              <option value="INSTITUTION_MANAGER">INSTITUTION_MANAGER</option>
-                              <option value="TEACHER">TEACHER</option>
-                              <option value="STUDENT">STUDENT</option>
-                              <option value="GUARDIAN">GUARDIAN</option>
-                              <option value="COORDINATOR">COORDINATOR</option>
+                              {isLoadingRoles ? (
+                                <option value="">Carregando...</option>
+                              ) : (
+                                availableRoles.map(role => (
+                                  <option key={role} value={role}>{role}</option>
+                                ))
+                              )}
                             </select>
                           </div>
                           <div>
@@ -1065,9 +1157,9 @@ export default function MySQLPostgresMigrationPage() {
                               onChange={(e) => updateRoleMapping(index, 'fallbackRole', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
                             >
-                              <option value="STUDENT">STUDENT</option>
-                              <option value="TEACHER">TEACHER</option>
-                              <option value="GUARDIAN">GUARDIAN</option>
+                              {availableRoles.map(role => (
+                                <option key={role} value={role}>{role}</option>
+                              ))}
                             </select>
                           </div>
                           <div className="flex items-end">
