@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getInternalApiUrl } from '@/config/env';
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function GET(
@@ -21,7 +21,8 @@ export async function GET(
       );
     }
 
-    const response = await fetch(getInternalApiUrl(`/api/aws/settings/${context.params.id}`), {
+    const params = await context.params;
+    const response = await fetch(getInternalApiUrl(`/api/aws/settings/${params.id}`), {
       method: 'GET',
       headers: {
         'Authorization': authHeader,
@@ -56,8 +57,9 @@ export async function PUT(
     }
 
     const body = await request.json();
+    const params = await context.params;
 
-    const response = await fetch(getInternalApiUrl(`/api/aws/settings/${context.params.id}`), {
+    const response = await fetch(getInternalApiUrl(`/api/aws/settings/${params.id}`), {
       method: 'PUT',
       headers: {
         'Authorization': authHeader,
@@ -92,7 +94,8 @@ export async function DELETE(
       );
     }
 
-    const response = await fetch(getInternalApiUrl(`/api/aws/settings/${context.params.id}`), {
+    const params = await context.params;
+    const response = await fetch(getInternalApiUrl(`/api/aws/settings/${params.id}`), {
       method: 'DELETE',
       headers: {
         'Authorization': authHeader,

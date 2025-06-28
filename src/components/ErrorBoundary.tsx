@@ -84,6 +84,7 @@ export class ErrorBoundary extends Component<Props, State> {
     const isChunkError = error.message?.includes('Loading chunk') || 
                         error.message?.includes('ChunkLoadError') ||
                         error.message?.includes('originalFactory') ||
+                        error.message?.includes("can't access property \"call\", originalFactory is undefined") ||
                         error.message?.includes('Cannot read properties of undefined') ||
                         error.message?.includes('MIME type') ||
                         error.name === 'ChunkLoadError';
@@ -104,12 +105,40 @@ export class ErrorBoundary extends Component<Props, State> {
     const isChunkError = error.message?.includes('Loading chunk') || 
                         error.message?.includes('ChunkLoadError') ||
                         error.message?.includes('originalFactory') ||
+                        error.message?.includes("can't access property \"call\", originalFactory is undefined") ||
                         error.message?.includes('Cannot read properties of undefined') ||
                         error.message?.includes('MIME type') ||
                         error.name === 'ChunkLoadError';
     
     if (isChunkError) {
       console.warn('⚠️ Erro de chunk ignorado pelo ErrorBoundary');
+      
+      // Tentar recarregar automaticamente após um breve atraso
+      if (typeof window !== 'undefined' && 
+          (error.message?.includes('originalFactory') || 
+           error.message?.includes("can't access property \"call\", originalFactory is undefined"))) {
+        
+        console.log('🔄 Preparando recuperação automática para erro de factory...');
+        
+        // Armazenar informação de tentativa de recuperação
+        const recoveryAttempts = parseInt(sessionStorage.getItem('errorRecoveryAttempts') || '0');
+        
+        if (recoveryAttempts < 3) {
+          sessionStorage.setItem('errorRecoveryAttempts', (recoveryAttempts + 1).toString());
+          
+          setTimeout(() => {
+            console.log('🔄 Recarregando página para recuperação...');
+            window.location.reload();
+          }, 2000);
+        } else {
+          console.warn('⚠️ Muitas tentativas de recuperação, parando ciclo de recarregamento');
+          // Limpar contador após 1 minuto para permitir novas tentativas futuras
+          setTimeout(() => {
+            sessionStorage.removeItem('errorRecoveryAttempts');
+          }, 60000);
+        }
+      }
+      
       return;
     }
     

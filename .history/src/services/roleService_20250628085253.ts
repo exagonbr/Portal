@@ -90,56 +90,32 @@ export class RoleService {
           }
         });
 
-        const response = await apiClient.get<any>(
-          this.baseEndpoint,
+        const response = await apiClient.get<ApiResponse<PaginatedResponseDto<RoleResponseDto>>>(
+          `${this.baseEndpoint}/search`,
           searchParams
         );
 
-        if (!response.success) {
+        if (!response.success || !response.data) {
           throw new Error(response.message || 'Falha ao buscar roles');
-        }
-
-        // A API local retorna { success: true, data: [...] } para acesso público
-        // ou { success: true, data: { items: [...], pagination: {...} } } para acesso autenticado
-        let items: RoleResponseDto[] = [];
-        let total = 0;
-
-        if (Array.isArray(response.data)) {
-          // Resposta pública: array direto
-          items = response.data;
-          total = items.length;
-        } else if (response.data?.items && Array.isArray(response.data.items)) {
-          // Resposta paginada
-          items = response.data.items;
-          total = response.data.total || response.data.pagination?.total || items.length;
-        } else if (response.data?.data) {
-          // Resposta aninhada
-          if (Array.isArray(response.data.data)) {
-            items = response.data.data;
-            total = items.length;
-          } else if (response.data.data.items) {
-            items = response.data.data.items;
-            total = response.data.data.total || response.data.data.pagination?.total || items.length;
-          }
         }
 
         // Garante que a resposta tem a estrutura correta
         const paginatedResponse: PaginatedResponseDto<RoleResponseDto> = {
-          items,
+          items: response.data.data?.items || [],
           pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit),
-            hasNext: page * limit < total,
-            hasPrev: page > 1
+            page: response.data.data?.page || page,
+            limit: response.data.data?.limit || limit,
+            total: response.data.data?.total || 0,
+            totalPages: response.data.data?.totalPages || Math.ceil((response.data.data?.total || 0) / limit),
+            hasNext: response.data.data?.hasNext || false,
+            hasPrev: response.data.data?.hasPrev || false
           },
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-          hasNext: page * limit < total,
-          hasPrev: page > 1
+          total: response.data.data?.total || 0,
+          page: response.data.data?.page || page,
+          limit: response.data.data?.limit || limit,
+          totalPages: response.data.data?.totalPages || Math.ceil((response.data.data?.total || 0) / limit),
+          hasNext: response.data.data?.hasNext || false,
+          hasPrev: response.data.data?.hasPrev || false
         };
 
         // Validação adicional da resposta
@@ -733,7 +709,7 @@ export class RoleService {
 
       // Fazer chamada à API
       const response = await apiClient.get<PaginatedResponseDto<RoleResponseDto>>(
-        this.baseEndpoint,
+        `${this.baseEndpoint}/search`,
         queryParams
       );
 

@@ -27,69 +27,136 @@ function ProtectedRouteContent({
   const router = useRouter()
   const { theme } = useTheme()
   const [isAuthorized, setIsAuthorized] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const [reloadCounter, setReloadCounter] = useState(0)
+
+  // Tratamento de erro e recuperação automática
+  useEffect(() => {
+    if (hasError && reloadCounter < 3) {
+      const timer = setTimeout(() => {
+        console.log('🔄 Tentando recuperar de erro de carregamento...');
+        setReloadCounter(prev => prev + 1);
+        // Forçar recarregamento do componente
+        window.location.reload();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasError, reloadCounter]);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // Se redirecionando para login, limpar dados primeiro
-        if (redirectTo.includes('/login')) {
-          clearAllDataForUnauthorized().then(() => {
-            router.push(redirectTo + '?error=unauthorized')
-          }).catch((error) => {
-            console.error('❌ Erro durante limpeza de dados:', error);
-            router.push(redirectTo + '?error=unauthorized')
-          });
-        } else {
-          router.push(redirectTo)
-        }
-        return
+    // Captura de erros globais relacionados ao factory
+    const handleError = (event: ErrorEvent) => {
+      if (event.error && 
+          event.error.toString().includes("can't access property \"call\", originalFactory is undefined")) {
+        console.error('⚠️ Erro de factory detectado, preparando recuperação');
+        event.preventDefault();
+        setHasError(true);
       }
+    };
 
-      // SYSTEM_ADMIN pode acessar TODAS as rotas
-      if (user.role === UserRole.SYSTEM_ADMIN.toString() || user.role?.toLowerCase() === 'system_admin') {
-        console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total');
-        setIsAuthorized(true);
-        return;
-      }
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
-      // Verificar role
-      if (requiredRole) {
-        const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
-        const hasRole = roles.includes(user.role as UserRole)
-        
-        if (!hasRole) {
-          console.log(`🔒 ProtectedRoute: Role ${user.role} não permitida`);
-          setIsAuthorized(false)
-          if (!showUnauthorized) {
-            router.push('/dashboard')
+  useEffect(() => {
+    try {
+      if (!loading) {
+        if (!user) {
+          // Se redirecionando para login, limpar dados primeiro
+          if (redirectTo.includes('/login')) {
+            clearAllDataForUnauthorized().then(() => {
+              router.push(redirectTo + '?error=unauthorized')
+            }).catch((error) => {
+              console.error('❌ Erro durante limpeza de dados:', error);
+              router.push(redirectTo + '?error=unauthorized')
+            });
+          } else {
+            router.push(redirectTo)
           }
           return
         }
-      }
 
-      // Verificar permissão
-      if (requiredPermission && user.role) {
-        const permissions = Array.isArray(requiredPermission) ? requiredPermission : [requiredPermission]
-        const userPermissions = ROLE_PERMISSIONS[user.role as UserRole]
-        
-        const hasPermission = permissions.every(permission => 
-          userPermissions[permission] === true
-        )
-        
-        if (!hasPermission) {
-          console.log(`🔒 ProtectedRoute: Permissão ${requiredPermission} não encontrada para role ${user.role}`);
-          setIsAuthorized(false)
-          if (!showUnauthorized) {
-            router.push('/dashboard')
-          }
-          return
+        // SYSTEM_ADMIN pode acessar TODAS as rotas
+        if (user.role === UserRole.SYSTEM_ADMIN.toString() || user.role?.toLowerCase() === 'system_admin') {
+          console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total');
+          setIsAuthorized(true);
+          return;
         }
-      }
 
-      console.log('✅ ProtectedRoute: Acesso autorizado para role:', user.role);
-      setIsAuthorized(true)
+        // Verificar role
+        if (requiredRole) {
+          const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
+          const hasRole = roles.includes(user.role as UserRole)
+          
+          if (!hasRole) {
+            console.log(`🔒 ProtectedRoute: Role ${user.role} não permitida`);
+            setIsAuthorized(false)
+            if (!showUnauthorized) {
+              router.push('/dashboard')
+            }
+            return
+          }
+        }
+
+        // Verificar permissão
+        if (requiredPermission && user.role) {
+          const permissions = Array.isArray(requiredPermission) ? requiredPermission : [requiredPermission]
+          const userPermissions = ROLE_PERMISSIONS[user.role as UserRole]
+          
+          const hasPermission = permissions.every(permission => 
+            userPermissions[permission] === true
+          )
+          
+          if (!hasPermission) {
+            console.log(`🔒 ProtectedRoute: Permissão ${requiredPermission} não encontrada para role ${user.role}`);
+            setIsAuthorized(false)
+            if (!showUnauthorized) {
+              router.push('/dashboard')
+            }
+            return
+          }
+        }
+
+        console.log('✅ ProtectedRoute: Acesso autorizado para role:', user.role);
+        setIsAuthorized(true)
+      }
+    } catch (error) {
+      console.error('❌ Erro durante verificação de autorização:', error);
+      setHasError(true);
     }
   }, [user, loading, requiredRole, requiredPermission, router, redirectTo, showUnauthorized])
+
+  // Modal de carregamento quando há erro
+  if (hasError) {
+    return (
+      <div 
+        className="min-h-screen flex items-center justify-center flex-col"
+        style={{ backgroundColor: theme.colors.background.primary }}
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-t-transparent rounded-full mb-6"
+          style={{ 
+            borderColor: theme.colors.primary.DEFAULT,
+            borderTopColor: 'transparent'
+          }}
+        />
+        <h2 
+          className="text-xl font-medium mb-2 text-center"
+          style={{ color: theme.colors.text.primary }}
+        >
+          Aguarde enquanto preparamos tudo para você
+        </h2>
+        <p
+          className="text-sm text-center max-w-xs"
+          style={{ color: theme.colors.text.secondary }}
+        >
+          Estamos carregando os recursos necessários...
+        </p>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -168,7 +235,21 @@ function ProtectedRouteContent({
 }
 
 export default function ProtectedRoute(props: ProtectedRouteProps) {
-  return (
-    <ProtectedRouteContent {...props} />
-  );
+  // Captura de erros no componente principal
+  try {
+    return (
+      <ProtectedRouteContent {...props} />
+    );
+  } catch (error) {
+    console.error('❌ Erro fatal no ProtectedRoute:', error);
+    // Fallback para caso de erro fatal
+    return (
+      <div className="min-h-screen flex items-center justify-center flex-col bg-gray-100">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mb-6 animate-spin"></div>
+        <h2 className="text-xl font-medium mb-2 text-center text-gray-800">
+          Aguarde enquanto preparamos tudo para você
+        </h2>
+      </div>
+    );
+  }
 } 

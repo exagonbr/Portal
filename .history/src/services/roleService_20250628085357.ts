@@ -90,7 +90,7 @@ export class RoleService {
           }
         });
 
-        const response = await apiClient.get<any>(
+        const response = await apiClient.get<ApiResponse<PaginatedResponseDto<RoleResponseDto>>>(
           this.baseEndpoint,
           searchParams
         );

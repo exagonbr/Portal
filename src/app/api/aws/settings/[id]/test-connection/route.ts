@@ -4,7 +4,7 @@ import { getInternalApiUrl } from '@/config/env';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -16,7 +16,8 @@ export async function POST(
       );
     }
 
-    const response = await fetch(`getInternalApiUrl('/api/aws/settings/${params.id}/test-connection')`, {
+    const resolvedParams = await params;
+    const response = await fetch(getInternalApiUrl(`/api/aws/settings/${resolvedParams.id}/test-connection`), {
       method: 'POST',
       headers: {
         'Authorization': authHeader,

@@ -4,10 +4,17 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
+  // Adicionar headers CORS para desenvolvimento local com backend de produção
+  const response = NextResponse.next()
+  
+  // Headers CORS para permitir comunicação com backend de produção
+  response.headers.set('Access-Control-Allow-Origin', '*')
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With')
+  response.headers.set('Access-Control-Allow-Credentials', 'true')
+  
   // CORREÇÃO CRÍTICA: Apenas interceptar casos específicos de CSS malformado
   if (pathname.includes('/_next/static/css/') && pathname.endsWith('.css')) {
-    const response = NextResponse.next()
-    
     // Garantir MIME type correto para arquivos CSS
     response.headers.set('Content-Type', 'text/css; charset=utf-8')
     response.headers.set('X-Content-Type-Options', 'nosniff')
@@ -30,15 +37,13 @@ export function middleware(request: NextRequest) {
   
   // CORREÇÃO: Garantir MIME type correto para chunks JavaScript
   if (pathname.includes('/_next/static/chunks/') && pathname.endsWith('.js')) {
-    const response = NextResponse.next()
-    
     response.headers.set('Content-Type', 'application/javascript; charset=utf-8')
     response.headers.set('X-Content-Type-Options', 'nosniff')
     
     return response
   }
   
-  return NextResponse.next()
+  return response
 }
 
 export const config = {

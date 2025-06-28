@@ -84,11 +84,7 @@ export function debugAuthState() {
   };
 }
 
-// Alias para compatibilidade
-export const debugAuth = debugAuthState;
-
 // Expor no window para debug manual
 if (typeof window !== 'undefined') {
   (window as any).debugAuthState = debugAuthState;
-  (window as any).debugAuth = debugAuth;
 }

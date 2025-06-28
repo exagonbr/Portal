@@ -1,9 +1,9 @@
-// Script para registrar o Service Worker personalizado
+// Script para registrar o Service Worker com Workbox
 // Deve ser carregado no HTML principal
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
       .then((registration) => {
         console.log('✅ Service Worker registrado com sucesso:', registration.scope);
         
@@ -15,6 +15,7 @@ if ('serviceWorker' in navigator) {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 console.log('🔄 Nova versão do Service Worker disponível');
                 // Opcionalmente, notificar o usuário sobre a atualização
+                showUpdateNotification();
               }
             });
           }
@@ -27,6 +28,8 @@ if ('serviceWorker' in navigator) {
 
   // Escutar mensagens do Service Worker
   navigator.serviceWorker.addEventListener('message', (event) => {
+    if (!event.data) return;
+    
     const { type, data } = event.data;
     
     switch (type) {
@@ -42,6 +45,54 @@ if ('serviceWorker' in navigator) {
         console.log('📨 Mensagem do Service Worker:', event.data);
     }
   });
+} else {
+  console.warn('⚠️ Service Worker não suportado ou desabilitado em desenvolvimento');
+}
+
+// Função para mostrar notificação de atualização
+function showUpdateNotification() {
+  // Verificar se já existe notificação
+  if (document.getElementById('sw-update-notification')) return;
+  
+  const notification = document.createElement('div');
+  notification.id = 'sw-update-notification';
+  notification.style.position = 'fixed';
+  notification.style.bottom = '20px';
+  notification.style.right = '20px';
+  notification.style.backgroundColor = '#0f3460';
+  notification.style.color = 'white';
+  notification.style.padding = '12px 20px';
+  notification.style.borderRadius = '8px';
+  notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+  notification.style.zIndex = '9999';
+  notification.style.display = 'flex';
+  notification.style.alignItems = 'center';
+  notification.style.justifyContent = 'space-between';
+  notification.style.maxWidth = '400px';
+  
+  notification.innerHTML = `
+    <div>
+      <strong style="display: block; margin-bottom: 4px;">Nova versão disponível</strong>
+      <span>Atualize para obter as últimas melhorias</span>
+    </div>
+    <button id="sw-update-button" style="background: white; color: #0f3460; border: none; padding: 6px 12px; border-radius: 4px; margin-left: 16px; cursor: pointer; font-weight: 500;">Atualizar</button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Adicionar evento ao botão
+  document.getElementById('sw-update-button')?.addEventListener('click', () => {
+    notification.innerHTML = `
+      <div>
+        <strong style="display: block; margin-bottom: 4px;">Atualizando...</strong>
+        <span>A página será recarregada</span>
+      </div>
+    `;
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  });
 }
 
 // Função global para limpar cache via Service Worker
@@ -54,10 +105,10 @@ window.clearServiceWorkerCache = async (reason = 'manual') => {
       // Prometer resposta
       const response = new Promise((resolve, reject) => {
         messageChannel.port1.onmessage = (event) => {
-          if (event.data.success) {
+          if (event.data && event.data.success) {
             resolve(event.data);
           } else {
-            reject(new Error(event.data.error || 'Erro desconhecido'));
+            reject(new Error((event.data && event.data.error) || 'Erro desconhecido'));
           }
         };
         

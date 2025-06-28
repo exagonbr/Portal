@@ -357,7 +357,7 @@ class SystemAdminService {
     };
   }> {
     try {
-      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`dashboard/analytics`);
+      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/analytics`);
       
       // Add debug logging
       console.log('Analytics response:', response);
@@ -390,7 +390,7 @@ class SystemAdminService {
     topFeatures: Array<{ name: string; usage: number }>;
   }> {
     try {
-      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`dashboard/engagement`);
+      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/engagement`);
       
       // Add debug logging
       console.log('Engagement metrics response:', response);
@@ -417,7 +417,7 @@ class SystemAdminService {
     try {
       console.log('🔍 [SYSTEM-ADMIN] Iniciando carregamento do dashboard do sistema...');
       
-      const response = await apiClient.get<{ data: SystemDashboardData }>(`dashboard/system`);
+      const response = await apiClient.get<{ data: SystemDashboardData }>(`/dashboard/system`);
       
       console.log('🔍 [SYSTEM-ADMIN] Resposta recebida:', {
         success: response.success,
@@ -489,7 +489,7 @@ class SystemAdminService {
       await syncTokenWithApiClient(token);
       
       // Tentar primeiro a rota do backend
-      const response = await apiClient.get<{ data: RealTimeMetrics }>(`dashboard/metrics/realtime`);
+      const response = await apiClient.get<{ data: RealTimeMetrics }>(`/dashboard/metrics/realtime`);
       
       if (response.success && response.data) {
         return response.data.data || response.data;
@@ -593,7 +593,7 @@ class SystemAdminService {
     try {
       console.log('🔍 [SYSTEM-ADMIN] Iniciando carregamento do status de saúde...');
       
-      const response = await apiClient.get<{ data: SystemHealth }>(`dashboard/health`);
+      const response = await apiClient.get<{ data: SystemHealth }>(`/dashboard/health`);
       
       console.log('🔍 [SYSTEM-ADMIN] Resposta de saúde recebida:', {
         success: response.success,
@@ -687,7 +687,7 @@ class SystemAdminService {
    */
   async getAnalyticsData(type: 'users' | 'sessions' | 'activity', period: 'day' | 'week' | 'month' = 'week'): Promise<AnalyticsData> {
     try {
-      const response = await apiClient.get<{ success: boolean; data: AnalyticsData; message?: string }>(`dashboard/analytics`, { type, period });
+      const response = await apiClient.get<{ success: boolean; data: AnalyticsData; message?: string }>(`/dashboard/analytics`, { type, period });
       
       // Add debug logging
       console.log('Analytics data response:', response);
@@ -712,7 +712,7 @@ class SystemAdminService {
    */
   async getDashboardSummary(): Promise<any> {
     try {
-      const response = await apiClient.get<{ data: any }>(`dashboard/summary`);
+      const response = await apiClient.get<{ data: any }>(`/dashboard/summary`);
       
       if (response.success && response.data) {
         return response.data.data;

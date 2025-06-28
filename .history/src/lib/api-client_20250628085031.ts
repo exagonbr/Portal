@@ -16,7 +16,7 @@ import { logHttp500Error } from '../utils/debug-http-500';
 
 // Configuração centralizada
 const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
   timeout: 30000,
   retryAttempts: 3,
   retryDelay: 1000,
@@ -233,16 +233,7 @@ class ApiClient {
    * Constrói URL completa
    */
   private buildURL(endpoint: string, params?: Record<string, string | number | boolean>): string {
-    let url: string;
-    
-    if (endpoint.startsWith('http')) {
-      url = endpoint;
-    } else {
-      // Garantir que não há barras duplas
-      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-      const cleanBaseURL = this.baseURL.endsWith('/') ? this.baseURL.slice(0, -1) : this.baseURL;
-      url = `${cleanBaseURL}${cleanEndpoint}`;
-    }
+    let url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
     
     if (params && Object.keys(params).length > 0) {
       const searchParams = new URLSearchParams();
@@ -381,16 +372,14 @@ class ApiClient {
       if (!response.ok) {
         // Log específico para HTTP 500
         if (response.status === 500) {
-          logHttp500Error(
+          logHttp500Error({
             url,
-            options.method || 'GET',
-            url, // usando url como endpoint
-            response.status,
-            data,
-            responseText,
-            options.headers as Record<string, string>,
-            Object.fromEntries(response.headers.entries())
-          );
+            method: options.method || 'GET',
+            headers: options.headers as Record<string, string>,
+            body: options.body,
+            responseHeaders: Object.fromEntries(response.headers.entries()),
+            responseText
+          });
         }
 
         const errorToThrow = {

@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 
+const withPWA = require('@ducanh2912/next-pwa').default({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+});
+
 const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig = {
@@ -120,8 +127,16 @@ const nextConfig = {
   // Configuração de output
   output: isDev ? undefined : 'standalone',
   
-  // Proxy para desenvolvimento removido - usando rotas Next.js API
+  // Proxy para desenvolvimento
   async rewrites() {
+    if (process.env.NODE_ENV === 'development') {
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'http://localhost:3001/api/:path*'
+        }
+      ];
+    }
     return [];
   },
   
@@ -237,7 +252,6 @@ const nextConfig = {
     'oracledb',
     'tedious'
   ],
-  
 };
 
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);

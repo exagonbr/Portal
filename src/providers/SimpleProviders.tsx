@@ -2,6 +2,7 @@
 
 import React, { ReactNode, useState, useEffect, Suspense } from 'react'
 import dynamic from 'next/dynamic'
+import { setupGlobalErrorHandler } from '@/utils/errorHandling'
 
 // Importações dinâmicas sem tratamento de erro que mostra telas
 const AuthProvider = dynamic(() => 
@@ -65,13 +66,20 @@ function MinimalLoadingFallback() {
 export function SimpleProviders({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
+  // Configurar manipulador global de erros
   useEffect(() => {
+    // Configurar manipulador global de erros para factory/chunk
+    const cleanupErrorHandler = setupGlobalErrorHandler();
+    
     // Apenas marcar como montado após um pequeno delay
     const timer = setTimeout(() => {
       setMounted(true);
     }, 100);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      cleanupErrorHandler(); // Limpar manipulador de erros
+    };
   }, [])
 
   // Não renderizar nada até estar montado no cliente
@@ -101,4 +109,4 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
       </Suspense>
     </div>
   )
-} 
+}
