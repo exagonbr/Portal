@@ -1115,76 +1115,8 @@ function SystemAdminDashboardContent() {
 
       {/* Layout Principal com 3 Colunas */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        
         {/* Coluna Principal - Gráficos e Analytics */}
-        <div className="xl:col-span-8">
-          
-          {/* Seção de Gráficos Principais */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            
-            {/* Usuários por Função - Dados Reais do Backend */}
-            {usersByRoleData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold flex items-center gap-2">
-                    <Users className="w-4 h-4 text-blue-500" />
-                    Usuários por Função
-                  </h3>
-                  <div className="text-xs text-gray-500 flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                    Total: {Object.values(realUsersByRole).reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}
-                  </div>
-                </div>
-                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <PieChart className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Gráfico de Usuários por Função</p>
-                    <p className="text-xs text-gray-400">Dados carregados - Visualização em desenvolvimento</p>
-                  </div>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {Object.entries(Object.keys(realUsersByRole).length > 0 ? realUsersByRole : realUserStats?.users_by_role || {}).map(([role, count], index) => {
-                    const roleNames: Record<string, string> = {
-                      'STUDENT': 'Alunos',
-                      'TEACHER': 'Professores', 
-                      'ACADEMIC_COORDINATOR': 'Coordenadores',
-                      'COORDINATOR': 'Coordenadores',
-                      'GUARDIAN': 'Responsáveis',
-                      'PARENT': 'Responsáveis',
-                      'INSTITUTION_MANAGER': 'Gestores',
-                      'ADMIN': 'Administradores',
-                      'SYSTEM_ADMIN': 'Super Admin'
-                    };
-                    const colors = ['text-blue-600', 'text-green-600', 'text-orange-600', 'text-purple-600', 'text-pink-600', 'text-emerald-600'];
-                    const bgColors = ['bg-blue-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100', 'bg-pink-100', 'bg-emerald-100'];
-                    const usersByRoleData = Object.keys(realUsersByRole).length > 0 ? realUsersByRole : realUserStats?.users_by_role || {};
-                    const total = Object.values(usersByRoleData).reduce((a: number, b: number) => a + b, 0) || realUserStats?.total_users || 1;
-                    const percentage = Math.round((count / total) * 100);
-                    
-                    return (
-                      <SimpleCard key={role} className="p-2 hover:shadow-sm transition-shadow">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className={`text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
-                              {count.toLocaleString('pt-BR')}
-                            </p>
-                            <p className="text-xs font-medium text-gray-700">{roleNames[role] || role}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className={`text-xs font-semibold ${colors[index] || 'text-gray-600'}`}>
-                              {percentage}%
-                            </p>
-                          </div>
-                        </div>
-                      </SimpleCard>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-          </div>
-
+        <div className="xl:col-span-12">
           {/* Seção de Gráficos de Analytics */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
             {/* Crescimento de Usuários */}
@@ -1253,8 +1185,74 @@ function SystemAdminDashboardContent() {
             )}
           </div>
 
+          {/* Seção de Gráficos Principais */}
+          <div className="grid grid-cols-1 ">
+            
+            {/* Usuários por Função - Dados Reais do Backend */}
+            {usersByRoleData && (
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <Users className="w-4 h-4 text-blue-500" />
+                    Usuários por Função
+                  </h3>
+                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                    Total: {Object.values(realUsersByRole).reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}
+                  </div>
+                </div>
+                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <PieChart className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Gráfico de Usuários por Função</p>
+                    <p className="text-xs text-gray-400">Dados carregados - Visualização em desenvolvimento</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {Object.entries(Object.keys(realUsersByRole).length > 0 ? realUsersByRole : realUserStats?.users_by_role || {}).map(([role, count], index) => {
+                    const roleNames: Record<string, string> = {
+                      'STUDENT': 'Alunos',
+                      'TEACHER': 'Professores', 
+                      'ACADEMIC_COORDINATOR': 'Coordenadores',
+                      'COORDINATOR': 'Coordenadores',
+                      'GUARDIAN': 'Responsáveis',
+                      'PARENT': 'Responsáveis',
+                      'INSTITUTION_MANAGER': 'Gestores',
+                      'ADMIN': 'Administradores',
+                      'SYSTEM_ADMIN': 'Super Admin'
+                    };
+                    const colors = ['text-blue-600', 'text-green-600', 'text-orange-600', 'text-purple-600', 'text-pink-600', 'text-emerald-600'];
+                    const bgColors = ['bg-blue-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100', 'bg-pink-100', 'bg-emerald-100'];
+                    const usersByRoleData = Object.keys(realUsersByRole).length > 0 ? realUsersByRole : realUserStats?.users_by_role || {};
+                    const total = Object.values(usersByRoleData).reduce((a: number, b: number) => a + b, 0) || realUserStats?.total_users || 1;
+                    const percentage = Math.round((count / total) * 100);
+                    
+                    return (
+                      <SimpleCard key={role} className="p-2 hover:shadow-sm transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className={`text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
+                              {count.toLocaleString('pt-BR')}
+                            </p>
+                            <p className="text-xs font-medium text-gray-700">{roleNames[role] || role}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-xs font-semibold ${colors[index] || 'text-gray-600'}`}>
+                              {percentage}%
+                            </p>
+                          </div>
+                        </div>
+                      </SimpleCard>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+          </div>
+
           {/* Seção de Gráficos Secundários */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 mb-4">
             
             {/* Sessões por Dispositivo */}
             {sessionsByDeviceData && (
@@ -1313,7 +1311,9 @@ function SystemAdminDashboardContent() {
 
 </div>
         {/* Coluna Lateral - Resumos e Ações */}
-        <div className="xl:col-span-4 space-y-4">
+        
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
           
           {/* Resumo de Instituições */}
           <ContentCard
@@ -1657,9 +1657,7 @@ function SystemAdminDashboardContent() {
               </button>
             </div>
           </div>
-
         </div>
-      </div>
     </div>
   );
 }
