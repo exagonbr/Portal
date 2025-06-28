@@ -56,7 +56,7 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
         },
         {
           href: '/admin/certificates',
-          icon: 'award',
+          icon: 'ward',
           label: 'Certificados',
           permission: 'canManageSystem'
         },

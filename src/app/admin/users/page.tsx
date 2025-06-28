@@ -8,7 +8,6 @@ import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import GenericCRUD, { CRUDColumn, CRUDAction } from '@/components/crud/GenericCRUD'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import UserFormModal from '@/components/admin/users/UserFormModal'
 import UserPermissionsModal from '@/components/admin/users/UserPermissionsModal'
 import UserViewModal from '@/components/admin/users/UserViewModal'
@@ -133,14 +132,13 @@ export default function AdminUsersPage() {
 
   // Filter functions
   const updateFilter = (key: string, value: any) => {
-    setFilters(prev => {
-      if (value === '' || value === undefined || value === null) {
-        const newFilters = { ...prev }
-        delete newFilters[key as keyof typeof prev]
-        return newFilters
-      }
-      return { ...prev, [key]: value }
-    })
+    const newFilters = { ...filters };
+    if (value === '' || value === undefined || value === null) {
+      delete (newFilters as any)[key];
+    } else {
+      (newFilters as any)[key] = value;
+    }
+    setFilters(newFilters);
   }
 
   // Role badge variant
@@ -283,7 +281,7 @@ export default function AdminUsersPage() {
   ]
 
   return (
-    <AuthenticatedLayout requiredRole="admin">
+    <AuthenticatedLayout>
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">

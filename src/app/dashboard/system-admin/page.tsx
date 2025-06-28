@@ -180,11 +180,11 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
 
   if (hasError) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-6 max-w-md">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Erro de Carregamento</h2>
-          <p className="text-gray-600 mb-4">
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="text-center p-4 sm:p-6 max-w-md w-full">
+          <AlertTriangle className="w-10 h-10 sm:w-12 sm:h-12 text-red-500 mx-auto mb-3 sm:mb-4" />
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Erro de Carregamento</h2>
+          <p className="text-sm sm:text-base text-gray-600 mb-4">
             Ocorreu um erro ao carregar alguns componentes. Isso pode ser devido a problemas de rede.
           </p>
           <button
@@ -193,7 +193,7 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
               setError(null);
               window.location.reload();
             }}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+            className="w-full sm:w-auto px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors text-sm sm:text-base"
           >
             Recarregar Página
           </button>
@@ -214,7 +214,7 @@ export default function SystemAdminDashboard() {
 }
 
 function SystemAdminDashboardContent() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<SystemDashboardData | null>(null);
@@ -268,8 +268,10 @@ function SystemAdminDashboardContent() {
     // Executar diagnóstico de autenticação primeiro
     console.log('🔍 Executando diagnóstico de autenticação...');
     debugAuth();
-    
-    loadDashboardData();
+
+    if (isAuthenticated) {
+      loadDashboardData();
+    }
     
     // Auto-refresh a cada 30 segundos para métricas em tempo real
     const interval = setInterval(() => {
@@ -282,7 +284,7 @@ function SystemAdminDashboardContent() {
       if (interval) clearInterval(interval);
       if (refreshInterval) clearInterval(refreshInterval);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const loadDashboardData = async () => {
     try {
@@ -410,16 +412,8 @@ function SystemAdminDashboardContent() {
 
   const loadRoleStats = async () => {
     try {
-      const response = await fetch('/api/roles/stats', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setRoleStats(result.data || result);
-      }
+      const result = await systemAdminService.getRoleStats();
+      setRoleStats(result);
     } catch (error) {
       console.error('Erro ao carregar estatísticas de roles:', error);
     }
@@ -427,16 +421,8 @@ function SystemAdminDashboardContent() {
 
   const loadAwsStats = async () => {
     try {
-      const response = await fetch('/api/aws/connection-logs/stats', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setAwsStats(result.data);
-      }
+      const result = await systemAdminService.getAwsConnectionStats();
+      setAwsStats(result);
     } catch (error) {
       console.error('Erro ao carregar estatísticas AWS:', error);
     }
@@ -544,21 +530,10 @@ function SystemAdminDashboardContent() {
 
   const loadRealUserStats = async () => {
     try {
-      const response = await fetch('/api/users/stats', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          setRealUserStats(result.data);
-          // Atualizar também os dados por role se estiverem disponíveis
-          if (result.data.users_by_role) {
-            setRealUsersByRole(result.data.users_by_role);
-          }
-        }
+      const result = await systemAdminService.getRealUserStats();
+      setRealUserStats(result);
+      if (result.users_by_role) {
+        setRealUsersByRole(result.users_by_role);
       }
     } catch (error) {
       console.error('Erro ao carregar estatísticas reais de usuários:', error);
@@ -831,69 +806,72 @@ function SystemAdminDashboardContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-sm text-gray-600 mt-3">Carregando dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
+    <div className="p-2 sm:p-4 lg:p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-3">
-              <Shield className="w-7 h-7 text-primary" />
-              Painel do Administrador do Sistema
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-700 dark:text-gray-800 flex items-center gap-2 sm:gap-3">
+              <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-primary flex-shrink-0" />
+              <span className="truncate">Painel do Administrador do Sistema</span>
             </h1>
-            <p className="text-gray-600 dark:text-gray-600 mt-1">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-600 mt-1">
               Monitoramento e gestão completa da plataforma Portal Sabercon
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 w-full sm:w-auto">
             <button 
               onClick={loadRealTimeMetrics}
-              className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2 text-sm"
+              className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm w-full sm:w-auto"
             >
-              <RefreshCw className="w-4 h-4" />
-              Atualizar
+              <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="sm:inline">Atualizar</span>
             </button>
             <button 
               onClick={() => router.push('/admin/monitoring')}
-              className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm"
+              className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm w-full sm:w-auto"
             >
-              <Gauge className="w-4 h-4" />
-              Monitoramento
+              <Gauge className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="sm:inline">Monitoramento</span>
             </button>
           </div>
         </div>
         
         {/* Resumo Geral do Sistema */}
         {realUserStats && (
-          <div className="mt-4">
+          <div className="mt-3 sm:mt-4">
             <ContentCard
               title="Resumo Geral do Sistema"
               subtitle="Estatísticas principais em tempo real"
               icon={BarChart3}
               iconColor="bg-blue-500"
             >
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xl font-bold text-blue-600">{realUserStats.total_users.toLocaleString('pt-BR')}</p>
-                  <p className="text-xs text-gray-600">Total de Usuários</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+                <div className="text-center p-2 sm:p-3 bg-blue-50 rounded-lg">
+                  <p className="text-lg sm:text-xl font-bold text-blue-600">{realUserStats.total_users.toLocaleString('pt-BR')}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Total de Usuários</p>
                 </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <p className="text-xl font-bold text-green-600">{realUserStats.active_users.toLocaleString('pt-BR')}</p>
-                  <p className="text-xs text-gray-600">Usuários Ativos</p>
+                <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg">
+                  <p className="text-lg sm:text-xl font-bold text-green-600">{realUserStats.active_users.toLocaleString('pt-BR')}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Usuários Ativos</p>
                 </div>
-                <div className="text-center p-3 bg-purple-50 rounded-lg">
-                  <p className="text-xl font-bold text-purple-600">{institutions.length}</p>
-                  <p className="text-xs text-gray-600">Instituições</p>
+                <div className="text-center p-2 sm:p-3 bg-purple-50 rounded-lg">
+                  <p className="text-lg sm:text-xl font-bold text-purple-600">{institutions.length}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Instituições</p>
                 </div>
-                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <p className="text-xl font-bold text-orange-600">{realUserStats.recent_registrations}</p>
-                  <p className="text-xs text-gray-600">Novos este Mês</p>
+                <div className="text-center p-2 sm:p-3 bg-orange-50 rounded-lg">
+                  <p className="text-lg sm:text-xl font-bold text-orange-600">{realUserStats.recent_registrations}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Novos este Mês</p>
                 </div>
               </div>
             </ContentCard>
@@ -903,26 +881,28 @@ function SystemAdminDashboardContent() {
 
       {/* Alertas do Sistema */}
       {alerts.filter(a => !a.resolved).length > 0 && (
-        <div className="mb-4 space-y-2">
+        <div className="mb-3 sm:mb-4 space-y-2">
           {alerts.filter(a => !a.resolved).map(alert => (
             <div
               key={alert.id}
-              className={`p-3 rounded-lg border ${
+              className={`p-2 sm:p-3 rounded-lg border ${
                 alert.type === 'critical' ? 'bg-red-50 border-red-200' :
                 alert.type === 'warning' ? 'bg-accent-yellow/10 border-accent-yellow/20' :
                 'bg-primary/10 border-primary/20'
               }`}
             >
               <div className="flex items-start gap-2">
-                {getAlertIcon(alert.type)}
-                <div className="flex-1">
-                  <h3 className="font-semibold text-sm">{alert.title}</h3>
-                  <p className="text-xs text-gray-600 mt-1">{alert.description}</p>
+                <div className="flex-shrink-0 mt-0.5">
+                  {getAlertIcon(alert.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-xs sm:text-sm">{alert.title}</h3>
+                  <p className="text-xs text-gray-600 mt-1 break-words">{alert.description}</p>
                   <p className="text-xs text-gray-500 mt-1">
                     {alert.timestamp.toLocaleString('pt-BR')}
                   </p>
                 </div>
-                <button className="text-xs text-gray-500 hover:text-gray-700">
+                <button className="text-xs text-gray-500 hover:text-gray-700 flex-shrink-0 px-2 py-1">
                   Resolver
                 </button>
               </div>
@@ -932,7 +912,7 @@ function SystemAdminDashboardContent() {
       )}
 
       {/* Métricas Principais do Sistema */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <StatCard
           icon={Server}
           title="Uptime do Sistema"
@@ -1114,20 +1094,20 @@ function SystemAdminDashboardContent() {
       </div>
 
       {/* Layout Principal com 3 Colunas */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 sm:gap-4">
         {/* Coluna Principal - Gráficos e Analytics */}
         <div className="xl:col-span-12">
           {/* Seção de Gráficos de Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
             {/* Crescimento de Usuários */}
             {userGrowthData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-green-500" />
-                    Crescimento de Usuários
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <h3 className="text-sm sm:text-base font-semibold flex items-center gap-2">
+                    <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+                    <span className="truncate">Crescimento de Usuários</span>
                   </h3>
-                  <div className="text-xs text-gray-500">Últimos 6 meses</div>
+                  <div className="text-xs text-gray-500 flex-shrink-0">Últimos 6 meses</div>
                 </div>
                 <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                   <div className="text-center">
@@ -1201,14 +1181,14 @@ function SystemAdminDashboardContent() {
                     Total: {Object.values(realUsersByRole).reduce((a, b) => a + b, 0).toLocaleString('pt-BR')}
                   </div>
                 </div>
-                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <PieChart className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Gráfico de Usuários por Função</p>
+                <div className="h-40 sm:h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center px-2">
+                    <PieChart className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-xs sm:text-sm text-gray-500">Gráfico de Usuários por Função</p>
                     <p className="text-xs text-gray-400">Dados carregados - Visualização em desenvolvimento</p>
                   </div>
                 </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="mt-2 sm:mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {Object.entries(Object.keys(realUsersByRole).length > 0 ? realUsersByRole : realUserStats?.users_by_role || {}).map(([role, count], index) => {
                     const roleNames: Record<string, string> = {
                       'STUDENT': 'Alunos',
@@ -1252,29 +1232,29 @@ function SystemAdminDashboardContent() {
           </div>
 
           {/* Seção de Gráficos Secundários */}
-          <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 mb-4">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 mb-3 sm:mb-4">
             
             {/* Sessões por Dispositivo */}
             {sessionsByDeviceData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold flex items-center gap-2">
-                    <Monitor className="w-4 h-4 text-indigo-500" />
-                    Sessões por Dispositivo
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <h3 className="text-sm sm:text-base font-semibold flex items-center gap-2">
+                    <Monitor className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-500 flex-shrink-0" />
+                    <span className="truncate">Sessões por Dispositivo</span>
                   </h3>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <span className="w-1.5 h-1.5 inline-block bg-green-500 rounded-full animate-pulse"></span>
                     <span className="text-xs text-gray-500">Tempo real</span>
                   </div>
                 </div>
-                <div className="h-40 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Sessões por Dispositivo</p>
+                <div className="h-32 sm:h-40 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center px-2">
+                    <BarChart3 className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-xs sm:text-sm text-gray-500">Sessões por Dispositivo</p>
                     <p className="text-xs text-gray-400">Em manutenção</p>
                   </div>
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+                <div className="mt-2 sm:mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 text-center">
                   {dashboardData && dashboardData.sessions?.sessionsByDevice && Object.keys(dashboardData.sessions.sessionsByDevice).length > 0 ?
                     Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
                       const colors = ['text-indigo-600', 'text-green-600', 'text-orange-600', 'text-purple-600'];
@@ -1284,14 +1264,14 @@ function SystemAdminDashboardContent() {
                       const total = Object.values(dashboardData.sessions.sessionsByDevice || {}).reduce((a, b) => a + b, 0);
                       const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
                       return (
-                        <div key={device} className="text-center p-2 rounded-lg bg-gray-50 hover:shadow-sm transition-shadow">
-                          <div className={`w-8 h-8 mx-auto mb-1 rounded-full ${bgColors[index] || 'bg-gray-100'} flex items-center justify-center`}>
-                            <Icon className={`w-4 h-4 ${colors[index] || 'text-gray-600'}`} />
+                        <div key={device} className="text-center p-1.5 sm:p-2 rounded-lg bg-gray-50 hover:shadow-sm transition-shadow">
+                          <div className={`w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-1 rounded-full ${bgColors[index] || 'bg-gray-100'} flex items-center justify-center`}>
+                            <Icon className={`w-3 h-3 sm:w-4 sm:h-4 ${colors[index] || 'text-gray-600'}`} />
                           </div>
-                          <p className={`text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
+                          <p className={`text-xs sm:text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
                             {count.toLocaleString('pt-BR')}
                           </p>
-                          <p className="text-xs font-medium text-gray-700">{device}</p>
+                          <p className="text-xs font-medium text-gray-700 truncate">{device}</p>
                           <p className="text-xs text-gray-500">{percentage}%</p>
                         </div>
                       );
@@ -1313,7 +1293,7 @@ function SystemAdminDashboardContent() {
         {/* Coluna Lateral - Resumos e Ações */}
         
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
           
           {/* Resumo de Instituições */}
           <ContentCard
@@ -1363,19 +1343,19 @@ function SystemAdminDashboardContent() {
                   return (
                     <SimpleCard
                       key={institution.id}
-                      className="p-3 hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/30"
+                      className="p-2 sm:p-3 hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/30"
                       hover={true}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs font-bold text-primary">#{index + 1}</span>
-                              <h4 className="font-semibold text-sm text-gray-800 truncate max-w-[180px]" title={institution.name}>
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <span className="text-xs font-bold text-primary flex-shrink-0">#{index + 1}</span>
+                              <h4 className="font-semibold text-xs sm:text-sm text-gray-800 truncate" title={institution.name}>
                                 {institution.name}
                               </h4>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-shrink-0">
                               <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 font-medium">
                                 Ativa
                               </span>
@@ -1508,16 +1488,16 @@ function SystemAdminDashboardContent() {
                   <p className="text-xs font-semibold text-gray-700 mb-2">Funcionalidades Mais Usadas:</p>
                   <div className="space-y-2">
                     {engagementMetrics.topFeatures.slice(0, 3).map((feature, index: number) => (
-                      <div key={feature.name} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                        <span className="text-xs font-medium text-gray-700">{feature.name}</span>
+                      <div key={feature.name} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 p-2 bg-gray-50 rounded-lg">
+                        <span className="text-xs font-medium text-gray-700 truncate">{feature.name}</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-gray-200 rounded-full">
+                          <div className="w-12 sm:w-16 h-1.5 bg-gray-200 rounded-full">
                             <div 
                               className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300" 
                               style={{ width: `${feature.usage}%` }}
                             ></div>
                           </div>
-                          <span className="text-xs font-bold text-blue-600 min-w-[25px]">{feature.usage}%</span>
+                          <span className="text-xs font-bold text-blue-600 min-w-6 sm:min-w-7 flex-shrink-0">{feature.usage}%</span>
                         </div>
                       </div>
                     ))}
@@ -1529,17 +1509,17 @@ function SystemAdminDashboardContent() {
 
           {/* Status AWS Resumido */}
           {(dashboardData?.infrastructure?.aws || awsStats) && (
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-              <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-                <Cloud className="w-4 h-4 text-orange-500" />
-                Infraestrutura AWS
+            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4">
+              <h3 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3 flex items-center gap-2">
+                <Cloud className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500 flex-shrink-0" />
+                <span className="truncate">Infraestrutura AWS</span>
               </h3>
               <div className="space-y-2">
                 {dashboardData?.infrastructure?.aws ? (
                   <>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Uptime:</span>
-                      <span className={`font-semibold text-sm ${
+                      <span className={`font-semibold text-xs sm:text-sm ${
                         dashboardData.infrastructure.aws.performance.uptime >= 99.9 ? 'text-accent-green' : 
                         dashboardData.infrastructure.aws.performance.uptime >= 99.5 ? 'text-accent-yellow' : 'text-red-600'
                       }`}>
@@ -1563,97 +1543,62 @@ function SystemAdminDashboardContent() {
                   </>
                 ) : awsStats && (
                   <>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Taxa de Sucesso:</span>
-                      <span className={`font-semibold text-sm ${
+                      <span className={`font-semibold text-xs sm:text-sm ${
                         awsStats.success_rate >= 95 ? 'text-accent-green' : 
                         awsStats.success_rate >= 80 ? 'text-accent-yellow' : 'text-red-600'
                       }`}>
                         {awsStats.success_rate.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Conexões:</span>
-                      <span className="font-semibold text-sm">{awsStats.total_connections}</span>
+                      <span className="font-semibold text-xs sm:text-sm">{awsStats.total_connections}</span>
                     </div>
                   </>
                 )}
               </div>
               <button 
                 onClick={() => router.push('/admin/aws')}
-                className="w-full mt-3 text-center text-xs text-primary hover:text-primary-dark"
+                className="w-full mt-2 sm:mt-3 text-center text-xs sm:text-sm text-primary hover:text-primary-dark transition-colors px-2 py-1 rounded"
               >
                 Configurar AWS
               </button>
             </div>
           )}
 
-          {/* Ações Rápidas */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-            <h3 className="text-base font-semibold mb-3">Ações do Sistema</h3>
-            <div className="space-y-2">
-              <button 
-                onClick={() => router.push('/admin/institutions')}
-                className="w-full px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                <Building2 className="w-4 h-4" />
-                Gerenciar Instituições
-              </button>
-              <button 
-                onClick={() => router.push('/admin/users')}
-                className="w-full px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                <Users className="w-4 h-4" />
-                Gerenciar Usuários
-              </button>
-              <button 
-                onClick={() => router.push('/admin/security')}
-                className="w-full px-3 py-2 bg-accent-purple text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                <Lock className="w-4 h-4" />
-                Políticas de Segurança
-              </button>
-              <button 
-                onClick={() => router.push('/admin/settings')}
-                className="w-full px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm"
-              >
-                <Settings className="w-4 h-4" />
-                Configurações
-              </button>
-            </div>
-          </div>
-
           {/* Links Rápidos */}
-          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-            <h3 className="text-base font-semibold mb-3">Acesso Rápido</h3>
+          <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-3 sm:p-4">
+            <h3 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3">Acesso Rápido</h3>
             <div className="space-y-1">
               <button 
                 onClick={() => router.push('/admin/analytics')}
-                className="w-full px-2 py-2 text-left text-xs hover:bg-gray-50 rounded flex items-center gap-2"
+                className="w-full px-2 sm:px-3 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 rounded flex items-center gap-2 transition-colors"
               >
-                <BarChart3 className="w-3 h-3 text-primary" />
-                Analytics do Sistema
+                <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                <span className="truncate">Analytics do Sistema</span>
               </button>
               <button 
                 onClick={() => router.push('/admin/logs')}
-                className="w-full px-2 py-2 text-left text-xs hover:bg-gray-50 rounded flex items-center gap-2"
+                className="w-full px-2 sm:px-3 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 rounded flex items-center gap-2 transition-colors"
               >
-                <Terminal className="w-3 h-3 text-primary" />
-                Logs do Sistema
+                <Terminal className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                <span className="truncate">Logs do Sistema</span>
               </button>
               <button 
                 onClick={() => router.push('/admin/sessions')}
-                className="w-full px-2 py-2 text-left text-xs hover:bg-gray-50 rounded flex items-center gap-2"
+                className="w-full px-2 sm:px-3 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 rounded flex items-center gap-2 transition-colors"
               >
-                <Eye className="w-3 h-3 text-primary" />
-                Sessões Ativas
+                <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                <span className="truncate">Sessões Ativas</span>
               </button>
               <button 
                 onClick={() => router.push('/portal/reports')}
-                className="w-full px-2 py-2 text-left text-xs hover:bg-gray-50 rounded flex items-center gap-2"
+                className="w-full px-2 sm:px-3 py-2 text-left text-xs sm:text-sm hover:bg-gray-50 rounded flex items-center gap-2 transition-colors"
               >
-                <FileText className="w-3 h-3 text-primary" />
-                Portal de Relatórios
+                <FileText className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                <span className="truncate">Portal de Relatórios</span>
               </button>
             </div>
           </div>

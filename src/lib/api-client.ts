@@ -16,7 +16,7 @@ import { logHttp500Error } from '../utils/debug-http-500';
 
 // Configuração centralizada
 const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br',
   timeout: 30000,
   retryAttempts: 3,
   retryDelay: 1000,

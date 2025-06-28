@@ -1067,6 +1067,45 @@ class SystemAdminService {
       ]
     };
   }
+
+  async getRoleStats(): Promise<any> {
+    try {
+      const response = await apiClient.get<any>(`/roles/stats`);
+      if (response.success && response.data) {
+        return response.data.data || response.data;
+      }
+      throw new Error(response.message || 'Falha ao carregar estatísticas de roles');
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas de roles:', error);
+      return null;
+    }
+  }
+
+  async getAwsConnectionStats(): Promise<any> {
+    try {
+      const response = await apiClient.get<any>(`/aws/connection-logs/stats`);
+      if (response.success && response.data) {
+        return response.data.data || response.data;
+      }
+      throw new Error(response.message || 'Falha ao carregar estatísticas da AWS');
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas da AWS:', error);
+      return null;
+    }
+  }
+
+  async getRealUserStats(): Promise<any> {
+    try {
+      const response = await apiClient.get<any>(`/users/stats`);
+      if (response.success && response.data) {
+        return response.data.data || response.data;
+      }
+      throw new Error(response.message || 'Falha ao carregar estatísticas de usuários');
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas de usuários:', error);
+      return null;
+    }
+  }
 }
 
-export const systemAdminService = new SystemAdminService(); 
+export const systemAdminService = new SystemAdminService();

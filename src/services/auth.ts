@@ -387,17 +387,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
           console.log('✅ Token salvo no localStorage');
         }
         
-        // Importar dinamicamente o apiClient para evitar dependência circular
-        import('../utils/chunk-retry').then(({ importApiClient }) => {
-          return importApiClient();
-        }).then((apiClientModule) => {
-          if (apiClientModule?.apiClient) {
-            apiClientModule.apiClient.setAuthToken(token);
-            console.log('✅ Token configurado no apiClient');
-          }
-        }).catch(error => {
-          console.warn('⚠️ Erro ao configurar token no apiClient:', error);
-        });
+        apiClient.setAuthToken(token);
       }
 
       return {
@@ -520,17 +510,7 @@ export const register = async (
           console.log('✅ Token salvo no localStorage após registro');
         }
         
-        // Importar dinamicamente o apiClient para evitar dependência circular
-        import('../utils/chunk-retry').then(({ importApiClient }) => {
-          return importApiClient();
-        }).then((apiClientModule) => {
-          if (apiClientModule?.apiClient) {
-            apiClientModule.apiClient.setAuthToken(token);
-            console.log('✅ Token configurado no apiClient após registro');
-          }
-        }).catch(error => {
-          console.warn('⚠️ Erro ao configurar token no apiClient após registro:', error);
-        });
+        apiClient.setAuthToken(token);
       }
 
       return {

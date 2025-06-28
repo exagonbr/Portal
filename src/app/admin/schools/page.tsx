@@ -33,7 +33,7 @@ interface UnitExtended extends Unit {
 
 export default function SystemAdminUnitsPage() {
   const { showSuccess, showError } = useToast();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [units, setUnits] = useState<UnitExtended[]>([]);
   const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,14 +53,16 @@ export default function SystemAdminUnitsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    loadInstitutions();
-  }, []);
+    if (isAuthenticated) {
+      loadInstitutions();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (!loadingInstitutions) {
+    if (isAuthenticated && !loadingInstitutions) {
       loadData();
     }
-  }, [selectedInstitution, loadingInstitutions]);
+  }, [isAuthenticated, selectedInstitution, loadingInstitutions]);
 
   const loadInstitutions = async () => {
     try {

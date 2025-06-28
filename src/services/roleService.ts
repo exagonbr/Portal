@@ -37,7 +37,7 @@ export interface RoleListOptions {
 }
 
 export class RoleService {
-  private readonly baseEndpoint = '/api/roles';
+  private readonly baseEndpoint = '/roles';
   private readonly logger: Logger;
 
   constructor() {
