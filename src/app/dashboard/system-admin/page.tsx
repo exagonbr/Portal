@@ -672,7 +672,7 @@ function SystemAdminDashboardContent() {
     }]
   } : null;
 
-  const sessionsByDeviceData = dashboardData ? {
+  const sessionsByDeviceData = dashboardData && dashboardData.sessions?.sessionsByDevice ? {
     labels: Object.keys(dashboardData.sessions.sessionsByDevice),
     datasets: [{
       label: 'Sessões Ativas',
@@ -905,8 +905,8 @@ function SystemAdminDashboardContent() {
         <StatCard
           icon={Users}
           title="Usuários Online"
-          value={dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || realUserStats?.active_users?.toLocaleString('pt-BR') || '0'}
-          subtitle={`${dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'} sessões ativas`}
+          value={dashboardData?.sessions?.activeUsers?.toLocaleString('pt-BR') || realUserStats?.active_users?.toLocaleString('pt-BR') || '0'}
+          subtitle={`${dashboardData?.sessions?.totalActiveSessions?.toLocaleString('pt-BR') || '0'} sessões ativas`}
           color="violet"
           trend={dashboardData?.sessions?.activeUsers && dashboardData.sessions.activeUsers > 5000 ? 'Alta carga' : 'Tempo real'}
         />
@@ -1179,26 +1179,34 @@ function SystemAdminDashboardContent() {
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-                  {dashboardData && Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
-                    const colors = ['text-indigo-600', 'text-green-600', 'text-orange-600', 'text-purple-600'];
-                    const bgColors = ['bg-indigo-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100'];
-                    const icons = [Monitor, Smartphone, Tablet];
-                    const Icon = icons[index] || Monitor;
-                    const total = Object.values(dashboardData.sessions.sessionsByDevice).reduce((a, b) => a + b, 0);
-                    const percentage = Math.round((count / total) * 100);
-                    return (
-                      <div key={device} className="text-center p-2 rounded-lg bg-gray-50 hover:shadow-sm transition-shadow">
-                        <div className={`w-8 h-8 mx-auto mb-1 rounded-full ${bgColors[index] || 'bg-gray-100'} flex items-center justify-center`}>
-                          <Icon className={`w-4 h-4 ${colors[index] || 'text-gray-600'}`} />
+                  {dashboardData && dashboardData.sessions?.sessionsByDevice && Object.keys(dashboardData.sessions.sessionsByDevice).length > 0 ? 
+                    Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
+                      const colors = ['text-indigo-600', 'text-green-600', 'text-orange-600', 'text-purple-600'];
+                      const bgColors = ['bg-indigo-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100'];
+                      const icons = [Monitor, Smartphone, Tablet];
+                      const Icon = icons[index] || Monitor;
+                      const total = Object.values(dashboardData.sessions.sessionsByDevice || {}).reduce((a, b) => a + b, 0);
+                      const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                      return (
+                        <div key={device} className="text-center p-2 rounded-lg bg-gray-50 hover:shadow-sm transition-shadow">
+                          <div className={`w-8 h-8 mx-auto mb-1 rounded-full ${bgColors[index] || 'bg-gray-100'} flex items-center justify-center`}>
+                            <Icon className={`w-4 h-4 ${colors[index] || 'text-gray-600'}`} />
+                          </div>
+                          <p className={`text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
+                            {count.toLocaleString('pt-BR')}
+                          </p>
+                          <p className="text-xs font-medium text-gray-700">{device}</p>
+                          <p className="text-xs text-gray-500">{percentage}%</p>
                         </div>
-                        <p className={`text-sm font-bold ${colors[index] || 'text-gray-600'}`}>
-                          {count.toLocaleString('pt-BR')}
-                        </p>
-                        <p className="text-xs font-medium text-gray-700">{device}</p>
-                        <p className="text-xs text-gray-500">{percentage}%</p>
-                      </div>
-                    );
-                  })}
+                      );
+                    }) : 
+                    // Fallback when no session data is available
+                    <div className="col-span-3 text-center py-4">
+                      <WifiOff className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">Nenhuma sessão ativa</p>
+                      <p className="text-xs text-gray-400">Aguardando dados...</p>
+                    </div>
+                  }
                 </div>
               </div>
             )}
