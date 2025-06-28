@@ -51,22 +51,43 @@ PASSWORD_HASH='$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewKyNiGSzLmNrJee'
 # SQL para criar instituições
 echo -e "${YELLOW}Criando instituições...${NC}"
 
+# Verificar se a coluna updated_at existe na tabela institution
+HAS_UPDATED_AT=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'institution' AND column_name = 'updated_at');" | tr -d ' ')
+
 # Criar Sabercon Educação
-SABERCON_ID=$(query_sql "
-    INSERT INTO institution (
-        name, company_name, accountable_name, accountable_contact,
-        document, street, district, state, postal_code,
-        contract_disabled, contract_term_start, contract_term_end,
-        deleted, has_library_platform, has_principal_platform, has_student_platform
-    ) VALUES (
-        'Sabercon Educação', 'Sabercon Educação LTDA', 'Administrador Sistema', 'admin@sabercon.edu.br',
-        '00.000.000/0001-00', 'Rua Principal, 123', 'Centro', 'SP', '00000-000',
-        false, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year',
-        false, true, true, true
-    )
-    ON CONFLICT (name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
-    RETURNING id;
-" | tr -d ' ')
+if [ "$HAS_UPDATED_AT" = "t" ]; then
+    SABERCON_ID=$(query_sql "
+        INSERT INTO institution (
+            name, company_name, accountable_name, accountable_contact,
+            document, street, district, state, postal_code,
+            contract_disabled, contract_term_start, contract_term_end,
+            deleted, has_library_platform, has_principal_platform, has_student_platform
+        ) VALUES (
+            'Sabercon Educação', 'Sabercon Educação LTDA', 'Administrador Sistema', 'admin@sabercon.edu.br',
+            '00.000.000/0001-00', 'Rua Principal, 123', 'Centro', 'SP', '00000-000',
+            false, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year',
+            false, true, true, true
+        )
+        ON CONFLICT (name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+        RETURNING id;
+    " | tr -d ' ')
+else
+    SABERCON_ID=$(query_sql "
+        INSERT INTO institution (
+            name, company_name, accountable_name, accountable_contact,
+            document, street, district, state, postal_code,
+            contract_disabled, contract_term_start, contract_term_end,
+            deleted, has_library_platform, has_principal_platform, has_student_platform
+        ) VALUES (
+            'Sabercon Educação', 'Sabercon Educação LTDA', 'Administrador Sistema', 'admin@sabercon.edu.br',
+            '00.000.000/0001-00', 'Rua Principal, 123', 'Centro', 'SP', '00000-000',
+            false, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year',
+            false, true, true, true
+        )
+        ON CONFLICT (name) DO NOTHING
+        RETURNING id;
+    " | tr -d ' ')
+fi
 
 if [ -z "$SABERCON_ID" ]; then
     SABERCON_ID=$(query_sql "SELECT id FROM institution WHERE name = 'Sabercon Educação' LIMIT 1;" | tr -d ' ')
@@ -75,21 +96,39 @@ fi
 echo -e "${GREEN}✅ Instituição Sabercon criada/atualizada (ID: $SABERCON_ID)${NC}"
 
 # Criar IFSP
-IFSP_ID=$(query_sql "
-    INSERT INTO institution (
-        name, company_name, accountable_name, accountable_contact,
-        document, street, district, state, postal_code,
-        contract_disabled, contract_term_start, contract_term_end,
-        deleted, has_library_platform, has_principal_platform, has_student_platform
-    ) VALUES (
-        'Instituto Federal de São Paulo', 'IFSP - Instituto Federal de São Paulo', 'Diretor IFSP', 'contato@ifsp.edu.br',
-        '11.111.111/0001-11', 'Av. Federal, 456', 'Centro Educacional', 'SP', '11111-111',
-        false, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year',
-        false, true, true, true
-    )
-    ON CONFLICT (name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
-    RETURNING id;
-" | tr -d ' ')
+if [ "$HAS_UPDATED_AT" = "t" ]; then
+    IFSP_ID=$(query_sql "
+        INSERT INTO institution (
+            name, company_name, accountable_name, accountable_contact,
+            document, street, district, state, postal_code,
+            contract_disabled, contract_term_start, contract_term_end,
+            deleted, has_library_platform, has_principal_platform, has_student_platform
+        ) VALUES (
+            'Instituto Federal de São Paulo', 'IFSP - Instituto Federal de São Paulo', 'Diretor IFSP', 'contato@ifsp.edu.br',
+            '11.111.111/0001-11', 'Av. Federal, 456', 'Centro Educacional', 'SP', '11111-111',
+            false, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year',
+            false, true, true, true
+        )
+        ON CONFLICT (name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+        RETURNING id;
+    " | tr -d ' ')
+else
+    IFSP_ID=$(query_sql "
+        INSERT INTO institution (
+            name, company_name, accountable_name, accountable_contact,
+            document, street, district, state, postal_code,
+            contract_disabled, contract_term_start, contract_term_end,
+            deleted, has_library_platform, has_principal_platform, has_student_platform
+        ) VALUES (
+            'Instituto Federal de São Paulo', 'IFSP - Instituto Federal de São Paulo', 'Diretor IFSP', 'contato@ifsp.edu.br',
+            '11.111.111/0001-11', 'Av. Federal, 456', 'Centro Educacional', 'SP', '11111-111',
+            false, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 year',
+            false, true, true, true
+        )
+        ON CONFLICT (name) DO NOTHING
+        RETURNING id;
+    " | tr -d ' ')
+fi
 
 if [ -z "$IFSP_ID" ]; then
     IFSP_ID=$(query_sql "SELECT id FROM institution WHERE name = 'Instituto Federal de São Paulo' LIMIT 1;" | tr -d ' ')
@@ -199,10 +238,31 @@ create_user() {
     local table_name=$5
     
     # Verificar colunas disponíveis na tabela
+    local has_email=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'email');" | tr -d ' ')
     local has_name=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'name');" | tr -d ' ')
     local has_full_name=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'full_name');" | tr -d ' ')
     local has_is_active=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'is_active');" | tr -d ' ')
     local has_enabled=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'enabled');" | tr -d ' ')
+    local has_updated_at=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'updated_at');" | tr -d ' ')
+    
+    # Se a tabela não tem coluna email, pular
+    if [ "$has_email" != "t" ]; then
+        echo -e "   ${YELLOW}⚠️ Tabela $table_name não possui coluna 'email', pulando...${NC}"
+        return
+    fi
+    
+    # Verificar qual é a chave primária para identificar usuários
+    local email_column="email"
+    local email_check="email = '$email'"
+    
+    # Para tabela 'user', pode usar username ao invés de email
+    if [ "$table_name" = "user" ]; then
+        local has_username=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'user' AND column_name = 'username');" | tr -d ' ')
+        if [ "$has_username" = "t" ] && [ "$has_email" != "t" ]; then
+            email_column="username"
+            email_check="username = '$email'"
+        fi
+    fi
     
     # Construir query dinamicamente
     local name_column=""
@@ -225,30 +285,38 @@ create_user() {
         active_value="true,"
     fi
     
+    local updated_column=""
+    if [ "$has_updated_at" = "t" ]; then
+        updated_column=", updated_at"
+    fi
+    
     # Verificar se usuário já existe
-    local user_exists=$(query_sql "SELECT EXISTS (SELECT FROM $table_name WHERE email = '$email');" | tr -d ' ')
+    local user_exists=$(query_sql "SELECT EXISTS (SELECT FROM $table_name WHERE $email_check);" | tr -d ' ')
     
     if [ "$user_exists" = "t" ]; then
         # Atualizar usuário existente
-        execute_sql "
-            UPDATE $table_name 
-            SET role_id = '$role_id',
-                $active_column = true,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE email = '$email';
-        " >/dev/null 2>&1
+        local update_query="UPDATE $table_name SET role_id = '$role_id'"
+        if [ -n "$active_column" ]; then
+            update_query="$update_query, ${active_column%,} = true"
+        fi
+        if [ "$has_updated_at" = "t" ]; then
+            update_query="$update_query, updated_at = CURRENT_TIMESTAMP"
+        fi
+        update_query="$update_query WHERE $email_check;"
+        
+        execute_sql "$update_query" >/dev/null 2>&1
         echo -e "   ${YELLOW}↻ Usuário $email atualizado na tabela $table_name${NC}"
     else
         # Criar novo usuário
         execute_sql "
             INSERT INTO $table_name (
-                id, email, password, $name_column
+                id, $email_column, password, $name_column
                 $active_column role_id, institution_id,
-                created_at, updated_at
+                created_at$updated_column
             ) VALUES (
                 gen_random_uuid(), '$email', '$PASSWORD_HASH', $name_value
                 $active_value '$role_id', '$institution_id',
-                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                CURRENT_TIMESTAMP${has_updated_at:+, CURRENT_TIMESTAMP}
             );
         " >/dev/null 2>&1
         echo -e "   ${GREEN}✅ Usuário $email criado na tabela $table_name${NC}"
