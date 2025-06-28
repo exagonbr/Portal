@@ -245,10 +245,17 @@ create_user() {
     local has_enabled=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'enabled');" | tr -d ' ')
     local has_updated_at=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'updated_at');" | tr -d ' ')
     
-    # Se a tabela não tem coluna email, pular
+    # Se a tabela não tem coluna email, avisar mas continuar
     if [ "$has_email" != "t" ]; then
-        echo -e "   ${YELLOW}⚠️ Tabela $table_name não possui coluna 'email', pulando...${NC}"
-        return
+        echo -e "   ${YELLOW}⚠️ Tabela $table_name não possui coluna 'email'${NC}"
+        
+        # Verificar se tem username ao invés
+        local has_username=$(query_sql "SELECT EXISTS (SELECT FROM information_schema.columns WHERE table_name = '$table_name' AND column_name = 'username');" | tr -d ' ')
+        
+        if [ "$has_username" != "t" ]; then
+            echo -e "   ${RED}❌ Tabela $table_name não possui coluna 'email' nem 'username', pulando...${NC}"
+            return
+        fi
     fi
     
     # Verificar qual é a chave primária para identificar usuários
@@ -290,8 +297,16 @@ create_user() {
         updated_column=", updated_at"
     fi
     
-    # Verificar se usuário já existe
-    local user_exists=$(query_sql "SELECT EXISTS (SELECT FROM $table_name WHERE $email_check);" | tr -d ' ')
+    # Verificar se usuário já existe (apenas se a coluna existe)
+    local user_exists="f"
+    if [ "$has_email" = "t" ] || ([ "$table_name" = "user" ] && [ "$has_username" = "t" ]); then
+        user_exists=$(query_sql "SELECT EXISTS (SELECT FROM $table_name WHERE $email_check);" 2>/dev/null | tr -d ' ')
+        
+        # Se houve erro na query, assumir que não existe
+        if [ -z "$user_exists" ]; then
+            user_exists="f"
+        fi
+    fi
     
     if [ "$user_exists" = "t" ]; then
         # Atualizar usuário existente
@@ -319,7 +334,11 @@ create_user() {
                 CURRENT_TIMESTAMP${has_updated_at:+, CURRENT_TIMESTAMP}
             );
         " >/dev/null 2>&1
-        echo -e "   ${GREEN}✅ Usuário $email criado na tabela $table_name${NC}"
+        if [ $? -eq 0 ]; then
+            echo -e "   ${GREEN}✅ Usuário $email criado na tabela $table_name${NC}"
+        else
+            echo -e "   ${YELLOW}⚠️ Não foi possível criar usuário $email na tabela $table_name (pode faltar colunas necessárias)${NC}"
+        fi
     fi
 }
 

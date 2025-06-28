@@ -19,7 +19,24 @@ Os seguintes usuários serão criados:
 
 ## 🚀 Como Usar
 
-### Opção 1: Usando o script wrapper (Recomendado para Produção)
+### Opção 1: Script Completo (RECOMENDADO)
+
+Este script executa todos os passos necessários em sequência:
+
+```bash
+# Tornar o script executável
+chmod +x scripts/insert-default-users-complete.sh
+
+# Executar o script completo
+./scripts/insert-default-users-complete.sh
+```
+
+O script irá:
+1. Verificar a estrutura do banco
+2. Oferecer correção da tabela 'user' se necessário
+3. Inserir todos os usuários padrão
+
+### Opção 2: Usando o script wrapper básico
 
 ```bash
 # Tornar o script executável
@@ -56,6 +73,9 @@ DB_HOST=seu-host DB_PASSWORD=sua-senha ./scripts/insert-default-users.sh
 
 - **`insert-default-users.sh`**: Script principal que executa as inserções SQL
 - **`insert-default-users-prod.sh`**: Script wrapper que carrega variáveis do .env e executa o script principal
+- **`insert-default-users-complete.sh`**: Script completo que executa todos os passos em sequência (RECOMENDADO)
+- **`check-db-structure.sh`**: Script para verificar a estrutura das tabelas no banco
+- **`fix-user-table.sh`**: Script para corrigir problemas na tabela 'user' (adiciona colunas faltantes)
 - **`README-default-users.md`**: Esta documentação
 
 ## ⚙️ O que o script faz
@@ -102,6 +122,27 @@ DB_HOST=seu-host DB_PASSWORD=sua-senha ./scripts/insert-default-users.sh
 ```
 **Solução**: Verifique se as migrações do banco foram executadas
 
+### Erro: column "email" does not exist
+```bash
+ERROR: column "email" does not exist
+```
+**Solução**: A tabela 'user' pode ter uma estrutura diferente. Execute o script de correção:
+```bash
+bash scripts/fix-user-table.sh
+```
+
+### Erro: column "updated_at" does not exist
+```bash
+ERROR: column "updated_at" of relation "institution" does not exist
+```
+**Solução**: Este erro é tratado automaticamente pelo script, que detecta se a coluna existe antes de usá-la
+
+### Verificar estrutura do banco
+Para diagnosticar problemas, você pode verificar a estrutura das tabelas:
+```bash
+bash scripts/check-db-structure.sh
+```
+
 ### Permissão negada
 ```bash
 bash: ./scripts/insert-default-users.sh: Permission denied
@@ -130,3 +171,53 @@ Em caso de problemas, verifique:
 2. Os logs do PostgreSQL
 3. A conectividade com o banco de dados
 4. As permissões do usuário do banco
+5. A estrutura das tabelas usando `scripts/check-db-structure.sh`
+
+## 🔧 Scripts Auxiliares
+
+### check-db-structure.sh
+Verifica a estrutura de todas as tabelas relevantes:
+```bash
+bash scripts/check-db-structure.sh
+```
+
+### fix-user-table.sh
+Corrige problemas na tabela 'user' adicionando colunas faltantes:
+```bash
+bash scripts/fix-user-table.sh
+```
+
+## ⚡ Execução Rápida para Produção
+
+### Método Recomendado (Tudo em um):
+```bash
+# Executa todos os passos automaticamente
+bash scripts/insert-default-users-complete.sh
+```
+
+### Método Manual (Passo a passo):
+```bash
+# 1. Verificar estrutura (opcional)
+bash scripts/check-db-structure.sh
+
+# 2. Corrigir tabela user se necessário (opcional)
+bash scripts/fix-user-table.sh
+
+# 3. Inserir usuários padrão
+bash scripts/insert-default-users-prod.sh
+```
+
+## 🎯 Solução Rápida para os Erros Reportados
+
+Se você encontrou os erros mencionados no feedback, execute:
+
+```bash
+# Este comando resolve todos os problemas automaticamente
+bash scripts/insert-default-users-complete.sh
+```
+
+O script irá:
+- ✅ Detectar automaticamente se a coluna `updated_at` existe antes de usá-la
+- ✅ Verificar se a tabela `user` tem coluna `email` antes de tentar inserir
+- ✅ Oferecer correção automática da estrutura da tabela `user`
+- ✅ Inserir todos os usuários padrão com tratamento de erros
