@@ -21,6 +21,9 @@ export function isChunkLoadError(error: any): boolean {
       error.message?.includes('ChunkLoadError') ||
       error.message?.includes('originalFactory is undefined') ||
       error.message?.includes("can't access property \"call\", originalFactory is undefined") ||
+      error.message?.includes("Cannot read properties of undefined (reading 'call')") ||
+      error.message?.includes("originalFactory.call is not a function") ||
+      error.message?.includes("factory is undefined") ||
       error.code === 'CHUNK_LOAD_FAILED')
   );
 }
@@ -54,6 +57,15 @@ export async function retryDynamicImport<T>(
       // Verificar se o resultado é válido
       if (!result) {
         throw new Error('Import returned null or undefined');
+      }
+      
+      // Verificar se o resultado tem as propriedades esperadas
+      if (typeof result === 'object' && result !== null) {
+        // Para imports de módulos, verificar se não está vazio
+        const keys = Object.keys(result);
+        if (keys.length === 0) {
+          throw new Error('Import returned empty object');
+        }
       }
       
       if (attempt > 1 && onSuccess) {
@@ -110,24 +122,49 @@ export async function retryDynamicImport<T>(
  * Wrapper específico para importar o api-client com retry
  */
 export async function importApiClient() {
-  return retryDynamicImport(
-    () => import('../lib/api-client'),
-    {
-      maxRetries: 3,
-      retryDelay: 1000,
-      onRetry: (attempt, error) => {
-        console.warn(`⚠️ Tentativa ${attempt} de importar api-client falhou:`, error.message);
-      },
-      onSuccess: (attempt) => {
-        if (attempt > 1) {
-          console.log(`✅ Api-client importado com sucesso na tentativa ${attempt}`);
+  try {
+    return await retryDynamicImport(
+      () => import('../lib/api-client'),
+      {
+        maxRetries: 3,
+        retryDelay: 1000,
+        onRetry: (attempt, error) => {
+          console.warn(`⚠️ Tentativa ${attempt} de importar api-client falhou:`, error.message);
+        },
+        onSuccess: (attempt) => {
+          if (attempt > 1) {
+            console.log(`✅ Api-client importado com sucesso na tentativa ${attempt}`);
+          }
+        },
+        onFailure: (error) => {
+          console.error('❌ Falha ao importar api-client após todas as tentativas:', error);
         }
-      },
-      onFailure: (error) => {
-        console.error('❌ Falha ao importar api-client após todas as tentativas:', error);
       }
-    }
-  );
+    );
+  } catch (error) {
+    console.error('❌ Erro crítico ao importar api-client:', error);
+    // Retornar um objeto mock para evitar crashes
+    return {
+      apiClient: {
+        clearAuth: () => {
+          console.warn('⚠️ Usando clearAuth mock devido a falha no import');
+          if (typeof window !== 'undefined') {
+            const keys = ['auth_token', 'token', 'authToken'];
+            keys.forEach(key => {
+              localStorage.removeItem(key);
+              sessionStorage.removeItem(key);
+            });
+          }
+        },
+        setAuthToken: (token: string) => {
+          console.warn('⚠️ Usando setAuthToken mock devido a falha no import');
+          if (typeof window !== 'undefined' && token) {
+            localStorage.setItem('auth_token', token);
+          }
+        }
+      }
+    };
+  }
 }
 
 /**

@@ -305,8 +305,8 @@ class SystemAdminService {
       
       console.log('📊 [SYSTEM-ADMIN-SERVICE] Resposta recebida:', response);
       
-      if (response.success && response.data) {
-        const usersData = response.data.data?.users_by_role || response.data.users_by_role || {};
+      if (response.success && response.data?.data?.users_by_role) {
+        const usersData = response.data.data.users_by_role;
         console.log('✅ [SYSTEM-ADMIN-SERVICE] Dados de usuários por função:', usersData);
         return usersData;
       }
@@ -357,17 +357,22 @@ class SystemAdminService {
     };
   }> {
     try {
-      const response = await apiClient.get<{ data: any }>(`dashboard/analytics`);
+      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`dashboard/analytics`);
       
-      if (response.success && response.data) {
+      // Add debug logging
+      console.log('Analytics response:', response);
+      
+      if (response.success && response.data?.data) {
+        // If success is true, return the data directly
         return response.data.data;
       }
       
+      // If success is false, throw error with message
       throw new Error(response.message || 'Falha ao carregar analytics');
     } catch (error) {
       console.error('Erro ao carregar analytics do sistema:', error);
       
-      // Fallback com dados simulados
+      // Fallback with simulated data
       return this.getFallbackAnalytics();
     }
   }
@@ -385,17 +390,22 @@ class SystemAdminService {
     topFeatures: Array<{ name: string; usage: number }>;
   }> {
     try {
-      const response = await apiClient.get<{ data: any }>(`dashboard/engagement`);
+      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`dashboard/engagement`);
       
-      if (response.success && response.data) {
+      // Add debug logging
+      console.log('Engagement metrics response:', response);
+      
+      if (response.success && response.data?.data) {
+        // If success is true, return the data directly
         return response.data.data;
       }
       
+      // If success is false, throw error with message
       throw new Error(response.message || 'Falha ao carregar métricas de engajamento');
     } catch (error) {
       console.error('Erro ao carregar métricas de engajamento:', error);
       
-      // Fallback com dados simulados
+      // Fallback with simulated data
       return this.getFallbackEngagementMetrics();
     }
   }
@@ -405,17 +415,46 @@ class SystemAdminService {
    */
   async getSystemDashboard(): Promise<SystemDashboardData> {
     try {
+      console.log('🔍 [SYSTEM-ADMIN] Iniciando carregamento do dashboard do sistema...');
+      
       const response = await apiClient.get<{ data: SystemDashboardData }>(`dashboard/system`);
       
-      if (response.success && response.data) {
-        return response.data.data;
+      console.log('🔍 [SYSTEM-ADMIN] Resposta recebida:', {
+        success: response.success,
+        hasData: !!response.data,
+        message: response.message,
+        responseKeys: Object.keys(response)
+      });
+      
+      // Verificar se a resposta tem dados, mesmo que success não seja true
+      if (response.data) {
+        console.log('✅ [SYSTEM-ADMIN] Dashboard carregado com sucesso');
+        return response.data.data || response.data;
       }
       
-      throw new Error(response.message || 'Falha ao carregar dashboard do sistema');
-    } catch (error) {
-      console.error('Erro ao carregar dashboard do sistema:', error);
+      // Se chegou aqui, não há dados válidos
+      const errorMessage = response.message || 'Falha ao carregar dashboard do sistema';
+      console.warn('⚠️ [SYSTEM-ADMIN] Resposta sem dados válidos:', errorMessage);
       
-      // Fallback com dados simulados
+      // Não lançar erro imediatamente, tentar fallback
+      console.log('🔄 [SYSTEM-ADMIN] Usando dados de fallback...');
+      return this.getFallbackDashboardData();
+      
+    } catch (error: any) {
+      console.error('❌ [SYSTEM-ADMIN] Erro ao carregar dashboard do sistema:', error);
+      
+      // Verificar se é erro de autenticação
+      if (error?.status === 401 || 
+          error?.message?.includes('Token') || 
+          error?.message?.includes('autenticação') || 
+          error?.message?.includes('autorização')) {
+        
+        console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
+        throw new Error('Token de autenticação inválido. Faça login novamente.');
+      }
+      
+      // Para outros erros, usar fallback
+      console.log('🔄 [SYSTEM-ADMIN] Usando dados de fallback devido ao erro...');
       return this.getFallbackDashboardData();
     }
   }
@@ -425,55 +464,39 @@ class SystemAdminService {
    */
   async getRealTimeMetrics(): Promise<RealTimeMetrics> {
     try {
-      console.log('🔍 [SYSTEM-ADMIN] Carregando métricas em tempo real...');
-      
       // Verificar autenticação usando o novo validador
       const authStatus = isAuthenticated();
       if (!authStatus.authenticated) {
-        console.warn('⚠️ [SYSTEM-ADMIN] Usuário não autenticado:', authStatus.error);
         clearAllTokens(); // Limpar tokens inválidos
         throw new Error('Token de autenticação inválido. Faça login novamente.');
       }
       
       const token = getCurrentToken();
       if (!token) {
-        console.warn('⚠️ [SYSTEM-ADMIN] Nenhum token encontrado após validação');
         throw new Error('Token de autenticação não encontrado. Faça login novamente.');
       }
-      
-      console.log('🔍 [SYSTEM-ADMIN] Token válido encontrado:', token.substring(0, 20) + '...');
       
       // Validar token específico
       const tokenValidation = validateToken(token);
       if (!tokenValidation.isValid) {
-        console.error('❌ [SYSTEM-ADMIN] Token inválido:', tokenValidation.error);
         clearAllTokens();
         throw new Error('Token de autenticação inválido. Faça login novamente.');
       }
       
-      if (tokenValidation.needsRefresh) {
-        console.warn('⚠️ [SYSTEM-ADMIN] Token precisa ser renovado em breve');
-      }
+      // Token pode precisar ser renovado em breve, mas ainda é válido
       
       // Sincronizar token com apiClient
-      const syncSuccess = await syncTokenWithApiClient(token);
-      if (!syncSuccess) {
-        console.warn('⚠️ [SYSTEM-ADMIN] Falha ao sincronizar token com apiClient');
-      }
+      await syncTokenWithApiClient(token);
       
       // Tentar primeiro a rota do backend
       const response = await apiClient.get<{ data: RealTimeMetrics }>(`dashboard/metrics/realtime`);
       
-      console.log('🔍 [SYSTEM-ADMIN] Resposta da API:', response);
-      
       if (response.success && response.data) {
-        console.log('✅ [SYSTEM-ADMIN] Métricas carregadas com sucesso');
-        return response.data.data;
+        return response.data.data || response.data;
       }
       
       // Se chegou aqui, a resposta não foi bem-sucedida
       const errorMessage = response.message || 'Falha ao carregar métricas em tempo real';
-      console.error('❌ [SYSTEM-ADMIN] Erro na resposta da API:', errorMessage);
       
       // Verificar se é erro de autenticação
       if (errorMessage.includes('Token') || errorMessage.includes('autenticação') || errorMessage.includes('autorização')) {
@@ -482,8 +505,6 @@ class SystemAdminService {
       
       throw new Error(errorMessage);
     } catch (error: any) {
-      console.error('❌ [SYSTEM-ADMIN] Erro ao carregar métricas em tempo real do backend:', error);
-      
       // Verificar se é erro de autenticação específico
       if (error?.message?.includes('Token') || 
           error?.message?.includes('autenticação') || 
@@ -491,21 +512,32 @@ class SystemAdminService {
           error?.message?.includes('401') ||
           error?.status === 401) {
         
-        console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado, limpando sessão...');
-        
         // Usar o utilitário para limpar todos os tokens
         clearAllTokens();
         
-        // Tentar limpar apiClient também
+        // Tentar limpar apiClient também - usando import direto para evitar chunk errors
         try {
-          const { importApiClient } = await import('../utils/chunk-retry');
-          const apiClientModule = await importApiClient();
+          // Import direto do apiClient para evitar problemas de chunk loading
+          const { apiClient } = await import('../lib/api-client');
           
-          if (apiClientModule?.apiClient) {
-            apiClientModule.apiClient.clearAuth();
+          if (apiClient && typeof apiClient.clearAuth === 'function') {
+            apiClient.clearAuth();
+            console.log('✅ [SYSTEM-ADMIN] Auth limpo do apiClient');
+          } else {
+            console.warn('⚠️ [SYSTEM-ADMIN] ApiClient não disponível para limpeza');
           }
         } catch (clearError) {
           console.warn('⚠️ [SYSTEM-ADMIN] Erro ao limpar auth do apiClient:', clearError);
+          
+          // Fallback: limpar tokens manualmente
+          if (typeof window !== 'undefined') {
+            const keys = ['auth_token', 'token', 'authToken'];
+            keys.forEach(key => {
+              localStorage.removeItem(key);
+              sessionStorage.removeItem(key);
+            });
+            console.log('✅ [SYSTEM-ADMIN] Tokens limpos via fallback');
+          }
         }
         
         throw new Error('Token de autenticação inválido. Faça login novamente.');
@@ -513,7 +545,6 @@ class SystemAdminService {
       
       // Se falhar, tentar a rota local como fallback
       try {
-        console.log('🔄 Tentando rota local como fallback...');
         const localResponse = await fetch('/api/dashboard/metrics/realtime');
         
         if (localResponse.ok) {
@@ -523,10 +554,8 @@ class SystemAdminService {
           }
         }
       } catch (localError) {
-        console.error('Erro na rota local de fallback:', localError);
+        // Ignorar erro na rota local e continuar para fallback
       }
-      
-      console.warn('🎭 Usando dados simulados para métricas em tempo real');
       
       // Fallback com dados simulados mais realistas
       const now = new Date();
@@ -562,17 +591,69 @@ class SystemAdminService {
    */
   async getSystemHealth(): Promise<SystemHealth> {
     try {
+      console.log('🔍 [SYSTEM-ADMIN] Iniciando carregamento do status de saúde...');
+      
       const response = await apiClient.get<{ data: SystemHealth }>(`dashboard/health`);
       
-      if (response.success && response.data) {
-        return response.data.data;
+      console.log('🔍 [SYSTEM-ADMIN] Resposta de saúde recebida:', {
+        success: response.success,
+        hasData: !!response.data,
+        message: response.message
+      });
+      
+      // Verificar se a resposta tem dados, mesmo que success não seja true
+      if (response.data) {
+        console.log('✅ [SYSTEM-ADMIN] Status de saúde carregado com sucesso');
+        return response.data.data || response.data;
       }
       
-      throw new Error(response.message || 'Falha ao carregar status de saúde');
-    } catch (error) {
-      console.error('Erro ao carregar status de saúde:', error);
+      // Se chegou aqui, não há dados válidos
+      const errorMessage = response.message || 'Falha ao carregar status de saúde';
+      console.warn('⚠️ [SYSTEM-ADMIN] Resposta sem dados válidos:', errorMessage);
       
-      // Fallback com dados simulados
+      // Não lançar erro imediatamente, usar fallback
+      console.log('🔄 [SYSTEM-ADMIN] Usando dados de fallback para saúde...');
+      return {
+        overall: 'healthy',
+        components: {
+          api: {
+            status: 'healthy',
+            uptime: process.uptime ? process.uptime() : 3600,
+            memory: {
+              rss: 104857600,
+              heapTotal: 83886080,
+              heapUsed: 67108864,
+              external: 8388608,
+              arrayBuffers: 1048576
+            }
+          },
+          redis: {
+            status: 'healthy',
+            activeConnections: 150
+          },
+          database: {
+            status: 'healthy',
+            connections: 'active'
+          }
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+    } catch (error: any) {
+      console.error('❌ [SYSTEM-ADMIN] Erro ao carregar status de saúde:', error);
+      
+      // Verificar se é erro de autenticação
+      if (error?.status === 401 || 
+          error?.message?.includes('Token') || 
+          error?.message?.includes('autenticação') || 
+          error?.message?.includes('autorização')) {
+        
+        console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
+        throw new Error('Token de autenticação inválido. Faça login novamente.');
+      }
+      
+      // Para outros erros, usar fallback
+      console.log('🔄 [SYSTEM-ADMIN] Usando dados de fallback devido ao erro...');
       return {
         overall: 'healthy',
         components: {
@@ -606,17 +687,22 @@ class SystemAdminService {
    */
   async getAnalyticsData(type: 'users' | 'sessions' | 'activity', period: 'day' | 'week' | 'month' = 'week'): Promise<AnalyticsData> {
     try {
-      const response = await apiClient.get<{ data: AnalyticsData }>(`dashboard/analytics`, { type, period });
+      const response = await apiClient.get<{ success: boolean; data: AnalyticsData; message?: string }>(`dashboard/analytics`, { type, period });
       
-      if (response.success && response.data) {
+      // Add debug logging
+      console.log('Analytics data response:', response);
+      
+      if (response.success && response.data?.data) {
+        // If success is true, return the data directly
         return response.data.data;
       }
       
+      // If success is false, throw error with message
       throw new Error(response.message || 'Falha ao carregar dados de analytics');
     } catch (error) {
       console.error('Erro ao carregar dados de analytics:', error);
       
-      // Fallback com dados simulados
+      // Fallback with simulated data
       return this.getFallbackAnalyticsData(type, period);
     }
   }

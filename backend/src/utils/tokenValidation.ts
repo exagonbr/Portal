@@ -1,14 +1,13 @@
 // Helper function to check if a string is valid base64
 export function isValidBase64(str: string): boolean {
+  // Must be a non-empty string with valid base64 characters (+ optional padding)
+  if (typeof str !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(str)) {
+    return false;
+  }
   try {
-    // Check if the string has valid base64 characters
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(str)) {
-      return false;
-    }
-    // Try to decode and encode back to see if it's valid
-    const decoded = Buffer.from(str, 'base64').toString('utf-8');
-    const encoded = Buffer.from(decoded, 'utf-8').toString('base64');
-    return encoded === str;
+    // Just decode it; no strict re-encode check needed
+    Buffer.from(str, 'base64').toString('utf-8');
+    return true;
   } catch {
     return false;
   }
@@ -42,18 +41,8 @@ export function validateTokenFormat(token: string): { isValid: boolean; error?: 
 // Helper function to safely decode base64 token
 export function safeDecodeBase64Token(token: string): { success: boolean; data?: any; error?: string } {
   try {
-    // Validate base64 format before attempting to decode
-    if (!isValidBase64(token)) {
-      return { success: false, error: 'Token is not valid base64 format' };
-    }
-
+    // Attempt direct base64 decode and JSON parse
     const base64Decoded = Buffer.from(token, 'base64').toString('utf-8');
-    
-    // Check if decoded content is valid JSON
-    if (!isValidJSON(base64Decoded)) {
-      return { success: false, error: 'Decoded token is not valid JSON' };
-    }
-
     const fallbackData = JSON.parse(base64Decoded);
     
     // Check if it's a valid fallback token structure

@@ -22,7 +22,7 @@ export default function SystemNavigationPage() {
       description: 'Funcionalidades administrativas e de configuração',
       links: [
         { name: 'Gestão de Usuários', url: '/admin/users', description: 'CRUD completo de usuários do sistema' },
-        { name: 'Gestão de Funções', url: '/admin/roles', description: 'Gerenciamento de papéis e permissões' },
+        { name: 'Gerenciar Permissões', url: '/admin/roles', description: 'Funções, grupos e permissões contextuais' },
         { name: 'Gestão de Unidades', url: '/admin/units', description: 'Gerenciamento de unidades educacionais' },
         { name: 'Configurações do Sistema', url: '/admin/settings', description: 'Configurações gerais da aplicação' },
         { name: 'Monitoramento', url: '/admin/monitoring', description: 'Monitoramento de performance e recursos' },

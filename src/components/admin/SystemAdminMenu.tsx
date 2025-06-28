@@ -63,7 +63,8 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           href: '/admin/roles',
           icon: 'key',
           label: 'Gerenciar Permissões',
-          permission: 'canManageSystem'
+          permission: 'canManageSystem',
+          description: 'Funções, grupos e permissões contextuais'
         },
         {
           href: '/admin/settings',

@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 
+require('dotenv').config(); // Load environment variables
 const jwt = require('jsonwebtoken');
 
 async function testUsersStats() {
-  const secret = process.env.JWT_SECRET || 'ExagonTech';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("⚠️  JWT_SECRET not defined in environment variables");
+  }
+  console.log('🔐 Using JWT_SECRET from environment:', secret.substring(0, 10) + '...');
   
   const payload = {
     userId: 'test-admin-id',
@@ -103,7 +108,7 @@ async function testDatabaseConnection() {
           userId: 'test',
           email: 'test@test.com',
           role: 'SYSTEM_ADMIN'
-        }, process.env.JWT_SECRET || 'ExagonTech')}`,
+        }, secret)}`,
         'Content-Type': 'application/json'
       }
     });

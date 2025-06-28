@@ -36,26 +36,54 @@ export async function validateJWTToken(token: string) {
   }
 
   // Check for obviously malformed tokens (containing special characters that shouldn't be there)
-      if (token.includes('\0') || token.includes('\x00')) {
+  if (token.includes('\0') || token.includes('\x00')) {
     console.warn('Token contains invalid characters');
     return null;
   }
 
-  try {
-    // First, try to verify as a real JWT
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as any;
-    return {
-      user: {
-        id: decoded.userId,
-        email: decoded.email,
-        name: decoded.name,
-        role: decoded.role,
-        institution_id: decoded.institutionId,
-        permissions: decoded.permissions || []
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.error('JWT_SECRET not configured');
+    return null;
+  }
+
+  // Detect if this is a real JWT (three segments) vs fallback token
+  const parts = token.split('.');
+  const isJwtToken = parts.length === 3;
+
+  if (isJwtToken) {
+    // Handle real JWT tokens
+    try {
+      const decoded = jwt.verify(token, secret) as any;
+      
+      if (typeof decoded !== 'object' || !decoded.userId) {
+        console.warn('JWT payload missing required fields');
+        return null;
       }
-    };
-  } catch (jwtError) {
-    // If JWT verification fails, try to decode as base64 (fallback tokens)
+
+      return {
+        user: {
+          id: decoded.userId,
+          email: decoded.email,
+          name: decoded.name,
+          role: decoded.role,
+          institution_id: decoded.institutionId,
+          permissions: decoded.permissions || []
+        }
+      };
+    } catch (jwtError) {
+      // Provide specific error logging for JWT failures
+      const errorMsg = jwtError instanceof Error ? jwtError.message : String(jwtError);
+      console.warn('JWT validation failed:', errorMsg);
+      return null;
+    }
+  } else {
+    // Handle fallback base64 tokens (only in development)
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('Simple base64 tokens not allowed in production');
+      return null;
+    }
+
     try {
       // Validate base64 format before attempting to decode
       if (!isValidBase64(token)) {
@@ -96,18 +124,10 @@ export async function validateJWTToken(token: string) {
         return null;
       }
     } catch (base64Error) {
-      // Only log the error if it's not due to invalid format (which we already checked)
-      const jwtErrorMsg = jwtError instanceof Error ? jwtError.message : String(jwtError);
-      const base64ErrorMsg = base64Error instanceof Error ? base64Error.message : String(base64Error);
-      
-      console.warn('Token validation failed:', { 
-        jwtError: jwtErrorMsg, 
-        base64Error: base64ErrorMsg,
-        tokenPreview: token.substring(0, 20) + '...'
-      });
+      const errorMsg = base64Error instanceof Error ? base64Error.message : String(base64Error);
+      console.warn('Base64 token validation failed:', errorMsg);
+      return null;
     }
-    
-    return null;
   }
 }
 

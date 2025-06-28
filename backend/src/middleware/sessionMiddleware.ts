@@ -380,15 +380,14 @@ export const optionalAuth = async (
 
 // Helper function to check if a string is valid base64
 function isValidBase64(str: string): boolean {
+  // Must be a non-empty string with valid base64 characters (+ optional padding)
+  if (typeof str !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(str)) {
+    return false;
+  }
   try {
-    // Check if the string has valid base64 characters
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(str)) {
-      return false;
-    }
-    // Try to decode and encode back to see if it's valid
-    const decoded = Buffer.from(str, 'base64').toString('utf-8');
-    const encoded = Buffer.from(decoded, 'utf-8').toString('base64');
-    return encoded === str;
+    // Just decode it; no strict re-encode check needed
+    Buffer.from(str, 'base64').toString('utf-8');
+    return true;
   } catch {
     return false;
   }
@@ -431,16 +430,16 @@ export const validateJWTSimple = async (
       });
     }
 
-    // Early validation: check if token is not empty and has reasonable length
-    if (!token || token.length < 10) {
+    // Early validation: check if token is valid base64 and has reasonable length
+    if (!token || token.length < 10 || !isValidBase64(token)) {
       return res.status(401).json({
         success: false,
-        message: 'Token muito curto ou vazio'
+        message: 'Token inválido ou malformado'
       });
     }
 
-    // Check for obviously malformed tokens
-    if (token.includes('\0') || token.includes('\x00')) {
+    // Check for malformed tokens
+    if (token.includes('\0') || token.includes('\x00') || !isValidJSON(Buffer.from(token, 'base64').toString())) {
       return res.status(401).json({
         success: false,
         message: 'Token contém caracteres inválidos'
@@ -476,24 +475,8 @@ export const validateJWTSimple = async (
     } catch (jwtError) {
       // Se falhar na validação JWT, tenta decodificar como base64 (fallback tokens)
       try {
-        // Validate base64 format before attempting to decode
-        if (!isValidBase64(token)) {
-          return res.status(401).json({
-            success: false,
-            message: 'Token não está em formato base64 válido'
-          });
-        }
-
+        // Direct decode and parse - no strict validation gates
         const base64Decoded = Buffer.from(token, 'base64').toString('utf-8');
-        
-        // Check if decoded content is valid JSON
-        if (!isValidJSON(base64Decoded)) {
-          return res.status(401).json({
-            success: false,
-            message: 'Token decodificado não é JSON válido'
-          });
-        }
-
         const fallbackData = JSON.parse(base64Decoded);
         
         // Verifica se é uma estrutura válida de token fallback
@@ -680,147 +663,171 @@ export const validateTokenUltraSimple = async (
     // Log para debug
     console.log('🔍 validateTokenUltraSimple - Header:', authHeader ? 'Present' : 'Missing');
     
-    if (!authHeader) {
-      console.log('❌ No authorization header');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ No authorization header or invalid format');
       return res.status(401).json({
         success: false,
         error: 'Token de autorização não fornecido',
-        debug: 'No authorization header'
-      });
-    }
-    
-    if (!authHeader.startsWith('Bearer ')) {
-      console.log('❌ Invalid authorization format');
-      return res.status(401).json({
-        success: false,
-        error: 'Formato de token inválido',
-        debug: 'Authorization header does not start with Bearer'
+        debug: 'No authorization header or doesn\'t start with Bearer'
       });
     }
 
-    const token = authHeader.substring(7);
+    const token = authHeader.substring(7).trim();
     console.log('🔍 Token length:', token ? token.length : 0);
-    
-    if (!token) {
-      console.log('❌ Empty token');
-      return res.status(401).json({
-        success: false,
-        error: 'Token vazio',
-        debug: 'Token is empty after Bearer prefix'
-      });
-    }
     
     if (token.length < 10) {
       console.log('❌ Token too short:', token.length);
       return res.status(401).json({
         success: false,
-        error: 'Token muito curto',
+        error: 'Token muito curto ou vazio',
         debug: `Token length: ${token.length}`
       });
     }
 
-    let userAuth: AuthTokenPayload;
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('⚠️  JWT_SECRET não definido');
+      return res.status(500).json({
+        success: false,
+        error: 'Configuração de autenticação incorreta',
+        debug: 'JWT_SECRET environment variable not set'
+      });
+    }
 
-    // Tentar primeiro como JWT
-    const secret = process.env.JWT_SECRET || 'ExagonTech';
-    try {
-      const decoded = jwt.verify(token, secret) as any;
-      console.log('✅ Token decoded as JWT successfully for user:', decoded.email);
-      
-      if (typeof decoded === 'string' || !decoded.userId) {
-        console.warn('⚠️ Invalid JWT payload detected in ultra-simple validation:', { decoded: typeof decoded, hasUserId: !!decoded?.userId });
+    // Detect if this is a real JWT (three segments) vs fallback token
+    const parts = token.split('.');
+    const isJwtToken = parts.length === 3;
+
+    if (isJwtToken) {
+      // Handle real JWT tokens
+      try {
+        const decoded = jwt.verify(token, secret) as any;
+        console.log('✅ Token decoded as JWT successfully for user:', decoded.email || decoded.userId);
+        
+        if (typeof decoded !== 'object' || !decoded.userId) {
+          console.warn('⚠️ Invalid JWT payload detected:', { decoded: typeof decoded, hasUserId: !!decoded?.userId });
+          return res.status(401).json({
+            success: false,
+            error: 'Payload do token inválido',
+            debug: 'JWT payload missing userId or is not object'
+          });
+        }
+        
+        req.user = {
+          userId: decoded.userId,
+          email: decoded.email || '',
+          name: decoded.name || '',
+          role: decoded.role || 'user',
+          permissions: decoded.permissions || [],
+          institutionId: decoded.institutionId,
+          sessionId: decoded.sessionId,
+          iat: decoded.iat,
+          exp: decoded.exp
+        };
+        
+        console.log('✅ User authenticated via JWT:', req.user.email, 'Role:', req.user.role);
+        return next();
+      } catch (jwtError: any) {
+        console.log('❌ JWT verification failed:', jwtError.message);
+        
+        // Provide specific JWT error messages
+        if (jwtError.name === 'TokenExpiredError') {
+          return res.status(401).json({
+            success: false,
+            error: 'Token expirado',
+            debug: 'JWT token has expired'
+          });
+        }
+        
+        if (jwtError.name === 'JsonWebTokenError') {
+          return res.status(401).json({
+            success: false,
+            error: 'Token inválido ou expirado',
+            debug: `JWT error: ${jwtError.message}`
+          });
+        }
+        
         return res.status(401).json({
           success: false,
-          error: 'Payload do token inválido',
-          debug: 'JWT payload missing userId or is string'
+          error: 'Erro na validação do token',
+          debug: `JWT verification failed: ${jwtError.message}`
         });
       }
-      
-      userAuth = {
-        userId: decoded.userId,
-        email: decoded.email,
-        name: decoded.name,
-        role: decoded.role,
-        permissions: decoded.permissions || [],
-        institutionId: decoded.institutionId,
-        sessionId: decoded.sessionId,
-        iat: decoded.iat,
-        exp: decoded.exp
-      };
-    } catch (jwtError: any) {
-      console.log('❌ JWT verification failed, trying base64 fallback:', jwtError.message);
-      
-      // Se falhar na validação JWT, tentar decodificar como base64 (fallback tokens)
+    } else {
+      // Handle fallback base64 tokens (only in development)
+      if (process.env.NODE_ENV === 'production') {
+        console.log('❌ Simple base64 tokens not allowed in production');
+        return res.status(401).json({
+          success: false,
+          error: 'Apenas tokens JWT são aceitos em produção',
+          debug: 'Simple base64 tokens not allowed in production'
+        });
+      }
+
       try {
-        // Validate base64 format before attempting to decode
-        if (!isValidBase64(token)) {
+        console.log('🔍 Trying base64 fallback token...');
+        
+        // Normalize URL-safe Base64 to standard Base64
+        const base64url = token.replace(/-/g, '+').replace(/_/g, '/');
+        const padding = base64url.length % 4;
+        const b64 = padding ? base64url + '='.repeat(4 - padding) : base64url;
+
+        let fallbackData: any;
+        try {
+          const decoded = Buffer.from(b64, 'base64').toString('utf8');
+          fallbackData = JSON.parse(decoded);
+        } catch (decodeError) {
+          console.log('❌ Base64 decode or JSON parse failed:', decodeError);
           return res.status(401).json({
             success: false,
-            error: 'Token não está em formato JWT nem base64 válido',
-            debug: 'Invalid token format'
+            error: 'Token inválido ou expirado',
+            debug: 'Base64 decode or JSON parse failed'
           });
         }
 
-        const base64Decoded = Buffer.from(token, 'base64').toString('utf-8');
+        console.log('🔍 Fallback token data:', { userId: fallbackData.userId, email: fallbackData.email, role: fallbackData.role });
         
-        // Check if decoded content is valid JSON
-        if (!isValidJSON(base64Decoded)) {
+        // Validate required fields
+        if (!fallbackData.userId || !fallbackData.email || !fallbackData.role) {
           return res.status(401).json({
             success: false,
-            error: 'Token decodificado não é JSON válido',
-            debug: 'Decoded token is not valid JSON'
+            error: 'Estrutura de token simples inválida',
+            debug: 'Fallback token missing required fields: userId, email, or role'
           });
         }
 
-        const fallbackData = JSON.parse(base64Decoded);
-        console.log('🔍 Fallback token data:', fallbackData);
-        
-        // Verifica se é uma estrutura válida de token fallback
-        if (fallbackData.userId && fallbackData.email && fallbackData.role) {
-          // Verifica se o token não expirou
-          if (fallbackData.exp && fallbackData.exp < Math.floor(Date.now() / 1000)) {
-            return res.status(401).json({
-              success: false,
-              error: 'Token expirado',
-              debug: 'Fallback token has expired'
-            });
-          }
-          
-          userAuth = {
-            userId: fallbackData.userId,
-            email: fallbackData.email,
-            name: fallbackData.name || fallbackData.userId,
-            role: fallbackData.role,
-            permissions: fallbackData.permissions || [],
-            institutionId: fallbackData.institutionId,
-            sessionId: fallbackData.sessionId,
-            iat: fallbackData.iat || Math.floor(Date.now() / 1000),
-            exp: fallbackData.exp || Math.floor(Date.now() / 1000) + 3600
-          };
-          
-          console.log('✅ Token decoded as base64 fallback successfully for user:', userAuth.email);
-        } else {
+        // Check expiration
+        if (fallbackData.exp && fallbackData.exp < Math.floor(Date.now() / 1000)) {
           return res.status(401).json({
             success: false,
-            error: 'Estrutura de token fallback inválida',
-            debug: 'Fallback token missing required fields'
+            error: 'Token expirado',
+            debug: 'Fallback token has expired'
           });
         }
-      } catch (base64Error: any) {
-        console.log('❌ Base64 fallback also failed:', base64Error.message);
+
+        req.user = {
+          userId: fallbackData.userId,
+          email: fallbackData.email,
+          name: fallbackData.name || fallbackData.userId,
+          role: fallbackData.role,
+          permissions: fallbackData.permissions || [],
+          institutionId: fallbackData.institutionId,
+          sessionId: fallbackData.sessionId,
+          iat: fallbackData.iat || Math.floor(Date.now() / 1000),
+          exp: fallbackData.exp || Math.floor(Date.now() / 1000) + 3600
+        };
+
+        console.log('✅ User authenticated via fallback token:', req.user.email, 'Role:', req.user.role);
+        return next();
+      } catch (error: any) {
+        console.log('❌ Fallback token processing failed:', error.message);
         return res.status(401).json({
           success: false,
           error: 'Token inválido ou expirado',
-          debug: `JWT error: ${jwtError.message}, Base64 error: ${base64Error.message}`
+          debug: 'Fallback token processing failed'
         });
       }
     }
-
-    // Criar objeto user
-    req.user = userAuth;
-
-    console.log('✅ User authenticated:', userAuth.email, 'Role:', userAuth.role);
-    next();
   } catch (error: any) {
     console.error('❌ validateTokenUltraSimple error:', error);
     return res.status(500).json({

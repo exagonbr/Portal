@@ -12,6 +12,7 @@ export * from './Book';
 export * from './Video';
 export * from './Quiz';
 export * from './Role';
+export * from './UserGroup';
 export * from './Chat';
 export * from './Forum';
 export * from './Annotation';
