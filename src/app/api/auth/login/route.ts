@@ -354,8 +354,12 @@ export async function POST(request: NextRequest) {
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const textResponse = await response.text();
-        console.error('❌ Backend retornou resposta não-JSON:', textResponse.substring(0, 500));
-        throw new Error(`Backend retornou resposta não-JSON: ${textResponse.substring(0, 100)}...`);
+        console.error('❌ Backend retornou resposta não-JSON:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: textResponse.substring(0, 1000)
+        });
+        throw new Error(`Backend retornou resposta não-JSON (status ${response.status}): ${textResponse.substring(0, 100)}...`);
       }
 
       data = await response.json();
@@ -384,7 +388,8 @@ export async function POST(request: NextRequest) {
             email: 'admin@sabercon.edu.br',
             role: 'SYSTEM_ADMIN',
             permissions: ['all'],
-            institutionId: 'inst_sabercon'
+            institutionId: 'inst_sabercon',
+            institution_name: 'SaberCon (Fallback)'
           }
         },
         'gestor@sabercon.edu.br': {
@@ -395,7 +400,8 @@ export async function POST(request: NextRequest) {
             email: 'gestor@sabercon.edu.br',
             role: 'INSTITUTION_ADMIN',
             permissions: ['manage_institution'],
-            institutionId: 'inst_sabercon'
+            institutionId: 'inst_sabercon',
+            institution_name: 'SaberCon (Fallback)'
           }
         },
         'coordenador@sabercon.edu.br': {
@@ -406,7 +412,8 @@ export async function POST(request: NextRequest) {
             email: 'coordenador@sabercon.edu.br',
             role: 'ACADEMIC_COORDINATOR',
             permissions: ['manage_courses'],
-            institutionId: 'inst_sabercon'
+            institutionId: 'inst_sabercon',
+            institution_name: 'SaberCon (Fallback)'
           }
         },
         'professor@sabercon.edu.br': {
@@ -417,7 +424,8 @@ export async function POST(request: NextRequest) {
             email: 'professor@sabercon.edu.br',
             role: 'TEACHER',
             permissions: ['manage_classes'],
-            institutionId: 'inst_sabercon'
+            institutionId: 'inst_sabercon',
+            institution_name: 'SaberCon (Fallback)'
           }
         },
         'estudante@sabercon.edu.br': {
@@ -428,7 +436,8 @@ export async function POST(request: NextRequest) {
             email: 'estudante@sabercon.edu.br',
             role: 'STUDENT',
             permissions: ['view_content'],
-            institutionId: 'inst_sabercon'
+            institutionId: 'inst_sabercon',
+            institution_name: 'SaberCon (Fallback)'
           }
         }
       };
@@ -485,10 +494,10 @@ export async function POST(request: NextRequest) {
       console.log(`🚫 LOGIN FAILED:`, {
         status: response.status,
         message: data?.message,
-        data: data
+        errorBody: data // Logar o corpo do erro
       });
       return NextResponse.json(
-        { success: false, message: data?.message || 'Erro ao fazer login' },
+        { success: false, message: data?.message || 'Erro ao fazer login', details: data?.details || data },
         { status: response.status }
       );
     }
@@ -515,40 +524,53 @@ export async function POST(request: NextRequest) {
 
     // Processar diferentes estruturas de resposta do backend
     let userData;
-    let token = data.token;
-    
-    // Tentar diferentes estruturas de resposta
-    if (data.user && data.token) {
-      // Estrutura padrão: { user: {...}, token: '...' }
+    let token;
+
+    // 1. Tentar extrair dados do usuário de locais comuns
+    if (data.user) {
       userData = data.user;
-      token = data.token;
     } else if (data.data && data.data.user) {
-      // Estrutura aninhada: { data: { user: {...}, token: '...' } }
       userData = data.data.user;
-      token = data.data.token || data.token;
-    } else if (data.id && data.email && data.role) {
-      // O próprio objeto é o usuário
+    } else if (data.id && data.email) {
+      // A própria resposta pode ser o objeto do usuário
       userData = data;
-      // Token pode estar em um campo separado ou precisamos gerar
-      if (!token) {
-        console.warn('⚠️ Token não encontrado na resposta, gerando localmente');
-        const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
-        token = jwt.sign({
-          userId: data.id,
-          email: data.email,
-          name: data.name,
-          role: data.role,
-          permissions: data.permissions || [],
-          iat: Math.floor(Date.now() / 1000),
-          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24h
-        }, JWT_SECRET);
-      }
-    } else {
-      console.error('🚫 Estrutura de resposta não reconhecida:', data);
+    }
+
+    // 2. Tentar extrair token de locais comuns
+    if (data.token) {
+      token = data.token;
+    } else if (data.data && data.data.token) {
+      token = data.data.token;
+    }
+
+    // 3. Se não encontrou userData, a estrutura da resposta é inválida
+    if (!userData) {
+      console.error('🚫 Estrutura de resposta não reconhecida (usuário não encontrado):', data);
       return NextResponse.json(
-        { success: false, message: 'Estrutura de resposta inválida do servidor' },
+        { success: false, message: 'Estrutura de resposta inválida do servidor (usuário não encontrado)' },
         { status: 502 }
       );
+    }
+
+    // 4. Normalizar o campo 'role' se necessário
+    if (!userData.role && (userData.role_name || userData.role_slug)) {
+      console.log(`Normalizando 'role': usando 'role_name' ou 'role_slug' como fallback.`);
+      userData.role = userData.role_name || userData.role_slug;
+    }
+
+    // 5. Gerar um token localmente como fallback se nenhum foi fornecido
+    if (!token) {
+      console.warn('⚠️ Token não encontrado na resposta do backend, gerando um token localmente como fallback.');
+      const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
+      token = jwt.sign({
+        userId: userData.id,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        permissions: userData.permissions || [],
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24h
+      }, JWT_SECRET);
     }
 
     // Verificar se temos os dados mínimos do usuário
@@ -612,6 +634,8 @@ export async function POST(request: NextRequest) {
       email: userData.email,
       role: userData.role,
       permissions: userData.permissions || [],
+      institution_id: userData.institution_id,
+      institution_name: userData.institution_name || `Instituição ID: ${userData.institution_id || 'N/A'}`
     };
 
     // Cookie não httpOnly para acesso pelo cliente JavaScript

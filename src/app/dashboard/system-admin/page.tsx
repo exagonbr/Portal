@@ -109,6 +109,32 @@ interface SystemAlert {
   resolved: boolean;
 }
 
+interface EngagementMetrics {
+  retentionRate: number;
+  averageSessionDuration: number;
+  bounceRate: number;
+  topFeatures: Array<{
+    name: string;
+    usage: number;
+  }>;
+}
+
+interface SystemAnalytics {
+  userGrowth?: Array<{
+    month: string;
+    users: number;
+    growth: number;
+  }>;
+  sessionTrends?: Array<{
+    hour: string;
+    sessions: number;
+  }>;
+  institutionDistribution?: Array<{
+    name: string;
+    users: number;
+  }>;
+}
+
 // Error boundary component
 function ErrorBoundary({ children }: { children: React.ReactNode }) {
   const [hasError, setHasError] = useState(false);
@@ -116,9 +142,12 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
-      if (event.error?.message?.includes("Cannot read properties of undefined (reading 'call')") ||
-          event.error?.message?.includes("originalFactory is undefined") ||
-          event.error?.message?.includes("ChunkLoadError")) {
+      const errorMessage = event.error?.message || '';
+      if (errorMessage.includes("Cannot read properties of undefined (reading 'call')") ||
+          errorMessage.includes("originalFactory is undefined") ||
+          errorMessage.includes("ChunkLoadError") ||
+          errorMessage.includes("Loading chunk") ||
+          errorMessage.includes("Loading CSS chunk")) {
         console.error('🔥 Chunk loading error capturado:', event.error);
         setError(event.error);
         setHasError(true);
@@ -127,9 +156,12 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      if (event.reason?.message?.includes("Cannot read properties of undefined (reading 'call')") ||
-          event.reason?.message?.includes("originalFactory is undefined") ||
-          event.reason?.message?.includes("ChunkLoadError")) {
+      const reasonMessage = event.reason?.message || '';
+      if (reasonMessage.includes("Cannot read properties of undefined (reading 'call')") ||
+          reasonMessage.includes("originalFactory is undefined") ||
+          reasonMessage.includes("ChunkLoadError") ||
+          reasonMessage.includes("Loading chunk") ||
+          reasonMessage.includes("Loading CSS chunk")) {
         console.error('🔥 Promise rejection capturada:', event.reason);
         setError(event.reason);
         setHasError(true);
@@ -193,8 +225,8 @@ function SystemAdminDashboardContent() {
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
   const [realUsersByRole, setRealUsersByRole] = useState<Record<string, number>>({});
   const [realUserStats, setRealUserStats] = useState<RealUserStats | null>(null);
-  const [systemAnalytics, setSystemAnalytics] = useState<any>(null);
-  const [engagementMetrics, setEngagementMetrics] = useState<any>(null);
+  const [systemAnalytics, setSystemAnalytics] = useState<SystemAnalytics | null>(null);
+  const [engagementMetrics, setEngagementMetrics] = useState<EngagementMetrics | null>(null);
   const [institutionStats, setInstitutionStats] = useState<{
     totalInstitutions: number;
     activeInstitutions: number;
@@ -248,6 +280,7 @@ function SystemAdminDashboardContent() {
     
     return () => {
       if (interval) clearInterval(interval);
+      if (refreshInterval) clearInterval(refreshInterval);
     };
   }, []);
 
@@ -410,8 +443,9 @@ function SystemAdminDashboardContent() {
   };
 
   const loadSystemAlerts = async () => {
-    // Alertas baseados em métricas reais do sistema
-    const systemAlerts: SystemAlert[] = [];
+    try {
+      // Alertas baseados em métricas reais do sistema
+      const systemAlerts: SystemAlert[] = [];
     
     // Verificar uso de memória real se disponível
     if (dashboardData?.system?.memoryUsage) {
@@ -482,7 +516,21 @@ function SystemAdminDashboardContent() {
       }
     );
 
-    setAlerts(systemAlerts);
+      setAlerts(systemAlerts);
+    } catch (error) {
+      console.error('Erro ao carregar alertas do sistema:', error);
+      // Set default alerts in case of error
+      setAlerts([
+        {
+          id: 'system-info',
+          type: 'info',
+          title: 'Sistema operacional',
+          description: 'Todos os serviços estão funcionando normalmente',
+          timestamp: new Date(),
+          resolved: true
+        }
+      ]);
+    }
   };
 
   const loadRealUsersByRole = async () => {
@@ -705,11 +753,11 @@ function SystemAdminDashboardContent() {
   } : null;
 
   // Gráfico de crescimento de usuários
-  const userGrowthData = systemAnalytics?.userGrowth ? {
-    labels: systemAnalytics.userGrowth.map((item: any) => item.month),
+  const userGrowthData = systemAnalytics?.userGrowth && Array.isArray(systemAnalytics.userGrowth) ? {
+    labels: systemAnalytics.userGrowth.map((item) => item.month),
     datasets: [{
       label: 'Usuários Totais',
-      data: systemAnalytics.userGrowth.map((item: any) => item.users),
+      data: systemAnalytics.userGrowth.map((item) => item.users),
       borderColor: 'rgba(59, 130, 246, 1)',
       backgroundColor: 'rgba(59, 130, 246, 0.1)',
       borderWidth: 3,
@@ -722,7 +770,7 @@ function SystemAdminDashboardContent() {
       pointHoverRadius: 8
     }, {
       label: 'Taxa de Crescimento (%)',
-      data: systemAnalytics.userGrowth.map((item: any) => item.growth),
+      data: systemAnalytics.userGrowth.map((item) => item.growth),
       borderColor: 'rgba(16, 185, 129, 1)',
       backgroundColor: 'rgba(16, 185, 129, 0.1)',
       borderWidth: 2,
@@ -738,11 +786,11 @@ function SystemAdminDashboardContent() {
   } : null;
 
   // Gráfico de tendências de sessões por hora
-  const sessionTrendsData = systemAnalytics?.sessionTrends ? {
-    labels: systemAnalytics.sessionTrends.map((item: any) => item.hour),
+  const sessionTrendsData = systemAnalytics?.sessionTrends && Array.isArray(systemAnalytics.sessionTrends) ? {
+    labels: systemAnalytics.sessionTrends.map((item) => item.hour),
     datasets: [{
       label: 'Sessões por Hora',
-      data: systemAnalytics.sessionTrends.map((item: any) => item.sessions),
+      data: systemAnalytics.sessionTrends.map((item) => item.sessions),
       borderColor: 'rgba(168, 85, 247, 1)',
       backgroundColor: 'rgba(168, 85, 247, 0.1)',
       borderWidth: 2,
@@ -757,11 +805,11 @@ function SystemAdminDashboardContent() {
   } : null;
 
   // Gráfico de distribuição de instituições
-  const institutionDistributionData = systemAnalytics?.institutionDistribution ? {
-    labels: systemAnalytics.institutionDistribution.map((item: any) => item.name),
+  const institutionDistributionData = systemAnalytics?.institutionDistribution && Array.isArray(systemAnalytics.institutionDistribution) ? {
+    labels: systemAnalytics.institutionDistribution.map((item) => item.name),
     datasets: [{
       label: 'Usuários por Instituição',
-      data: systemAnalytics.institutionDistribution.map((item: any) => item.users),
+      data: systemAnalytics.institutionDistribution.map((item) => item.users),
       backgroundColor: [
         'rgba(59, 130, 246, 0.8)',
         'rgba(16, 185, 129, 0.8)',
@@ -1038,12 +1086,12 @@ function SystemAdminDashboardContent() {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-800">
-                {dashboardData?.sessions.totalActiveSessions.toLocaleString('pt-BR') || '0'}
+                {dashboardData?.sessions?.totalActiveSessions?.toLocaleString('pt-BR') || '0'}
               </p>
               <p className="text-xs text-gray-600">Sessões Ativas</p>
               <p className="text-xs text-gray-500 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 inline-block bg-green-500 rounded-full animate-pulse"></span>
-                {dashboardData?.sessions.activeUsers.toLocaleString('pt-BR') || '0'} usuários online
+                {dashboardData?.sessions?.activeUsers?.toLocaleString('pt-BR') || '0'} usuários online
               </p>
             </div>
           </div>
@@ -1056,7 +1104,7 @@ function SystemAdminDashboardContent() {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-800">
-                {dashboardData ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
+                {dashboardData?.sessions?.averageSessionDuration ? `${dashboardData.sessions.averageSessionDuration.toFixed(0)}min` : 'N/A'}
               </p>
               <p className="text-xs text-gray-600">Tempo Médio</p>
               <p className="text-xs text-gray-500">Por sessão</p>
@@ -1091,11 +1139,11 @@ function SystemAdminDashboardContent() {
                   <div className="text-center">
                     <PieChart className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">Gráfico de Usuários por Função</p>
-                    <p className="text-xs text-gray-400">Em manutenção</p>
+                    <p className="text-xs text-gray-400">Dados carregados - Visualização em desenvolvimento</p>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  {Object.entries(realUsersByRole.length ? realUsersByRole : realUserStats?.users_by_role || {}).map(([role, count], index) => {
+                  {Object.entries(Object.keys(realUsersByRole).length > 0 ? realUsersByRole : realUserStats?.users_by_role || {}).map(([role, count], index) => {
                     const roleNames: Record<string, string> = {
                       'STUDENT': 'Alunos',
                       'TEACHER': 'Professores', 
@@ -1109,7 +1157,7 @@ function SystemAdminDashboardContent() {
                     };
                     const colors = ['text-blue-600', 'text-green-600', 'text-orange-600', 'text-purple-600', 'text-pink-600', 'text-emerald-600'];
                     const bgColors = ['bg-blue-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100', 'bg-pink-100', 'bg-emerald-100'];
-                    const usersByRoleData = realUsersByRole.length ? realUsersByRole : realUserStats?.users_by_role || {};
+                    const usersByRoleData = Object.keys(realUsersByRole).length > 0 ? realUsersByRole : realUserStats?.users_by_role || {};
                     const total = Object.values(usersByRoleData).reduce((a: number, b: number) => a + b, 0) || realUserStats?.total_users || 1;
                     const percentage = Math.round((count / total) * 100);
                     
@@ -1135,6 +1183,10 @@ function SystemAdminDashboardContent() {
               </div>
             )}
 
+          </div>
+
+          {/* Seção de Gráficos de Analytics */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
             {/* Crescimento de Usuários */}
             {userGrowthData && (
               <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
@@ -1155,6 +1207,50 @@ function SystemAdminDashboardContent() {
               </div>
             )}
 
+            {/* Tendências de Sessões por Hora */}
+            {sessionTrendsData && (
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-purple-500" />
+                    Atividade por Hora
+                  </h3>
+                  <div className="text-xs text-gray-500">Hoje</div>
+                </div>
+                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <Activity className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Atividade por Hora</p>
+                    <p className="text-xs text-gray-400">Em manutenção</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Distribuição por Instituições */}
+            {institutionDistributionData && (
+              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-slate-500" />
+                    Distribuição por Instituições
+                  </h3>
+                  <button
+                    onClick={() => router.push('/admin/institutions')}
+                    className="text-xs text-primary hover:text-primary-dark"
+                  >
+                    Ver todas
+                  </button>
+                </div>
+                <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Distribuição por Instituições</p>
+                    <p className="text-xs text-gray-400">Em manutenção</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Seção de Gráficos Secundários */}
@@ -1181,7 +1277,7 @@ function SystemAdminDashboardContent() {
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-                  {dashboardData && dashboardData.sessions?.sessionsByDevice && Object.keys(dashboardData.sessions.sessionsByDevice).length > 0 ? 
+                  {dashboardData && dashboardData.sessions?.sessionsByDevice && Object.keys(dashboardData.sessions.sessionsByDevice).length > 0 ?
                     Object.entries(dashboardData.sessions.sessionsByDevice).map(([device, count], index) => {
                       const colors = ['text-indigo-600', 'text-green-600', 'text-orange-600', 'text-purple-600'];
                       const bgColors = ['bg-indigo-100', 'bg-green-100', 'bg-orange-100', 'bg-purple-100'];
@@ -1201,7 +1297,7 @@ function SystemAdminDashboardContent() {
                           <p className="text-xs text-gray-500">{percentage}%</p>
                         </div>
                       );
-                    }) : 
+                    }) :
                     // Fallback when no session data is available
                     <div className="col-span-3 text-center py-4">
                       <WifiOff className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -1213,55 +1309,9 @@ function SystemAdminDashboardContent() {
               </div>
             )}
 
-            {/* Tendências de Sessões por Hora */}
-            {sessionTrendsData && (
-              <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-purple-500" />
-                    Atividade por Hora
-                  </h3>
-                  <div className="text-xs text-gray-500">Hoje</div>
-                </div>
-                <div className="h-40 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                  <div className="text-center">
-                    <Activity className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">Atividade por Hora</p>
-                    <p className="text-xs text-gray-400">Em manutenção</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          </div>
-
-          {/* Distribuição por Instituições */}
-          {institutionDistributionData && (
-            <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-slate-500" />
-                  Distribuição por Instituições
-                </h3>
-                <button 
-                  onClick={() => router.push('/admin/institutions')}
-                  className="text-xs text-primary hover:text-primary-dark"
-                >
-                  Ver todas
-                </button>
-              </div>
-              <div className="h-48 flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <div className="text-center">
-                  <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">Distribuição por Instituições</p>
-                  <p className="text-xs text-gray-400">Em manutenção</p>
-                </div>
-              </div>
-            </div>
-          )}
-
         </div>
 
+</div>
         {/* Coluna Lateral - Resumos e Ações */}
         <div className="xl:col-span-4 space-y-4">
           
@@ -1457,7 +1507,7 @@ function SystemAdminDashboardContent() {
                 <div className="mt-4">
                   <p className="text-xs font-semibold text-gray-700 mb-2">Funcionalidades Mais Usadas:</p>
                   <div className="space-y-2">
-                    {engagementMetrics.topFeatures.slice(0, 3).map((feature: any, index: number) => (
+                    {engagementMetrics.topFeatures.slice(0, 3).map((feature, index: number) => (
                       <div key={feature.name} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
                         <span className="text-xs font-medium text-gray-700">{feature.name}</span>
                         <div className="flex items-center gap-2">

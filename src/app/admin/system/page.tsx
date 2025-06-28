@@ -1,50 +1,91 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
-// import DashboardPageLayout from '@/components/dashboard/DashboardPageLayout'
+import { useState, useEffect } from 'react'
 
-const SYSTEM_INFO = {
-  version: '2.1.4',
-  buildDate: '2024-03-20',
-  environment: 'Production',
-  uptime: '15 dias, 8 horas',
-  lastRestart: '2024-03-05 14:30:00',
+// Tipagem para as informações do sistema
+interface SystemInfo {
+  version: string;
+  buildDate: string;
+  environment: string;
+  uptime: string;
+  lastRestart: string;
   database: {
-    type: 'PostgreSQL',
-    version: '15.2',
-    size: '2.8 GB',
-    connections: 45,
-    maxConnections: 100
-  },
+    type: string;
+    version: string;
+    size: string;
+    connections: number;
+    maxConnections: number;
+  };
   server: {
-    cpu: 35,
-    memory: 68,
-    disk: 42,
-    network: 15
-  },
-  services: [
-    { name: 'API Gateway', status: 'online', uptime: '99.9%', lastCheck: '2024-03-20 11:45:00' },
-    { name: 'Database', status: 'online', uptime: '99.8%', lastCheck: '2024-03-20 11:45:00' },
-    { name: 'File Storage', status: 'online', uptime: '99.7%', lastCheck: '2024-03-20 11:45:00' },
-    { name: 'Email Service', status: 'warning', uptime: '98.5%', lastCheck: '2024-03-20 11:44:00' },
-    { name: 'Backup Service', status: 'online', uptime: '99.9%', lastCheck: '2024-03-20 11:45:00' },
-    { name: 'Cache Redis', status: 'online', uptime: '99.6%', lastCheck: '2024-03-20 11:45:00' }
-  ]
+    cpu: number;
+    memory: number;
+    disk: number;
+    network: number;
+  };
+  services: {
+    name: string;
+    status: 'online' | 'warning' | 'offline';
+    uptime: string;
+    lastCheck: string;
+  }[];
 }
 
-const RECENT_ACTIVITIES = [
-  { id: 1, type: 'system', message: 'Sistema reiniciado para manutenção', timestamp: '2024-03-20 10:30:00', severity: 'info' },
-  { id: 2, type: 'security', message: 'Tentativa de acesso não autorizado bloqueada', timestamp: '2024-03-20 09:15:00', severity: 'warning' },
-  { id: 3, type: 'backup', message: 'Backup automático concluído com sucesso', timestamp: '2024-03-20 02:00:00', severity: 'success' },
-  { id: 4, type: 'update', message: 'Atualização de segurança aplicada', timestamp: '2024-03-19 18:45:00', severity: 'info' },
-  { id: 5, type: 'error', message: 'Erro temporário no serviço de email', timestamp: '2024-03-19 14:20:00', severity: 'error' }
-]
+// Tipagem para as atividades recentes
+interface Activity {
+  id: number;
+  type: 'system' | 'security' | 'backup' | 'update' | 'error';
+  message: string;
+  timestamp: string;
+  severity: 'info' | 'warning' | 'error' | 'success';
+}
+
 
 export default function AdminSystemPage() {
   const { user } = useAuth()
-  const [selectedTab, setSelectedTab] = useState('overview')
+  const [selectedTab, setSelectedTab] = useState('services')
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false)
+  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const [infoRes, activitiesRes] = await Promise.all([
+          fetch('/api/admin/system/info'),
+          fetch('/api/admin/system/activities')
+        ])
+        const infoData = await infoRes.json()
+        const activitiesData = await activitiesRes.json()
+        setSystemInfo(infoData)
+        setActivities(activitiesData)
+      } catch (error) {
+        console.error("Failed to fetch system data:", error)
+        // Adicionar tratamento de erro para o usuário, se necessário
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-xl font-semibold">Carregando informações do sistema...</div>
+      </div>
+    )
+  }
+
+  if (!systemInfo) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-xl font-semibold text-red-500">Falha ao carregar as informações do sistema.</div>
+      </div>
+    )
+  }
 
     return (
     <div className="p-6 space-y-8">
@@ -77,38 +118,38 @@ export default function AdminSystemPage() {
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
             </div>
             <div className="text-2xl font-bold text-gray-600">Online</div>
-            <div className="text-sm text-gray-600 mt-1">Uptime: {SYSTEM_INFO.uptime}</div>
+            <div className="text-sm text-gray-600 mt-1">Uptime: {systemInfo.uptime}</div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">CPU</div>
-            <div className="text-2xl font-bold text-gray-600">{SYSTEM_INFO.server.cpu}%</div>
+            <div className="text-2xl font-bold text-gray-600">{systemInfo.server.cpu}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div 
-                className="bg-blue-500 h-2 rounded-full" 
-                style={{ width: `${SYSTEM_INFO.server.cpu}%` }}
+              <div
+                className="bg-blue-500 h-2 rounded-full"
+                style={{ width: `${systemInfo.server.cpu}%` }}
               ></div>
             </div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Memória</div>
-            <div className="text-2xl font-bold text-gray-600">{SYSTEM_INFO.server.memory}%</div>
+            <div className="text-2xl font-bold text-gray-600">{systemInfo.server.memory}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div 
-                className="bg-yellow-500 h-2 rounded-full" 
-                style={{ width: `${SYSTEM_INFO.server.memory}%` }}
+              <div
+                className="bg-yellow-500 h-2 rounded-full"
+                style={{ width: `${systemInfo.server.memory}%` }}
               ></div>
             </div>
           </div>
           
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="text-sm font-medium text-gray-500 mb-1">Disco</div>
-            <div className="text-2xl font-bold text-gray-600">{SYSTEM_INFO.server.disk}%</div>
+            <div className="text-2xl font-bold text-gray-600">{systemInfo.server.disk}%</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-              <div 
-                className="bg-green-500 h-2 rounded-full" 
-                style={{ width: `${SYSTEM_INFO.server.disk}%` }}
+              <div
+                className="bg-green-500 h-2 rounded-full"
+                style={{ width: `${systemInfo.server.disk}%` }}
               ></div>
             </div>
           </div>
@@ -117,16 +158,6 @@ export default function AdminSystemPage() {
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
           <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setSelectedTab('overview')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                selectedTab === 'overview'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Visão Geral
-            </button>
             <button
               onClick={() => setSelectedTab('services')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -150,58 +181,56 @@ export default function AdminSystemPage() {
           </nav>
         </div>
 
-      {/* Overview Tab */}
-      {selectedTab === 'overview' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* System Information */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-600 mb-4">Informações do Sistema</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Versão:</span>
-                  <span className="font-medium">{SYSTEM_INFO.version}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Build:</span>
-                  <span className="font-medium">{SYSTEM_INFO.buildDate}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Ambiente:</span>
-                  <span className="font-medium">{SYSTEM_INFO.environment}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Último Restart:</span>
-                  <span className="font-medium">{SYSTEM_INFO.lastRestart}</span>
-                </div>
+      {/* General System Summary - Always Visible */}
+      <div className="space-y-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* System Information */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-600 mb-4">Informações do Sistema</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Versão:</span>
+                <span className="font-medium">{systemInfo.version}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Build:</span>
+                <span className="font-medium">{systemInfo.buildDate}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Ambiente:</span>
+                <span className="font-medium">{systemInfo.environment}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Último Restart:</span>
+                <span className="font-medium">{systemInfo.lastRestart}</span>
               </div>
             </div>
+          </div>
 
-            {/* Database Information */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-600 mb-4">Base de Dados</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tipo:</span>
-                  <span className="font-medium">{SYSTEM_INFO.database.type}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Versão:</span>
-                  <span className="font-medium">{SYSTEM_INFO.database.version}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tamanho:</span>
-                  <span className="font-medium">{SYSTEM_INFO.database.size}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Conexões:</span>
-                  <span className="font-medium">{SYSTEM_INFO.database.connections}/{SYSTEM_INFO.database.maxConnections}</span>
-                </div>
+          {/* Database Information */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-600 mb-4">Base de Dados</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tipo:</span>
+                <span className="font-medium">{systemInfo.database.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Versão:</span>
+                <span className="font-medium">{systemInfo.database.version}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tamanho:</span>
+                <span className="font-medium">{systemInfo.database.size}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Conexões:</span>
+                <span className="font-medium">{systemInfo.database.connections}/{systemInfo.database.maxConnections}</span>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Services Tab */}
       {selectedTab === 'services' && (
@@ -218,7 +247,7 @@ export default function AdminSystemPage() {
                 </tr>
               </thead>
               <tbody>
-                {SYSTEM_INFO.services.map((service, index) => (
+                {systemInfo.services.map((service, index) => (
                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-4 px-6">
                       <div className="font-medium text-gray-600">{service.name}</div>
@@ -263,7 +292,7 @@ export default function AdminSystemPage() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-600 mb-4">Atividades Recentes</h3>
           <div className="space-y-4">
-            {RECENT_ACTIVITIES.map((activity) => (
+            {activities.map((activity) => (
               <div key={activity.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   activity.severity === 'success' ? 'bg-green-100' :

@@ -316,7 +316,40 @@ export default function AdminAnalyticsPage() {
                   </div>
                 ) : null}
               </div>
+            </div>
 
+            {/* Usage Charts */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-600 mb-4">Uso do Sistema</h3>
+                <div className="h-80">
+                  {isLoading ? (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2 animate-pulse">📈</div>
+                        <p>Carregando dados...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <SystemUsageChart data={systemUsageData} height={320} />
+                  )}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-600 mb-4">Distribuição de Recursos</h3>
+                <div className="h-80">
+                  {isLoading ? (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="text-center">
+                        <div className="text-4xl mb-2 animate-pulse">🥧</div>
+                        <p>Carregando dados...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <ResourceDistributionChart data={resourceDistribution} height={320} />
+                  )}
+                </div>
+              </div>
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold text-gray-600 mb-1">S3 Storage Analytics</h3>
                 <p className="text-sm text-gray-500 mb-4">
@@ -352,40 +385,6 @@ export default function AdminAnalyticsPage() {
                     region={settings.region}
                   />
                 )}
-              </div>
-            </div>
-
-            {/* Usage Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-600 mb-4">Uso do Sistema</h3>
-                <div className="h-80">
-                  {isLoading ? (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <div className="text-center">
-                        <div className="text-4xl mb-2 animate-pulse">📈</div>
-                        <p>Carregando dados...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <SystemUsageChart data={systemUsageData} height={320} />
-                  )}
-                </div>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-600 mb-4">Distribuição de Recursos</h3>
-                <div className="h-80">
-                  {isLoading ? (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <div className="text-center">
-                        <div className="text-4xl mb-2 animate-pulse">🥧</div>
-                        <p>Carregando dados...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <ResourceDistributionChart data={resourceDistribution} height={320} />
-                  )}
-                </div>
               </div>
             </div>
 
