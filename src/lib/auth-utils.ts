@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
+import { validateJWTWithMultipleSecrets } from '@/utils/jwt-validator';
 
 // Helper function to check if a string is valid base64
 function isValidBase64(str: string): boolean {
@@ -66,10 +67,14 @@ export async function validateJWTToken(token: string) {
   }
 
   try {
-    // First, try to verify as a real JWT
-    const jwtSecret = process.env.JWT_SECRET || 'ExagonTech';
-    console.log('🔑 Validando JWT com secret:', jwtSecret.substring(0, 5) + '...');
-    const decoded = jwt.verify(token, jwtSecret) as any;
+    // Use the new JWT validator with multiple secrets
+    const validation = validateJWTWithMultipleSecrets(token);
+    
+    if (!validation.success) {
+      throw new Error(validation.error || 'JWT validation failed');
+    }
+    
+    const decoded = validation.decoded;
     console.log('✅ JWT válido, usuário:', {
       userId: decoded.userId,
       email: decoded.email,

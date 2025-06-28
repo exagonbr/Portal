@@ -2,9 +2,6 @@
 
 const isDev = process.env.NODE_ENV === 'development';
 
-// Gerar versão de cache única para cada build
-const cacheVersion = process.env.NEXT_PUBLIC_CACHE_VERSION || `dev-${Date.now()}`;
-
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
@@ -154,15 +151,10 @@ const nextConfig = {
             key: 'Access-Control-Max-Age',
             value: '86400'
           },
-          // CORREÇÃO: Cache otimizado para APIs
+          // CORREÇÃO: Evitar cache de redirecionamentos
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0'
-          },
-          // Adicionar header de versão para debugging
-          {
-            key: 'X-Cache-Version',
-            value: cacheVersion
+            value: 'no-cache, no-store, must-revalidate'
           }
         ]
       },
@@ -218,15 +210,6 @@ const nextConfig = {
   },
   
   webpack: (config, { isServer, webpack }) => {
-    // Injetar versão de cache no Service Worker
-    if (!isServer) {
-      config.plugins.push(
-        new webpack.DefinePlugin({
-          '__CACHE_VERSION__': JSON.stringify(cacheVersion)
-        })
-      );
-    }
-
     config.module.rules.push({
       test: /\.(pdf)$/i,
       type: 'asset/resource',

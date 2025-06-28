@@ -1,8 +1,12 @@
 // Portal Sabercon Service Worker
-// Versão compatível com Next.js 15
+// Versão compatível com Next.js 15 com versionamento dinâmico
 
-const CACHE_NAME = 'portal-sabercon-v1';
-const STATIC_CACHE_NAME = 'portal-sabercon-static-v1';
+// Versão dinâmica baseada no build (injetada durante o build)
+const CACHE_VERSION = self.__CACHE_VERSION__ || 'dev-' + Date.now();
+const CACHE_NAME = `portal-sabercon-${CACHE_VERSION}`;
+const STATIC_CACHE_NAME = `portal-sabercon-static-${CACHE_VERSION}`;
+
+console.log(`🚀 Service Worker iniciado - Versão: ${CACHE_VERSION}`);
 
 // Assets para cache estático
 const STATIC_ASSETS = [
@@ -52,6 +56,29 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Escutar mensagens do cliente
+self.addEventListener('message', (event) => {
+  const { type, payload } = event.data || {};
+  
+  switch (type) {
+    case 'SKIP_WAITING':
+      console.log('🔄 Forçando ativação do novo Service Worker');
+      self.skipWaiting();
+      break;
+      
+    case 'CLEAR_CACHE':
+      handleClearCache(event, payload);
+      break;
+      
+    case 'GET_CACHE_INFO':
+      handleGetCacheInfo(event);
+      break;
+      
+    default:
+      console.log('📨 Mensagem recebida:', event.data);
+  }
+});
+
 // Interceptar requisições
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -72,14 +99,14 @@ self.addEventListener('fetch', (event) => {
     // Páginas HTML - Network First
     event.respondWith(networkFirstStrategy(request));
   } else if (request.url.includes('/_next/static/')) {
-    // Assets estáticos do Next.js - Cache First
-    event.respondWith(cacheFirstStrategy(request));
+    // Assets estáticos do Next.js - Stale While Revalidate para atualizações rápidas
+    event.respondWith(staleWhileRevalidateStrategy(request, STATIC_CACHE_NAME));
   } else if (request.url.includes('/api/')) {
-    // APIs - Network First com fallback limitado
+    // APIs - Network Only (sem cache para dados dinâmicos)
     event.respondWith(networkOnlyStrategy(request));
   } else {
     // Outros recursos - Stale While Revalidate
-    event.respondWith(staleWhileRevalidateStrategy(request));
+    event.respondWith(staleWhileRevalidateStrategy(request, CACHE_NAME));
   }
 });
 
@@ -160,39 +187,46 @@ async function networkOnlyStrategy(request) {
   }
 }
 
-// Estratégia Stale While Revalidate
-async function staleWhileRevalidateStrategy(request) {
-  const cache = await caches.open(CACHE_NAME);
+// Estratégia Stale While Revalidate melhorada
+async function staleWhileRevalidateStrategy(request, cacheName = CACHE_NAME) {
+  const cache = await caches.open(cacheName);
   const cachedResponse = await cache.match(request);
   
-  // Busca em background
+  // Busca em background (não bloqueia retorno do cache)
   const fetchPromise = fetch(request).then((networkResponse) => {
     if (networkResponse && networkResponse.ok) {
+      // Clona antes de armazenar para evitar problemas de stream
       cache.put(request, networkResponse.clone());
+      console.log(`🔄 Cache atualizado: ${request.url}`);
     }
     return networkResponse;
   }).catch((error) => {
     console.log('Service Worker: Background fetch failed', error);
-    // Retornar null para que o fallback seja usado
     return null;
   });
   
-  // Retorna cache imediatamente se disponível, senão espera a rede
+  // Se tem cache, retorna imediatamente e atualiza em background
   if (cachedResponse) {
+    console.log(`📦 Servindo do cache: ${request.url}`);
+    // Não aguarda o fetchPromise - atualização em background
+    fetchPromise.catch(() => {}); // Evita unhandled promise rejection
     return cachedResponse;
   }
   
+  // Se não tem cache, aguarda a rede
+  console.log(`🌐 Buscando da rede: ${request.url}`);
   const networkResponse = await fetchPromise;
   if (networkResponse) {
     return networkResponse;
   }
   
-  // Fallback final - retornar uma Response válida
+  // Fallback final
   return new Response(
     JSON.stringify({ 
       success: false, 
       message: 'Resource unavailable', 
-      cached: false 
+      cached: false,
+      timestamp: new Date().toISOString()
     }), 
     { 
       status: 503, 
@@ -200,6 +234,78 @@ async function staleWhileRevalidateStrategy(request) {
       headers: { 'Content-Type': 'application/json' }
     }
   );
+}
+
+// Handler para limpeza de cache
+async function handleClearCache(event, payload) {
+  try {
+    const cacheNames = await caches.keys();
+    const deletedCaches = [];
+    
+    for (const cacheName of cacheNames) {
+      if (cacheName.startsWith('portal-sabercon-')) {
+        await caches.delete(cacheName);
+        deletedCaches.push(cacheName);
+      }
+    }
+    
+    const response = {
+      success: true,
+      message: 'Cache limpo com sucesso',
+      deletedCaches,
+      reason: payload?.reason || 'manual'
+    };
+    
+    // Responder via MessageChannel se disponível
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage(response);
+    }
+    
+    console.log('✅ Cache limpo:', response);
+  } catch (error) {
+    const errorResponse = {
+      success: false,
+      error: error.message
+    };
+    
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage(errorResponse);
+    }
+    
+    console.error('❌ Erro ao limpar cache:', error);
+  }
+}
+
+// Handler para informações do cache
+async function handleGetCacheInfo(event) {
+  try {
+    const cacheNames = await caches.keys();
+    const portalCaches = cacheNames.filter(name => name.startsWith('portal-sabercon-'));
+    
+    const cacheInfo = {
+      success: true,
+      currentVersion: CACHE_VERSION,
+      activeCaches: portalCaches,
+      totalCaches: cacheNames.length
+    };
+    
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage(cacheInfo);
+    }
+    
+    console.log('📊 Informações do cache:', cacheInfo);
+  } catch (error) {
+    const errorResponse = {
+      success: false,
+      error: error.message
+    };
+    
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage(errorResponse);
+    }
+    
+    console.error('❌ Erro ao obter informações do cache:', error);
+  }
 }
 
 // Gerenciar notificações push (se necessário)

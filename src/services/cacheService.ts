@@ -158,6 +158,60 @@ export class CacheService {
   }
 
   /**
+   * Força revalidação de uma chave específica
+   */
+  async revalidate<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    ttl?: number
+  ): Promise<T> {
+    console.log(`🔄 Revalidando cache: ${key}`);
+    const value = await fetcher();
+    await this.set(key, value, ttl);
+    return value;
+  }
+
+  /**
+   * Obtém valor com estratégia stale-while-revalidate
+   */
+  async getStaleWhileRevalidate<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    ttl?: number
+  ): Promise<T> {
+    const cached = await this.get<T>(key);
+    
+    if (cached !== null) {
+      // Retorna valor em cache imediatamente
+      // E dispara revalidação em background
+      this.revalidateInBackground(key, fetcher, ttl);
+      return cached;
+    }
+
+    // Se não tem cache, busca normalmente
+    const value = await fetcher();
+    await this.set(key, value, ttl);
+    return value;
+  }
+
+  /**
+   * Revalidação em background (não bloqueia)
+   */
+  private async revalidateInBackground<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    ttl?: number
+  ): Promise<void> {
+    try {
+      const value = await fetcher();
+      await this.set(key, value, ttl);
+      console.log(`✅ Cache revalidado em background: ${key}`);
+    } catch (error) {
+      console.warn(`⚠️ Falha na revalidação em background de ${key}:`, error);
+    }
+  }
+
+  /**
    * Invalida cache por padrão de chave
    */
   async invalidatePattern(pattern: string): Promise<void> {

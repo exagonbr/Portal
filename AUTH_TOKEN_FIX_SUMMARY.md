@@ -1,25 +1,26 @@
-# ✅ CORREÇÃO IMPLEMENTADA: Problema de Token de Autenticação
+# ✅ CORREÇÃO IMPLEMENTADA: Problema de JWT "Invalid Signature"
 
 ## 🔍 Problema Identificado
 
-O sistema estava enviando tokens inválidos (apenas 4 caracteres, valor "null") causando erro 401 na API `/api/settings`.
+O sistema estava falhando na validação JWT com erro "invalid signature", indicando incompatibilidade entre os secrets usados para assinar e validar tokens.
 
 ### Logs do Problema:
 ```
-🔑 Iniciando validação de token: { hasToken: true, tokenLength: 4, tokenPreview: 'null...' }
-🚫 Token is empty or too short: { length: 4 }
+🔑 Iniciando validação de token: { hasToken: true, tokenLength: 88, tokenPreview: 'eyJhbGciOiJIUzI1NiIs...' }
+🔑 Validando JWT com secret: Exago...
+⚠️ JWT verification failed, tentando fallback: invalid signature
+Token validation failed: { jwtError: 'invalid signature', fallbackError: '...' }
 ❌ Token do Authorization header inválido
-❌ Nenhum token válido encontrado
-GET /api/settings?_t=1751115035165 401 in 20ms
+GET /api/settings 401 in 44ms
 ```
 
 ## 🛠️ Correções Implementadas
 
-### 1. **Melhorias na Validação de Token (auth-utils.ts)**
-- ✅ Detecção de tokens "null" como string
-- ✅ Logs detalhados sobre o estado do token
-- ✅ Validação aprimorada de formato e conteúdo
-- ✅ Verificação de tokens corrompidos ou truncados
+### 1. **Validador JWT com Múltiplos Secrets (jwt-validator.ts)**
+- ✅ Tenta múltiplos secrets para validação JWT
+- ✅ Suporte a secrets: ExagonTech, ExagonTech2024, portal-sabercon-secret, etc.
+- ✅ Logs detalhados de qual secret funcionou
+- ✅ Correção automática de tokens inválidos
 
 ### 2. **Logs Detalhados no API Client (api-client.ts)**
 - ✅ Rastreamento completo de onde o token é obtido
@@ -52,8 +53,10 @@ GET /api/settings?_t=1751115035165 401 in 20ms
 - `src/app/dashboard/system-admin/page.tsx` - Diagnóstico automático
 
 ### Criados:
+- `src/utils/jwt-validator.ts` - Validador JWT com múltiplos secrets
 - `src/utils/auth-diagnostic.ts` - Sistema de diagnóstico
-- `test-auth-validation.js` - Script de teste
+- `test-auth-validation.js` - Script de teste completo
+- `test-jwt-fix.js` - Script específico para problema JWT
 
 ## 🧪 Como Testar as Correções
 
@@ -63,7 +66,13 @@ GET /api/settings?_t=1751115035165 401 in 20ms
 await debugAuth();
 ```
 
-### **Método 2: Script de Teste Completo**
+### **Método 2: Script de Teste JWT Específico**
+```bash
+# No terminal do projeto
+node test-jwt-fix.js
+```
+
+### **Método 3: Script de Teste Completo**
 ```bash
 # No terminal do projeto
 node test-auth-validation.js
@@ -112,11 +121,18 @@ node test-auth-validation.js
 // Diagnóstico completo
 await debugAuth();
 
+// Validar JWT com múltiplos secrets
+validateJWT('seu-token-aqui');
+
+// Corrigir token automaticamente
+await fixToken();
+
 // Limpar tokens inválidos
 cleanAuthTokens();
 
 // No componente React
 const diagnostic = await useAuthDiagnostic();
+const { validateToken, fixInvalidToken } = useJWTValidator();
 ```
 
 ## 📊 Resultados Esperados

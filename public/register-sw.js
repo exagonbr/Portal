@@ -14,11 +14,20 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 console.log('🔄 Nova versão do Service Worker disponível');
-                // Opcionalmente, notificar o usuário sobre a atualização
-                showUpdateNotification();
+                // Forçar ativação imediata da nova versão
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
               }
             });
           }
+        });
+        
+        // Escutar mudanças de controller (nova versão ativada)
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('🔄 Service Worker atualizado, recarregando página...');
+          // Pequeno delay para garantir que o novo SW está pronto
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
         });
       })
       .catch((error) => {

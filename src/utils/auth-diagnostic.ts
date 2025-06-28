@@ -3,6 +3,8 @@
  * Identifica e corrige problemas comuns de autenticação
  */
 
+import { validateJWTWithMultipleSecrets, fixInvalidToken } from './jwt-validator';
+
 export interface AuthDiagnosticResult {
   success: boolean;
   issues: string[];
@@ -62,13 +64,22 @@ export async function runAuthDiagnostic(): Promise<AuthDiagnosticResult> {
     result.issues.push(`Token rejeitado pela API: ${apiTest.error}`);
     
     if (apiTest.status === 401) {
-      result.fixes.push('Tentando obter novo token...');
-      const newToken = await attemptTokenRefresh();
+      result.fixes.push('Tentando corrigir token automaticamente...');
+      const newToken = await fixInvalidToken();
       if (newToken) {
-        result.fixes.push('Novo token obtido com sucesso');
+        result.fixes.push('Novo token obtido e configurado com sucesso');
         result.success = true;
+        
+        // Atualizar informações do token
+        result.tokenInfo = {
+          found: true,
+          source: 'auto-fixed',
+          length: newToken.length,
+          isValid: true,
+          preview: newToken.substring(0, 20) + '...'
+        };
       } else {
-        result.recommendations.push('Não foi possível renovar token - faça login novamente');
+        result.recommendations.push('Não foi possível obter novo token - faça login novamente');
       }
     }
     return result;
@@ -153,25 +164,16 @@ async function validateTokenStructure(token: string) {
     return { isValid: false, reason: `Token muito curto: ${token.length} caracteres` };
   }
 
-  // Verificar se é JWT
+  // Usar o validador JWT com múltiplos secrets
+  const validation = validateJWTWithMultipleSecrets(token);
+  if (validation.success) {
+    return { isValid: true, reason: `Token JWT válido (secret: ${validation.usedSecret?.substring(0, 5)}...)` };
+  }
+  
+  // Se falhou na validação JWT, verificar se é base64
   const parts = token.split('.');
   if (parts.length === 3) {
-    try {
-      const payload = JSON.parse(atob(parts[1]));
-      const isExpired = payload.exp && payload.exp < Math.floor(Date.now() / 1000);
-      
-      if (isExpired) {
-        return { isValid: false, reason: 'Token JWT expirado' };
-      }
-      
-      if (!payload.userId && !payload.sub) {
-        return { isValid: false, reason: 'Token JWT sem userId/sub' };
-      }
-      
-      return { isValid: true, reason: 'Token JWT válido' };
-    } catch (error) {
-      return { isValid: false, reason: 'Token JWT malformado' };
-    }
+    return { isValid: false, reason: `Token JWT inválido: ${validation.error}` };
   }
 
   // Verificar se é base64 válido

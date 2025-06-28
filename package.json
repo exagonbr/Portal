@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --debug",
+    "build": "node scripts/cache-version.js && next build --debug",
     "start": "next start",
     "lint": "next lint",
     "fix:webpack": "node scripts/fix-webpack-hot-reload.js",
@@ -16,7 +16,10 @@
     "test:push": "node scripts/test-push-notifications.js",
     "database:fresh": "cd backend && npm run database:fresh",
     "generate:certificates": "node scripts/generate-certificates.js",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "cache:clear": "node scripts/clear-cache.js",
+    "cache:version": "node scripts/cache-version.js",
+    "cache:test": "node scripts/test-cache-performance.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.825.0",
