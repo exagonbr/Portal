@@ -523,7 +523,7 @@ export class UltraLogoutService {
   private static showLogoutLoading(): void {
     try {
       if (typeof document !== 'undefined') {
-        // Criar overlay de loading
+        // Criar overlay de loading com blur
         const overlay = document.createElement('div');
         overlay.id = 'ultra-logout-overlay';
         overlay.style.cssText = `
@@ -532,24 +532,123 @@ export class UltraLogoutService {
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(0, 0, 0, 0.8);
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 999999;
           color: white;
-          font-family: Arial, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
           font-size: 18px;
+          animation: fadeIn 0.3s ease-in-out;
         `;
         
+        // Adicionar estilos de animação
+        const style = document.createElement('style');
+        style.textContent = `
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+          
+          @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          
+          .logout-icon-container {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            position: relative;
+          }
+          
+          .logout-icon-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+          }
+          
+          .logout-icon {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+          }
+          
+          .logout-spinner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid transparent;
+            border-top-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: rotate 1.5s linear infinite;
+          }
+        `;
+        document.head.appendChild(style);
+        
         overlay.innerHTML = `
-          <div style="text-align: center;">
-            <div style="margin-bottom: 20px;">🔄</div>
-            <div>Fazendo logout e limpando dados...</div>
-            <div style="font-size: 14px; margin-top: 10px; opacity: 0.7;">
-              Por favor, aguarde...
+          <div style="
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 48px 64px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+          ">
+            <div class="logout-icon-container">
+              <div class="logout-icon-bg"></div>
+              <div class="logout-icon">🚪</div>
+              <div class="logout-spinner"></div>
+            </div>
+            <div style="font-size: 24px; font-weight: 600; margin-bottom: 12px;">
+              Fazendo logout e limpando dados...
+            </div>
+            <div style="font-size: 16px; opacity: 0.8; font-weight: 400;">
+              Por favor, aguarde enquanto preparamos tudo
+            </div>
+            <div style="margin-top: 24px;">
+              <div style="
+                width: 200px;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 2px;
+                margin: 0 auto;
+                overflow: hidden;
+              ">
+                <div style="
+                  width: 100%;
+                  height: 100%;
+                  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+                  animation: shimmer 1.5s ease-in-out infinite;
+                "></div>
+              </div>
             </div>
           </div>
+          
+          <style>
+            @keyframes shimmer {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(100%); }
+            }
+          </style>
         `;
         
         document.body.appendChild(overlay);

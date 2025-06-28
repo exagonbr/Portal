@@ -1,5 +1,7 @@
 import { apiClient } from '@/lib/api-client';
 import { isAuthenticated, getCurrentToken, validateToken, syncTokenWithApiClient, clearAllTokens } from '@/utils/token-validator';
+import { runAuthDiagnostics, debugAuth } from '@/utils/auth-diagnostics';
+import { autoRefreshToken, withAutoRefresh } from '@/utils/token-refresh';
 
 // Interfaces para dados do dashboard do sistema
 export interface SystemDashboardData {
@@ -287,23 +289,42 @@ class SystemAdminService {
     try {
       console.log('📊 [SYSTEM-ADMIN-SERVICE] Iniciando getUsersByRole...');
       
-      // Verificar se há token disponível
-      const hasToken = typeof window !== 'undefined' && (
-        localStorage.getItem('auth_token') || 
-        localStorage.getItem('token') || 
-        sessionStorage.getItem('auth_token')
-      );
+      // Usar o token validator para verificação mais robusta
+      const authStatus = isAuthenticated();
+      const currentToken = getCurrentToken();
       
-      if (!hasToken) {
-        console.warn('❌ [SYSTEM-ADMIN-SERVICE] Token de autenticação não encontrado');
+      console.log('🔍 [SYSTEM-ADMIN-SERVICE] Status de autenticação:', {
+        authenticated: authStatus.authenticated,
+        tokenValid: authStatus.tokenValid,
+        needsRefresh: authStatus.needsRefresh,
+        hasToken: !!currentToken,
+        tokenLength: currentToken ? currentToken.length : 0,
+        error: authStatus.error
+      });
+      
+      if (!currentToken) {
+        console.warn('❌ [SYSTEM-ADMIN-SERVICE] Nenhum token encontrado em nenhuma fonte');
         throw new Error('Token de autorização não fornecido');
       }
       
-      console.log('✅ [SYSTEM-ADMIN-SERVICE] Token encontrado, fazendo requisição...');
+      if (!authStatus.authenticated) {
+        console.warn('❌ [SYSTEM-ADMIN-SERVICE] Token inválido ou expirado:', authStatus.error);
+        throw new Error(`Token de autenticação inválido: ${authStatus.error}`);
+      }
+      
+      // Sincronizar token com apiClient antes da requisição
+      await syncTokenWithApiClient(currentToken);
+      
+      console.log('✅ [SYSTEM-ADMIN-SERVICE] Token válido, fazendo requisição...');
       
       const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`users/stats`);
       
-      console.log('📊 [SYSTEM-ADMIN-SERVICE] Resposta recebida:', response);
+      console.log('📊 [SYSTEM-ADMIN-SERVICE] Resposta recebida:', {
+        success: response.success,
+        hasData: !!response.data,
+        dataKeys: response.data ? Object.keys(response.data) : [],
+        message: response.message
+      });
       
       if (response.success && response.data?.data?.users_by_role) {
         const usersData = response.data.data.users_by_role;
@@ -317,13 +338,39 @@ class SystemAdminService {
     } catch (error) {
       console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro ao carregar usuários por função:', error);
       
-      // Se for erro de autenticação, propagar o erro
+      // Executar diagnóstico detalhado em caso de erro
+      console.group('🔍 [SYSTEM-ADMIN-SERVICE] Diagnóstico de erro');
+      const diagnostics = runAuthDiagnostics();
+      console.log('📋 Diagnóstico completo:', diagnostics);
+      console.groupEnd();
+      
+      // Se for erro de autenticação, tentar auto-refresh antes de falhar
       if (error instanceof Error && (
         error.message.includes('Token de autorização não fornecido') ||
         error.message.includes('Token de autenticação inválido') ||
         error.message.includes('401') ||
         error.message.includes('Unauthorized')
       )) {
+        console.log('🔄 [SYSTEM-ADMIN-SERVICE] Tentando auto-refresh do token...');
+        
+        try {
+          const refreshSuccess = await autoRefreshToken();
+          if (refreshSuccess) {
+            console.log('✅ [SYSTEM-ADMIN-SERVICE] Auto-refresh bem-sucedido, tentando novamente...');
+            // Tentar a requisição novamente com o novo token
+            const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`users/stats`);
+            
+            if (response.success && response.data?.data?.users_by_role) {
+              const usersData = response.data.data.users_by_role;
+              console.log('✅ [SYSTEM-ADMIN-SERVICE] Dados obtidos após refresh:', usersData);
+              return usersData;
+            }
+          }
+        } catch (refreshError) {
+          console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro no auto-refresh:', refreshError);
+        }
+        
+        // Se chegou aqui, o refresh falhou ou não resolveu o problema
         throw error;
       }
       

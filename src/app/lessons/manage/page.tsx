@@ -18,6 +18,7 @@ import {
   MoreVertical
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
 
 interface Lesson {
   id: string
@@ -208,6 +209,7 @@ export default function TeacherLessonsPage() {
   const uniqueCourses = Array.from(new Set(lessons.map(l => l.course)))
 
   return (
+    <DashboardLayout>
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
@@ -456,5 +458,6 @@ export default function TeacherLessonsPage() {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   )
 }

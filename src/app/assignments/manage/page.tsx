@@ -17,6 +17,7 @@ import {
   MoreVertical
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
 
 interface Assignment {
   id: string
@@ -195,6 +196,7 @@ export default function TeacherAssignmentsPage() {
   }
 
   return (
+    <DashboardLayout>
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
@@ -437,5 +439,6 @@ export default function TeacherAssignmentsPage() {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   )
 }

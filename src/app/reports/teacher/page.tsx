@@ -14,6 +14,7 @@ import {
   Clock
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
 
 interface ReportData {
   students: {
@@ -110,6 +111,7 @@ export default function TeacherReportsPage() {
   }
 
   return (
+    <DashboardLayout>
     <div className="p-6 max-w-7xl mx-auto">
       {/* Cabeçalho */}
       <div className="mb-8">
@@ -399,5 +401,6 @@ export default function TeacherReportsPage() {
         </>
       )}
     </div>
+    </DashboardLayout>
   )
 }

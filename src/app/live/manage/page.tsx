@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { Calendar, Clock, Users, Video, VideoOff, Play, Settings, Plus, Search, Filter, ChevronRight, AlertCircle, CheckCircle, Mic, MicOff, Monitor, MonitorOff } from 'lucide-react'
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
 
 interface LiveClass {
   id: string
@@ -277,6 +278,7 @@ export default function LiveManagePage() {
   }
 
   return (
+    <DashboardLayout>
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Gestão de Aulas ao Vivo</h1>
@@ -399,5 +401,6 @@ export default function LiveManagePage() {
         </div>
       )}
     </div>
+    </DashboardLayout>
   )
 }

@@ -71,7 +71,7 @@ class ApiClient {
   }
 
   /**
-   * Obtém o token de autenticação
+   * Obtém o token de autenticação com validação aprimorada
    */
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') {
@@ -93,10 +93,15 @@ class ApiClient {
         length: storedToken ? storedToken.length : 0,
         preview: storedToken ? storedToken.substring(0, 20) + '...' : 'null',
         isNullString: storedToken === 'null',
-        isEmpty: !storedToken || storedToken.trim() === ''
+        isEmpty: !storedToken || storedToken.trim() === '',
+        isValidLength: storedToken ? storedToken.length > 10 : false
       });
       
-      if (storedToken && storedToken.trim() !== '' && storedToken !== 'null' && storedToken !== 'undefined') {
+      if (storedToken && 
+          storedToken.trim() !== '' && 
+          storedToken !== 'null' && 
+          storedToken !== 'undefined' &&
+          storedToken.length > 10) { // Adicionar validação de comprimento mínimo
         token = storedToken.trim();
         tokenSource = `localStorage.${key}`;
         break;
@@ -148,13 +153,30 @@ class ApiClient {
     
     if (!token) {
       console.warn('❌ [API-CLIENT] Nenhum token válido encontrado em nenhuma fonte');
+      console.log('🔍 [API-CLIENT] Tentando diagnóstico adicional...');
+      
+      // Diagnóstico adicional - verificar se há tokens corrompidos
+      for (const key of possibleKeys) {
+        const storedToken = localStorage.getItem(key);
+        if (storedToken) {
+          console.log(`🔍 [API-CLIENT] Token corrompido em localStorage.${key}:`, {
+            value: storedToken,
+            length: storedToken.length,
+            isNull: storedToken === 'null',
+            isUndefined: storedToken === 'undefined',
+            isEmpty: storedToken.trim() === ''
+          });
+        }
+      }
+      
       return null;
     }
     
     console.log(`✅ [API-CLIENT] Token encontrado em ${tokenSource}:`, {
       length: token.length,
       preview: token.substring(0, 20) + '...',
-      isJWT: token.split('.').length === 3
+      isJWT: token.split('.').length === 3,
+      source: tokenSource
     });
     
     // Validar formato básico do token
@@ -322,6 +344,22 @@ class ApiClient {
       const token = this.getAuthToken();
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+        console.log('🔐 [API-CLIENT] Authorization header adicionado:', {
+          length: token.length,
+          preview: token.substring(0, 20) + '...'
+        });
+      } else {
+        console.warn('⚠️ [API-CLIENT] Nenhum token disponível para Authorization header');
+        
+        // Diagnóstico adicional quando não há token
+        if (typeof window !== 'undefined') {
+          console.log('🔍 [API-CLIENT] Diagnóstico de storage:');
+          const keys = ['auth_token', 'token', 'authToken'];
+          keys.forEach(key => {
+            const value = localStorage.getItem(key);
+            console.log(`  localStorage.${key}:`, value ? `${value.length} chars` : 'null');
+          });
+        }
       }
     }
 

@@ -10,6 +10,7 @@ import { CourseAddModal } from '@/components/CourseAddModal'
 import { CourseEditModal } from '@/components/CourseEditModal'
 import { Badge } from '@/components/ui/Badge'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
+import DashboardLayout from '@/components/dashboard/DashboardLayout'
 
 export default function ManageCourses() {
   const router = useRouter()
@@ -127,7 +128,7 @@ export default function ManageCourses() {
   ]
 
   return (
-    <AuthenticatedLayout>
+    <DashboardLayout>
       <div className="container mx-auto py-8">
         <GenericCRUD
           title="Gerenciamento de Cursos"
@@ -174,6 +175,6 @@ export default function ManageCourses() {
           />
         )}
       </div>
-    </AuthenticatedLayout>
+    </DashboardLayout>
   )
 }

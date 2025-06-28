@@ -414,6 +414,7 @@ export default function ForumPage() {
   };
 
   return (
+    <DashboardLayout>
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -693,5 +694,7 @@ export default function ForumPage() {
         </div>
       )}
     </div>
+          </DashboardLayout>
+
   );
 }

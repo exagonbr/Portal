@@ -10,6 +10,7 @@ import { useToast } from '@/components/ToastManager';
 import { courseService } from '@/services/courseService';
 import { institutionService } from '@/services/institutionService';
 import { CourseResponseDto } from '@/types/api';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 export default function CoursesPage() {
   const { showError, showSuccess } = useToast();
@@ -147,6 +148,7 @@ export default function CoursesPage() {
   ];
 
   return (
+    <DashboardLayout>
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Cursos</h1>
@@ -218,5 +220,6 @@ export default function CoursesPage() {
         />
       )}
     </div>
+    </DashboardLayout>
   );
 } 
