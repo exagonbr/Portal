@@ -305,7 +305,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     const isMobile = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
     console.log(`🔐 Iniciando processo de login (${isMobile ? 'MOBILE' : 'DESKTOP'})...`);
     
-    const loginUrl = `${AUTH_CONFIG.API_URL}/auth/login`;
+    const loginUrl = `/api/auth/login`;
     console.log(`🔐 Fazendo login em: ${loginUrl}`);
 
     // Configuração de timeout e opções específicas para mobile e Firefox
@@ -461,7 +461,7 @@ export const register = async (
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/register`, {
+      const response = await fetch(`/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -615,7 +615,7 @@ export const logout = async (): Promise<void> => {
       const timeoutMs = 10000; // 10s timeout para logout
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      const response = await fetch(`${AUTH_CONFIG.API_URL}/auth/logout`, {
+      const response = await fetch(`/api/auth/logout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
