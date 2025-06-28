@@ -38,7 +38,7 @@ async function createDefaultUsers() {
     console.log('✓ Senha hash gerada');
     
     // Buscar instituições
-    const institutionsResult = await client.query('SELECT id, name FROM institution');
+    const institutionsResult = await client.query('SELECT id, name FROM institutions');
     const institutions = institutionsResult.rows;
     console.log(`✓ ${institutions.length} instituições encontradas`);
     

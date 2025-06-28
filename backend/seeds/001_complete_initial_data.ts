@@ -26,12 +26,12 @@ export async function seed(knex: Knex): Promise<void> {
   await knex('role_permissions').del();
   await knex('permissions').del();
   await knex('roles').del();
-  await knex('institution').del();
+  await knex('institutions').del();
 
   console.log('✅ Tabelas limpas com sucesso');
 
   // 1. Inserir instituições
-  const institutions = await knex('institution').insert([
+  const institutions = await knex('institutions').insert([
     {
       name: 'Sabercon Educação',
       code: 'SABERCON',

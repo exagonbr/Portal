@@ -41,7 +41,7 @@ export async function seed(knex: any): Promise<void> {
   `);
 
   // Buscar uma instituição existente
-  const institution = await knex('institution').where('status', 'active').first();
+  const institution = await knex('institutions').where('status', 'active').first();
   
   if (!institution) {
     console.log('❌ Nenhuma instituição encontrada. Execute primeiro o seed de instituições.');
