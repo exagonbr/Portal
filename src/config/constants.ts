@@ -1,9 +1,9 @@
 // API Configuration - Centralizada (sem dependência circular)
 const getApiConfig = () => {
   const isProduction = process.env.NODE_ENV === 'production';
-  const apiUrl = isProduction 
-    ? '/api' 
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
+  const apiUrl = isProduction
+    ? '/api'
+    : (process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api');
     
   return {
     BASE_URL: apiUrl,
@@ -26,9 +26,9 @@ export const getApiUrl = (path: string = '') => {
 
 export const getInternalApiUrl = (path: string = '') => {
   const isProduction = process.env.NODE_ENV === 'production';
-  const baseUrl = isProduction 
-    ? 'http://127.0.0.1:3001' 
-    : (process.env.INTERNAL_API_URL || 'http://localhost:3001');
+  const baseUrl = isProduction
+    ? (process.env.INTERNAL_API_URL || 'https://portal.sabercon.com.br/api')
+    : (process.env.INTERNAL_API_URL || 'https://portal.sabercon.com.br/api');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${baseUrl}${cleanPath}`;
 };

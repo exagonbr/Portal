@@ -82,7 +82,7 @@ export default function TestConnection() {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <h3 className="font-semibold mb-2 text-blue-800">Configuração Atual:</h3>
             <div className="text-sm text-blue-700 space-y-1">
-              <p><strong>URL da API:</strong> {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api</p>
+              <p><strong>URL da API:</strong> {process.env.NEXT_PUBLIC_API_URL || 'https://portal.sabercon.com.br/api'}/api</p>
               <p><strong>Endpoint testado:</strong> /api/users</p>
               <p><strong>Método:</strong> GET</p>
             </div>

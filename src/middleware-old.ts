@@ -11,7 +11,7 @@ import { PRODUCTION_CONFIG, ProductionUtils } from './config/production';
 // Configuration constants
 const CONFIG = {
   BASE_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
-  BACKEND_URL: process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3001/api',
+  BACKEND_URL: process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api',
   API_VERSION: process.env.API_VERSION || 'v1',
   COOKIES: {
     AUTH_TOKEN: 'auth_token',

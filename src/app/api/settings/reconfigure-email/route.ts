@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession, Session } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as (Session & { accessToken?: string });
     
     if (!session || session.user?.role !== 'SYSTEM_ADMIN') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
     // Fazer chamada para o backend
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://portal.sabercon.com.br/api'
     
     const response = await fetch(`${backendUrl}/api/settings/reconfigure-email`, {
       method: 'POST',
