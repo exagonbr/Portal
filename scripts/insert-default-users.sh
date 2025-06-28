@@ -6,11 +6,11 @@
 
 # Configurações do banco de dados
 # ATENÇÃO: Ajuste estas variáveis para o ambiente de produção
- DB_HOST= "localhost"
- DB_PORT="5432"
- DB_NAME="portal_sabercon"
- DB_USER="postgres"
- DB_PASSWORD="root"
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+DB_NAME="${DB_NAME:-portal_sabercon}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASSWORD="${DB_PASSWORD:-root}"
 
 # Cores para output
 RED='\033[0;31m'

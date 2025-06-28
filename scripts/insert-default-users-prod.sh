@@ -26,11 +26,11 @@ else
 fi
 
 # Configurar variáveis do banco de dados
-export DB_HOST= "localhost"
-export DB_PORT="5432"
-export DB_NAME="portal_sabercon"
-export DB_USER="postgres"
-export DB_PASSWORD="root"
+export DB_HOST="${DATABASE_HOST:-localhost}"
+export DB_PORT="${DATABASE_PORT:-5432}"
+export DB_NAME="${DATABASE_NAME:-portal_sabercon}"
+export DB_USER="${DATABASE_USER:-postgres}"
+export DB_PASSWORD="${DATABASE_PASSWORD:-root}"
 
 echo ""
 echo -e "${BLUE}Configurações do banco de dados:${NC}"
@@ -76,5 +76,3 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Script executado com sucesso!${NC}"
 else
     echo -e "${RED}❌ Erro durante a execução do script${NC}"
-    exit 1
-fi
