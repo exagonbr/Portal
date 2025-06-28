@@ -63,10 +63,12 @@ export class InstitutionRepository extends BaseRepository<Institution> {
   ): Promise<Institution[]> {
     const query = this.db(this.tableName);
 
+    // Aplicar filtros de forma otimizada
     if (filters.search) {
+      // Usar índices para busca de texto se disponíveis
       query.where(function() {
-        this.where('name', 'ilike', `%${filters.search}%`)
-            .orWhere('code', 'ilike', `%${filters.search}%`);
+        this.whereRaw(`LOWER(name) LIKE LOWER(?)`, [`%${filters.search}%`])
+            .orWhereRaw(`LOWER(code) LIKE LOWER(?)`, [`%${filters.search}%`]);
       });
     }
 
@@ -80,10 +82,7 @@ export class InstitutionRepository extends BaseRepository<Institution> {
       query.where('status', status);
     }
 
-    if (pagination) {
-      query.limit(pagination.limit).offset((pagination.page - 1) * pagination.limit);
-    }
-
+    // Aplicar ordenação
     if (sortBy && sortOrder) {
       // Mapear campos que podem ter nomes diferentes na tabela
       let dbSortBy = sortBy;
@@ -97,9 +96,20 @@ export class InstitutionRepository extends BaseRepository<Institution> {
       query.orderBy('name', 'asc'); // Default sort order por nome
     }
 
-    const results = await query.select('*');
-    // Map each result from DB format to model format
-    return results.map(this.mapToModel);
+    // Aplicar paginação por último para otimizar a consulta
+    if (pagination) {
+      query.limit(pagination.limit).offset((pagination.page - 1) * pagination.limit);
+    }
+
+    try {
+      // Usar timeout explícito para evitar consultas muito longas
+      const results = await query.select('*').timeout(30000);
+      // Map each result from DB format to model format
+      return results.map(this.mapToModel);
+    } catch (error) {
+      console.error('Erro na consulta de instituições:', error);
+      throw error;
+    }
   }
 
   // Helper method to map database record to model

@@ -1,8 +1,8 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { AuthService } from '../services/auth';
+import { OptimizedAuthService } from '../services/OptimizedAuthService';
 import { authMiddleware } from '../middleware/auth.middleware';
-import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -140,7 +140,12 @@ router.post(
  */
 router.post('/login', async (req: express.Request, res: express.Response) => {
   try {
-    console.log('🔐 Nova requisição de login recebida');
+    console.log('🔐 Nova requisição de login recebida na rota ANTIGA');
+    console.log('🔍 DEBUG ROTA ANTIGA - Dados recebidos:', {
+      body: req.body,
+      contentType: req.headers['content-type'],
+      bodyType: typeof req.body
+    });
     
     // Validação básica sem middleware complexo
     const { email, password } = req.body;
@@ -163,8 +168,8 @@ router.post('/login', async (req: express.Request, res: express.Response) => {
 
     console.log(`🔐 Tentativa de login para: ${email}`);
     
-    // Chamar AuthService diretamente
-    const result = await AuthService.login(email, password);
+    // Usar OptimizedAuthService para melhor performance
+    const result = await OptimizedAuthService.login(email, password);
     
     if (!result.success) {
       return res.status(401).json({
@@ -175,29 +180,19 @@ router.post('/login', async (req: express.Request, res: express.Response) => {
 
     console.log(`✅ Login bem-sucedido para: ${email}`);
 
-    // Gerar JWT simples
-    const token = jwt.sign(
-      {
-        userId: result.user.id,
-        email: result.user.email,
-        name: result.user.name,
-        role: result.user.role,
-        institutionId: result.user.institution_id,
-        permissions: result.user.permissions || []
-      },
-      process.env.JWT_SECRET || 'ExagonTech',
-      { expiresIn: '24h' }
-    );
+    // Usar o token JWT já gerado pelo OptimizedAuthService
+    const token = result.token;
 
     // Resposta simplificada
     return res.status(200).json({
       success: true,
       token,
+      refreshToken: result.refreshToken,
       user: {
         id: result.user.id,
         email: result.user.email,
         name: result.user.name,
-        role: result.user.role,
+        role: result.user.role_slug,
         institution_id: result.user.institution_id,
         permissions: result.user.permissions || []
       },

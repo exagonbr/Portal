@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* Importar correções específicas para mobile */
 @import '../styles/mobile-fixes.css';
 
@@ -12,6 +8,10 @@
 @import '../styles/cards-standard.css';
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* Cores Primárias - Azul Corporativo */
@@ -192,8 +192,10 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
 
-  /* Breakpoints */
+/* Breakpoints */
+:root {
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;

@@ -9,8 +9,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  reactStrictMode: true,
-  swcMinify: true,
+  reactStrictMode: false,
   productionBrowserSourceMaps: false,
   eslint: {
     // Warning: This allows production builds to successfully complete even if
@@ -22,9 +21,10 @@ const nextConfig = {
   experimental: {
     // Melhorar a hidratação de componentes
     optimizePackageImports: ['react-hot-toast', 'lucide-react'],
-    // Reduzir problemas de hidratação
-    serverComponentsExternalPackages: ['epubjs'],
   },
+  
+  // Pacotes externos para componentes do servidor
+  serverExternalPackages: ['epubjs'],
   
   // Configurações de compilação para evitar problemas de hidratação
   compiler: {
@@ -41,7 +41,7 @@ const nextConfig = {
   // CORREÇÃO: Configuração de proxy mais específica para evitar loops
   async rewrites() {
     if (process.env.NODE_ENV === 'development') {
-      const apiDestination = 'https://portal.sabercon.com.br/api/:path*';
+      const apiDestination = 'http://localhost:3000/api/:path*';
       
       console.log(`🔄 Proxy configurado para : ${apiDestination}`);
       

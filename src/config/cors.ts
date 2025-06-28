@@ -53,6 +53,7 @@ export const CORS_HEADERS = {
   'Access-Control-Allow-Credentials': 'false',
   'Access-Control-Max-Age': CORS_CONFIG.maxAge.toString(),
   'Access-Control-Expose-Headers': CORS_CONFIG.exposedHeaders.join(', '),
+  'Allow': CORS_CONFIG.methods.join(', '), // HEADER ALLOW ADICIONADO
 };
 
 /**
@@ -65,6 +66,7 @@ export const SPECIFIC_CORS_HEADERS = {
     'Access-Control-Allow-Headers': CORS_CONFIG.allowedHeaders.join(', '),
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': CORS_CONFIG.maxAge.toString(),
+    'Allow': CORS_CONFIG.methods.join(', '),
   },
   'http://localhost:3000': {
     'Access-Control-Allow-Origin': 'http://localhost:3000',
@@ -72,6 +74,7 @@ export const SPECIFIC_CORS_HEADERS = {
     'Access-Control-Allow-Headers': CORS_CONFIG.allowedHeaders.join(', '),
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': CORS_CONFIG.maxAge.toString(),
+    'Allow': CORS_CONFIG.methods.join(', '),
   },
   'http://localhost:3001': {
     'Access-Control-Allow-Origin': 'http://localhost:3001',
@@ -79,6 +82,7 @@ export const SPECIFIC_CORS_HEADERS = {
     'Access-Control-Allow-Headers': CORS_CONFIG.allowedHeaders.join(', '),
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': CORS_CONFIG.maxAge.toString(),
+    'Allow': CORS_CONFIG.methods.join(', '),
   }
 };
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env NODE_OPTIONS='--inspect' next dev --turbopack --port 3000",
     "build": "node scripts/cache-version.js && next build --debug",
     "start": "next start",
     "lint": "next lint",
@@ -98,6 +98,7 @@
     "autoprefixer": "^10.4.21",
     "chalk": "^4.1.2",
     "chrome-launcher": "^1.1.0",
+    "cross-env": "^7.0.3",
     "dgram": "^1.0.1",
     "eslint": "^9.29.0",
     "eslint-config-next": "^15.3.4",

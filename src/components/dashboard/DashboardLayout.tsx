@@ -8,6 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { UpdateNotificationCompact } from '@/components/UpdateNotificationCompact'
 import { useUpdateStatus } from '@/components/PWAUpdateManager'
+import { EnhancedLoadingState } from '@/components/ui/LoadingStates'
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
@@ -41,6 +42,7 @@ export default function DashboardLayout({
   const [showCalendar, setShowCalendar] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { theme, themeType, toggleTheme } = useTheme()
   
   // Hook para status de atualização (com fallback para quando não estiver no UpdateProvider)
@@ -204,8 +206,31 @@ export default function DashboardLayout({
     return () => document.removeEventListener('click', handleDocumentClick);
   }, [])
 
+  // Função de logout melhorada para seguir o padrão dos outros componentes
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      setShowUserMenu(false);
+      await logout();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden" style={{ backgroundColor: theme.colors.background.secondary }}>
+    <>
+      {/* Loading State para Logout */}
+      {isLoggingOut && (
+        <EnhancedLoadingState
+          message="Saindo do sistema..."
+          submessage="Limpando dados e finalizando sessão"
+          showProgress={false}
+        />
+      )}
+
+      <div className="flex h-screen w-screen overflow-hidden" style={{ backgroundColor: theme.colors.background.secondary }}>
       {/* Left Sidebar - Ajustado para ser responsivo */}
       <div className="hidden md:block">
         <SafeDashboardSidebar />
@@ -709,10 +734,7 @@ export default function DashboardLayout({
                         <hr className="my-2" style={{ borderColor: theme.colors.border.DEFAULT }} />
                         
                         <button
-                          onClick={() => {
-                            setShowUserMenu(false)
-                            logout()
-                          }}
+                          onClick={handleLogout}
                           className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center space-x-2"
                           style={{ color: theme.colors.status.error }}
                           onMouseEnter={(e) => {
@@ -723,7 +745,7 @@ export default function DashboardLayout({
                           }}
                         >
                           <span className="material-symbols-outlined text-sm">logout</span>
-                          <span>Sair</span>
+                          <span>Sair da Plataforma</span>
                         </button>
                       </div>
                     </div>
@@ -751,5 +773,6 @@ export default function DashboardLayout({
         </div>
       )}
     </div>
+    </>
   )
 }

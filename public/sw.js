@@ -116,8 +116,11 @@ async function networkFirstStrategy(request) {
     const networkResponse = await fetch(request);
     
     if (networkResponse.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResponse.clone());
+      // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
+      if (request.method === 'GET' || request.method === 'HEAD') {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(request, networkResponse.clone());
+      }
     }
     
     return networkResponse;
@@ -153,8 +156,11 @@ async function cacheFirstStrategy(request) {
     const networkResponse = await fetch(request);
     
     if (networkResponse.ok) {
-      const cache = await caches.open(STATIC_CACHE_NAME);
-      cache.put(request, networkResponse.clone());
+      // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
+      if (request.method === 'GET' || request.method === 'HEAD') {
+        const cache = await caches.open(STATIC_CACHE_NAME);
+        cache.put(request, networkResponse.clone());
+      }
     }
     
     return networkResponse;
@@ -195,9 +201,14 @@ async function staleWhileRevalidateStrategy(request, cacheName = CACHE_NAME) {
   // Busca em background (não bloqueia retorno do cache)
   const fetchPromise = fetch(request).then((networkResponse) => {
     if (networkResponse && networkResponse.ok) {
-      // Clona antes de armazenar para evitar problemas de stream
-      cache.put(request, networkResponse.clone());
-      console.log(`🔄 Cache atualizado: ${request.url}`);
+      // Verifica se o método é cacheable (GET, HEAD) antes de armazenar
+      if (request.method === 'GET' || request.method === 'HEAD') {
+        // Clona antes de armazenar para evitar problemas de stream
+        cache.put(request, networkResponse.clone());
+        console.log(`🔄 Cache atualizado: ${request.url}`);
+      } else {
+        console.log(`⚠️ Método ${request.method} não cacheable: ${request.url}`);
+      }
     }
     return networkResponse;
   }).catch((error) => {

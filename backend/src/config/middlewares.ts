@@ -56,6 +56,7 @@ export function setupMiddlewares(app: express.Application): void {
       'Access-Control-Allow-Origin',
       'Access-Control-Allow-Headers',
       'Access-Control-Allow-Methods',
+      'Allow',
       'Set-Cookie',
       'X-Response-Time',
       'X-Total-Count',
@@ -74,10 +75,12 @@ export function setupMiddlewares(app: express.Application): void {
     res.setHeader('Access-Control-Allow-Credentials', 'false'); // Deve ser false com origin: '*'
     res.setHeader('Access-Control-Max-Age', '86400'); // Cache preflight por 24h
     res.setHeader('Access-Control-Expose-Headers', 'Set-Cookie, X-Response-Time, X-Total-Count, X-Page-Count');
+    res.setHeader('Allow', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD'); // HEADER ALLOW ADICIONADO
     
     // Para requisições OPTIONS (preflight), responder imediatamente
     if (req.method === 'OPTIONS') {
       res.setHeader('Content-Length', '0');
+      res.setHeader('Allow', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD'); // GARANTIR ALLOW NO OPTIONS
       return res.status(200).end();
     }
     

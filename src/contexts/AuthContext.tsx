@@ -276,12 +276,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const logout = useCallback(async () => {
     try {
-      console.log('🔐 AuthContext: Iniciando logout completo...');
+      console.log('🔐 AuthContext: Iniciando ULTRA LOGOUT...');
       setLoading(true);
       
       // Limpar estado local primeiro
       setUser(null);
       setError(null);
+      
+      // Usar o serviço de ultra logout
+      const { performUltraLogout } = await import('../services/ultraLogoutService');
+      await performUltraLogout();
+      
+      return; // O UltraLogoutService já faz tudo, incluindo redirecionamento
       
       // Função para limpeza completa de dados
       const performCompleteCleanup = async () => {

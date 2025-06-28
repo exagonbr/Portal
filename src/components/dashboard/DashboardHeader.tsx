@@ -404,7 +404,7 @@ export default function DashboardHeader() {
                     >
                       logout
                     </span>
-                    Sair
+                    Sair da Plataforma
                   </button>
                 </div>
               </div>

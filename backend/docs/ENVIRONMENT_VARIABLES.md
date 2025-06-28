@@ -34,6 +34,7 @@ REDIS_PORT=6379
 REDIS_PASSWORD=
 REDIS_DB=0
 REDIS_TLS=false
+REDIS_ENABLED=true
 
 # ===================================
 # REDIS QUEUE SETTINGS
@@ -105,6 +106,7 @@ npm_package_version=1.0.0
 | `REDIS_PASSWORD` | string | (vazio) | Senha do Redis (opcional) |
 | `REDIS_DB` | number | 0 | Banco de dados Redis (0-15) |
 | `REDIS_TLS` | boolean | false | Usar TLS para conexão Redis |
+| `REDIS_ENABLED` | boolean | true | Habilitar Redis |
 
 ### REDIS QUEUE SETTINGS
 

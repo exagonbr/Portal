@@ -12,6 +12,7 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie',
   'Access-Control-Allow-Credentials': 'false', // Deve ser false com origin: '*'
   'Access-Control-Max-Age': '86400',
+  'Allow': 'GET, POST, PUT, DELETE, OPTIONS, PATCH', // HEADER ALLOW ADICIONADO
 };
 
 // Função helper para respostas com CORS

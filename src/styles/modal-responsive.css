@@ -251,4 +251,157 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
   }
+}
+
+/* Estilos responsivos para modais */
+
+/* Modal base responsivo */
+.modal {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 transition-opacity;
+}
+
+.modal-content {
+  @apply relative bg-white rounded-lg shadow-xl max-w-md w-full max-h-screen overflow-y-auto;
+}
+
+/* Responsividade para diferentes tamanhos de tela */
+@media (min-width: 640px) {
+  .modal-content {
+    max-width: 500px;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-content {
+    max-width: 600px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal-content {
+    max-width: 700px;
+  }
+}
+
+/* Modal header responsivo */
+.modal-header {
+  @apply flex items-center justify-between p-4 border-b border-gray-200;
+}
+
+.modal-title {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+@media (min-width: 768px) {
+  .modal-title {
+    @apply text-xl;
+  }
+}
+
+/* Modal body responsivo */
+.modal-body {
+  @apply p-4;
+}
+
+@media (min-width: 768px) {
+  .modal-body {
+    @apply p-6;
+  }
+}
+
+/* Modal footer responsivo */
+.modal-footer {
+  @apply flex flex-col gap-2 p-4 border-t border-gray-200;
+}
+
+@media (min-width: 640px) {
+  .modal-footer {
+    @apply flex-row justify-end;
+  }
+}
+
+/* Botão de fechar responsivo */
+.modal-close {
+  @apply absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors;
+}
+
+/* Modal fullscreen em mobile */
+@media (max-width: 639px) {
+  .modal-fullscreen {
+    @apply fixed inset-0 p-0;
+  }
+  
+  .modal-fullscreen .modal-content {
+    @apply h-full max-h-none rounded-none;
+  }
+}
+
+/* Animações para modal */
+.modal-enter {
+  @apply opacity-0;
+}
+
+.modal-enter-active {
+  @apply opacity-100 transition-opacity duration-300;
+}
+
+.modal-exit {
+  @apply opacity-100;
+}
+
+.modal-exit-active {
+  @apply opacity-0 transition-opacity duration-300;
+}
+
+.modal-content-enter {
+  @apply scale-95 opacity-0;
+}
+
+.modal-content-enter-active {
+  @apply scale-100 opacity-100 transition-all duration-300;
+}
+
+.modal-content-exit {
+  @apply scale-100 opacity-100;
+}
+
+.modal-content-exit-active {
+  @apply scale-95 opacity-0 transition-all duration-300;
+}
+
+/* Modal de confirmação responsivo */
+.modal-confirm {
+  @apply max-w-sm;
+}
+
+@media (min-width: 640px) {
+  .modal-confirm {
+    max-width: 400px;
+  }
+}
+
+/* Modal de formulário responsivo */
+.modal-form {
+  @apply max-w-lg;
+}
+
+@media (min-width: 768px) {
+  .modal-form {
+    max-width: 600px;
+  }
+}
+
+/* Modal de galeria responsivo */
+.modal-gallery {
+  @apply max-w-4xl;
+}
+
+@media (max-width: 767px) {
+  .modal-gallery {
+    @apply max-w-full h-full;
+  }
 } 

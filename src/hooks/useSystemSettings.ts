@@ -171,12 +171,11 @@ export function useSystemSettings() {
       
       // Adicionar timestamp para evitar cache do navegador
       const url = `/api/settings?_t=${now}`
-      console.log('📡 Fazendo requisição para:', url)
+      console.log('📡 Fazendo requisição para rota pública:', url)
       
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache'
@@ -276,7 +275,7 @@ export function useSystemSettings() {
     try {
       const token = getAuthToken()
       
-      const response = await fetch('/api/settings', {
+      const response = await fetch('/api/settings/admin', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -318,7 +317,7 @@ export function useSystemSettings() {
     try {
       const token = getAuthToken()
       
-      const response = await fetch('/api/settings', {
+      const response = await fetch('/api/settings/admin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -362,7 +361,7 @@ export function useSystemSettings() {
     try {
       const token = getAuthToken()
       
-      const response = await fetch('/api/settings', {
+      const response = await fetch('/api/settings/admin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -402,7 +401,7 @@ export function useSystemSettings() {
 
       const token = getAuthToken()
       
-      const response = await fetch('/api/settings', {
+      const response = await fetch('/api/settings/admin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

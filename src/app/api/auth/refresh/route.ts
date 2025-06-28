@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Enviar requisição para o backend para renovar o token
-    console.log(`🔄 API Refresh: Chamando backend em getInternalApiUrl('/api/auth/refresh-token')`);
+    console.log(`🔄 API Refresh: Chamando backend em ${getInternalApiUrl('/api/auth/optimized/refresh')}`);
     
-    const response = await fetch(`getInternalApiUrl('/api/auth/refresh-token')`, {
+    const response = await fetch(getInternalApiUrl('/api/auth/optimized/refresh'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

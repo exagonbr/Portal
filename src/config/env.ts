@@ -29,7 +29,7 @@ const getBaseUrls = () => {
   // Desenvolvimento
   const nextPublicApiUrl = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) || 'https://portal.sabercon.com.br/api';
   const nextAuthUrl = (typeof process !== 'undefined' && process.env?.NEXTAUTH_URL) || 'http://localhost:3000';
-  const internalApiUrl = (typeof process !== 'undefined' && process.env?.INTERNAL_API_URL) || 'https://portal.sabercon.com.br';
+  const internalApiUrl = (typeof process !== 'undefined' && process.env?.INTERNAL_API_URL) || 'https://portal.sabercon.com.br/api';
   
   return {
     FRONTEND_URL: nextAuthUrl,
@@ -49,7 +49,7 @@ try {
     FRONTEND_URL: 'http://localhost:3000',
     BACKEND_URL: 'https://portal.sabercon.com.br/api',
     API_BASE_URL: 'https://portal.sabercon.com.br/api',
-    INTERNAL_API_URL: 'https://portal.sabercon.com.br'
+    INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
   };
 }
 
@@ -99,11 +99,25 @@ export const getApiUrl = (path: string = '') => {
 export const getInternalApiUrl = (path: string = '') => {
   try {
     const baseUrl = ENV_CONFIG.INTERNAL_API_URL;
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    let cleanPath = path.startsWith('/') ? path : `/${path}`;
+    
+    // Se o baseUrl já termina com /api e o path começa com /api, remover duplicação
+    if (baseUrl.endsWith('/api') && cleanPath.startsWith('/api')) {
+      cleanPath = cleanPath.substring(4); // Remove '/api' do início
+    }
+    
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter Internal API URL, usando fallback:', error);
-    return `https://portal.sabercon.com.br${path.startsWith('/') ? path : `/${path}`}`;
+    const fallbackUrl = 'https://portal.sabercon.com.br';
+    let cleanPath = path.startsWith('/') ? path : `/${path}`;
+    
+    // Evitar duplicação de /api no fallback também
+    if (cleanPath.startsWith('/api/api')) {
+      cleanPath = cleanPath.substring(4); // Remove primeiro '/api'
+    }
+    
+    return `${fallbackUrl}${cleanPath}`;
   }
 };
 

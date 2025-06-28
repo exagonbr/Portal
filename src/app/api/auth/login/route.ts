@@ -257,8 +257,49 @@ export async function POST(request: NextRequest) {
   const rateLimit = checkRateLimit(rateLimitKey, requestPattern, request);
   
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    // Tentar diferentes métodos de parsing
+    let body;
+    let email, password;
+    
+    const contentType = request.headers.get('content-type') || '';
+    console.log('🔍 Content-Type recebido:', contentType);
+    
+    try {
+      // Primeiro, tentar JSON
+      body = await request.json();
+      console.log('✅ Body parseado como JSON:', body);
+      ({ email, password } = body);
+    } catch (jsonError) {
+      console.log('❌ Erro ao parsear JSON:', jsonError);
+      
+      try {
+        // Se falhar, tentar como FormData
+        const formData = await request.formData();
+        console.log('🔍 Tentando FormData...');
+        email = formData.get('email')?.toString();
+        password = formData.get('password')?.toString();
+        console.log('✅ Dados extraídos do FormData:', { email: email ? 'presente' : 'ausente', password: password ? 'presente' : 'ausente' });
+      } catch (formError) {
+        console.log('❌ Erro ao parsear FormData:', formError);
+        
+        try {
+          // Último recurso: texto plano
+          const textBody = await request.text();
+          console.log('🔍 Body como texto:', textBody);
+          
+          // Tentar parsear como JSON string
+          if (textBody.trim().startsWith('{')) {
+            const parsedText = JSON.parse(textBody);
+            ({ email, password } = parsedText);
+            console.log('✅ Texto parseado como JSON:', { email: email ? 'presente' : 'ausente', password: password ? 'presente' : 'ausente' });
+          } else {
+            console.log('❌ Texto não é JSON válido');
+          }
+        } catch (textError) {
+          console.log('❌ Erro ao processar texto:', textError);
+        }
+      }
+    }
 
     console.log(`🔐 LOGIN ATTEMPT:`, {
       email: email ? email.substring(0, 3) + '***' : 'missing',
@@ -280,9 +321,9 @@ export async function POST(request: NextRequest) {
     let response;
     
     try {
-      console.log(`🌐 BACKEND REQUEST: Tentando ${API_CONFIG.BASE_URL}/auth/login`);
+      console.log(`🌐 BACKEND REQUEST: Tentando ${API_CONFIG.BASE_URL}/auth/optimized/login`);
       
-      response = await fetch(`${API_CONFIG.BASE_URL}/auth/login`, {
+      response = await fetch(`${API_CONFIG.BASE_URL}/auth/optimized/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

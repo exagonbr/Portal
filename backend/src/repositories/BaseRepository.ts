@@ -68,8 +68,17 @@ export abstract class BaseRepository<T> {
       query = query.where(filters);
     }
 
-    const result = await query.count('* as count').first();
-    return parseInt(result?.count as string) || 0;
+    try {
+      // Usar timeout explícito e otimizar a contagem
+      const result = await query
+        .count('* as count')
+        .timeout(15000)
+        .first();
+      return parseInt(result?.count as string) || 0;
+    } catch (error) {
+      console.error(`Erro ao contar registros na tabela ${this.tableName}:`, error);
+      throw error;
+    }
   }
 
   async exists(filters: Partial<T>): Promise<boolean> {

@@ -18,8 +18,14 @@ const config: Knex.Config = {
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   },
   pool: {
-    min: 2,
-    max: environment === 'production' ? 20 : 10,
+    min: environment === 'production' ? 5 : 2,
+    max: environment === 'production' ? 30 : 10,
+    idleTimeoutMillis: environment === 'production' ? 60000 : 30000,
+    acquireTimeoutMillis: environment === 'production' ? 120000 : 60000,
+    createTimeoutMillis: environment === 'production' ? 30000 : 30000,
+    destroyTimeoutMillis: environment === 'production' ? 5000 : 5000,
+    reapIntervalMillis: environment === 'production' ? 1000 : 1000,
+    createRetryIntervalMillis: 200,
   },
   migrations: {
     tableName: 'knex_migrations',
@@ -28,7 +34,7 @@ const config: Knex.Config = {
   seeds: {
     directory: '../../seeds',
   },
-  acquireConnectionTimeout: 60000,
+  acquireConnectionTimeout: environment === 'production' ? 120000 : 60000,
 };
 
 // Instância do Knex

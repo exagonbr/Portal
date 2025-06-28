@@ -6,59 +6,65 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 API Settings GET - Iniciando validação de autenticação...')
-    
-    // Verificar autenticação
-    const authHeader = request.headers.get('authorization')
-    console.log('🔍 Authorization header:', authHeader ? 'Presente' : 'Ausente')
-    console.log('🔍 Authorization preview:', authHeader ? authHeader.substring(0, 20) + '...' : 'N/A')
-    
-    const authResult = await getAuthentication(request)
-    console.log('🔍 Resultado da autenticação:', authResult ? 'Sucesso' : 'Falha')
-    
-    if (authResult && authResult.user) {
-      console.log('✅ Usuário autenticado:', {
-        id: authResult.user.id,
-        email: authResult.user.email,
-        role: authResult.user.role
-      })
-    } else {
-      console.error('❌ Autenticação falhou - detalhes:', {
-        hasAuthResult: !!authResult,
-        hasUser: authResult ? !!authResult.user : false,
-        authHeader: authHeader ? 'presente' : 'ausente'
-      })
-      return NextResponse.json(
-        { success: false, message: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
+    console.log('🔍 API Settings GET - Rota pública, sem verificação de autenticação')
 
-    console.log('✅ Autenticação bem-sucedida, usuário:', authResult.user?.email)
+    // Tentar múltiplos endpoints possíveis
+    const endpoints = [
+      '/api/settings/public',
+      '/settings/public',
+      '/api/system-settings/public'
+    ]
 
-    // Fazer requisição para o backend usando URL configurada
-    const backendUrl = getInternalApiUrl('/api/settings')
-    console.log('🌐 Tentando conectar com backend:', backendUrl)
+    let lastError = null
     
-    const backendResponse = await fetch(backendUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': request.headers.get('Authorization') || '',
-        'Content-Type': 'application/json'
+    for (const endpoint of endpoints) {
+      try {
+        const backendUrl = getInternalApiUrl(endpoint)
+        console.log('🌐 Tentando conectar com backend:', backendUrl)
+        
+        const backendResponse = await fetch(backendUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          // Timeout de 5 segundos
+          signal: AbortSignal.timeout(5000)
+        })
+
+        console.log('🌐 Resposta do backend:', backendResponse.status, backendResponse.statusText)
+
+        if (backendResponse.ok) {
+          const response = await backendResponse.json()
+          console.log('✅ Dados recebidos do backend:', Object.keys(response))
+          
+          // Se a resposta tem sucesso e dados categorizados, achatar a estrutura
+          if (response.success && response.data) {
+            const flatData: any = {}
+            
+            // Achatar as categorias em um único objeto
+            Object.values(response.data).forEach((category: any) => {
+              if (typeof category === 'object' && category !== null) {
+                Object.assign(flatData, category)
+              }
+            })
+            
+            return NextResponse.json({
+              success: true,
+              data: flatData
+            })
+          }
+          
+          return NextResponse.json(response)
+        }
+        
+        lastError = `${backendResponse.status} - ${await backendResponse.text()}`
+      } catch (err) {
+        console.log(`❌ Erro ao tentar ${endpoint}:`, err)
+        lastError = err
       }
-    })
-
-    console.log('🌐 Resposta do backend:', backendResponse.status, backendResponse.statusText)
-
-    if (!backendResponse.ok) {
-      const errorText = await backendResponse.text()
-      console.error('❌ Erro do backend:', backendResponse.status, errorText)
-      throw new Error(`Backend error: ${backendResponse.status} - ${errorText}`)
     }
 
-    const data = await backendResponse.json()
-    console.log('✅ Dados recebidos do backend:', Object.keys(data))
-    return NextResponse.json(data)
+    throw new Error(`Todos os endpoints falharam. Último erro: ${lastError}`)
 
   } catch (error) {
     console.error('❌ Erro ao carregar configurações:', error)

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     // 1. Se houver token, notificar o backend sobre o logout
     if (authToken) {
       try {
-        const response = await fetch(`getInternalApiUrl('/api/auth/logout')`, {
+        const response = await fetch(getInternalApiUrl('/api/auth/optimized/logout'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

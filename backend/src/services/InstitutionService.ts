@@ -10,6 +10,7 @@ import {
   InstitutionStatsDto
 } from '../dto/InstitutionDto';
 import { ServiceResult, PaginationResult } from '../types/common'; // Adicionado PaginationResult aqui
+import { CacheService } from './CacheService';
 // import { NotFoundError, ConflictError, ValidationError } from '../utils/errors'; // Comentado por enquanto
 
 export class InstitutionService extends BaseService<Institution, CreateInstitutionDto, UpdateInstitutionDto> {
@@ -28,50 +29,64 @@ export class InstitutionService extends BaseService<Institution, CreateInstituti
       const page = filters.page || 1; // Valor padrão para page
       const limit = filters.limit || 10; // Valor padrão para limit
       
-      const queryFilters: any = {};
-      if (search) {
-        queryFilters.search = search;
-      }
-      if (type) queryFilters.type = type;
-      if (is_active !== undefined) queryFilters.is_active = is_active;
+      // Criar uma chave de cache baseada nos filtros
+      const cacheKey = `institutions:${search || ''}:${type || ''}:${is_active !== undefined ? is_active : ''}:${page}:${limit}:${sortBy || ''}:${sortOrder || ''}`;
+      
+      // Usar o serviço de cache
+      const cacheService = CacheService.getInstance();
+      
+      // Tentar obter do cache ou executar a consulta
+      return await cacheService.getOrSet<ServiceResult<PaginatedInstitutionDto>>(
+        cacheKey,
+        async () => {
+          const queryFilters: any = {};
+          if (search) {
+            queryFilters.search = search;
+          }
+          if (type) queryFilters.type = type;
+          if (is_active !== undefined) queryFilters.is_active = is_active;
 
-      // Validar sortBy: apenas permitir chaves que existem no modelo Institution
-      let validSortBy: keyof Institution | undefined = undefined;
-      if (sortBy) {
-        // Esta é uma verificação simples. Uma lista explícita de campos ordenáveis seria mais robusta.
-        // Ou verificar se sortBy é uma chave de uma instância de Institution (mais complexo de tipar aqui).
-        // Por agora, vamos assumir que se o nome do campo do DTO for igual ao do modelo, é válido.
-        // Isso pode não ser seguro se os nomes dos campos diferirem significativamente ou se referirem a dados computados.
-        const institutionModelKeys = [
-          'id', 'name', 'code', 'type', 'characteristics',
-          'address', 'phone', 'email', 'is_active',
-          'created_at', 'updated_at'
-        ] as Array<keyof Institution>;
+          // Validar sortBy: apenas permitir chaves que existem no modelo Institution
+          let validSortBy: keyof Institution | undefined = undefined;
+          if (sortBy) {
+            const institutionModelKeys = [
+              'id', 'name', 'code', 'type', 'characteristics',
+              'address', 'phone', 'email', 'is_active',
+              'created_at', 'updated_at'
+            ] as Array<keyof Institution>;
 
-        if (institutionModelKeys.includes(sortBy as keyof Institution)) {
-          validSortBy = sortBy as keyof Institution;
-        } else {
-          this.logger.warn(`Invalid sortBy field received: ${sortBy}. Defaulting to no sort or repository default.`);
-        }
-      }
+            if (institutionModelKeys.includes(sortBy as keyof Institution)) {
+              validSortBy = sortBy as keyof Institution;
+            } else {
+              this.logger.warn(`Invalid sortBy field received: ${sortBy}. Defaulting to no sort or repository default.`);
+            }
+          }
 
-      const total = await this.institutionRepository.count(queryFilters);
-      const institutions = await this.institutionRepository.findAllWithFilters(
-        queryFilters,
-        { page, limit },
-        validSortBy, // Usar o sortBy validado
-        sortOrder
-      );
+          // Executar consultas em paralelo para melhorar o desempenho
+          const [total, institutions] = await Promise.all([
+            this.institutionRepository.count(queryFilters),
+            this.institutionRepository.findAllWithFilters(
+              queryFilters,
+              { page, limit },
+              validSortBy,
+              sortOrder
+            )
+          ]);
 
-      const paginationResult = this.calculatePagination(total, page, limit);
+          const paginationResult = this.calculatePagination(total, page, limit);
+          const institutionDtos = institutions.map(this.mapToDto);
 
-      return {
-        success: true,
-        data: {
-          institution: institutions.map(this.mapToDto),
-          pagination: paginationResult,
+          return {
+            success: true,
+            data: {
+              institution: institutionDtos,
+              pagination: paginationResult,
+            },
+          };
         },
-      };
+        // Tempo de cache: 5 minutos para consultas normais, 15 minutos para listas de instituições ativas
+        is_active === true ? 900 : 300
+      );
     } catch (error) {
       this.logger.error('Error finding institutions with filters', { filters }, error as Error);
       return { success: false, error: 'Failed to retrieve institutions' };

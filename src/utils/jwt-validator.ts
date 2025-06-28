@@ -1,21 +1,9 @@
 /**
- * Utilitário para validação de JWT com múltiplos secrets
- * Resolve problemas de incompatibilidade de secrets entre frontend e backend
+ * Utilitário para validação de JWT simplificado
+ * Evita loops infinitos usando apenas o secret principal
  */
 
 import jwt from 'jsonwebtoken';
-
-// Lista de possíveis secrets para tentar
-const POSSIBLE_SECRETS = [
-  process.env.JWT_SECRET,
-  process.env.NEXTAUTH_SECRET,
-  process.env.AUTH_SECRET,
-  'ExagonTech',
-  'ExagonTech2024',
-  'portal-sabercon-secret',
-  'sabercon-jwt-secret',
-  'default-secret'
-].filter(Boolean) as string[];
 
 export interface JWTValidationResult {
   success: boolean;
@@ -25,10 +13,10 @@ export interface JWTValidationResult {
 }
 
 /**
- * Valida JWT tentando múltiplos secrets
+ * Valida JWT usando apenas o secret principal (evita loops)
  */
 export function validateJWTWithMultipleSecrets(token: string): JWTValidationResult {
-  console.log('🔑 [JWT-VALIDATOR] Iniciando validação com múltiplos secrets...');
+  console.log('🔑 [JWT-VALIDATOR] Iniciando validação JWT simplificada...');
   
   if (!token || token.length < 10) {
     return {
@@ -46,33 +34,38 @@ export function validateJWTWithMultipleSecrets(token: string): JWTValidationResu
     };
   }
 
-  for (const secret of POSSIBLE_SECRETS) {
-    try {
-      console.log(`🔑 [JWT-VALIDATOR] Tentando secret: ${secret.substring(0, 5)}...`);
-      const decoded = jwt.verify(token, secret) as any;
+  // Usar apenas o secret principal para evitar loops
+  const secret = process.env.JWT_SECRET || 'ExagonTech';
+  
+  try {
+    console.log(`🔑 [JWT-VALIDATOR] Tentando secret: ${secret.substring(0, 5)}...`);
+    const decoded = jwt.verify(token, secret) as any;
+    
+    // Verificar se o payload é válido
+    if (typeof decoded === 'object' && (decoded.userId || decoded.sub)) {
+      console.log(`✅ [JWT-VALIDATOR] JWT validado com sucesso usando secret: ${secret.substring(0, 5)}...`);
+      console.log(`✅ [JWT-VALIDATOR] Usuário: ${decoded.email || decoded.userId || decoded.sub}`);
       
-      // Verificar se o payload é válido
-      if (typeof decoded === 'object' && (decoded.userId || decoded.sub)) {
-        console.log(`✅ [JWT-VALIDATOR] JWT validado com sucesso usando secret: ${secret.substring(0, 5)}...`);
-        console.log(`✅ [JWT-VALIDATOR] Usuário: ${decoded.email || decoded.userId || decoded.sub}`);
-        
-        return {
-          success: true,
-          decoded,
-          usedSecret: secret
-        };
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      console.log(`❌ [JWT-VALIDATOR] Falha com secret ${secret.substring(0, 5)}...: ${errorMsg}`);
+      return {
+        success: true,
+        decoded,
+        usedSecret: secret
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Payload JWT inválido'
+      };
     }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.log(`❌ [JWT-VALIDATOR] Falha com secret ${secret.substring(0, 5)}...: ${errorMsg}`);
+    
+    return {
+      success: false,
+      error: `JWT validation failed: ${errorMsg}`
+    };
   }
-
-  console.log('❌ [JWT-VALIDATOR] Nenhum secret funcionou para validar o JWT');
-  return {
-    success: false,
-    error: 'Nenhum secret funcionou para validar o JWT'
-  };
 }
 
 /**
