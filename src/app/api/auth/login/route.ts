@@ -321,9 +321,17 @@ export async function POST(request: NextRequest) {
     let response;
     
     try {
-      console.log(`🌐 BACKEND REQUEST: Tentando ${API_CONFIG.BASE_URL}/auth/optimized/login`);
+      // Determinar URL do backend baseado no ambiente
+      const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ||
+                            process.env.BACKEND_URL ||
+                            'https://portal.sabercon.com.br/api';
+      const backendUrl = `${backendBaseUrl}/auth/optimized/login`;
       
-      response = await fetch(`${API_CONFIG.BASE_URL}/auth/optimized/login`, {
+      console.log(`🌐 BACKEND REQUEST: Tentando ${backendUrl}`);
+      console.log(`🔧 Ambiente: ${process.env.NODE_ENV}`);
+      console.log(`🔧 Backend URL configurada: ${backendBaseUrl}`);
+      
+      response = await fetch(backendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -332,26 +340,39 @@ export async function POST(request: NextRequest) {
         // Configurações específicas para mobile
         credentials: 'same-origin', // Mudança de 'include' para 'same-origin' para melhor compatibilidade mobile
         body: JSON.stringify({ email, password }),
-        signal: AbortSignal.timeout(10000), // 10 segundos timeout
+        signal: AbortSignal.timeout(15000), // 15 segundos timeout
       });
 
       console.log(`🌐 BACKEND RESPONSE:`, {
         status: response.status,
         statusText: response.statusText,
-        contentType: response.headers.get('content-type')
+        contentType: response.headers.get('content-type'),
+        headers: Object.fromEntries(response.headers.entries())
       });
 
       // Verificar se a resposta é JSON válido
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Backend retornou resposta não-JSON');
+        const textResponse = await response.text();
+        console.error('❌ Backend retornou resposta não-JSON:', textResponse.substring(0, 500));
+        throw new Error(`Backend retornou resposta não-JSON: ${textResponse.substring(0, 100)}...`);
       }
 
       data = await response.json();
-      console.log(`🌐 BACKEND DATA:`, { success: data.success, hasUser: !!data.user });
+      console.log(`🌐 BACKEND DATA:`, {
+        success: data.success,
+        hasUser: !!data.user,
+        message: data.message,
+        error: data.error
+      });
       
     } catch (backendError) {
-      console.error('🚫 BACKEND ERROR:', backendError);
+      console.error('🚫 BACKEND ERROR DETALHADO:', {
+        error: backendError,
+        message: backendError instanceof Error ? backendError.message : 'Erro desconhecido',
+        stack: backendError instanceof Error ? backendError.stack : undefined,
+        type: backendError instanceof Error ? backendError.name : typeof backendError
+      });
       
       // Fallback: Autenticação local para desenvolvimento/teste
       const mockUsers = {
@@ -451,21 +472,110 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!response.ok) {
-      console.log(`🚫 LOGIN FAILED:`, { status: response.status, message: data.message });
+    // Verificar se temos resposta válida
+    if (!response) {
+      console.log('🚫 Nenhuma resposta do backend');
       return NextResponse.json(
-        { success: false, message: data.message || 'Erro ao fazer login' },
+        { success: false, message: 'Nenhuma resposta do servidor' },
+        { status: 503 }
+      );
+    }
+
+    if (!response.ok) {
+      console.log(`🚫 LOGIN FAILED:`, {
+        status: response.status,
+        message: data?.message,
+        data: data
+      });
+      return NextResponse.json(
+        { success: false, message: data?.message || 'Erro ao fazer login' },
         { status: response.status }
+      );
+    }
+
+    // Verificar se temos dados válidos
+    if (!data) {
+      console.log('🚫 Resposta sem dados do backend');
+      return NextResponse.json(
+        { success: false, message: 'Resposta inválida do servidor' },
+        { status: 502 }
+      );
+    }
+
+    // Verificar estrutura dos dados recebidos
+    console.log('📦 Estrutura dos dados recebidos:', {
+      hasData: !!data,
+      hasUser: !!data?.user,
+      hasToken: !!data?.token,
+      userEmail: data?.user?.email,
+      userRole: data?.user?.role,
+      dataKeys: data ? Object.keys(data) : [],
+      fullData: JSON.stringify(data).substring(0, 200) + '...'
+    });
+
+    // Processar diferentes estruturas de resposta do backend
+    let userData;
+    let token = data.token;
+    
+    // Tentar diferentes estruturas de resposta
+    if (data.user && data.token) {
+      // Estrutura padrão: { user: {...}, token: '...' }
+      userData = data.user;
+      token = data.token;
+    } else if (data.data && data.data.user) {
+      // Estrutura aninhada: { data: { user: {...}, token: '...' } }
+      userData = data.data.user;
+      token = data.data.token || data.token;
+    } else if (data.id && data.email && data.role) {
+      // O próprio objeto é o usuário
+      userData = data;
+      // Token pode estar em um campo separado ou precisamos gerar
+      if (!token) {
+        console.warn('⚠️ Token não encontrado na resposta, gerando localmente');
+        const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
+        token = jwt.sign({
+          userId: data.id,
+          email: data.email,
+          name: data.name,
+          role: data.role,
+          permissions: data.permissions || [],
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24h
+        }, JWT_SECRET);
+      }
+    } else {
+      console.error('🚫 Estrutura de resposta não reconhecida:', data);
+      return NextResponse.json(
+        { success: false, message: 'Estrutura de resposta inválida do servidor' },
+        { status: 502 }
+      );
+    }
+
+    // Verificar se temos os dados mínimos do usuário
+    if (!userData || !userData.email || !userData.role) {
+      console.error('🚫 Dados do usuário incompletos:', userData);
+      return NextResponse.json(
+        { success: false, message: 'Dados do usuário incompletos' },
+        { status: 502 }
+      );
+    }
+
+    // Garantir que temos um token
+    if (!token) {
+      console.error('🚫 Token não encontrado na resposta');
+      return NextResponse.json(
+        { success: false, message: 'Token de autenticação não fornecido' },
+        { status: 502 }
       );
     }
 
     // Configurar cookies com os tokens recebidos do backend
     const cookieStore = await cookies();
     
-    console.log(`🍪 SETTING COOKIES for user ${data.user.email}`);
+    console.log(`🍪 SETTING COOKIES for user ${userData.email}`);
     
     // Token de acesso - configurado para ser acessível pelo middleware
-    cookieStore.set('auth_token', data.token, {
+    cookieStore.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -495,17 +605,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Dados do usuário (não sensíveis)
-    const userData = {
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      role: data.user.role,
-      permissions: data.user.permissions || [],
+    // Dados do usuário (não sensíveis) - usar userData já processado
+    const userDataForCookie = {
+      id: userData.id,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      permissions: userData.permissions || [],
     };
 
     // Cookie não httpOnly para acesso pelo cliente JavaScript
-    cookieStore.set('user_data', JSON.stringify(userData), {
+    cookieStore.set('user_data', JSON.stringify(userDataForCookie), {
       httpOnly: false, // Permitir acesso via JavaScript
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -515,8 +625,8 @@ export async function POST(request: NextRequest) {
 
     const duration = Date.now() - startTime;
     console.log(`✅ LOGIN SUCCESS:`, {
-      email: data.user.email,
-      role: data.user.role,
+      email: userData.email,
+      role: userData.role,
       duration: `${duration}ms`,
       rateLimitRemaining: rateLimit.remaining
     });
@@ -524,8 +634,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Login realizado com sucesso',
-      user: userData,
-      token: data.token, // Incluir o token na resposta para uso em headers Authorization
+      user: userDataForCookie,
+      token: token, // Incluir o token na resposta para uso em headers Authorization
       redirectTo: data.redirectTo || '/dashboard',
       // Instruir o frontend para salvar o token no localStorage também
       saveTokenToStorage: true
@@ -537,14 +647,31 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error('💥 LOGIN ERROR:', {
+    console.error('💥 LOGIN ERROR COMPLETO:', {
       error: error instanceof Error ? error.message : 'Unknown error',
+      errorType: error instanceof Error ? error.name : typeof error,
       duration: `${duration}ms`,
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error
     });
     
+    // Mensagem de erro mais detalhada em desenvolvimento
+    const errorMessage = process.env.NODE_ENV === 'development' && error instanceof Error
+      ? `Erro interno do servidor: ${error.message}`
+      : 'Erro interno do servidor. Por favor, tente novamente.';
+    
     return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
+      {
+        success: false,
+        message: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && {
+          debug: {
+            error: error instanceof Error ? error.message : String(error),
+            type: error instanceof Error ? error.name : typeof error,
+            timestamp: new Date().toISOString()
+          }
+        })
+      },
       { status: 500 }
     );
   }
