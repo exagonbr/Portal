@@ -111,17 +111,20 @@ export class OptimizedAuthService {
         // Verificar se o institution_id é um UUID válido
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         if (uuidRegex.test(userBasic.institution_id)) {
+          console.log(`️⚠️ Tentativa de busca de instituição com UUID em coluna de inteiro: ${userBasic.institution_id}. Esta busca será ignorada.`);
+          institutionName = `Instituição (UUID)`;
+        } else {
+          // Se não for UUID, pode ser um ID legacy (inteiro)
           const institution = await db('institutions')
             .select('name')
             .where('id', userBasic.institution_id)
             .first();
           if (institution) {
             institutionName = institution.name;
+          } else {
+            console.log(`⚠️ Instituição com ID legado não encontrada: ${userBasic.institution_id}`);
+            institutionName = `Instituição ID: ${userBasic.institution_id}`;
           }
-        } else {
-          console.log(`⚠️ Institution ID não é UUID válido: ${userBasic.institution_id}`);
-          // Se não for UUID, pode ser um ID legacy - vamos buscar por outro campo ou ignorar
-          institutionName = `Instituição ID: ${userBasic.institution_id}`;
         }
       }
       

@@ -28,7 +28,7 @@ const getBaseUrls = () => {
   
   // Desenvolvimento
   const nextPublicApiUrl = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) || 'https://portal.sabercon.com.br/api';
-  const nextAuthUrl = (typeof process !== 'undefined' && process.env?.NEXTAUTH_URL) || 'http://localhost:3000';
+  const nextAuthUrl = (typeof process !== 'undefined' && process.env?.NEXTAUTH_URL) || 'https://portal.sabercon.com.br';
   const internalApiUrl = (typeof process !== 'undefined' && process.env?.INTERNAL_API_URL) || 'https://portal.sabercon.com.br/api';
   
   return {
@@ -46,7 +46,7 @@ try {
 } catch (error) {
   console.warn('Erro ao inicializar URLs base, usando fallback:', error);
   BASE_URLS = {
-    FRONTEND_URL: 'http://localhost:3000',
+    FRONTEND_URL: 'https://portal.sabercon.com.br',
     BACKEND_URL: 'https://portal.sabercon.com.br/api',
     API_BASE_URL: 'https://portal.sabercon.com.br/api',
     INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'

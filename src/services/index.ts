@@ -323,7 +323,7 @@ export const devUtils = {
 // Configuração padrão para desenvolvimento
 export const setupDevelopmentConfig = () => {
   configureServices({
-    baseURL: 'http://localhost:3000',
+    baseURL: 'https://portal.sabercon.com.br',
     timeout: 30000,
     retryAttempts: 3,
     retryDelay: 1000,
@@ -351,7 +351,7 @@ export const setupDevelopmentConfig = () => {
 // Configuração padrão para produção
 export const setupProductionConfig = () => {
   configureServices({
-    baseURL: 'http://localhost:3000',
+    baseURL: 'https://portal.sabercon.com.br',
     timeout: 15000,
     retryAttempts: 2,
     retryDelay: 2000,

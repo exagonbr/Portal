@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`getInternalApiUrl('/api/tv-shows/${params.id}/modules')`, {
+    const response = await fetch(getInternalApiUrl(`/api/tv-shows/${params.id}/modules`), {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });
