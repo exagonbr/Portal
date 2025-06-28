@@ -17,7 +17,7 @@ export interface AdminMenuSection {
 
 export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
   try {
-    const menu: AdminMenuSection[] = [
+    const menu = [
     {
       section: 'Principal',
       items: [

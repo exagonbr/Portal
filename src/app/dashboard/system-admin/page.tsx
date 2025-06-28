@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { runAuthDiagnostic, AuthDiagnosticResult } from '@/utils/auth-diagnostic';
 import {
   Shield,
   Building2,
@@ -202,8 +203,28 @@ function SystemAdminDashboardContent() {
     averageUsersPerInstitution: number;
     recentInstitutions: number;
   } | null>(null);
+  const [authDiagnostic, setAuthDiagnostic] = useState<AuthDiagnosticResult | null>(null);
 
   useEffect(() => {
+    // Executar diagnóstico de autenticação ao carregar
+    const runInitialDiagnostic = async () => {
+      console.log('🔍 [DASHBOARD] Executando diagnóstico inicial de autenticação...');
+      try {
+        const diagnostic = await runAuthDiagnostic();
+        setAuthDiagnostic(diagnostic);
+        
+        if (!diagnostic.success) {
+          console.warn('⚠️ [DASHBOARD] Problemas de autenticação detectados:', diagnostic.issues);
+        } else {
+          console.log('✅ [DASHBOARD] Autenticação funcionando corretamente');
+        }
+      } catch (error) {
+        console.error('❌ [DASHBOARD] Erro no diagnóstico de autenticação:', error);
+      }
+    };
+
+    runInitialDiagnostic();
+    
     // Inicializar handler global de erros
     initializeGlobalErrorHandler();
     

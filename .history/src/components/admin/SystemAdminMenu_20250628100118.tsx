@@ -7,7 +7,6 @@ export interface AdminMenuItem {
   icon: string
   label: string
   permission?: keyof import('@/types/roles').RolePermissions
-  description?: string
 }
 
 export interface AdminMenuSection {
@@ -17,7 +16,7 @@ export interface AdminMenuSection {
 
 export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
   try {
-    const menu: AdminMenuSection[] = [
+    const menu = [
     {
       section: 'Principal',
       items: [

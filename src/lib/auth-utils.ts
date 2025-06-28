@@ -31,18 +31,37 @@ export async function validateJWTToken(token: string) {
   console.log('🔑 Iniciando validação de token:', {
     hasToken: !!token,
     tokenLength: token ? token.length : 0,
-    tokenPreview: token ? token.substring(0, 20) + '...' : 'N/A'
+    tokenPreview: token ? token.substring(0, 20) + '...' : 'N/A',
+    tokenType: typeof token,
+    isNullString: token === 'null' || token === 'undefined'
   })
+
+  // Check for null/undefined strings first
+  if (token === 'null' || token === 'undefined' || token === 'false' || token === 'true') {
+    console.warn('🚫 Token is a string representation of null/undefined/boolean:', token);
+    return null;
+  }
 
   // Early validation: check if token is not empty and has reasonable length
   if (!token || token.length < 10) {
-    console.warn('🚫 Token is empty or too short:', { length: token ? token.length : 0 });
+    console.warn('🚫 Token is empty or too short:', { 
+      length: token ? token.length : 0,
+      actualValue: token,
+      isEmpty: !token,
+      isWhitespace: token && token.trim().length === 0
+    });
     return null;
   }
 
   // Check for obviously malformed tokens (containing special characters that shouldn't be there)
   if (token.includes('\0') || token.includes('\x00')) {
     console.warn('🚫 Token contains invalid characters');
+    return null;
+  }
+
+  // Check for common invalid token patterns
+  if (token.startsWith('Bearer ') || token.includes(' ')) {
+    console.warn('🚫 Token contains Bearer prefix or spaces - malformed');
     return null;
   }
 
@@ -117,15 +136,27 @@ export async function getAuthentication(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   console.log('🔐 Authorization header:', authHeader ? 'Presente' : 'Ausente')
   
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    console.log('🔐 Token do header Authorization encontrado, validando...')
-    const jwtSession = await validateJWTToken(token);
-    if (jwtSession) {
-      console.log('✅ Autenticação via Authorization header bem-sucedida')
-      return jwtSession;
+  if (authHeader) {
+    console.log('🔐 Authorization header completo:', authHeader.substring(0, 50) + '...')
+    
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7).trim();
+      console.log('🔐 Token extraído do header:', {
+        length: token.length,
+        preview: token.substring(0, 20) + '...',
+        isNull: token === 'null',
+        isEmpty: !token
+      })
+      
+      const jwtSession = await validateJWTToken(token);
+      if (jwtSession) {
+        console.log('✅ Autenticação via Authorization header bem-sucedida')
+        return jwtSession;
+      }
+      console.log('❌ Token do Authorization header inválido')
+    } else {
+      console.log('❌ Authorization header não começa com "Bearer ":', authHeader.substring(0, 20))
     }
-    console.log('❌ Token do Authorization header inválido')
   }
 
   // Try token from cookies as fallback
@@ -135,7 +166,12 @@ export async function getAuthentication(request: NextRequest) {
   console.log('🔐 Token dos cookies:', tokenFromCookie ? 'Encontrado' : 'Não encontrado')
   
   if (tokenFromCookie) {
-    console.log('🔐 Validando token dos cookies...')
+    console.log('🔐 Token dos cookies detalhes:', {
+      length: tokenFromCookie.length,
+      preview: tokenFromCookie.substring(0, 20) + '...',
+      isNull: tokenFromCookie === 'null'
+    })
+    
     const jwtSession = await validateJWTToken(tokenFromCookie);
     if (jwtSession) {
       console.log('✅ Autenticação via cookies bem-sucedida')

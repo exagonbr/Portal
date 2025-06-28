@@ -7,7 +7,6 @@ export interface AdminMenuItem {
   icon: string
   label: string
   permission?: keyof import('@/types/roles').RolePermissions
-  description?: string
 }
 
 export interface AdminMenuSection {
@@ -17,7 +16,7 @@ export interface AdminMenuSection {
 
 export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
   try {
-    const menu: AdminMenuSection[] = [
+    const menu = [
     {
       section: 'Principal',
       items: [
@@ -104,13 +103,13 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
         {
           href: '/portal/collections',
           icon: 'video_library',
-          label: 'Coleções',
+          label: 'Visualizar Coleções',
           permission: 'canManageSystem'
         },
         {
           href: '/portal/collections/admin',
           icon: 'admin_panel_settings',
-          label: 'Gestor de Coleções',
+          label: 'Admin de Coleções',
           permission: 'canManageSystem'
         },
         {

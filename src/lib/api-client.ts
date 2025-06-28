@@ -75,17 +75,30 @@ class ApiClient {
    */
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') {
+      console.log('🔍 [API-CLIENT] Executando no servidor, sem acesso ao storage');
       return null;
     }
+    
+    console.log('🔍 [API-CLIENT] Buscando token de autenticação...');
     
     // Tentar obter token de localStorage com prioridade
     const possibleKeys = ['auth_token', 'token', 'authToken'];
     let token = null;
+    let tokenSource = '';
     
     for (const key of possibleKeys) {
       const storedToken = localStorage.getItem(key);
-      if (storedToken && storedToken.trim() !== '') {
+      console.log(`🔍 [API-CLIENT] localStorage.${key}:`, {
+        found: !!storedToken,
+        length: storedToken ? storedToken.length : 0,
+        preview: storedToken ? storedToken.substring(0, 20) + '...' : 'null',
+        isNullString: storedToken === 'null',
+        isEmpty: !storedToken || storedToken.trim() === ''
+      });
+      
+      if (storedToken && storedToken.trim() !== '' && storedToken !== 'null' && storedToken !== 'undefined') {
         token = storedToken.trim();
+        tokenSource = `localStorage.${key}`;
         break;
       }
     }
@@ -94,8 +107,16 @@ class ApiClient {
     if (!token) {
       for (const key of possibleKeys) {
         const storedToken = sessionStorage.getItem(key);
-        if (storedToken && storedToken.trim() !== '') {
+        console.log(`🔍 [API-CLIENT] sessionStorage.${key}:`, {
+          found: !!storedToken,
+          length: storedToken ? storedToken.length : 0,
+          preview: storedToken ? storedToken.substring(0, 20) + '...' : 'null',
+          isNullString: storedToken === 'null'
+        });
+        
+        if (storedToken && storedToken.trim() !== '' && storedToken !== 'null' && storedToken !== 'undefined') {
           token = storedToken.trim();
+          tokenSource = `sessionStorage.${key}`;
           break;
         }
       }
@@ -104,21 +125,41 @@ class ApiClient {
     // Se não encontrar nos storages, tentar obter dos cookies
     if (!token) {
       const cookies = document.cookie.split(';');
+      console.log('🔍 [API-CLIENT] Verificando cookies:', cookies.length);
+      
       for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
-        if (['auth_token', 'token', 'authToken'].includes(name) && value && value.trim() !== '') {
-          token = value.trim();
-          break;
+        if (['auth_token', 'token', 'authToken'].includes(name)) {
+          console.log(`🔍 [API-CLIENT] cookie.${name}:`, {
+            found: !!value,
+            length: value ? value.length : 0,
+            preview: value ? value.substring(0, 20) + '...' : 'null',
+            isNullString: value === 'null'
+          });
+          
+          if (value && value.trim() !== '' && value !== 'null' && value !== 'undefined') {
+            token = value.trim();
+            tokenSource = `cookie.${name}`;
+            break;
+          }
         }
       }
     }
     
     if (!token) {
+      console.warn('❌ [API-CLIENT] Nenhum token válido encontrado em nenhuma fonte');
       return null;
     }
     
+    console.log(`✅ [API-CLIENT] Token encontrado em ${tokenSource}:`, {
+      length: token.length,
+      preview: token.substring(0, 20) + '...',
+      isJWT: token.split('.').length === 3
+    });
+    
     // Validar formato básico do token
     if (token.length < 10) {
+      console.warn('❌ [API-CLIENT] Token muito curto:', token.length);
       return null;
     }
     
@@ -128,13 +169,24 @@ class ApiClient {
       try {
         // Tentar decodificar o payload para verificar expiração
         const payload = JSON.parse(atob(jwtParts[1]));
+        console.log('🔍 [API-CLIENT] JWT payload:', {
+          userId: payload.userId,
+          email: payload.email,
+          role: payload.role,
+          exp: payload.exp,
+          isExpired: payload.exp && payload.exp < Math.floor(Date.now() / 1000)
+        });
+        
         if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-          // Token expirado, mas ainda retornar para tentar refresh
+          console.warn('⚠️ [API-CLIENT] Token expirado, mas retornando para tentar refresh');
           return token;
         }
       } catch (error) {
+        console.warn('⚠️ [API-CLIENT] Erro ao decodificar JWT payload:', error);
         // Ainda retornar o token, pode ser válido mesmo com erro de decode
       }
+    } else {
+      console.log('🔍 [API-CLIENT] Token não é JWT (não tem 3 partes)');
     }
     
     return token;
