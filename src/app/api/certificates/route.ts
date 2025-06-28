@@ -1,55 +1,146 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prepareAuthHeaders } from '../lib/auth-headers';
+import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 
-import { getInternalApiUrl } from '@/config/env';
+// helpers
+function sanitizeInt(s: string|undefined, fallback: number): number {
+  const n = parseInt(s||'', 10)
+  return isNaN(n) || n < 1 ? fallback : n
+}
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const searchParams = url.searchParams;
-    
-    // Construir URL do backend com parâmetros
-    const backendUrl = new URL('/certificates', getInternalApiUrl());
-    searchParams.forEach((value, key) => {
-      backendUrl.searchParams.append(key, value);
-    });
+    const url = new URL(req.url)
+    const page  = sanitizeInt(url.searchParams.get('page'),  1)
+    const limit = sanitizeInt(url.searchParams.get('limit'), 10)
+    const skip  = (page - 1) * limit
 
-    // Fazer requisição para o backend
-    const response = await fetch(backendUrl.toString(), {
-      method: 'GET',
-      headers: prepareAuthHeaders(request),
-    });
+    // build where-clause
+    const where: Prisma.CertificateWhereInput = {}
+    if (url.searchParams.has('user_id')) {
+      where.user_id = url.searchParams.get('user_id')!
+    }
+    if (url.searchParams.has('course_id')) {
+      where.course_id = url.searchParams.get('course_id')!
+    }
+    if (url.searchParams.has('certificate_type')) {
+      where.certificate_type = url.searchParams.get('certificate_type')! as any
+    }
+    if (url.searchParams.has('is_active')) {
+      where.is_active = url.searchParams.get('is_active') === 'true'
+    }
+    if (url.searchParams.has('search')) {
+      const q = url.searchParams.get('search')!
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+        { verification_code: { contains: q, mode: 'insensitive' } },
+      ]
+    }
 
-    const data = await response.json();
+    // sorting
+    let orderBy: Prisma.CertificateOrderByWithRelationInput = { issued_date: 'desc' }
+    const sb = url.searchParams.get('sort_by')
+    const so = url.searchParams.get('sort_order') === 'asc' ? 'asc' : 'desc'
+    if (sb === 'title' || sb === 'created_at' || sb === 'issued_date') {
+      orderBy = { [sb]: so }
+    }
 
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error('Erro ao buscar certificados:', error);
+    // run count + find in one transaction
+    const [total, certificates] = await prisma.$transaction([
+      prisma.certificate.count({ where }),
+      prisma.certificate.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          user:   { select: { id: true, name: true, email: true } },
+          course: { select: { id: true, title: true, slug: true } },
+        },
+      }),
+    ])
+
+    const totalPages = Math.ceil(total / limit) || 1
+    return NextResponse.json({
+      success: true,
+      data: certificates,
+      pagination: { page, limit, total, totalPages },
+    })
+  } catch (err: any) {
+    console.error('Erro ao buscar certificados:', err)
     return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
+      { success: false, message: err.message || 'Erro interno do servidor' },
       { status: 500 }
-    );
+    )
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await req.json()
+    const {
+      user_id,
+      course_id,
+      title,
+      description,
+      certificate_type,
+      expiry_date,
+      certificate_url,
+      metadata,
+    } = body
 
-    const response = await fetch(getInternalApiUrl('/api/certificates'), {
-      method: 'POST',
-      headers: prepareAuthHeaders(request),
-      body: JSON.stringify(body),
-    });
+    // basic validation
+    if (!user_id || !title || !certificate_type) {
+      return NextResponse.json(
+        { success: false, message: 'Campos obrigatórios: user_id, title, certificate_type' },
+        { status: 400 }
+      )
+    }
 
-    const data = await response.json();
+    // generate a unique verification code
+    function genCode(len = 8) {
+      return Array.from({ length: len })
+        .map(() => (Math.random() * 36 | 0).toString(36).toUpperCase())
+        .join('')
+    }
 
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error('Erro ao criar certificado:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    let code = genCode()
+    while (
+      await prisma.certificate.findUnique({
+        where: { verification_code: code },
+      })
+    ) {
+      code = genCode()
+    }
+
+    const cert = await prisma.certificate.create({
+      data: {
+        user_id,
+        course_id: course_id || null,
+        title,
+        description,
+        certificate_type,
+        issued_date: new Date(),
+        expiry_date: expiry_date ? new Date(expiry_date) : null,
+        certificate_url,
+        metadata: metadata || undefined,
+        verification_code: code,
+        is_active: true,
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        course: { select: { id: true, title: true, slug: true } },
+      },
+    })
+
+    return NextResponse.json({ success: true, data: cert }, { status: 201 })
+  } catch (err: any) {
+    console.error('Erro ao criar certificado:', err)
+    const msg =
+      err.code === 'P2002'
+        ? 'Código de verificação duplicado'
+        : err.message || 'Erro interno do servidor'
+    return NextResponse.json({ success: false, message: msg }, { status: 500 })
   }
 }

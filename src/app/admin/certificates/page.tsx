@@ -20,7 +20,8 @@ import {
   FileText,
   ExternalLink,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Plus
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { formatDate } from '@/utils/date'
@@ -29,6 +30,7 @@ import { useToast } from '@/components/ToastManager'
 import { Badge } from '@/components/ui/Badge'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { Button } from '@/components/ui/Button'
+import { CertificateFormModal } from '@/components/admin/CertificateFormModal'
 import {
   Certificate,
   CertificateFilters,
@@ -308,7 +310,11 @@ export default function ManageCertificates() {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [filters, setFilters] = useState<CertificateFilters>({})
   const [showFilters, setShowFilters] = useState(true)
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingCertificate, setEditingCertificate] = useState<Certificate | null>(null)
+  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
+  const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
 
   // Verificar autorização
   useEffect(() => {
@@ -380,7 +386,40 @@ export default function ManageCertificates() {
 
   useEffect(() => {
     loadCertificates();
+    loadUsersAndCourses();
   }, [loadCertificates]);
+
+  // Carregar usuários e cursos para o formulário
+  const loadUsersAndCourses = async () => {
+    try {
+      // Carregar usuários (simplificado - você pode ajustar conforme sua API)
+      const usersResponse = await fetch('/api/users?limit=1000');
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json();
+        if (usersData.success && usersData.data) {
+          setUsers(usersData.data.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email
+          })));
+        }
+      }
+
+      // Carregar cursos (simplificado - você pode ajustar conforme sua API)
+      const coursesResponse = await fetch('/api/courses?limit=1000');
+      if (coursesResponse.ok) {
+        const coursesData = await coursesResponse.json();
+        if (coursesData.success && coursesData.data) {
+          setCourses(coursesData.data.map((c: any) => ({
+            id: c.id,
+            title: c.title
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar usuários e cursos:', error);
+    }
+  };
 
   // Função de busca
   const handleSearch = useCallback((query: string) => {
@@ -403,8 +442,50 @@ export default function ManageCertificates() {
 
   // Editar certificado
   const handleEditCertificate = (certificate: Certificate) => {
-    // TODO: Implementar modal de edição
-    showNotification('Funcionalidade de edição em desenvolvimento', 'info')
+    setEditingCertificate(certificate)
+    setShowCreateModal(true)
+  }
+
+  // Criar novo certificado
+  const handleCreateCertificate = () => {
+    setEditingCertificate(null)
+    setShowCreateModal(true)
+  }
+
+  // Salvar certificado (criar ou editar)
+  const handleSaveCertificate = async (formData: any) => {
+    try {
+      const url = editingCertificate 
+        ? `/api/certificates/${editingCertificate.id}`
+        : '/api/certificates';
+      
+      const method = editingCertificate ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao salvar certificado');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        showSuccess(editingCertificate ? 'Certificado atualizado com sucesso!' : 'Certificado criado com sucesso!');
+        loadCertificates();
+        setShowCreateModal(false);
+        setEditingCertificate(null);
+      } else {
+        throw new Error(result.message || 'Erro ao salvar certificado');
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar certificado:', error);
+      showError(error.message || 'Erro ao salvar certificado');
+    }
   }
 
   // Excluir certificado
@@ -618,6 +699,13 @@ export default function ManageCertificates() {
               <span className="text-sm text-slate-500">
                 Total: {totalItems} certificados
               </span>
+              <Button
+                onClick={handleCreateCertificate}
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+              >
+                <Plus className="h-4 w-4" />
+                Novo Certificado
+              </Button>
               <button
                 onClick={handleRefresh}
                 className={`p-2 rounded-lg border border-slate-200 hover:bg-slate-50 ${refreshing ? 'animate-spin' : ''}`}
@@ -856,6 +944,19 @@ export default function ManageCertificates() {
             onDelete={handleDeleteCertificate}
           />
         )}
+
+        {/* Modal de criação/edição */}
+        <CertificateFormModal
+          certificate={editingCertificate}
+          isOpen={showCreateModal}
+          onClose={() => {
+            setShowCreateModal(false)
+            setEditingCertificate(null)
+          }}
+          onSave={handleSaveCertificate}
+          users={users}
+          courses={courses}
+        />
       </div>
     </AuthenticatedLayout>
   )

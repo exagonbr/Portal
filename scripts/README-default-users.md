@@ -74,6 +74,7 @@ DB_HOST=seu-host DB_PASSWORD=sua-senha ./scripts/insert-default-users.sh
 - **`insert-default-users.sh`**: Script principal que executa as inserções SQL
 - **`insert-default-users-prod.sh`**: Script wrapper que carrega variáveis do .env e executa o script principal
 - **`insert-default-users-complete.sh`**: Script completo que executa todos os passos em sequência (RECOMENDADO)
+- **`insert-default-users-simple.sh`**: Script simplificado que insere apenas na tabela 'users' (sem erros)
 - **`check-db-structure.sh`**: Script para verificar a estrutura das tabelas no banco
 - **`fix-user-table.sh`**: Script para corrigir problemas na tabela 'user' (adiciona colunas faltantes)
 - **`README-default-users.md`**: Esta documentação
@@ -209,15 +210,35 @@ bash scripts/insert-default-users-prod.sh
 
 ## 🎯 Solução Rápida para os Erros Reportados
 
-Se você encontrou os erros mencionados no feedback, execute:
+### Se você está vendo erros com a tabela 'user':
 
+**Opção 1: Use o script simplificado (MAIS RÁPIDO)**
 ```bash
-# Este comando resolve todos os problemas automaticamente
+# Insere apenas na tabela 'users' (sem erros)
+bash scripts/insert-default-users-simple.sh
+```
+
+**Opção 2: Corrija a tabela 'user' primeiro**
+```bash
+# 1. Corrija a estrutura da tabela 'user'
+bash scripts/fix-user-table.sh
+
+# 2. Execute o script completo
 bash scripts/insert-default-users-complete.sh
 ```
 
-O script irá:
-- ✅ Detectar automaticamente se a coluna `updated_at` existe antes de usá-la
-- ✅ Verificar se a tabela `user` tem coluna `email` antes de tentar inserir
-- ✅ Oferecer correção automática da estrutura da tabela `user`
-- ✅ Inserir todos os usuários padrão com tratamento de erros
+### Script Simplificado - Sem Erros
+
+Se você quer evitar os erros com a tabela 'user', use:
+
+```bash
+# Este script insere APENAS na tabela 'users'
+# Não tenta inserir na tabela 'user' (evita erros)
+bash scripts/insert-default-users-simple.sh
+```
+
+Vantagens:
+- ✅ Sem erros de "column email does not exist"
+- ✅ Execução limpa e rápida
+- ✅ Todos os usuários criados na tabela principal 'users'
+- ✅ Compatível com a aplicação que usa a tabela 'users'

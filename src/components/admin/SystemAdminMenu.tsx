@@ -55,6 +55,12 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
           permission: 'canManageGlobalUsers'
         },
         {
+          href: '/admin/certificates',
+          icon: 'award',
+          label: 'Certificados',
+          permission: 'canManageSystem'
+        },
+        {
           href: '/admin/security',
           icon: 'security',
           label: 'Políticas de Segurança',

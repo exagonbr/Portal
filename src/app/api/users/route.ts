@@ -1,54 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prepareAuthHeaders } from '../lib/auth-headers';
-import { getInternalApiUrl } from '@/config/env';
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const searchParams = url.searchParams;
-    
-    // Construir URL do backend com parâmetros
-    const backendUrl = new URL('/users', getInternalApiUrl());
-    searchParams.forEach((value, key) => {
-      backendUrl.searchParams.append(key, value);
-    });
+    const url = new URL(req.url)
+    const limit = parseInt(url.searchParams.get('limit') || '50', 10)
+    const search = url.searchParams.get('search')
 
-    // Fazer requisição para o backend
-    const response = await fetch(backendUrl.toString(), {
-      method: 'GET',
-      headers: prepareAuthHeaders(request),
-    });
+    const where: any = {}
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ]
+    }
 
-    const data = await response.json();
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+      orderBy: { name: 'asc' },
+      take: Math.min(limit, 1000), // máximo 1000
+    })
 
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
+    return NextResponse.json({
+      success: true,
+      data: users,
+    })
+  } catch (err: any) {
+    console.error('Erro ao buscar usuários:', err)
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
-    );
+    )
   }
 }
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-
-    const response = await fetch(getInternalApiUrl('/users'), {
-      method: 'POST',
-      headers: prepareAuthHeaders(request),
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
-
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error('Erro ao criar usuário:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
-    );
-  }
-} 
