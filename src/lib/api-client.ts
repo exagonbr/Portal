@@ -15,8 +15,14 @@ import { CORS_HEADERS } from '@/config/cors';
 import { logHttp500Error } from '../utils/debug-http-500';
 
 // Configuração centralizada
+// Configuração centralizada
+const API_URLS = [
+  process.env.NEXT_PUBLIC_API_URL,
+  'http://localhost:3001',
+  'https://portal.sabercon.com.br/api'
+].filter(Boolean) as string[];
+
 const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
   timeout: 30000,
   retryAttempts: 3,
   retryDelay: 1000,
@@ -60,14 +66,29 @@ if (typeof window !== 'undefined') {
 
 // Cliente API principal
 class ApiClient {
-  private baseURL: string;
+  private baseURLs: string[];
+  private currentBaseURLIndex: number;
   private timeout: number;
   private isRefreshing = false;
   private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
-    this.baseURL = API_CONFIG.baseURL;
+    this.baseURLs = API_URLS.length > 0 ? API_URLS : ['/api'];
+    this.currentBaseURLIndex = 0;
     this.timeout = API_CONFIG.timeout;
+  }
+
+  private getBaseURL(): string {
+    return this.baseURLs[this.currentBaseURLIndex];
+  }
+
+  private switchToNextBaseURL(): boolean {
+    if (this.currentBaseURLIndex < this.baseURLs.length - 1) {
+      this.currentBaseURLIndex++;
+      console.warn(`[API-CLIENT] API primária falhou. Trocando para a URL de fallback: ${this.getBaseURL()}`);
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -314,7 +335,8 @@ class ApiClient {
     } else {
       // Garantir que não há barras duplas
       const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-      const cleanBaseURL = this.baseURL.endsWith('/') ? this.baseURL.slice(0, -1) : this.baseURL;
+      const baseURL = this.getBaseURL();
+      const cleanBaseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
       url = `${cleanBaseURL}${cleanEndpoint}`;
     }
     
@@ -377,7 +399,7 @@ class ApiClient {
     this.isRefreshing = true;
     this.refreshPromise = (async () => {
       try {
-        const response = await fetch(`${this.baseURL}/auth/refresh`, {
+        const response = await fetch(`${this.getBaseURL()}/auth/refresh`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -412,127 +434,96 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const url = this.buildURL(endpoint);
-    const headers = this.prepareHeaders(options.headers as Record<string, string>, false);
+    let lastError: any;
 
-    // Preparar body se necessário
-    const requestOptions: RequestInit = {
-      ...options,
-      headers,
-      credentials: 'include' // Always include credentials for cookie-based auth
-    };
+    // Salva o índice original para resetar se a URL de fallback funcionar
+    const initialBaseURLIndex = this.currentBaseURLIndex;
 
-    if (options.body && !(options.body instanceof FormData)) {
-      requestOptions.body = JSON.stringify(options.body);
-    } else if (options.body instanceof FormData) {
-      // Para FormData, remover Content-Type para deixar o browser definir
-      delete (requestOptions.headers as any)['Content-Type'];
-      requestOptions.body = options.body;
-    }
+    while (this.currentBaseURLIndex < this.baseURLs.length) {
+      const url = this.buildURL(endpoint);
+      const headers = this.prepareHeaders(options.headers as Record<string, string>, false);
+      const requestOptions: RequestInit = {
+        ...options,
+        headers,
+        credentials: 'include'
+      };
 
-    let timeoutId: NodeJS.Timeout | null = null;
-
-    try {
-      let response: Response;
-
-      if (isFirefox()) {
-        if (FirefoxUtils.safeFetch) {
-          response = await FirefoxUtils.safeFetch(url, requestOptions);
-        } else {
-          response = await fetch(url, requestOptions);
-        }
-      } else {
-        // Para outros navegadores, usar AbortController para timeout
-        const controller = new AbortController();
-        timeoutId = setTimeout(() => {
-          controller.abort();
-        }, this.timeout);
-
-        response = await fetch(url, {
-          ...requestOptions,
-          signal: controller.signal
-        });
+      if (options.body && !(options.body instanceof FormData)) {
+        requestOptions.body = JSON.stringify(options.body);
+      } else if (options.body instanceof FormData) {
+        delete (requestOptions.headers as any)['Content-Type'];
+        requestOptions.body = options.body;
       }
 
-      // Limpar timeout se a requisição foi bem-sucedida
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
-      const responseText = await response.text();
-      let data: any;
+      let timeoutId: NodeJS.Timeout | null = null;
 
       try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        data = { message: responseText };
-      }
+        let response: Response;
+        console.log(`[API-CLIENT] Tentando requisição para: ${url}`);
 
-      if (!response.ok) {
-        // Log específico para HTTP 500
-        if (response.status === 500) {
-          logHttp500Error(
-            url,
-            options.method || 'GET',
-            url, // usando url como endpoint
-            response.status,
-            data,
-            responseText,
-            options.headers as Record<string, string>,
-            Object.fromEntries(response.headers.entries())
-          );
+        if (isFirefox()) {
+          response = FirefoxUtils.safeFetch
+            ? await FirefoxUtils.safeFetch(url, requestOptions)
+            : await fetch(url, requestOptions);
+        } else {
+          const controller = new AbortController();
+          timeoutId = setTimeout(() => controller.abort(), this.timeout);
+          response = await fetch(url, { ...requestOptions, signal: controller.signal });
         }
 
-        const errorToThrow = {
-          message: data.message || data.error || `HTTP ${response.status}`,
-          status: response.status,
-          details: data
-        } as ApiError;
+        if (timeoutId) clearTimeout(timeoutId);
 
-        throw errorToThrow;
+        const responseText = await response.text();
+        let data: any;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          data = { message: responseText };
+        }
+
+        if (!response.ok) {
+          if (response.status === 500) {
+            logHttp500Error(url, options.method || 'GET', endpoint, response.status, data, responseText, options.headers as Record<string, string>, Object.fromEntries(response.headers.entries()));
+          }
+          throw {
+            message: data.message || data.error || `HTTP ${response.status}`,
+            status: response.status,
+            details: data
+          } as ApiError;
+        }
+        
+        return { success: true, data, message: data.message };
+
+      } catch (error: any) {
+        lastError = error;
+        if (timeoutId) clearTimeout(timeoutId);
+
+        const isNetworkError = (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) ||
+                               (error.name === 'AbortError') ||
+                               (isFirefox() && FirefoxUtils.isNSBindingAbortError(error));
+
+        if (isNetworkError) {
+          const switched = this.switchToNextBaseURL();
+          if (switched) {
+            continue; // Tenta com a nova URL base
+          }
+        }
+        
+        const processedError = this.processError(error);
+        // Se a URL de fallback falhar, resetamos para a original para futuras requisições
+        this.currentBaseURLIndex = initialBaseURLIndex;
+        return { success: false, message: processedError.message, errors: [JSON.stringify(processedError)] };
       }
-
-      return {
-        success: true,
-        data,
-        message: data.message
-      };
-
-    } catch (error: any) {
-      // Limpar timeout em caso de erro
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
-      /**
-       * Somente substituir um erro verdadeiramente plain-object sem keys.
-       * Se vier um Error (TypeError, AbortError, etc.), NÃO sobrepor
-       * e repassar sua mensagem original.
-       */
-      const isPlainObject = error != null && 
-        (error.constructor === Object) && 
-        Object.keys(error).length === 0;
-
-      if (error == null || isPlainObject) {
-        error = new Error('Erro vazio capturado - possível problema de serialização');
-      }
-
-      // Tratar erros específicos
-      const processedError = this.processError(error);
-      
-      // Log específico para Firefox
-      if (isFirefox() && FirefoxUtils.isNSBindingAbortError(error)) {
-        return {
-          success: false,
-          message: 'Request cancelled by browser'
-        };
-      }
-
-      return {
-        success: false,
-        message: processedError.message
-      };
     }
+
+    // Se saiu do loop, todas as URLs falharam.
+    this.currentBaseURLIndex = initialBaseURLIndex; // Reset
+    const processedError = this.processError(lastError);
+    return {
+      success: false,
+      message: `Todas as URLs da API estão inacessíveis. Último erro: ${processedError.message}`,
+      errors: [JSON.stringify(processedError)]
+    };
   }
 
   /**
