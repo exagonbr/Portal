@@ -848,8 +848,7 @@ function SystemAdminDashboardContent() {
         </div>
         
         {/* Resumo Geral do Sistema */}
-        {realUserStats && (
-          <div className="mt-3 sm:mt-4">
+        <div className="mt-3 sm:mt-4">
             <ContentCard
               title="Resumo Geral do Sistema"
               subtitle="Estatísticas principais em tempo real"
@@ -858,25 +857,24 @@ function SystemAdminDashboardContent() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                 <div className="text-center p-2 sm:p-3 bg-blue-50 rounded-lg">
-                  <p className="text-lg sm:text-xl font-bold text-blue-600">{realUserStats.total_users.toLocaleString('pt-BR')}</p>
+                  <p className="text-lg sm:text-xl font-bold text-blue-600">{realUserStats?.total_users?.toLocaleString('pt-BR') ?? '...'}</p>
                   <p className="text-xs sm:text-sm text-gray-600">Total de Usuários</p>
                 </div>
                 <div className="text-center p-2 sm:p-3 bg-green-50 rounded-lg">
-                  <p className="text-lg sm:text-xl font-bold text-green-600">{realUserStats.active_users.toLocaleString('pt-BR')}</p>
+                  <p className="text-lg sm:text-xl font-bold text-green-600">{realUserStats?.active_users?.toLocaleString('pt-BR') ?? '...'}</p>
                   <p className="text-xs sm:text-sm text-gray-600">Usuários Ativos</p>
                 </div>
                 <div className="text-center p-2 sm:p-3 bg-purple-50 rounded-lg">
-                  <p className="text-lg sm:text-xl font-bold text-purple-600">{institutions.length}</p>
+                  <p className="text-lg sm:text-xl font-bold text-purple-600">{institutions?.length ?? '...'}</p>
                   <p className="text-xs sm:text-sm text-gray-600">Instituições</p>
                 </div>
                 <div className="text-center p-2 sm:p-3 bg-orange-50 rounded-lg">
-                  <p className="text-lg sm:text-xl font-bold text-orange-600">{realUserStats.recent_registrations}</p>
+                  <p className="text-lg sm:text-xl font-bold text-orange-600">{realUserStats?.recent_registrations?.toLocaleString('pt-BR') ?? '...'}</p>
                   <p className="text-xs sm:text-sm text-gray-600">Novos este Mês</p>
                 </div>
               </div>
             </ContentCard>
           </div>
-        )}
       </div>
 
       {/* Alertas do Sistema */}

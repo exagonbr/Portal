@@ -32,6 +32,29 @@ interface ColumnInfo {
   postgresName: string
 }
 
+interface RoleMapping {
+  mysqlRole: string
+  postgresRole: string
+  fallbackRole?: string
+}
+
+interface ColumnMapping {
+  mysqlColumn: string
+  postgresColumn: string
+  mysqlType: string
+  postgresType: string
+  required: boolean
+  defaultValue?: any
+}
+
+interface TableStructureMapping {
+  mysqlTable: string
+  postgresTable: string
+  columns: ColumnMapping[]
+  customSQL?: string
+  recreateStructure: boolean
+}
+
 interface MigrationOptions {
   recreateTables: boolean
   preserveData: boolean
@@ -64,8 +87,14 @@ export default function MySQLPostgresMigrationPage() {
     preserveData: true
   })
   
+  // Estados de mapeamento
+  const [roleMappings, setRoleMappings] = useState<RoleMapping[]>([])
+  const [structureMappings, setStructureMappings] = useState<TableStructureMapping[]>([])
+  const [showMappingModal, setShowMappingModal] = useState(false)
+  const [selectedTableForMapping, setSelectedTableForMapping] = useState<string>('')
+
   // Estados da UI
-  const [activeTab, setActiveTab] = useState<'connection' | 'tables' | 'columns' | 'migration'>('connection')
+  const [activeTab, setActiveTab] = useState<'connection' | 'tables' | 'columns' | 'mapping' | 'migration'>('connection')
   const [connectionTested, setConnectionTested] = useState(false)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [isLoadingTables, setIsLoadingTables] = useState(false)
@@ -399,23 +428,6 @@ export default function MySQLPostgresMigrationPage() {
                   Crie automaticamente todos os usuários padrão nas tabelas "users" e "user" (se existirem) para garantir compatibilidade total
                 </p>
               </div>
-              <button
-                onClick={createDefaultUsers}
-                disabled={isCreatingUsers}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
-              >
-                {isCreatingUsers ? (
-                  <>
-                    <span className="animate-spin">🔄</span>
-                    Criando...
-                  </>
-                ) : (
-                  <>
-                    <span>👥</span>
-                    Criar Usuários Padrão
-                  </>
-                )}
-              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

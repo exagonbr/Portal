@@ -20,10 +20,35 @@ interface MigrationOptions {
   preserveData: boolean
 }
 
+interface RoleMapping {
+  mysqlRole: string
+  postgresRole: string
+  fallbackRole?: string
+}
+
+interface ColumnMapping {
+  mysqlColumn: string
+  postgresColumn: string
+  mysqlType: string
+  postgresType: string
+  required: boolean
+  defaultValue?: any
+}
+
+interface TableStructureMapping {
+  mysqlTable: string
+  postgresTable: string
+  columns: ColumnMapping[]
+  customSQL?: string
+  recreateStructure: boolean
+}
+
 interface MigrationRequest {
   mysqlConnection: MySQLConnection
   selectedTables: TableMapping[]
   options: MigrationOptions
+  roleMappings?: RoleMapping[]
+  structureMappings?: TableStructureMapping[]
 }
 
 export async function POST(request: NextRequest) {
@@ -32,7 +57,13 @@ export async function POST(request: NextRequest) {
   let pgPool: Pool | null = null
   
   try {
-    const { mysqlConnection: mysqlConfig, selectedTables, options }: MigrationRequest = await request.json()
+    const { 
+      mysqlConnection: mysqlConfig, 
+      selectedTables, 
+      options, 
+      roleMappings = [],
+      structureMappings = []
+    }: MigrationRequest = await request.json()
     
     // Validação dos parâmetros
     if (!mysqlConfig || !selectedTables || selectedTables.length === 0) {
@@ -72,14 +103,31 @@ export async function POST(request: NextRequest) {
       details: [] as any[]
     }
 
+    // Validar integridade antes da migração
+    const integritResult = await validateMigrationIntegrity(pgPool, selectedTables, roleMappings)
+    if (!integritResult.isValid) {
+      return NextResponse.json({
+        success: false,
+        error: 'Falha na validação de integridade',
+        details: integritResult.errors
+      }, { status: 400 })
+    }
+
     // Processar cada tabela
     for (const tableMapping of selectedTables) {
       try {
+        // Buscar mapeamento de estrutura personalizado
+        const structureMapping = structureMappings.find(sm => 
+          sm.mysqlTable === tableMapping.mysqlTable
+        )
+        
         const tableResult = await processTable(
           mysqlConnection,
           pgPool,
           tableMapping,
-          options
+          options,
+          roleMappings,
+          structureMapping
         )
         
         results.tablesProcessed++
@@ -139,7 +187,9 @@ async function processTable(
   mysqlConnection: mysql.Connection,
   pgPool: Pool,
   tableMapping: TableMapping,
-  options: MigrationOptions
+  options: MigrationOptions,
+  roleMappings: RoleMapping[] = [],
+  structureMapping?: TableStructureMapping
 ) {
   const { mysqlTable, postgresTable } = tableMapping
   const result = {
@@ -179,7 +229,17 @@ async function processTable(
 
     // 4. Criar tabela PostgreSQL se não existir ou foi removida
     if (!tableExists || options.recreateTables) {
-      const createTableSQL = generateCreateTableSQL(postgresTable, columnsResult)
+      let createTableSQL
+      
+      if (structureMapping && structureMapping.recreateStructure) {
+        // Usar estrutura customizada
+        createTableSQL = generateCustomTableSQL(postgresTable, structureMapping)
+        result.warnings.push(`Tabela ${postgresTable} criada com estrutura customizada`)
+      } else {
+        // Usar estrutura automática baseada no MySQL
+        createTableSQL = generateCreateTableSQL(postgresTable, columnsResult, structureMapping)
+      }
+      
       await pgClient.query(createTableSQL)
       result.created = true
     }
@@ -224,7 +284,15 @@ async function processTable(
       
       for (let i = 0; i < dataResult.length; i += batchSize) {
         const batch = dataResult.slice(i, i + batchSize)
-        const insertedCount = await insertBatch(pgClient, postgresTable, columnsResult, batch, options.preserveData)
+        const insertedCount = await insertBatch(
+          pgClient, 
+          postgresTable, 
+          columnsResult, 
+          batch, 
+          options.preserveData,
+          roleMappings,
+          structureMapping
+        )
         processed += insertedCount
       }
       
@@ -241,15 +309,198 @@ async function processTable(
   return result
 }
 
-function generateCreateTableSQL(tableName: string, columns: any[]): string {
+// ========================================
+// NOVAS FUNÇÕES DE VALIDAÇÃO E MAPEAMENTO
+// ========================================
+
+async function validateMigrationIntegrity(
+  pgPool: Pool, 
+  selectedTables: TableMapping[], 
+  roleMappings: RoleMapping[]
+): Promise<{ isValid: boolean; errors: string[]; warnings: string[] }> {
+  const errors: string[] = []
+  const warnings: string[] = []
+  const pgClient = await pgPool.connect()
+
+  try {
+    // 1. Verificar se roles necessários existem
+    const requiredRoles = roleMappings.map(rm => rm.postgresRole)
+    if (requiredRoles.length > 0) {
+      const roleExistsQuery = `
+        SELECT name FROM roles WHERE name = ANY($1::text[])
+      `
+      const existingRoles = await pgClient.query(roleExistsQuery, [requiredRoles])
+      const existingRoleNames = existingRoles.rows.map(r => r.name)
+      
+      const missingRoles = requiredRoles.filter(role => !existingRoleNames.includes(role))
+      if (missingRoles.length > 0) {
+        errors.push(`Roles não encontrados no PostgreSQL: ${missingRoles.join(', ')}`)
+      }
+    }
+
+    // 2. Verificar se tabelas de destino têm estrutura adequada
+    for (const table of selectedTables) {
+      const tableExistsQuery = `
+        SELECT column_name, data_type, is_nullable 
+        FROM information_schema.columns 
+        WHERE table_name = $1 AND table_schema = 'public'
+      `
+      const columns = await pgClient.query(tableExistsQuery, [table.postgresTable])
+      
+      if (columns.rows.length === 0) {
+        warnings.push(`Tabela ${table.postgresTable} não existe, será criada`)
+      }
+    }
+
+    // 3. Verificar se há conflitos de constraints
+    const constraintQuery = `
+      SELECT table_name, constraint_name, constraint_type 
+      FROM information_schema.table_constraints 
+      WHERE table_name = ANY($1::text[]) AND table_schema = 'public'
+    `
+    const tableNames = selectedTables.map(t => t.postgresTable)
+    const constraints = await pgClient.query(constraintQuery, [tableNames])
+    
+    if (constraints.rows.length > 0) {
+      warnings.push(`Encontradas ${constraints.rows.length} constraints nas tabelas de destino`)
+    }
+
+  } catch (error: any) {
+    errors.push(`Erro na validação de integridade: ${error.message}`)
+  } finally {
+    pgClient.release()
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  }
+}
+
+function mapMySQLRoleToPostgreSQL(
+  mysqlRoleValue: any, 
+  roleMappings: RoleMapping[]
+): string {
+  if (!mysqlRoleValue) return 'STUDENT' // Fallback padrão
+
+  // Converter valor para string
+  const roleStr = String(mysqlRoleValue).toUpperCase().trim()
+  
+  // 1. Tentar mapeamento direto customizado
+  const customMapping = roleMappings.find(rm => 
+    rm.mysqlRole.toUpperCase() === roleStr
+  )
+  if (customMapping) {
+    console.log(`🔄 ROLE MAPPING CUSTOMIZADO: ${roleStr} → ${customMapping.postgresRole}`)
+    return customMapping.postgresRole
+  }
+
+  // 2. Mapeamento automático baseado em padrões comuns
+  const autoMappings: Record<string, string> = {
+    // Roles administrativos
+    'ADMIN': 'SYSTEM_ADMIN',
+    'ADMINISTRATOR': 'SYSTEM_ADMIN',
+    'SYSTEM_ADMIN': 'SYSTEM_ADMIN',
+    'ROOT': 'SYSTEM_ADMIN',
+    
+    // Roles de gestão
+    'MANAGER': 'INSTITUTION_MANAGER',
+    'INSTITUTION_MANAGER': 'INSTITUTION_MANAGER',
+    'GESTOR': 'INSTITUTION_MANAGER',
+    'DIRETOR': 'INSTITUTION_MANAGER',
+    'DIRECTOR': 'INSTITUTION_MANAGER',
+    
+    // Roles educacionais
+    'TEACHER': 'TEACHER',
+    'PROFESSOR': 'TEACHER',
+    'DOCENTE': 'TEACHER',
+    'EDUCATOR': 'TEACHER',
+    
+    'STUDENT': 'STUDENT',
+    'ALUNO': 'STUDENT',
+    'ESTUDANTE': 'STUDENT',
+    'PUPIL': 'STUDENT',
+    
+    'COORDINATOR': 'COORDINATOR',
+    'COORDENADOR': 'COORDINATOR',
+    
+    // Roles familiares
+    'PARENT': 'GUARDIAN',
+    'GUARDIAN': 'GUARDIAN',
+    'RESPONSAVEL': 'GUARDIAN',
+    'PAI': 'GUARDIAN',
+    'MAE': 'GUARDIAN',
+    
+    // Roles numéricos (comum em sistemas legados)
+    '1': 'SYSTEM_ADMIN',
+    '2': 'INSTITUTION_MANAGER', 
+    '3': 'TEACHER',
+    '4': 'STUDENT',
+    '5': 'GUARDIAN',
+    '6': 'COORDINATOR'
+  }
+
+  const mappedRole = autoMappings[roleStr]
+  if (mappedRole) {
+    console.log(`🔄 ROLE MAPPING AUTOMÁTICO: ${roleStr} → ${mappedRole}`)
+    return mappedRole
+  }
+
+  // 3. Mapeamento baseado em palavras-chave
+  if (roleStr.includes('ADMIN') || roleStr.includes('ROOT')) return 'SYSTEM_ADMIN'
+  if (roleStr.includes('MANAGER') || roleStr.includes('GESTOR')) return 'INSTITUTION_MANAGER'
+  if (roleStr.includes('TEACHER') || roleStr.includes('PROFESSOR')) return 'TEACHER'
+  if (roleStr.includes('STUDENT') || roleStr.includes('ALUNO')) return 'STUDENT'
+  if (roleStr.includes('PARENT') || roleStr.includes('GUARDIAN')) return 'GUARDIAN'
+  if (roleStr.includes('COORD')) return 'COORDINATOR'
+
+  // 4. Fallback padrão
+  console.log(`⚠️ ROLE MAPPING FALLBACK: ${roleStr} → STUDENT (não reconhecido)`)
+  return 'STUDENT'
+}
+
+function generateCustomTableSQL(tableName: string, structureMapping: TableStructureMapping): string {
+  if (structureMapping.customSQL) {
+    return structureMapping.customSQL.replace(/\{tableName\}/g, tableName)
+  }
+
+  const columnDefinitions = structureMapping.columns.map(col => {
+    const nullable = col.required ? ' NOT NULL' : ''
+    const defaultValue = col.defaultValue !== undefined ? 
+      ` DEFAULT ${typeof col.defaultValue === 'string' ? `'${col.defaultValue}'` : col.defaultValue}` : ''
+    
+    return `"${col.postgresColumn}" ${col.postgresType}${nullable}${defaultValue}`
+  }).join(',\n  ')
+
+  return `
+    CREATE TABLE IF NOT EXISTS "${tableName}" (
+      ${columnDefinitions}
+    );
+  `
+}
+
+function generateCreateTableSQL(
+  tableName: string, 
+  columns: any[], 
+  structureMapping?: TableStructureMapping
+): string {
   const columnDefinitions = columns.map(col => {
-    const postgresType = mapMySQLTypeToPostgreSQL(col.Type)
-    const nullable = col.Null === 'YES' ? '' : ' NOT NULL'
-    const defaultValue = getDefaultValue(col.Default, postgresType)
+    // Verificar se há mapeamento customizado para esta coluna
+    const customColumn = structureMapping?.columns.find(cm => 
+      cm.mysqlColumn.toLowerCase() === col.Field.toLowerCase()
+    )
+    
+    const columnName = customColumn ? customColumn.postgresColumn : col.Field.toLowerCase()
+    const postgresType = customColumn ? customColumn.postgresType : mapMySQLTypeToPostgreSQL(col.Type)
+    const nullable = customColumn ? (customColumn.required ? ' NOT NULL' : '') : (col.Null === 'YES' ? '' : ' NOT NULL')
+    const defaultValue = customColumn && customColumn.defaultValue !== undefined ?
+      (typeof customColumn.defaultValue === 'string' ? ` DEFAULT '${customColumn.defaultValue}'` : ` DEFAULT ${customColumn.defaultValue}`) :
+      getDefaultValue(col.Default, postgresType)
     const autoIncrement = col.Extra.includes('auto_increment') ? 
       (postgresType.includes('bigint') ? ' GENERATED BY DEFAULT AS IDENTITY' : ' GENERATED BY DEFAULT AS IDENTITY') : ''
     
-    return `"${col.Field.toLowerCase()}" ${postgresType}${autoIncrement}${nullable}${defaultValue}`
+    return `"${columnName}" ${postgresType}${autoIncrement}${nullable}${defaultValue}`
   }).join(',\n  ')
 
   // Encontrar chave primária
@@ -345,7 +596,9 @@ async function insertBatch(
   tableName: string,
   columns: any[],
   batch: any[],
-  preserveData: boolean
+  preserveData: boolean,
+  roleMappings: RoleMapping[] = [],
+  structureMapping?: TableStructureMapping
 ): Promise<number> {
   if (batch.length === 0) return 0
 
@@ -357,6 +610,14 @@ async function insertBatch(
   const values = batch.flatMap(row => 
     columns.map(col => {
       let value = row[col.Field]
+      
+      // TRATAMENTO ESPECIAL PARA ROLES/CARGOS
+      const fieldName = col.Field.toLowerCase()
+      if (fieldName.includes('role') || fieldName.includes('cargo') || fieldName.includes('perfil')) {
+        const mappedRole = mapMySQLRoleToPostgreSQL(value, roleMappings)
+        console.log(`🎭 ROLE MAPPING: Tabela ${tableName}, Campo ${col.Field}: "${value}" → "${mappedRole}"`)
+        value = mappedRole
+      }
       
       // INTERCEPTAÇÃO SUPER AGRESSIVA: Converter QUALQUER valor suspeito
       if (value !== null && value !== undefined) {
