@@ -1,35 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+interface UserQueryResult {
+  id: bigint
+  full_name: string
+  email: string
+}
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url)
     const limit = parseInt(url.searchParams.get('limit') || '50', 10)
     const search = url.searchParams.get('search')
 
-    const where: any = {}
+    // Usar consulta SQL bruta para contornar problemas de schema
+    let users: UserQueryResult[]
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-      ]
+      users = await prisma.$queryRaw<UserQueryResult[]>`
+        SELECT id, full_name, email
+        FROM "users"
+        WHERE full_name ILIKE ${'%' + search + '%'} OR email ILIKE ${'%' + search + '%'}
+        ORDER BY full_name ASC
+        LIMIT ${Math.min(limit, 1000)}
+      `
+    } else {
+      users = await prisma.$queryRaw<UserQueryResult[]>`
+        SELECT id, full_name, email
+        FROM "users"
+        ORDER BY full_name ASC
+        LIMIT ${Math.min(limit, 1000)}
+      `
     }
 
-    const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-      },
-      orderBy: { name: 'asc' },
-      take: Math.min(limit, 1000), // máximo 1000
-    })
+    // Converter BigInt para string para serialização JSON
+    const serializedUsers = users.map((user: UserQueryResult) => ({
+      ...user,
+      id: user.id.toString()
+    }))
 
     return NextResponse.json({
       success: true,
-      data: users,
+      data: serializedUsers,
     })
   } catch (err: any) {
     console.error('Erro ao buscar usuários:', err)

@@ -39,7 +39,7 @@ import {
   CERTIFICATE_TYPE_COLORS,
   CertificateType
 } from '@/types/certificate'
-import { UserRole } from '@/types/common'
+import { UserRole } from '@/types/roles'
 
 // Interfaces para as colunas e ações da tabela
 interface CRUDColumn<T> {
