@@ -17,6 +17,9 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
+  // Desabilitar fast refresh
+  fastRefresh: false,
+  
   // Configurações para melhorar a hidratação
   experimental: {
     // Melhorar a hidratação de componentes
@@ -216,6 +219,12 @@ const nextConfig = {
   },
   
   webpack: (config, { isServer, webpack }) => {
+    // Desabilitar debug de issues do webpack
+    config.stats = 'errors-only';
+    config.infrastructureLogging = {
+      level: 'error',
+    };
+    
     // Injetar versão de cache no Service Worker
     if (!isServer) {
       config.plugins.push(
