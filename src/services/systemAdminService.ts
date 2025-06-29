@@ -403,25 +403,27 @@ class SystemAdminService {
       throughput: number;
     };
   }> {
-    try {
-      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/analytics`);
-      
-      // Add debug logging
-      console.log('Analytics response:', response);
-      
-      if (response.success && response.data?.data) {
-        // If success is true, return the data directly
-        return response.data.data;
+    return withAutoRefresh(async () => {
+      try {
+        const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/analytics`);
+        
+        // Add debug logging
+        console.log('Analytics response:', response);
+        
+        if (response.success && response.data?.data) {
+          // If success is true, return the data directly
+          return response.data.data;
+        }
+        
+        // If success is false, throw error with message
+        throw new Error(response.message || 'Falha ao carregar analytics');
+      } catch (error) {
+        console.error('Erro ao carregar analytics do sistema:', error);
+        
+        // Fallback with simulated data
+        return this.getFallbackAnalytics();
       }
-      
-      // If success is false, throw error with message
-      throw new Error(response.message || 'Falha ao carregar analytics');
-    } catch (error) {
-      console.error('Erro ao carregar analytics do sistema:', error);
-      
-      // Fallback with simulated data
-      return this.getFallbackAnalytics();
-    }
+    });
   }
 
   /**
@@ -436,25 +438,27 @@ class SystemAdminService {
     bounceRate: number;
     topFeatures: Array<{ name: string; usage: number }>;
   }> {
-    try {
-      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/engagement`);
-      
-      // Add debug logging
-      console.log('Engagement metrics response:', response);
-      
-      if (response.success && response.data?.data) {
-        // If success is true, return the data directly
-        return response.data.data;
+    return withAutoRefresh(async () => {
+      try {
+        const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/engagement`);
+        
+        // Add debug logging
+        console.log('Engagement metrics response:', response);
+        
+        if (response.success && response.data?.data) {
+          // If success is true, return the data directly
+          return response.data.data;
+        }
+        
+        // If success is false, throw error with message
+        throw new Error(response.message || 'Falha ao carregar métricas de engajamento');
+      } catch (error) {
+        console.error('Erro ao carregar métricas de engajamento:', error);
+        
+        // Fallback with simulated data
+        return this.getFallbackEngagementMetrics();
       }
-      
-      // If success is false, throw error with message
-      throw new Error(response.message || 'Falha ao carregar métricas de engajamento');
-    } catch (error) {
-      console.error('Erro ao carregar métricas de engajamento:', error);
-      
-      // Fallback with simulated data
-      return this.getFallbackEngagementMetrics();
-    }
+    });
   }
 
   /**
@@ -733,43 +737,47 @@ class SystemAdminService {
    * Obtém dados de analytics
    */
   async getAnalyticsData(type: 'users' | 'sessions' | 'activity', period: 'day' | 'week' | 'month' = 'week'): Promise<AnalyticsData> {
-    try {
-      const response = await apiClient.get<{ success: boolean; data: AnalyticsData; message?: string }>(`/dashboard/analytics`, { type, period });
-      
-      // Add debug logging
-      console.log('Analytics data response:', response);
-      
-      if (response.success && response.data?.data) {
-        // If success is true, return the data directly
-        return response.data.data;
+    return withAutoRefresh(async () => {
+      try {
+        const response = await apiClient.get<{ success: boolean; data: AnalyticsData; message?: string }>(`/dashboard/analytics`, { type, period });
+        
+        // Add debug logging
+        console.log('Analytics data response:', response);
+        
+        if (response.success && response.data?.data) {
+          // If success is true, return the data directly
+          return response.data.data;
+        }
+        
+        // If success is false, throw error with message
+        throw new Error(response.message || 'Falha ao carregar dados de analytics');
+      } catch (error) {
+        console.error('Erro ao carregar dados de analytics:', error);
+        
+        // Fallback with simulated data
+        return this.getFallbackAnalyticsData(type, period);
       }
-      
-      // If success is false, throw error with message
-      throw new Error(response.message || 'Falha ao carregar dados de analytics');
-    } catch (error) {
-      console.error('Erro ao carregar dados de analytics:', error);
-      
-      // Fallback with simulated data
-      return this.getFallbackAnalyticsData(type, period);
-    }
+    });
   }
 
   /**
    * Obtém resumo personalizado do dashboard
    */
   async getDashboardSummary(): Promise<any> {
-    try {
-      const response = await apiClient.get<{ data: any }>(`/dashboard/summary`);
-      
-      if (response.success && response.data) {
-        return response.data.data;
+    return withAutoRefresh(async () => {
+      try {
+        const response = await apiClient.get<{ data: any }>(`/dashboard/summary`);
+        
+        if (response.success && response.data) {
+          return response.data.data;
+        }
+        
+        throw new Error(response.message || 'Falha ao carregar resumo do dashboard');
+      } catch (error) {
+        console.error('Erro ao carregar resumo do dashboard:', error);
+        return null;
       }
-      
-      throw new Error(response.message || 'Falha ao carregar resumo do dashboard');
-    } catch (error) {
-      console.error('Erro ao carregar resumo do dashboard:', error);
-      return null;
-    }
+    });
   }
 
   /**
@@ -1069,42 +1077,48 @@ class SystemAdminService {
   }
 
   async getRoleStats(): Promise<any> {
-    try {
-      const response = await apiClient.get<any>(`/roles/stats`);
-      if (response.success && response.data) {
-        return response.data.data || response.data;
+    return withAutoRefresh(async () => {
+      try {
+        const response = await apiClient.get<any>(`/roles/stats`);
+        if (response.success && response.data) {
+          return response.data.data || response.data;
+        }
+        throw new Error(response.message || 'Falha ao carregar estatísticas de roles');
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas de roles:', error);
+        return null;
       }
-      throw new Error(response.message || 'Falha ao carregar estatísticas de roles');
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas de roles:', error);
-      return null;
-    }
+    });
   }
 
   async getAwsConnectionStats(): Promise<any> {
-    try {
-      const response = await apiClient.get<any>(`/aws/connection-logs/stats`);
-      if (response.success && response.data) {
-        return response.data.data || response.data;
+    return withAutoRefresh(async () => {
+      try {
+        const response = await apiClient.get<any>(`/aws/connection-logs/stats`);
+        if (response.success && response.data) {
+          return response.data.data || response.data;
+        }
+        throw new Error(response.message || 'Falha ao carregar estatísticas da AWS');
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas da AWS:', error);
+        return null;
       }
-      throw new Error(response.message || 'Falha ao carregar estatísticas da AWS');
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas da AWS:', error);
-      return null;
-    }
+    });
   }
 
   async getRealUserStats(): Promise<any> {
-    try {
-      const response = await apiClient.get<any>(`/users/stats`);
-      if (response.success && response.data) {
-        return response.data.data || response.data;
+    return withAutoRefresh(async () => {
+      try {
+        const response = await apiClient.get<any>(`/users/stats`);
+        if (response.success && response.data) {
+          return response.data.data || response.data;
+        }
+        throw new Error(response.message || 'Falha ao carregar estatísticas de usuários');
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas de usuários:', error);
+        return {};
       }
-      throw new Error(response.message || 'Falha ao carregar estatísticas de usuários');
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas de usuários:', error);
-      return null;
-    }
+    });
   }
 }
 

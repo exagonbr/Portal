@@ -41,7 +41,19 @@ const GamificationProvider = dynamic(() =>
   loading: () => null
 })
 
-const ToastManager = dynamic(() => 
+const NavigationLoadingProvider = dynamic(() =>
+  import('@/contexts/NavigationLoadingContext')
+    .then(mod => ({ default: mod.NavigationLoadingProvider }))
+    .catch(error => {
+      console.error('❌ Erro ao carregar NavigationLoadingProvider:', error);
+      // Retornar um provider vazio em caso de erro
+      return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+    }), {
+  ssr: false,
+  loading: () => null
+})
+
+const ToastManager = dynamic(() =>
   import('@/components/ToastManager')
     .then(mod => ({ default: mod.ToastManager }))
     .catch(error => {
@@ -93,17 +105,21 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
       <Suspense fallback={null}>
         <ThemeProvider>
           <Suspense fallback={null}>
-            <AuthProvider>
+            <NavigationLoadingProvider>
               <Suspense fallback={null}>
-                <GamificationProvider>
+                <AuthProvider>
                   <Suspense fallback={null}>
-                    <ToastManager>
-                      {children}
-                    </ToastManager>
+                    <GamificationProvider>
+                      <Suspense fallback={null}>
+                        <ToastManager>
+                          {children}
+                        </ToastManager>
+                      </Suspense>
+                    </GamificationProvider>
                   </Suspense>
-                </GamificationProvider>
+                </AuthProvider>
               </Suspense>
-            </AuthProvider>
+            </NavigationLoadingProvider>
           </Suspense>
         </ThemeProvider>
       </Suspense>

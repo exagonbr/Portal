@@ -8,6 +8,12 @@ interface LogEntry {
   message: string
   table?: string
   progress?: number
+  realTimeData?: {
+    tableName: string
+    currentRow: number
+    totalRows: number
+    percentage: number
+  }
 }
 
 interface MigrationLogViewerProps {
@@ -138,12 +144,31 @@ export default function MigrationLogViewer({ logs, isActive, onClear }: Migratio
                   {log.progress !== undefined && (
                     <div className="mt-1 w-48">
                       <div className="w-full bg-gray-700 rounded-full h-1">
-                        <div 
+                        <div
                           className="bg-blue-500 h-1 rounded-full transition-all duration-300"
                           style={{ width: `${log.progress}%` }}
                         ></div>
                       </div>
                       <span className="text-xs text-gray-500">{log.progress.toFixed(1)}%</span>
+                    </div>
+                  )}
+
+                  {/* Real-time progress data */}
+                  {log.realTimeData && (
+                    <div className="mt-2 bg-gray-800 rounded p-2 text-xs">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-blue-400 font-medium">{log.realTimeData.tableName}</span>
+                        <span className="text-green-400">{log.realTimeData.percentage.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-1 mb-1">
+                        <div
+                          className="bg-green-500 h-1 rounded-full transition-all duration-300"
+                          style={{ width: `${log.realTimeData.percentage}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-gray-400">
+                        {log.realTimeData.currentRow.toLocaleString()} / {log.realTimeData.totalRows.toLocaleString()} registros
+                      </div>
                     </div>
                   )}
                 </div>

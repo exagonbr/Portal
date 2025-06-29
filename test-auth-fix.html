@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Correção de Autenticação</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .success { border-color: #4CAF50; background-color: #f8fff8; }
+        .error { border-color: #f44336; background-color: #fff8f8; }
+        .warning { border-color: #ff9800; background-color: #fffaf0; }
+        .info { border-color: #2196F3; background-color: #f0f8ff; }
+        
+        button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #1976D2; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background-color: #4CAF50; color: white; }
+        .status.error { background-color: #f44336; color: white; }
+        .status.warning { background-color: #ff9800; color: white; }
+        .status.info { background-color: #2196F3; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste de Correção de Autenticação - Portal Sabercon</h1>
+        <p>Esta página testa as correções implementadas para resolver o erro 401 na API /units.</p>
+    </div>
+
+    <div class="container">
+        <h2>📋 Resumo do Problema</h2>
+        <div class="test-section error">
+            <h3>❌ Erro Original</h3>
+            <p><strong>Log:</strong> <code>127.0.0.1 - - [28/Jun/2025:23:59:14 +0000] "GET /api/units?limit=100 HTTP/1.1" 401 44</code></p>
+            <p><strong>Causa:</strong> GOOGLE_CLIENT_SECRET estava igual ao GOOGLE_CLIENT_ID, causando falha na autenticação NextAuth</p>
+        </div>
+        
+        <div class="test-section info">
+            <h3>🔧 Correções Implementadas</h3>
+            <ul>
+                <li>✅ Corrigido GOOGLE_CLIENT_SECRET no arquivo .env</li>
+                <li>✅ Criado sistema de debug de autenticação</li>
+                <li>✅ Adicionado provider de credenciais como fallback</li>
+                <li>✅ Criada rota /api/units-debug para testes</li>
+                <li>✅ Implementado diagnóstico completo de sessão</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Testes de Diagnóstico</h2>
+        
+        <div class="test-section">
+            <h3>1. Diagnóstico de Configuração de Autenticação</h3>
+            <button onclick="testAuthConfig()">Testar Configuração</button>
+            <div id="authConfigResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Teste da API Units Original</h3>
+            <button onclick="testOriginalUnitsAPI()">Testar /api/units</button>
+            <div id="originalUnitsResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Teste da API Units Debug</h3>
+            <button onclick="testDebugUnitsAPI()">Testar /api/units-debug</button>
+            <div id="debugUnitsResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Teste de Login com Credenciais</h3>
+            <div>
+                <input type="email" id="testEmail" placeholder="Email (use: admin@sabercon.com.br)" value="admin@sabercon.com.br">
+                <input type="password" id="testPassword" placeholder="Senha (use: admin123)" value="admin123">
+                <button onclick="testCredentialsLogin()">Testar Login</button>
+            </div>
+            <div id="credentialsResult"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Resultados dos Testes</h2>
+        <div id="testSummary" class="test-section info">
+            <p>Execute os testes acima para ver os resultados aqui.</p>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {};
+
+        function updateTestSummary() {
+            const summary = document.getElementById('testSummary');
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(r => r.success).length;
+            
+            if (totalTests === 0) return;
+            
+            const successRate = Math.round((passedTests / totalTests) * 100);
+            let statusClass = 'info';
+            if (successRate >= 75) statusClass = 'success';
+            else if (successRate >= 50) statusClass = 'warning';
+            else statusClass = 'error';
+            
+            summary.className = `test-section ${statusClass}`;
+            summary.innerHTML = `
+                <h3>📊 Resumo dos Testes</h3>
+                <p><strong>Testes Executados:</strong> ${totalTests}</p>
+                <p><strong>Testes Aprovados:</strong> ${passedTests}</p>
+                <p><strong>Taxa de Sucesso:</strong> <span class="status ${statusClass}">${successRate}%</span></p>
+                <div style="margin-top: 10px;">
+                    ${Object.entries(testResults).map(([test, result]) => 
+                        `<div>• ${test}: <span class="status ${result.success ? 'success' : 'error'}">${result.success ? 'PASSOU' : 'FALHOU'}</span></div>`
+                    ).join('')}
+                </div>
+            `;
+        }
+
+        async function testAuthConfig() {
+            const button = event.target;
+            const resultDiv = document.getElementById('authConfigResult');
+            
+            button.disabled = true;
+            button.textContent = 'Testando...';
+            resultDiv.innerHTML = '<p>🔄 Executando diagnóstico...</p>';
+            
+            try {
+                const response = await fetch('/api/debug/auth');
+                const data = await response.json();
+                
+                testResults['Configuração de Auth'] = { success: response.ok };
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Diagnóstico Completo</h4>
+                            <pre>${JSON.stringify(data.data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Erro no Diagnóstico</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                testResults['Configuração de Auth'] = { success: false };
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Erro de Conexão</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Testar Configuração';
+            updateTestSummary();
+        }
+
+        async function testOriginalUnitsAPI() {
+            const button = event.target;
+            const resultDiv = document.getElementById('originalUnitsResult');
+            
+            button.disabled = true;
+            button.textContent = 'Testando...';
+            resultDiv.innerHTML = '<p>🔄 Testando API original...</p>';
+            
+            try {
+                const response = await fetch('/api/units?limit=100');
+                const data = await response.json();
+                
+                testResults['API Units Original'] = { success: response.ok };
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ API Units Funcionando</h4>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Itens:</strong> ${data.data?.items?.length || 0}</p>
+                            <pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Erro na API Units (Status: ${response.status})</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                testResults['API Units Original'] = { success: false };
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Erro de Conexão</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Testar /api/units';
+            updateTestSummary();
+        }
+
+        async function testDebugUnitsAPI() {
+            const button = event.target;
+            const resultDiv = document.getElementById('debugUnitsResult');
+            
+            button.disabled = true;
+            button.textContent = 'Testando...';
+            resultDiv.innerHTML = '<p>🔄 Testando API debug...</p>';
+            
+            try {
+                const response = await fetch('/api/units-debug?limit=100');
+                const data = await response.json();
+                
+                testResults['API Units Debug'] = { success: response.ok };
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ API Units Debug Funcionando</h4>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Auth Status:</strong> ${data.debug?.authenticationStatus || 'N/A'}</p>
+                            <p><strong>Itens:</strong> ${data.data?.items?.length || 0}</p>
+                            <pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Erro na API Units Debug (Status: ${response.status})</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                testResults['API Units Debug'] = { success: false };
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Erro de Conexão</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Testar /api/units-debug';
+            updateTestSummary();
+        }
+
+        async function testCredentialsLogin() {
+            const button = event.target;
+            const resultDiv = document.getElementById('credentialsResult');
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            button.disabled = true;
+            button.textContent = 'Testando...';
+            resultDiv.innerHTML = '<p>🔄 Testando login...</p>';
+            
+            try {
+                const response = await fetch('/api/debug/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                
+                testResults['Login com Credenciais'] = { success: response.ok };
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Login Simulado Bem-sucedido</h4>
+                            <p><strong>Usuário:</strong> ${data.user?.name}</p>
+                            <p><strong>Role:</strong> ${data.user?.role}</p>
+                            <p><strong>Permissões:</strong> ${data.user?.permissions?.length || 0}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Falha no Login (Status: ${response.status})</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                testResults['Login com Credenciais'] = { success: false };
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Erro de Conexão</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Testar Login';
+            updateTestSummary();
+        }
+
+        // Executar teste inicial ao carregar a página
+        window.addEventListener('load', () => {
+            console.log('🧪 Página de teste carregada. Execute os testes para diagnosticar a autenticação.');
+        });
+    </script>
+</body>
+</html>

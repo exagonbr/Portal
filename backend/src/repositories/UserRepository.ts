@@ -36,7 +36,7 @@ export class UserRepository extends BaseRepository<User> {
   async findUserWithoutPassword(id: string): Promise<UserWithoutPassword | null> {
     const user = await db(this.tableName)
       .where('id', id)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'cpf', 'birth_date', 'created_at', 'updated_at')
+      .select('id', 'email', 'full_name as name', 'username', 'phone', 'address', 'enabled as is_active', 'institution_id', 'date_created as created_at', 'last_updated as updated_at')
       .first();
     
     return user || null;
@@ -44,12 +44,22 @@ export class UserRepository extends BaseRepository<User> {
 
   async findUsersWithoutPassword(filters?: Partial<User>): Promise<UserWithoutPassword[]> {
     let query = db(this.tableName)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'cpf', 'birth_date', 'created_at', 'updated_at');
+      .select('id', 'email', 'full_name as name', 'username', 'phone', 'address', 'enabled as is_active', 'institution_id', 'date_created as created_at', 'last_updated as updated_at');
 
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined) {
-          query = query.where(key, value);
+          // Mapear campos do modelo para campos reais da tabela
+          const fieldMapping: { [key: string]: string } = {
+            'name': 'full_name',
+            'is_active': 'enabled',
+            'created_at': 'date_created',
+            'updated_at': 'last_updated',
+            'telefone': 'phone',
+            'endereco': 'address'
+          };
+          const realField = fieldMapping[key] || key;
+          query = query.where(realField, value);
         }
       });
     }
@@ -59,9 +69,10 @@ export class UserRepository extends BaseRepository<User> {
 
   async searchUsers(searchTerm: string, institutionId?: string): Promise<UserWithoutPassword[]> {
     let query = db(this.tableName)
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'endereco', 'telefone', 'school_id', 'is_active', 'cpf', 'birth_date', 'created_at', 'updated_at')
-      .where('name', 'ilike', `%${searchTerm}%`)
-      .orWhere('email', 'ilike', `%${searchTerm}%`);
+      .select('id', 'email', 'full_name as name', 'username', 'phone', 'address', 'enabled as is_active', 'institution_id', 'date_created as created_at', 'last_updated as updated_at')
+      .where('full_name', 'ilike', `%${searchTerm}%`)
+      .orWhere('email', 'ilike', `%${searchTerm}%`)
+      .orWhere('username', 'ilike', `%${searchTerm}%`);
 
     if (institutionId) {
       query = query.where('institution_id', institutionId);
@@ -71,29 +82,26 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async getUsersWithRoleAndInstitution(): Promise<any[]> {
+    // Simplificado para evitar JOINs com tabelas que podem não existir
     return db(this.tableName)
       .select(
         `${this.tableName}.id`,
         `${this.tableName}.email`,
-        `${this.tableName}.name`,
-        `${this.tableName}.role_id`,
+        `${this.tableName}.full_name as name`,
+        `${this.tableName}.username`,
+        `${this.tableName}.phone`,
+        `${this.tableName}.address`,
         `${this.tableName}.institution_id`,
-        `${this.tableName}.endereco`,
-        `${this.tableName}.telefone`,
-        `${this.tableName}.school_id`,
-        `${this.tableName}.is_active`,
-        `${this.tableName}.cpf`,
-        `${this.tableName}.birth_date`,
-        `${this.tableName}.created_at`,
-        `${this.tableName}.updated_at`,
-        'roles.name as role_name',
-        'institutions.name as institution_name',
-        'schools.name as school_name'
+        `${this.tableName}.enabled as is_active`,
+        `${this.tableName}.is_admin`,
+        `${this.tableName}.is_manager`,
+        `${this.tableName}.is_teacher`,
+        `${this.tableName}.is_student`,
+        `${this.tableName}.date_created as created_at`,
+        `${this.tableName}.last_updated as updated_at`
       )
-      .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
-      .leftJoin('institutions', `${this.tableName}.institution_id`, 'institutions.id')
-      .leftJoin('schools', `${this.tableName}.school_id`, 'schools.id')
-      .where(`${this.tableName}.is_active`, true);
+      .where(`${this.tableName}.enabled`, true)
+      .whereNot(`${this.tableName}.deleted`, true);
   }
 
   async getUserWithRoleAndInstitution(id: string): Promise<User | null> {
@@ -101,25 +109,21 @@ export class UserRepository extends BaseRepository<User> {
       .select(
         `${this.tableName}.id`,
         `${this.tableName}.email`,
-        `${this.tableName}.name`,
-        `${this.tableName}.role_id`,
+        `${this.tableName}.full_name as name`,
+        `${this.tableName}.username`,
+        `${this.tableName}.phone`,
+        `${this.tableName}.address`,
         `${this.tableName}.institution_id`,
-        `${this.tableName}.endereco`,
-        `${this.tableName}.telefone`,
-        `${this.tableName}.school_id`,
-        `${this.tableName}.is_active`,
-        `${this.tableName}.cpf`,
-        `${this.tableName}.birth_date`,
-        `${this.tableName}.created_at`,
-        `${this.tableName}.updated_at`,
-        'roles.name as role_name',
-        'institutions.name as institution_name',
-        'schools.name as school_name'
+        `${this.tableName}.enabled as is_active`,
+        `${this.tableName}.is_admin`,
+        `${this.tableName}.is_manager`,
+        `${this.tableName}.is_teacher`,
+        `${this.tableName}.is_student`,
+        `${this.tableName}.date_created as created_at`,
+        `${this.tableName}.last_updated as updated_at`
       )
-      .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
-      .leftJoin('institutions', `${this.tableName}.institution_id`, 'institutions.id')
-      .leftJoin('schools', `${this.tableName}.school_id`, 'schools.id')
       .where(`${this.tableName}.id`, id)
+      .whereNot(`${this.tableName}.deleted`, true)
       .first();
 
     return result || null;
@@ -161,17 +165,36 @@ export class UserRepository extends BaseRepository<User> {
 
   async getUserStatsByRole(): Promise<Record<string, number>> {
     try {
+      // Simplificado baseado nos campos booleanos da tabela
       const result = await db(this.tableName)
-        .select('roles.name as role_name')
-        .count('users.id as count')
-        .leftJoin('roles', 'users.role_id', 'roles.id')
-        .where('users.is_active', true)
-        .groupBy('roles.name');
+        .select(
+          db.raw(`
+            CASE
+              WHEN is_admin = true THEN 'ADMIN'
+              WHEN is_manager = true THEN 'MANAGER'
+              WHEN is_teacher = true THEN 'TEACHER'
+              WHEN is_student = true THEN 'STUDENT'
+              ELSE 'USER'
+            END as role_name
+          `)
+        )
+        .count('id as count')
+        .where('enabled', true)
+        .whereNot('deleted', true)
+        .groupBy(db.raw(`
+          CASE
+            WHEN is_admin = true THEN 'ADMIN'
+            WHEN is_manager = true THEN 'MANAGER'
+            WHEN is_teacher = true THEN 'TEACHER'
+            WHEN is_student = true THEN 'STUDENT'
+            ELSE 'USER'
+          END
+        `));
 
       // Converter array de resultados em objeto
       const stats: Record<string, number> = {};
       result.forEach((row: any) => {
-        const roleName = row.role_name || 'Sem Role';
+        const roleName = row.role_name || 'USER';
         stats[roleName] = parseInt(row.count, 10) || 0;
       });
 

@@ -10,6 +10,7 @@ import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRo
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
 import { EnhancedLoadingState } from '../ui/LoadingStates'
+import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading'
 
 interface NavItem {
   href: string
@@ -141,38 +142,55 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme, isSystemAdm
   onClick?: () => void,
   theme: any,
   isSystemAdmin?: boolean
-}) => (
-  <motion.div
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 0.2 }}
-    whileHover={{ x: 2 }}
-  >
-    <Link
-      href={item.href}
-      prefetch={true}
-      className={`flex items-center gap-2 px-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative
-        ${isCollapsed ? 'justify-center' : ''}
-        py-1.5 min-h-[32px]`}
-      style={{
-        backgroundColor: isActive ? theme.colors.sidebar.active : 'transparent',
-        color: isActive ? theme.colors.sidebar.textActive : theme.colors.sidebar.text
-      }}
-      onClick={onClick}
-      aria-current={isActive ? 'page' : undefined}
-      onMouseEnter={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.backgroundColor = theme.colors.sidebar.hover
-          e.currentTarget.style.color = theme.colors.sidebar.textActive
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'transparent'
-          e.currentTarget.style.color = theme.colors.sidebar.text
-        }
-      }}
+}) => {
+  const { navigateWithLoading } = useNavigationWithLoading()
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    
+    // Se já estiver na página atual, não fazer nada
+    if (isActive) return
+    
+    // Chamar onClick se fornecido (para fechar mobile sidebar)
+    onClick?.()
+    
+    // Navegar com loading
+    navigateWithLoading(item.href, {
+      message: 'Estamos preparando tudo para você',
+      delay: 600
+    })
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.2 }}
+      whileHover={{ x: 2 }}
     >
+      <button
+        onClick={handleClick}
+        className={`flex items-center gap-2 px-2 transition-all duration-200 rounded-md mx-1 text-xs font-medium group relative w-full text-left
+          ${isCollapsed ? 'justify-center' : ''}
+          py-1.5 min-h-[32px]`}
+        style={{
+          backgroundColor: isActive ? theme.colors.sidebar.active : 'transparent',
+          color: isActive ? theme.colors.sidebar.textActive : theme.colors.sidebar.text
+        }}
+        aria-current={isActive ? 'page' : undefined}
+        onMouseEnter={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.backgroundColor = theme.colors.sidebar.hover
+            e.currentTarget.style.color = theme.colors.sidebar.textActive
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = theme.colors.sidebar.text
+          }
+        }}
+      >
       <motion.span
         className={`material-symbols-outlined transition-transform duration-300 flex-shrink-0 ${
           isCollapsed ? 'text-[16px]' : 'text-[14px]'
@@ -217,9 +235,10 @@ const NavItem = memo(({ item, isActive, isCollapsed, onClick, theme, isSystemAdm
           </motion.div>
         )}
       </AnimatePresence>
-    </Link>
+    </button>
   </motion.div>
-));
+  )
+});
 NavItem.displayName = 'NavItem';
 
 const NavSection = memo(({ section, items, pathname, isCollapsed, onItemClick, userRole, theme }: {

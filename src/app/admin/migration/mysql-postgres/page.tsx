@@ -106,6 +106,12 @@ export default function MySQLPostgresMigrationPage() {
   const [isCreatingUsers, setIsCreatingUsers] = useState(false)
   const [availableRoles, setAvailableRoles] = useState<string[]>([])
   const [isLoadingRoles, setIsLoadingRoles] = useState(false)
+  
+  // Estados para merge de tabelas e seed
+  const [tableMergeConfig, setTableMergeConfig] = useState<Record<string, string[]>>({})
+  const [seedDataConfig, setSeedDataConfig] = useState<Record<string, boolean>>({})
+  const [isGeneratingSeed, setIsGeneratingSeed] = useState(false)
+  const [realTimeProgress, setRealTimeProgress] = useState<Record<string, number>>({})
 
   // Computed properties
   const selectedTables = tables.filter(t => t.selected)
@@ -288,19 +294,42 @@ export default function MySQLPostgresMigrationPage() {
 
   const normalizeTableName = (mysqlName: string): string => {
     const mapping: Record<string, string> = {
-      'usuarios': 'users',
-      'usuários': 'users',
-      'arquivos': 'files',
-      'instituicoes': 'institutions',
-      'instituições': 'institutions',
-      'escolas': 'schools',
-      'colecoes': 'collections',
-      'coleções': 'collections',
-      'permissoes': 'permissions',
-      'permissões': 'permissions'
+      // Mapeamento CRÍTICO: user → users (mais importante)
+      'user': 'users',
+      
+      // Outros mapeamentos importantes
+      'file': 'files',
+      'video': 'videos',
+      'institution': 'institutions',
+      'unit': 'schools',
+      'tv_show': 'collections',
+      
+      // Mapeamentos de roles e perfis
+      'roles': 'roles',
+      'role': 'roles',
+      'profile': 'profile',
+
+      // Mapeamentos de conteúdo
+      'livros': 'books',
+      'livro': 'books',
+      'books': 'books',
+      'book': 'books',
+      
+      // Mapeamentos de turmas e classes
+      'turmas': 'classes',
+      'turma': 'classes',
+      'classes': 'classes',
+      'class': 'classes'
     }
     
-    return mapping[mysqlName.toLowerCase()] || mysqlName.toLowerCase()
+    const normalized = mapping[mysqlName.toLowerCase()] || mysqlName.toLowerCase()
+    
+    // Log do mapeamento para debug
+    if (mapping[mysqlName.toLowerCase()]) {
+      addLog('info', `🔄 Mapeamento de tabela: ${mysqlName} → ${normalized}`)
+    }
+    
+    return normalized
   }
 
   const toggleTableSelection = (tableName: string) => {
@@ -457,6 +486,92 @@ export default function MySQLPostgresMigrationPage() {
     } catch (error: any) {
       addLog('error', `❌ Erro na detecção: ${error.message}`)
     }
+  }
+
+  // Função para configurar merge de tabelas
+  const configureMergeTable = (sourceTable: string, targetTables: string[]) => {
+    setTableMergeConfig(prev => ({
+      ...prev,
+      [sourceTable]: targetTables
+    }))
+    addLog('info', `🔗 Configurado merge: ${sourceTable} → [${targetTables.join(', ')}]`)
+  }
+
+  // Função para gerar seed de dados
+  const generateSeedData = async () => {
+    setIsGeneratingSeed(true)
+    addLog('info', '🌱 Iniciando geração de dados seed...')
+    
+    try {
+      const response = await fetch('/api/migration/generate-seed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedTables: selectedTables.map(t => t.name),
+          seedConfig: seedDataConfig
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        addLog('success', `🌱 Seed gerado com sucesso! ${result.recordsGenerated} registros criados`)
+        result.details?.forEach((detail: any) => {
+          addLog('info', `   • ${detail.table}: ${detail.records} registros`)
+        })
+      } else {
+        addLog('error', `❌ Erro ao gerar seed: ${result.error}`)
+      }
+    } catch (error: any) {
+      addLog('error', `❌ Erro de rede ao gerar seed: ${error.message}`)
+    } finally {
+      setIsGeneratingSeed(false)
+    }
+  }
+
+  // Função para auto-configurar merge user → users
+  const autoConfigureUserMerge = () => {
+    const userTable = tables.find(t => t.name.toLowerCase() === 'user')
+    const usersTable = tables.find(t => t.name.toLowerCase() === 'users')
+    
+    if (userTable && !usersTable) {
+      // Se só existe 'user', mapear para 'users'
+      configureMergeTable('user', ['users'])
+      addLog('success', '✅ Auto-configurado: tabela "user" será migrada para "users"')
+    } else if (userTable && usersTable) {
+      // Se existem ambas, mesclar 'user' em 'users'
+      configureMergeTable('user', ['users'])
+      addLog('success', '✅ Auto-configurado: dados de "user" serão mesclados em "users"')
+    }
+    
+    // Configurar outros merges comuns
+    const commonMerges = [
+      { from: 'usuario', to: ['users'] },
+      { from: 'usuarios', to: ['users'] },
+      { from: 'role', to: ['roles'] },
+      { from: 'perfil', to: ['roles'] },
+      { from: 'arquivo', to: ['files'] },
+      { from: 'livro', to: ['books'] }
+    ]
+    
+    commonMerges.forEach(merge => {
+      const sourceTable = tables.find(t => t.name.toLowerCase() === merge.from)
+      if (sourceTable) {
+        configureMergeTable(merge.from, merge.to)
+        addLog('info', `🔄 Auto-configurado merge: ${merge.from} → ${merge.to.join(', ')}`)
+      }
+    })
+  }
+
+  // Função para atualizar progresso em tempo real
+  const updateRealTimeProgress = (tableName: string, progress: number) => {
+    setRealTimeProgress(prev => ({
+      ...prev,
+      [tableName]: progress
+    }))
+    
+    // Atualizar log com progresso
+    addLog('info', `📊 ${tableName}: ${progress.toFixed(1)}% concluído`)
   }
 
   const executeMigration = async () => {
@@ -676,6 +791,116 @@ export default function MySQLPostgresMigrationPage() {
             )}
           </div>
 
+          {/* Seção de Merge de Tabelas e Seed */}
+          {connectionTested && tables.length > 0 && (
+            <div className="bg-white border rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">🔗 Configurações Avançadas</h3>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Merge de Tabelas */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-semibold text-blue-800">🔄 Merge de Tabelas</h4>
+                    <button
+                      onClick={autoConfigureUserMerge}
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                    >
+                      Auto-configurar
+                    </button>
+                  </div>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Configure quais tabelas MySQL devem ser mescladas em tabelas PostgreSQL existentes
+                  </p>
+                  
+                  {/* Mapeamento user → users destacado */}
+                  <div className="bg-green-100 border border-green-300 rounded p-3 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-green-600 font-medium">✅ Mapeamento Crítico:</span>
+                    </div>
+                    <div className="text-sm text-green-700">
+                      <strong>user → users</strong> (Tabela de usuários unificada)
+                    </div>
+                    <div className="text-xs text-green-600 mt-1">
+                      Todos os dados da tabela "user" serão migrados para "users"
+                    </div>
+                  </div>
+
+                  {/* Lista de merges configurados */}
+                  {Object.keys(tableMergeConfig).length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-blue-800">Merges Configurados:</div>
+                      {Object.entries(tableMergeConfig).map(([source, targets]) => (
+                        <div key={source} className="flex items-center justify-between bg-white p-2 rounded border">
+                          <span className="text-sm">
+                            <span className="font-medium">{source}</span> → {targets.join(', ')}
+                          </span>
+                          <button
+                            onClick={() => {
+                              const newConfig = { ...tableMergeConfig }
+                              delete newConfig[source]
+                              setTableMergeConfig(newConfig)
+                            }}
+                            className="text-red-600 hover:text-red-800 text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Geração de Seed */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-semibold text-green-800">🌱 Dados Seed</h4>
+                    <button
+                      onClick={generateSeedData}
+                      disabled={isGeneratingSeed}
+                      className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {isGeneratingSeed ? '🔄 Gerando...' : 'Gerar Seed'}
+                    </button>
+                  </div>
+                  <p className="text-sm text-green-700 mb-3">
+                    Gere dados de exemplo para testar o sistema após a migração
+                  </p>
+                  
+                  {/* Opções de seed */}
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={seedDataConfig.users || false}
+                        onChange={(e) => setSeedDataConfig(prev => ({ ...prev, users: e.target.checked }))}
+                        className="w-4 h-4 text-green-600"
+                      />
+                      <span className="text-sm text-green-700">Usuários de teste</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={seedDataConfig.institutions || false}
+                        onChange={(e) => setSeedDataConfig(prev => ({ ...prev, institutions: e.target.checked }))}
+                        className="w-4 h-4 text-green-600"
+                      />
+                      <span className="text-sm text-green-700">Instituições de exemplo</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={seedDataConfig.content || false}
+                        onChange={(e) => setSeedDataConfig(prev => ({ ...prev, content: e.target.checked }))}
+                        className="w-4 h-4 text-green-600"
+                      />
+                      <span className="text-sm text-green-700">Conteúdo de demonstração</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Navegação por Abas */}
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
@@ -742,6 +967,56 @@ export default function MySQLPostgresMigrationPage() {
               </div>
             </nav>
           </div>
+
+          {/* Barra de Progresso em Tempo Real */}
+          {isMigrating && (
+            <div className="bg-white border rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Progresso da Migração em Tempo Real</h3>
+              
+              {/* Progresso Geral */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">Progresso Geral</span>
+                  <span className="text-sm text-gray-600">{Math.round(migrationProgress)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-4">
+                  <div
+                    className="bg-blue-600 h-4 rounded-full transition-all duration-300 flex items-center justify-center"
+                    style={{ width: `${migrationProgress}%` }}
+                  >
+                    {migrationProgress > 10 && (
+                      <span className="text-white text-xs font-medium">
+                        {Math.round(migrationProgress)}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progresso por Tabela */}
+              {Object.keys(realTimeProgress).length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Progresso por Tabela:</h4>
+                  <div className="space-y-3">
+                    {Object.entries(realTimeProgress).map(([tableName, progress]) => (
+                      <div key={tableName} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">{tableName}</span>
+                          <span className="text-sm text-gray-600">{progress.toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Conteúdo das abas */}
           <div className="mt-6">

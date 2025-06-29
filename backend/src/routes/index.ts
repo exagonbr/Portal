@@ -10,6 +10,7 @@ import notificationsRoutes from './notifications';
 import institutionsPublicRouter from './institutions.public';
 import institutionsRouter from './institutions';
 import usersRouter from './users';
+import usersDebugRouter from './users-debug';
 import coursesRouter from './courses';
 import modulesRouter from './modules';
 import lessonsRouter from './lessons';
@@ -79,6 +80,7 @@ router.use('/notifications', notificationsRoutes);
 router.use('/institutions', institutionsRouter); // Rotas administrativas (com autenticação)
 router.use('/institutions-public', institutionsPublicRouter); // Rotas públicas
 router.use('/users', usersRouter);
+router.use('/users-debug', usersDebugRouter);
 router.use('/courses', coursesRouter);
 router.use('/modules', modulesRouter);
 router.use('/lessons', lessonsRouter);
