@@ -112,15 +112,16 @@ export default function TVShowsManagePage() {
         return null;
       }
 
-      console.log(`🔗 Fazendo requisição para: /api/video-file/${videoId}`)
+      const url = `/api/video-file/${videoId}`;
+      console.log(`🔗 Fazendo requisição para: ${url}`)
       
-      const response = await fetch(`/api/video-file/${videoId}`, {
+      const response = await fetchWithRetry(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-      });
+      }, 3);
 
       console.log(`📡 Resposta da API:`, {
         status: response.status,
@@ -239,6 +240,74 @@ export default function TVShowsManagePage() {
     return null;
   }
 
+  // Função para fazer fetch com timeout personalizado
+  const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs: number = 30000): Promise<Response> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timeout');
+      }
+      throw error;
+    }
+  };
+
+  // Função para fazer fetch com retry e backoff exponencial
+  const fetchWithRetry = async (url: string, options: RequestInit = {}, maxRetries: number = 3): Promise<Response> => {
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 Tentativa ${attempt}/${maxRetries} para: ${url}`);
+        
+        const response = await fetchWithTimeout(url, options, 30000);
+        
+        // Se a resposta for bem-sucedida, retornar
+        if (response.ok) {
+          console.log(`✅ Sucesso na tentativa ${attempt} para: ${url}`);
+          return response;
+        }
+        
+        // Se for erro 504, 502, 503 (erros de gateway/servidor), tentar novamente
+        if ([502, 503, 504].includes(response.status)) {
+          console.warn(`⚠️ Erro ${response.status} na tentativa ${attempt}/${maxRetries}: ${response.statusText}`);
+          
+          if (attempt < maxRetries) {
+            const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+            console.log(`⏳ Aguardando ${delay/1000}s antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+        }
+        
+        // Para outros erros HTTP, retornar a resposta (será tratada pelo código chamador)
+        return response;
+        
+      } catch (error) {
+        console.warn(`⚠️ Erro na tentativa ${attempt}/${maxRetries}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+          console.log(`⏳ Aguardando ${delay/1000}s antes da próxima tentativa...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    console.error(`❌ Todas as ${maxRetries} tentativas falharam para: ${url}`);
+    throw lastError!;
+  };
+
   const loadTvShows = async (page = 1, search = '') => {
     try {
       setIsLoading(true)
@@ -257,9 +326,10 @@ export default function TVShowsManagePage() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch(`/api/tv-shows?${params}`, {
-        headers
-      })
+      const url = `/api/tv-shows?${params}`;
+      console.log('🔗 Carregando TV Shows de:', url);
+
+      const response = await fetchWithRetry(url, { headers }, 3);
 
       if (response.ok) {
         const data = await response.json()
@@ -267,8 +337,8 @@ export default function TVShowsManagePage() {
           const tvShowsData = data.data?.tvShows || []
           
           // Log para debug
-          console.log('TV Shows carregados:', tvShowsData.length)
-          console.log('Contagem de vídeos por show:', tvShowsData.map((show: TVShowListItem) => ({
+          console.log('✅ TV Shows carregados:', tvShowsData.length)
+          console.log('📊 Contagem de vídeos por show:', tvShowsData.map((show: TVShowListItem) => ({
             name: show.name,
             video_count: show.video_count
           })))
@@ -283,11 +353,31 @@ export default function TVShowsManagePage() {
           }
         }
       } else {
-        console.error('Erro na resposta da API:', response.status, response.statusText)
+        console.error('❌ Erro na resposta da API:', response.status, response.statusText);
+        
+        // Se for erro de autenticação, tentar dados simulados
+        if (response.status === 401) {
+          console.warn('⚠️ Erro de autenticação - usando dados simulados');
+          const mockData = {
+            success: true,
+            data: {
+              tvShows: [],
+              totalPages: 1,
+              page: 1
+            }
+          };
+          
+          setTvShows(mockData.data.tvShows);
+          setTotalPages(mockData.data.totalPages);
+          setCurrentPage(mockData.data.page);
+        }
       }
     } catch (error) {
-      console.error('Erro ao carregar TV Shows:', error)
-      setTvShows([])
+      console.error('❌ Erro ao carregar TV Shows:', error);
+      
+      // Em caso de erro, usar dados simulados
+      console.warn('⚠️ Usando dados simulados devido ao erro');
+      setTvShows([]);
     } finally {
       setIsLoading(false)
     }
@@ -304,8 +394,11 @@ export default function TVShowsManagePage() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
+      const url = '/api/tv-shows?page=1&limit=10000';
+      console.log('📊 Calculando estatísticas de:', url);
+
       // Buscar TODAS as coleções para calcular estatísticas corretas
-      const response = await fetch('/api/tv-shows?page=1&limit=10000', { headers })
+      const response = await fetchWithRetry(url, { headers }, 3);
       
       if (response.ok) {
         const data = await response.json()
@@ -378,11 +471,11 @@ export default function TVShowsManagePage() {
           const avgRating = ratingsCount > 0 ? Math.round((ratingsSum / ratingsCount) * 10) / 10 : 0
           
           console.log('=== RESULTADO FINAL ===')
-          console.log('Total de coleções:', totalCollections)
-          console.log('Coleções com vídeos:', collectionsWithVideos)
-          console.log('TOTAL DE VÍDEOS:', totalVideos)
-          console.log('Duração total:', totalDuration)
-          console.log('Avaliação média:', avgRating)
+          console.log('✅ Total de coleções:', totalCollections)
+          console.log('✅ Coleções com vídeos:', collectionsWithVideos)
+          console.log('✅ TOTAL DE VÍDEOS:', totalVideos)
+          console.log('✅ Duração total:', totalDuration)
+          console.log('✅ Avaliação média:', avgRating)
           console.log('========================')
           
           setStats({
@@ -392,9 +485,12 @@ export default function TVShowsManagePage() {
             avgRating
           })
         }
+      } else {
+        console.error('❌ Erro na resposta da API de estatísticas:', response.status, response.statusText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Erro ao calcular estatísticas:', error)
+      console.error('❌ Erro ao calcular estatísticas:', error)
       
       // Em caso de erro, calcular com base nos dados já carregados
       const fallbackTotalVideos = tvShows.reduce((sum, show) => {
@@ -402,7 +498,7 @@ export default function TVShowsManagePage() {
         return sum + videoCount
       }, 0)
       
-      console.log('Fallback - Total de vídeos calculado:', fallbackTotalVideos)
+      console.log('⚠️ Fallback - Total de vídeos calculado:', fallbackTotalVideos)
       
       setStats({
         totalCollections: tvShows.length,
@@ -429,20 +525,29 @@ export default function TVShowsManagePage() {
         headers['Authorization'] = `Bearer ${token}`
       }
 
-      const response = await fetch(`/api/tv-shows/${id}`, { headers })
+      const url = `/api/tv-shows/${id}`;
+      console.log('🔍 Carregando detalhes da coleção:', url);
+
+      const response = await fetchWithRetry(url, { headers }, 3);
+      
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
           const tvShowData = data.data
+          console.log('✅ Detalhes da coleção carregados:', tvShowData.name);
           setSelectedTvShow(tvShowData)
           // Os módulos já vêm incluídos na resposta
           if (tvShowData.modules) {
             setModules(tvShowData.modules)
+            console.log('📁 Módulos carregados:', Object.keys(tvShowData.modules).length);
           }
         }
+      } else {
+        console.error('❌ Erro na resposta da API de detalhes:', response.status, response.statusText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Erro ao carregar detalhes do TV Show:', error)
+      console.error('❌ Erro ao carregar detalhes do TV Show:', error)
       setSelectedTvShow(null)
       setModules({})
     } finally {

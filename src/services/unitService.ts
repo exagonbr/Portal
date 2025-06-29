@@ -66,21 +66,30 @@ class UnitService {
 
       console.log('📡 UnitService.list - Fazendo requisição para API', { url: this.baseUrl, params });
 
-      const response = await apiClient.get<{
-        success: boolean;
-        data: PaginatedUnitResponse;
-      }>(
+      const response = await apiClient.get<PaginatedUnitResponse>(
         this.baseUrl,
         Object.keys(params).length > 0 ? params : undefined
       );
       
       console.log('✅ UnitService.list - Resposta recebida', response);
+      console.log('🔍 UnitService.list - Estrutura da resposta:', {
+        hasData: !!response.data,
+        dataKeys: response.data ? Object.keys(response.data) : [],
+        dataType: typeof response.data,
+        success: response.success,
+        fullResponse: JSON.stringify(response, null, 2)
+      });
       
-      if (!response.data || !response.data.success) {
+      if (!response.success || !response.data) {
+        console.error('❌ UnitService.list - Formato de resposta inválido:', {
+          responseData: response.data,
+          success: response.success,
+          responseType: typeof response.data
+        });
         throw new Error('Invalid response format from API');
       }
       
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('❌ UnitService.list - Erro:', error);
       throw handleApiError(error as ApiClientError);
@@ -91,18 +100,15 @@ class UnitService {
     try {
       console.log('🔄 UnitService.getById - Buscando unidade', id);
       
-      const response = await apiClient.get<{
-        success: boolean;
-        data: Unit;
-      }>(`${this.baseUrl}/${id}`);
+      const response = await apiClient.get<Unit>(`${this.baseUrl}/${id}`);
       
       console.log('✅ UnitService.getById - Resposta recebida', response);
       
-      if (!response.data || !response.data.success) {
+      if (!response.success || !response.data) {
         throw new Error('Invalid response format from API');
       }
       
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('❌ UnitService.getById - Erro:', error);
       throw handleApiError(error as ApiClientError);
@@ -113,19 +119,15 @@ class UnitService {
     try {
       console.log('🔄 UnitService.create - Criando unidade', data);
       
-      const response = await apiClient.post<{
-        success: boolean;
-        data: Unit;
-        message?: string;
-      }>(this.baseUrl, data);
+      const response = await apiClient.post<Unit>(this.baseUrl, data);
       
       console.log('✅ UnitService.create - Resposta recebida', response);
       
-      if (!response.data || !response.data.success) {
+      if (!response.success || !response.data) {
         throw new Error('Invalid response format from API');
       }
       
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('❌ UnitService.create - Erro:', error);
       throw handleApiError(error as ApiClientError);
@@ -136,19 +138,15 @@ class UnitService {
     try {
       console.log('🔄 UnitService.update - Atualizando unidade', id, data);
       
-      const response = await apiClient.put<{
-        success: boolean;
-        data: Unit;
-        message?: string;
-      }>(`${this.baseUrl}/${id}`, data);
+      const response = await apiClient.put<Unit>(`${this.baseUrl}/${id}`, data);
       
       console.log('✅ UnitService.update - Resposta recebida', response);
       
-      if (!response.data || !response.data.success) {
+      if (!response.success || !response.data) {
         throw new Error('Invalid response format from API');
       }
       
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('❌ UnitService.update - Erro:', error);
       throw handleApiError(error as ApiClientError);
@@ -159,14 +157,11 @@ class UnitService {
     try {
       console.log('🔄 UnitService.delete - Excluindo unidade', id);
       
-      const response = await apiClient.delete<{
-        success: boolean;
-        message?: string;
-      }>(`${this.baseUrl}/${id}`);
+      const response = await apiClient.delete<void>(`${this.baseUrl}/${id}`);
       
       console.log('✅ UnitService.delete - Resposta recebida', response);
       
-      if (!response.data || !response.data.success) {
+      if (!response.success) {
         throw new Error('Invalid response format from API');
       }
     } catch (error) {
@@ -188,18 +183,15 @@ class UnitService {
         });
       }
 
-      const response = await apiClient.get<{
-        success: boolean;
-        data: Unit[];
-      }>(`${this.baseUrl}/search`, params);
+      const response = await apiClient.get<Unit[]>(`${this.baseUrl}/search`, params);
       
       console.log('✅ UnitService.search - Resposta recebida', response);
       
-      if (!response.data || !response.data.success) {
+      if (!response.success || !response.data) {
         throw new Error('Invalid response format from API');
       }
       
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('❌ UnitService.search - Erro:', error);
       throw handleApiError(error as ApiClientError);

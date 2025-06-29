@@ -171,6 +171,117 @@ export interface AnalyticsData {
 class SystemAdminService {
   private baseUrl = '';
 
+  // Função para fazer fetch com timeout personalizado
+  private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 30000): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error: unknown) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timeout');
+      }
+      throw error;
+    }
+  }
+
+  // Função para fazer fetch com retry e backoff exponencial
+  private async fetchWithRetry(url: string, options: RequestInit = {}, maxRetries: number = 3): Promise<Response> {
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 [SYSTEM-ADMIN] Tentativa ${attempt}/${maxRetries} para: ${url}`);
+        
+        const response = await this.fetchWithTimeout(url, options, 30000);
+        
+        // Se a resposta for bem-sucedida, retornar
+        if (response.ok) {
+          console.log(`✅ [SYSTEM-ADMIN] Sucesso na tentativa ${attempt} para: ${url}`);
+          return response;
+        }
+        
+        // Se for erro 504, 502, 503 (erros de gateway/servidor), tentar novamente
+        if ([502, 503, 504].includes(response.status)) {
+          console.warn(`⚠️ [SYSTEM-ADMIN] Erro ${response.status} na tentativa ${attempt}/${maxRetries}: ${response.statusText}`);
+          
+          if (attempt < maxRetries) {
+            const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+            console.log(`⏳ [SYSTEM-ADMIN] Aguardando ${delay/1000}s antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+        }
+        
+        // Para outros erros HTTP, retornar a resposta (será tratada pelo código chamador)
+        return response;
+        
+      } catch (error) {
+        console.warn(`⚠️ [SYSTEM-ADMIN] Erro na tentativa ${attempt}/${maxRetries}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+          console.log(`⏳ [SYSTEM-ADMIN] Aguardando ${delay/1000}s antes da próxima tentativa...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    console.error(`❌ [SYSTEM-ADMIN] Todas as ${maxRetries} tentativas falharam para: ${url}`);
+    throw lastError!;
+  }
+
+  // Função para retry de chamadas da API com backoff exponencial
+  private async retryApiCall<T>(apiCall: () => Promise<T>, maxRetries: number = 3): Promise<T> {
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 [SYSTEM-ADMIN] Tentativa ${attempt}/${maxRetries} da chamada API...`);
+        
+        const result = await apiCall();
+        console.log(`✅ [SYSTEM-ADMIN] Sucesso na tentativa ${attempt}`);
+        return result;
+        
+      } catch (error: unknown) {
+        console.warn(`⚠️ [SYSTEM-ADMIN] Erro na tentativa ${attempt}/${maxRetries}:`, error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        // Se for erro 504, 502, 503 (erros de gateway/servidor), tentar novamente
+        const isRetryableError = error && typeof error === 'object' && (
+          ('status' in error && [502, 503, 504].includes((error as any).status)) ||
+          ('message' in error && typeof (error as any).message === 'string' &&
+           ((error as any).message.includes('504') ||
+            (error as any).message.includes('Gateway Time-out') ||
+            (error as any).message.includes('timeout')))
+        );
+        
+        if (isRetryableError && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+          console.log(`⏳ [SYSTEM-ADMIN] Aguardando ${delay/1000}s antes da próxima tentativa...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        // Para outros erros ou se esgotaram as tentativas, parar
+        if (attempt >= maxRetries) {
+          break;
+        }
+      }
+    }
+    
+    console.error(`❌ [SYSTEM-ADMIN] Todas as ${maxRetries} tentativas falharam`);
+    throw lastError!;
+  }
+
   /**
    * Verifica o status da autenticação usando o novo validador
    */
@@ -190,7 +301,7 @@ class SystemAdminService {
         needsRefresh: authStatus.needsRefresh,
         error: authStatus.error
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         hasToken: false,
         tokenValid: false,
@@ -246,21 +357,22 @@ class SystemAdminService {
         error = response.message || 'Token inválido';
         console.log('❌ [SYSTEM-ADMIN] API funcionando mas token inválido:', error);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ [SYSTEM-ADMIN] Erro na requisição de teste:', err);
       
       // Analisar o tipo de erro mais detalhadamente
-      if (err.name === 'AuthError' || err.status === 401) {
+      const errorObj = err as any;
+      if (errorObj?.name === 'AuthError' || errorObj?.status === 401) {
         apiWorking = true;
         tokenValid = false;
-        error = err.message || 'Token de autenticação inválido';
+        error = errorObj?.message || 'Token de autenticação inválido';
         console.log('🔍 [SYSTEM-ADMIN] Erro de autenticação detectado:', error);
-      } else if (err.name === 'NetworkError' || err.status === 0) {
+      } else if (errorObj?.name === 'NetworkError' || errorObj?.status === 0) {
         apiWorking = false;
         tokenValid = false;
         error = 'Erro de conectividade com a API';
         console.log('🔍 [SYSTEM-ADMIN] Erro de rede detectado:', error);
-      } else if (err.name === 'TimeoutError' || err.status === 408) {
+      } else if (errorObj?.name === 'TimeoutError' || errorObj?.status === 408) {
         apiWorking = false;
         tokenValid = false;
         error = 'Timeout na requisição para a API';
@@ -269,7 +381,7 @@ class SystemAdminService {
         // Para outros erros, assumir que a API pode estar funcionando
         apiWorking = true;
         tokenValid = false;
-        error = err.message || 'Erro desconhecido na requisição';
+        error = errorObj?.message || 'Erro desconhecido na requisição';
         console.log('🔍 [SYSTEM-ADMIN] Erro genérico:', error);
       }
     }
@@ -335,7 +447,7 @@ class SystemAdminService {
       const errorMessage = response.message || 'Falha ao carregar dados de usuários';
       console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro na resposta:', errorMessage);
       throw new Error(errorMessage);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro ao carregar usuários por função:', error);
       
       // Executar diagnóstico detalhado em caso de erro
@@ -366,7 +478,7 @@ class SystemAdminService {
               return usersData;
             }
           }
-        } catch (refreshError) {
+        } catch (refreshError: unknown) {
           console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro no auto-refresh:', refreshError);
         }
         
@@ -403,27 +515,25 @@ class SystemAdminService {
       throughput: number;
     };
   }> {
-    return withAutoRefresh(async () => {
-      try {
-        const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/analytics`);
-        
-        // Add debug logging
-        console.log('Analytics response:', response);
-        
-        if (response.success && response.data?.data) {
-          // If success is true, return the data directly
-          return response.data.data;
-        }
-        
-        // If success is false, throw error with message
-        throw new Error(response.message || 'Falha ao carregar analytics');
-      } catch (error) {
-        console.error('Erro ao carregar analytics do sistema:', error);
-        
-        // Fallback with simulated data
-        return this.getFallbackAnalytics();
+    try {
+      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/analytics`);
+      
+      // Add debug logging
+      console.log('Analytics response:', response);
+      
+      if (response.success && response.data) {
+        // If success is true, return the data directly
+        return response.data.data || response.data;
       }
-    });
+      
+      // If success is false, throw error with message
+      throw new Error(response.message || 'Falha ao carregar analytics');
+    } catch (error: unknown) {
+      console.error('Erro ao carregar analytics do sistema:', error);
+      
+      // Fallback with simulated data
+      return this.getFallbackAnalytics();
+    }
   }
 
   /**
@@ -445,14 +555,14 @@ class SystemAdminService {
         // Add debug logging
         console.log('Engagement metrics response:', response);
         
-        if (response.success && response.data?.data) {
+        if (response.success && response.data) {
           // If success is true, return the data directly
-          return response.data.data;
+          return response.data.data || response.data;
         }
         
         // If success is false, throw error with message
         throw new Error(response.message || 'Falha ao carregar métricas de engajamento');
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao carregar métricas de engajamento:', error);
         
         // Fallback with simulated data
@@ -487,18 +597,60 @@ class SystemAdminService {
       const errorMessage = response.message || 'Falha ao carregar dashboard do sistema';
       console.warn('⚠️ [SYSTEM-ADMIN] Resposta sem dados válidos:', errorMessage);
       
+      // Verificar se é erro 504 Gateway Timeout ou similar
+      if (errorMessage.includes('504') || errorMessage.includes('Gateway Time-out') || errorMessage.includes('timeout')) {
+        console.log('🔄 [SYSTEM-ADMIN] Erro de timeout detectado, tentando novamente...');
+        
+        // Tentar novamente com retry
+        try {
+          const retryResponse = await this.retryApiCall(() =>
+            apiClient.get<{ data: SystemDashboardData }>(`/dashboard/system`)
+          );
+          
+          if (retryResponse.data) {
+            console.log('✅ [SYSTEM-ADMIN] Dashboard carregado com sucesso após retry');
+            return retryResponse.data.data || retryResponse.data;
+          }
+        } catch (retryError) {
+          console.warn('⚠️ [SYSTEM-ADMIN] Retry falhou, usando fallback:', retryError);
+        }
+      }
+      
       // Não lançar erro imediatamente, tentar fallback
       console.log('🔄 [SYSTEM-ADMIN] Usando dados de fallback...');
       return this.getFallbackDashboardData();
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ [SYSTEM-ADMIN] Erro ao carregar dashboard do sistema:', error);
       
+      const errorObj = error as any;
+      // Verificar se é erro de timeout (504 Gateway Timeout)
+      if (errorObj?.status === 504 ||
+          errorObj?.message?.includes('504') ||
+          errorObj?.message?.includes('Gateway Time-out') ||
+          errorObj?.message?.includes('timeout')) {
+        
+        console.log('🔄 [SYSTEM-ADMIN] Erro 504 detectado, tentando retry...');
+        
+        try {
+          const retryResponse = await this.retryApiCall(() =>
+            apiClient.get<{ data: SystemDashboardData }>(`/dashboard/system`)
+          );
+          
+          if (retryResponse.data) {
+            console.log('✅ [SYSTEM-ADMIN] Dashboard carregado com sucesso após retry');
+            return retryResponse.data.data || retryResponse.data;
+          }
+        } catch (retryError: unknown) {
+          console.warn('⚠️ [SYSTEM-ADMIN] Retry falhou, usando fallback:', retryError);
+        }
+      }
+      
       // Verificar se é erro de autenticação
-      if (error?.status === 401 || 
-          error?.message?.includes('Token') || 
-          error?.message?.includes('autenticação') || 
-          error?.message?.includes('autorização')) {
+      if (errorObj?.status === 401 ||
+          errorObj?.message?.includes('Token') ||
+          errorObj?.message?.includes('autenticação') ||
+          errorObj?.message?.includes('autorização')) {
         
         console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
         throw new Error('Token de autenticação inválido. Faça login novamente.');
@@ -548,6 +700,24 @@ class SystemAdminService {
       
       // Se chegou aqui, a resposta não foi bem-sucedida
       const errorMessage = response.message || 'Falha ao carregar métricas em tempo real';
+      
+      // Verificar se é erro de timeout (504 Gateway Timeout)
+      if (errorMessage.includes('504') || errorMessage.includes('Gateway Time-out') || errorMessage.includes('timeout')) {
+        console.log('🔄 [SYSTEM-ADMIN] Erro de timeout detectado, tentando retry...');
+        
+        try {
+          const retryResponse = await this.retryApiCall(() =>
+            apiClient.get<{ data: RealTimeMetrics }>(`/dashboard/metrics/realtime`)
+          );
+          
+          if (retryResponse.success && retryResponse.data) {
+            console.log('✅ [SYSTEM-ADMIN] Métricas carregadas com sucesso após retry');
+            return retryResponse.data.data || retryResponse.data;
+          }
+        } catch (retryError) {
+          console.warn('⚠️ [SYSTEM-ADMIN] Retry falhou para métricas:', retryError);
+        }
+      }
       
       // Verificar se é erro de autenticação
       if (errorMessage.includes('Token') || errorMessage.includes('autenticação') || errorMessage.includes('autorização')) {
@@ -662,6 +832,24 @@ class SystemAdminService {
       const errorMessage = response.message || 'Falha ao carregar status de saúde';
       console.warn('⚠️ [SYSTEM-ADMIN] Resposta sem dados válidos:', errorMessage);
       
+      // Verificar se é erro de timeout (504 Gateway Timeout)
+      if (errorMessage.includes('504') || errorMessage.includes('Gateway Time-out') || errorMessage.includes('timeout')) {
+        console.log('🔄 [SYSTEM-ADMIN] Erro de timeout detectado, tentando retry...');
+        
+        try {
+          const retryResponse = await this.retryApiCall(() =>
+            apiClient.get<{ data: SystemHealth }>(`/dashboard/health`)
+          );
+          
+          if (retryResponse.data) {
+            console.log('✅ [SYSTEM-ADMIN] Status de saúde carregado com sucesso após retry');
+            return retryResponse.data.data || retryResponse.data;
+          }
+        } catch (retryError) {
+          console.warn('⚠️ [SYSTEM-ADMIN] Retry falhou para status de saúde:', retryError);
+        }
+      }
+      
       // Não lançar erro imediatamente, usar fallback
       console.log('🔄 [SYSTEM-ADMIN] Usando dados de fallback para saúde...');
       return {
@@ -693,10 +881,32 @@ class SystemAdminService {
     } catch (error: any) {
       console.error('❌ [SYSTEM-ADMIN] Erro ao carregar status de saúde:', error);
       
+      // Verificar se é erro de timeout (504 Gateway Timeout)
+      if (error?.status === 504 ||
+          error?.message?.includes('504') ||
+          error?.message?.includes('Gateway Time-out') ||
+          error?.message?.includes('timeout')) {
+        
+        console.log('🔄 [SYSTEM-ADMIN] Erro 504 detectado, tentando retry...');
+        
+        try {
+          const retryResponse = await this.retryApiCall(() =>
+            apiClient.get<{ data: SystemHealth }>(`/dashboard/health`)
+          );
+          
+          if (retryResponse.data) {
+            console.log('✅ [SYSTEM-ADMIN] Status de saúde carregado com sucesso após retry');
+            return retryResponse.data.data || retryResponse.data;
+          }
+        } catch (retryError) {
+          console.warn('⚠️ [SYSTEM-ADMIN] Retry falhou para status de saúde:', retryError);
+        }
+      }
+      
       // Verificar se é erro de autenticação
-      if (error?.status === 401 || 
-          error?.message?.includes('Token') || 
-          error?.message?.includes('autenticação') || 
+      if (error?.status === 401 ||
+          error?.message?.includes('Token') ||
+          error?.message?.includes('autenticação') ||
           error?.message?.includes('autorização')) {
         
         console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
@@ -744,9 +954,9 @@ class SystemAdminService {
         // Add debug logging
         console.log('Analytics data response:', response);
         
-        if (response.success && response.data?.data) {
+        if (response.success && response.data) {
           // If success is true, return the data directly
-          return response.data.data;
+          return response.data.data || response.data;
         }
         
         // If success is false, throw error with message
@@ -769,7 +979,7 @@ class SystemAdminService {
         const response = await apiClient.get<{ data: any }>(`/dashboard/summary`);
         
         if (response.success && response.data) {
-          return response.data.data;
+          return response.data;
         }
         
         throw new Error(response.message || 'Falha ao carregar resumo do dashboard');
@@ -1081,7 +1291,7 @@ class SystemAdminService {
       try {
         const response = await apiClient.get<any>(`/roles/stats`);
         if (response.success && response.data) {
-          return response.data.data || response.data;
+          return response.data;
         }
         throw new Error(response.message || 'Falha ao carregar estatísticas de roles');
       } catch (error) {
@@ -1096,7 +1306,7 @@ class SystemAdminService {
       try {
         const response = await apiClient.get<any>(`/aws/connection-logs/stats`);
         if (response.success && response.data) {
-          return response.data.data || response.data;
+          return response.data;
         }
         throw new Error(response.message || 'Falha ao carregar estatísticas da AWS');
       } catch (error) {
@@ -1111,7 +1321,7 @@ class SystemAdminService {
       try {
         const response = await apiClient.get<any>(`/users/stats`);
         if (response.success && response.data) {
-          return response.data.data || response.data;
+          return response.data;
         }
         throw new Error(response.message || 'Falha ao carregar estatísticas de usuários');
       } catch (error) {

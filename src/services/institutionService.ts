@@ -27,6 +27,63 @@ import {
 
 const API_BASE = `/api/institutions`;
 
+// Configuração de timeout para requisições
+const REQUEST_TIMEOUT = 30000; // 30 segundos
+const MAX_RETRIES = 3;
+
+// Função para criar fetch com timeout
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout: number = REQUEST_TIMEOUT): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Timeout: A requisição demorou mais de ${timeout/1000} segundos para responder`);
+    }
+    throw error;
+  }
+};
+
+// Função para retry com backoff exponencial
+const fetchWithRetry = async (url: string, options: RequestInit = {}, maxRetries: number = MAX_RETRIES): Promise<Response> => {
+  let lastError: Error;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 Tentativa ${attempt}/${maxRetries} para: ${url}`);
+      const response = await fetchWithTimeout(url, options);
+      
+      // Se a resposta for 504 (Gateway Timeout), tentar novamente
+      if (response.status === 504 && attempt < maxRetries) {
+        console.warn(`⚠️ Gateway Timeout (504) na tentativa ${attempt}, tentando novamente...`);
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000)); // Backoff exponencial
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.warn(`⚠️ Erro na tentativa ${attempt}/${maxRetries}:`, lastError.message);
+      
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // Backoff exponencial: 2s, 4s, 8s
+        console.log(`⏳ Aguardando ${delay/1000}s antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError!;
+};
+
 // Função para obter token de autenticação de múltiplas fontes
 const getAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
@@ -146,7 +203,8 @@ export class InstitutionService {
       const headers = createAuthHeaders();
       console.log('📋 Request headers:', headers);
       
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
+        method: 'GET',
         headers,
       });
       
@@ -159,6 +217,24 @@ export class InstitutionService {
         // Se for erro de autenticação (401), retornar dados simulados
         if (response.status === 401) {
           console.warn('⚠️ Erro de autenticação, retornando dados simulados');
+          return this.getFallbackInstitutions(options);
+        }
+        
+        // Se for erro 504 (Gateway Timeout), retornar dados simulados
+        if (response.status === 504) {
+          console.warn('⚠️ Gateway Timeout (504), retornando dados simulados');
+          return this.getFallbackInstitutions(options);
+        }
+        
+        // Se for erro 502 (Bad Gateway), retornar dados simulados
+        if (response.status === 502) {
+          console.warn('⚠️ Bad Gateway (502), retornando dados simulados');
+          return this.getFallbackInstitutions(options);
+        }
+        
+        // Se for erro 503 (Service Unavailable), retornar dados simulados
+        if (response.status === 503) {
+          console.warn('⚠️ Service Unavailable (503), retornando dados simulados');
           return this.getFallbackInstitutions(options);
         }
         
@@ -210,7 +286,16 @@ export class InstitutionService {
       return migratedData;
     } catch (error) {
       console.error('❌ Erro ao buscar instituições:', error);
-      console.warn('⚠️ Retornando dados simulados devido ao erro');
+      
+      // Verificar se é erro de timeout
+      if (error instanceof Error && error.message.includes('Timeout')) {
+        console.warn('⚠️ Timeout na requisição, retornando dados simulados');
+      } else if (error instanceof Error && error.message.includes('fetch')) {
+        console.warn('⚠️ Erro de rede na requisição, retornando dados simulados');
+      } else {
+        console.warn('⚠️ Erro desconhecido, retornando dados simulados');
+      }
+      
       return this.getFallbackInstitutions(options);
     }
   }
@@ -320,7 +405,8 @@ export class InstitutionService {
   // Obter instituição por ID
   static async getInstitutionById(id: string): Promise<InstitutionDto> {
     try {
-      const response = await fetch(`${API_BASE}/${id}`, {
+      const response = await fetchWithRetry(`${API_BASE}/${id}`, {
+        method: 'GET',
         headers: createAuthHeaders(),
       });
       
@@ -364,7 +450,7 @@ export class InstitutionService {
         processedData.phone = formatPhone(processedData.phone);
       }
 
-      const response = await fetch(API_BASE, {
+      const response = await fetchWithRetry(API_BASE, {
         method: 'POST',
         headers: createAuthHeaders(),
         body: JSON.stringify(processedData),
@@ -407,7 +493,7 @@ export class InstitutionService {
         processedData.phone = formatPhone(processedData.phone);
       }
 
-      const response = await fetch(`${API_BASE}/${id}`, {
+      const response = await fetchWithRetry(`${API_BASE}/${id}`, {
         method: 'PUT',
         headers: createAuthHeaders(),
         body: JSON.stringify(processedData),
@@ -451,7 +537,7 @@ export class InstitutionService {
   // Excluir instituição
   static async deleteInstitution(id: string): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE}/${id}`, {
+      const response = await fetchWithRetry(`${API_BASE}/${id}`, {
         method: 'DELETE',
         headers: createAuthHeaders(),
       });
@@ -471,7 +557,8 @@ export class InstitutionService {
     try {
       // Implementar lógica para verificar dependências
       // Por exemplo, verificar se há usuários, escolas ou cursos vinculados
-      const response = await fetch(`${API_BASE}/${id}/stats`, {
+      const response = await fetchWithRetry(`${API_BASE}/${id}/stats`, {
+        method: 'GET',
         headers: createAuthHeaders(),
       });
 
@@ -544,7 +631,8 @@ export class InstitutionService {
   // Exportar instituições
   static async exportInstitutions(format: 'csv' | 'xlsx' = 'csv'): Promise<Blob> {
     try {
-      const response = await fetch(`${API_BASE}/export?format=${format}`, {
+      const response = await fetchWithRetry(`${API_BASE}/export?format=${format}`, {
+        method: 'GET',
         headers: createAuthHeaders(),
       });
 
@@ -568,7 +656,7 @@ export class InstitutionService {
       const headers = createAuthHeaders();
       delete headers['Content-Type']; // Deixar o browser definir o Content-Type para FormData
 
-      const response = await fetch(`${API_BASE}/import`, {
+      const response = await fetchWithRetry(`${API_BASE}/import`, {
         method: 'POST',
         headers,
         body: formData,
