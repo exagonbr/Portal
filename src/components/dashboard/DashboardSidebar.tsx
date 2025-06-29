@@ -374,7 +374,7 @@ const RoleSelector = memo(({ userRole, selectedRole, onRoleChange, theme, isSyst
     },
     {
       label: "Acadêmico",
-      roles: [UserRole.ACADEMIC_COORDINATOR, UserRole.TEACHER]
+      roles: [UserRole.COORDINATOR, UserRole.TEACHER]
     },
     {
       label: "Usuários",
@@ -439,7 +439,7 @@ function DashboardSidebarComponent() {
   }
 
   // Get user role with fallback to STUDENT
-  const userRole: UserRole = (user?.role || 'STUDENT') as UserRole;
+  const userRole: UserRole = (user?.role || UserRole.STUDENT) as UserRole;
   const [selectedRole, setSelectedRole] = useState<UserRole>(userRole)
 
 
@@ -470,7 +470,7 @@ function DashboardSidebarComponent() {
         const dashboardMap = {
           [UserRole.SYSTEM_ADMIN]: '/dashboard/system-admin',
           [UserRole.INSTITUTION_MANAGER]: '/dashboard/institution-manager',
-          [UserRole.ACADEMIC_COORDINATOR]: '/dashboard/coordinator',
+          [UserRole.COORDINATOR]: '/dashboard/coordinator',
           [UserRole.TEACHER]: '/dashboard/teacher',
           [UserRole.STUDENT]: '/dashboard/student',
           [UserRole.GUARDIAN]: '/dashboard/guardian'
@@ -543,7 +543,7 @@ function DashboardSidebarComponent() {
       const dashboardMap = {
         [UserRole.SYSTEM_ADMIN]: '/dashboard/system-admin',
         [UserRole.INSTITUTION_MANAGER]: '/dashboard/institution-manager',
-        [UserRole.ACADEMIC_COORDINATOR]: '/dashboard/coordinator',
+        [UserRole.COORDINATOR]: '/dashboard/coordinator',
         [UserRole.TEACHER]: '/dashboard/teacher',
         [UserRole.STUDENT]: '/dashboard/student',
         [UserRole.GUARDIAN]: '/dashboard/guardian'
@@ -695,7 +695,7 @@ function DashboardSidebarComponent() {
         ];
         break;
 
-      case UserRole.ACADEMIC_COORDINATOR:
+      case UserRole.COORDINATOR:
         roleSpecificItems = [
           {
             section: 'Coordenação Acadêmica',

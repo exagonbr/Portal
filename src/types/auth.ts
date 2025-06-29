@@ -1,15 +1,9 @@
 /**
  * Define os possíveis papéis de usuário no sistema
+ * Importando do arquivo centralizado de roles
  */
-export type UserRole =
-  | 'admin'                // Administrador geral
-  | 'system_admin'         // Administrador de sistema
-  | 'institution_manager'  // Gestor de instituição
-  | 'academic_coordinator' // Coordenador acadêmico
-  | 'manager'              // Gestor
-  | 'teacher'              // Professor
-  | 'student'              // Estudante
-  | 'guardian';            // Responsável/Guardião
+import { UserRole } from './roles';
+export { UserRole };
 
 /**
  * Define as permissões possíveis no sistema

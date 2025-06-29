@@ -52,7 +52,7 @@ export default function UserForm({ user, mode, onSubmit, onCancel }: UserFormPro
   const roleOptions = [
     { value: UserRole.SYSTEM_ADMIN, label: 'Administrador do Sistema' },
     { value: UserRole.INSTITUTION_MANAGER, label: 'Gestor de Instituição' },
-    { value: UserRole.ACADEMIC_COORDINATOR, label: 'Coordenador Acadêmico' },
+    { value: UserRole.COORDINATOR, label: 'Coordenador Acadêmico' },
     { value: UserRole.TEACHER, label: 'Professor' },
     { value: UserRole.STUDENT, label: 'Aluno' },
     { value: UserRole.GUARDIAN, label: 'Responsável' }

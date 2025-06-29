@@ -69,7 +69,7 @@ export const ENV_CONFIG = {
   // Configurações de CORS
   CORS_ORIGINS: isProduction 
     ? ['https://portal.sabercon.com.br', 'https://www.portal.sabercon.com.br']
-    : ['http://localhost:3000', 'http://localhost:3001'],
+    : ['https://portal.sabercon.com.br/api'],
     
   // Configurações de segurança
   SECURE_COOKIES: isProduction,

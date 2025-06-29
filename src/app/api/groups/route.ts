@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api';
+const BACKEND_URL = 'https://portal.sabercon.com.br';
 
 export async function GET(request: NextRequest) {
   try {

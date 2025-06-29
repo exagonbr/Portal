@@ -1,7 +1,7 @@
 export enum UserRole {
   SYSTEM_ADMIN = 'SYSTEM_ADMIN',
   INSTITUTION_MANAGER = 'INSTITUTION_MANAGER', 
-  ACADEMIC_COORDINATOR = 'ACADEMIC_COORDINATOR',
+  COORDINATOR = 'COORDINATOR',
   TEACHER = 'TEACHER',
   STUDENT = 'STUDENT',
   GUARDIAN = 'GUARDIAN'
@@ -158,7 +158,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canViewBoletos: false,
     canViewFinancialHistory: false
   },
-  [UserRole.ACADEMIC_COORDINATOR]: {
+  [UserRole.COORDINATOR]: {
     canManageSystem: false,
     canManageInstitutions: false,
     canManageGlobalUsers: false,
@@ -327,7 +327,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
 export const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.SYSTEM_ADMIN]: 'Administrador do Sistema',
   [UserRole.INSTITUTION_MANAGER]: 'Gestor de Instituição',
-  [UserRole.ACADEMIC_COORDINATOR]: 'Coordenador Acadêmico',
+  [UserRole.COORDINATOR]: 'Coordenador Acadêmico',
   [UserRole.TEACHER]: 'Professor',
   [UserRole.STUDENT]: 'Estudante',
   [UserRole.GUARDIAN]: 'Responsável'
@@ -336,7 +336,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   [UserRole.SYSTEM_ADMIN]: 'Supervisiona toda a infraestrutura da plataforma. Responsável por configurações do sistema, gerenciamento de permissões, integração de instituições, políticas de segurança e garantia da integridade e disponibilidade da plataforma.',
   [UserRole.INSTITUTION_MANAGER]: 'Gerencia as operações de uma escola ou unidade educacional específica. Possui acesso administrativo para gerenciar turmas, usuários, horários, análises de desempenho, conteúdo institucional e comunicações internas.',
-  [UserRole.ACADEMIC_COORDINATOR]: 'Supervisiona ciclos educacionais específicos ou departamentos. Monitora o progresso acadêmico dos alunos, apoia o desenvolvimento dos professores, coordena a execução do currículo e analisa dados de desempenho.',
+  [UserRole.COORDINATOR]: 'Supervisiona ciclos educacionais específicos ou departamentos. Monitora o progresso acadêmico dos alunos, apoia o desenvolvimento dos professores, coordena a execução do currículo e analisa dados de desempenho.',
   [UserRole.TEACHER]: 'Acessa suas turmas designadas para gerenciar registros de presença, notas, planos de aula, recursos instrucionais e comunicação bidirecional com alunos e responsáveis.',
   [UserRole.STUDENT]: 'Tem acesso ao seu ambiente de aprendizagem personalizado, incluindo horários de aula, materiais de aprendizagem digital, avaliações, acompanhamento de progresso e mensagens com professores.',
   [UserRole.GUARDIAN]: 'Recebe insights detalhados sobre o desempenho acadêmico e comportamental dos alunos sob seus cuidados. Inclui acesso em tempo real a registros de presença, notas, comunicados escolares e comunicação direta com a equipe escolar.'
@@ -345,7 +345,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
 export const ROLE_COLORS: Record<UserRole, string> = {
   [UserRole.SYSTEM_ADMIN]: '#DC2626', // red-600
   [UserRole.INSTITUTION_MANAGER]: '#7C3AED', // violet-600
-  [UserRole.ACADEMIC_COORDINATOR]: '#2563EB', // blue-600
+  [UserRole.COORDINATOR]: '#2563EB', // blue-600
   [UserRole.TEACHER]: '#059669', // emerald-600
   [UserRole.STUDENT]: '#F59E0B', // amber-600
   [UserRole.GUARDIAN]: '#8B5CF6' // purple-600
@@ -400,7 +400,7 @@ export const ROLE_BASED_ROUTES: RoleBasedRoute[] = [
   },
   {
     path: '/institution/analytics',
-    roles: [UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR],
+    roles: [UserRole.INSTITUTION_MANAGER, UserRole.COORDINATOR],
     label: 'Análises Institucionais',
     icon: 'BarChart'
   },
@@ -408,19 +408,19 @@ export const ROLE_BASED_ROUTES: RoleBasedRoute[] = [
   // Academic Coordinator Routes
   {
     path: '/dashboard/coordinator',
-    roles: [UserRole.ACADEMIC_COORDINATOR],
+    roles: [UserRole.COORDINATOR],
     label: 'Painel Acadêmico',
     icon: 'GraduationCap'
   },
   {
     path: '/cycles',
-    roles: [UserRole.ACADEMIC_COORDINATOR, UserRole.INSTITUTION_MANAGER],
+    roles: [UserRole.COORDINATOR, UserRole.INSTITUTION_MANAGER],
     label: 'Ciclos Educacionais',
     icon: 'Calendar'
   },
   {
     path: '/curriculum',
-    roles: [UserRole.ACADEMIC_COORDINATOR],
+    roles: [UserRole.COORDINATOR],
     label: 'Currículo',
     icon: 'BookOpen'
   },
@@ -482,19 +482,19 @@ export const ROLE_BASED_ROUTES: RoleBasedRoute[] = [
   // Common Routes
   {
     path: '/chat',
-    roles: [UserRole.TEACHER, UserRole.STUDENT, UserRole.GUARDIAN, UserRole.ACADEMIC_COORDINATOR, UserRole.INSTITUTION_MANAGER],
+    roles: [UserRole.TEACHER, UserRole.STUDENT, UserRole.GUARDIAN, UserRole.COORDINATOR, UserRole.INSTITUTION_MANAGER],
     label: 'Mensagens',
     icon: 'MessageSquare'
   },
   {
     path: '/forum',
-    roles: [UserRole.TEACHER, UserRole.STUDENT, UserRole.ACADEMIC_COORDINATOR],
+    roles: [UserRole.TEACHER, UserRole.STUDENT, UserRole.COORDINATOR],
     label: 'Fórum',
     icon: 'MessageCircle'
   },
   {
     path: '/announcements',
-    roles: [UserRole.TEACHER, UserRole.STUDENT, UserRole.GUARDIAN, UserRole.ACADEMIC_COORDINATOR, UserRole.INSTITUTION_MANAGER],
+    roles: [UserRole.TEACHER, UserRole.STUDENT, UserRole.GUARDIAN, UserRole.COORDINATOR, UserRole.INSTITUTION_MANAGER],
     label: 'Comunicados',
     icon: 'Bell'
   }

@@ -322,9 +322,7 @@ export async function POST(request: NextRequest) {
     
     try {
       // Determinar URL do backend baseado no ambiente
-      const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ||
-                            process.env.BACKEND_URL ||
-                            'https://portal.sabercon.com.br/api';
+      const backendBaseUrl = 'https://portal.sabercon.com.br/api';
       const backendUrl = `${backendBaseUrl}/auth/optimized/login`;
       
       console.log(`🌐 BACKEND REQUEST: Tentando ${backendUrl}`);
@@ -558,6 +556,27 @@ export async function POST(request: NextRequest) {
       userData.role = userData.role_name || userData.role_slug;
     }
 
+    // 5. Mapear role_slug para role se necessário
+    if (userData.role_slug && !userData.role) {
+      userData.role = userData.role_slug;
+    }
+
+    // 6. Garantir que temos as permissões corretas
+    if (!userData.permissions && userData.permissions !== undefined) {
+      userData.permissions = [];
+    }
+
+    console.log('🔄 Dados do usuário após normalização:', {
+      id: userData.id,
+      email: userData.email,
+      name: userData.name,
+      role: userData.role,
+      role_slug: userData.role_slug,
+      permissions: userData.permissions?.length || 0,
+      institution_id: userData.institution_id,
+      institution_name: userData.institution_name
+    });
+
     // 5. Gerar um token localmente como fallback se nenhum foi fornecido
     if (!token) {
       console.warn('⚠️ Token não encontrado na resposta do backend, gerando um token localmente como fallback.');
@@ -632,11 +651,13 @@ export async function POST(request: NextRequest) {
       id: userData.id,
       name: userData.name,
       email: userData.email,
-      role: userData.role,
+      role: userData.role || userData.role_slug, // Garantir que temos role
       permissions: userData.permissions || [],
       institution_id: userData.institution_id,
       institution_name: userData.institution_name || `Instituição ID: ${userData.institution_id || 'N/A'}`
     };
+
+    console.log('🍪 Dados do usuário para cookie:', userDataForCookie);
 
     // Cookie não httpOnly para acesso pelo cliente JavaScript
     cookieStore.set('user_data', JSON.stringify(userDataForCookie), {

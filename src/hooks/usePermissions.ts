@@ -47,7 +47,7 @@ export function usePermissions() {
 
   const isSystemAdmin = (): boolean => hasRole(UserRole.SYSTEM_ADMIN)
   const isInstitutionManager = (): boolean => hasRole(UserRole.INSTITUTION_MANAGER)
-  const isAcademicCoordinator = (): boolean => hasRole(UserRole.ACADEMIC_COORDINATOR)
+  const isAcademicCoordinator = (): boolean => hasRole(UserRole.COORDINATOR)
   const isTeacher = (): boolean => hasRole(UserRole.TEACHER)
   const isStudent = (): boolean => hasRole(UserRole.STUDENT)
   const isGuardian = (): boolean => hasRole(UserRole.GUARDIAN)
@@ -55,14 +55,14 @@ export function usePermissions() {
   const isStaff = (): boolean => hasRole([
     UserRole.SYSTEM_ADMIN,
     UserRole.INSTITUTION_MANAGER,
-    UserRole.ACADEMIC_COORDINATOR,
+    UserRole.COORDINATOR,
     UserRole.TEACHER
   ])
 
   const isManagement = (): boolean => hasRole([
     UserRole.SYSTEM_ADMIN,
     UserRole.INSTITUTION_MANAGER,
-    UserRole.ACADEMIC_COORDINATOR
+    UserRole.COORDINATOR
   ])
 
   return {

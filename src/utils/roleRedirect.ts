@@ -1,4 +1,4 @@
-import { UserRole } from '../types/auth';
+import { UserRole } from '../types/roles';
 
 /**
  * Mapeia roles de usuário para seus respectivos dashboards
@@ -10,7 +10,7 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
   'ADMIN': '/dashboard/system-admin',
   'SYSTEM_ADMIN': '/dashboard/system-admin',
   'INSTITUTION_MANAGER': '/dashboard/institution-manager',
-  'ACADEMIC_COORDINATOR': '/dashboard/coordinator',
+  'COORDINATOR': '/dashboard/coordinator',
   'GUARDIAN': '/dashboard/guardian',
   'MANAGER': '/dashboard/institution-manager',
   
@@ -22,6 +22,7 @@ export const ROLE_DASHBOARD_MAP: Record<string, string> = {
   'system_admin': '/dashboard/system-admin',
   'institution_manager': '/dashboard/institution-manager',
   'academic_coordinator': '/dashboard/coordinator',
+  'coordinator': '/dashboard/coordinator',
   'guardian': '/dashboard/guardian',
   
   // Roles em português (vindas do backend)

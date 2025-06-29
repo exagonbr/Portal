@@ -18,7 +18,6 @@ import { logHttp500Error } from '../utils/debug-http-500';
 // Configuração centralizada
 const API_URLS = [
   process.env.NEXT_PUBLIC_API_URL,
-  'http://localhost:3001',
   'https://portal.sabercon.com.br/api'
 ].filter(Boolean) as string[];
 

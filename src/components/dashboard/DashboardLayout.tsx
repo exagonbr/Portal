@@ -16,7 +16,7 @@ interface DashboardLayoutProps {
 export enum UserRole {
   SYSTEM_ADMIN = 'SYSTEM_ADMIN',
   INSTITUTION_MANAGER = 'INSTITUTION_MANAGER', 
-  ACADEMIC_COORDINATOR = 'ACADEMIC_COORDINATOR',
+  COORDINATOR = 'COORDINATOR',
   TEACHER = 'TEACHER',
   STUDENT = 'STUDENT',
   GUARDIAN = 'GUARDIAN'
@@ -26,7 +26,7 @@ export enum UserRole {
 export const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.SYSTEM_ADMIN]: 'Administrador do Sistema',
   [UserRole.INSTITUTION_MANAGER]: 'Gestor de Instituição',
-  [UserRole.ACADEMIC_COORDINATOR]: 'Coordenador Acadêmico',
+  [UserRole.COORDINATOR]: 'Coordenador Acadêmico',
   [UserRole.TEACHER]: 'Professor',
   [UserRole.STUDENT]: 'Estudante',
   [UserRole.GUARDIAN]: 'Responsável'

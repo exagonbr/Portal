@@ -103,7 +103,7 @@ const roleBasedStats: Record<UserRole, StatItem[]> = {
       description: 'Taxa de adimplência'
     }
   ],
-  [UserRole.ACADEMIC_COORDINATOR]: [
+  [UserRole.COORDINATOR]: [
     {
       id: 'curriculum-completion',
       title: 'Conclusão Curricular',

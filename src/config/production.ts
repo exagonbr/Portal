@@ -46,8 +46,8 @@ export const PRODUCTION_CONFIG = {
   
   // URLs de API
   API: {
-    BACKEND_URL: process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api',
-    FRONTEND_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    BACKEND_URL: 'https://portal.sabercon.com.br/api',
+    FRONTEND_URL:'https://portal.sabercon.com.br'
   }
 } as const;
 

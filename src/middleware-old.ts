@@ -10,8 +10,8 @@ import { PRODUCTION_CONFIG, ProductionUtils } from './config/production';
 
 // Configuration constants
 const CONFIG = {
-  BASE_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
-  BACKEND_URL: process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api',
+  BASE_URL: process.env.NEXTAUTH_URL || 'https://portal.sabercon.com.br',
+  BACKEND_URL: 'https://portal.sabercon.com.br/api',
   API_VERSION: process.env.API_VERSION || 'v1',
   COOKIES: {
     AUTH_TOKEN: 'auth_token',
@@ -64,7 +64,7 @@ const ROUTES = {
     [UserRole.TEACHER]: ['/dashboard/teacher'],
     [UserRole.SYSTEM_ADMIN]: ['/dashboard/admin'],
     [UserRole.INSTITUTION_MANAGER]: ['/dashboard/institution-manager'],
-    [UserRole.ACADEMIC_COORDINATOR]: ['/dashboard/coordinator'],
+    [UserRole.COORDINATOR]: ['/dashboard/coordinator'],
     [UserRole.GUARDIAN]: ['/dashboard/guardian']
   }
 } as const;

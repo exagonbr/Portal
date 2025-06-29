@@ -304,7 +304,7 @@ export default function StandardSidebar() {
       const dashboardMap = {
         [UserRole.SYSTEM_ADMIN]: '/dashboard/system-admin',
         [UserRole.INSTITUTION_MANAGER]: '/dashboard/institution-manager',
-        [UserRole.ACADEMIC_COORDINATOR]: '/dashboard/coordinator',
+        [UserRole.COORDINATOR]: '/dashboard/coordinator',
         [UserRole.TEACHER]: '/dashboard/teacher',
         [UserRole.STUDENT]: '/dashboard/student',
         [UserRole.GUARDIAN]: '/dashboard/guardian'
@@ -417,7 +417,7 @@ export default function StandardSidebar() {
         ];
         break;
 
-      case UserRole.ACADEMIC_COORDINATOR:
+      case UserRole.COORDINATOR:
         roleSpecificItems = [
           {
             section: 'Coordenação Acadêmica',
