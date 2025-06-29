@@ -725,13 +725,14 @@ class SystemAdminService {
       }
       
       throw new Error(errorMessage);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorObj = error as any;
       // Verificar se é erro de autenticação específico
-      if (error?.message?.includes('Token') || 
-          error?.message?.includes('autenticação') || 
-          error?.message?.includes('autorização') ||
-          error?.message?.includes('401') ||
-          error?.status === 401) {
+      if (errorObj?.message?.includes('Token') ||
+          errorObj?.message?.includes('autenticação') ||
+          errorObj?.message?.includes('autorização') ||
+          errorObj?.message?.includes('401') ||
+          errorObj?.status === 401) {
         
         // Usar o utilitário para limpar todos os tokens
         clearAllTokens();
@@ -747,7 +748,7 @@ class SystemAdminService {
           } else {
             console.warn('⚠️ [SYSTEM-ADMIN] ApiClient não disponível para limpeza');
           }
-        } catch (clearError) {
+        } catch (clearError: unknown) {
           console.warn('⚠️ [SYSTEM-ADMIN] Erro ao limpar auth do apiClient:', clearError);
           
           // Fallback: limpar tokens manualmente
@@ -774,7 +775,7 @@ class SystemAdminService {
             return localData.data;
           }
         }
-      } catch (localError) {
+      } catch (localError: unknown) {
         // Ignorar erro na rota local e continuar para fallback
       }
       
@@ -878,14 +879,15 @@ class SystemAdminService {
         timestamp: new Date().toISOString()
       };
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ [SYSTEM-ADMIN] Erro ao carregar status de saúde:', error);
       
+      const errorObj = error as any;
       // Verificar se é erro de timeout (504 Gateway Timeout)
-      if (error?.status === 504 ||
-          error?.message?.includes('504') ||
-          error?.message?.includes('Gateway Time-out') ||
-          error?.message?.includes('timeout')) {
+      if (errorObj?.status === 504 ||
+          errorObj?.message?.includes('504') ||
+          errorObj?.message?.includes('Gateway Time-out') ||
+          errorObj?.message?.includes('timeout')) {
         
         console.log('🔄 [SYSTEM-ADMIN] Erro 504 detectado, tentando retry...');
         
@@ -898,16 +900,16 @@ class SystemAdminService {
             console.log('✅ [SYSTEM-ADMIN] Status de saúde carregado com sucesso após retry');
             return retryResponse.data.data || retryResponse.data;
           }
-        } catch (retryError) {
+        } catch (retryError: unknown) {
           console.warn('⚠️ [SYSTEM-ADMIN] Retry falhou para status de saúde:', retryError);
         }
       }
       
       // Verificar se é erro de autenticação
-      if (error?.status === 401 ||
-          error?.message?.includes('Token') ||
-          error?.message?.includes('autenticação') ||
-          error?.message?.includes('autorização')) {
+      if (errorObj?.status === 401 ||
+          errorObj?.message?.includes('Token') ||
+          errorObj?.message?.includes('autenticação') ||
+          errorObj?.message?.includes('autorização')) {
         
         console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
         throw new Error('Token de autenticação inválido. Faça login novamente.');
@@ -961,7 +963,7 @@ class SystemAdminService {
         
         // If success is false, throw error with message
         throw new Error(response.message || 'Falha ao carregar dados de analytics');
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao carregar dados de analytics:', error);
         
         // Fallback with simulated data
@@ -983,7 +985,7 @@ class SystemAdminService {
         }
         
         throw new Error(response.message || 'Falha ao carregar resumo do dashboard');
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao carregar resumo do dashboard:', error);
         return null;
       }
@@ -1294,7 +1296,7 @@ class SystemAdminService {
           return response.data;
         }
         throw new Error(response.message || 'Falha ao carregar estatísticas de roles');
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao carregar estatísticas de roles:', error);
         return null;
       }
@@ -1309,7 +1311,7 @@ class SystemAdminService {
           return response.data;
         }
         throw new Error(response.message || 'Falha ao carregar estatísticas da AWS');
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao carregar estatísticas da AWS:', error);
         return null;
       }
@@ -1324,7 +1326,7 @@ class SystemAdminService {
           return response.data;
         }
         throw new Error(response.message || 'Falha ao carregar estatísticas de usuários');
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao carregar estatísticas de usuários:', error);
         return {};
       }
