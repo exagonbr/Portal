@@ -227,7 +227,7 @@ export default function ModulesPage() {
   )
 
   return (
-    <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.ACADEMIC_COORDINATOR, UserRole.TEACHER]}>
+    <ProtectedRoute requiredRole={[UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_MANAGER, UserRole.COORDINATOR, UserRole.TEACHER]}>
         <DashboardPageLayout
           title="Gerenciar Módulos"
           subtitle="Gerencie o conteúdo dos cursos"

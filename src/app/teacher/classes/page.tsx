@@ -255,7 +255,7 @@ export default function TeacherClassesPage() {
   )
 
   return (
-          <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.ACADEMIC_COORDINATOR, UserRole.SYSTEM_ADMIN]}>
+          <ProtectedRoute requiredRole={[UserRole.TEACHER, UserRole.COORDINATOR, UserRole.SYSTEM_ADMIN]}>
         <DashboardPageLayout
           title="Minhas Turmas"
           subtitle="Gerencie suas turmas e acompanhe o progresso dos alunos"

@@ -1,4 +1,5 @@
-import {User, UserEssentials, Permission, UserRole} from '../types/auth';
+import {User, UserEssentials, Permission} from '../types/auth';
+import {UserRole} from '../types/roles';
 import { apiClient, handleApiError } from '@/lib/api-client';
 import { API_CONFIG, TOKEN_KEY, REFRESH_TOKEN_KEY, TOKEN_EXPIRY_KEY } from '@/config/constants';
 import { 
@@ -257,13 +258,76 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
 /**
  * Extrai apenas os campos essenciais do usuário para autenticação
  */
-export const extractUserEssentials = (user: User): UserEssentials => {
+export const extractUserEssentials = (user: any): UserEssentials => {
+  // Mapear role_slug do backend para role do frontend
+  let role: UserRole;
+  const backendRole = user.role_slug || user.role;
+  
+  // Converter role do backend para enum do frontend
+  switch (backendRole) {
+    case 'SYSTEM_ADMIN':
+    case 'system_admin':
+    case 'Administrador do Sistema':
+    case 'ADMINISTRADOR DO SISTEMA':
+      role = 'SYSTEM_ADMIN' as UserRole;
+      break;
+    case 'INSTITUTION_MANAGER':
+    case 'institution_manager':
+    case 'Gestor Institucional':
+    case 'GESTOR INSTITUCIONAL':
+      role = 'INSTITUTION_MANAGER' as UserRole;
+      break;
+    case 'COORDINATOR':
+    case 'coordinator':
+    case 'ACADEMIC_COORDINATOR':
+    case 'academic_coordinator':
+    case 'Coordenador Acadêmico':
+    case 'COORDENADOR ACADÊMICO':
+      role = 'COORDINATOR' as UserRole;
+      break;
+    case 'TEACHER':
+    case 'teacher':
+    case 'Professor':
+    case 'PROFESSOR':
+      role = 'TEACHER' as UserRole;
+      break;
+    case 'STUDENT':
+    case 'student':
+    case 'Aluno':
+    case 'ALUNO':
+      role = 'STUDENT' as UserRole;
+      break;
+    case 'GUARDIAN':
+    case 'guardian':
+    case 'Responsável':
+    case 'RESPONSÁVEL':
+      role = 'GUARDIAN' as UserRole;
+      break;
+    default:
+      console.warn('Role não reconhecida:', backendRole, 'usando STUDENT como fallback');
+      role = 'STUDENT' as UserRole;
+  }
+
+  // Mapear permissões do backend para o frontend
+  const permissions = user.permissions || [];
+
+  console.log('🔄 extractUserEssentials - Mapeamento:', {
+    original: user,
+    mapped: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role,
+      permissions
+    }
+  });
+
   return {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role,
-    permissions: user.permissions || []
+    role,
+    permissions
   };
 };
 
@@ -363,10 +427,21 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       let userData;
       if (result.success && result.data) {
         userData = result.data.user || result.data;
-      } else {
+      } else if (result.user) {
         // Fallback para estrutura antiga
         userData = result.user;
+      } else {
+        // Fallback final - a própria resposta pode ser o usuário
+        userData = result;
       }
+
+      console.log('🔍 Dados do usuário extraídos:', {
+        hasUserData: !!userData,
+        userKeys: userData ? Object.keys(userData) : [],
+        role: userData?.role,
+        role_slug: userData?.role_slug,
+        permissions: userData?.permissions?.length || 0
+      });
 
       // Extrair apenas os campos essenciais do usuário
       const userEssentials = userData ? extractUserEssentials(userData) : undefined;

@@ -60,7 +60,7 @@ const createEmptyPermissions = (): RolePermissions => ({
 const MOCK_USER_COUNTS: Record<UserRole, number> = {
   [UserRole.SYSTEM_ADMIN]: 3,
   [UserRole.INSTITUTION_MANAGER]: 12,
-  [UserRole.ACADEMIC_COORDINATOR]: 28,
+  [UserRole.COORDINATOR]: 28,
   [UserRole.TEACHER]: 145,
   [UserRole.STUDENT]: 2847,
   [UserRole.GUARDIAN]: 1923

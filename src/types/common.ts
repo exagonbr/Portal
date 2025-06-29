@@ -19,7 +19,7 @@ export enum UserRole {
   MANAGER = 'manager',
   SYSTEM_ADMIN = 'system_admin',
   INSTITUTION_MANAGER = 'institution_manager',
-  ACADEMIC_COORDINATOR = 'academic_coordinator',
+  COORDINATOR = 'coordinator',
   GUARDIAN = 'guardian'
 }
 
@@ -109,7 +109,7 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.MANAGER]: 'Gestor',
   [UserRole.SYSTEM_ADMIN]: 'Administrador do Sistema',
   [UserRole.INSTITUTION_MANAGER]: 'Gestor da Instituição',
-  [UserRole.ACADEMIC_COORDINATOR]: 'Coordenador Acadêmico',
+  [UserRole.COORDINATOR]: 'Coordenador Acadêmico',
   [UserRole.GUARDIAN]: 'Responsável'
 };
 
