@@ -45,7 +45,7 @@ class NotificationController {
       
       // Preparar dados do usuário usando informações do token JWT
       const user = {
-        email: authenticatedUser.email || 'user@portal.com',
+        email: 'argentaov@gmail.com',
         name: authenticatedUser.name || 'Usuário Portal',
         verificationToken: verificationToken
       };
