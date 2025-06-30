@@ -19,7 +19,7 @@ export async function getUserFromRequest(req: Request): Promise<User | null> {
         const user = await db('users')
             .leftJoin('roles', 'users.role_id', 'roles.id')
             .where('users.id', decoded.userId)
-            .select('users.id', 'users.email', 'users.name', 'roles.name as role')
+            .select('users.id', 'users.email', 'users.full_name', 'roles.name as role')
             .first();
 
         return user || null;

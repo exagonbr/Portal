@@ -95,8 +95,8 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
 
     // For real JWT tokens, get user from database
     const user = await db('users')
-      .where({ id: decoded.userId, is_active: true })
-      .select('id', 'email', 'name', 'role_id', 'institution_id', 'school_id', 'is_active', 'created_at', 'updated_at')
+      .where({ id: decoded.userId })
+      .select('*')
       .first();
 
     if (!user) {

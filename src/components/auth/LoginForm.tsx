@@ -43,6 +43,33 @@ export function LoginForm() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Verificar se há erro de Google OAuth na URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    
+    if (error) {
+      let errorMessage = '';
+      switch (error) {
+        case 'google_auth_failed':
+          errorMessage = 'Falha na autenticação com Google. Tente novamente.';
+          break;
+        case 'auth_failed':
+          errorMessage = 'Erro na autenticação. Tente novamente.';
+          break;
+        case 'missing_token':
+          errorMessage = 'Token de autenticação não recebido. Tente novamente.';
+          break;
+        default:
+          errorMessage = 'Erro na autenticação. Tente novamente.';
+      }
+      setSubmitError(errorMessage);
+      
+      // Limpar o erro da URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // Detectar se é dispositivo móvel
   const [isMobile, setIsMobile] = useState(false);
   
@@ -425,12 +452,13 @@ export function LoginForm() {
         >
           {/* Google Login Button */}
           <a
-            href="http://localhost:3001/auth/google"
-            className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            href={`${process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin + '/api' : 'http://localhost:3001/api')}/auth/google`}
+            className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 transform hover:scale-105 active:scale-95"
             style={{
               color: theme.colors.text.primary,
               backgroundColor: theme.colors.background.primary,
               borderColor: theme.colors.border.DEFAULT,
+              minHeight: isMobile ? '48px' : 'auto',
             }}
           >
             <Image src="/google-logo.svg" alt="Google logo" width={20} height={20} className="mr-2" />

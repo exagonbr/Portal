@@ -7,10 +7,21 @@ class AuthController {
     try {
       const user = req.user as User;
       const token = AuthService.generateToken(user);
-      // TODO: Redirect to a frontend page with the token
-      res.redirect(`http://localhost:3000/auth/callback?token=${token}`);
+      
+      // Usar URL de produção ou fallback para desenvolvimento
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      
+      console.log('🔐 Google OAuth: Redirecionando usuário após autenticação');
+      console.log('👤 Usuário:', user.email);
+      console.log('🌐 Frontend URL:', frontendUrl);
+      
+      res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
-      res.status(500).json({ message: 'Error during Google authentication' });
+      console.error('❌ Erro durante autenticação Google:', error);
+      
+      // Redirecionar para página de erro em caso de falha
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/auth/login?error=google_auth_failed`);
     }
   }
 }

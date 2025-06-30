@@ -75,10 +75,10 @@ export const validateJWT = async (
         const roleName = role.name;
         decoded.role = roleMapping[roleName] || roleName.toLowerCase();
       } catch (dbError) {
-        console.error('Error fetching user role:', dbError);
-        return res.status(401).json({
+        console.error('Erro ao consultar banco de dados:', dbError);
+        return res.status(500).json({
           success: false,
-          message: 'Authentication failed'
+          error: 'Database error during authentication'
         });
       }
     }

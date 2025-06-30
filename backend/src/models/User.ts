@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   password: string;
-  name: string;
+  full_name: string;
   role_id: string;
   institution_id: string;
   endereco?: string;
@@ -18,7 +18,7 @@ export interface User {
 export interface CreateUserData {
   email: string;
   password: string;
-  name: string;
+  full_name: string;
   role_id: string;
   institution_id: string;
   endereco?: string;
@@ -32,7 +32,7 @@ export interface CreateUserData {
 export interface UpdateUserData {
   email?: string;
   password?: string;
-  name?: string;
+  full_name?: string;
   role_id?: string;
   institution_id?: string;
   endereco?: string;

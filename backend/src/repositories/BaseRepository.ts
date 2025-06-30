@@ -28,6 +28,7 @@ export abstract class BaseRepository<T> {
   async findById(id: string): Promise<T | null> {
     const result = await this.db(this.tableName)
       .where('id', id)
+      .select('*')
       .first();
     return result || null;
   }
@@ -35,6 +36,7 @@ export abstract class BaseRepository<T> {
   async findOne(filters: Partial<T>): Promise<T | null> {
     const result = await this.db(this.tableName)
       .where(filters)
+      .select('*')
       .first();
     return result || null;
   }

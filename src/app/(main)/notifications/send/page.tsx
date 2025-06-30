@@ -260,10 +260,20 @@ export default function SendNotificationPage() {
       }
 
       // Enviar notificação via API
+      console.log('🔍 [NOTIFICATIONS] Dados sendo enviados:', notificationData)
       const response = await apiClient.post('/api/notifications/send', notificationData)
+      console.log('🔍 [NOTIFICATIONS] Resposta recebida:', response)
 
-      if (response.success) {
+      if (response.success === true) {
+        const data = response.data as any;
         setSuccess(true)
+        
+        // Mostrar detalhes do sucesso
+        console.log('✅ [NOTIFICATIONS] Notificação enviada com sucesso:', {
+          notificationId: data?.notificationId,
+          recipientCount: data?.recipientCount,
+          methods: data?.methods
+        })
         
         // Resetar formulário após sucesso
         setTimeout(() => {
@@ -279,9 +289,11 @@ export default function SendNotificationPage() {
           })
           setSelectedUsers([])
           setSuccess(false)
-        }, 3000)
+        }, 5000) // Aumentado para 5 segundos para dar tempo de ver a mensagem
       } else {
-        throw new Error(response.message || 'Erro ao enviar notificação')
+        const errorMessage = response.message || 'Erro ao enviar notificação'
+        console.error('❌ [NOTIFICATIONS] Erro na resposta da API:', response)
+        throw new Error(errorMessage)
       }
 
     } catch (error: any) {
@@ -312,35 +324,14 @@ export default function SendNotificationPage() {
   }
 
   const handleTestEmail = async () => {
-    const emailToTest = testEmail.trim()
-    
-    if (!emailToTest) {
-      setTestResults(prev => ({
-        ...prev,
-        email: { success: false, message: 'Digite um email válido para teste' }
-      }))
-      return
-    }
-
-    // Validação básica de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(emailToTest)) {
-      setTestResults(prev => ({
-        ...prev,
-        email: { success: false, message: 'Formato de email inválido' }
-      }))
-      return
-    }
-
     try {
       setLoading(true)
       setTestResults(prev => ({ ...prev, email: undefined }))
 
-      console.log('🔍 [NOTIFICATIONS] Testando email para:', emailToTest)
+      console.log('🔍 [NOTIFICATIONS] Testando email...')
 
       // Verificar autenticação antes de fazer requisições
       const authStatus = isAuthenticated()
-      console.log('🔍 [NOTIFICATIONS] Status de autenticação:', authStatus)
       
       if (!authStatus.authenticated) {
         console.warn('⚠️ [NOTIFICATIONS] Usuário não autenticado:', authStatus.error)
@@ -350,52 +341,37 @@ export default function SendNotificationPage() {
 
       // Sincronizar token com apiClient
       const token = getCurrentToken()
-      console.log('🔍 [NOTIFICATIONS] Token atual:', token ? token.substring(0, 20) + '...' : 'nenhum')
       
       if (token) {
         const syncSuccess = await syncTokenWithApiClient(token)
-        console.log('🔍 [NOTIFICATIONS] Sincronização do token:', syncSuccess ? 'sucesso' : 'falha')
         if (!syncSuccess) {
           console.warn('⚠️ [NOTIFICATIONS] Falha ao sincronizar token')
         }
-      } else {
-        console.error('❌ [NOTIFICATIONS] Nenhum token disponível para sincronização')
       }
 
-      // Usar nossa nova API de verificação de email
+      // Usar nossa API de verificação de email
       console.log('🔍 [NOTIFICATIONS] Enviando email de verificação...')
       const response = await apiClient.post('/api/notifications/email/verify')
 
       console.log('🔍 [NOTIFICATIONS] Resposta recebida:', response)
       
-      // Verificar se a resposta é válida
-      if (!response || typeof response !== 'object') {
-        console.error('❌ [NOTIFICATIONS] Resposta inválida ou vazia:', response)
-        throw new Error('Erro de comunicação com o servidor - resposta inválida')
-      }
-
       if (response.success === true) {
+        const data = response.data as any;
         setTestResults(prev => ({
           ...prev,
           email: {
             success: true,
-            message: `Email de verificação enviado com sucesso para ${(response.data as any)?.recipient || user?.email || 'seu email'}! Verifique a caixa de entrada.`,
+            message: `Email de verificação enviado com sucesso para ${data?.recipient || user?.email || 'seu email'}! Verifique a caixa de entrada.`,
             timestamp: new Date().toLocaleString('pt-BR')
           }
         }))
       } else {
-        // Verificar se há informações de erro específicas na resposta
-        console.error('❌ [NOTIFICATIONS] Erro na resposta da API:', response)
-        
         const errorMessage = response.message || 'Erro ao enviar email de verificação'
         
-        // Se é erro de autenticação, verificar diferentes formas
+        // Se é erro de autenticação
         if (response.message?.includes('401') ||
             response.message?.includes('Unauthorized') ||
-            response.message?.includes('not authenticated') ||
-            response.message?.includes('Token de autenticação') ||
-            response.message?.includes('autenticação inválido') ||
-            response.message?.includes('autenticação não encontrado')) {
+            response.message?.includes('not authenticated')) {
           console.error('🔐 [NOTIFICATIONS] Erro de autenticação detectado na resposta')
           clearAllTokens()
           throw new Error('Sessão expirada. Faça login novamente.')
@@ -405,14 +381,12 @@ export default function SendNotificationPage() {
       }
     } catch (error: any) {
       console.error('❌ [NOTIFICATIONS] Error sending test email:', error)
-      console.log('🔍 [NOTIFICATIONS] Tipo do erro:', typeof error)
-      console.log('🔍 [NOTIFICATIONS] Propriedades do erro:', Object.keys(error || {}))
       
       let errorMessage = 'Erro desconhecido ao enviar email de teste'
       
       // Verificar se é erro de autenticação específico
-      if (error?.message?.includes('Token') || 
-          error?.message?.includes('autenticação') || 
+      if (error?.message?.includes('Token') ||
+          error?.message?.includes('autenticação') ||
           error?.message?.includes('autorização') ||
           error?.message?.includes('401') ||
           error?.status === 401) {
@@ -422,41 +396,19 @@ export default function SendNotificationPage() {
         errorMessage = 'Sessão expirada. Faça login novamente.'
       } else if (error instanceof Error) {
         errorMessage = error.message
-        console.log('🔍 [NOTIFICATIONS] Erro capturado (Error):', error.message)
         
         // Verificar tipos específicos de erro
         if (error.message.includes('fetch') || error.message.includes('network')) {
           errorMessage = 'Erro de conexão com o servidor. Verifique sua internet.'
         } else if (error.message.includes('timeout')) {
           errorMessage = 'Tempo limite excedido. Tente novamente.'
-        } else if (error.message.includes('resposta inválida') || error.message.includes('resposta malformada')) {
-          errorMessage = error.message // Usar a mensagem específica que criamos
         }
-      } else if (typeof error === 'object' && error !== null) {
-        const errorObj = error as any
-        console.log('🔍 [NOTIFICATIONS] Erro capturado (Object):', errorObj)
-        
-        // Verificar se é erro de rede
-        if (errorObj.name === 'TypeError' && errorObj.message?.includes('fetch')) {
-          errorMessage = 'Erro de conexão com o servidor. Verifique sua internet.'
-        } else if (errorObj.name === 'AbortError' || errorObj.message?.includes('aborted')) {
-          errorMessage = 'Requisição cancelada. Tente novamente.'
-        } else if (errorObj.message) {
-          errorMessage = errorObj.message
-        } else if (errorObj.error) {
-          errorMessage = errorObj.error
-        } else {
-          errorMessage = 'Erro de comunicação com o servidor'
-        }
-      } else {
-        console.log('🔍 [NOTIFICATIONS] Erro capturado (Outro tipo):', typeof error, error)
-        errorMessage = 'Erro inesperado ao enviar email de teste'
       }
       
       setTestResults(prev => ({
         ...prev,
-        email: { 
-          success: false, 
+        email: {
+          success: false,
           message: errorMessage
         }
       }))
@@ -665,11 +617,21 @@ export default function SendNotificationPage() {
         </div>
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center">
+            <div className="flex items-center mb-2">
               <span className="material-symbols-outlined text-green-600 mr-2">
                 check_circle
               </span>
-              <p className="text-green-800">Notificação enviada com sucesso!</p>
+              <p className="text-green-800 font-medium">✅ Notificação enviada com sucesso!</p>
+            </div>
+            <div className="text-sm text-green-700 ml-6">
+              <p>• Título: "{form.title}"</p>
+              <p>• Métodos: {form.sendPush && form.sendEmail ? 'Push + Email' : form.sendPush ? 'Push Notification' : 'Email'}</p>
+              <p>• Destinatários: {
+                form.recipients.type === 'all' ? 'Todos os usuários permitidos' :
+                form.recipients.type === 'role' ? `Funções selecionadas (${form.recipients.roles?.length || 0})` :
+                `Usuários específicos (${selectedUsers.length})`
+              }</p>
+              <p>• Enviado em: {new Date().toLocaleString('pt-BR')}</p>
             </div>
           </div>
         )}
@@ -765,11 +727,21 @@ export default function SendNotificationPage() {
                     const response = await apiClient.get('/api/notifications/email/verify')
                     console.log('✅ [NOTIFICATIONS] Verificação de email:', response)
                     
-                    if (response.success) {
+                    if (response.success === true) {
                       const data = response.data as any
-                      alert(`✅ Configuração: ${data?.message || 'OK'}\nConectado: ${data?.connected ? 'Sim' : 'Não'}\nHabilitado: ${data?.enabled ? 'Sim' : 'Não'}`)
+                      const statusMessage = `✅ Configuração de Email Verificada
+                      
+📧 Status: ${data?.message || 'Configuração OK'}
+🔗 Conectado: ${data?.connected ? 'Sim' : 'Não'}
+⚡ Habilitado: ${data?.enabled ? 'Sim' : 'Não'}
+📨 Provedor: ${data?.provider || 'Gmail SMTP'}
+📍 Servidor: ${data?.host || 'smtp.gmail.com'}
+
+✅ Sistema pronto para enviar emails!`
+                      
+                      alert(statusMessage)
                     } else {
-                      alert(`❌ Erro na verificação: ${response.message}`)
+                      alert(`❌ Erro na verificação: ${response.message || 'Falha na verificação'}`)
                     }
                   } catch (error: any) {
                     console.error('❌ [NOTIFICATIONS] Erro na verificação:', error)
@@ -809,28 +781,21 @@ export default function SendNotificationPage() {
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Email para teste
-                    </label>
-                    <input
-                      type="email"
-                      value={testEmail}
-                      onChange={(e) => setTestEmail(e.target.value)}
-                      placeholder="Digite o email para receber o teste"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
+                    <p className="text-xs text-gray-600 mb-2">
+                      O email de teste será enviado para: <strong>{user?.email || 'seu email'}</strong>
+                    </p>
                   </div>
                   <button
                     onClick={handleTestEmail}
-                    disabled={loading || !testEmail.trim()}
-                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center space-x-2 mt-5"
+                    disabled={loading}
+                    className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
                   >
                     {loading && testResults.email === undefined ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     ) : (
                       <span className="material-symbols-outlined text-sm">email</span>
                     )}
-                    <span>Testar Email</span>
+                    <span>Verificar Email</span>
                   </button>
                 </div>
                 
@@ -851,8 +816,8 @@ export default function SendNotificationPage() {
               
               {testResults.email && (
                 <div className={`p-3 rounded-lg text-sm mt-2 ${
-                  testResults.email.success 
-                    ? 'bg-green-50 border border-green-200 text-green-800' 
+                  testResults.email.success
+                    ? 'bg-green-50 border border-green-200 text-green-800'
                     : 'bg-red-50 border border-red-200 text-red-800'
                 }`}>
                   {testResults.email.message}

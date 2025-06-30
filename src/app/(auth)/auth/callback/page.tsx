@@ -14,14 +14,27 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const token = searchParams.get('token');
+    const error = searchParams.get('error');
+
+    console.log('🔐 Callback: Processando retorno do Google OAuth');
+    console.log('🎫 Token presente:', !!token);
+    console.log('❌ Erro presente:', error);
+
+    if (error) {
+      console.error('❌ Erro no callback do Google:', error);
+      router.push(`/auth/login?error=${error}`);
+      return;
+    }
 
     if (token) {
+      console.log('✅ Token recebido, processando login...');
       handleGoogleLogin(token).catch(error => {
-        console.error("Google login failed", error);
+        console.error("❌ Falha no login Google:", error);
         router.push('/auth/login?error=auth_failed');
       });
     } else {
-      router.push('/auth/login?error=auth_failed');
+      console.error('❌ Token não encontrado no callback');
+      router.push('/auth/login?error=missing_token');
     }
   }, [searchParams, handleGoogleLogin, router]);
 
