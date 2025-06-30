@@ -1,5 +1,5 @@
 import { BaseRepository } from './BaseRepository';
-import { User, CreateUserData, UpdateUserData, UserWithoutPassword } from '../models/User';
+import { User, CreateUserData, UpdateUserData } from '../models/User';
 import db from '../config/database';
 
 export class UserRepository extends BaseRepository<User> {

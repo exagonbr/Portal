@@ -297,10 +297,12 @@ router.get('/', validateJWTSmart, requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'IN
         // Por simplicidade, assumindo que role é o role_id
         filters.role_id = role;
       }
-      users = await userRepository.findUsersWithoutPassword(filters);
+      users = await userRepository.findAll(filters);
     } else {
       // Buscar todos os usuários com informações de role e instituição
-      users = await userRepository.getUsersWithRoleAndInstitution();
+      // O método getUsersWithRoleAndInstitution não existe para buscar múltiplos usuários.
+      // Usando find() para buscar todos. A lógica de join com role e instituição precisa ser implementada no repositório.
+      users = await userRepository.findAll();
     }
 
     res.json({
