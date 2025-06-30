@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import knex from '@/config/database';
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
+
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -10,7 +28,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { videoId: string } }
+  { params }: { params: Promise<{ videoId: string }> }
 ) {
   try {
     const { videoId } = params;

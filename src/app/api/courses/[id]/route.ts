@@ -44,7 +44,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -56,10 +56,11 @@ export async function GET(
     })
     }
 
-    const courseId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar curso
-    const course = mockCourses.get(courseId)
+    const course = mockCourses.get(id)
 
     if (!course) {
       return NextResponse.json({ error: 'Curso não encontrado' }, { 
@@ -70,10 +71,10 @@ export async function GET(
 
     // Verificar permissões de visualização
     const userRole = session.user?.role
-    const canView = 
+    const canView =
       userRole === 'SYSTEM_ADMIN' ||
-      (userRole === 'INSTITUTION_ADMIN' && course.institution_id === session.user.institution_id) ||
-      (userRole === 'SCHOOL_MANAGER' && course.institution_id === session.user.institution_id) ||
+      (userRole === 'INSTITUTION_MANAGER' && course.institution_id === session.user.institution_id) ||
+      (userRole === 'COORDINATOR' && course.institution_id === session.user.institution_id) ||
       (userRole === 'TEACHER' && course.teachers?.includes(session.user?.id)) ||
       (userRole === 'STUDENT' && course.students?.includes(session.user?.id))
 
@@ -110,7 +111,7 @@ export async function GET(
 // PUT - Atualizar curso
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -122,7 +123,8 @@ export async function PUT(
     })
     }
 
-    const courseId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const body = await request.json()
 
     // Validar dados
@@ -142,7 +144,7 @@ export async function PUT(
     const updateData = validationResult.data
 
     // Buscar curso existente
-    const existingCourse = mockCourses.get(courseId)
+    const existingCourse = mockCourses.get(id)
     if (!existingCourse) {
       return NextResponse.json({ error: 'Curso não encontrado' }, { 
       status: 404,
@@ -152,9 +154,9 @@ export async function PUT(
 
     // Verificar permissões
     const userRole = session.user?.role
-    const canEdit = 
+    const canEdit =
       userRole === 'SYSTEM_ADMIN' ||
-      (userRole === 'INSTITUTION_ADMIN' && existingCourse.institution_id === session.user.institution_id)
+      (userRole === 'INSTITUTION_MANAGER' && existingCourse.institution_id === session.user.institution_id)
 
     if (!canEdit) {
       return NextResponse.json({ error: 'Sem permissão para editar este curso' }, { 
@@ -168,7 +170,7 @@ export async function PUT(
       const duplicateCourse = Array.from(mockCourses.values()).find(
         course => course.name === updateData.name && 
                   course.institution_id === existingCourse.institution_id &&
-                  course.id !== courseId
+                  course.id !== id
       )
 
       if (duplicateCourse) {
@@ -187,7 +189,7 @@ export async function PUT(
       updated_by: session.user?.id
     }
 
-    mockCourses.set(courseId, updatedCourse)
+    mockCourses.set(id, updatedCourse)
 
     return NextResponse.json({
       success: true,
@@ -209,7 +211,7 @@ export async function PUT(
 // DELETE - Remover curso
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -221,10 +223,11 @@ export async function DELETE(
     })
     }
 
-    const courseId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar curso
-    const existingCourse = mockCourses.get(courseId)
+    const existingCourse = mockCourses.get(id)
     if (!existingCourse) {
       return NextResponse.json({ error: 'Curso não encontrado' }, { 
       status: 404,
@@ -234,9 +237,9 @@ export async function DELETE(
 
     // Verificar permissões
     const userRole = session.user?.role
-    const canDelete = 
+    const canDelete =
       userRole === 'SYSTEM_ADMIN' ||
-      (userRole === 'INSTITUTION_ADMIN' && existingCourse.institution_id === session.user.institution_id)
+      (userRole === 'INSTITUTION_MANAGER' && existingCourse.institution_id === session.user.institution_id)
 
     if (!canDelete) {
       return NextResponse.json({ error: 'Sem permissão para deletar este curso' }, { 
@@ -254,7 +257,7 @@ export async function DELETE(
     }
 
     // Deletar curso (em produção, seria soft delete)
-    mockCourses.delete(courseId)
+    mockCourses.delete(id)
 
     return NextResponse.json({
       success: true,

@@ -13,10 +13,10 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(getInternalApiUrl(`/users/${params.id}`), {
+    const response = await fetch(getInternalApiUrl(`/users/${resolvedParams.id}`), {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });
@@ -35,12 +35,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
 
-    const response = await fetch(getInternalApiUrl(`/users/${params.id}`), {
+    const response = await fetch(getInternalApiUrl(`/users/${resolvedParams.id}`), {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -60,10 +60,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(getInternalApiUrl(`/users/${params.id}`), {
+    const response = await fetch(getInternalApiUrl(`/users/${resolvedParams.id}`), {
       method: 'DELETE',
       headers: prepareAuthHeaders(request),
     });

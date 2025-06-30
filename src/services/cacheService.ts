@@ -1,5 +1,3 @@
-import { apiClient, handleApiError } from '@/lib/api-client';
-
 export interface CacheConfig {
   ttl?: number; // Time to live em segundos
   prefix?: string; // Prefixo para as chaves
@@ -13,11 +11,37 @@ export interface CacheEntry<T> {
   key: string;
 }
 
+interface CacheStats {
+  hits: number;
+  misses: number;
+  sets: number;
+  deletes: number;
+  size: number;
+}
+
+/**
+ * Serviço de cache em memória local
+ * - Cache apenas em memória para acesso rápido
+ * - Sem dependência do Redis
+ * - Cleanup automático de itens expirados
+ */
 export class CacheService {
   private memoryCache = new Map<string, CacheEntry<any>>();
   private defaultTTL = 300; // 5 minutos
   private keyPrefix = 'portal_sabercon:';
   private enabled = true;
+  
+  // Estatísticas de cache
+  private stats: CacheStats = {
+    hits: 0,
+    misses: 0,
+    sets: 0,
+    deletes: 0,
+    size: 0
+  };
+
+  // Cleanup automático a cada 5 minutos
+  private cleanupInterval: NodeJS.Timeout;
 
   constructor(config?: CacheConfig) {
     if (config?.ttl) this.defaultTTL = config.ttl;
@@ -25,7 +49,14 @@ export class CacheService {
     if (config?.enabled !== undefined) this.enabled = config.enabled;
 
     // Limpeza automática do cache em memória a cada 5 minutos
-    setInterval(() => this.cleanupMemoryCache(), 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(() => this.cleanupMemoryCache(), 5 * 60 * 1000);
+
+    // Cleanup quando a página for fechada
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => {
+        this.cleanup();
+      });
+    }
   }
 
   /**
@@ -54,39 +85,63 @@ export class CacheService {
         this.memoryCache.delete(key);
       }
     }
+    this.updateCacheSize();
   }
 
   /**
-   * Obtém valor do cache (Redis primeiro, depois memória)
+   * Atualiza o tamanho do cache nas estatísticas
+   */
+  private updateCacheSize(): void {
+    this.stats.size = this.memoryCache.size;
+  }
+
+  /**
+   * Reseta as estatísticas
+   */
+  private resetStats(): void {
+    this.stats = {
+      hits: 0,
+      misses: 0,
+      sets: 0,
+      deletes: 0,
+      size: 0
+    };
+  }
+
+  /**
+   * Define valor na memória
+   */
+  private setInMemory<T>(key: string, value: T, ttl: number): void {
+    const entry: CacheEntry<T> = {
+      data: value,
+      timestamp: Date.now(),
+      ttl,
+      key
+    };
+    this.memoryCache.set(key, entry);
+  }
+
+  /**
+   * Obtém valor do cache (apenas memória)
    */
   async get<T>(key: string): Promise<T | null> {
     if (!this.enabled) return null;
 
     const cacheKey = this.generateKey(key);
 
-    try {
-      // Tenta buscar no Redis primeiro
-      const redisValue = await this.getFromRedis<T>(cacheKey);
-      if (redisValue !== null) {
-        // Atualiza cache em memória para acesso mais rápido
-        this.setInMemory(cacheKey, redisValue, this.defaultTTL);
-        return redisValue;
-      }
-    } catch (error) {
-      console.warn('Erro ao buscar no Redis, usando cache em memória:', error);
-    }
-
-    // Fallback para cache em memória
+    // Busca apenas na memória
     const memoryEntry = this.memoryCache.get(cacheKey);
     if (memoryEntry && this.isValidEntry(memoryEntry)) {
+      this.stats.hits++;
       return memoryEntry.data;
     }
 
+    this.stats.misses++;
     return null;
   }
 
   /**
-   * Define valor no cache (Redis e memória)
+   * Define valor no cache (apenas memória)
    */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
     if (!this.enabled) return;
@@ -94,47 +149,31 @@ export class CacheService {
     const cacheKey = this.generateKey(key);
     const cacheTTL = ttl || this.defaultTTL;
 
-    // Salva em memória para acesso rápido
+    // Salva apenas na memória
     this.setInMemory(cacheKey, value, cacheTTL);
-
-    try {
-      // Tenta salvar no Redis
-      await this.setInRedis(cacheKey, value, cacheTTL);
-    } catch (error) {
-      console.warn('Erro ao salvar no Redis, mantendo apenas em memória:', error);
-    }
+    this.stats.sets++;
+    this.updateCacheSize();
   }
 
   /**
-   * Remove valor do cache
+   * Remove valor do cache (apenas memória)
    */
   async delete(key: string): Promise<void> {
     const cacheKey = this.generateKey(key);
 
     // Remove da memória
     this.memoryCache.delete(cacheKey);
-
-    try {
-      // Remove do Redis
-      await this.deleteFromRedis(cacheKey);
-    } catch (error) {
-      console.warn('Erro ao remover do Redis:', error);
-    }
+    this.stats.deletes++;
+    this.updateCacheSize();
   }
 
   /**
-   * Limpa todo o cache
+   * Limpa todo o cache (apenas memória)
    */
   async clear(): Promise<void> {
     // Limpa memória
     this.memoryCache.clear();
-
-    try {
-      // Limpa Redis (apenas chaves com nosso prefixo)
-      await this.clearRedis();
-    } catch (error) {
-      console.warn('Erro ao limpar Redis:', error);
-    }
+    this.resetStats();
   }
 
   /**
@@ -215,9 +254,7 @@ export class CacheService {
    * Invalida cache por padrão de chave
    */
   async invalidatePattern(pattern: string): Promise<void> {
-    const fullPattern = this.generateKey(pattern);
-
-    // Remove da memória
+    // Remove da memória (busca por padrão)
     const keys = Array.from(this.memoryCache.keys());
     for (const key of keys) {
       if (key.includes(pattern)) {
@@ -225,317 +262,46 @@ export class CacheService {
       }
     }
 
-    try {
-      // Remove do Redis
-      await this.invalidateRedisPattern(fullPattern);
-    } catch (error) {
-      console.warn('Erro ao invalidar padrão no Redis:', error);
-    }
+    this.updateCacheSize();
+  }
+
+  /**
+   * Pré-carrega dados no cache
+   */
+  async preload<T>(entries: Array<{ key: string; value: T; ttl?: number }>): Promise<void> {
+    const promises = entries.map(entry => 
+      this.set(entry.key, entry.value, entry.ttl)
+    );
+    
+    await Promise.all(promises);
   }
 
   /**
    * Obtém estatísticas do cache
    */
-  getStats(): {
-    memoryEntries: number;
-    memorySize: number;
-    enabled: boolean;
-    defaultTTL: number;
-  } {
+  getStats(): CacheStats & { memorySize: number; enabled: boolean; defaultTTL: number } {
     return {
-      memoryEntries: this.memoryCache.size,
-      memorySize: JSON.stringify(Array.from(this.memoryCache.entries())).length,
+      ...this.stats,
+      memorySize: this.memoryCache.size,
       enabled: this.enabled,
       defaultTTL: this.defaultTTL
     };
   }
 
-  // Métodos privados para interação com Redis
-
-  private setInMemory<T>(key: string, value: T, ttl: number): void {
-    const entry: CacheEntry<T> = {
-      data: value,
-      timestamp: Date.now(),
-      ttl,
-      key
-    };
-    this.memoryCache.set(key, entry);
-  }
-
-  private async getFromRedis<T>(key: string): Promise<T | null> {
-    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
-    // return null;
-    
-    try {
-      // Verificar se há token de autenticação antes de tentar acessar o Redis
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('auth_token') || 
-                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
-        
-        if (!token) {
-          console.debug('No auth token available, skipping Redis cache');
-          return null;
-        }
-      }
-
-      // DESABILITADO: Chamada direta ao backend que causa CORS
-      // const response = await apiClient.get<{ value: T; exists: boolean }>(
-      //   '/api/cache/get',
-      //   { key }
-      // );
-
-      // if (response.success && response.data?.exists) {
-      //   return response.data.value;
-      // }
-      
-      console.debug('Redis cache desabilitado temporariamente');
-      return null;
-    } catch (error) {
-      console.debug('Redis get failed:', error);
-    }
-
-    return null;
-  }
-
-  private async setInRedis<T>(key: string, value: T, ttl: number): Promise<void> {
-    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
-    return;
-    
-    try {
-      // Verificar se há token de autenticação antes de tentar acessar o Redis
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('auth_token') || 
-                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
-        
-        if (!token) {
-          console.debug('No auth token available, skipping Redis cache set');
-          return;
-        }
-      }
-
-      // DESABILITADO: await apiClient.post('/api/cache/set', {
-      //   key,
-      //   value,
-      //   ttl
-      // });
-      
-      console.debug('Redis cache set desabilitado temporariamente');
-    } catch (error) {
-      console.debug('Redis set failed:', error);
-      // Não fazer throw do erro para não quebrar a aplicação
-      // throw error;
-    }
-  }
-
-  private async deleteFromRedis(key: string): Promise<void> {
-    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
-    return;
-    
-    try {
-      // Verificar se há token de autenticação antes de tentar acessar o Redis
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('auth_token') || 
-                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
-        
-        if (!token) {
-          console.debug('No auth token available, skipping Redis cache delete');
-          return;
-        }
-      }
-
-      // DESABILITADO: await apiClient.post('/api/cache/delete', { key });
-      console.debug('Redis cache delete desabilitado temporariamente');
-    } catch (error) {
-      console.debug('Redis delete failed:', error);
-      // Não fazer throw do erro para não quebrar a aplicação
-      // throw error;
-    }
-  }
-
-  private async clearRedis(): Promise<void> {
-    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
-    return;
-    
-    try {
-      // Verificar se há token de autenticação antes de tentar acessar o Redis
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('auth_token') || 
-                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
-        
-        if (!token) {
-          console.debug('No auth token available, skipping Redis cache clear');
-          return;
-        }
-      }
-
-      // DESABILITADO: await apiClient.post('/api/cache/clear', { pattern: this.keyPrefix + '*' });
-      console.debug('Redis cache clear desabilitado temporariamente');
-    } catch (error) {
-      console.debug('Redis clear failed:', error);
-      // Não fazer throw do erro para não quebrar a aplicação
-      // throw error;
-    }
-  }
-
-  private async invalidateRedisPattern(pattern: string): Promise<void> {
-    // TEMPORARIAMENTE DESABILITADO PARA RESOLVER PROBLEMAS DE CORS
-    return;
-    
-    try {
-      // Verificar se há token de autenticação antes de tentar acessar o Redis
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('auth_token') || 
-                     document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
-        
-        if (!token) {
-          console.debug('No auth token available, skipping Redis cache invalidate');
-          return;
-        }
-      }
-
-      // DESABILITADO: await apiClient.post('/api/cache/invalidate', { pattern });
-      console.debug('Redis cache invalidate desabilitado temporariamente');
-    } catch (error) {
-      console.debug('Redis invalidate pattern failed:', error);
-      // Não fazer throw do erro para não quebrar a aplicação
-      // throw error;
-    }
-  }
-
   /**
-   * Habilita ou desabilita o cache
+   * Cleanup manual
    */
-  setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-    if (!enabled) {
-      this.memoryCache.clear();
+  cleanup(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
     }
-  }
-
-  /**
-   * Configura TTL padrão
-   */
-  setDefaultTTL(ttl: number): void {
-    this.defaultTTL = ttl;
-  }
-
-  /**
-   * Pré-aquece o cache com dados frequentemente acessados
-   */
-  async warmup(keys: Array<{ key: string; fetcher: () => Promise<any>; ttl?: number }>): Promise<void> {
-    const promises = keys.map(async ({ key, fetcher, ttl }) => {
-      try {
-        const value = await fetcher();
-        await this.set(key, value, ttl);
-      } catch (error) {
-        console.warn(`Erro ao pré-aquecer cache para chave ${key}:`, error);
-      }
-    });
-
-    await Promise.allSettled(promises);
+    this.memoryCache.clear();
+    this.resetStats();
   }
 }
 
-// Instância singleton do serviço de cache
-export const cacheService = new CacheService({
-  ttl: 300, // 5 minutos padrão
-  prefix: 'portal_sabercon:',
-  enabled: true
-});
+// Instância singleton do cache
+export const cacheService = new CacheService();
 
-// Configurações específicas por tipo de dados
-export const CacheKeys = {
-  // Usuários
-  USER_BY_ID: (id: string) => `user:${id}`,
-  USER_LIST: (filters: string) => `users:list:${filters}`,
-  USER_PROFILE: (id: string) => `user:profile:${id}`,
-  USER_COURSES: (id: string) => `user:courses:${id}`,
-  USERS_BY_ROLE: (roleId: string) => `users:role:${roleId}`,
-  USER_STATS: 'users:stats',
-
-  // Roles
-  ROLE_BY_ID: (id: string) => `role:${id}`,
-  ROLE_LIST: (filters: string) => `roles:list:${filters}`,
-  ROLE_PERMISSIONS: (roleId: string) => `role:permissions:${roleId}`,
-  ACTIVE_ROLES: 'roles:active',
-  ROLE_STATS: 'roles:stats',
-
-  // Instituições
-  INSTITUTION_BY_ID: (id: string) => `institution:${id}`,
-  INSTITUTION_LIST: (filters: string) => `institutions:list:${filters}`,
-  ACTIVE_INSTITUTIONS: 'institutions:active',
-  INSTITUTION_STATS: 'institutions:stats',
-
-  // Cursos
-  COURSE_BY_ID: (id: string) => `course:${id}`,
-  COURSE_LIST: (filters: string) => `courses:list:${filters}`,
-  COURSES_BY_INSTITUTION: (institutionId: string) => `courses:institution:${institutionId}`,
-  ACTIVE_COURSES: 'courses:active',
-  COURSE_STATS: 'courses:stats',
-
-  // Autenticação
-  AUTH_USER: (token: string) => `auth:user:${token}`,
-  AUTH_PERMISSIONS: (userId: string) => `auth:permissions:${userId}`,
-
-  // Configurações
-  APP_CONFIG: 'app:config',
-  SYSTEM_HEALTH: 'system:health'
-} as const;
-
-// TTLs específicos por tipo de dados (em segundos)
-export const CacheTTL = {
-  SHORT: 60,        // 1 minuto - dados que mudam frequentemente
-  MEDIUM: 300,      // 5 minutos - dados normais
-  LONG: 1800,       // 30 minutos - dados estáticos
-  VERY_LONG: 3600,  // 1 hora - configurações
-  STATS: 900        // 15 minutos - estatísticas
-} as const;
-
-// Funções utilitárias para cache
-export const withCache = async <T>(
-  key: string,
-  fetcher: () => Promise<T>,
-  ttl?: number
-): Promise<T> => {
-  return cacheService.getOrSet(key, fetcher, ttl);
-};
-
-export const invalidateUserCache = async (userId?: string): Promise<void> => {
-  if (userId) {
-    await cacheService.delete(CacheKeys.USER_BY_ID(userId));
-    await cacheService.delete(CacheKeys.USER_PROFILE(userId));
-    await cacheService.delete(CacheKeys.USER_COURSES(userId));
-  }
-  await cacheService.invalidatePattern('users:list:');
-  await cacheService.delete(CacheKeys.USER_STATS);
-};
-
-export const invalidateRoleCache = async (roleId?: string): Promise<void> => {
-  if (roleId) {
-    await cacheService.delete(CacheKeys.ROLE_BY_ID(roleId));
-  }
-  await cacheService.invalidatePattern('roles:list:');
-  await cacheService.delete(CacheKeys.ACTIVE_ROLES);
-  await cacheService.delete(CacheKeys.ROLE_STATS);
-};
-
-export const invalidateInstitutionCache = async (institutionId?: string): Promise<void> => {
-  if (institutionId) {
-    await cacheService.delete(CacheKeys.INSTITUTION_BY_ID(institutionId));
-  }
-  await cacheService.invalidatePattern('institutions:list:');
-  await cacheService.delete(CacheKeys.ACTIVE_INSTITUTIONS);
-  await cacheService.delete(CacheKeys.INSTITUTION_STATS);
-};
-
-export const invalidateCourseCache = async (courseId?: string, institutionId?: string): Promise<void> => {
-  if (courseId) {
-    await cacheService.delete(CacheKeys.COURSE_BY_ID(courseId));
-  }
-  if (institutionId) {
-    await cacheService.delete(CacheKeys.COURSES_BY_INSTITUTION(institutionId));
-  }
-  await cacheService.invalidatePattern('courses:list:');
-  await cacheService.delete(CacheKeys.ACTIVE_COURSES);
-  await cacheService.delete(CacheKeys.COURSE_STATS);
-};
+// Export default para compatibilidade
+export default cacheService;

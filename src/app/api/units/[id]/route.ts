@@ -4,6 +4,24 @@ import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import { getInternalApiUrl } from '@/config/env';
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
+
 // Schema de validação para atualização de unidade
 const updateUnitSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').optional(),
@@ -45,7 +63,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -57,7 +75,7 @@ export async function GET(
     })
     }
 
-    const response = await fetch(getInternalApiUrl(`/api/units/${params.id}`), {
+    const response = await fetch(getInternalApiUrl(`/api/units/${resolvedParams.id}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -88,7 +106,7 @@ export async function GET(
 // PUT - Atualizar unidade
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -102,7 +120,7 @@ export async function PUT(
 
     const body = await request.json()
 
-    const response = await fetch(getInternalApiUrl(`/api/units/${params.id}`), {
+    const response = await fetch(getInternalApiUrl(`/api/units/${resolvedParams.id}`), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -134,7 +152,7 @@ export async function PUT(
 // DELETE - Remover unidade
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -146,7 +164,7 @@ export async function DELETE(
     })
     }
 
-    const response = await fetch(getInternalApiUrl(`/api/units/${params.id}`), {
+    const response = await fetch(getInternalApiUrl(`/api/units/${resolvedParams.id}`), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

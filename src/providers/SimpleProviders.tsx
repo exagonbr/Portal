@@ -3,19 +3,8 @@
 import React, { ReactNode, useState, useEffect, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
-
-// Importações dinâmicas sem tratamento de erro que mostra telas
-const AuthWrapper = dynamic(() => 
-  import('@/contexts/AuthContext')
-    .then(mod => ({ default: mod.AuthWrapper }))
-    .catch(error => {
-      console.error('❌ Erro ao carregar AuthWrapper:', error);
-      // Retornar um provider vazio em caso de erro
-      return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
-    }), {
-  ssr: false,
-  loading: () => null
-})
+import { SessionProvider } from 'next-auth/react'
+import { AuthWrapper } from '../contexts/AuthContext'
 
 const ThemeProvider = dynamic(() => 
   import('@/contexts/ThemeContext')
@@ -73,45 +62,45 @@ function MinimalLoadingFallback() {
 }
 
 /**
+ * Error boundary simples para AuthWrapper
+ */
+function AuthWrapperWithErrorBoundary({ children }: { children: ReactNode }) {
+  try {
+    return <AuthWrapper>{children}</AuthWrapper>;
+  } catch (error) {
+    console.error('❌ Erro no AuthWrapper:', error);
+    return <>{children}</>;
+  }
+}
+
+/**
  * Providers simplificados SEM telas de erro
  */
 export function SimpleProviders({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false)
-  const [providersReady, setProvidersReady] = useState(false)
 
-  // Configurar manipulador global de erros
+  // Configurar manipulador global de erros apenas no cliente
   useEffect(() => {
+    setMounted(true);
+    
     // Configurar manipulador global de erros para factory/chunk
     const cleanupErrorHandler = setupGlobalErrorHandler();
-    
-    // Apenas marcar como montado após um pequeno delay
-    const timer = setTimeout(() => {
-      setMounted(true);
-    }, 100);
 
     return () => {
-      clearTimeout(timer);
       cleanupErrorHandler(); // Limpar manipulador de erros
     };
   }, [])
 
-  // Aguardar um pouco mais para garantir que os providers estão prontos
-  useEffect(() => {
-    if (mounted) {
-      const timer = setTimeout(() => {
-        setProvidersReady(true);
-      }, 150);
-
-      return () => clearTimeout(timer);
-    }
-  }, [mounted]);
-
-  // Não renderizar nada até estar montado no cliente e providers prontos
-  if (!mounted || !providersReady) {
-    return null;
+  // Renderizar uma versão simplificada no servidor
+  if (!mounted) {
+    return (
+      <div className="min-h-screen w-full">
+        {children}
+      </div>
+    );
   }
 
-  // Renderizar sem error boundaries que mostram telas de erro
+  // Renderizar versão completa no cliente
   return (
     <div className="min-h-screen w-full">
       <Suspense fallback={null}>
@@ -119,17 +108,19 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <NavigationLoadingProvider>
               <Suspense fallback={null}>
-                <AuthWrapper>
-                  <Suspense fallback={null}>
-                    <GamificationProvider>
-                      <Suspense fallback={null}>
-                        <ToastManager>
-                          {children}
-                        </ToastManager>
-                      </Suspense>
-                    </GamificationProvider>
-                  </Suspense>
-                </AuthWrapper>
+                <SessionProvider>
+                  <AuthWrapperWithErrorBoundary>
+                    <Suspense fallback={null}>
+                      <GamificationProvider>
+                        <Suspense fallback={null}>
+                          <ToastManager>
+                            {children}
+                          </ToastManager>
+                        </Suspense>
+                      </GamificationProvider>
+                    </Suspense>
+                  </AuthWrapperWithErrorBoundary>
+                </SessionProvider>
               </Suspense>
             </NavigationLoadingProvider>
           </Suspense>

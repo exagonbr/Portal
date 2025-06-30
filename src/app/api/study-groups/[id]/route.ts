@@ -71,7 +71,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -83,7 +83,8 @@ export async function GET(
     })
     }
 
-    const groupId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar grupo
     const group = mockStudyGroups.get(groupId)
@@ -163,7 +164,7 @@ export async function GET(
 // PUT - Atualizar grupo
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -175,7 +176,8 @@ export async function PUT(
     })
     }
 
-    const groupId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const body = await request.json()
 
     // Validar dados
@@ -260,7 +262,7 @@ export async function PUT(
 // DELETE - Remover grupo
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -272,7 +274,8 @@ export async function DELETE(
     })
     }
 
-    const groupId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar grupo
     const existingGroup = mockStudyGroups.get(groupId)

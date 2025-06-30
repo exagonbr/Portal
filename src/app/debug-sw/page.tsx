@@ -53,13 +53,13 @@ export default function DebugServiceWorkerPage() {
           <p className="text-sm mb-2">Se o problema persistir, use no console:</p>
           <div className="bg-gray-800 text-red-400 p-3 rounded font-mono text-sm">
             <div>// Limpar tudo e recarregar</div>
-            <div>(async () => {'{'}</div>
+            <div>(async () =&gt; &#123;</div>
             <div>  const caches = await window.caches.keys();</div>
-            <div>  await Promise.all(caches.map(c => window.caches.delete(c)));</div>
+            <div>  await Promise.all(caches.map(c =&gt; window.caches.delete(c)));</div>
             <div>  const regs = await navigator.serviceWorker.getRegistrations();</div>
-            <div>  await Promise.all(regs.map(r => r.unregister()));</div>
+            <div>  await Promise.all(regs.map(r =&gt; r.unregister()));</div>
             <div>  window.location.reload();</div>
-            <div>{'})()'};</div>
+            <div>&#125;)();</div>
           </div>
         </div>
 

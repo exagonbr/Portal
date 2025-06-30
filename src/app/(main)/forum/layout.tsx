@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
+import { UserRole } from '@prisma/client'
 
 interface ForumLayoutProps {
   children: React.ReactNode
@@ -19,7 +20,7 @@ export default function ForumLayout({ children }: ForumLayoutProps) {
 
   const navigationItems = [
     { href: '/forum', label: 'Todos os Tópicos' },
-    ...(user?.role === 'teacher' ? [
+    ...(user?.role === UserRole.TEACHER ? [
       { href: '/forum/teacher/assignments', label: 'Atribuições' },
       { href: '/forum/teacher/announcements', label: 'Anúncios' }
     ] : [])

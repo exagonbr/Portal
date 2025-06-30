@@ -2,12 +2,35 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 // helpers
-function sanitizeInt(s: string|undefined, fallback: number): number {
+function sanitizeInt(s: string|null|undefined, fallback: number): number {
   const n = parseInt(s||'', 10)
   return isNaN(n) || n < 1 ? fallback : n
 }
 
+// generate a unique verification code
+function genCode(len = 8) {
+  return Array.from({ length: len })
+    .map(() => (Math.random() * 36 | 0).toString(36).toUpperCase())
+    .join('')
+}
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -23,12 +46,12 @@ export async function GET(req: NextRequest) {
     const skip  = (page - 1) * limit
 
     // build where-clause
-    const where: Prisma.CertificateWhereInput = {}
+    const where: Prisma.certificatesWhereInput = {}
     if (url.searchParams.has('user_id')) {
-      where.user_id = url.searchParams.get('user_id')!
+      where.user_id = parseInt(url.searchParams.get('user_id')!)
     }
     if (url.searchParams.has('course_id')) {
-      where.course_id = url.searchParams.get('course_id')!
+      where.course_id = parseInt(url.searchParams.get('course_id')!)
     }
     if (url.searchParams.has('certificate_type')) {
       where.certificate_type = url.searchParams.get('certificate_type')! as any
@@ -46,7 +69,7 @@ export async function GET(req: NextRequest) {
     }
 
     // sorting
-    let orderBy: Prisma.CertificateOrderByWithRelationInput = { issued_date: 'desc' }
+    let orderBy: Prisma.certificatesOrderByWithRelationInput = { issued_date: 'desc' }
     const sb = url.searchParams.get('sort_by')
     const so = url.searchParams.get('sort_order') === 'asc' ? 'asc' : 'desc'
     if (sb === 'title' || sb === 'created_at' || sb === 'issued_date') {
@@ -55,15 +78,14 @@ export async function GET(req: NextRequest) {
 
     // run count + find in one transaction
     const [total, certificates] = await prisma.$transaction([
-      prisma.certificate.count({ where }),
-      prisma.certificate.findMany({
+      prisma.certificates.count({ where }),
+      prisma.certificates.findMany({
         where,
         skip,
         take: limit,
         orderBy,
         include: {
-          user:   { select: { id: true, name: true, email: true } },
-          course: { select: { id: true, title: true, slug: true } },
+          courses: { select: { id: true, title: true, slug: true } },
         },
       }),
     ])
@@ -74,7 +96,7 @@ export async function GET(req: NextRequest) {
       data: certificates,
       pagination: { page, limit, total, totalPages },
     }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      headers: getCorsHeaders(req.headers.get('origin') || undefined)
     })
   } catch (err: any) {
     console.error('Erro ao buscar certificados:', err)
@@ -107,26 +129,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // generate a unique verification code
-    function genCode(len = 8) {
-      return Array.from({ length: len })
-        .map(() => (Math.random() * 36 | 0).toString(36).toUpperCase())
-        .join('')
-    }
-
     let code = genCode()
     while (
-      await prisma.certificate.findUnique({
+      await prisma.certificates.findUnique({
         where: { verification_code: code },
       })
     ) {
       code = genCode()
     }
 
-    const cert = await prisma.certificate.create({
+    const cert = await prisma.certificates.create({
       data: {
-        user_id,
-        course_id: course_id || null,
+        user_id: parseInt(user_id),
+        course_id: course_id ? parseInt(course_id) : null,
         title,
         description,
         certificate_type,
@@ -136,10 +151,10 @@ export async function POST(req: NextRequest) {
         metadata: metadata || undefined,
         verification_code: code,
         is_active: true,
+        updated_at: new Date(),
       },
       include: {
-        user: { select: { id: true, name: true, email: true } },
-        course: { select: { id: true, title: true, slug: true } },
+        courses: { select: { id: true, title: true, slug: true } },
       },
     })
 

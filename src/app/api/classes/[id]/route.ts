@@ -51,19 +51,20 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
+      return NextResponse.json({ error: 'Não autorizado' }, {
       status: 401,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
     }
 
-    const classId = params.id
+    const resolvedParams = await params
+    const classId = resolvedParams.id
 
     // Buscar turma
     const classData = mockClasses.get(classId)
@@ -79,8 +80,8 @@ export async function GET(
     const userRole = session.user?.role
     const canView = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
-      (userRole === 'SCHOOL_MANAGER' && classData.school_id === session.user.school_id) ||
+      userRole === 'INSTITUTION_MANAGER' ||
+      (userRole === 'COORDINATOR' && classData.school_id === session.user.school_id) ||
       (userRole === 'TEACHER' && classData.teacher_id === session.user?.id) ||
       (userRole === 'STUDENT' && classData.students?.includes(session.user?.id)) ||
       (userRole === 'GUARDIAN' && classData.students?.some((studentId: string) => 
@@ -121,19 +122,20 @@ export async function GET(
 // PUT - Atualizar turma
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
+      return NextResponse.json({ error: 'Não autorizado' }, {
       status: 401,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
     }
 
-    const classId = params.id
+    const resolvedParams = await params
+    const classId = resolvedParams.id
     const body = await request.json()
 
     // Validar dados
@@ -165,8 +167,8 @@ export async function PUT(
     const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
-      (userRole === 'SCHOOL_MANAGER' && existingClass.school_id === session.user.school_id)
+      userRole === 'INSTITUTION_MANAGER' ||
+      (userRole === 'COORDINATOR' && existingClass.school_id === session.user.school_id)
 
     if (!canEdit) {
       return NextResponse.json({ error: 'Sem permissão para editar esta turma' }, { 
@@ -216,19 +218,20 @@ export async function PUT(
 // DELETE - Remover turma
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { 
+      return NextResponse.json({ error: 'Não autorizado' }, {
       status: 401,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
     }
 
-    const classId = params.id
+    const resolvedParams = await params
+    const classId = resolvedParams.id
 
     // Buscar turma
     const existingClass = mockClasses.get(classId)
@@ -243,7 +246,7 @@ export async function DELETE(
     const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
-      (userRole === 'SCHOOL_MANAGER' && existingClass.school_id === session.user.school_id)
+      (userRole === 'COORDINATOR' && existingClass.school_id === session.user.school_id)
 
     if (!canDelete) {
       return NextResponse.json({ error: 'Sem permissão para deletar esta turma' }, { 

@@ -4,46 +4,73 @@ import { LoginForm } from './LoginForm';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { ThemeSelectorCompact } from '@/components/ui/ThemeSelector';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth, useAuthSafe } from '@/contexts/AuthContext';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
 import { MotionDiv, MotionH1, MotionP, ClientOnly } from '@/components/ui/MotionWrapper';
+import { getTheme } from '@/config/themes';
 
 export function LoginPage() {
   const router = useRouter();
-  const authContext = useAuthSafe(); // Usar versão segura primeiro
+  const authContext = useAuthSafe(); // Usar versão segura primeira
   const searchParams = useSearchParams();
   const [showUnauthorizedMessage, setShowUnauthorizedMessage] = useState(false);
-  const { theme } = useTheme();
+  const [showExpiredMessage, setShowExpiredMessage] = useState(false);
+  const [contextLoading, setContextLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  
+  // Usar tema padrão seguro
+  const [theme, setTheme] = useState(() => getTheme('academic'));
+  
+  // Tentar obter tema do contexto quando disponível
+  useEffect(() => {
+    if (mounted) {
+      try {
+        // Importar dinamicamente para evitar erro de hidratação
+        import('@/contexts/ThemeContext').then(({ useTheme }) => {
+          try {
+            const themeContext = useTheme();
+            if (themeContext?.theme) {
+              setTheme(themeContext.theme);
+            }
+          } catch (error) {
+            // Contexto não disponível, manter tema padrão
+            console.log('ThemeContext não disponível, usando tema padrão');
+          }
+        }).catch(() => {
+          // Erro ao importar, manter tema padrão
+          console.log('Erro ao importar ThemeContext, usando tema padrão');
+        });
+      } catch (error) {
+        // Qualquer erro, manter tema padrão
+        console.log('Erro ao acessar tema, usando padrão');
+      }
+    }
+  }, [mounted]);
+  
   const { settings, isLoading } = useSystemSettings();
 
-  // Se o contexto não estiver disponível ainda, mostrar loading
-  if (!authContext) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.background.primary }}>
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <MotionDiv 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
-              style={{ borderColor: theme.colors.primary.DEFAULT }}
-            />
-            <p className="mt-2" style={{ color: theme.colors.text.secondary }}>Carregando...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const { user } = authContext;
-
+  // Aguardar montagem no cliente
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Aguardar o contexto estar disponível
+  useEffect(() => {
+    if (authContext !== undefined) {
+      setContextLoading(false);
+    }
+  }, [authContext]);
+
+  // Processar parâmetros da URL apenas no cliente
+  useEffect(() => {
+    if (!mounted || !authContext) return;
+    
     const error = searchParams?.get('error');
+    const authError = searchParams?.get('auth_error');
     const logout = searchParams?.get('logout');
     
     if (error === 'unauthorized') {
@@ -57,22 +84,38 @@ export function LoginPage() {
       });
     }
     
+    if (authError === 'expired') {
+      setShowExpiredMessage(true);
+      
+      // Limpar todos os dados quando o login expirar
+      clearAllDataForUnauthorized().then(() => {
+        console.log('✅ Limpeza completa de dados concluída para login expirado');
+      }).catch((error) => {
+        console.error('❌ Erro durante limpeza de dados:', error);
+      });
+    }
+    
     if (logout === 'true') {
       // Mostrar mensagem de logout bem-sucedido
       console.log('✅ Logout realizado com sucesso');
     }
     
-    // Limpar parâmetros da URL após processar
-    if (error || logout) {
+    // Limpar parâmetros da URL após processar (apenas no cliente)
+    if (typeof window !== 'undefined' && (error || authError || logout)) {
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
+      url.searchParams.delete('auth_error');
       url.searchParams.delete('logout');
       window.history.replaceState({}, '', url.toString());
     }
-  }, [searchParams]);
+  }, [searchParams, authContext, mounted]);
 
   // Redirecionar usuário já autenticado para o dashboard correto
   useEffect(() => {
+    if (!mounted || !authContext) return;
+    
+    const { user } = authContext;
+    
     if (user) {
       const normalizedRole = user.role?.toLowerCase();
       const dashboardPath = getDashboardPath(normalizedRole || user.role);
@@ -92,7 +135,30 @@ export function LoginPage() {
         }, 500);
       }
     }
-  }, [user, router]);
+  }, [authContext, router, mounted]);
+
+  // Se não estiver montado ou contexto não disponível, mostrar loading
+  if (!mounted || !authContext || contextLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.background.primary }}>
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <MotionDiv
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
+              style={{ borderColor: theme.colors.primary.DEFAULT }}
+            />
+            <p className="mt-2" style={{ color: theme.colors.text.secondary }}>
+              {!mounted ? 'Carregando...' : !authContext ? 'Inicializando autenticação...' : 'Carregando...'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { user } = authContext;
 
   const renderBackground = () => {
     if (isLoading) return null;
@@ -295,7 +361,7 @@ export function LoginPage() {
 
         {/* Unauthorized Message */}
         {showUnauthorizedMessage && (
-          <MotionDiv 
+          <MotionDiv
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="rounded-lg p-4 border"
@@ -308,7 +374,7 @@ export function LoginPage() {
           >
             <div className="flex">
               <div className="flex-shrink-0">
-                <span 
+                <span
                   className="material-symbols-outlined"
                   style={{ color: theme.colors.status.warning }}
                   aria-hidden="true"
@@ -320,6 +386,39 @@ export function LoginPage() {
                 <h3 className="text-sm font-medium">Não autorizado</h3>
                 <p className="text-sm mt-1 opacity-90">
                   Você precisa fazer login para acessar esta página.
+                </p>
+              </div>
+            </div>
+          </MotionDiv>
+        )}
+
+        {/* Expired Login Message */}
+        {showExpiredMessage && (
+          <MotionDiv
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="rounded-lg p-4 border"
+            style={{
+              backgroundColor: `${theme.colors.status.error}20`,
+              borderColor: theme.colors.status.error,
+              color: theme.colors.text.primary
+            }}
+            role="alert"
+          >
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span
+                  className="material-symbols-outlined"
+                  style={{ color: theme.colors.status.error }}
+                  aria-hidden="true"
+                >
+                  schedule
+                </span>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium">Login Expirado</h3>
+                <p className="text-sm mt-1 opacity-90">
+                  Sua sessão expirou. Por favor, faça login novamente para continuar.
                 </p>
               </div>
             </div>

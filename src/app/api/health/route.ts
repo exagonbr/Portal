@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { API_CONFIG } from '@/config/constants';
+import { getCorsHeaders, createCorsOptionsResponse } from '@/config/cors';
 
 
 // Handler para requisições OPTIONS (preflight)
@@ -20,7 +21,6 @@ export async function GET(request: NextRequest) {
       version: process.env.npm_package_version || '1.0.0',
       services: {
         database: 'connected', // Em produção, verificar conexão real
-        redis: 'connected',    // Em produção, verificar conexão real
         s3: 'connected'        // Em produção, verificar conexão real
       },
       memory: {

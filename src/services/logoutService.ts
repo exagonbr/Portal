@@ -5,7 +5,7 @@
 
 export class LogoutService {
   /**
-   * Realiza logout completo limpando localStorage, sessionStorage, cookies, Redis e backend
+   * Realiza logout completo limpando localStorage, sessionStorage, cookies e backend
    */
   static async performCompleteLogout(): Promise<void> {
     console.log('🔄 LogoutService: Iniciando logout completo');
@@ -19,9 +19,6 @@ export class LogoutService {
 
       // 3. Limpar cookies
       await this.clearCookies();
-
-      // 4. Invalidar sessão no Redis
-      await this.invalidateRedisSession();
 
       // 5. Notificar backend sobre logout
       await this.notifyBackendLogout();
@@ -135,37 +132,6 @@ export class LogoutService {
     }
   }
 
-  /**
-   * Invalida sessão no Redis
-   */
-  private static async invalidateRedisSession(): Promise<void> {
-    try {
-      console.log('🔄 LogoutService: Invalidando sessão no Redis');
-      
-      const sessionId = localStorage.getItem('session_id');
-      if (!sessionId) {
-        console.log('ℹ️ LogoutService: Nenhum session_id encontrado para invalidar');
-        return;
-      }
-
-      const response = await fetch('/api/sessions/invalidate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionId }),
-      });
-
-      if (response.ok) {
-        console.log('✅ LogoutService: Sessão Redis invalidada');
-      } else {
-        console.warn('⚠️ LogoutService: Erro ao invalidar sessão no Redis');
-      }
-    } catch (error) {
-      console.error('❌ LogoutService: Erro ao invalidar sessão no Redis:', error);
-      // Não bloqueia o logout se falhar
-    }
-  }
 
   /**
    * Notifica backend sobre logout

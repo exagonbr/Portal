@@ -12,10 +12,11 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/groups/${params.id}/permissions`, {
+    const resolvedParams = await params
+    const response = await fetch(`${BACKEND_URL}/api/groups/${resolvedParams.id}/permissions`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -39,12 +40,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const body = await request.json();
     
-    const response = await fetch(`${BACKEND_URL}/api/groups/${params.id}/permissions`, {
+    const response = await fetch(`${BACKEND_URL}/api/groups/${resolvedParams.id}/permissions`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -69,13 +71,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
     
-    const response = await fetch(`${BACKEND_URL}/api/groups/${params.id}/permissions?${queryString}`, {
+    const response = await fetch(`${BACKEND_URL}/api/groups/${resolvedParams.id}/permissions?${queryString}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

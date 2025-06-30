@@ -3,6 +3,24 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { mockRoles, findRoleById } from '../../mockDatabase'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
+
 // GET - Verificar se role pode ser deletada
 
 // Handler para requisições OPTIONS (preflight)
@@ -13,9 +31,10 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -33,7 +52,7 @@ export async function GET(
       )
     }
 
-    const roleId = params.id
+    const roleId = resolvedParams.id
     const existingRole = findRoleById(roleId)
 
     if (!existingRole) {
@@ -60,7 +79,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error(`Erro ao verificar se role ${params.id} pode ser deletada:`, error)
+    console.error(`Erro ao verificar se role ${resolvedParams.id} pode ser deletada:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

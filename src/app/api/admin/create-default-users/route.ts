@@ -3,6 +3,24 @@ import db from '../../../../../backend/src/config/database'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
 
+// Função para criar headers CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+// Função para resposta OPTIONS
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 // Definição dos usuários padrão
 const defaultUsers = [
   {

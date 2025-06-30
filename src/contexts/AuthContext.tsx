@@ -28,25 +28,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  * Wrapper que garante que o AuthProvider está pronto antes de renderizar children
  */
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
-  const [isReady, setIsReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Aguardar um pouco para garantir que o contexto está pronto
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 50);
-
-    return () => clearTimeout(timer);
+    setMounted(true);
   }, []);
 
-  if (!isReady) {
-    return null; // Ou um loading spinner minimalista
+  // Renderizar versão simplificada no servidor
+  if (!mounted) {
+    return <AuthProvider isInitializing={true}>{children}</AuthProvider>;
   }
 
-  return <AuthProvider>{children}</AuthProvider>;
+  // Renderizar versão completa no cliente
+  return <AuthProvider isInitializing={false}>{children}</AuthProvider>;
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, isInitializing = false }: { children: React.ReactNode; isInitializing?: boolean }) {
   const [user, setUser] = useState<UserEssentials | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,39 +71,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchCurrentUser = useCallback(async () => {
     // Só executar no cliente após montagem
     if (!mounted || typeof window === 'undefined') {
+      setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
       
-      // CORREÇÃO: Adicionar timeout para evitar travamento
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout na verificação de autenticação')), 5000);
-      });
-      
-      const userPromise = authService.getCurrentUser();
-      
-      // Usar Promise.race para garantir que não trave
-      const currentUser = await Promise.race([userPromise, timeoutPromise]) as UserEssentials | null;
+      // CORREÇÃO: Usar getCurrentUser diretamente sem timeout - é síncrono
+      const currentUser = await authService.getCurrentUser();
       
       if (currentUser) {
+        console.log('✅ Usuário encontrado na sessão:', currentUser.email, currentUser.role);
         setUser(currentUser);
         setError(null);
       } else {
+        console.log('ℹ️ Nenhum usuário na sessão');
         setUser(null);
       }
       
     } catch (err) {
       console.error('❌ Erro ao buscar usuário da sessão:', err);
       setUser(null);
-      
-      // CORREÇÃO: Não definir erro se for timeout, apenas log
-      if (err instanceof Error && err.message.includes('Timeout')) {
-        console.warn('⚠️ Timeout na verificação de autenticação - continuando sem usuário');
-      } else {
-        setError('Erro ao carregar dados do usuário');
-      }
+      setError(null); // Não definir erro para não afetar UX
     } finally {
       setLoading(false);
     }
@@ -116,15 +103,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Inicialização do contexto - verificar sessão existente
    */
   useEffect(() => {
-    if (mounted) {
+    if (mounted && !isInitializing) {
       // CORREÇÃO: Adicionar delay para evitar execução imediata
       const timeoutId = setTimeout(() => {
         fetchCurrentUser();
       }, 100);
       
       return () => clearTimeout(timeoutId);
+    } else if (!mounted) {
+      // No servidor, definir loading como false
+      setLoading(false);
     }
-  }, [mounted, fetchCurrentUser]);
+  }, [mounted, fetchCurrentUser, isInitializing]);
 
   /**
    * Função de redirecionamento segura com controle de loop
@@ -542,7 +532,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value: AuthContextType = {
     user,
-    loading,
+    loading: loading || isInitializing, // Include initialization loading
     error,
     isAuthenticated,
     login,
@@ -568,6 +558,7 @@ export function useAuth() {
     // Em vez de lançar erro imediatamente, verificar se estamos em um estado de loading
     if (typeof window !== 'undefined') {
       console.warn('⚠️ useAuth: Contexto não encontrado, possivelmente ainda carregando...');
+      console.warn('⚠️ Certifique-se de que o componente está dentro de um AuthProvider');
     }
     throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
@@ -589,25 +580,30 @@ export function useRequireAuth(redirectTo = '/auth/login') {
   const authContext = useAuthSafe();
   const router = useRouter();
   
+  // Mover hooks para fora da condição
+  useEffect(() => {
+    if (!authContext) return;
+    
+    const { user, loading } = authContext;
+    
+    if (!loading && !user) {
+      console.log('🔐 useRequireAuth: Usuário não autenticado, redirecionando...');
+      
+      // Redirecionar diretamente sem limpeza adicional
+      const redirectUrl = redirectTo.includes('?')
+        ? `${redirectTo}&error=unauthorized`
+        : `${redirectTo}?error=unauthorized`;
+      
+      router.replace(redirectUrl);
+    }
+  }, [authContext, router, redirectTo]);
+
   // Se o contexto não estiver disponível, aguardar
   if (!authContext) {
     return { user: null, loading: true, isAuthenticated: false };
   }
   
   const { user, loading } = authContext;
-
-  useEffect(() => {
-    if (!loading && !user) {
-      console.log('🔐 useRequireAuth: Usuário não autenticado, redirecionando...');
-      
-      // Redirecionar diretamente sem limpeza adicional
-      const redirectUrl = redirectTo.includes('?') 
-        ? `${redirectTo}&error=unauthorized` 
-        : `${redirectTo}?error=unauthorized`;
-      
-      router.replace(redirectUrl);
-    }
-  }, [user, loading, router, redirectTo]);
 
   return { user, loading, isAuthenticated: !!user };
 }
@@ -619,16 +615,13 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
   const authContext = useAuthSafe();
   const router = useRouter();
   
-  // Se o contexto não estiver disponível, aguardar
-  if (!authContext) {
-    return { user: null, loading: true, hasRole: false, isAuthenticated: false };
-  }
-  
-  const { user, loading, hasRole } = authContext;
-
-  const hasAllowedRole = allowedRoles.some(role => hasRole(role));
-
+  // Mover hooks para fora da condição
   useEffect(() => {
+    if (!authContext) return;
+    
+    const { user, loading, hasRole } = authContext;
+    const hasAllowedRole = allowedRoles.some(role => hasRole(role));
+
     if (!loading && user && !hasAllowedRole) {
       console.log(`🔐 useRequireRole: Usuário não tem role permitida. Role atual: ${user.role}, Permitidas: ${allowedRoles.join(', ')}`);
       
@@ -638,7 +631,15 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
       
       router.replace(dashboardPath || redirectTo);
     }
-  }, [user, loading, hasAllowedRole, allowedRoles, router, redirectTo]);
+  }, [authContext, allowedRoles, router, redirectTo]);
+
+  // Se o contexto não estiver disponível, aguardar
+  if (!authContext) {
+    return { user: null, loading: true, hasRole: false, isAuthenticated: false };
+  }
+  
+  const { user, loading, hasRole } = authContext;
+  const hasAllowedRole = allowedRoles.some(role => hasRole(role));
 
   return {
     user,
@@ -655,16 +656,13 @@ export function useRequirePermission(requiredPermissions: string[], redirectTo =
   const authContext = useAuthSafe();
   const router = useRouter();
   
-  // Se o contexto não estiver disponível, aguardar
-  if (!authContext) {
-    return { user: null, loading: true, hasPermissions: false, isAuthenticated: false };
-  }
-  
-  const { user, loading, hasAllPermissions } = authContext;
-
-  const hasRequiredPermissions = hasAllPermissions(requiredPermissions);
-
+  // Mover hooks para fora da condição
   useEffect(() => {
+    if (!authContext) return;
+    
+    const { user, loading, hasAllPermissions } = authContext;
+    const hasRequiredPermissions = hasAllPermissions(requiredPermissions);
+
     if (!loading && user && !hasRequiredPermissions) {
       console.log(`🔐 useRequirePermission: Usuário não tem permissões necessárias. Permissões: ${requiredPermissions.join(', ')}`);
       
@@ -674,7 +672,15 @@ export function useRequirePermission(requiredPermissions: string[], redirectTo =
       
       router.replace(dashboardPath || redirectTo);
     }
-  }, [user, loading, hasRequiredPermissions, requiredPermissions, router, redirectTo]);
+  }, [authContext, requiredPermissions, router, redirectTo]);
+
+  // Se o contexto não estiver disponível, aguardar
+  if (!authContext) {
+    return { user: null, loading: true, hasPermissions: false, isAuthenticated: false };
+  }
+  
+  const { user, loading, hasAllPermissions } = authContext;
+  const hasRequiredPermissions = hasAllPermissions(requiredPermissions);
 
   return {
     user,

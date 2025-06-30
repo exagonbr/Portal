@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
+
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -9,11 +27,12 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const { collectionId } = await request.json()
-    const fileId = params.id
+    const fileId = resolvedParams.id
 
     if (!collectionId) {
       return NextResponse.json({ error: 'ID da coleção é obrigatório' }, { 

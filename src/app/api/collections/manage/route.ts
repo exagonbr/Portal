@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../lib/auth-headers';
+import { createCorsOptionsResponse } from '@/config/cors';
 
 const BACKEND_URL = 'https://portal.sabercon.com.br/api';
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 import { connection as db } from '@/config/database'
 
 // Para agora, vou usar uma versão simplificada sem AWS SDK até que as dependências sejam instaladas

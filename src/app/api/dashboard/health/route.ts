@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
+import { getCorsHeaders, createCorsOptionsResponse } from '@/config/cors';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,7 @@ function getSystemHealth() {
           failed: Math.floor(Math.random() * 100)
         }
       },
-      redis: {
+      cache: {
         status: 'healthy', // Simulado como saudável
         activeConnections: Math.floor(10 + Math.random() * 40),
         memory: Math.floor(50 + Math.random() * 30), // MB

@@ -74,3 +74,6 @@ export class AuthErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+// Export default para compatibilidade
+export default AuthErrorBoundary;

@@ -38,9 +38,10 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -50,7 +51,7 @@ export async function GET(
     })
     }
 
-    const courseId = params.id
+    const courseId = resolvedParams.id
 
     // Buscar curso
     const course = mockCourses.get(courseId)
@@ -63,10 +64,10 @@ export async function GET(
 
     // Verificar permissões
     const userRole = session.user?.role
-    const canViewStudents = 
+    const canViewStudents =
       userRole === 'SYSTEM_ADMIN' ||
-      (userRole === 'INSTITUTION_ADMIN' && course.institution_id === session.user.institution_id) ||
-      (userRole === 'SCHOOL_MANAGER' && course.institution_id === session.user.institution_id) ||
+      (userRole === 'INSTITUTION_MANAGER' && course.institution_id === session.user.institution_id) ||
+      (userRole === 'COORDINATOR' && course.institution_id === session.user.institution_id) ||
       (userRole === 'TEACHER' && course.teachers?.includes(session.user?.id))
 
     if (!canViewStudents) {
@@ -133,9 +134,10 @@ export async function GET(
 // POST - Matricular aluno no curso
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -145,7 +147,7 @@ export async function POST(
     })
     }
 
-    const courseId = params.id
+    const courseId = resolvedParams.id
     const body = await request.json()
 
     // Validar dados
@@ -175,10 +177,10 @@ export async function POST(
 
     // Verificar permissões
     const userRole = session.user?.role
-    const canEnrollStudents = 
+    const canEnrollStudents =
       userRole === 'SYSTEM_ADMIN' ||
-      (userRole === 'INSTITUTION_ADMIN' && course.institution_id === session.user.institution_id) ||
-      (userRole === 'SCHOOL_MANAGER' && course.institution_id === session.user.institution_id)
+      (userRole === 'INSTITUTION_MANAGER' && course.institution_id === session.user.institution_id) ||
+      (userRole === 'COORDINATOR' && course.institution_id === session.user.institution_id)
 
     if (!canEnrollStudents) {
       return NextResponse.json({ error: 'Sem permissão para matricular alunos neste curso' }, { 

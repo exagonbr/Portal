@@ -30,28 +30,7 @@ function ProtectedRouteContent({
   const [hasError, setHasError] = useState(false)
   const [reloadCounter, setReloadCounter] = useState(0)
 
-  // Se o contexto não estiver disponível ainda, mostrar loading
-  if (!authContext) {
-    return (
-      <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: theme.colors.background.primary }}
-      >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-t-transparent rounded-full"
-          style={{ 
-            borderColor: theme.colors.primary.DEFAULT,
-            borderTopColor: 'transparent'
-          }}
-        />
-      </div>
-    )
-  }
-
-  const { user, loading } = authContext
-
+  // Mover todos os hooks para fora das condições
   // Tratamento de erro e recuperação automática
   useEffect(() => {
     if (hasError && reloadCounter < 3) {
@@ -68,7 +47,7 @@ function ProtectedRouteContent({
   useEffect(() => {
     // Captura de erros globais relacionados ao factory
     const handleError = (event: ErrorEvent) => {
-      if (event.error && 
+      if (event.error &&
           event.error.toString().includes("can't access property \"call\", originalFactory is undefined")) {
         console.error('⚠️ Erro de factory detectado, preparando recuperação');
         event.preventDefault();
@@ -81,7 +60,11 @@ function ProtectedRouteContent({
   }, []);
 
   useEffect(() => {
+    if (!authContext) return;
+    
     try {
+      const { user, loading } = authContext;
+      
       if (!loading) {
         if (!user) {
           // Se redirecionando para login, limpar dados primeiro
@@ -125,7 +108,7 @@ function ProtectedRouteContent({
           const permissions = Array.isArray(requiredPermission) ? requiredPermission : [requiredPermission]
           const userPermissions = ROLE_PERMISSIONS[user.role as UserRole]
           
-          const hasPermission = permissions.every(permission => 
+          const hasPermission = permissions.every(permission =>
             userPermissions[permission] === true
           )
           
@@ -146,7 +129,29 @@ function ProtectedRouteContent({
       console.error('❌ Erro durante verificação de autorização:', error);
       setHasError(true);
     }
-  }, [user, loading, requiredRole, requiredPermission, router, redirectTo, showUnauthorized])
+  }, [authContext, requiredRole, requiredPermission, router, redirectTo, showUnauthorized])
+
+  // Se o contexto não estiver disponível ainda, mostrar loading
+  if (!authContext) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: theme.colors.background.primary }}
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-t-transparent rounded-full"
+          style={{
+            borderColor: theme.colors.primary.DEFAULT,
+            borderTopColor: 'transparent'
+          }}
+        />
+      </div>
+    )
+  }
+
+  const { user, loading } = authContext
 
   // Modal de carregamento quando há erro
   if (hasError) {

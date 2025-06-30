@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
+import { getCorsHeaders, createCorsOptionsResponse } from '@/config/cors';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
     
     // Simulação de uso de memória Redis
     const baseMemoryMB = 45 + Math.random() * 15; // 45-60MB
-    const redisMemory = `${baseMemoryMB.toFixed(1)}MB`;
+    const cacheMemory = `${baseMemoryMB.toFixed(1)}MB`;
     
     // Dados de uptime do sistema
     const uptimeSeconds = Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 86400 * 7); // Até 7 dias
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
     const metrics = {
       activeUsers,
       activeSessions,
-      redisMemory,
+      cacheMemory,
       timestamp: now.toISOString(),
       system: {
         uptime: uptimeSeconds,

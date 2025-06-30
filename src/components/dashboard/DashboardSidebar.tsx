@@ -422,27 +422,11 @@ function DashboardSidebarComponent() {
   const { theme } = useTheme()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-
-  // Verificações de segurança
-  if (!theme || !theme.colors || !theme.colors.sidebar) {
-    console.warn('Theme não está disponível ou incompleto no DashboardSidebar');
-    return (
-      <div className="w-64 bg-gray-100 p-4 text-gray-800 border-r border-gray-200">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-300 rounded mb-2"></div>
-          <div className="h-4 bg-gray-300 rounded mb-2 w-3/4"></div>
-          <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-        </div>
-        <p className="mt-4 text-sm">Carregando tema do sidebar...</p>
-      </div>
-    );
-  }
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Get user role with fallback to STUDENT
   const userRole: UserRole = (user?.role || UserRole.STUDENT) as UserRole;
   const [selectedRole, setSelectedRole] = useState<UserRole>(userRole)
-
-
 
   // Check if current role is SYSTEM_ADMIN for compact styling
   const isSystemAdmin = selectedRole === UserRole.SYSTEM_ADMIN;
@@ -509,8 +493,6 @@ function DashboardSidebarComponent() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -1087,6 +1069,21 @@ function DashboardSidebarComponent() {
           }
         })()
       : getNavItems();
+
+  // Verificações de segurança após todos os hooks
+  if (!theme || !theme.colors || !theme.colors.sidebar) {
+    console.warn('Theme não está disponível ou incompleto no DashboardSidebar');
+    return (
+      <div className="w-64 bg-gray-100 p-4 text-gray-800 border-r border-gray-200">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-300 rounded mb-2"></div>
+          <div className="h-4 bg-gray-300 rounded mb-2 w-3/4"></div>
+          <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+        </div>
+        <p className="mt-4 text-sm">Carregando tema do sidebar...</p>
+      </div>
+    );
+  }
 
   return (
     <>

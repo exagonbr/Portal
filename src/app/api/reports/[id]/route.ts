@@ -46,7 +46,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -58,7 +58,8 @@ export async function GET(
     })
     }
 
-    const reportId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar relatório
     const report = mockReports.get(reportId)
@@ -142,7 +143,7 @@ export async function GET(
 // PUT - Atualizar relatório
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -154,7 +155,8 @@ export async function PUT(
     })
     }
 
-    const reportId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const body = await request.json()
 
     // Validar dados
@@ -248,7 +250,7 @@ export async function PUT(
 // DELETE - Remover relatório
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -260,7 +262,8 @@ export async function DELETE(
     })
     }
 
-    const reportId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar relatório
     const existingReport = mockReports.get(reportId)

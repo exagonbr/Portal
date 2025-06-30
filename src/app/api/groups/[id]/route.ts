@@ -12,10 +12,10 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/groups/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/groups/${resolvedParams.id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -39,12 +39,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
     
-    const response = await fetch(`${BACKEND_URL}/api/groups/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/groups/${resolvedParams.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -69,10 +69,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/groups/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/groups/${resolvedParams.id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

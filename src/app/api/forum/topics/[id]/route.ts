@@ -52,7 +52,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -64,7 +64,8 @@ export async function GET(
     })
     }
 
-    const topicId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar tópico
     const topic = mockTopics.get(topicId)
@@ -150,7 +151,7 @@ export async function GET(
 // PUT - Atualizar tópico
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -162,7 +163,8 @@ export async function PUT(
     })
     }
 
-    const topicId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const body = await request.json()
 
     // Validar dados
@@ -263,7 +265,7 @@ export async function PUT(
 // DELETE - Remover tópico
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -275,7 +277,8 @@ export async function DELETE(
     })
     }
 
-    const topicId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar tópico
     const existingTopic = mockTopics.get(topicId)

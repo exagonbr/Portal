@@ -98,9 +98,9 @@ export async function GET(
 
     // Verificar permissões
     const userRole = session.user?.role
-    const canViewDetails = 
+    const canViewDetails =
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       userRole === 'TEACHER' ||
       (userRole === 'STUDENT' && assignment.is_published)
 
@@ -198,9 +198,9 @@ export async function PUT(
 
     // Verificar permissões
     const userRole = session.user?.role
-    const canEdit = 
+    const canEdit =
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       (userRole === 'TEACHER' && existingAssignment.created_by === session.user?.id)
 
     if (!canEdit) {
@@ -293,9 +293,9 @@ export async function DELETE(
 
     // Verificar permissões
     const userRole = session.user?.role
-    const canDelete = 
+    const canDelete =
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       (userRole === 'TEACHER' && existingAssignment.created_by === session.user?.id)
 
     if (!canDelete) {

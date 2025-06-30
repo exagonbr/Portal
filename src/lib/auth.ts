@@ -40,6 +40,8 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 horas (86400 segundos)
+    updateAge: 24 * 60 * 60, // Atualizar a cada 24 horas
   }
 } 

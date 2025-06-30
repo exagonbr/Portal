@@ -12,10 +12,11 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/groups/${params.id}/members`, {
+    const resolvedParams = await params
+    const response = await fetch(`${BACKEND_URL}/api/groups/${resolvedParams.id}/members`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -39,12 +40,13 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const body = await request.json();
     
-    const response = await fetch(`${BACKEND_URL}/api/groups/${params.id}/members`, {
+    const response = await fetch(`${BACKEND_URL}/api/groups/${resolvedParams.id}/members`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

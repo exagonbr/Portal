@@ -31,9 +31,10 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -43,7 +44,7 @@ export async function GET(
       )
     }
 
-    const roleId = params.id
+    const roleId = resolvedParams.id
     const role = findRoleById(roleId)
 
     if (!role) {
@@ -76,7 +77,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error(`Erro ao buscar permissões da role ${params.id}:`, error)
+    console.error(`Erro ao buscar permissões da role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

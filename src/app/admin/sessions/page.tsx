@@ -5,6 +5,7 @@ import SessionManager from '../../../components/admin/SessionManager';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { UserRole } from '@prisma/client';
 
 const SessionsAdminPage: React.FC = () => {
   const { user, loading } = useAuth();
@@ -12,7 +13,7 @@ const SessionsAdminPage: React.FC = () => {
 
   useEffect(() => {
     // Verifica se o usuário tem permissão de admin
-    if (!loading && (!user || user.role !== 'admin')) {
+    if (!loading && (!user || user.role !== UserRole.SYSTEM_ADMIN)) {
       router.push('/dashboard');
     }
   }, [user, loading, router]);
@@ -25,7 +26,7 @@ const SessionsAdminPage: React.FC = () => {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== UserRole.SYSTEM_ADMIN) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

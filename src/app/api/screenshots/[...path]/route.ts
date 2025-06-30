@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
+
 // Função para gerar SVG de placeholder mais realista
 function generatePlaceholderSVG(width: number, height: number, label: string, formFactor: 'wide' | 'narrow') {
   const backgroundColor = formFactor === 'wide' ? '#0f3460' : '#1e40af'
@@ -110,10 +128,11 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const filename = params.path.join('/')
+    const resolvedParams = await params
+    const path = resolvedParams.path.join('/')
     
     // Verificar se o arquivo solicitado existe na configuração
     if (!(filename in screenshots)) {

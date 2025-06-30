@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../lib/auth-headers';
-
 import { getInternalApiUrl } from '@/config/env';
 
+// Função CORS
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': origin || '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    }
+  });
+}
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -14,7 +25,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/cache/set')`, {
+    const response = await fetch(getInternalApiUrl('/cache/set'), {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -36,7 +47,7 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/cache/set')`, {
+    const response = await fetch(getInternalApiUrl('/cache/set'), {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -58,7 +69,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/cache/set')`, {
+    const response = await fetch(getInternalApiUrl('/cache/set'), {
       method: 'PATCH',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),

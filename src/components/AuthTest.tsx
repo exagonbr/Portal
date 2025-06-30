@@ -5,6 +5,8 @@ import { useAuth, useAuthSafe } from '@/contexts/AuthContext';
 export function AuthTest() {
   // Test the safe version first
   const authContextSafe = useAuthSafe();
+  // Always call useAuth hook to avoid conditional hook calls
+  const { user, loading, isAuthenticated } = useAuth();
   
   if (!authContextSafe) {
     return (
@@ -14,9 +16,6 @@ export function AuthTest() {
       </div>
     );
   }
-
-  // Now we can safely use the regular useAuth
-  const { user, loading, isAuthenticated } = useAuth();
 
   return (
     <div className="p-4 bg-green-100 border border-green-400 rounded">

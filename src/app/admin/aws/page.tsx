@@ -289,7 +289,7 @@ export default function AdminAwsPage() {
               <div className="flex items-center">
                 <Info className="w-5 h-5 text-amber-600 mr-2" />
                 <span className="text-amber-800">
-                  Existem alterações não salvas. Clique em "Salvar" para aplicar as mudanças.
+                  Existem alterações não salvas. Clique em &quot;Salvar&quot; para aplicar as mudanças.
                 </span>
               </div>
             </div>

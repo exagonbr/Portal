@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 import { FileRecord, S3FileInfo } from '@/types/files'
 
 // Configuração S3 (você deve configurar com suas credenciais)

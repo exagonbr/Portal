@@ -13,10 +13,10 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roleId: string } }
+  { params }: { params: Promise<{ roleId: string }> }
 ) {
   try {
-    const response = await fetch(getInternalApiUrl(`/users?role_id=${params.roleId}`), {
+    const response = await fetch(getInternalApiUrl(`/users?role_id=${resolvedParams.roleId}`), {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });

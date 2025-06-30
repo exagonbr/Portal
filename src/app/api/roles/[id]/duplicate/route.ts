@@ -36,9 +36,10 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -56,7 +57,7 @@ export async function POST(
       )
     }
 
-    const roleId = params.id
+    const roleId = resolvedParams.id
     const existingRole = findRoleById(roleId)
 
     if (!existingRole) {
@@ -116,7 +117,7 @@ export async function POST(
     }, { status: 201 })
 
   } catch (error) {
-    console.error(`Erro ao duplicar role ${params.id}:`, error)
+    console.error(`Erro ao duplicar role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

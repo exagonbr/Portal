@@ -739,7 +739,7 @@ export default function ManageCertificates() {
               <span className="text-sm font-medium text-blue-800">Filtros ativos:</span>
               {filters.search && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Busca: "{filters.search}"
+                  Busca: &quot;{filters.search}&quot;
                 </span>
               )}
               {filters.certificate_type && (

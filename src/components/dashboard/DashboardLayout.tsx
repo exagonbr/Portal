@@ -45,18 +45,26 @@ export default function DashboardLayout({
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { theme, themeType, toggleTheme } = useTheme()
   
-  // Hook para status de atualização (com fallback para quando não estiver no UpdateProvider)
-  let updateStatus = null
-  try {
-    updateStatus = useUpdateStatus()
-  } catch (error) {
-    // Se não estiver dentro do UpdateProvider, usar valores padrão
-    updateStatus = {
-      isUpdateAvailable: false,
-      isUpdating: false,
-      handleUpdate: () => {}
-    }
-  }
+  // Hook para status de atualização - sempre chamar o hook sem try/catch
+  const updateStatus = useUpdateStatus()
+
+  // Adicionar listener para cliques fora dos dropdowns
+  useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as Element;
+      
+      // Verificar se o clique foi em um dropdown ou seus elementos
+      const isDropdownClick = target.closest('[data-dropdown]') ||
+                             target.closest('[data-dropdown-trigger]');
+      
+      if (!isDropdownClick) {
+        handleClickOutside();
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, [])
 
   // Verificação de segurança para o tema
   if (!theme || !theme.colors) {
@@ -188,23 +196,6 @@ export default function DashboardLayout({
     setShowUserMenu(false)
   }
 
-  // Adicionar listener para cliques fora dos dropdowns
-  useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      const target = event.target as Element;
-      
-      // Verificar se o clique foi em um dropdown ou seus elementos
-      const isDropdownClick = target.closest('[data-dropdown]') || 
-                             target.closest('[data-dropdown-trigger]');
-      
-      if (!isDropdownClick) {
-        handleClickOutside();
-      }
-    };
-
-    document.addEventListener('click', handleDocumentClick);
-    return () => document.removeEventListener('click', handleDocumentClick);
-  }, [])
 
   // Função de logout melhorada para seguir o padrão dos outros componentes
   const handleLogout = async () => {

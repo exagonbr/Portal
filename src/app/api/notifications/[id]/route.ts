@@ -41,7 +41,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -53,7 +53,8 @@ export async function GET(
     })
     }
 
-    const notificationId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar notificação
     const notification = mockNotifications.get(notificationId)
@@ -114,7 +115,7 @@ export async function GET(
 // PUT - Atualizar status da notificação
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -126,7 +127,8 @@ export async function PUT(
     })
     }
 
-    const notificationId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const body = await request.json()
 
     // Validar dados
@@ -214,7 +216,7 @@ export async function PUT(
 // DELETE - Remover notificação (apenas para remetente ou admin)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -226,7 +228,8 @@ export async function DELETE(
     })
     }
 
-    const notificationId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar notificação
     const existingNotification = mockNotifications.get(notificationId)

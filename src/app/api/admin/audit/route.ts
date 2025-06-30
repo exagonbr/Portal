@@ -4,6 +4,23 @@ import { authOptions } from '@/lib/auth'
 import { UserRole } from '@/types/roles'
 import knex from '@/config/database'
 
+// Função para criar headers CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+// Função para resposta OPTIONS
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -160,11 +177,11 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        total: parseInt(total as string, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }),
+        total: parseInt(total as string),
         totalPages: Math.ceil(parseInt(total as string) / limit)
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
@@ -253,9 +270,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       stats: {
-        totalActivities: parseInt(totalActivities?.total as string || '0', {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }),
+        totalActivities: parseInt(totalActivities?.total as string || '0'),
         uniqueUsers: parseInt(uniqueUsers?.total as string || '0'),
         uniqueSessions: parseInt(uniqueSessions?.total as string || '0'),
         loginCount: parseInt(loginCount?.total as string || '0'),
@@ -266,6 +281,8 @@ export async function POST(request: NextRequest) {
       },
       dailyActivities,
       topUsers
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {

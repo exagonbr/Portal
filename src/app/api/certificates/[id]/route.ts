@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -11,14 +27,14 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cert = await prisma.certificate.findUnique({
-      where: { id: params.id },
+    const resolvedParams = await params
+    const cert = await prisma.certificates.findUnique({
+      where: { id: parseInt(resolvedParams.id) },
       include: {
-        user:   { select: { id: true, name: true, email: true } },
-        course: { select: { id: true, title: true, slug: true } },
+        courses: { select: { id: true, title: true, slug: true } },
       },
     })
     if (!cert) {
@@ -28,7 +44,7 @@ export async function GET(
       )
     }
     return NextResponse.json({ success: true, data: cert }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      headers: getCorsHeaders(req.headers.get('origin') || undefined)
     })
   } catch (err: any) {
     console.error('Erro ao buscar certificado:', err)
@@ -41,74 +57,62 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const body = await req.json()
     // pick only updatable fields
-    const data: Prisma.CertificateUpdateInput = {}
-    ;[
-      'title',
-      'description',
-      'certificate_type',
-      'expiry_date',
-      'certificate_url',
-      'metadata',
-      'is_active',
-    ].forEach((key) => {
-      if (body[key] !== undefined) {
-        data[key] =
-          key === 'expiry_date'
-            ? body[key]
-              ? new Date(body[key])
-              : null
-            : body[key]
-      }
-    })
+    const data: Prisma.certificatesUpdateInput = {}
+    
+    if (body.title !== undefined) data.title = body.title
+    if (body.description !== undefined) data.description = body.description
+    if (body.certificate_type !== undefined) data.certificate_type = body.certificate_type
+    if (body.expiry_date !== undefined) {
+      data.expiry_date = body.expiry_date ? new Date(body.expiry_date) : null
+    }
+    if (body.certificate_url !== undefined) data.certificate_url = body.certificate_url
+    if (body.metadata !== undefined) data.metadata = body.metadata
+    if (body.is_active !== undefined) data.is_active = body.is_active
 
-    const updated = await prisma.certificate.update({
-      where: { id: params.id },
+    const updated = await prisma.certificates.update({
+      where: { id: parseInt(resolvedParams.id) },
       data,
       include: {
-        user:   { select: { id: true, name: true, email: true } },
-        course: { select: { id: true, title: true, slug: true } },
+        courses: { select: { id: true, title: true, slug: true } },
       },
     })
 
     return NextResponse.json({ success: true, data: updated }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      headers: getCorsHeaders(req.headers.get('origin') || undefined)
     })
   } catch (err: any) {
     console.error('Erro ao atualizar certificado:', err)
     const status = err.code === 'P2025' ? 404 : 500
     const msg = status === 404 ? 'Certificado não encontrado' : 'Erro interno do servidor'
-    return NextResponse.json({ success: false, message: msg }, { status }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    return NextResponse.json({ success: false, message: msg }, { status, headers: getCorsHeaders(req.headers.get('origin') || undefined) })
   }
 }
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const deleted = await prisma.certificate.delete({
-      where: { id: params.id },
+    const resolvedParams = await params
+    const deleted = await prisma.certificates.delete({
+      where: { id: parseInt(resolvedParams.id) },
       include: {
-        user:   { select: { id: true, name: true, email: true } },
-        course: { select: { id: true, title: true, slug: true } },
+        courses: { select: { id: true, title: true, slug: true } },
       },
     })
     return NextResponse.json({ success: true, data: deleted }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      headers: getCorsHeaders(req.headers.get('origin') || undefined)
     })
   } catch (err: any) {
     console.error('Erro ao deletar certificado:', err)
     const status = err.code === 'P2025' ? 404 : 500
     const msg = status === 404 ? 'Certificado não encontrado' : 'Erro interno do servidor'
-    return NextResponse.json({ success: false, message: msg }, { status }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    return NextResponse.json({ success: false, message: msg }, { status, headers: getCorsHeaders(req.headers.get('origin') || undefined) })
   }
 }

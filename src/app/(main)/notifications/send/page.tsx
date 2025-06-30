@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { UserRole } from '@/types/roles'
+import { UserRole } from '@prisma/client'
 import { apiClient } from '@/lib/api-client'
 import { pushNotificationService } from '@/services/pushNotificationService'
 import { isAuthenticated, getCurrentToken, validateToken, syncTokenWithApiClient, clearAllTokens } from '@/utils/token-validator'
@@ -71,7 +71,7 @@ export default function SendNotificationPage() {
     }
 
     // Verificar se o usuário tem permissão para enviar notificações
-    const restrictedRoles = [UserRole.GUARDIAN, UserRole.STUDENT]
+    const restrictedRoles: UserRole[] = [UserRole.GUARDIAN, UserRole.STUDENT]
     if (restrictedRoles.includes(user.role as UserRole)) {
       router.push('/notifications')
       return
@@ -123,10 +123,10 @@ export default function SendNotificationPage() {
         const userRole = user?.role as UserRole
         
         if (userRole === UserRole.SYSTEM_ADMIN) {
-          roles = 'INSTITUTION_MANAGER,ACADEMIC_COORDINATOR,TEACHER,STUDENT,GUARDIAN'
-        } else if (userRole === UserRole.INSTITUTION_MANAGER) {
-          roles = 'ACADEMIC_COORDINATOR,TEACHER,STUDENT,GUARDIAN'
-        } else if (userRole === UserRole.ACADEMIC_COORDINATOR) {
+          roles = 'INSTITUTION_ADMIN,SCHOOL_MANAGER,TEACHER,STUDENT,GUARDIAN'
+        } else if (userRole === UserRole.INSTITUTION_ADMIN) {
+          roles = 'SCHOOL_MANAGER,TEACHER,STUDENT,GUARDIAN'
+        } else if (userRole === UserRole.SCHOOL_MANAGER) {
           roles = 'TEACHER,STUDENT,GUARDIAN'
         } else if (userRole === UserRole.TEACHER) {
           roles = 'STUDENT,GUARDIAN'
@@ -155,7 +155,7 @@ export default function SendNotificationPage() {
         
         // Fallback para dados mock em caso de erro
         const mockUsers: User[] = [
-          { id: '1', name: 'João Silva', email: 'joao@escola.com', role: 'INSTITUTION_MANAGER' },
+          { id: '1', name: 'João Silva', email: 'joao@escola.com', role: 'INSTITUTION_ADMIN' },
           { id: '2', name: 'Maria Santos', email: 'maria@escola.com', role: 'TEACHER' },
           { id: '3', name: 'Pedro Costa', email: 'pedro@escola.com', role: 'TEACHER' },
           { id: '4', name: 'Ana Oliveira', email: 'ana@escola.com', role: 'STUDENT' },
@@ -168,9 +168,9 @@ export default function SendNotificationPage() {
         
         if (userRole === UserRole.SYSTEM_ADMIN) {
           filteredUsers = mockUsers
-        } else if (userRole === UserRole.INSTITUTION_MANAGER) {
-          filteredUsers = mockUsers.filter(u => ['ACADEMIC_COORDINATOR', 'TEACHER', 'STUDENT', 'GUARDIAN'].includes(u.role))
-        } else if (userRole === UserRole.ACADEMIC_COORDINATOR) {
+        } else if (userRole === UserRole.INSTITUTION_ADMIN) {
+          filteredUsers = mockUsers.filter(u => ['SCHOOL_MANAGER', 'TEACHER', 'STUDENT', 'GUARDIAN'].includes(u.role))
+        } else if (userRole === UserRole.SCHOOL_MANAGER) {
           filteredUsers = mockUsers.filter(u => ['TEACHER', 'STUDENT', 'GUARDIAN'].includes(u.role))
         } else if (userRole === UserRole.TEACHER) {
           filteredUsers = mockUsers.filter(u => ['STUDENT', 'GUARDIAN'].includes(u.role))
@@ -190,20 +190,20 @@ export default function SendNotificationPage() {
     
     if (userRole === UserRole.SYSTEM_ADMIN) {
       return [
-        { value: 'INSTITUTION_MANAGER', label: 'Gestores Institucionais' },
-        { value: 'ACADEMIC_COORDINATOR', label: 'Coordenadores Acadêmicos' },
+        { value: 'INSTITUTION_ADMIN', label: 'Administradores Institucionais' },
+        { value: 'SCHOOL_MANAGER', label: 'Gestores Escolares' },
         { value: 'TEACHER', label: 'Professores' },
         { value: 'STUDENT', label: 'Estudantes' },
         { value: 'GUARDIAN', label: 'Responsáveis' }
       ]
-    } else if (userRole === UserRole.INSTITUTION_MANAGER) {
+    } else if (userRole === UserRole.INSTITUTION_ADMIN) {
       return [
-        { value: 'ACADEMIC_COORDINATOR', label: 'Coordenadores Acadêmicos' },
+        { value: 'SCHOOL_MANAGER', label: 'Gestores Escolares' },
         { value: 'TEACHER', label: 'Professores' },
         { value: 'STUDENT', label: 'Estudantes' },
         { value: 'GUARDIAN', label: 'Responsáveis' }
       ]
-    } else if (userRole === UserRole.ACADEMIC_COORDINATOR) {
+    } else if (userRole === UserRole.SCHOOL_MANAGER) {
       return [
         { value: 'TEACHER', label: 'Professores' },
         { value: 'STUDENT', label: 'Estudantes' },
@@ -723,7 +723,8 @@ export default function SendNotificationPage() {
   }
 
   // Verificar se o usuário pode acessar esta página
-  if (!user || [UserRole.GUARDIAN, UserRole.STUDENT].includes(user.role as UserRole)) {
+  const restrictedRoles: UserRole[] = [UserRole.GUARDIAN, UserRole.STUDENT]
+  if (!user || restrictedRoles.includes(user.role as UserRole)) {
     return (
       <div className="container-responsive spacing-y-responsive">
         <div className="text-center">

@@ -23,20 +23,32 @@ const KoodoViewer = dynamic(
   }
 );
 
-export default function BookViewerPage({ params }: { params: { id: string } }) {
+export default function BookViewerPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [book, setBook] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [bookId, setBookId] = useState<string | null>(null)
 
   useEffect(() => {
+    // Resolver os parâmetros assíncronos
+    const resolveParams = async () => {
+      const resolvedParams = await params
+      setBookId(resolvedParams.id)
+    }
+    resolveParams()
+  }, [params])
+
+  useEffect(() => {
+    if (!bookId) return
+
     // Simular carregamento do livro
     const loadBook = async () => {
       try {
-        console.log('Carregando livro com ID:', params.id)
+        console.log('Carregando livro com ID:', bookId)
         // Aqui você faria uma chamada à API real
         // Por enquanto, vamos usar os dados mockados
-        const foundBook = mockBooks.find(b => b.id === params.id)
+        const foundBook = mockBooks.find(b => b.id === bookId)
         console.log('Livro encontrado:', foundBook)
         
         if (foundBook) {
@@ -49,7 +61,7 @@ export default function BookViewerPage({ params }: { params: { id: string } }) {
           setBook(foundBook)
         } else {
           // Livro não encontrado
-          console.error('Livro não encontrado com ID:', params.id)
+          console.error('Livro não encontrado com ID:', bookId)
           router.push('/portal/books')
         }
       } catch (error) {
@@ -61,7 +73,7 @@ export default function BookViewerPage({ params }: { params: { id: string } }) {
     }
 
     loadBook()
-  }, [params.id, router])
+  }, [bookId, router])
 
   if (loading) {
     return (

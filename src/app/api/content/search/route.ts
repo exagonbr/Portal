@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { ContentSearchResult, ContentMetadata } from '@/types/content';
 import { s3Service } from '@/services/s3Service';
 

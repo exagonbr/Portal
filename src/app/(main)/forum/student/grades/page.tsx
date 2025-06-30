@@ -2,12 +2,13 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { UserRole } from '@prisma/client'
 
 export default function StudentGradesPage() {
   const { user } = useAuth()
   const router = useRouter()
 
-  if (!user || user.role !== 'student') {
+  if (!user || user.role !== UserRole.STUDENT) {
     router.push('/forum')
     return null
   }

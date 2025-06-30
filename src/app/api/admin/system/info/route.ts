@@ -1,4 +1,22 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+// Função para criar headers CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+// Função para resposta OPTIONS
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
 
 // Em um cenário real, esses dados viriam de um serviço de monitoramento
 const SYSTEM_INFO = {
@@ -30,14 +48,13 @@ const SYSTEM_INFO = {
   ]
 }
 
-
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || undefined;
   return createCorsOptionsResponse(origin);
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   return NextResponse.json(SYSTEM_INFO, {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })

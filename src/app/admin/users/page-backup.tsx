@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import {
   Users,
   Plus,
@@ -20,7 +22,16 @@ import {
   UserCheck,
   UserX,
   Key,
-  Activity
+  Activity,
+  Phone,
+  History,
+  BarChart3,
+  FileText,
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Upload
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { userService } from '@/services/userService'
@@ -34,9 +45,27 @@ import { Badge } from '@/components/ui/Badge'
 import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 import { Button } from '@/components/ui/Button'
 import UserFormModal from '@/components/admin/users/UserFormModal'
-import UserPermissionsModal from '@/components/admin/users/UserPermissionsModal'
 import UserViewModal from '@/components/admin/users/UserViewModal'
-import { Card } from '@/components/ui/Card'
+import Card from '@/components/ui/Card'
+import Modal from '@/components/ui/Modal'
+// import CreateUserForm from '@/components/admin/users/CreateUserForm' // Componente não existe
+
+// Função debounce
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+// Função para resetar senha do usuário
+async function resetUserPassword(userId: string): Promise<void> {
+  // Implementação mock - substituir pela implementação real
+  console.log(`Resetando senha do usuário ${userId}`);
+  // Simular delay da API
+  await new Promise(resolve => setTimeout(resolve, 1000));
+}
 
 // Estendendo o tipo UserResponseDto para incluir campos adicionais
 interface ExtendedUserResponseDto extends UserResponseDto {
@@ -2616,12 +2645,21 @@ export default function ManageUsers() {
         {/* Modal de Criação de Usuário */}
         {showCreateModal && (
           <div className="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <CreateUserForm
+            {/* <CreateUserForm
               onClose={() => setShowCreateModal(false)}
               onSuccess={handleCreateUserSuccess}
               roles={roles}
               institutions={institutions}
-            />
+            /> */}
+            <div className="bg-white p-6 rounded-lg">
+              <p>Componente CreateUserForm não implementado</p>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="mt-4 px-4 py-2 bg-gray-500 text-white rounded"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         )}
       </div>

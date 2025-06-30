@@ -676,7 +676,7 @@ export default function MySQLPostgresMigrationPage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">👥 Usuários Padrão do Sistema</h3>
                 <p className="text-gray-600 mt-1">
-                  Crie automaticamente todos os usuários padrão nas tabelas "users" e "user" (se existirem) para garantir compatibilidade total
+                  Crie automaticamente todos os usuários padrão nas tabelas &quot;users&quot; e &quot;user&quot; (se existirem) para garantir compatibilidade total
                 </p>
               </div>
             </div>
@@ -740,7 +740,7 @@ export default function MySQLPostgresMigrationPage() {
             <div className="mt-4 space-y-3">
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  <strong>🔄 Compatibilidade Garantida:</strong> Os usuários serão criados em ambas as tabelas "users" e "user" (se existirem) para garantir funcionamento com diferentes estruturas de banco
+                  <strong>🔄 Compatibilidade Garantida:</strong> Os usuários serão criados em ambas as tabelas &quot;users&quot; e &quot;user&quot; (se existirem) para garantir funcionamento com diferentes estruturas de banco
                 </p>
               </div>
               
@@ -785,7 +785,7 @@ export default function MySQLPostgresMigrationPage() {
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
                 <p className="text-yellow-800">
-                  ⚠️ Configurações não carregadas. Preencha manualmente na aba "Conexão MySQL"
+                  ⚠️ Configurações não carregadas. Preencha manualmente na aba &quot;Conexão MySQL&quot;
                 </p>
               </div>
             )}
@@ -821,7 +821,7 @@ export default function MySQLPostgresMigrationPage() {
                       <strong>user → users</strong> (Tabela de usuários unificada)
                     </div>
                     <div className="text-xs text-green-600 mt-1">
-                      Todos os dados da tabela "user" serão migrados para "users"
+                      Todos os dados da tabela &quot;user&quot; serão migrados para &quot;users&quot;
                     </div>
                   </div>
 
@@ -1763,7 +1763,7 @@ export default function MySQLPostgresMigrationPage() {
                       <h4 className="font-semibold text-green-800 mb-3">✅ Colunas Recomendadas para o Sistema</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <h5 className="font-medium text-green-700 mb-2">Para tabela 'users':</h5>
+                          <h5 className="font-medium text-green-700 mb-2">Para tabela &apos;users&apos;:</h5>
                           <div className="text-sm text-green-600 space-y-1">
                             <div>• id (integer, auto-increment)</div>
                             <div>• email (varchar, unique)</div>
@@ -1777,7 +1777,7 @@ export default function MySQLPostgresMigrationPage() {
                           </div>
                         </div>
                         <div>
-                          <h5 className="font-medium text-green-700 mb-2">Para tabela 'roles':</h5>
+                          <h5 className="font-medium text-green-700 mb-2">Para tabela &apos;roles&apos;:</h5>
                           <div className="text-sm text-green-600 space-y-1">
                             <div>• id (integer, auto-increment)</div>
                             <div>• name (varchar, unique)</div>

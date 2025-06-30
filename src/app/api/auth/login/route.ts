@@ -330,7 +330,9 @@ export async function POST(request: NextRequest) {
     
     try {
       // Determinar URL do backend baseado no ambiente
-      const backendBaseUrl = 'https://portal.sabercon.com.br/api';
+      const backendBaseUrl = process.env.NODE_ENV === 'production'
+        ? 'https://portal.sabercon.com.br/api'
+        : 'http://localhost:3001/api';
       const backendUrl = `${backendBaseUrl}/auth/optimized/login`;
       
       console.log(`🌐 BACKEND REQUEST: Tentando ${backendUrl}`);
@@ -561,15 +563,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Normalizar o campo 'role' se necessário
-    if (!userData.role && (userData.role_name || userData.role_slug)) {
-      console.log(`Normalizando 'role': usando 'role_name' ou 'role_slug' como fallback.`);
-      userData.role = userData.role_name || userData.role_slug;
-    }
-
-    // 5. Mapear role_slug para role se necessário
-    if (userData.role_slug && !userData.role) {
-      userData.role = userData.role_slug;
+    // 4. Normalizar o campo 'role' - SEMPRE usar role_slug quando disponível
+    if (userData.role_slug) {
+      console.log(`Normalizando 'role': usando 'role_slug' (${userData.role_slug}) em vez de 'role_name' (${userData.role_name})`);
+      userData.role = userData.role_slug; // SEMPRE priorizar role_slug
+    } else if (!userData.role && userData.role_name) {
+      console.log(`Fallback 'role': usando 'role_name' como último recurso.`);
+      userData.role = userData.role_name;
     }
 
     // 6. Garantir que temos as permissões corretas
@@ -631,7 +631,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 horas
+      maxAge: 60 * 60 * 24, // 24 horas (86400 segundos)
       path: '/',
     });
 
@@ -641,7 +641,7 @@ export async function POST(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 dias
+        maxAge: 60 * 60 * 24 * 7, // 7 dias (604800 segundos)
         path: '/',
       });
     }
@@ -652,7 +652,7 @@ export async function POST(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24, // 24 horas
+        maxAge: 60 * 60 * 24, // 24 horas (86400 segundos)
         path: '/',
       });
     }
@@ -675,7 +675,7 @@ export async function POST(request: NextRequest) {
       httpOnly: false, // Permitir acesso via JavaScript
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 horas
+      maxAge: 60 * 60 * 24, // 24 horas (86400 segundos)
       path: '/',
     });
 

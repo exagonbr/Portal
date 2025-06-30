@@ -85,7 +85,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -97,7 +97,8 @@ export async function GET(
     })
     }
 
-    const quizId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar quiz
     const quiz = mockQuizzes.get(quizId)
@@ -205,7 +206,7 @@ export async function GET(
 // PUT - Atualizar quiz
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -217,7 +218,8 @@ export async function PUT(
     })
     }
 
-    const quizId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const body = await request.json()
 
     // Validar dados
@@ -332,7 +334,7 @@ export async function PUT(
 // DELETE - Remover quiz
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -344,7 +346,8 @@ export async function DELETE(
     })
     }
 
-    const quizId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Buscar quiz
     const existingQuiz = mockQuizzes.get(quizId)

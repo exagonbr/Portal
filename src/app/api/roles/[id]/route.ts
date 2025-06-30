@@ -39,7 +39,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -51,7 +51,8 @@ export async function GET(
       )
     }
 
-    const roleId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const role = findRoleById(roleId)
 
     if (!role) {
@@ -69,7 +70,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error(`Erro ao buscar role ${params.id}:`, error)
+    console.error(`Erro ao buscar role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -80,7 +81,7 @@ export async function GET(
 // PUT - Atualizar role
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -100,7 +101,8 @@ export async function PUT(
       )
     }
 
-    const roleId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const existingRole = findRoleById(roleId)
 
     if (!existingRole) {
@@ -158,7 +160,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error(`Erro ao atualizar role ${params.id}:`, error)
+    console.error(`Erro ao atualizar role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -169,7 +171,7 @@ export async function PUT(
 // DELETE - Remover role
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -189,7 +191,8 @@ export async function DELETE(
       )
     }
 
-    const roleId = params.id
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const existingRole = findRoleById(roleId)
 
     if (!existingRole) {
@@ -218,7 +221,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error(`Erro ao deletar role ${params.id}:`, error)
+    console.error(`Erro ao deletar role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

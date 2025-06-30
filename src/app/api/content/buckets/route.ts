@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Configuração S3
 const s3Client = new S3Client({
@@ -57,32 +58,32 @@ export async function GET(request: NextRequest) {
         })) || []
 
         return NextResponse.json({
-          configured: Object.values(CONFIGURED_BUCKETS, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }),
+          configured: Object.values(CONFIGURED_BUCKETS),
           all: allBuckets,
           total: allBuckets.length
+        }, {
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
         })
       } catch (awsError) {
         console.warn('Não foi possível listar todos os buckets AWS:', awsError)
         // Retornar apenas os buckets configurados se não conseguir listar
         return NextResponse.json({
-          configured: Object.values(CONFIGURED_BUCKETS, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }),
+          configured: Object.values(CONFIGURED_BUCKETS),
           all: [],
           total: Object.keys(CONFIGURED_BUCKETS).length,
           warning: 'Não foi possível listar todos os buckets AWS. Mostrando apenas buckets configurados.'
+        }, {
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
         })
       }
     }
 
     // Retornar apenas buckets configurados
     return NextResponse.json({
-      configured: Object.values(CONFIGURED_BUCKETS, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }),
+      configured: Object.values(CONFIGURED_BUCKETS),
       total: Object.keys(CONFIGURED_BUCKETS).length
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {

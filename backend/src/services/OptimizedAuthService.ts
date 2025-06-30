@@ -226,7 +226,7 @@ export class OptimizedAuthService {
         userId: user.id,
         email: user.email,
         name: user.name,
-        role: user.role_slug || user.role_name || 'STUDENT',
+        role: user.role_slug || 'STUDENT', // SEMPRE usar role_slug, nunca role_name
         permissions: permissions, // Usar as permissões RBAC corretas
         institutionId: user.institution_id,
         sessionId
@@ -238,10 +238,11 @@ export class OptimizedAuthService {
       });
 
       // Preparar resposta do usuário
-      const userResponse: UserWithRole = {
+      const userResponse: UserWithRole & { role: string } = {
         id: user.id,
         email: user.email,
         name: user.full_name,
+        role: user.role_slug || 'STUDENT', // ADICIONAR campo role com o slug
         role_id: user.role_id,
         institution_id: user.institution_id,
         is_active: user.enabled,
@@ -585,6 +586,7 @@ export class OptimizedAuthService {
         id: user.id,
         email: user.email,
         name: user.full_name,
+        role: roleInfo.slug, // ADICIONAR campo role com o slug
         role_id: roleInfo.id,
         institution_id: user.institution_id,
         is_active: user.enabled,
@@ -594,7 +596,7 @@ export class OptimizedAuthService {
         role_slug: roleInfo.slug,
         permissions,
         institution_name: institutionName
-      };
+      } as UserWithRole & { role: string };
 
     } catch (error) {
       console.error('Erro ao buscar usuário por ID:', error);

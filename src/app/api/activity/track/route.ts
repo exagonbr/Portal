@@ -5,6 +5,24 @@ import { activityTracker } from '@/services/activityTrackingService'
 import { CreateActivityData, ActivityType } from '@/types/activity'
 import { z } from 'zod'
 
+// Função para criar headers CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+// Função para resposta OPTIONS
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 // Schema de validação para rastreamento de atividade
 const trackActivitySchema = z.object({
   user_id: z.string(),
@@ -49,8 +67,7 @@ export async function POST(request: NextRequest) {
     const validatedData = trackActivitySchema.parse(body)
 
     // Obter informações da requisição
-    const ip = request.ip || 
-               request.headers.get('x-forwarded-for')?.split(',')[0] ||
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
                request.headers.get('x-real-ip') ||
                'unknown'
     

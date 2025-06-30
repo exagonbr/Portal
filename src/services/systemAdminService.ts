@@ -133,7 +133,6 @@ export interface RealTimeMetrics {
   activeUsers: number;
   activeSessions: number;
   memoryUsage: NodeJS.MemoryUsage;
-  redisMemory?: number;
 }
 
 export interface SystemHealth {
@@ -143,11 +142,7 @@ export interface SystemHealth {
       status: 'healthy' | 'warning' | 'critical';
       uptime: number;
       memory: NodeJS.MemoryUsage;
-    };
-    redis: {
-      status: 'healthy' | 'warning' | 'critical';
       activeConnections: number;
-      memory?: number;
     };
     database: {
       status: 'healthy' | 'warning' | 'critical';
@@ -975,7 +970,6 @@ class SystemAdminService {
           external: 8388608 + Math.floor(Math.random() * 838860),
           arrayBuffers: 1048576 + Math.floor(Math.random() * 104857)
         },
-        redisMemory: Math.floor(45 + Math.random() * 15) // MB
       };
     }
   }
@@ -1037,10 +1031,7 @@ class SystemAdminService {
               heapUsed: 67108864,
               external: 8388608,
               arrayBuffers: 1048576
-            }
-          },
-          redis: {
-            status: 'healthy',
+            },
             activeConnections: 150
           },
           database: {
@@ -1101,10 +1092,7 @@ class SystemAdminService {
               heapUsed: 67108864,
               external: 8388608,
               arrayBuffers: 1048576
-            }
-          },
-          redis: {
-            status: 'healthy',
+            },
             activeConnections: 150
           },
           database: {
