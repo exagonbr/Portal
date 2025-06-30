@@ -40,23 +40,10 @@ const nextConfig = {
   // Configuração de output para produção
   output: isDev ? undefined : 'standalone',
   
-  // CORREÇÃO: Configuração de proxy mais específica para evitar loops
-  // CORREÇÃO: Configuração de proxy mais específica para evitar loops
-  async rewrites() {
-    const apiDestination =
-      process.env.NODE_ENV === 'development'
-        ? 'http://localhost:3001/api/:path*'
-        : 'https://portal.sabercon.com.br/api/:path*';
-
-    console.log(`🔄 Proxy configurado para: ${apiDestination}`);
-
-    return [
-      {
-        source: '/api/:path*',
-        destination: apiDestination,
-      },
-    ];
-  },
+  // REMOVIDO: Configuração de proxy (rewrites) eliminada para comunicação direta
+  // O frontend agora se comunica diretamente com o backend via URLs configuradas
+  // Frontend: https://portal.sabercon.com.br (porta 3000)
+  // Backend: http://localhost:3001 (comunicação interna via Nginx)
   
   images: {
     remotePatterns: [
@@ -108,7 +95,7 @@ const nextConfig = {
     CUSTOM_KEY: 'my-value',
   },
   
-  // CORREÇÃO: Headers otimizados para CORS GLOBAL - PERMITIR TODAS AS ORIGENS
+  // Headers otimizados para comunicação direta (sem proxy)
   async headers() {
     return [
       {
@@ -120,7 +107,7 @@ const nextConfig = {
           },
           {
             key: 'Access-Control-Allow-Origin',
-            value: '*'
+            value: 'https://portal.sabercon.com.br'
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -129,63 +116,12 @@ const nextConfig = {
           {
             key: 'Access-Control-Allow-Headers',
             value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie'
-          }
-        ]
-      },
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*'
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie'
-          },
-          {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'false'
-          },
-          {
-            key: 'Access-Control-Max-Age',
-            value: '86400'
-          },
-          // CORREÇÃO: Cache otimizado para APIs
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0'
-          },
-          // Adicionar header de versão para debugging
-          {
-            key: 'X-Cache-Version',
-            value: cacheVersion
           }
         ]
       },
       {
         source: '/:path*',
         headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*'
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie'
-          },
-          {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'false'
-          },
           {
             key: 'X-Frame-Options',
             value: 'DENY'
@@ -198,20 +134,15 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin'
           },
+          // Cache otimizado para assets estáticos
           {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob: *",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: *",
-              "style-src 'self' 'unsafe-inline' https: *",
-              "img-src 'self' data: blob: https: *",
-              "font-src 'self' data: https: *",
-              "connect-src 'self' https: wss: *",
-              "media-src 'self' https: *",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self' *"
-            ].join('; ')
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          },
+          // Header de versão para debugging
+          {
+            key: 'X-Cache-Version',
+            value: cacheVersion
           }
         ]
       }

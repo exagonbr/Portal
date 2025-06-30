@@ -1,6 +1,6 @@
 /**
- * Configuração centralizada de ambiente
- * Resolve URLs baseado no ambiente atual
+ * Configuração centralizada de ambiente - OTIMIZADA
+ * Comunicação direta frontend-backend sem proxy
  */
 
 // Detectar ambiente de forma segura
@@ -15,27 +15,29 @@ const NODE_ENV = getNodeEnv();
 const isProduction = NODE_ENV === 'production';
 const isDevelopment = NODE_ENV === 'development';
 
-// URLs base baseadas no ambiente
+// URLs otimizadas para comunicação direta
 const getBaseUrls = () => {
   if (isProduction) {
     return {
+      // Frontend público
       FRONTEND_URL: 'https://portal.sabercon.com.br',
+      
+      // Backend - comunicação direta via Nginx (sem proxy Next.js)
+      // Cliente (browser): usa URL pública do Nginx
       BACKEND_URL: 'https://portal.sabercon.com.br/api',
-      API_BASE_URL: '/api', // Usar URL relativa em produção
-      INTERNAL_API_URL: (typeof process !== 'undefined' && process.env?.INTERNAL_API_URL) || 'http://127.0.0.1:3001'
+      API_BASE_URL: 'https://portal.sabercon.com.br/api',
+      
+      // Servidor (SSR): usa URL interna direta
+      INTERNAL_API_URL: 'http://localhost:3001/api'
     };
   }
   
-  // Desenvolvimento
-  const nextPublicApiUrl = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) || 'https://portal.sabercon.com.br/api';
-  const nextAuthUrl = (typeof process !== 'undefined' && process.env?.NEXTAUTH_URL) || 'https://portal.sabercon.com.br';
-  const internalApiUrl = (typeof process !== 'undefined' && process.env?.INTERNAL_API_URL) || 'https://portal.sabercon.com.br/api';
-  
+  // Desenvolvimento - mesmo esquema para consistência
   return {
-    FRONTEND_URL: nextAuthUrl,
-    BACKEND_URL: nextPublicApiUrl,
-    API_BASE_URL: nextPublicApiUrl,
-    INTERNAL_API_URL: internalApiUrl
+    FRONTEND_URL: 'https://portal.sabercon.com.br',
+    BACKEND_URL: 'https://portal.sabercon.com.br/api',
+    API_BASE_URL: 'https://portal.sabercon.com.br/api',
+    INTERNAL_API_URL: 'http://localhost:3001/api'
   };
 };
 
@@ -49,7 +51,7 @@ try {
     FRONTEND_URL: 'https://portal.sabercon.com.br',
     BACKEND_URL: 'https://portal.sabercon.com.br/api',
     API_BASE_URL: 'https://portal.sabercon.com.br/api',
-    INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
+    INTERNAL_API_URL: 'http://localhost:3001/api'
   };
 }
 
@@ -62,28 +64,26 @@ export const ENV_CONFIG = {
   // URLs
   ...BASE_URLS,
   
-  // Configurações de API
+  // Configurações de API otimizadas
   API_TIMEOUT: 30000,
-  API_RETRY_ATTEMPTS: 3,
+  API_RETRY_ATTEMPTS: 2, // Reduzido para evitar sobrecarga
   
-  // Configurações de CORS
-  CORS_ORIGINS: isProduction 
-    ? ['https://portal.sabercon.com.br', 'https://www.portal.sabercon.com.br']
-    : ['https://portal.sabercon.com.br/api'],
+  // CORS simplificado
+  CORS_ORIGINS: ['https://portal.sabercon.com.br'],
     
   // Configurações de segurança
   SECURE_COOKIES: isProduction,
   SAME_SITE: isProduction ? 'strict' as const : 'lax' as const,
   
-  // Configurações de cache
+  // Cache otimizado
   CACHE_ENABLED: true,
-  CACHE_TTL: isProduction ? 3600 : 300,
+  CACHE_TTL: isProduction ? 1800 : 300, // 30min prod, 5min dev
   
   // Debug
   DEBUG_MODE: isDevelopment
 } as const;
 
-// Função helper para obter URL da API
+// Função helper para obter URL da API (cliente/browser)
 export const getApiUrl = (path: string = '') => {
   try {
     const baseUrl = ENV_CONFIG.API_BASE_URL;
@@ -95,43 +95,28 @@ export const getApiUrl = (path: string = '') => {
   }
 };
 
-// Função helper para obter URL interna (backend)
+// Função helper para obter URL interna (servidor/SSR)
 export const getInternalApiUrl = (path: string = '') => {
   try {
     const baseUrl = ENV_CONFIG.INTERNAL_API_URL;
-    let cleanPath = path.startsWith('/') ? path : `/${path}`;
-    
-    // Se o baseUrl já termina com /api e o path começa com /api, remover duplicação
-    if (baseUrl.endsWith('/api') && cleanPath.startsWith('/api')) {
-      cleanPath = cleanPath.substring(4); // Remove '/api' do início
-    }
-    
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter Internal API URL, usando fallback:', error);
-    const fallbackUrl = 'https://portal.sabercon.com.br';
-    let cleanPath = path.startsWith('/') ? path : `/${path}`;
-    
-    // Evitar duplicação de /api no fallback também
-    if (cleanPath.startsWith('/api/api')) {
-      cleanPath = cleanPath.substring(4); // Remove primeiro '/api'
-    }
-    
-    return `${fallbackUrl}${cleanPath}`;
+    return `http://localhost:3001/api${path.startsWith('/') ? path : `/${path}`}`;
   }
 };
 
 // Função helper para log de configuração (apenas em desenvolvimento)
 export const logEnvironmentConfig = () => {
   if (typeof console !== 'undefined' && ENV_CONFIG.DEBUG_MODE) {
-    console.log('🔧 Configuração de Ambiente:');
+    console.log('🚀 Configuração Otimizada (Comunicação Direta):');
     console.log(`   NODE_ENV: ${ENV_CONFIG.NODE_ENV}`);
     console.log(`   FRONTEND_URL: ${ENV_CONFIG.FRONTEND_URL}`);
-    console.log(`   BACKEND_URL: ${ENV_CONFIG.BACKEND_URL}`);
-    console.log(`   API_BASE_URL: ${ENV_CONFIG.API_BASE_URL}`);
-    console.log(`   INTERNAL_API_URL: ${ENV_CONFIG.INTERNAL_API_URL}`);
-    console.log(`   SECURE_COOKIES: ${ENV_CONFIG.SECURE_COOKIES}`);
-    console.log(`   CORS_ORIGINS: ${ENV_CONFIG.CORS_ORIGINS.join(', ')}`);
+    console.log(`   API_BASE_URL (Cliente): ${ENV_CONFIG.API_BASE_URL}`);
+    console.log(`   INTERNAL_API_URL (Servidor): ${ENV_CONFIG.INTERNAL_API_URL}`);
+    console.log(`   🔥 Proxy Next.js: DESABILITADO`);
+    console.log(`   ⚡ Comunicação: DIRETA via Nginx`);
   }
 };
 

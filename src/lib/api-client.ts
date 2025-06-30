@@ -1,6 +1,6 @@
 /**
- * Cliente API Unificado para Portal Sabercon
- * Substitui: api.ts, apiClient.ts, httpClient.ts
+ * Cliente API Otimizado para Portal Sabercon
+ * Comunicação direta frontend-backend (sem proxy Next.js)
  */
 
 import { ApiResponse, ApiError } from '@/types/api';
@@ -14,17 +14,13 @@ import {
 import { CORS_HEADERS } from '@/config/cors';
 import { logHttp500Error } from '../utils/debug-http-500';
 
-// Configuração centralizada
-// Configuração centralizada
-const API_URLS = [
-  process.env.NEXT_PUBLIC_API_URL,
-  'https://portal.sabercon.com.br/api'
-].filter(Boolean) as string[];
-
+// Configuração otimizada para comunicação direta
 const API_CONFIG = {
-  timeout: 30000,
-  retryAttempts: 3,
-  retryDelay: 1000,
+  // URL base única - comunicação direta via Nginx
+  baseUrl: 'https://portal.sabercon.com.br/api',
+  timeout: 25000, // Reduzido para melhor UX
+  retryAttempts: 2, // Reduzido para evitar sobrecarga
+  retryDelay: 800,
 } as const;
 
 // Tipos
@@ -63,175 +59,46 @@ if (typeof window !== 'undefined') {
   initializeFirefoxCompatibility();
 }
 
-// Cliente API principal
+// Cliente API otimizado
 class ApiClient {
-  private baseURLs: string[];
-  private currentBaseURLIndex: number;
+  private baseURL: string;
   private timeout: number;
   private isRefreshing = false;
   private refreshPromise: Promise<boolean> | null = null;
 
   constructor() {
-    this.baseURLs = API_URLS.length > 0 ? API_URLS : ['/api'];
-    this.currentBaseURLIndex = 0;
+    this.baseURL = API_CONFIG.baseUrl;
     this.timeout = API_CONFIG.timeout;
-  }
-
-  private getBaseURL(): string {
-    return this.baseURLs[this.currentBaseURLIndex];
-  }
-
-  private switchToNextBaseURL(): boolean {
-    if (this.currentBaseURLIndex < this.baseURLs.length - 1) {
-      this.currentBaseURLIndex++;
-      console.warn(`[API-CLIENT] API primária falhou. Trocando para a URL de fallback: ${this.getBaseURL()}`);
-      return true;
+    
+    // Log de inicialização apenas em desenvolvimento
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.log('🚀 [API-CLIENT] Inicializado com comunicação direta:', {
+        baseURL: this.baseURL,
+        timeout: this.timeout,
+        proxyNextJS: 'DESABILITADO'
+      });
     }
-    return false;
   }
 
   /**
-   * Obtém o token de autenticação com validação aprimorada
+   * Obtém o token de autenticação de forma otimizada
    */
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') {
-      console.log('🔍 [API-CLIENT] Executando no servidor, sem acesso ao storage');
       return null;
     }
     
-    console.log('🔍 [API-CLIENT] Buscando token de autenticação...');
+    // Busca otimizada - priorizar localStorage
+    const token = localStorage.getItem('auth_token') || 
+                  localStorage.getItem('token') || 
+                  sessionStorage.getItem('auth_token') ||
+                  sessionStorage.getItem('token');
     
-    // Tentar obter token de localStorage com prioridade
-    const possibleKeys = ['auth_token', 'token', 'authToken'];
-    let token = null;
-    let tokenSource = '';
-    
-    for (const key of possibleKeys) {
-      const storedToken = localStorage.getItem(key);
-      console.log(`🔍 [API-CLIENT] localStorage.${key}:`, {
-        found: !!storedToken,
-        length: storedToken ? storedToken.length : 0,
-        preview: storedToken ? storedToken.substring(0, 20) + '...' : 'null',
-        isNullString: storedToken === 'null',
-        isEmpty: !storedToken || storedToken.trim() === '',
-        isValidLength: storedToken ? storedToken.length > 10 : false
-      });
-      
-      if (storedToken && 
-          storedToken.trim() !== '' && 
-          storedToken !== 'null' && 
-          storedToken !== 'undefined' &&
-          storedToken.length > 10) { // Adicionar validação de comprimento mínimo
-        token = storedToken.trim();
-        tokenSource = `localStorage.${key}`;
-        break;
-      }
+    if (token && token !== 'null' && token !== 'undefined' && token.trim() !== '') {
+      return token.trim();
     }
     
-    // Se não encontrar no localStorage, tentar sessionStorage
-    if (!token) {
-      for (const key of possibleKeys) {
-        const storedToken = sessionStorage.getItem(key);
-        console.log(`🔍 [API-CLIENT] sessionStorage.${key}:`, {
-          found: !!storedToken,
-          length: storedToken ? storedToken.length : 0,
-          preview: storedToken ? storedToken.substring(0, 20) + '...' : 'null',
-          isNullString: storedToken === 'null'
-        });
-        
-        if (storedToken && storedToken.trim() !== '' && storedToken !== 'null' && storedToken !== 'undefined') {
-          token = storedToken.trim();
-          tokenSource = `sessionStorage.${key}`;
-          break;
-        }
-      }
-    }
-    
-    // Se não encontrar nos storages, tentar obter dos cookies
-    if (!token) {
-      const cookies = document.cookie.split(';');
-      console.log('🔍 [API-CLIENT] Verificando cookies:', cookies.length);
-      
-      for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (['auth_token', 'token', 'authToken'].includes(name)) {
-          console.log(`🔍 [API-CLIENT] cookie.${name}:`, {
-            found: !!value,
-            length: value ? value.length : 0,
-            preview: value ? value.substring(0, 20) + '...' : 'null',
-            isNullString: value === 'null'
-          });
-          
-          if (value && value.trim() !== '' && value !== 'null' && value !== 'undefined') {
-            token = value.trim();
-            tokenSource = `cookie.${name}`;
-            break;
-          }
-        }
-      }
-    }
-    
-    if (!token) {
-      console.warn('❌ [API-CLIENT] Nenhum token válido encontrado em nenhuma fonte');
-      console.log('🔍 [API-CLIENT] Tentando diagnóstico adicional...');
-      
-      // Diagnóstico adicional - verificar se há tokens corrompidos
-      for (const key of possibleKeys) {
-        const storedToken = localStorage.getItem(key);
-        if (storedToken) {
-          console.log(`🔍 [API-CLIENT] Token corrompido em localStorage.${key}:`, {
-            value: storedToken,
-            length: storedToken.length,
-            isNull: storedToken === 'null',
-            isUndefined: storedToken === 'undefined',
-            isEmpty: storedToken.trim() === ''
-          });
-        }
-      }
-      
-      return null;
-    }
-    
-    console.log(`✅ [API-CLIENT] Token encontrado em ${tokenSource}:`, {
-      length: token.length,
-      preview: token.substring(0, 20) + '...',
-      isJWT: token.split('.').length === 3,
-      source: tokenSource
-    });
-    
-    // Validar formato básico do token
-    if (token.length < 10) {
-      console.warn('❌ [API-CLIENT] Token muito curto:', token.length);
-      return null;
-    }
-    
-    // Verificar se é um JWT válido (3 partes separadas por ponto)
-    const jwtParts = token.split('.');
-    if (jwtParts.length === 3) {
-      try {
-        // Tentar decodificar o payload para verificar expiração
-        const payload = JSON.parse(atob(jwtParts[1]));
-        console.log('🔍 [API-CLIENT] JWT payload:', {
-          userId: payload.userId,
-          email: payload.email,
-          role: payload.role,
-          exp: payload.exp,
-          isExpired: payload.exp && payload.exp < Math.floor(Date.now() / 1000)
-        });
-        
-        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-          console.warn('⚠️ [API-CLIENT] Token expirado, mas retornando para tentar refresh');
-          return token;
-        }
-      } catch (error) {
-        console.warn('⚠️ [API-CLIENT] Erro ao decodificar JWT payload:', error);
-        // Ainda retornar o token, pode ser válido mesmo com erro de decode
-      }
-    } else {
-      console.log('🔍 [API-CLIENT] Token não é JWT (não tem 3 partes)');
-    }
-    
-    return token;
+    return null;
   }
 
   /**
@@ -334,7 +201,7 @@ class ApiClient {
     } else {
       // Garantir que não há barras duplas
       const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-      const baseURL = this.getBaseURL();
+      const baseURL = this.baseURL;
       const cleanBaseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
       url = `${cleanBaseURL}${cleanEndpoint}`;
     }
@@ -398,7 +265,7 @@ class ApiClient {
     this.isRefreshing = true;
     this.refreshPromise = (async () => {
       try {
-        const response = await fetch(`${this.getBaseURL()}/auth/refresh`, {
+        const response = await fetch(`${this.baseURL}/auth/refresh`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -433,96 +300,66 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    let lastError: any;
+    const url = this.buildURL(endpoint);
+    const headers = this.prepareHeaders(options.headers as Record<string, string>, false);
+    const requestOptions: RequestInit = {
+      ...options,
+      headers,
+      credentials: 'include'
+    };
 
-    // Salva o índice original para resetar se a URL de fallback funcionar
-    const initialBaseURLIndex = this.currentBaseURLIndex;
-
-    while (this.currentBaseURLIndex < this.baseURLs.length) {
-      const url = this.buildURL(endpoint);
-      const headers = this.prepareHeaders(options.headers as Record<string, string>, false);
-      const requestOptions: RequestInit = {
-        ...options,
-        headers,
-        credentials: 'include'
-      };
-
-      if (options.body && !(options.body instanceof FormData)) {
-        requestOptions.body = JSON.stringify(options.body);
-      } else if (options.body instanceof FormData) {
-        delete (requestOptions.headers as any)['Content-Type'];
-        requestOptions.body = options.body;
-      }
-
-      let timeoutId: NodeJS.Timeout | null = null;
-
-      try {
-        let response: Response;
-        console.log(`[API-CLIENT] Tentando requisição para: ${url}`);
-
-        if (isFirefox()) {
-          response = FirefoxUtils.safeFetch
-            ? await FirefoxUtils.safeFetch(url, requestOptions)
-            : await fetch(url, requestOptions);
-        } else {
-          const controller = new AbortController();
-          timeoutId = setTimeout(() => controller.abort(), this.timeout);
-          response = await fetch(url, { ...requestOptions, signal: controller.signal });
-        }
-
-        if (timeoutId) clearTimeout(timeoutId);
-
-        const responseText = await response.text();
-        let data: any;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          data = { message: responseText };
-        }
-
-        if (!response.ok) {
-          if (response.status === 500) {
-            logHttp500Error(url, options.method || 'GET', endpoint, response.status, data, responseText, options.headers as Record<string, string>, Object.fromEntries(response.headers.entries()));
-          }
-          throw {
-            message: data.message || data.error || `HTTP ${response.status}`,
-            status: response.status,
-            details: data
-          } as ApiError;
-        }
-        
-        return { success: true, data, message: data.message };
-
-      } catch (error: any) {
-        lastError = error;
-        if (timeoutId) clearTimeout(timeoutId);
-
-        const isNetworkError = (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) ||
-                               (error.name === 'AbortError') ||
-                               (isFirefox() && FirefoxUtils.isNSBindingAbortError(error));
-
-        if (isNetworkError) {
-          const switched = this.switchToNextBaseURL();
-          if (switched) {
-            continue; // Tenta com a nova URL base
-          }
-        }
-        
-        const processedError = this.processError(error);
-        // Se a URL de fallback falhar, resetamos para a original para futuras requisições
-        this.currentBaseURLIndex = initialBaseURLIndex;
-        return { success: false, message: processedError.message, errors: [JSON.stringify(processedError)] };
-      }
+    if (options.body && !(options.body instanceof FormData)) {
+      requestOptions.body = JSON.stringify(options.body);
+    } else if (options.body instanceof FormData) {
+      delete (requestOptions.headers as any)['Content-Type'];
+      requestOptions.body = options.body;
     }
 
-    // Se saiu do loop, todas as URLs falharam.
-    this.currentBaseURLIndex = initialBaseURLIndex; // Reset
-    const processedError = this.processError(lastError);
-    return {
-      success: false,
-      message: `Todas as URLs da API estão inacessíveis. Último erro: ${processedError.message}`,
-      errors: [JSON.stringify(processedError)]
-    };
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    try {
+      let response: Response;
+      console.log(`[API-CLIENT] Requisição direta para: ${url}`);
+
+      if (isFirefox()) {
+        response = FirefoxUtils.safeFetch
+          ? await FirefoxUtils.safeFetch(url, requestOptions)
+          : await fetch(url, requestOptions);
+      } else {
+        const controller = new AbortController();
+        timeoutId = setTimeout(() => controller.abort(), this.timeout);
+        response = await fetch(url, { ...requestOptions, signal: controller.signal });
+      }
+
+      if (timeoutId) clearTimeout(timeoutId);
+
+      const responseText = await response.text();
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        data = { message: responseText };
+      }
+
+      if (!response.ok) {
+        if (response.status === 500) {
+          logHttp500Error(url, options.method || 'GET', endpoint, response.status, data, responseText, options.headers as Record<string, string>, Object.fromEntries(response.headers.entries()));
+        }
+        throw {
+          message: data.message || data.error || `HTTP ${response.status}`,
+          status: response.status,
+          details: data
+        } as ApiError;
+      }
+      
+      return { success: true, data, message: data.message };
+
+    } catch (error: any) {
+      if (timeoutId) clearTimeout(timeoutId);
+      
+      const processedError = this.processError(error);
+      return { success: false, message: processedError.message, errors: [JSON.stringify(processedError)] };
+    }
   }
 
   /**

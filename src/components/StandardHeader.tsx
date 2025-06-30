@@ -44,14 +44,12 @@ interface Notification {
 
 const getRoleLabel = (role: UserRole): string => {
   const roleLabels: Record<UserRole, string> = {
-    'student': 'Aluno',
-    'teacher': 'Professor',
-    'manager': 'Gestor',
-    'institution_manager': 'Gestor Institucional',
-    'admin': 'Administrador',
-    'system_admin': 'Administrador do Sistema',
-    'academic_coordinator': 'Coordenador Acadêmico',
-    'guardian': 'Responsável'
+    [UserRole.STUDENT]: 'Aluno',
+    [UserRole.TEACHER]: 'Professor',
+    [UserRole.COORDINATOR]: 'Coordenador Acadêmico',
+    [UserRole.INSTITUTION_MANAGER]: 'Gestor Institucional',
+    [UserRole.SYSTEM_ADMIN]: 'Administrador do Sistema',
+    [UserRole.GUARDIAN]: 'Responsável'
   };
   return roleLabels[role] || role;
 };
@@ -680,7 +678,7 @@ const StandardHeader = ({
                     <h3 className="text-sm font-semibold" style={{ color: theme.colors.text.primary }}>Notificações</h3>
                     <p className="text-xs" style={{ color: theme.colors.text.secondary }}>{unreadNotifications} não lidas</p>
                   </div>
-                  {user?.role !== 'student' && (
+                  {user?.role !== UserRole.STUDENT && (
                     <Link
                       href="/notifications/send"
                       className="text-xs font-medium transition-colors"
