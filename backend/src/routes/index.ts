@@ -42,6 +42,7 @@ import teachersRouter from './teachers';
 import studentsRouter from './students';
 import schoolsRouter from './schools.routes';
 import unitsRouter from './units';
+import notificationLogsRouter from './notification-logs';
 
 const router = express.Router();
 
@@ -112,5 +113,6 @@ router.use('/teachers', teachersRouter);
 router.use('/students', studentsRouter);
 router.use('/schools', schoolsRouter);
 router.use('/units', unitsRouter);
+router.use('/notification-logs', notificationLogsRouter);
 
 export default router;

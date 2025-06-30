@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
 import { emailService } from '../services/emailService';
+import { notificationLogService, NotificationType } from '../services/NotificationLogService';
+import { AuthTokenPayload } from '../types/express';
+import crypto from 'crypto';
 
 class NotificationController {
   /**
@@ -27,29 +30,78 @@ class NotificationController {
    *         description: Erro ao enviar email
    */
   public async sendVerificationEmail(req: Request, res: Response): Promise<void> {
+    let logId: string | null = null;
+    
     try {
-      // TODO: Implementar uma forma real de obter o usuário.
-      // Por enquanto, usaremos dados mocados para o exemplo.
-      const user = {
-        email: 'test@example.com',
-        name: 'Test User',
-        verificationToken: 'mock-token-12345' // Em um caso real, isso seria gerado e salvo no DB
-      };
-
-      if (!user) {
+      // Obter dados do usuário autenticado
+      const authenticatedUser = req.user as AuthTokenPayload;
+      if (!authenticatedUser) {
         res.status(401).json({ message: 'User not authenticated' });
         return;
       }
 
-      const sent = await emailService.sendVerificationEmail(user.email, user.name, user.verificationToken);
+      // Gerar token de verificação real
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      
+      // Preparar dados do usuário usando informações do token JWT
+      const user = {
+        email: authenticatedUser.email || 'user@portal.com',
+        name: authenticatedUser.name || 'Usuário Portal',
+        verificationToken: verificationToken
+      };
 
-      if (sent) {
-        res.status(200).json({ message: 'Verification email sent.' });
+      // Criar log de notificação
+      const log = await notificationLogService.create({
+        type: NotificationType.EMAIL,
+        recipient: user.email,
+        subject: 'Verifique seu endereço de email - Portal Sabercon',
+        template_name: 'email-verification',
+        verification_token: user.verificationToken,
+        user_id: authenticatedUser.userId,
+        provider: 'Gmail SMTP',
+        metadata: {
+          userName: user.name,
+          userAgent: req.get('User-Agent'),
+          ip: req.ip
+        }
+      });
+
+      logId = log.id;
+
+      console.log(`📧 Enviando email de verificação para: ${user.email}`);
+      console.log(`📧 Nome do usuário: ${user.name}`);
+      console.log(`📧 Token de verificação: ${user.verificationToken}`);
+      console.log(`📊 Log ID: ${logId}`);
+      
+      const emailResult = await emailService.sendVerificationEmail(user.email, user.name, user.verificationToken);
+
+      if (emailResult) {
+        // Marcar como enviado com sucesso
+        await notificationLogService.markAsSent(logId, 'email-sent-successfully', {
+          success: true,
+          timestamp: new Date().toISOString()
+        });
+        
+        res.status(200).json({
+          message: 'Verification email sent.',
+          recipient: user.email,
+          status: 'success',
+          logId: logId
+        });
       } else {
+        // Marcar como falhado
+        await notificationLogService.markAsFailed(logId, 'Email service returned false - SMTP configuration issue');
+        
         res.status(500).json({ message: 'Failed to send verification email.' });
       }
     } catch (error) {
       console.error('Error sending verification email:', error);
+      
+      // Marcar como falhado se temos o logId
+      if (logId) {
+        await notificationLogService.markAsFailed(logId, error instanceof Error ? error.message : 'Unknown error');
+      }
+      
       res.status(500).json({ message: 'Internal server error' });
     }
   }

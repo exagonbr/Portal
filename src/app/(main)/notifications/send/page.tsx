@@ -337,11 +337,6 @@ export default function SendNotificationPage() {
       setTestResults(prev => ({ ...prev, email: undefined }))
 
       console.log('🔍 [NOTIFICATIONS] Testando email para:', emailToTest)
-      console.log('🔍 [NOTIFICATIONS] Estado inicial:', {
-        apiClientExists: !!apiClient,
-        windowExists: typeof window !== 'undefined',
-        localStorageAvailable: typeof localStorage !== 'undefined'
-      })
 
       // Verificar autenticação antes de fazer requisições
       const authStatus = isAuthenticated()
@@ -367,85 +362,11 @@ export default function SendNotificationPage() {
         console.error('❌ [NOTIFICATIONS] Nenhum token disponível para sincronização')
       }
 
-      // Primeiro verificar se o email está configurado
-      try {
-        console.log('🔍 [NOTIFICATIONS] Verificando configuração de email...')
-        const verifyResponse = await apiClient.get('/api/notifications/email/verify')
-        console.log('🔍 [NOTIFICATIONS] Resposta da verificação:', verifyResponse)
-        
-        if (!verifyResponse.success) {
-          // Se a verificação falhou, pode ser problema de autenticação
-          if ((verifyResponse as any).status === 401) {
-            throw new Error('Sessão expirada. Faça login novamente.')
-          }
-          console.warn('Verificação de email falhou:', verifyResponse.message)
-        }
-        
-        if (verifyResponse.success && !(verifyResponse.data as any)?.enabled) {
-          throw new Error((verifyResponse.data as any)?.message || 'Serviço de email não está habilitado')
-        }
-      } catch (verifyError) {
-        // Se a verificação falhou, tenta enviar o teste mesmo assim
-        console.warn('Verificação de email falhou, tentando enviar teste:', verifyError)
-      }
-
-      // Enviar email de teste
-      console.log('🔍 [NOTIFICATIONS] Fazendo requisição para /api/notifications/email/test...')
-      console.log('🔍 [NOTIFICATIONS] Payload da requisição:', { to: emailToTest })
-      
-      // Verificar se o apiClient tem o token configurado
-      const currentToken = getCurrentToken()
-      console.log('🔍 [NOTIFICATIONS] Token no momento da requisição:', currentToken ? currentToken.substring(0, 20) + '...' : 'nenhum')
-      
-      // Teste de conectividade básica primeiro
-      try {
-        console.log('🔍 [NOTIFICATIONS] Testando conectividade básica...')
-        const pingResponse = await fetch('/api/notifications/email/verify', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${currentToken}`,
-            'Content-Type': 'application/json'
-          }
-        })
-        
-        console.log('🔍 [NOTIFICATIONS] Status da conectividade:', pingResponse.status)
-        console.log('🔍 [NOTIFICATIONS] Headers da resposta:', Object.fromEntries(pingResponse.headers.entries()))
-        
-        const pingText = await pingResponse.text()
-        console.log('🔍 [NOTIFICATIONS] Resposta bruta da conectividade:', pingText)
-        
-        if (!pingResponse.ok) {
-          console.error('❌ [NOTIFICATIONS] Falha na conectividade básica:', pingResponse.status, pingText)
-          
-          // Se a conectividade básica falhou, não tente o apiClient
-          if (pingResponse.status === 401) {
-            throw new Error('Sessão expirada. Faça login novamente.')
-          } else if (pingResponse.status >= 500) {
-            throw new Error('Servidor indisponível. Tente novamente mais tarde.')
-          } else {
-            throw new Error(`Erro de conectividade: ${pingResponse.status} - ${pingText}`)
-          }
-        } else {
-          console.log('✅ [NOTIFICATIONS] Conectividade básica OK')
-        }
-      } catch (pingError) {
-        console.error('❌ [NOTIFICATIONS] Erro no teste de conectividade:', pingError)
-        
-        // Se o teste de conectividade falhou completamente, não tente o apiClient
-        if (pingError instanceof Error) {
-          throw pingError
-        } else {
-          throw new Error('Erro de conectividade com o servidor')
-        }
-      }
-      
-      const response = await apiClient.post('/api/notifications/email/test', {
-        to: emailToTest
-      })
+      // Usar nossa nova API de verificação de email
+      console.log('🔍 [NOTIFICATIONS] Enviando email de verificação...')
+      const response = await apiClient.post('/api/notifications/email/verify')
 
       console.log('🔍 [NOTIFICATIONS] Resposta recebida:', response)
-      console.log('🔍 [NOTIFICATIONS] Tipo da resposta:', typeof response)
-      console.log('🔍 [NOTIFICATIONS] Propriedades da resposta:', response ? Object.keys(response) : 'nenhuma')
       
       // Verificar se a resposta é válida
       if (!response || typeof response !== 'object') {
@@ -453,19 +374,12 @@ export default function SendNotificationPage() {
         throw new Error('Erro de comunicação com o servidor - resposta inválida')
       }
 
-      // Verificar se a resposta tem estrutura válida
-      if (!response.hasOwnProperty('success')) {
-        console.error('❌ [NOTIFICATIONS] Resposta malformada - não contém propriedade "success"')
-        console.error('❌ [NOTIFICATIONS] Conteúdo da resposta:', JSON.stringify(response, null, 2))
-        throw new Error('Erro de comunicação com o servidor - resposta malformada')
-      }
-
       if (response.success === true) {
         setTestResults(prev => ({
           ...prev,
-          email: { 
-            success: true, 
-            message: `Email de teste enviado com sucesso para ${emailToTest}! Verifique a caixa de entrada.`,
+          email: {
+            success: true,
+            message: `Email de verificação enviado com sucesso para ${(response.data as any)?.recipient || user?.email || 'seu email'}! Verifique a caixa de entrada.`,
             timestamp: new Date().toLocaleString('pt-BR')
           }
         }))
@@ -473,11 +387,11 @@ export default function SendNotificationPage() {
         // Verificar se há informações de erro específicas na resposta
         console.error('❌ [NOTIFICATIONS] Erro na resposta da API:', response)
         
-        const errorMessage = response.message || 'Erro ao enviar email de teste'
+        const errorMessage = response.message || 'Erro ao enviar email de verificação'
         
         // Se é erro de autenticação, verificar diferentes formas
-        if (response.message?.includes('401') || 
-            response.message?.includes('Unauthorized') || 
+        if (response.message?.includes('401') ||
+            response.message?.includes('Unauthorized') ||
             response.message?.includes('not authenticated') ||
             response.message?.includes('Token de autenticação') ||
             response.message?.includes('autenticação inválido') ||
@@ -485,12 +399,6 @@ export default function SendNotificationPage() {
           console.error('🔐 [NOTIFICATIONS] Erro de autenticação detectado na resposta')
           clearAllTokens()
           throw new Error('Sessão expirada. Faça login novamente.')
-        }
-        
-        // Se a resposta indica success=false, usar a mensagem específica
-        if (response.success === false && response.message) {
-          console.error('❌ [NOTIFICATIONS] API retornou erro específico:', response.message)
-          throw new Error(response.message)
         }
         
         throw new Error(errorMessage)
