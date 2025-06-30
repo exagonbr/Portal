@@ -1,12 +1,20 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { getInternalApiUrl } from '@/config/env';
 
-// Handler para requisições OPTIONS (preflight)
+// Handler para requisições OPTIONS (preflight) - SIMPLIFICADO
 export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie',
+      'Access-Control-Allow-Credentials': 'false',
+      'Access-Control-Max-Age': '86400',
+      'Content-Length': '0',
+    },
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -14,12 +22,16 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
-      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
         { 
           status: 401,
-          headers: getCorsHeaders(origin)
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'false',
+          }
         }
       );
     }
@@ -27,7 +39,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
 
-    const response = await fetch(getInternalApiUrl(`/api/aws/connection-logs${queryString ? `?${queryString}` : ''}`), {
+    const apiUrl = queryString 
+      ? `${getInternalApiUrl('/api/aws/connection-logs')}?${queryString}`
+      : getInternalApiUrl('/api/aws/connection-logs');
+
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Authorization': authHeader,
@@ -36,20 +52,28 @@ export async function GET(request: NextRequest) {
     });
 
     const data = await response.json();
-    const origin = request.headers.get('origin') || undefined;
 
     return NextResponse.json(data, { 
       status: response.status,
-      headers: getCorsHeaders(origin)
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'false',
+      }
     });
   } catch (error) {
     console.error('Erro ao buscar logs de conexão AWS:', error);
-    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
         status: 500,
-        headers: getCorsHeaders(origin)
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'false',
+        }
       }
     );
   }

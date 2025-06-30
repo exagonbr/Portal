@@ -1,51 +1,97 @@
 /** @type {import('next').NextConfig} */
 
 const isDev = process.env.NODE_ENV === 'development';
+const isProd = process.env.NODE_ENV === 'production';
 
 // Gerar versão de cache única para cada build
-const cacheVersion = process.env.NEXT_PUBLIC_CACHE_VERSION || `dev-${Date.now()}`;
+const cacheVersion = process.env.NEXT_PUBLIC_CACHE_VERSION || `v${Date.now()}`;
+
+// Configurações de segurança CSP
+const ContentSecurityPolicy = `
+  default-src 'self';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' *.youtube.com *.handtalk.me;
+  child-src 'self' *.youtube.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: blob: *.openlibrary.org *.unsplash.com *.ssl-images-amazon.com *.youtube.com;
+  font-src 'self' data:;
+  connect-src 'self' *.sabercon.com.br ws: wss:;
+  media-src 'self' blob:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+  upgrade-insecure-requests;
+`.replace(/\s{2,}/g, ' ').trim();
 
 const nextConfig = {
+  // Configurações básicas do TypeScript
   typescript: {
     ignoreBuildErrors: false,
+    tsconfigPath: './tsconfig.json',
   },
-  reactStrictMode: false,
+
+  // Configurações de desenvolvimento
+  reactStrictMode: !isDev, // Apenas em produção para evitar problemas de desenvolvimento
+  swcMinify: true, // Usar SWC para minificação (mais rápido que Terser)
   productionBrowserSourceMaps: false,
+  
+  // ESLint
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // Melhor prática: não ignorar erros
+    dirs: ['src', 'pages', 'components', 'lib', 'utils'],
   },
-  
-  // Desabilitar fast refresh
-  fastRefresh: false,
-  
-  // Configurações para melhorar a hidratação
+
+  // Configurações experimentais
   experimental: {
-    // Melhorar a hidratação de componentes
-    optimizePackageImports: ['react-hot-toast', 'lucide-react'],
+    // Otimizações modernas
+    optimizePackageImports: [
+      'react-hot-toast', 
+      'lucide-react', 
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      'date-fns',
+    ],
+    // Melhorar performance de compilação
+    webpackBuildWorker: true,
+    // Otimizar CSS
+    optimizeCss: isProd,
+    // Lazy compilation para desenvolvimento
+    ...(isDev && { webpackBuildWorker: true }),
   },
-  
+
   // Pacotes externos para componentes do servidor
-  serverExternalPackages: ['epubjs'],
-  
-  // Configurações de compilação para evitar problemas de hidratação
+  serverExternalPackages: [
+    'epubjs',
+    'sharp',
+    'canvas',
+    'jsdom',
+    'puppeteer',
+  ],
+
+  // Configurações do compilador
   compiler: {
     // Remover console.log em produção
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn']
+    removeConsole: isProd ? {
+      exclude: ['error', 'warn', 'info']
     } : false,
+    // Otimizar React
+    reactRemoveProperties: isProd,
   },
-  
-  // Configuração de output para produção
-  output: isDev ? undefined : 'standalone',
-  
-  // REMOVIDO: Configuração de proxy (rewrites) eliminada para comunicação direta
-  // O frontend agora se comunica diretamente com o backend via URLs configuradas
-  // Frontend: https://portal.sabercon.com.br (porta 3000)
-  // Backend: http://localhost:3001 (comunicação interna via Nginx)
-  
+
+  // Configuração de output
+  output: isProd ? 'standalone' : undefined,
+  distDir: '.next',
+  trailingSlash: false,
+  poweredByHeader: false,
+
+  // Configuração de imagens otimizada
   images: {
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 31536000, // 1 ano
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',
@@ -53,16 +99,7 @@ const nextConfig = {
         pathname: '/b/**'
       },
       {
-        protocol: 'http',
-        hostname: 'covers.openlibrary.org',
-        pathname: '/b/**'
-      },
-      {
         protocol: 'https',
-        hostname: 'images.unsplash.com'
-      },
-      {
-        protocol: 'http',
         hostname: 'images.unsplash.com'
       },
       {
@@ -70,34 +107,59 @@ const nextConfig = {
         hostname: 'images-na.ssl-images-amazon.com'
       },
       {
-        protocol: 'http',
-        hostname: 'images-na.ssl-images-amazon.com'
-      },
-      {
         protocol: 'https',
         hostname: 'img.youtube.com'
       },
-      {
-        protocol: 'http',
-        hostname: 'img.youtube.com'
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost'
-      },
-      {
-        protocol: 'https',
-        hostname: 'localhost'
-      }
+      // Apenas para desenvolvimento
+      ...(isDev ? [
+        {
+          protocol: 'http',
+          hostname: 'localhost',
+          port: '3001'
+        }
+      ] : [])
     ]
   },
-  env: {
-    CUSTOM_KEY: 'my-value',
-  },
-  
-  // Headers otimizados para comunicação direta (sem proxy)
+
+  // Headers de segurança e performance
   async headers() {
+    const securityHeaders = [
+      {
+        key: 'X-DNS-Prefetch-Control',
+        value: 'on'
+      },
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload'
+      },
+      {
+        key: 'X-Frame-Options',
+        value: 'DENY'
+      },
+      {
+        key: 'X-Content-Type-Options',
+        value: 'nosniff'
+      },
+      {
+        key: 'X-XSS-Protection',
+        value: '1; mode=block'
+      },
+      {
+        key: 'Referrer-Policy',
+        value: 'strict-origin-when-cross-origin'
+      },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()'
+      },
+      ...(isProd ? [{
+        key: 'Content-Security-Policy',
+        value: ContentSecurityPolicy
+      }] : [])
+    ];
+
     return [
+      // Headers para livros EPUB
       {
         source: '/books/:path*',
         headers: [
@@ -106,40 +168,31 @@ const nextConfig = {
             value: 'application/epub+zip'
           },
           {
-            key: 'Access-Control-Allow-Origin',
-            value: 'https://portal.sabercon.com.br'
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, s-maxage=31536000'
           },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS, PATCH'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'X-Requested-With, Content-Type, Authorization, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie'
-          }
+          ...securityHeaders
         ]
       },
+      // Headers para assets estáticos
       {
-        source: '/:path*',
+        source: '/(.*\\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$)',
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
-          // Cache otimizado para assets estáticos
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable'
           },
-          // Header de versão para debugging
+          {
+            key: 'X-Cache-Version',
+            value: cacheVersion
+          }
+        ]
+      },
+      // Headers gerais
+      {
+        source: '/((?!api/).*)',
+        headers: [
+          ...securityHeaders,
           {
             key: 'X-Cache-Version',
             value: cacheVersion
@@ -148,42 +201,87 @@ const nextConfig = {
       }
     ];
   },
-  
-  webpack: (config, { isServer, webpack }) => {
-    // Desabilitar debug de issues do webpack
-    config.stats = 'errors-only';
+
+  // Configuração robusta do Webpack
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }) => {
+    // Configurações de logging otimizadas
+    config.stats = dev ? 'minimal' : 'errors-warnings';
     config.infrastructureLogging = {
-      level: 'error',
+      level: dev ? 'warn' : 'error',
     };
-    
-    // Injetar versão de cache no Service Worker
+
+    // Plugin para versão de cache no Service Worker
     if (!isServer) {
       config.plugins.push(
         new webpack.DefinePlugin({
-          '__CACHE_VERSION__': JSON.stringify(cacheVersion)
+          '__CACHE_VERSION__': JSON.stringify(cacheVersion),
+          '__BUILD_ID__': JSON.stringify(buildId),
         })
       );
     }
 
-    config.module.rules.push({
-      test: /\.(pdf)$/i,
-      type: 'asset/resource',
-      generator: {
-        filename: 'static/chunks/[path][name].[hash][ext]'
+    // Configuração para diferentes tipos de arquivo
+    config.module.rules.push(
+      {
+        test: /\.(pdf|epub)$/i,
+        type: 'asset/resource',
+        generator: {
+          filename: 'static/media/[name].[hash:8].[ext]'
+        }
+      },
+      {
+        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)$/i,
+        type: 'asset/resource',
+        generator: {
+          filename: 'static/media/[name].[hash:8].[ext]'
+        }
       }
-    });
+    );
 
-    // Configurações específicas para melhorar carregamento de chunks
+    // Configurações específicas para o cliente
     if (!isServer) {
-      // Otimizar divisão de chunks para evitar ChunkLoadError
+      // Otimizações de bundle splitting robustas
       config.optimization = {
         ...config.optimization,
+        moduleIds: 'deterministic',
+        chunkIds: 'deterministic',
+        minimize: isProd,
+        usedExports: true,
+        sideEffects: false,
         splitChunks: {
-          ...config.optimization.splitChunks,
           chunks: 'all',
+          minSize: 20000,
+          maxSize: isProd ? 244000 : 0,
+          minChunks: 1,
+          maxAsyncRequests: 30,
+          maxInitialRequests: 30,
+          enforceSizeThreshold: 50000,
           cacheGroups: {
-            ...config.optimization.splitChunks?.cacheGroups,
-            // Criar chunk específico para api-client
+            // Framework chunk (React, Next.js)
+            framework: {
+              chunks: 'all',
+              name: 'framework',
+              test: /(?:react|react-dom|scheduler|prop-types|use-subscription)/,
+              priority: 40,
+              enforce: true,
+            },
+            // Vendor libraries
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+              priority: 30,
+              enforce: true,
+            },
+            // UI components
+            ui: {
+              test: /[\\/]src[\\/]components[\\/]ui[\\/]/,
+              name: 'ui-components',
+              chunks: 'all',
+              priority: 25,
+              enforce: true,
+            },
+            // API client
             apiClient: {
               test: /[\\/]src[\\/]lib[\\/]api-client/,
               name: 'api-client',
@@ -191,50 +289,99 @@ const nextConfig = {
               priority: 20,
               enforce: true,
             },
-            // Chunk para serviços de autenticação
-            authServices: {
-              test: /[\\/]src[\\/]services[\\/]auth/,
+            // Auth services
+            auth: {
+              test: /[\\/]src[\\/](services|contexts)[\\/].*auth/i,
               name: 'auth-services',
               chunks: 'all',
               priority: 15,
               enforce: true,
             },
+            // Common utilities
+            common: {
+              test: /[\\/]src[\\/](utils|lib|hooks)[\\/]/,
+              name: 'common',
+              chunks: 'all',
+              priority: 10,
+              minChunks: 2,
+            },
+            // Default
+            default: {
+              minChunks: 2,
+              priority: 5,
+              reuseExistingChunk: true,
+            },
           },
         },
       };
 
-      // Configurar retry automático para chunks falhados
+      // Configurações de output robustas
       config.output = {
         ...config.output,
         crossOriginLoading: 'anonymous',
-        // Adicionar configuração para retry de chunks
-        chunkLoadTimeout: 30000, // 30 segundos
+        chunkLoadTimeout: 60000, // 60 segundos
+        publicPath: '/_next/',
+        filename: isProd 
+          ? 'static/chunks/[name].[contenthash:8].js'
+          : 'static/chunks/[name].js',
+        chunkFilename: isProd
+          ? 'static/chunks/[name].[contenthash:8].js'
+          : 'static/chunks/[name].js',
       };
+
+      // Configurar retry automático para chunks falhados
+      config.plugins.push(
+        new webpack.optimize.LimitChunkCountPlugin({
+          maxChunks: isProd ? 50 : 100,
+        })
+      );
     }
 
+    // Configurações para o servidor
     if (isServer) {
-      config.externals.push({
-        'oracledb': 'commonjs oracledb',
-        'mysql': 'commonjs mysql',
-        'mysql2': 'commonjs mysql2',
-        'sqlite3': 'commonjs sqlite3',
-        'better-sqlite3': 'commonjs better-sqlite3',
-        'tedious': 'commonjs tedious'
-      })
+      config.externals = [
+        ...config.externals,
+        {
+          'oracledb': 'commonjs oracledb',
+          'mysql': 'commonjs mysql',
+          'mysql2': 'commonjs mysql2',
+          'sqlite3': 'commonjs sqlite3',
+          'better-sqlite3': 'commonjs better-sqlite3',
+          'tedious': 'commonjs tedious',
+          'pg': 'commonjs pg',
+          'pg-native': 'commonjs pg-native',
+          'sharp': 'commonjs sharp',
+        }
+      ];
     } else {
-      // No lado do cliente, adicionar fallbacks para módulos de servidor
+      // Fallbacks para o cliente
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        'oracledb': false,
-        'fs': false,
-        'net': false,
-        'tls': false,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+        // Database-related
         'pg': false,
         'pg-native': false,
         'pg-query-stream': false,
+        'oracledb': false,
+        'mysql': false,
+        'mysql2': false,
+        'sqlite3': false,
+        'better-sqlite3': false,
+        'tedious': false,
       };
 
-      // Adicionar alias para módulos relacionados ao PostgreSQL no cliente
+      // Aliases para evitar problemas
       config.resolve.alias = {
         ...config.resolve.alias,
         'pg-cloudflare': false,
@@ -243,24 +390,43 @@ const nextConfig = {
       };
     }
 
-    // Ignorar módulos específicos que causam problemas
+    // Plugins para ignorar módulos problemáticos
     config.plugins.push(
       new webpack.IgnorePlugin({
-        resourceRegExp: /^(cardinal|encoding|pg-cloudflare)$/,
-        contextRegExp: /./,
+        resourceRegExp: /^(cardinal|encoding|pg-cloudflare|bufferutil|utf-8-validate)$/,
+      }),
+      new webpack.IgnorePlugin({
+        resourceRegExp: /cloudflare:sockets/,
       })
     );
 
-    // Adicionar plugin para lidar com o esquema cloudflare:sockets
-    config.module.rules.push({
-      test: /cloudflare:sockets/,
-      use: 'null-loader',
-      include: /node_modules/,
-    });
+    // Configurações específicas para desenvolvimento
+    if (dev) {
+      config.watchOptions = {
+        poll: false,
+        ignored: /node_modules/,
+      };
+    }
 
     return config;
   },
+
+  // Configuração de redirecionamentos
+  async redirects() {
+    return [
+      {
+        source: '/home',
+        destination: '/dashboard',
+        permanent: true,
+      },
+    ];
+  },
+
+  // Configuração para PWA (se aplicável)
+  env: {
+    CUSTOM_KEY: 'my-value',
+    CACHE_VERSION: cacheVersion,
+  },
 };
 
-// This ensures the PWA configuration is properly recognized
 module.exports = nextConfig;

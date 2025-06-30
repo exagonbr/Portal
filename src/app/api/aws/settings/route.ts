@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { getInternalApiUrl } from '@/config/env';
 
-// Handler para requisições OPTIONS (preflight)
+// Handler para requisições OPTIONS (preflight) - SIMPLIFICADO
 export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie',
+      'Access-Control-Allow-Credentials': 'false',
+      'Access-Control-Max-Age': '86400',
+      'Content-Length': '0',
+    },
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -13,12 +21,16 @@ export async function GET(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
-      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
         { 
           status: 401,
-          headers: getCorsHeaders(origin)
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'false',
+          }
         }
       );
     }
@@ -32,20 +44,28 @@ export async function GET(request: NextRequest) {
     });
 
     const data = await response.json();
-    const origin = request.headers.get('origin') || undefined;
 
     return NextResponse.json(data, { 
       status: response.status,
-      headers: getCorsHeaders(origin)
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'false',
+      }
     });
   } catch (error) {
     console.error('Erro ao buscar configurações AWS:', error);
-    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
         status: 500,
-        headers: getCorsHeaders(origin)
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'false',
+        }
       }
     );
   }
@@ -56,12 +76,16 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
-      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
         { 
           status: 401,
-          headers: getCorsHeaders(origin)
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'false',
+          }
         }
       );
     }
@@ -78,20 +102,28 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
-    const origin = request.headers.get('origin') || undefined;
 
     return NextResponse.json(data, { 
       status: response.status,
-      headers: getCorsHeaders(origin)
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'false',
+      }
     });
   } catch (error) {
     console.error('Erro ao criar configurações AWS:', error);
-    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
         status: 500,
-        headers: getCorsHeaders(origin)
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'false',
+        }
       }
     );
   }
@@ -102,12 +134,16 @@ export async function DELETE(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
-      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
         { 
           status: 401,
-          headers: getCorsHeaders(origin)
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'false',
+          }
         }
       );
     }
@@ -120,15 +156,18 @@ export async function DELETE(request: NextRequest) {
       },
     });
 
-    const origin = request.headers.get('origin') || undefined;
-
     if (response.status === 404) {
       // Se o backend não tem a rota, apenas retornar sucesso
       return NextResponse.json(
         { success: true, message: 'Configurações resetadas' },
         { 
           status: 200,
-          headers: getCorsHeaders(origin)
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'false',
+          }
         }
       );
     }
@@ -136,16 +175,25 @@ export async function DELETE(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data, { 
       status: response.status,
-      headers: getCorsHeaders(origin)
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'false',
+      }
     });
   } catch (error) {
     console.error('Erro ao deletar configurações AWS:', error);
-    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
         status: 500,
-        headers: getCorsHeaders(origin)
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'false',
+        }
       }
     );
   }

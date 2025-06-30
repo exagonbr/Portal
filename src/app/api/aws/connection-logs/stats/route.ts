@@ -1,13 +1,21 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { getInternalApiUrl } from '@/config/env';
 
-// Handler para requisições OPTIONS (preflight)
+// Handler para requisições OPTIONS (preflight) - SIMPLIFICADO
 export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Cache-Control, Pragma, Accept, Origin, Cookie',
+      'Access-Control-Allow-Credentials': 'false',
+      'Access-Control-Max-Age': '86400',
+      'Content-Length': '0',
+    },
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -15,24 +23,32 @@ export async function GET(request: NextRequest) {
     const session = await getAuthentication(request);
     
     if (!session) {
-      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization required' },
         { 
           status: 401,
-          headers: getCorsHeaders(origin)
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'false',
+          }
         }
       );
     }
 
     // Verificar se é admin
     if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
-      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { 
           status: 403,
-          headers: getCorsHeaders(origin)
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'false',
+          }
         }
       );
     }
@@ -52,8 +68,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const origin = request.headers.get('origin') || undefined;
-
     if (!response.ok) {
       // Se o backend não estiver disponível, retornar dados mock
       const mockStats = {
@@ -71,20 +85,28 @@ export async function GET(request: NextRequest) {
         success: true,
         data: mockStats
       }, {
-        headers: getCorsHeaders(origin)
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Allow-Credentials': 'false',
+        }
       });
     }
 
     const data = await response.json();
     return NextResponse.json(data, { 
       status: response.status,
-      headers: getCorsHeaders(origin)
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'false',
+      }
     });
 
   } catch (error) {
     console.error('Erro ao buscar estatísticas de conexão AWS:', error);
-    
-    const origin = request.headers.get('origin') || undefined;
     
     // Fallback com dados mock em caso de erro
     const mockStats = {
@@ -102,7 +124,12 @@ export async function GET(request: NextRequest) {
       success: true,
       data: mockStats
     }, {
-      headers: getCorsHeaders(origin)
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'false',
+      }
     });
   }
 } 

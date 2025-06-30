@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/api-client';
 import { isAuthenticated, getCurrentToken, validateToken, syncTokenWithApiClient, clearAllTokens } from '@/utils/token-validator';
 import { runAuthDiagnostics, debugAuth } from '@/utils/auth-diagnostics';
 import { autoRefreshToken, withAutoRefresh } from '@/utils/token-refresh';
+import { CORS_HEADERS } from '@/config/cors';
 
 // Interfaces para dados do dashboard do sistema
 export interface SystemDashboardData {
@@ -246,13 +247,40 @@ class SystemAdminService {
     };
   }
 
+  /**
+   * Função utilitária para fazer requisições fetch com CORS padronizado
+   */
+  private async fetchWithCors(url: string, options: RequestInit = {}): Promise<Response> {
+    // Preparar headers com CORS
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...CORS_HEADERS,
+      ...(options.headers as Record<string, string> || {})
+    };
+
+    // Obter token de autenticação se disponível
+    const token = getCurrentToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    console.log(`🌐 [SYSTEM-ADMIN] Fazendo requisição com CORS para: ${url}`);
+    
+    return fetch(url, {
+      ...options,
+      headers,
+      mode: 'cors',
+      credentials: 'include'
+    });
+  }
+
   // Função para fazer fetch com timeout personalizado
   private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 30000): Promise<Response> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
     try {
-      const response = await fetch(url, {
+      const response = await this.fetchWithCors(url, {
         ...options,
         signal: controller.signal
       });
@@ -842,15 +870,20 @@ class SystemAdminService {
       
       // Se falhar, tentar a rota local como fallback
       try {
-        const localResponse = await fetch('/api/dashboard/metrics/realtime');
+        console.log('🌐 [SYSTEM-ADMIN] Tentando rota local com CORS...');
+        const localResponse = await this.fetchWithCors('/api/dashboard/metrics/realtime', {
+          method: 'GET'
+        });
         
         if (localResponse.ok) {
           const localData = await localResponse.json();
           if (localData.success && localData.data) {
+            console.log('✅ [SYSTEM-ADMIN] Dados obtidos da rota local com sucesso');
             return localData.data;
           }
         }
       } catch (localError: unknown) {
+        console.warn('⚠️ [SYSTEM-ADMIN] Erro na rota local:', localError);
         // Ignorar erro na rota local e continuar para fallback
       }
       
