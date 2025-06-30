@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../lib/auth-headers';
-
+import { CORS_HEADERS } from '@/config/cors';
 import { getInternalApiUrl } from '@/config/env';
-
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
+  return new Response(null, {
+    status: 200,
+    headers: CORS_HEADERS,
+  });
 }
 
 export async function GET(
@@ -15,7 +16,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(getInternalApiUrl(`/api/tv-shows/${resolvedParams.id}`), {
+    const resolvedParams = await params;
+    const response = await fetch(getInternalApiUrl(`/tv-shows/${resolvedParams.id}`), {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });
@@ -37,9 +39,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
 
-    const response = await fetch(getInternalApiUrl(`/api/tv-shows/${resolvedParams.id}`), {
+    const response = await fetch(getInternalApiUrl(`/tv-shows/${resolvedParams.id}`), {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -62,7 +65,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(getInternalApiUrl(`/api/tv-shows/${resolvedParams.id}`), {
+    const resolvedParams = await params;
+    const response = await fetch(getInternalApiUrl(`/tv-shows/${resolvedParams.id}`), {
       method: 'DELETE',
       headers: prepareAuthHeaders(request),
     });
@@ -77,4 +81,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}
