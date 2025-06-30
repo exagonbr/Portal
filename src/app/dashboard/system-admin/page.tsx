@@ -552,9 +552,22 @@ function SystemAdminDashboardContent() {
   const loadEngagementMetrics = async () => {
     try {
       const engagement = await systemAdminService.getUserEngagementMetrics();
-      setEngagementMetrics(engagement);
+      
+      // Verificar se os dados têm a estrutura correta
+      if (engagement && typeof engagement === 'object') {
+        // Garantir que topFeatures seja um array válido
+        if (!Array.isArray(engagement.topFeatures)) {
+          engagement.topFeatures = [];
+        }
+        
+        setEngagementMetrics(engagement);
+      } else {
+        console.warn('Dados de engajamento inválidos recebidos:', engagement);
+        setEngagementMetrics(null);
+      }
     } catch (error) {
       console.error('Erro ao carregar métricas de engajamento:', error);
+      setEngagementMetrics(null);
     }
   };
 
@@ -1466,41 +1479,43 @@ function SystemAdminDashboardContent() {
                   <SimpleCard className="p-2" hover={false}>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Taxa de Retenção:</span>
-                      <span className="font-bold text-green-600 text-sm">{engagementMetrics.retentionRate}%</span>
+                      <span className="font-bold text-green-600 text-sm">{engagementMetrics?.retentionRate || 0}%</span>
                     </div>
                   </SimpleCard>
                   <SimpleCard className="p-2" hover={false}>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Tempo Médio de Sessão:</span>
-                      <span className="font-bold text-blue-600 text-sm">{engagementMetrics.averageSessionDuration}min</span>
+                      <span className="font-bold text-blue-600 text-sm">{engagementMetrics?.averageSessionDuration || 0}min</span>
                     </div>
                   </SimpleCard>
                   <SimpleCard className="p-2" hover={false}>
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-600">Taxa de Rejeição:</span>
-                      <span className="font-bold text-orange-600 text-sm">{engagementMetrics.bounceRate}%</span>
+                      <span className="font-bold text-orange-600 text-sm">{engagementMetrics?.bounceRate || 0}%</span>
                     </div>
                   </SimpleCard>
                 </div>
-                <div className="mt-4">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Funcionalidades Mais Usadas:</p>
-                  <div className="space-y-2">
-                    {engagementMetrics.topFeatures.slice(0, 3).map((feature, index: number) => (
-                      <div key={feature.name} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 p-2 bg-gray-50 rounded-lg">
-                        <span className="text-xs font-medium text-gray-700 truncate">{feature.name}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-12 sm:w-16 h-1.5 bg-gray-200 rounded-full">
-                            <div 
-                              className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300" 
-                              style={{ width: `${feature.usage}%` }}
-                            ></div>
+                {engagementMetrics?.topFeatures && Array.isArray(engagementMetrics.topFeatures) && engagementMetrics.topFeatures.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Funcionalidades Mais Usadas:</p>
+                    <div className="space-y-2">
+                      {engagementMetrics.topFeatures.slice(0, 3).map((feature, index: number) => (
+                        <div key={feature?.name || `feature-${index}`} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 p-2 bg-gray-50 rounded-lg">
+                          <span className="text-xs font-medium text-gray-700 truncate">{feature?.name || 'Funcionalidade'}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-12 sm:w-16 h-1.5 bg-gray-200 rounded-full">
+                              <div 
+                                className="h-1.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300" 
+                                style={{ width: `${feature?.usage || 0}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-xs font-bold text-blue-600 min-w-6 sm:min-w-7 flex-shrink-0">{feature?.usage || 0}%</span>
                           </div>
-                          <span className="text-xs font-bold text-blue-600 min-w-6 sm:min-w-7 flex-shrink-0">{feature.usage}%</span>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </ContentCard>
           )}

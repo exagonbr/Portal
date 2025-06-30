@@ -549,6 +549,17 @@ class SystemAdminService {
       
       const errorMessage = response.message || 'Falha ao carregar dados de usuários';
       console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro na resposta:', errorMessage);
+      
+      // Fornecer informações mais específicas sobre o erro
+      if (errorMessage.includes('Token inválido') || errorMessage.includes('Token expirado')) {
+        console.error('🔍 [SYSTEM-ADMIN-SERVICE] Diagnóstico do token:', {
+          currentToken: !!currentToken,
+          tokenLength: currentToken ? currentToken.length : 0,
+          authStatus: authStatus
+        });
+        throw new Error(`Erro de autenticação: ${errorMessage}. Verifique se você está logado corretamente.`);
+      }
+      
       throw new Error(errorMessage);
     } catch (error: unknown) {
       console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro ao carregar usuários por função:', error);
@@ -659,8 +670,15 @@ class SystemAdminService {
         console.log('Engagement metrics response:', response);
         
         if (response.success && response.data) {
-          // If success is true, return the data directly
-          return response.data.data || response.data;
+          const data = response.data.data || response.data;
+          
+          // Garantir que topFeatures seja sempre um array válido
+          if (!Array.isArray(data.topFeatures)) {
+            console.warn('topFeatures não é um array válido, usando array vazio');
+            data.topFeatures = [];
+          }
+          
+          return data;
         }
         
         // If success is false, throw error with message

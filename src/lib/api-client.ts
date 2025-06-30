@@ -425,6 +425,13 @@ class ApiClient {
       const currentToken = this.getAuthToken();
       const hasToken = !!currentToken;
       
+      console.log('🔍 [API-CLIENT] Diagnóstico de erro 401:', {
+        hasToken,
+        tokenLength: currentToken ? currentToken.length : 0,
+        errorMessage: error.message,
+        errorDetails: error.details?.message
+      });
+      
       let message = 'Token de autenticação inválido! "Erro desconhecido"';
       
       if (!hasToken) {
@@ -437,6 +444,37 @@ class ApiClient {
         message = `Token de autenticação inválido! "${error.message}"`;
       } else if (error.details?.message) {
         message = `Token de autenticação inválido! "${error.details.message}"`;
+      }
+      
+      // Adicionar informações de diagnóstico
+      if (hasToken && currentToken) {
+        try {
+          const parts = currentToken.split('.');
+          const isJWT = parts.length === 3;
+          console.log('🔍 [API-CLIENT] Token details:', {
+            isJWT,
+            parts: parts.length,
+            firstPartLength: parts[0]?.length || 0
+          });
+          
+          if (isJWT) {
+            try {
+              const payload = JSON.parse(atob(parts[1]));
+              const now = Math.floor(Date.now() / 1000);
+              const isExpired = payload.exp && payload.exp < now;
+              console.log('🔍 [API-CLIENT] JWT payload check:', {
+                hasUserId: !!payload.userId,
+                exp: payload.exp,
+                now: now,
+                isExpired
+              });
+            } catch (e) {
+              console.error('🔍 [API-CLIENT] Erro ao decodificar JWT payload:', e);
+            }
+          }
+        } catch (e) {
+          console.error('🔍 [API-CLIENT] Erro no diagnóstico do token:', e);
+        }
       }
       
       return {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { API_CONFIG } from '@/config/constants';
-import jwt from 'jsonwebtoken';
+import { API_CONFIG } from '../../../../config/constants';
+import { createCorsOptionsResponse, getCorsHeaders } from '../../../../config/cors';
+import * as jwt from 'jsonwebtoken';
 
 // Rate limiting inteligente para evitar loops
 const requestCounts = new Map<string, { count: number; lastReset: number; lastRequest: number; pattern: string[]; consecutiveRequests: number; blockedUntil?: number; isMobile?: boolean }>();
@@ -551,10 +552,12 @@ export async function POST(request: NextRequest) {
     // 3. Se não encontrou userData, a estrutura da resposta é inválida
     if (!userData) {
       console.error('🚫 Estrutura de resposta não reconhecida (usuário não encontrado):', data);
-      return NextResponse.json({ success: false, message: 'Estrutura de resposta inválida do servidor (usuário não encontrado, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })' },
-        { status: 502 }
+      return NextResponse.json(
+        { success: false, message: 'Estrutura de resposta inválida do servidor (usuário não encontrado)' },
+        { 
+          status: 502,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       );
     }
 
@@ -718,15 +721,16 @@ export async function POST(request: NextRequest) {
         message: errorMessage,
         ...(process.env.NODE_ENV === 'development' && {
           debug: {
-            error: error instanceof Error ? error.message : String(error, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }),
+            error: error instanceof Error ? error.message : String(error),
             type: error instanceof Error ? error.name : typeof error,
             timestamp: new Date().toISOString()
           }
         })
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
     );
   }
 }

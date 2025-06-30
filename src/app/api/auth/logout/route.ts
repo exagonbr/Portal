@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-
-import { getInternalApiUrl } from '@/config/env';
+import { createCorsOptionsResponse } from '../../../../config/cors';
+import { getInternalApiUrl } from '../../../../config/env';
 
 
 // Handler para requisições OPTIONS (preflight)
@@ -127,9 +127,8 @@ export async function POST(request: NextRequest) {
     console.error('❌ API: Erro crítico no logout:', error);
     
     // Mesmo com erro, tentamos limpar os cookies
-    const errorResponse = NextResponse.json({ success: true, message: 'Logout realizado com sucesso (com erros recuperáveis, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })' },
+    const errorResponse = NextResponse.json(
+      { success: true, message: 'Logout realizado com sucesso (com erros recuperáveis)' },
       { 
         status: 200,
         headers: {
