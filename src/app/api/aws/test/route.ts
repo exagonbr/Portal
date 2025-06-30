@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { getInternalApiUrl } from '@/config/env';
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
+      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
-        { status: 401 }
+        { 
+          status: 401,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
@@ -17,12 +27,16 @@ export async function POST(request: NextRequest) {
 
     // Validar configurações AWS obrigatórias
     if (!body.accessKeyId || !body.secretAccessKey || !body.region) {
+      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { 
           success: false, 
           message: 'Configurações AWS incompletas. Verifique Access Key ID, Secret Key e Região.' 
         },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
@@ -37,6 +51,7 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
+    const origin = request.headers.get('origin') || undefined;
 
     // Se o backend não tiver a rota implementada, simular resultado
     if (response.status === 404) {
@@ -73,19 +88,29 @@ export async function POST(request: NextRequest) {
         }
       };
 
-      return NextResponse.json(mockResults, { status: 200 });
+      return NextResponse.json(mockResults, { 
+        status: 200,
+        headers: getCorsHeaders(origin)
+      });
     }
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { 
+      status: response.status,
+      headers: getCorsHeaders(origin)
+    });
   } catch (error) {
     console.error('Erro ao testar conexão AWS:', error);
+    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { 
         success: false, 
         message: 'Erro interno do servidor ao testar conexão AWS',
         error: error instanceof Error ? error.message : 'Erro desconhecido'
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(origin)
+      }
     );
   }
 } 

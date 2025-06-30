@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { getInternalApiUrl } from '@/config/env';
 
 type RouteContext = {
@@ -6,6 +7,12 @@ type RouteContext = {
     id: string;
   }>;
 };
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function GET(
   request: NextRequest,
@@ -15,9 +22,13 @@ export async function GET(
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
+      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
-        { status: 401 }
+        { 
+          status: 401,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
@@ -31,13 +42,21 @@ export async function GET(
     });
 
     const data = await response.json();
+    const origin = request.headers.get('origin') || undefined;
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { 
+      status: response.status,
+      headers: getCorsHeaders(origin)
+    });
   } catch (error) {
     console.error('Erro ao buscar configuração AWS:', error);
+    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(origin)
+      }
     );
   }
 }
@@ -50,9 +69,13 @@ export async function PUT(
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
+      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
-        { status: 401 }
+        { 
+          status: 401,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
@@ -69,13 +92,21 @@ export async function PUT(
     });
 
     const data = await response.json();
+    const origin = request.headers.get('origin') || undefined;
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { 
+      status: response.status,
+      headers: getCorsHeaders(origin)
+    });
   } catch (error) {
     console.error('Erro ao atualizar configuração AWS:', error);
+    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(origin)
+      }
     );
   }
 }
@@ -88,9 +119,13 @@ export async function DELETE(
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader) {
+      const origin = request.headers.get('origin') || undefined;
       return NextResponse.json(
         { success: false, message: 'Authorization header missing' },
-        { status: 401 }
+        { 
+          status: 401,
+          headers: getCorsHeaders(origin)
+        }
       );
     }
 
@@ -104,13 +139,21 @@ export async function DELETE(
     });
 
     const data = await response.json();
+    const origin = request.headers.get('origin') || undefined;
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { 
+      status: response.status,
+      headers: getCorsHeaders(origin)
+    });
   } catch (error) {
     console.error('Erro ao deletar configuração AWS:', error);
+    const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getCorsHeaders(origin)
+      }
     );
   }
 }
