@@ -3,6 +3,13 @@ import { cookies } from 'next/headers';
 
 import { getInternalApiUrl } from '@/config/env';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -91,6 +98,8 @@ export async function POST(request: NextRequest) {
       success: true,
       user: data.user,
       message: 'Usuário registrado com sucesso',
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error) {
     console.error('Erro no registro:', error);

@@ -37,12 +37,22 @@ const createUnitSchema = z.object({
 })
 
 // GET - Listar unidades
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Extrair parâmetros de busca
@@ -65,13 +75,15 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     console.error('Error fetching units:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -81,7 +93,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -103,12 +118,14 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     console.error('Error creating unit:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

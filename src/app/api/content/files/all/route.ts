@@ -94,6 +94,13 @@ async function listS3Files(bucket: string, category: string): Promise<S3FileInfo
   }
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const allFiles: Record<string, S3FileInfo[]> = {}
@@ -103,13 +110,15 @@ export async function GET(request: NextRequest) {
       allFiles[category] = await listS3Files(bucket, category)
     }
 
-    return NextResponse.json(allFiles)
+    return NextResponse.json(allFiles, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('Erro ao buscar todos os arquivos:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

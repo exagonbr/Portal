@@ -15,6 +15,13 @@ const mockNotifications = new Map()
 const mockUserNotifications = new Map()
 
 // GET - Buscar notificação por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -23,10 +30,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const notificationId = params.id
@@ -35,19 +42,19 @@ export async function GET(
     const notification = mockNotifications.get(notificationId)
 
     if (!notification) {
-      return NextResponse.json(
-        { error: 'Notificação não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Notificação não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se o usuário é destinatário
     const userStatus = notification.user_statuses?.[session.user?.id]
     if (!userStatus && notification.sender_id !== session.user?.id) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar esta notificação' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar esta notificação' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Marcar como lida automaticamente ao visualizar
@@ -74,14 +81,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: notificationWithStatus
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar notificação:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -94,10 +103,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const notificationId = params.id
@@ -106,10 +115,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateNotificationSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -120,19 +130,19 @@ export async function PUT(
     // Buscar notificação existente
     const existingNotification = mockNotifications.get(notificationId)
     if (!existingNotification) {
-      return NextResponse.json(
-        { error: 'Notificação não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Notificação não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se o usuário é destinatário
     const userStatus = existingNotification.user_statuses?.[session.user?.id]
     if (!userStatus) {
-      return NextResponse.json(
-        { error: 'Você não é destinatário desta notificação' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Você não é destinatário desta notificação' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar status do usuário
@@ -149,10 +159,10 @@ export async function PUT(
     if (updateData.acknowledged !== undefined) {
       // Verificar se a notificação requer acknowledgment
       if (!existingNotification.settings?.require_acknowledgment && updateData.acknowledged) {
-        return NextResponse.json(
-          { error: 'Esta notificação não requer confirmação de leitura' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Esta notificação não requer confirmação de leitura' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
       userStatus.acknowledged = updateData.acknowledged
       userStatus.acknowledged_at = updateData.acknowledged ? new Date().toISOString() : null
@@ -170,14 +180,16 @@ export async function PUT(
         notification_id: notificationId
       },
       message: 'Status da notificação atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar notificação:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -190,10 +202,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const notificationId = params.id
@@ -201,10 +213,10 @@ export async function DELETE(
     // Buscar notificação
     const existingNotification = mockNotifications.get(notificationId)
     if (!existingNotification) {
-      return NextResponse.json(
-        { error: 'Notificação não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Notificação não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões - apenas remetente ou admin pode deletar
@@ -213,10 +225,10 @@ export async function DELETE(
       existingNotification.sender_id === session.user?.id
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar esta notificação' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar esta notificação' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Remover notificação das listas de usuários
@@ -232,13 +244,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Notificação removida com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar notificação:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

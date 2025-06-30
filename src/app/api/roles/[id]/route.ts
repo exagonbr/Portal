@@ -13,6 +13,13 @@ const updateRoleSchema = z.object({
 })
 
 // GET - Obter role por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -40,6 +47,8 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: role
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
@@ -89,11 +98,12 @@ export async function PUT(
     // Validar dados
     const validationResult = updateRoleSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           success: false,
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -125,6 +135,8 @@ export async function PUT(
       success: true,
       data: updatedRole,
       message: 'Role atualizada com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
@@ -183,6 +195,8 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Role deletada com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {

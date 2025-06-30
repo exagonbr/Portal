@@ -3,6 +3,13 @@ import { cookies } from 'next/headers';
 
 import { getInternalApiUrl } from '@/config/env';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
@@ -41,6 +48,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       valid: true,
       user: data.user,
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error) {
     console.error('Erro ao validar token:', error);
@@ -90,6 +99,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       valid: true,
       user: data.user,
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error) {
     console.error('Erro ao validar token:', error);

@@ -13,6 +13,13 @@ const mockCourses = new Map()
 const mockUsers = new Map()
 
 // GET - Listar alunos do curso
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -21,10 +28,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const courseId = params.id
@@ -32,10 +39,10 @@ export async function GET(
     // Buscar curso
     const course = mockCourses.get(courseId)
     if (!course) {
-      return NextResponse.json(
-        { error: 'Curso não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Curso não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -47,10 +54,10 @@ export async function GET(
       (userRole === 'TEACHER' && course.teachers?.includes(session.user?.id))
 
     if (!canViewStudents) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar alunos deste curso' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar alunos deste curso' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de paginação
@@ -93,17 +100,19 @@ export async function GET(
           page,
           limit,
           total: students.length,
-          totalPages: Math.ceil(students.length / limit)
+          totalPages: Math.ceil(students.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar alunos do curso:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -116,10 +125,10 @@ export async function POST(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const courseId = params.id
@@ -128,10 +137,11 @@ export async function POST(
     // Validar dados
     const validationResult = enrollStudentSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -142,10 +152,10 @@ export async function POST(
     // Buscar curso
     const course = mockCourses.get(courseId)
     if (!course) {
-      return NextResponse.json(
-        { error: 'Curso não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Curso não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -156,27 +166,27 @@ export async function POST(
       (userRole === 'SCHOOL_MANAGER' && course.institution_id === session.user.institution_id)
 
     if (!canEnrollStudents) {
-      return NextResponse.json(
-        { error: 'Sem permissão para matricular alunos neste curso' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para matricular alunos neste curso' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se aluno existe
     const student = mockUsers.get(student_id)
     if (!student) {
-      return NextResponse.json(
-        { error: 'Aluno não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Aluno não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se aluno já está matriculado
     if (course.students?.includes(student_id)) {
-      return NextResponse.json(
-        { error: 'Aluno já está matriculado neste curso' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Aluno já está matriculado neste curso' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Matricular aluno
@@ -210,9 +220,9 @@ export async function POST(
 
   } catch (error) {
     console.error('Erro ao matricular aluno:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

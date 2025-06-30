@@ -45,6 +45,13 @@ function normalizeUserRole(role: string | undefined): string | undefined {
 }
 
 // GET - Buscar livro por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -53,10 +60,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const bookId = params.id
@@ -65,10 +72,10 @@ export async function GET(
     const book = mockBooks.get(bookId)
 
     if (!book) {
-      return NextResponse.json(
-        { error: 'Livro não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Livro não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões de acesso
@@ -87,10 +94,10 @@ export async function GET(
       ))
 
     if (!canAccess) {
-      return NextResponse.json(
-        { error: 'Sem permissão para acessar este livro' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para acessar este livro' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Incrementar contador de visualizações
@@ -110,14 +117,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: bookWithAccess
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar livro:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -130,10 +139,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const bookId = params.id
@@ -142,10 +151,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateBookSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -156,10 +166,10 @@ export async function PUT(
     // Buscar livro existente
     const existingBook = mockBooks.get(bookId)
     if (!existingBook) {
-      return NextResponse.json(
-        { error: 'Livro não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Livro não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -170,10 +180,10 @@ export async function PUT(
       (userRole === 'TEACHER' && existingBook.created_by === session.user?.id)
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar este livro' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar este livro' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar livro
@@ -190,14 +200,16 @@ export async function PUT(
       success: true,
       data: updatedBook,
       message: 'Livro atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar livro:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -210,10 +222,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const bookId = params.id
@@ -221,10 +233,10 @@ export async function DELETE(
     // Buscar livro
     const existingBook = mockBooks.get(bookId)
     if (!existingBook) {
-      return NextResponse.json(
-        { error: 'Livro não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Livro não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -235,18 +247,18 @@ export async function DELETE(
       userRole === 'LIBRARIAN'
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar este livro' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar este livro' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se livro está sendo usado em cursos ativos
     if (existingBook.course_ids && existingBook.course_ids.length > 0) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar livro vinculado a cursos. Remova as vinculações primeiro' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar livro vinculado a cursos. Remova as vinculações primeiro' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Deletar livro (em produção, seria soft delete)
@@ -255,13 +267,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Livro removido com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar livro:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

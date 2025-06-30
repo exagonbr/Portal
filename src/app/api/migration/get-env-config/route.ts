@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Buscar configurações do .env
@@ -40,6 +47,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       config: safeConfig
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {

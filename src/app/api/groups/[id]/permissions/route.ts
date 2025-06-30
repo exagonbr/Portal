@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api';
+
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function GET(
   request: NextRequest,

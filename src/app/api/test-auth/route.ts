@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthentication } from '@/lib/auth-utils'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Test Auth endpoint called');
@@ -11,12 +18,13 @@ export async function GET(request: NextRequest) {
     
     if (!session) {
       console.log('❌ No session found');
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           success: false, 
           message: 'No authentication found',
           debug: {
-            hasAuthHeader: !!request.headers.get('authorization'),
+            hasAuthHeader: !!request.headers.get('authorization', {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }),
             hasCookies: request.cookies.size > 0,
             endpoint: 'nextjs-api'
           }
@@ -35,6 +43,8 @@ export async function GET(request: NextRequest) {
         endpoint: 'nextjs-api',
         sessionType: session.user.id === 'admin' ? 'fallback' : 'jwt'
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {

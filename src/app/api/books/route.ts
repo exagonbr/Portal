@@ -34,15 +34,22 @@ const createBookSchema = z.object({
 const mockBooks = new Map()
 
 // GET - Listar livros
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -142,17 +149,19 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: books.length,
-          totalPages: Math.ceil(books.length / limit)
+          totalPages: Math.ceil(books.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar livros:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -162,19 +171,19 @@ export async function POST(request: NextRequest) {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
     const userRole = session.user?.role
     if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER', 'LIBRARIAN'])) {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar livros' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para criar livros' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -182,10 +191,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createBookSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -200,10 +210,10 @@ export async function POST(request: NextRequest) {
       )
 
       if (existingISBN) {
-        return NextResponse.json(
-          { error: 'Já existe um livro com este ISBN' },
-          { status: 409 }
-        )
+        return NextResponse.json({ error: 'Já existe um livro com este ISBN' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -227,9 +237,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao criar livro:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

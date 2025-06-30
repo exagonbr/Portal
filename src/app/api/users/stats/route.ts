@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../lib/auth-headers';
 import { getBackendUrl } from '../../lib/backend-config';
 import { handleApiResponse } from '../../lib/response-handler';
+import { createCorsOptionsResponse } from '@/config/cors';
+
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -72,8 +80,7 @@ export async function GET(request: NextRequest) {
       console.log('⏰ [/api/users/stats] Timeout detectado, tentando fallback...');
       
       // Retornar dados de fallback em caso de timeout
-      return NextResponse.json(
-        {
+      return NextResponse.json({
           success: true,
           data: {
             total_users: 18742,

@@ -38,6 +38,13 @@ const createUnitSchema = z.object({
 })
 
 // GET - Listar unidades (versão debug sem autenticação obrigatória)
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 [UNITS-DEBUG] Iniciando requisição GET /api/units-debug');
@@ -113,7 +120,9 @@ export async function GET(request: NextRequest) {
             totalPages: 1
           }
         },
-        message: 'Dados simulados retornados (sem autenticação)',
+        message: 'Dados simulados retornados (sem autenticação, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })',
         debug: {
           authenticationStatus: 'NO_SESSION',
           originalSession: !!originalSession,
@@ -151,14 +160,15 @@ export async function GET(request: NextRequest) {
       const errorData = await response.json().catch(() => ({}))
       console.error('❌ [UNITS-DEBUG] Erro na resposta do backend:', errorData);
       
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: errorData.message || 'Failed to fetch units',
           debug: {
             backendStatus: response.status,
             backendStatusText: response.statusText,
             backendError: errorData,
-            timestamp: new Date().toISOString()
+            timestamp: new Date(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).toISOString()
           }
         },
         { status: response.status }
@@ -177,19 +187,22 @@ export async function GET(request: NextRequest) {
       debug: {
         authenticationStatus: 'AUTHENTICATED',
         userEmail: session.user.email,
-        userRole: (session.user as any)?.role,
+        userRole: (session.user as any, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })?.role,
         timestamp: new Date().toISOString()
       }
     })
   } catch (error) {
     console.error('❌ [UNITS-DEBUG] Erro na requisição:', error)
-    return NextResponse.json(
-      { 
+    return NextResponse.json({ 
         error: 'Internal server error',
         debug: {
           errorName: error instanceof Error ? error.name : 'UnknownError',
           errorMessage: error instanceof Error ? error.message : 'Erro desconhecido',
-          timestamp: new Date().toISOString()
+          timestamp: new Date(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).toISOString()
         }
       },
       { status: 500 }
@@ -210,7 +223,9 @@ export async function POST(request: NextRequest) {
         error: 'Unauthorized - Authentication required for creating units',
         debug: {
           authenticationStatus: 'NO_SESSION',
-          timestamp: new Date().toISOString()
+          timestamp: new Date(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).toISOString()
         }
       }, { status: 401 })
     }
@@ -232,13 +247,14 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: errorData.message || 'Failed to create unit',
           debug: {
             backendStatus: response.status,
             backendError: errorData,
-            timestamp: new Date().toISOString()
+            timestamp: new Date(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).toISOString()
           }
         },
         { status: response.status }
@@ -251,17 +267,20 @@ export async function POST(request: NextRequest) {
       debug: {
         authenticationStatus: 'AUTHENTICATED',
         userEmail: session.user.email,
-        timestamp: new Date().toISOString()
+        timestamp: new Date(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).toISOString()
       }
     })
   } catch (error) {
     console.error('❌ [UNITS-DEBUG] Erro na criação:', error)
-    return NextResponse.json(
-      { 
+    return NextResponse.json({ 
         error: 'Internal server error',
         debug: {
           errorMessage: error instanceof Error ? error.message : 'Erro desconhecido',
-          timestamp: new Date().toISOString()
+          timestamp: new Date(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).toISOString()
         }
       },
       { status: 500 }

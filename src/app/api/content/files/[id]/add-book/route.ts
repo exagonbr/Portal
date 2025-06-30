@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connection as db } from '@/config/database'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -11,17 +18,17 @@ export async function POST(
 
     // Validar dados obrigatórios
     if (!bookData.title || !bookData.title.trim()) {
-      return NextResponse.json(
-        { error: 'Título do livro é obrigatório' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Título do livro é obrigatório' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     if (!bookData.category) {
-      return NextResponse.json(
-        { error: 'Categoria é obrigatória' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Categoria é obrigatória' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     console.log(`📚 Adicionando livro para arquivo ${fileId}:`, bookData.title)
@@ -32,10 +39,10 @@ export async function POST(
       .first()
 
     if (!existingFile) {
-      return NextResponse.json(
-        { error: 'Arquivo não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Arquivo não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se já existe um livro para este arquivo
@@ -44,10 +51,10 @@ export async function POST(
       .first()
 
     if (existingBook) {
-      return NextResponse.json(
-        { error: 'Já existe um livro cadastrado para este arquivo' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Já existe um livro cadastrado para este arquivo' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Buscar uma instituição padrão (primeira ativa)
@@ -56,10 +63,10 @@ export async function POST(
       .first()
 
     if (!defaultInstitution) {
-      return NextResponse.json(
-        { error: 'Nenhuma instituição ativa encontrada' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Nenhuma instituição ativa encontrada' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Criar registro na tabela books
@@ -129,17 +136,17 @@ export async function POST(
     // Verificar tipos de erro específicos
     if (error instanceof Error) {
       if (error.message.includes('unique constraint')) {
-        return NextResponse.json(
-          { error: 'Livro com este título já existe' },
-          { status: 409 }
-        )
+        return NextResponse.json({ error: 'Livro com este título já existe' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
       
       if (error.message.includes('foreign key')) {
-        return NextResponse.json(
-          { error: 'Erro de referência no banco de dados' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Erro de referência no banco de dados' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
 
       // Log detalhado para debug
@@ -149,9 +156,9 @@ export async function POST(
       })
     }
 
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

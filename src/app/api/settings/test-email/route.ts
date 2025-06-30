@@ -3,21 +3,31 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import nodemailer from 'nodemailer'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session || session.user?.role !== 'SYSTEM_ADMIN') {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const { host, port, user, password, secure, fromAddress } = await request.json()
 
     if (!host || !port || !user || !password) {
-      return NextResponse.json(
-        { error: 'Configurações de email incompletas' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Configurações de email incompletas' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Criar transporter
@@ -52,7 +62,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Email de teste enviado com sucesso!'
-      })
+      }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     } catch (emailError: any) {
       console.error('Erro ao enviar email:', emailError)
       return NextResponse.json({
@@ -62,9 +74,9 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Erro ao testar email:', error)
-    return NextResponse.json(
-      { error: 'Erro ao testar configuração de email' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro ao testar configuração de email' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

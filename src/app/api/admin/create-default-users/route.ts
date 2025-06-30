@@ -77,6 +77,13 @@ const rolesData = [
   }
 ]
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Iniciando criação automática de usuários padrão...')
@@ -356,6 +363,8 @@ export async function POST(request: NextRequest) {
         sabercon: saberconInstitution.id,
         ifsp: ifspInstitution.id
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error: any) {

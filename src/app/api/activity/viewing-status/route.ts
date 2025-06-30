@@ -23,6 +23,13 @@ const viewingStatusSchema = z.object({
   device_type: z.string().default('web')
 })
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verificar autenticação
@@ -55,6 +62,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Status de visualização atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
@@ -121,6 +130,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: viewingStatus
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {

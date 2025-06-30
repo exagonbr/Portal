@@ -59,6 +59,13 @@ const mockQuizzes = new Map()
 const mockQuizAttempts = new Map()
 
 // GET - Buscar quiz por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -67,10 +74,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const quizId = params.id
@@ -79,10 +86,10 @@ export async function GET(
     const quiz = mockQuizzes.get(quizId)
 
     if (!quiz) {
-      return NextResponse.json(
-        { error: 'Quiz não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Quiz não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -94,10 +101,10 @@ export async function GET(
 
     // Estudantes só podem ver quizzes publicados
     if (isStudent && !quiz.is_published) {
-      return NextResponse.json(
-        { error: 'Quiz não disponível' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Quiz não disponível' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Buscar tentativas do usuário
@@ -165,14 +172,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: quizData
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar quiz:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -185,10 +194,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const quizId = params.id
@@ -197,10 +206,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateQuizSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -211,10 +221,10 @@ export async function PUT(
     // Buscar quiz existente
     const existingQuiz = mockQuizzes.get(quizId)
     if (!existingQuiz) {
-      return NextResponse.json(
-        { error: 'Quiz não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Quiz não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -225,10 +235,10 @@ export async function PUT(
       (userRole === 'TEACHER' && existingQuiz.created_by === session.user?.id)
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar este quiz' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar este quiz' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se já tem tentativas
@@ -242,10 +252,10 @@ export async function PUT(
       const hasRestrictedChanges = restrictedFields.some(field => (updateData as any)[field] !== undefined)
       
       if (hasRestrictedChanges) {
-        return NextResponse.json(
-          { error: 'Não é possível alterar questões ou configurações estruturais após o quiz ter sido iniciado por alunos' },
-          { status: 409 }
-        )
+        return NextResponse.json({ error: 'Não é possível alterar questões ou configurações estruturais após o quiz ter sido iniciado por alunos' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -260,10 +270,10 @@ export async function PUT(
         (existingQuiz.availability?.end_date ? new Date(existingQuiz.availability.end_date) : null)
       
       if (startDate && endDate && endDate <= startDate) {
-        return NextResponse.json(
-          { error: 'Data de término deve ser posterior à data de início' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Data de término deve ser posterior à data de início' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -288,14 +298,16 @@ export async function PUT(
       success: true,
       data: updatedQuiz,
       message: 'Quiz atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar quiz:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -308,10 +320,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const quizId = params.id
@@ -319,10 +331,10 @@ export async function DELETE(
     // Buscar quiz
     const existingQuiz = mockQuizzes.get(quizId)
     if (!existingQuiz) {
-      return NextResponse.json(
-        { error: 'Quiz não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Quiz não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -333,10 +345,10 @@ export async function DELETE(
       (userRole === 'TEACHER' && existingQuiz.created_by === session.user?.id)
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar este quiz' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar este quiz' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se há tentativas
@@ -345,10 +357,10 @@ export async function DELETE(
       .flatMap(key => mockQuizAttempts.get(key) || [])
 
     if (allAttempts.length > 0) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar quiz com tentativas registradas. Archive o quiz ao invés de deletar.' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar quiz com tentativas registradas. Archive o quiz ao invés de deletar.' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Deletar quiz
@@ -357,13 +369,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Quiz removido com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar quiz:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

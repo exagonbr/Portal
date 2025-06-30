@@ -8,6 +8,13 @@ function sanitizeInt(s: string|undefined, fallback: number): number {
   return isNaN(n) || n < 1 ? fallback : n
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url)
@@ -66,6 +73,8 @@ export async function GET(req: NextRequest) {
       success: true,
       data: certificates,
       pagination: { page, limit, total, totalPages },
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (err: any) {
     console.error('Erro ao buscar certificados:', err)

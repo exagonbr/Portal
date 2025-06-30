@@ -46,15 +46,22 @@ const mockStudyGroups = new Map()
 const mockGroupMembers = new Map() // Relação grupo-membros
 
 // GET - Listar grupos de estudo
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -164,17 +171,19 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: groupsWithInfo.length,
-          totalPages: Math.ceil(groupsWithInfo.length / limit)
+          totalPages: Math.ceil(groupsWithInfo.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar grupos de estudo:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -184,10 +193,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -195,10 +204,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createStudyGroupSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -211,10 +221,10 @@ export async function POST(request: NextRequest) {
     
     // Estudantes só podem criar grupos públicos ou privados
     if (userRole === 'STUDENT' && ['CLASS_ONLY', 'INVITE_ONLY'].includes(groupData.visibility)) {
-      return NextResponse.json(
-        { error: 'Estudantes não podem criar grupos com esta visibilidade' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Estudantes não podem criar grupos com esta visibilidade' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se for grupo de turma, verificar se o usuário tem acesso à turma
@@ -263,9 +273,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao criar grupo de estudo:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

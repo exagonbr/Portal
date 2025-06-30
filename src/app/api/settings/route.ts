@@ -4,6 +4,13 @@ import { getInternalApiUrl } from '@/config/env'
 
 export const dynamic = 'force-dynamic'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 API Settings GET - Rota pública, sem verificação de autenticação')
@@ -51,10 +58,14 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({
               success: true,
               data: flatData
-            })
+            }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
           }
           
-          return NextResponse.json(response)
+          return NextResponse.json(response, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
         
         lastError = `${backendResponse.status} - ${await backendResponse.text()}`
@@ -104,6 +115,8 @@ export async function GET(request: NextRequest) {
         notifications_push_enabled: true,
         notifications_digest_frequency: 'daily'
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   }
 }
@@ -137,7 +150,9 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = await backendResponse.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('Erro ao salvar configurações:', error)
@@ -189,7 +204,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await backendResponse.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('Erro na ação de configurações:', error)

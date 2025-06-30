@@ -10,6 +10,13 @@ const duplicateRoleSchema = z.object({
 })
 
 // POST - Duplicar role
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -47,11 +54,12 @@ export async function POST(
     // Validar dados
     const validationResult = duplicateRoleSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           success: false,
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )

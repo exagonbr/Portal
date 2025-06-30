@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRedisClient } from '@/config/redis';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { sessionId } = await request.json();
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: 'Session ID é obrigatório' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Session ID é obrigatório' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     }
 
     console.log(`🔄 Redis: Iniciando invalidação da sessão: ${sessionId}`);
@@ -60,7 +67,9 @@ export async function POST(request: NextRequest) {
       // Continue even if Redis fails - don't block logout
       return NextResponse.json({ 
         success: true, 
-        message: 'Sessão invalidada (com avisos no Redis)',
+        message: 'Sessão invalidada (com avisos no Redis, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })',
         warning: 'Erro no Redis, mas logout continuou'
       });
     }
@@ -68,14 +77,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       message: 'Sessão invalidada com sucesso no Redis' 
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
   } catch (error) {
     console.error('❌ API: Erro crítico ao invalidar sessão:', error);
-    return NextResponse.json(
-      { 
+    return NextResponse.json({ 
         success: true, // Retorna sucesso para não bloquear logout
-        message: 'Sessão invalidada (com erros recuperáveis)',
+        message: 'Sessão invalidada (com erros recuperáveis, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })',
         error: 'Erro interno, mas logout foi processado'
       },
       { status: 200 } // 200 para não bloquear o logout

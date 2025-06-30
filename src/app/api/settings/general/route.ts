@@ -12,21 +12,33 @@ let generalSettingsData = {
   supportEmail: 'suporte@portal.educacional.com'
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
-    return NextResponse.json(generalSettingsData)
+    return NextResponse.json(generalSettingsData, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     console.error('Erro ao buscar configurações gerais:', error)
-    return NextResponse.json(
-      { error: 'Erro ao buscar configurações gerais' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro ao buscar configurações gerais' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -35,26 +47,29 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
     
     // Validação básica
     if (!body.platformName || !body.systemUrl || !body.supportEmail) {
-      return NextResponse.json(
-        { error: 'Campos obrigatórios não preenchidos' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Campos obrigatórios não preenchidos' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Validação de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(body.supportEmail)) {
-      return NextResponse.json(
-        { error: 'Email de suporte inválido' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Email de suporte inválido' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualiza os dados
@@ -64,13 +79,15 @@ export async function POST(request: NextRequest) {
       id: generalSettingsData.id || '1'
     }
 
-    return NextResponse.json(generalSettingsData)
+    return NextResponse.json(generalSettingsData, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     console.error('Erro ao salvar configurações gerais:', error)
-    return NextResponse.json(
-      { error: 'Erro ao salvar configurações gerais' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro ao salvar configurações gerais' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -88,11 +105,14 @@ export async function DELETE() {
       supportEmail: 'suporte@portal.educacional.com'
     }
 
-    return NextResponse.json({ message: 'Configurações gerais resetadas' })
+    return NextResponse.json({ message: 'Configurações gerais resetadas' }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     return NextResponse.json(
-      { error: 'Erro ao deletar configurações gerais' },
-      { status: 500 }
-    )
+      { error: 'Erro ao deletar configurações gerais' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

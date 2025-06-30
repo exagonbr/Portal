@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { Pool } from 'pg'
+
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function GET(request: NextRequest) {
   let pgPool: Pool | null = null
@@ -56,7 +64,9 @@ export async function GET(request: NextRequest) {
         total: roles.length,
         summary: {
           total_roles: roles.length,
-          active_roles: roles.filter(r => r.is_active).length,
+          active_roles: roles.filter(r => r.is_active, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).length,
           total_users: statsResult.rows.reduce((sum, stat) => sum + parseInt(stat.user_count), 0)
         }
       })

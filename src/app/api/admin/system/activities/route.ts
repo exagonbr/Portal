@@ -8,7 +8,16 @@ const RECENT_ACTIVITIES = [
   { id: 5, type: 'error', message: 'Erro temporário no serviço de email', timestamp: '2024-03-19 14:20:00', severity: 'error' }
 ]
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET() {
   // Em um cenário real, isso viria de um sistema de logs ou banco de dados
-  return NextResponse.json(RECENT_ACTIVITIES)
+  return NextResponse.json(RECENT_ACTIVITIES, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 }

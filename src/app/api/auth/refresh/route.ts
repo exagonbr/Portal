@@ -6,6 +6,13 @@ import { getInternalApiUrl } from '@/config/env';
 /**
  * Endpoint para renovar o token de autenticação
  */
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
@@ -93,6 +100,8 @@ export async function POST(request: NextRequest) {
         token,
         expires_at
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
     // Configurar cookies

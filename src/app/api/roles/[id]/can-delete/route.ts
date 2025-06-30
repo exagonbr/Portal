@@ -4,6 +4,13 @@ import { authOptions } from '@/lib/auth'
 import { mockRoles, findRoleById } from '../../mockDatabase'
 
 // GET - Verificar se role pode ser deletada
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -48,6 +55,8 @@ export async function GET(
         reason,
         usersCount
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {

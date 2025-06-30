@@ -30,15 +30,22 @@ const createClassSchema = z.object({
 const mockClasses = new Map()
 
 // GET - Listar turmas
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -127,17 +134,19 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: classes.length,
-          totalPages: Math.ceil(classes.length / limit)
+          totalPages: Math.ceil(classes.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar turmas:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -147,19 +156,19 @@ export async function POST(request: NextRequest) {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
     const userRole = session.user?.role
     if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'])) {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar turmas' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para criar turmas' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -167,10 +176,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createClassSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -189,10 +199,10 @@ export async function POST(request: NextRequest) {
     const endDate = new Date(classData.end_date)
     
     if (startDate >= endDate) {
-      return NextResponse.json(
-        { error: 'Data de início deve ser anterior à data de término' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Data de início deve ser anterior à data de término' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se já existe turma com mesmo nome no mesmo período
@@ -204,10 +214,10 @@ export async function POST(request: NextRequest) {
     )
 
     if (existingClass) {
-      return NextResponse.json(
-        { error: 'Já existe uma turma com este nome neste período' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Já existe uma turma com este nome neste período' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Criar turma
@@ -230,9 +240,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao criar turma:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

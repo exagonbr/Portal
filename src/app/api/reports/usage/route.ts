@@ -313,6 +313,13 @@ function getMockUsageData(filters: any): UsageStats {
 }
 
 // GET - Obter dados de uso
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🚀 Iniciando GET /api/reports/usage')
@@ -323,10 +330,10 @@ export async function GET(request: NextRequest) {
     
     if (!session) {
       console.log('❌ Usuário não autenticado')
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões - apenas admins podem ver relatórios de uso
@@ -335,10 +342,10 @@ export async function GET(request: NextRequest) {
     
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'system_admin', 'admin', 'institution_manager'].includes(userRole)) {
       console.log('🚫 Usuário sem permissão')
-      return NextResponse.json(
-        { error: 'Sem permissão para acessar relatórios de uso' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para acessar relatórios de uso' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
     */
 
@@ -361,10 +368,11 @@ export async function GET(request: NextRequest) {
     const validationResult = usageReportSchema.safeParse(filters)
     if (!validationResult.success) {
       console.log('❌ Filtros inválidos:', validationResult.error.flatten().fieldErrors)
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Filtros inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -385,10 +393,10 @@ export async function GET(request: NextRequest) {
       const dateTo = new Date(validatedFilters.date_to)
       
       if (dateTo <= dateFrom) {
-        return NextResponse.json(
-          { error: 'Data final deve ser posterior à data inicial' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Data final deve ser posterior à data inicial' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -401,15 +409,17 @@ export async function GET(request: NextRequest) {
       success: true,
       data: usageData,
       filters: validatedFilters,
-      generated_at: new Date().toISOString()
+      generated_at: new Date(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).toISOString()
     })
 
   } catch (error) {
     console.error('❌ Erro ao obter dados de uso:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -419,19 +429,19 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
     const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'system_admin', 'admin', 'institution_manager'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Sem permissão para exportar relatórios de uso' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para exportar relatórios de uso' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -469,9 +479,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao exportar relatório:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }

@@ -10,6 +10,13 @@ interface MySQLConnection {
   tableName: string
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { host, port, user, password, database, tableName }: MySQLConnection = await request.json()
@@ -117,7 +124,9 @@ export async function POST(request: NextRequest) {
         columns,
         tableName,
         columnCount: columns.length
-      })
+      }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
     } catch (error) {
       await connection.end()

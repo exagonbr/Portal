@@ -143,6 +143,13 @@ function generateDashboardSummary(userRole: string) {
   }
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getAuthentication(request);
@@ -160,6 +167,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: summary
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
   } catch (error) {

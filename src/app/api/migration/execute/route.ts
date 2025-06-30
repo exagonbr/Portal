@@ -51,6 +51,13 @@ interface MigrationRequest {
   structureMappings?: TableStructureMapping[]
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
   let mysqlConnection: mysql.Connection | null = null
@@ -162,6 +169,8 @@ export async function POST(request: NextRequest) {
         hasErrors: results.errors.length > 0,
         hasWarnings: results.warnings.length > 0
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error: any) {
@@ -178,7 +187,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: error.message || 'Erro interno durante migração',
-      duration: Date.now() - startTime
+      duration: Date.now(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }) - startTime
     }, { status: 500 })
   }
 }

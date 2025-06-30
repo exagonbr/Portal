@@ -3,6 +3,13 @@ import { getInternalApiUrl } from '@/config/env';
 
 export const dynamic = 'force-dynamic';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Tentar buscar configurações do backend
@@ -19,7 +26,9 @@ export async function GET(request: NextRequest) {
 
       if (backendResponse.ok) {
         const data = await backendResponse.json();
-        return NextResponse.json(data);
+        return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
       } else {
         console.warn(`Backend retornou status ${backendResponse.status}, usando fallback`);
       }
@@ -50,7 +59,9 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(defaultSettings);
+    return NextResponse.json(defaultSettings, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
 
   } catch (error) {
     console.error('Erro ao buscar configurações públicas:', error);
@@ -74,6 +85,8 @@ export async function GET(request: NextRequest) {
           secondary_color: '#3b82f6'
         }
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   }
 } 

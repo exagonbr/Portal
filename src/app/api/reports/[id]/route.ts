@@ -20,6 +20,13 @@ const updateReportSchema = z.object({
 const mockReports = new Map()
 
 // GET - Buscar relatório por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -28,10 +35,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const reportId = params.id
@@ -40,10 +47,10 @@ export async function GET(
     const report = mockReports.get(reportId)
 
     if (!report) {
-      return NextResponse.json(
-        { error: 'Relatório não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Relatório não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -59,10 +66,10 @@ export async function GET(
       (report.visibility === 'SHARED' && report.share_with?.includes(session.user?.id))
 
     if (!canView) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar este relatório' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar este relatório' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Preparar resposta com informações extras
@@ -102,14 +109,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: reportWithDetails
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar relatório:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -122,10 +131,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const reportId = params.id
@@ -134,10 +143,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateReportSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -148,10 +158,10 @@ export async function PUT(
     // Buscar relatório existente
     const existingReport = mockReports.get(reportId)
     if (!existingReport) {
-      return NextResponse.json(
-        { error: 'Relatório não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Relatório não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -161,18 +171,18 @@ export async function PUT(
       ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar este relatório' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar este relatório' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Não permitir edição de relatórios em processamento
     if (existingReport.status === 'processing') {
-      return NextResponse.json(
-        { error: 'Não é possível editar relatório em processamento' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível editar relatório em processamento' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se está alterando compartilhamento, validar usuários
@@ -204,14 +214,16 @@ export async function PUT(
       success: true,
       data: updatedReport,
       message: 'Relatório atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar relatório:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -224,10 +236,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const reportId = params.id
@@ -235,10 +247,10 @@ export async function DELETE(
     // Buscar relatório
     const existingReport = mockReports.get(reportId)
     if (!existingReport) {
-      return NextResponse.json(
-        { error: 'Relatório não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Relatório não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -248,18 +260,18 @@ export async function DELETE(
       userRole === 'SYSTEM_ADMIN'
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar este relatório' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar este relatório' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Não permitir deletar relatórios em processamento
     if (existingReport.status === 'processing') {
-      return NextResponse.json(
-        { error: 'Não é possível deletar relatório em processamento' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar relatório em processamento' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se tem arquivo associado, marcar para exclusão
@@ -274,13 +286,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Relatório removido com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar relatório:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

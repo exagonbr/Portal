@@ -27,6 +27,13 @@ const mockTopics = new Map()
 const mockCategories = new Map()
 
 // GET - Buscar tópico por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -35,10 +42,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const topicId = params.id
@@ -47,10 +54,10 @@ export async function GET(
     const topic = mockTopics.get(topicId)
 
     if (!topic) {
-      return NextResponse.json(
-        { error: 'Tópico não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Tópico não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões de visualização
@@ -62,10 +69,10 @@ export async function GET(
       (topic.visibility === 'PRIVATE' && (topic.author_id === session.user?.id || userRole === 'SYSTEM_ADMIN'))
 
     if (!canView) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar este tópico' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar este tópico' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Incrementar contador de visualizações
@@ -111,14 +118,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: topicWithDetails
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar tópico:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -131,10 +140,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const topicId = params.id
@@ -143,10 +152,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateTopicSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -157,10 +167,10 @@ export async function PUT(
     // Buscar tópico existente
     const existingTopic = mockTopics.get(topicId)
     if (!existingTopic) {
-      return NextResponse.json(
-        { error: 'Tópico não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Tópico não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -171,37 +181,37 @@ export async function PUT(
 
     // Permissões básicas de edição
     if (!isAuthor && !isAdmin && !isTeacher) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar este tópico' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar este tópico' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Apenas admins e professores podem fixar/trancar tópicos
     if ((updateData.is_pinned !== undefined || updateData.is_locked !== undefined) && 
         !isAdmin && !isTeacher) {
-      return NextResponse.json(
-        { error: 'Sem permissão para fixar ou trancar tópicos' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para fixar ou trancar tópicos' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Apenas autor, admin ou professor podem marcar como resolvido
     if (updateData.is_solved !== undefined && existingTopic.type === 'QUESTION') {
       if (!isAuthor && !isAdmin && !isTeacher) {
-        return NextResponse.json(
-          { error: 'Sem permissão para marcar como resolvido' },
-          { status: 403 }
-        )
+        return NextResponse.json({ error: 'Sem permissão para marcar como resolvido' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
     // Não permitir edição se tópico estiver trancado (exceto admins)
     if (existingTopic.is_locked && !isAdmin) {
-      return NextResponse.json(
-        { error: 'Tópico está trancado e não pode ser editado' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Tópico está trancado e não pode ser editado' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar tópico
@@ -220,14 +230,16 @@ export async function PUT(
       success: true,
       data: updatedTopic,
       message: 'Tópico atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar tópico:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -240,10 +252,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const topicId = params.id
@@ -251,10 +263,10 @@ export async function DELETE(
     // Buscar tópico
     const existingTopic = mockTopics.get(topicId)
     if (!existingTopic) {
-      return NextResponse.json(
-        { error: 'Tópico não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Tópico não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -264,18 +276,18 @@ export async function DELETE(
       (existingTopic.author_id === session.user?.id && existingTopic.reply_count === 0)
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar este tópico' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar este tópico' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Não permitir deletar tópicos com muitas respostas (preservar discussões)
     if (existingTopic.reply_count > 5 && userRole !== 'SYSTEM_ADMIN') {
-      return NextResponse.json(
-        { error: 'Tópicos com muitas respostas não podem ser deletados. Entre em contato com um administrador.' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Tópicos com muitas respostas não podem ser deletados. Entre em contato com um administrador.' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar estatísticas da categoria
@@ -291,14 +303,16 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Tópico removido com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar tópico:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 

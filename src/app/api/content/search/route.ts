@@ -56,15 +56,22 @@ function calculateTagMatchScore(tags: string[], queryWords: string[]): number {
   return matches.length / queryWords.length;
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: Request) {
   try {
     const { query, type, tags } = await request.json();
 
     if (!query) {
-      return NextResponse.json(
-        { error: 'Search query is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Search query is required' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     }
 
     // Get all contents
@@ -89,12 +96,14 @@ export async function POST(request: Request) {
     return NextResponse.json({
       results: filteredResults,
       totalResults: filteredResults.length
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error) {
     console.error('Search error:', error);
-    return NextResponse.json(
-      { error: 'Failed to perform search' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to perform search' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
 }

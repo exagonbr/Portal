@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -20,7 +27,9 @@ export async function GET(
         { status: 404 }
       )
     }
-    return NextResponse.json({ success: true, data: cert })
+    return NextResponse.json({ success: true, data: cert }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (err: any) {
     console.error('Erro ao buscar certificado:', err)
     return NextResponse.json(
@@ -66,12 +75,16 @@ export async function PUT(
       },
     })
 
-    return NextResponse.json({ success: true, data: updated })
+    return NextResponse.json({ success: true, data: updated }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (err: any) {
     console.error('Erro ao atualizar certificado:', err)
     const status = err.code === 'P2025' ? 404 : 500
     const msg = status === 404 ? 'Certificado não encontrado' : 'Erro interno do servidor'
-    return NextResponse.json({ success: false, message: msg }, { status })
+    return NextResponse.json({ success: false, message: msg }, { status }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -87,11 +100,15 @@ export async function DELETE(
         course: { select: { id: true, title: true, slug: true } },
       },
     })
-    return NextResponse.json({ success: true, data: deleted })
+    return NextResponse.json({ success: true, data: deleted }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (err: any) {
     console.error('Erro ao deletar certificado:', err)
     const status = err.code === 'P2025' ? 404 : 500
     const msg = status === 404 ? 'Certificado não encontrado' : 'Erro interno do servidor'
-    return NextResponse.json({ success: false, message: msg }, { status })
+    return NextResponse.json({ success: false, message: msg }, { status }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }

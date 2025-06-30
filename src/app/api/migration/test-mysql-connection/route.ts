@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import mysql from 'mysql2/promise'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { host, port, user, password, database } = await request.json()
@@ -42,7 +49,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Conexão MySQL estabelecida com sucesso',
-        tableCount: Array.isArray(tables) ? tables.length : 0
+        tableCount: Array.isArray(tables, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }) ? tables.length : 0
       })
       
     } catch (connectionError: any) {

@@ -10,6 +10,13 @@ const toggleStatusSchema = z.object({
 })
 
 // PATCH - Alterar status da role (ativar/desativar)
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -47,11 +54,12 @@ export async function PATCH(
     // Validar dados
     const validationResult = toggleStatusSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           success: false,
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -72,6 +80,8 @@ export async function PATCH(
       success: true,
       data: updatedRole,
       message: `Role ${active ? 'ativada' : 'desativada'} com sucesso`
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {

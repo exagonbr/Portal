@@ -1,14 +1,25 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Simulação de buckets S3
@@ -23,6 +34,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       buckets: mockBuckets
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
     console.error('Erro ao listar buckets S3:', error)

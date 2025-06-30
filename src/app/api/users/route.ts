@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { prisma } from '@/lib/prisma'
 
 interface UserQueryResult {
   id: bigint
   full_name: string
   email: string
+}
+
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
 }
 
 export async function GET(req: NextRequest) {
@@ -41,6 +49,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       data: serializedUsers,
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (err: any) {
     console.error('Erro ao buscar usuários:', err)

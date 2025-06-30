@@ -61,15 +61,22 @@ const mockQuizzes = new Map()
 const mockQuizAttempts = new Map()
 
 // GET - Listar quizzes
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -195,17 +202,19 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: filteredQuizzes.length,
-          totalPages: Math.ceil(filteredQuizzes.length / limit)
+          totalPages: Math.ceil(filteredQuizzes.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar quizzes:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -215,19 +224,19 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
     const userRole = session.user?.role
     if (!userRole || !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar quizzes' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para criar quizzes' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -235,10 +244,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createQuizSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -252,10 +262,10 @@ export async function POST(request: NextRequest) {
       const endDate = quizData.availability.end_date ? new Date(quizData.availability.end_date) : null
       
       if (endDate && endDate <= startDate) {
-        return NextResponse.json(
-          { error: 'Data de término deve ser posterior à data de início' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Data de término deve ser posterior à data de início' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -306,9 +316,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Erro ao criar quiz:', error)
-    return NextResponse.json(
-      { error: error.message || 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error.message || 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

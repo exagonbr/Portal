@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { S3FileInfo, FileRecord } from '@/types/files'
@@ -101,16 +102,23 @@ async function listAllS3Files(bucket: string): Promise<S3FileInfo[]> {
 }
 
 // GET - Listar TODOS os arquivos do bucket (incluindo não vinculados)
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category') as 'literario' | 'professor' | 'aluno'
 
     if (!category) {
-      return NextResponse.json(
-        { error: 'Categoria é obrigatória' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Categoria é obrigatória' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     if (!['literario', 'professor', 'aluno'].includes(category)) {
@@ -123,13 +131,15 @@ export async function GET(request: NextRequest) {
     const bucket = BUCKETS[category]
     const files = await listAllS3Files(bucket)
     
-    return NextResponse.json(files)
+    return NextResponse.json(files, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('Erro ao buscar arquivos do bucket:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }

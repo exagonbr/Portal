@@ -45,6 +45,13 @@ const updateAssignmentSchema = z.object({
 const mockAssignments = new Map()
 
 // GET - Buscar tarefa por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -53,10 +60,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const params = await context.params
@@ -66,10 +73,10 @@ export async function GET(
     const assignment = mockAssignments.get(assignmentId)
 
     if (!assignment) {
-      return NextResponse.json(
-        { error: 'Tarefa não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Tarefa não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -81,10 +88,10 @@ export async function GET(
       (userRole === 'STUDENT' && assignment.is_published)
 
     if (!canViewDetails) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar esta tarefa' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar esta tarefa' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Adicionar informações específicas do usuário
@@ -115,14 +122,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: assignmentWithUserInfo
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar tarefa:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -135,10 +144,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const params = await context.params
@@ -148,10 +157,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateAssignmentSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -162,10 +172,10 @@ export async function PUT(
     // Buscar tarefa existente
     const existingAssignment = mockAssignments.get(assignmentId)
     if (!existingAssignment) {
-      return NextResponse.json(
-        { error: 'Tarefa não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Tarefa não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -176,10 +186,10 @@ export async function PUT(
       (userRole === 'TEACHER' && existingAssignment.created_by === session.user?.id)
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar esta tarefa' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar esta tarefa' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Validar datas se estiverem sendo alteradas
@@ -189,10 +199,10 @@ export async function PUT(
                            (existingAssignment.available_from ? new Date(existingAssignment.available_from) : null)
 
       if (availableFrom && availableFrom > dueDate) {
-        return NextResponse.json(
-          { error: 'Data de disponibilidade deve ser anterior à data de entrega' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Data de disponibilidade deve ser anterior à data de entrega' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -202,10 +212,10 @@ export async function PUT(
       const hasRestrictedChanges = restrictedFields.some(field => (updateData as any)[field] !== undefined)
       
       if (hasRestrictedChanges) {
-        return NextResponse.json(
-          { error: 'Não é possível alterar configurações estruturais após receber submissões' },
-          { status: 409 }
-        )
+        return NextResponse.json({ error: 'Não é possível alterar configurações estruturais após receber submissões' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -223,14 +233,16 @@ export async function PUT(
       success: true,
       data: updatedAssignment,
       message: 'Tarefa atualizada com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar tarefa:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -243,10 +255,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const params = await context.params
@@ -255,10 +267,10 @@ export async function DELETE(
     // Buscar tarefa
     const existingAssignment = mockAssignments.get(assignmentId)
     if (!existingAssignment) {
-      return NextResponse.json(
-        { error: 'Tarefa não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Tarefa não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -269,18 +281,18 @@ export async function DELETE(
       (userRole === 'TEACHER' && existingAssignment.created_by === session.user?.id)
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar esta tarefa' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar esta tarefa' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Não permitir deletar se houver submissões
     if (existingAssignment.submissions && existingAssignment.submissions.length > 0) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar tarefa com submissões. Archive a tarefa ao invés de deletar.' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar tarefa com submissões. Archive a tarefa ao invés de deletar.' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Deletar tarefa (em produção, seria soft delete)
@@ -289,13 +301,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Tarefa removida com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar tarefa:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

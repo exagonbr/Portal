@@ -232,6 +232,13 @@ function checkRateLimit(key: string, pattern: string, request: NextRequest): { a
   return { allowed: true, remaining: maxRequests - record.count };
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const userAgent = request.headers.get('user-agent') || 'unknown';
@@ -544,8 +551,9 @@ export async function POST(request: NextRequest) {
     // 3. Se não encontrou userData, a estrutura da resposta é inválida
     if (!userData) {
       console.error('🚫 Estrutura de resposta não reconhecida (usuário não encontrado):', data);
-      return NextResponse.json(
-        { success: false, message: 'Estrutura de resposta inválida do servidor (usuário não encontrado)' },
+      return NextResponse.json({ success: false, message: 'Estrutura de resposta inválida do servidor (usuário não encontrado, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })' },
         { status: 502 }
       );
     }
@@ -705,13 +713,14 @@ export async function POST(request: NextRequest) {
       ? `Erro interno do servidor: ${error.message}`
       : 'Erro interno do servidor. Por favor, tente novamente.';
     
-    return NextResponse.json(
-      {
+    return NextResponse.json({
         success: false,
         message: errorMessage,
         ...(process.env.NODE_ENV === 'development' && {
           debug: {
-            error: error instanceof Error ? error.message : String(error),
+            error: error instanceof Error ? error.message : String(error, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }),
             type: error instanceof Error ? error.name : typeof error,
             timestamp: new Date().toISOString()
           }

@@ -45,6 +45,13 @@ const mockStudyGroups = new Map()
 const mockGroupMembers = new Map()
 
 // GET - Buscar grupo por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -53,10 +60,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const groupId = params.id
@@ -65,10 +72,10 @@ export async function GET(
     const group = mockStudyGroups.get(groupId)
 
     if (!group) {
-      return NextResponse.json(
-        { error: 'Grupo não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Grupo não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Buscar membros
@@ -85,10 +92,10 @@ export async function GET(
       (group.visibility === 'CLASS_ONLY' && group.class_id) // Verificar se está na turma
 
     if (!canView) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar este grupo' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar este grupo' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Preparar informações do grupo
@@ -123,14 +130,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: groupWithDetails
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar grupo:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -143,10 +152,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const groupId = params.id
@@ -155,10 +164,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateStudyGroupSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -169,10 +179,10 @@ export async function PUT(
     // Buscar grupo existente
     const existingGroup = mockStudyGroups.get(groupId)
     if (!existingGroup) {
-      return NextResponse.json(
-        { error: 'Grupo não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Grupo não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -186,18 +196,20 @@ export async function PUT(
       (userMembership?.role === 'MODERATOR' && !['visibility', 'max_members'].some(field => (updateData as any)[field] !== undefined))
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar este grupo' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar este grupo' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Validar alteração de max_members
     if (updateData.max_members && updateData.max_members < members.length) {
-      return NextResponse.json(
-        { error: `Não é possível reduzir o limite para menos que o número atual de membros (${members.length})` },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: `Não é possível reduzir o limite para menos que o número atual de membros (${members.length}, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })` }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar grupo
@@ -214,14 +226,16 @@ export async function PUT(
       success: true,
       data: updatedGroup,
       message: 'Grupo atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar grupo:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -234,10 +248,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const groupId = params.id
@@ -245,10 +259,10 @@ export async function DELETE(
     // Buscar grupo
     const existingGroup = mockStudyGroups.get(groupId)
     if (!existingGroup) {
-      return NextResponse.json(
-        { error: 'Grupo não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Grupo não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -258,10 +272,10 @@ export async function DELETE(
       existingGroup.creator_id === session.user?.id
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar este grupo' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar este grupo' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se há atividade recente
@@ -269,10 +283,10 @@ export async function DELETE(
     const daysSinceActivity = (new Date().getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24)
     
     if (daysSinceActivity < 7) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar grupo com atividade recente. Desative o grupo primeiro.' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar grupo com atividade recente. Desative o grupo primeiro.' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Notificar membros (em produção)
@@ -286,13 +300,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Grupo removido com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar grupo:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

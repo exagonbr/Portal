@@ -38,15 +38,22 @@ const mockNotifications = new Map()
 const mockUserNotifications = new Map() // Relação usuário-notificação
 
 // GET - Listar notificações
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -140,7 +147,9 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: notifications.length,
-          totalPages: Math.ceil(notifications.length / limit)
+          totalPages: Math.ceil(notifications.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         },
         unread_count: unreadCount
       }
@@ -148,10 +157,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao listar notificações:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -161,10 +170,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -172,10 +181,10 @@ export async function POST(request: NextRequest) {
     const canSendNotifications = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'TEACHER'].includes(userRole)
     
     if (!canSendNotifications) {
-      return NextResponse.json(
-        { error: 'Sem permissão para enviar notificações' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para enviar notificações' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -183,10 +192,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createNotificationSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -196,17 +206,17 @@ export async function POST(request: NextRequest) {
 
     // Validar permissões específicas por tipo de destinatário
     if (notificationData.recipient_type === 'ALL' && userRole !== 'SYSTEM_ADMIN') {
-      return NextResponse.json(
-        { error: 'Apenas administradores do sistema podem enviar notificações para todos' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Apenas administradores do sistema podem enviar notificações para todos' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     if (notificationData.recipient_type === 'INSTITUTION' && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Sem permissão para enviar notificações para toda a instituição' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para enviar notificações para toda a instituição' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Determinar destinatários
@@ -288,9 +298,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao criar notificação:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

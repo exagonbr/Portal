@@ -2,6 +2,13 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { API_CONFIG } from '@/config/constants';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Verificações básicas de saúde do sistema
@@ -23,7 +30,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(healthData)
+    return NextResponse.json(healthData, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     console.error('Erro no health check:', error)
     return NextResponse.json(

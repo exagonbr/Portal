@@ -3,6 +3,13 @@ import { prepareAuthHeaders } from '../../lib/auth-headers';
 
 import { getInternalApiUrl } from '@/config/env';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

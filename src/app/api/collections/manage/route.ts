@@ -3,6 +3,13 @@ import { prepareAuthHeaders } from '../../lib/auth-headers';
 
 const BACKEND_URL = 'https://portal.sabercon.com.br/api';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);

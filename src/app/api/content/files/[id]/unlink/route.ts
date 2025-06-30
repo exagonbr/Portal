@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -23,13 +30,15 @@ export async function POST(
       success: true,
       file: mockUpdatedFile,
       message: 'Arquivo desvinculado do conteúdo com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao desvincular arquivo do conteúdo:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

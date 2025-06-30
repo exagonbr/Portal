@@ -3,21 +3,31 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session || session.user?.role !== 'SYSTEM_ADMIN') {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const { accessKeyId, secretAccessKey, region } = await request.json()
 
     if (!accessKeyId || !secretAccessKey || !region) {
-      return NextResponse.json(
-        { error: 'Credenciais AWS incompletas' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Credenciais AWS incompletas' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Configurar cliente S3
@@ -40,7 +50,9 @@ export async function POST(request: NextRequest) {
         success: true,
         buckets,
         message: 'Conexão AWS estabelecida com sucesso!'
-      })
+      }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     } catch (awsError: any) {
       console.error('Erro AWS:', awsError)
       return NextResponse.json({
@@ -50,9 +62,9 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Erro ao testar conexão AWS:', error)
-    return NextResponse.json(
-      { error: 'Erro ao testar conexão AWS' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro ao testar conexão AWS' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

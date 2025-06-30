@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import knex from '@/config/database';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { videoId: string } }
@@ -69,6 +76,8 @@ export async function GET(
         video_id: fileData.video_id
       },
       message: 'Dados do arquivo encontrados com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
   } catch (error) {

@@ -50,15 +50,22 @@ const createLessonSchema = z.object({
 const mockLessons = new Map()
 
 // GET - Listar aulas
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -163,17 +170,19 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: lessons.length,
-          totalPages: Math.ceil(lessons.length / limit)
+          totalPages: Math.ceil(lessons.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar aulas:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -183,19 +192,19 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
     const userRole = session.user?.role
     if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar aulas' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para criar aulas' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -203,10 +212,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createLessonSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -221,10 +231,10 @@ export async function POST(request: NextRequest) {
     )
 
     if (existingOrder) {
-      return NextResponse.json(
-        { error: 'Já existe uma aula com esta ordem nesta unidade' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Já existe uma aula com esta ordem nesta unidade' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se for professor, verificar se tem permissão na turma
@@ -235,10 +245,10 @@ export async function POST(request: NextRequest) {
 
     // Validar data agendada para aulas ao vivo
     if (lessonData.type === 'LIVE' && !lessonData.scheduled_date) {
-      return NextResponse.json(
-        { error: 'Data agendada é obrigatória para aulas ao vivo' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Data agendada é obrigatória para aulas ao vivo' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Criar aula
@@ -260,9 +270,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao criar aula:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

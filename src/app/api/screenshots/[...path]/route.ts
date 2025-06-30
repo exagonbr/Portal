@@ -101,6 +101,13 @@ const screenshots = {
   }
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { path: string[] } }
@@ -110,10 +117,10 @@ export async function GET(
     
     // Verificar se o arquivo solicitado existe na configuração
     if (!(filename in screenshots)) {
-      return NextResponse.json(
-        { error: 'Screenshot não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Screenshot não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const config = screenshots[filename as keyof typeof screenshots]
@@ -153,9 +160,9 @@ export async function GET(
 
   } catch (error) {
     console.error('Erro ao servir screenshot:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

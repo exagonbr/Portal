@@ -5,6 +5,13 @@ import { PERMISSION_GROUPS } from '@/types/roleManagement'
 import { findRoleById } from '../../mockDatabase'
 
 // GET - Obter permissões de uma role
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -44,7 +51,9 @@ export async function GET(
         roleId: role.id,
         roleName: role.name,
         permissionGroups: permissionsByGroup,
-        totalPermissions: PERMISSION_GROUPS.reduce((total, group) => total + group.permissions.length, 0),
+        totalPermissions: PERMISSION_GROUPS.reduce((total, group, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }) => total + group.permissions.length, 0),
         enabledPermissions: role.permissions?.length || 0
       }
     })

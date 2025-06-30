@@ -30,6 +30,15 @@ const SYSTEM_INFO = {
   ]
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET() {
-  return NextResponse.json(SYSTEM_INFO)
+  return NextResponse.json(SYSTEM_INFO, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 }

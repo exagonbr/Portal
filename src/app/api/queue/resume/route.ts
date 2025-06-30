@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getInternalApiUrl } from '@/config/env';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const url = `getInternalApiUrl('/api/queue/resume')`;

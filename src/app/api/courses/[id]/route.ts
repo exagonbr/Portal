@@ -19,6 +19,13 @@ const updateCourseSchema = z.object({
 const mockCourses = new Map()
 
 // GET - Buscar curso por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -27,10 +34,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const courseId = params.id
@@ -39,10 +46,10 @@ export async function GET(
     const course = mockCourses.get(courseId)
 
     if (!course) {
-      return NextResponse.json(
-        { error: 'Curso não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Curso não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões de visualização
@@ -55,10 +62,10 @@ export async function GET(
       (userRole === 'STUDENT' && course.students?.includes(session.user?.id))
 
     if (!canView) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar este curso' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar este curso' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Adicionar estatísticas
@@ -71,14 +78,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: courseWithStats
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar curso:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -91,10 +100,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const courseId = params.id
@@ -103,10 +112,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateCourseSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -117,10 +127,10 @@ export async function PUT(
     // Buscar curso existente
     const existingCourse = mockCourses.get(courseId)
     if (!existingCourse) {
-      return NextResponse.json(
-        { error: 'Curso não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Curso não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -130,10 +140,10 @@ export async function PUT(
       (userRole === 'INSTITUTION_ADMIN' && existingCourse.institution_id === session.user.institution_id)
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar este curso' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar este curso' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se está alterando nome, verificar duplicação
@@ -145,10 +155,10 @@ export async function PUT(
       )
 
       if (duplicateCourse) {
-        return NextResponse.json(
-          { error: 'Já existe um curso com este nome nesta instituição' },
-          { status: 409 }
-        )
+        return NextResponse.json({ error: 'Já existe um curso com este nome nesta instituição' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -166,14 +176,16 @@ export async function PUT(
       success: true,
       data: updatedCourse,
       message: 'Curso atualizado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar curso:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -186,10 +198,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const courseId = params.id
@@ -197,10 +209,10 @@ export async function DELETE(
     // Buscar curso
     const existingCourse = mockCourses.get(courseId)
     if (!existingCourse) {
-      return NextResponse.json(
-        { error: 'Curso não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Curso não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -210,18 +222,18 @@ export async function DELETE(
       (userRole === 'INSTITUTION_ADMIN' && existingCourse.institution_id === session.user.institution_id)
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar este curso' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar este curso' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se curso tem alunos matriculados
     if (existingCourse.students && existingCourse.students.length > 0) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar curso com alunos matriculados' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar curso com alunos matriculados' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Deletar curso (em produção, seria soft delete)
@@ -230,13 +242,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Curso removido com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar curso:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

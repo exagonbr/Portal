@@ -48,6 +48,13 @@ const updateLessonSchema = z.object({
 const mockLessons = new Map()
 
 // GET - Buscar aula por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -56,10 +63,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const lessonId = params.id
@@ -68,10 +75,10 @@ export async function GET(
     const lesson = mockLessons.get(lessonId)
 
     if (!lesson) {
-      return NextResponse.json(
-        { error: 'Aula não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Aula não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -83,10 +90,10 @@ export async function GET(
       (userRole === 'STUDENT' && lesson.is_published && lesson.is_active)
 
     if (!canViewDetails) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar esta aula' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar esta aula' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Adicionar informações de progresso para alunos
@@ -111,14 +118,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: lessonWithProgress
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar aula:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -131,10 +140,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const lessonId = params.id
@@ -143,10 +152,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateLessonSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -157,10 +167,10 @@ export async function PUT(
     // Buscar aula existente
     const existingLesson = mockLessons.get(lessonId)
     if (!existingLesson) {
-      return NextResponse.json(
-        { error: 'Aula não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Aula não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -171,10 +181,10 @@ export async function PUT(
       (userRole === 'TEACHER' && existingLesson.created_by === session.user?.id)
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar esta aula' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar esta aula' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se está alterando ordem, verificar duplicação
@@ -186,29 +196,29 @@ export async function PUT(
       )
 
       if (duplicateOrder) {
-        return NextResponse.json(
-          { error: 'Já existe uma aula com esta ordem nesta unidade' },
-          { status: 409 }
-        )
+        return NextResponse.json({ error: 'Já existe uma aula com esta ordem nesta unidade' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
     // Validar mudança de tipo
     if (updateData.type && updateData.type !== existingLesson.type) {
       if (updateData.type === 'LIVE' && !existingLesson.scheduled_date && !updateData.scheduled_date) {
-        return NextResponse.json(
-          { error: 'Data agendada é obrigatória para aulas ao vivo' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Data agendada é obrigatória para aulas ao vivo' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
     // Não permitir alteração de aula em andamento
     if (existingLesson.type === 'LIVE' && existingLesson.is_live_now) {
-      return NextResponse.json(
-        { error: 'Não é possível editar aula em andamento' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível editar aula em andamento' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar aula
@@ -225,14 +235,16 @@ export async function PUT(
       success: true,
       data: updatedLesson,
       message: 'Aula atualizada com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar aula:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -245,10 +257,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const lessonId = params.id
@@ -256,10 +268,10 @@ export async function DELETE(
     // Buscar aula
     const existingLesson = mockLessons.get(lessonId)
     if (!existingLesson) {
-      return NextResponse.json(
-        { error: 'Aula não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Aula não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -270,26 +282,26 @@ export async function DELETE(
       (userRole === 'TEACHER' && existingLesson.created_by === session.user?.id)
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar esta aula' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar esta aula' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Não permitir deletar aula em andamento
     if (existingLesson.type === 'LIVE' && existingLesson.is_live_now) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar aula em andamento' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar aula em andamento' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se tem atividades ou avaliações vinculadas
     if (existingLesson.has_submissions || existingLesson.has_grades) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar aula com atividades enviadas ou notas lançadas' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar aula com atividades enviadas ou notas lançadas' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Deletar aula (em produção, seria soft delete)
@@ -308,13 +320,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Aula removida com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar aula:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

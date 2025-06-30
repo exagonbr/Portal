@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const timestamp = new Date().toISOString();
@@ -54,7 +61,10 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    return NextResponse.json(status, { status: 200 });
+    return NextResponse.json(status, { 
+      status: 200,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     
   } catch (error) {
     console.error('Erro na rota /api/status:', error);

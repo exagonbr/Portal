@@ -5,6 +5,13 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const revalidate = 0;
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Verificar autenticação
@@ -115,6 +122,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: metrics
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
 
   } catch (error: any) {

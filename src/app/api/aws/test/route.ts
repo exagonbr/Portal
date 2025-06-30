@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Chamar backend para testar conexão
-    const response = await fetch(`getInternalApiUrl('/api/aws/test')`, {
+    const response = await fetch(getInternalApiUrl('/api/aws/test'), {
       method: 'POST',
       headers: {
         'Authorization': authHeader,

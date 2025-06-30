@@ -11,6 +11,13 @@ let mockUserStats = new Map<string, {
   showOnLeaderboard: boolean;
 }>();
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: Request) {
   try {
     // Filter users who opted in to leaderboard
@@ -26,12 +33,15 @@ export async function GET(request: Request) {
       .sort((a, b) => b.xp - a.xp) // Sort by XP descending
       .slice(0, LEADERBOARD_LIMITS.TOP_STUDENTS); // Limit to top N students
 
-    return NextResponse.json(leaderboardEntries);
+    return NextResponse.json(leaderboardEntries, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to fetch leaderboard' },
-      { status: 500 }
-    );
+      { error: 'Failed to fetch leaderboard' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
 }
 
@@ -41,18 +51,18 @@ export async function PUT(request: Request) {
     const { userId, showOnLeaderboard } = await request.json();
 
     if (!userId || typeof showOnLeaderboard !== 'boolean') {
-      return NextResponse.json(
-        { error: 'User ID and visibility preference are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'User ID and visibility preference are required' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     }
 
     const userStats = mockUserStats.get(userId);
     if (!userStats) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     }
 
     mockUserStats.set(userId, {
@@ -60,12 +70,15 @@ export async function PUT(request: Request) {
       showOnLeaderboard
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to update leaderboard preference' },
-      { status: 500 }
-    );
+      { error: 'Failed to update leaderboard preference' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
 }
 
@@ -75,10 +88,10 @@ export async function POST(request: Request) {
     const { userId, stats } = await request.json();
 
     if (!userId || !stats) {
-      return NextResponse.json(
-        { error: 'User ID and stats are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'User ID and stats are required' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     }
 
     const existingStats = mockUserStats.get(userId);
@@ -88,11 +101,14 @@ export async function POST(request: Request) {
       showOnLeaderboard: existingStats?.showOnLeaderboard ?? true
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to update user stats' },
-      { status: 500 }
-    );
+      { error: 'Failed to update user stats' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
 }

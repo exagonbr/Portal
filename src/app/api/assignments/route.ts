@@ -46,15 +46,22 @@ const createAssignmentSchema = z.object({
 const mockAssignments = new Map()
 
 // GET - Listar tarefas
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -174,17 +181,19 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: assignments.length,
-          totalPages: Math.ceil(assignments.length / limit)
+          totalPages: Math.ceil(assignments.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar tarefas:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -194,19 +203,19 @@ export async function POST(request: NextRequest) {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
     const userRole = session.user?.role
     if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'])) {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar tarefas' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para criar tarefas' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -214,10 +223,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createAssignmentSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -231,33 +241,33 @@ export async function POST(request: NextRequest) {
     const availableFrom = assignmentData.available_from ? new Date(assignmentData.available_from) : now
 
     if (dueDate <= now) {
-      return NextResponse.json(
-        { error: 'Data de entrega deve ser futura' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Data de entrega deve ser futura' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     if (availableFrom > dueDate) {
-      return NextResponse.json(
-        { error: 'Data de disponibilidade deve ser anterior à data de entrega' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Data de disponibilidade deve ser anterior à data de entrega' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Validar configurações de grupo
     if (assignmentData.group_assignment && !assignmentData.group_size) {
-      return NextResponse.json(
-        { error: 'Tamanho do grupo é obrigatório para tarefas em grupo' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Tamanho do grupo é obrigatório para tarefas em grupo' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Validar configurações de revisão por pares
     if (assignmentData.peer_review && !assignmentData.peer_review_count) {
-      return NextResponse.json(
-        { error: 'Número de revisões é obrigatório para revisão por pares' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Número de revisões é obrigatório para revisão por pares' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se for professor, verificar se tem permissão na turma
@@ -286,9 +296,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao criar tarefa:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

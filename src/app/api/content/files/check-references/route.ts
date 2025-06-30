@@ -2,16 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connection as db } from '@/config/database'
 
 // Para agora, vou usar uma versão simplificada sem AWS SDK até que as dependências sejam instaladas
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
 
     if (!category) {
-      return NextResponse.json(
-        { error: 'Categoria é obrigatória' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Categoria é obrigatória' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     if (!['literario', 'professor', 'aluno'].includes(category)) {
@@ -81,7 +88,9 @@ export async function GET(request: NextRequest) {
       }
     }))
 
-    return NextResponse.json(transformedFiles)
+    return NextResponse.json(transformedFiles, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('❌ Erro ao verificar referências:', error)
@@ -94,10 +103,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.json(
-      { error: 'Erro interno do servidor ao verificar referências' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor ao verificar referências' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -108,10 +117,10 @@ export async function POST(request: NextRequest) {
     const { s3Key, category, name, description, tags } = body
 
     if (!s3Key || !category) {
-      return NextResponse.json(
-        { error: 'S3 Key e categoria são obrigatórios' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'S3 Key e categoria são obrigatórios' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Simular criação de referência no banco
@@ -134,13 +143,16 @@ export async function POST(request: NextRequest) {
       tags: tags || []
     }
 
-    return NextResponse.json(newRecord, { status: 201 })
+    return NextResponse.json(newRecord, { 
+      status: 201,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('Erro ao criar referência:', error)
-    return NextResponse.json(
-      { error: 'Erro ao criar referência no banco' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro ao criar referência no banco' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

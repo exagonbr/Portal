@@ -53,15 +53,22 @@ const generateReportSchema = z.object({
 const mockReports = new Map()
 
 // GET - Listar relatórios
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -186,7 +193,9 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: reportsWithInfo.length,
-          totalPages: Math.ceil(reportsWithInfo.length / limit)
+          totalPages: Math.ceil(reportsWithInfo.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         },
         stats
       }
@@ -194,10 +203,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao listar relatórios:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -207,10 +216,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -218,10 +227,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = generateReportSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -234,29 +244,29 @@ export async function POST(request: NextRequest) {
     
     // Relatórios financeiros apenas para admins
     if (reportData.type === 'FINANCIAL' && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Sem permissão para gerar relatórios financeiros' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para gerar relatórios financeiros' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Estudantes só podem gerar relatórios próprios
     if (userRole === 'STUDENT') {
       if (!['STUDENT_PERFORMANCE', 'COURSE_PROGRESS'].includes(reportData.type)) {
-        return NextResponse.json(
-          { error: 'Tipo de relatório não permitido para estudantes' },
-          { status: 403 }
-        )
+        return NextResponse.json({ error: 'Tipo de relatório não permitido para estudantes' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
       
       // Garantir que só pode ver dados próprios
       if (reportData.filters.student_ids && 
           reportData.filters.student_ids.length > 0 && 
           !reportData.filters.student_ids.includes(session.user?.id)) {
-        return NextResponse.json(
-          { error: 'Estudantes só podem gerar relatórios próprios' },
-          { status: 403 }
-        )
+        return NextResponse.json({ error: 'Estudantes só podem gerar relatórios próprios' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -265,10 +275,10 @@ export async function POST(request: NextRequest) {
     const dateTo = new Date(reportData.filters.date_to)
     
     if (dateTo <= dateFrom) {
-      return NextResponse.json(
-        { error: 'Data final deve ser posterior à data inicial' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Data final deve ser posterior à data inicial' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Limitar período máximo
@@ -276,10 +286,10 @@ export async function POST(request: NextRequest) {
     const daysDiff = Math.ceil((dateTo.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24))
     
     if (daysDiff > maxDays) {
-      return NextResponse.json(
-        { error: `Período máximo permitido é de ${maxDays} dias para este tipo de relatório` },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: `Período máximo permitido é de ${maxDays} dias para este tipo de relatório` }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Criar relatório
@@ -325,9 +335,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao gerar relatório:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

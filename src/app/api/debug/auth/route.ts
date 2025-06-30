@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(req: NextRequest) {
   try {
     // Capturar todos os headers
@@ -55,6 +62,8 @@ export async function GET(req: NextRequest) {
       success: true,
       message: 'Debug de autenticação - Frontend',
       debug: debugInfo
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error: any) {
     return NextResponse.json(

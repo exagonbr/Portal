@@ -4,6 +4,13 @@ import { getInternalApiUrl } from '@/config/env'
 
 export const dynamic = 'force-dynamic'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 API Settings Admin GET - Iniciando validação de autenticação...')
@@ -47,7 +54,9 @@ export async function GET(request: NextRequest) {
 
     const data = await backendResponse.json()
     console.log('✅ Dados recebidos do backend:', Object.keys(data))
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('❌ Erro ao carregar configurações administrativas:', error)
@@ -87,7 +96,9 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = await backendResponse.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('Erro ao salvar configurações:', error)
@@ -139,7 +150,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await backendResponse.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
 
   } catch (error) {
     console.error('Erro na ação de configurações:', error)

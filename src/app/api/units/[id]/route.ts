@@ -36,6 +36,13 @@ const updateUnitSchema = z.object({
 })
 
 // GET - Buscar unidade por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -44,7 +51,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const response = await fetch(getInternalApiUrl(`/api/units/${params.id}`), {
@@ -63,13 +73,15 @@ export async function GET(
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     console.error('Error fetching unit:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -82,7 +94,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -104,13 +119,15 @@ export async function PUT(
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     console.error('Error updating unit:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -123,7 +140,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const response = await fetch(getInternalApiUrl(`/api/units/${params.id}`), {
@@ -141,12 +161,14 @@ export async function DELETE(
       )
     }
 
-    return NextResponse.json({ success: true, message: 'Unit deleted successfully' })
+    return NextResponse.json({ success: true, message: 'Unit deleted successfully' }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   } catch (error) {
     console.error('Error deleting unit:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

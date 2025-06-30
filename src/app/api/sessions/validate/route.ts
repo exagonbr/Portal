@@ -2,15 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sessionService } from '../../../../services/sessionService';
 
 // POST /api/sessions/validate - Valida uma sessão
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { sessionId } = await request.json();
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: 'ID da sessão é obrigatório' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'ID da sessão é obrigatório' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     }
 
     // Verifica se a sessão é válida
@@ -39,15 +46,17 @@ export async function POST(request: NextRequest) {
         sessionId,
         userId: sessionData.userId,
         user: sessionData.user,
-        lastActivity: new Date(sessionData.lastActivity),
+        lastActivity: new Date(sessionData.lastActivity, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }),
       }
     });
   } catch (error) {
     console.error('Erro ao validar sessão:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
 }
 
@@ -57,10 +66,10 @@ export async function PUT(request: NextRequest) {
     const { sessionId, extendBy } = await request.json();
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: 'ID da sessão é obrigatório' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'ID da sessão é obrigatório' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     }
 
     const success = await sessionService.extendSession(sessionId, extendBy);
@@ -69,18 +78,20 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ 
         message: 'Sessão estendida com sucesso',
         extended: true 
-      });
+      }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     } else {
-      return NextResponse.json(
-        { error: 'Falha ao estender sessão' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Falha ao estender sessão' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
     }
   } catch (error) {
     console.error('Erro ao estender sessão:', error);
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    });
   }
 }

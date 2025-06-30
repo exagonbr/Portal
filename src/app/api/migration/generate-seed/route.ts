@@ -14,6 +14,13 @@ interface SeedRequest {
   seedConfig: SeedConfig
 }
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { selectedTables, seedConfig }: SeedRequest = await request.json()
@@ -283,7 +290,9 @@ export async function POST(request: NextRequest) {
       message: 'Dados seed gerados com sucesso!',
       recordsGenerated,
       details,
-      tablesProcessed: details.map(d => d.table)
+      tablesProcessed: details.map(d => d.table, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     })
     
   } catch (error: any) {

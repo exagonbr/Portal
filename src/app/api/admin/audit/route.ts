@@ -4,12 +4,22 @@ import { authOptions } from '@/lib/auth'
 import { UserRole } from '@/types/roles'
 import knex from '@/config/database'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se o usuário tem permissão para ver logs de auditoria
@@ -19,7 +29,10 @@ export async function GET(request: NextRequest) {
     )
 
     if (!hasPermission) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+      return NextResponse.json({ error: 'Acesso negado' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const { searchParams } = new URL(request.url)
@@ -147,17 +160,19 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        total: parseInt(total as string),
+        total: parseInt(total as string, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }),
         totalPages: Math.ceil(parseInt(total as string) / limit)
       }
     })
 
   } catch (error) {
     console.error('Erro ao buscar logs de auditoria:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -167,7 +182,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const userRoles = Array.isArray(session.user.role) ? session.user.role : [session.user.role]
@@ -176,7 +194,10 @@ export async function POST(request: NextRequest) {
     )
 
     if (!hasPermission) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+      return NextResponse.json({ error: 'Acesso negado' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -232,7 +253,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       stats: {
-        totalActivities: parseInt(totalActivities?.total as string || '0'),
+        totalActivities: parseInt(totalActivities?.total as string || '0', {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }),
         uniqueUsers: parseInt(uniqueUsers?.total as string || '0'),
         uniqueSessions: parseInt(uniqueSessions?.total as string || '0'),
         loginCount: parseInt(loginCount?.total as string || '0'),
@@ -247,9 +270,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao buscar estatísticas de auditoria:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

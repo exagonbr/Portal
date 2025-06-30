@@ -25,6 +25,13 @@ const updateClassSchema = z.object({
 const mockClasses = new Map()
 
 // GET - Buscar turma por ID
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -33,10 +40,10 @@ export async function GET(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const classId = params.id
@@ -45,10 +52,10 @@ export async function GET(
     const classData = mockClasses.get(classId)
 
     if (!classData) {
-      return NextResponse.json(
-        { error: 'Turma não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Turma não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões de visualização
@@ -64,10 +71,10 @@ export async function GET(
       ))
 
     if (!canView) {
-      return NextResponse.json(
-        { error: 'Sem permissão para visualizar esta turma' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para visualizar esta turma' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Adicionar estatísticas
@@ -81,14 +88,16 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: classWithStats
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao buscar turma:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -101,10 +110,10 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const classId = params.id
@@ -113,10 +122,11 @@ export async function PUT(
     // Validar dados
     const validationResult = updateClassSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -127,10 +137,10 @@ export async function PUT(
     // Buscar turma existente
     const existingClass = mockClasses.get(classId)
     if (!existingClass) {
-      return NextResponse.json(
-        { error: 'Turma não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Turma não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -141,20 +151,22 @@ export async function PUT(
       (userRole === 'SCHOOL_MANAGER' && existingClass.school_id === session.user.school_id)
 
     if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Sem permissão para editar esta turma' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para editar esta turma' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Validar número máximo de alunos
     if (updateData.max_students !== undefined) {
       const currentStudents = existingClass.students?.length || 0
       if (updateData.max_students < currentStudents) {
-        return NextResponse.json(
-          { error: `Número máximo de alunos não pode ser menor que o número atual (${currentStudents})` },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: `Número máximo de alunos não pode ser menor que o número atual (${currentStudents}, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })` }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -172,14 +184,16 @@ export async function PUT(
       success: true,
       data: updatedClass,
       message: 'Turma atualizada com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar turma:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -192,10 +206,10 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const classId = params.id
@@ -203,10 +217,10 @@ export async function DELETE(
     // Buscar turma
     const existingClass = mockClasses.get(classId)
     if (!existingClass) {
-      return NextResponse.json(
-        { error: 'Turma não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Turma não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
@@ -216,26 +230,26 @@ export async function DELETE(
       (userRole === 'SCHOOL_MANAGER' && existingClass.school_id === session.user.school_id)
 
     if (!canDelete) {
-      return NextResponse.json(
-        { error: 'Sem permissão para deletar esta turma' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para deletar esta turma' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se turma tem alunos
     if (existingClass.students && existingClass.students.length > 0) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar turma com alunos matriculados' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar turma com alunos matriculados' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se turma está ativa
     if (existingClass.is_active) {
-      return NextResponse.json(
-        { error: 'Não é possível deletar turma ativa. Desative-a primeiro' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Não é possível deletar turma ativa. Desative-a primeiro' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Deletar turma (em produção, seria soft delete)
@@ -244,13 +258,15 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Turma removida com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao deletar turma:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

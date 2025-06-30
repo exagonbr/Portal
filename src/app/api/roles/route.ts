@@ -12,6 +12,13 @@ const createRoleSchema = z.object({
 })
 
 // GET - Listar roles
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Parâmetros de query
@@ -27,18 +34,18 @@ export async function GET(request: NextRequest) {
       const session = await getAuthentication(request)
       
       if (!session) {
-        return NextResponse.json(
-          { error: 'Não autorizado' },
-          { status: 401 }
-        )
+        return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
 
       // Verificar permissões
       if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
-        return NextResponse.json(
-          { error: 'Sem permissão para listar roles' },
-          { status: 403 }
-        )
+        return NextResponse.json({ error: 'Sem permissão para listar roles' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
@@ -64,7 +71,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: publicRoles
-      })
+      }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Aplicar filtros de busca
@@ -96,17 +105,19 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: roles.length,
-          totalPages: Math.ceil(roles.length / limit)
+          totalPages: Math.ceil(roles.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar roles:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -116,18 +127,18 @@ export async function POST(request: NextRequest) {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
     if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN'])) {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar roles' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para criar roles' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -135,10 +146,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createRoleSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -149,10 +161,10 @@ export async function POST(request: NextRequest) {
     // Verificar se já existe role com mesmo nome
     const existingRole = findRoleByName(roleData.name)
     if (existingRole) {
-      return NextResponse.json(
-        { error: 'Já existe uma role com este nome' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Já existe uma role com este nome' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Criar role
@@ -179,10 +191,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao criar role:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -192,37 +204,37 @@ export async function PUT(request: NextRequest) {
     const session = await getAuthentication(request)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões
     if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN'])) {
-      return NextResponse.json(
-        { error: 'Sem permissão para atualizar roles' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para atualizar roles' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
     const { id, ...updateData } = body
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'ID da role é obrigatório' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'ID da role é obrigatório' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Buscar role existente
     const existingRole = mockRoles.get(id)
     if (!existingRole) {
-      return NextResponse.json(
-        { error: 'Role não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Role não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar role
@@ -239,13 +251,15 @@ export async function PUT(request: NextRequest) {
       success: true,
       data: updatedRole,
       message: 'Role atualizada com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
     console.error('Erro ao atualizar role:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connection as db } from '@/config/database'
 
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -10,10 +17,10 @@ export async function PATCH(
     const { name } = await request.json()
 
     if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: 'Nome do arquivo é obrigatório' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Nome do arquivo é obrigatório' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const newName = name.trim()
@@ -24,10 +31,10 @@ export async function PATCH(
       .first()
 
     if (!existingFile) {
-      return NextResponse.json(
-        { error: 'Arquivo não encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Arquivo não encontrado' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar se já existe outro arquivo com o mesmo nome no mesmo bucket
@@ -41,10 +48,10 @@ export async function PATCH(
       .first()
 
     if (duplicateFile) {
-      return NextResponse.json(
-        { error: 'Já existe um arquivo com este nome no mesmo bucket' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Já existe um arquivo com este nome no mesmo bucket' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Atualizar o nome do arquivo no banco
@@ -72,6 +79,8 @@ export async function PATCH(
         renamedAt: updatedFile.updated_at
       },
       message: 'Arquivo renomeado com sucesso'
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
@@ -80,23 +89,23 @@ export async function PATCH(
     // Verificar tipos de erro específicos
     if (error instanceof Error) {
       if (error.message.includes('unique constraint')) {
-        return NextResponse.json(
-          { error: 'Nome de arquivo já está em uso' },
-          { status: 409 }
-        )
+        return NextResponse.json({ error: 'Nome de arquivo já está em uso' }, { 
+      status: 409,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
       
       if (error.message.includes('foreign key')) {
-        return NextResponse.json(
-          { error: 'Erro de referência no banco de dados' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Erro de referência no banco de dados' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
       }
     }
 
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

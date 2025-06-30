@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 
 /**
  * Este endpoint atua como um proxy para carregar PDFs de fontes externas,
@@ -8,26 +9,33 @@ import { NextRequest, NextResponse } from 'next/server'
  * Query parameters:
  * - url: URL do PDF a ser carregado
  */
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Extrair a URL do PDF dos parâmetros de consulta
     const url = request.nextUrl.searchParams.get('url')
     
     if (!url) {
-      return NextResponse.json(
-        { error: 'URL não fornecida. Use ?url=endereco-do-pdf' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'URL não fornecida. Use ?url=endereco-do-pdf' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
     
     // Verificar se a URL é válida
     try {
       new URL(url)
     } catch (e) {
-      return NextResponse.json(
-        { error: 'URL inválida' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'URL inválida' }, { 
+      status: 400,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
     
     // Verificar se é uma URL do Cloudfront ou Sabercon
@@ -72,9 +80,9 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Erro no proxy PDF:', error)
-    return NextResponse.json(
-      { error: 'Erro interno ao processar o PDF' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno ao processar o PDF' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 } 

@@ -35,15 +35,22 @@ const mockTopics = new Map()
 const mockCategories = new Map()
 
 // GET - Listar tópicos
+
+// Handler para requisições OPTIONS (preflight)
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin') || undefined;
+  return createCorsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Parâmetros de query
@@ -184,17 +191,19 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: sortedTopics.length,
-          totalPages: Math.ceil(sortedTopics.length / limit)
+          totalPages: Math.ceil(sortedTopics.length / limit, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
         }
       }
     })
 
   } catch (error) {
     console.error('Erro ao listar tópicos:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
@@ -204,10 +213,10 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Não autorizado' }, { 
+      status: 401,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     const body = await request.json()
@@ -215,10 +224,11 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createTopicSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json(
-        { 
+      return NextResponse.json({ 
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten().fieldErrors
+          errors: validationResult.error.flatten(, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    }).fieldErrors
         },
         { status: 400 }
       )
@@ -229,10 +239,10 @@ export async function POST(request: NextRequest) {
     // Verificar se categoria existe
     const category = mockCategories.get(topicData.category_id)
     if (!category) {
-      return NextResponse.json(
-        { error: 'Categoria não encontrada' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Categoria não encontrada' }, { 
+      status: 404,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Verificar permissões especiais
@@ -240,18 +250,18 @@ export async function POST(request: NextRequest) {
     
     // Apenas professores e admins podem criar anúncios
     if (topicData.type === 'ANNOUNCEMENT' && !['SYSTEM_ADMIN', 'TEACHER'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Sem permissão para criar anúncios' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para criar anúncios' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Apenas professores e admins podem fixar tópicos
     if (topicData.is_pinned && !['SYSTEM_ADMIN', 'TEACHER'].includes(userRole)) {
-      return NextResponse.json(
-        { error: 'Sem permissão para fixar tópicos' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Sem permissão para fixar tópicos' }, { 
+      status: 403,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
     }
 
     // Se for tópico de turma, verificar se usuário tem acesso
@@ -295,10 +305,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erro ao criar tópico:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { 
+      status: 500,
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+    })
   }
 }
 
