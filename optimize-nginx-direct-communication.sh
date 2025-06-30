@@ -49,10 +49,81 @@ log "   Proxy Next.js: DESABILITADO"
 BACKUP_DIR="/var/backups/nginx-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 cp /etc/nginx/sites-available/default "$BACKUP_DIR/" 2>/dev/null || true
+cp /etc/nginx/nginx.conf "$BACKUP_DIR/" 2>/dev/null || true
 log "📁 Backup criado em: $BACKUP_DIR"
 
-# Configuração otimizada do Nginx
-log "⚙️ Criando configuração otimizada do Nginx..."
+# Primeiro, configurar o nginx.conf principal com rate limiting
+log "⚙️ Configurando nginx.conf principal..."
+
+cat > /etc/nginx/nginx.conf << 'EOF'
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    # Basic Settings
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    server_tokens off;
+    
+    # MIME Types
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    
+    # Logging
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+    
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log warn;
+    
+    # Gzip
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml;
+    
+    # Rate Limiting (configurações globais)
+    limit_req_zone $binary_remote_addr zone=api:10m rate=30r/s;
+    limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=login:10m rate=5r/s;
+    
+    # Connection limiting
+    limit_conn_zone $binary_remote_addr zone=conn_limit_per_ip:10m;
+    limit_conn_zone $server_name zone=conn_limit_per_server:10m;
+    
+    # Cache settings
+    proxy_cache_path /var/cache/nginx/portal levels=1:2 keys_zone=portal_cache:10m max_size=1g inactive=60m use_temp_path=off;
+    
+    # Include sites
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}
+EOF
+
+# Agora configurar o site específico
+log "⚙️ Criando configuração otimizada do site..."
 
 cat > /etc/nginx/sites-available/default << EOF
 # Portal Sabercon - Configuração Otimizada
@@ -97,13 +168,9 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     
-    # Rate limiting otimizado
-    limit_req_zone \$binary_remote_addr zone=api:10m rate=30r/s;
-    limit_req_zone \$binary_remote_addr zone=general:10m rate=10r/s;
-    limit_req_zone \$binary_remote_addr zone=login:10m rate=5r/s;
-    
-    # Cache settings
-    proxy_cache_path /var/cache/nginx/portal levels=1:2 keys_zone=portal_cache:10m max_size=1g inactive=60m;
+    # Connection limiting
+    limit_conn conn_limit_per_ip 20;
+    limit_conn conn_limit_per_server 1000;
     
     # Frontend (Next.js) → localhost:$FRONTEND_PORT
     location / {
@@ -137,6 +204,7 @@ server {
             proxy_cache portal_cache;
             proxy_cache_valid 200 1y;
             add_header Cache-Control "public, immutable";
+            add_header X-Cache-Status \$upstream_cache_status;
             expires 1y;
         }
         
@@ -146,6 +214,7 @@ server {
             proxy_cache portal_cache;
             proxy_cache_valid 200 7d;
             add_header Cache-Control "public, max-age=604800";
+            add_header X-Cache-Status \$upstream_cache_status;
             expires 7d;
         }
     }
@@ -273,6 +342,7 @@ else
     log_error "Configuração Nginx inválida"
     log "🔄 Restaurando backup..."
     cp "$BACKUP_DIR/default" /etc/nginx/sites-available/default
+    cp "$BACKUP_DIR/nginx.conf" /etc/nginx/nginx.conf
     systemctl reload nginx
     exit 1
 fi
