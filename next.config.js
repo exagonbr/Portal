@@ -32,7 +32,6 @@ const nextConfig = {
 
   // Configurações de desenvolvimento
   reactStrictMode: !isDev, // Apenas em produção para evitar problemas de desenvolvimento
-  swcMinify: true, // Usar SWC para minificação (mais rápido que Terser)
   productionBrowserSourceMaps: false,
   
   // ESLint
@@ -53,10 +52,6 @@ const nextConfig = {
     ],
     // Melhorar performance de compilação
     webpackBuildWorker: true,
-    // Otimizar CSS
-    optimizeCss: isProd,
-    // Lazy compilation para desenvolvimento
-    ...(isDev && { webpackBuildWorker: true }),
   },
 
   // Pacotes externos para componentes do servidor
@@ -238,103 +233,100 @@ const nextConfig = {
       }
     );
 
-    // Configurações específicas para o cliente
-    if (!isServer) {
-      // Otimizações de bundle splitting robustas
-      config.optimization = {
-        ...config.optimization,
-        moduleIds: 'deterministic',
-        chunkIds: 'deterministic',
-        minimize: isProd,
-        usedExports: true,
-        sideEffects: false,
-        splitChunks: {
-          chunks: 'all',
-          minSize: 20000,
-          maxSize: isProd ? 244000 : 0,
-          minChunks: 1,
-          maxAsyncRequests: 30,
-          maxInitialRequests: 30,
-          enforceSizeThreshold: 50000,
-          cacheGroups: {
-            // Framework chunk (React, Next.js)
-            framework: {
-              chunks: 'all',
-              name: 'framework',
-              test: /(?:react|react-dom|scheduler|prop-types|use-subscription)/,
-              priority: 40,
-              enforce: true,
-            },
-            // Vendor libraries
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-              priority: 30,
-              enforce: true,
-            },
-            // UI components
-            ui: {
-              test: /[\\/]src[\\/]components[\\/]ui[\\/]/,
-              name: 'ui-components',
-              chunks: 'all',
-              priority: 25,
-              enforce: true,
-            },
-            // API client
-            apiClient: {
-              test: /[\\/]src[\\/]lib[\\/]api-client/,
-              name: 'api-client',
-              chunks: 'all',
-              priority: 20,
-              enforce: true,
-            },
-            // Auth services
-            auth: {
-              test: /[\\/]src[\\/](services|contexts)[\\/].*auth/i,
-              name: 'auth-services',
-              chunks: 'all',
-              priority: 15,
-              enforce: true,
-            },
-            // Common utilities
-            common: {
-              test: /[\\/]src[\\/](utils|lib|hooks)[\\/]/,
-              name: 'common',
-              chunks: 'all',
-              priority: 10,
-              minChunks: 2,
-            },
-            // Default
-            default: {
-              minChunks: 2,
-              priority: 5,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      };
+         // Configurações específicas para o cliente
+     if (!isServer) {
+       // Otimizações de bundle splitting (apenas em produção para evitar problemas em dev)
+       if (isProd) {
+         config.optimization = {
+           ...config.optimization,
+           moduleIds: 'deterministic',
+           chunkIds: 'deterministic',
+           minimize: true,
+           usedExports: true,
+           sideEffects: false,
+           splitChunks: {
+             chunks: 'all',
+             minSize: 20000,
+             maxSize: 244000,
+             minChunks: 1,
+             maxAsyncRequests: 30,
+             maxInitialRequests: 30,
+             enforceSizeThreshold: 50000,
+             cacheGroups: {
+               // Framework chunk (React, Next.js)
+               framework: {
+                 chunks: 'all',
+                 name: 'framework',
+                 test: /(?:react|react-dom|scheduler|prop-types|use-subscription)/,
+                 priority: 40,
+                 enforce: true,
+               },
+               // Vendor libraries
+               vendor: {
+                 test: /[\\/]node_modules[\\/]/,
+                 name: 'vendors',
+                 chunks: 'all',
+                 priority: 30,
+                 enforce: true,
+               },
+               // UI components
+               ui: {
+                 test: /[\\/]src[\\/]components[\\/]ui[\\/]/,
+                 name: 'ui-components',
+                 chunks: 'all',
+                 priority: 25,
+                 enforce: true,
+               },
+               // API client
+               apiClient: {
+                 test: /[\\/]src[\\/]lib[\\/]api-client/,
+                 name: 'api-client',
+                 chunks: 'all',
+                 priority: 20,
+                 enforce: true,
+               },
+               // Auth services
+               auth: {
+                 test: /[\\/]src[\\/](services|contexts)[\\/].*auth/i,
+                 name: 'auth-services',
+                 chunks: 'all',
+                 priority: 15,
+                 enforce: true,
+               },
+               // Common utilities
+               common: {
+                 test: /[\\/]src[\\/](utils|lib|hooks)[\\/]/,
+                 name: 'common',
+                 chunks: 'all',
+                 priority: 10,
+                 minChunks: 2,
+               },
+               // Default
+               default: {
+                 minChunks: 2,
+                 priority: 5,
+                 reuseExistingChunk: true,
+               },
+             },
+           },
+         };
+       }
 
-      // Configurações de output robustas
-      config.output = {
-        ...config.output,
-        crossOriginLoading: 'anonymous',
-        chunkLoadTimeout: 60000, // 60 segundos
-        publicPath: '/_next/',
-        filename: isProd 
-          ? 'static/chunks/[name].[contenthash:8].js'
-          : 'static/chunks/[name].js',
-        chunkFilename: isProd
-          ? 'static/chunks/[name].[contenthash:8].js'
-          : 'static/chunks/[name].js',
-      };
+             // Configurações de output robustas
+       config.output = {
+         ...config.output,
+         crossOriginLoading: 'anonymous',
+         chunkLoadTimeout: 60000, // 60 segundos
+       };
 
-      // Configurar retry automático para chunks falhados
-      config.plugins.push(
-        new webpack.optimize.LimitChunkCountPlugin({
-          maxChunks: isProd ? 50 : 100,
-        })
-      );
+       // Configurar retry automático para chunks falhados (apenas em produção)
+       if (isProd) {
+         config.plugins.push(
+           new webpack.optimize.LimitChunkCountPlugin({
+             maxChunks: 50,
+           })
+         );
+       }
     }
 
     // Configurações para o servidor

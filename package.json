@@ -4,7 +4,7 @@
   "private": true,
   "uniqueName": "portal-educacional",
   "scripts": {
-    "dev": "next dev",
+    "dev": "npx next-clear-cache . && next dev",
     "build": "npx next-clear-cache . && node scripts/cache-version.js && next build",
     "start": "next start",
     "lint": "next lint",
