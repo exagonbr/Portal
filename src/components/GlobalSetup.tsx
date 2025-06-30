@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 import { initializeLoopPrevention } from '@/utils/loop-prevention';
+import { isDevelopment, isProduction } from '@/utils/env';
+import { setupHydrationErrorPrevention } from '@/utils/hydration-fix';
 
 // Declarações de tipos para bibliotecas globais
 declare global {
@@ -15,13 +17,16 @@ export default function GlobalSetup() {
   useEffect(() => {
     // Configurações globais do sistema
     
+    // Configurar prevenção de erros de hidratação
+    setupHydrationErrorPrevention();
+    
     // Inicializar sistema de prevenção de loops
     try {
       const loopPrevention = initializeLoopPrevention();
       console.log('✅ Sistema de prevenção de loops inicializado');
       
       // Adicionar ao window para debug em desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
+      if (isDevelopment()) {
         (window as any).loopPrevention = loopPrevention;
         (window as any).loopStats = () => loopPrevention.getStats();
       }
@@ -30,7 +35,7 @@ export default function GlobalSetup() {
     }
 
     // Desabilitar logs desnecessários em produção
-    if (process.env.NODE_ENV === 'production') {
+    if (isProduction()) {
       const noop = () => {};
       console.debug = noop;
       console.info = noop;

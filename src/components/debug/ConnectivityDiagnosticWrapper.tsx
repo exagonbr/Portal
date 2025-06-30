@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { isDevelopment } from '@/utils/env';
 
 const ConnectivityDiagnostic = dynamic(
   () => import('./ConnectivityDiagnostic'),
@@ -9,7 +10,7 @@ const ConnectivityDiagnostic = dynamic(
 
 export default function ConnectivityDiagnosticWrapper() {
   // Só renderizar em desenvolvimento
-  if (process.env.NODE_ENV !== 'development') {
+  if (!isDevelopment()) {
     return null;
   }
 

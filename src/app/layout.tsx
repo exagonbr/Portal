@@ -2,9 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { SimpleProviders } from '@/providers/SimpleProviders';
+import { isDevelopment } from '@/utils/env';
 
 // Importar debugger HTTP 500 em desenvolvimento
-if (process.env.NODE_ENV === 'development') {
+if (isDevelopment()) {
   import('@/utils/debug-http-500');
 }
 

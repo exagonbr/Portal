@@ -5,12 +5,15 @@ import dynamic from 'next/dynamic'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
 import { SessionProvider } from 'next-auth/react'
 import { AuthWrapper } from '../contexts/AuthContext'
+import { isDevelopment } from '@/utils/env'
 
 const ThemeProvider = dynamic(() => 
   import('@/contexts/ThemeContext')
     .then(mod => ({ default: mod.ThemeProvider }))
     .catch(error => {
-      console.error('❌ Erro ao carregar ThemeProvider:', error);
+      if (isDevelopment()) {
+        console.error('❌ Erro ao carregar ThemeProvider:', error);
+      }
       // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
     }), {
@@ -22,7 +25,9 @@ const GamificationProvider = dynamic(() =>
   import('@/contexts/GamificationContext')
     .then(mod => ({ default: mod.GamificationProvider }))
     .catch(error => {
-      console.error('❌ Erro ao carregar GamificationProvider:', error);
+      if (isDevelopment()) {
+        console.error('❌ Erro ao carregar GamificationProvider:', error);
+      }
       // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
     }), {
@@ -34,7 +39,9 @@ const NavigationLoadingProvider = dynamic(() =>
   import('@/contexts/NavigationLoadingContext')
     .then(mod => ({ default: mod.NavigationLoadingProvider }))
     .catch(error => {
-      console.error('❌ Erro ao carregar NavigationLoadingProvider:', error);
+      if (isDevelopment()) {
+        console.error('❌ Erro ao carregar NavigationLoadingProvider:', error);
+      }
       // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
     }), {
@@ -46,8 +53,24 @@ const ToastManager = dynamic(() =>
   import('@/components/ToastManager')
     .then(mod => ({ default: mod.ToastManager }))
     .catch(error => {
-      console.error('❌ Erro ao carregar ToastManager:', error);
+      if (isDevelopment()) {
+        console.error('❌ Erro ao carregar ToastManager:', error);
+      }
       // Retornar um componente vazio em caso de erro
+      return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+    }), {
+  ssr: false,
+  loading: () => null
+})
+
+const UpdateProvider = dynamic(() =>
+  import('@/components/PWAUpdateManager')
+    .then(mod => ({ default: mod.UpdateProvider }))
+    .catch(error => {
+      if (isDevelopment()) {
+        console.error('❌ Erro ao carregar UpdateProvider:', error);
+      }
+      // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
     }), {
   ssr: false,
@@ -68,7 +91,9 @@ function AuthWrapperWithErrorBoundary({ children }: { children: ReactNode }) {
   try {
     return <AuthWrapper>{children}</AuthWrapper>;
   } catch (error) {
-    console.error('❌ Erro no AuthWrapper:', error);
+    if (isDevelopment()) {
+      console.error('❌ Erro no AuthWrapper:', error);
+    }
     return <>{children}</>;
   }
 }
@@ -111,13 +136,17 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
                 <SessionProvider>
                   <AuthWrapperWithErrorBoundary>
                     <Suspense fallback={null}>
-                      <GamificationProvider>
+                      <UpdateProvider>
                         <Suspense fallback={null}>
-                          <ToastManager>
-                            {children}
-                          </ToastManager>
+                          <GamificationProvider>
+                            <Suspense fallback={null}>
+                              <ToastManager>
+                                {children}
+                              </ToastManager>
+                            </Suspense>
+                          </GamificationProvider>
                         </Suspense>
-                      </GamificationProvider>
+                      </UpdateProvider>
                     </Suspense>
                   </AuthWrapperWithErrorBoundary>
                 </SessionProvider>

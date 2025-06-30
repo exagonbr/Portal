@@ -3,13 +3,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useEffect, useCallback, memo } from 'react'
 import { UserRole, ROLE_PERMISSIONS, ROLE_LABELS, hasPermission, getAccessibleRoutes, RolePermissions } from '@/types/roles'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSystemAdminMenuItems } from '@/components/admin/SystemAdminMenu'
-import { EnhancedLoadingState } from '../ui/LoadingStates'
+import { EnhancedLoadingState } from '@/components/ui/LoadingStates'
 import { useNavigationWithLoading } from '@/hooks/useNavigationWithLoading'
 
 interface NavItem {
@@ -520,6 +520,16 @@ function DashboardSidebarComponent() {
   }, [])
 
   const getNavItems = useCallback((): NavSection[] => {
+    // Special case for SYSTEM_ADMIN - only return their specific menu
+    if (selectedRole === UserRole.SYSTEM_ADMIN) {
+      try {
+        return getSystemAdminMenuItems() || []
+      } catch (error) {
+        console.error('Erro ao carregar menu do System Admin:', error)
+        return []
+      }
+    }
+
     // Get dashboard route based on role
     const getDashboardRoute = (role: UserRole): string => {
       const dashboardMap = {
@@ -528,14 +538,14 @@ function DashboardSidebarComponent() {
         [UserRole.COORDINATOR]: '/dashboard/coordinator',
         [UserRole.TEACHER]: '/dashboard/teacher',
         [UserRole.STUDENT]: '/dashboard/student',
-        [UserRole.GUARDIAN]: '/dashboard/guardian'
-      };
-      return dashboardMap[role] || '/dashboard';
-    };
+        [UserRole.GUARDIAN]: '/dashboard/guardian',
+      }
+      return dashboardMap[role] || '/dashboard'
+    }
 
-    const dashboardRoute = getDashboardRoute(selectedRole);
+    const dashboardRoute = getDashboardRoute(selectedRole)
 
-    // Common items for all users
+    // Common items for all other users
     const commonItems: NavSection[] = [
       {
         section: 'Principal',
@@ -543,31 +553,21 @@ function DashboardSidebarComponent() {
           {
             href: dashboardRoute,
             icon: 'dashboard',
-            label: 'Painel Principal'
+            label: 'Painel Principal',
           },
           {
             href: '/chat',
             icon: 'chat',
-            label: 'Mensagens'
-          }
-        ]
-      }
-    ];
+            label: 'Mensagens',
+          },
+        ],
+      },
+    ]
 
     // Role-specific sections
-    let roleSpecificItems: NavSection[] = [];
+    let roleSpecificItems: NavSection[] = []
 
     switch (selectedRole) {
-      case UserRole.SYSTEM_ADMIN:
-        // Usa o menu completo do SystemAdminMenu
-        try {
-          roleSpecificItems = getSystemAdminMenuItems() || [];
-        } catch (error) {
-          console.error('Erro ao carregar menu do System Admin:', error);
-          roleSpecificItems = [];
-        }
-        break;
-
       case UserRole.INSTITUTION_MANAGER:
         roleSpecificItems = [
           {
@@ -577,27 +577,27 @@ function DashboardSidebarComponent() {
                 href: '/institution/schools',
                 icon: 'school',
                 label: 'Escolas',
-                permission: 'canManageSchools'
+                permission: 'canManageSchools',
               },
               {
                 href: '/institution/classes',
                 icon: 'class',
                 label: 'Turmas',
-                permission: 'canManageClasses'
+                permission: 'canManageClasses',
               },
               {
                 href: '/institution/teachers',
                 icon: 'groups',
                 label: 'Professores',
-                permission: 'canManageInstitutionUsers'
+                permission: 'canManageInstitutionUsers',
               },
               {
                 href: '/institution/students',
                 icon: 'group',
                 label: 'Alunos',
-                permission: 'canManageInstitutionUsers'
-              }
-            ]
+                permission: 'canManageInstitutionUsers',
+              },
+            ],
           },
           {
             section: 'Acadêmico',
@@ -606,21 +606,21 @@ function DashboardSidebarComponent() {
                 href: '/institution/courses',
                 icon: 'menu_book',
                 label: 'Cursos',
-                permission: 'canManageCurriculum'
+                permission: 'canManageCurriculum',
               },
               {
                 href: '/institution/curriculum',
                 icon: 'assignment',
                 label: 'Currículo',
-                permission: 'canManageCurriculum'
+                permission: 'canManageCurriculum',
               },
               {
                 href: '/institution/calendar',
                 icon: 'calendar_month',
                 label: 'Calendário',
-                permission: 'canManageSchedules'
-              }
-            ]
+                permission: 'canManageSchedules',
+              },
+            ],
           },
           {
             section: 'Portais',
@@ -629,27 +629,27 @@ function DashboardSidebarComponent() {
                 href: '/portal/books',
                 icon: 'auto_stories',
                 label: 'Portal de Literatura',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/videos',
                 icon: 'play_circle',
                 label: 'Portal de Vídeos',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/collections',
                 icon: 'video_library',
                 label: 'Coleções',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/collections/manage',
                 icon: 'edit_note',
                 label: 'Gerenciar Coleções',
-                permission: 'canAccessLearningMaterials'
-              }
-            ]
+                permission: 'canAccessLearningMaterials',
+              },
+            ],
           },
           {
             section: 'Relatórios',
@@ -658,24 +658,24 @@ function DashboardSidebarComponent() {
                 href: '/reports/institutional',
                 icon: 'analytics',
                 label: 'Relatórios Institucionais',
-                permission: 'canViewInstitutionAnalytics'
+                permission: 'canViewInstitutionAnalytics',
               },
               {
                 href: '/reports/performance',
                 icon: 'assessment',
                 label: 'Desempenho Acadêmico',
-                permission: 'canViewAcademicAnalytics'
+                permission: 'canViewAcademicAnalytics',
               },
               {
                 href: '/reports/financial',
                 icon: 'payments',
                 label: 'Financeiro',
-                permission: 'canViewInstitutionAnalytics'
+                permission: 'canViewInstitutionAnalytics',
               },
-            ]
-          }
-        ];
-        break;
+            ],
+          },
+        ]
+        break
 
       case UserRole.COORDINATOR:
         roleSpecificItems = [
@@ -686,27 +686,27 @@ function DashboardSidebarComponent() {
                 href: '/coordinator/cycles',
                 icon: 'school',
                 label: 'Ciclos Educacionais',
-                permission: 'canManageCycles'
+                permission: 'canManageCycles',
               },
               {
                 href: '/coordinator/curriculum',
                 icon: 'menu_book',
                 label: 'Gestão Curricular',
-                permission: 'canManageCurriculum'
+                permission: 'canManageCurriculum',
               },
               {
                 href: '/coordinator/teachers',
                 icon: 'groups',
                 label: 'Corpo Docente',
-                permission: 'canMonitorTeachers'
+                permission: 'canMonitorTeachers',
               },
               {
                 href: '/coordinator/evaluations',
                 icon: 'grade',
                 label: 'Avaliações',
-                permission: 'canViewAcademicAnalytics'
+                permission: 'canViewAcademicAnalytics',
               },
-            ]
+            ],
           },
           {
             section: 'Acompanhamento',
@@ -715,21 +715,21 @@ function DashboardSidebarComponent() {
                 href: '/coordinator/performance',
                 icon: 'trending_up',
                 label: 'Desempenho',
-                permission: 'canViewAcademicAnalytics'
+                permission: 'canViewAcademicAnalytics',
               },
               {
                 href: '/coordinator/planning',
                 icon: 'event_note',
                 label: 'Planejamento',
-                permission: 'canManageCurriculum'
+                permission: 'canManageCurriculum',
               },
               {
                 href: '/coordinator/meetings',
                 icon: 'groups_2',
                 label: 'Reuniões',
-                permission: 'canCoordinateDepartments'
-              }
-            ]
+                permission: 'canCoordinateDepartments',
+              },
+            ],
           },
           {
             section: 'Qualidade',
@@ -738,21 +738,21 @@ function DashboardSidebarComponent() {
                 href: '/coordinator/indicators',
                 icon: 'analytics',
                 label: 'Indicadores',
-                permission: 'canViewAcademicAnalytics'
+                permission: 'canViewAcademicAnalytics',
               },
               {
                 href: '/coordinator/reports',
                 icon: 'assessment',
                 label: 'Relatórios',
-                permission: 'canViewAcademicAnalytics'
+                permission: 'canViewAcademicAnalytics',
               },
               {
                 href: '/coordinator/improvements',
                 icon: 'tips_and_updates',
                 label: 'Melhorias',
-                permission: 'canCoordinateDepartments'
-              }
-            ]
+                permission: 'canCoordinateDepartments',
+              },
+            ],
           },
           {
             section: 'Portais',
@@ -761,36 +761,36 @@ function DashboardSidebarComponent() {
                 href: '/portal/books',
                 icon: 'auto_stories',
                 label: 'Portal de Literatura',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/videos',
                 icon: 'play_circle',
                 label: 'Portal de Vídeos',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/collections',
                 icon: 'video_library',
                 label: 'Coleções',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/collections/manage',
                 icon: 'edit_note',
                 label: 'Gerenciar Coleções',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/student',
                 icon: 'person_outline',
                 label: 'Portal do Aluno',
-                permission: 'canAccessLearningMaterials'
-              }
-            ]
-          }
-        ];
-        break;
+                permission: 'canAccessLearningMaterials',
+              },
+            ],
+          },
+        ]
+        break
 
       case UserRole.TEACHER:
         roleSpecificItems = [
@@ -801,27 +801,27 @@ function DashboardSidebarComponent() {
                 href: '/courses/manage',
                 icon: 'school',
                 label: 'Gestão de Cursos',
-                permission: 'canManageLessonPlans'
+                permission: 'canManageLessonPlans',
               },
               {
                 href: '/assignments/manage',
                 icon: 'assignment',
                 label: 'Gestão de Atividades',
-                permission: 'canManageLessonPlans'
+                permission: 'canManageLessonPlans',
               },
               {
                 href: '/live/manage',
                 icon: 'video_camera_front',
                 label: 'Gestão de Aulas ao Vivo',
-                permission: 'canManageLessonPlans'
+                permission: 'canManageLessonPlans',
               },
               {
                 href: '/lessons/manage',
                 icon: 'menu_book',
                 label: 'Gestão de Aulas',
-                permission: 'canManageLessonPlans'
-              }
-            ]
+                permission: 'canManageLessonPlans',
+              },
+            ],
           },
           {
             section: 'Gestão da Turma',
@@ -830,27 +830,27 @@ function DashboardSidebarComponent() {
                 href: '/teacher/students',
                 icon: 'group',
                 label: 'Alunos',
-                permission: 'canCommunicateWithStudents'
+                permission: 'canCommunicateWithStudents',
               },
               {
                 href: '/teacher/grades',
                 icon: 'grade',
                 label: 'Avaliações',
-                permission: 'canManageGrades'
+                permission: 'canManageGrades',
               },
               {
                 href: '/reports/teacher',
                 icon: 'analytics',
                 label: 'Relatórios',
-                permission: 'canManageGrades'
+                permission: 'canManageGrades',
               },
               {
                 href: '/forum',
                 icon: 'forum',
                 label: 'Fórum',
-                permission: 'canCommunicateWithStudents'
-              }
-            ]
+                permission: 'canCommunicateWithStudents',
+              },
+            ],
           },
           {
             section: 'Portais',
@@ -859,30 +859,30 @@ function DashboardSidebarComponent() {
                 href: '/portal/videos',
                 icon: 'play_circle',
                 label: 'Portal de Vídeos',
-                permission: 'canUploadResources'
+                permission: 'canUploadResources',
               },
               {
                 href: '/portal/collections',
                 icon: 'video_library',
                 label: 'Coleções',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/collections/manage',
                 icon: 'edit_note',
                 label: 'Gerenciar Coleções',
-                permission: 'canUploadResources'
+                permission: 'canUploadResources',
               },
               {
                 href: '/portal/books',
                 icon: 'auto_stories',
                 label: 'Portal de Literatura',
-                permission: 'canUploadResources'
-              }
-            ]
-          }
-        ];
-        break;
+                permission: 'canUploadResources',
+              },
+            ],
+          },
+        ]
+        break
 
       case UserRole.STUDENT:
         roleSpecificItems = [
@@ -893,45 +893,45 @@ function DashboardSidebarComponent() {
                 href: '/courses/',
                 icon: 'school',
                 label: 'Meus Cursos',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/assignments',
                 icon: 'assignment',
                 label: 'Atividades',
-                permission: 'canSubmitAssignments'
+                permission: 'canSubmitAssignments',
               },
               {
                 href: '/live',
                 icon: 'video_camera_front',
                 label: 'Aulas ao Vivo',
-                permission: 'canViewOwnSchedule'
+                permission: 'canViewOwnSchedule',
               },
               {
                 href: '/lessons',
                 icon: 'school',
                 label: 'Aulas',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/quiz/student',
                 icon: 'quiz',
                 label: 'Quiz Interativo',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/study-groups/student',
                 icon: 'group',
                 label: 'Grupos de Estudo',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/forum',
                 icon: 'forum',
                 label: 'Fórum',
-                permission: 'canCommunicateWithStudents'
-              }
-            ]
+                permission: 'canCommunicateWithStudents',
+              },
+            ],
           },
           {
             section: 'Portais',
@@ -940,30 +940,30 @@ function DashboardSidebarComponent() {
                 href: '/portal/books',
                 icon: 'auto_stories',
                 label: 'Portal de Literatura',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/videos',
                 icon: 'play_circle',
                 label: 'Portal de Vídeos',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/collections',
                 icon: 'video_library',
                 label: 'Coleções',
-                permission: 'canAccessLearningMaterials'
+                permission: 'canAccessLearningMaterials',
               },
               {
                 href: '/portal/student',
                 icon: 'person_outline',
                 label: 'Portal do Aluno',
-                permission: 'canAccessLearningMaterials'
-              }
-            ]
-          }
-        ];
-        break;
+                permission: 'canAccessLearningMaterials',
+              },
+            ],
+          },
+        ]
+        break
 
       case UserRole.GUARDIAN:
         roleSpecificItems = [
@@ -974,33 +974,33 @@ function DashboardSidebarComponent() {
                 href: '/guardian/children',
                 icon: 'child_care',
                 label: 'Meus Filhos',
-                permission: 'canViewChildrenInfo'
+                permission: 'canViewChildrenInfo',
               },
               {
                 href: '/guardian/grades',
                 icon: 'grade',
                 label: 'Notas',
-                permission: 'canViewChildrenGrades'
+                permission: 'canViewChildrenGrades',
               },
               {
                 href: '/guardian/attendance',
                 icon: 'fact_check',
                 label: 'Frequência',
-                permission: 'canViewChildrenAttendance'
+                permission: 'canViewChildrenAttendance',
               },
               {
                 href: '/guardian/activities',
                 icon: 'assignment',
                 label: 'Atividades',
-                permission: 'canViewChildrenAssignments'
+                permission: 'canViewChildrenAssignments',
               },
               {
                 href: '/dashboard/guardian/momentos',
                 icon: 'photo_camera',
                 label: 'Momentos',
-                permission: 'canViewChildrenInfo'
-              }
-            ]
+                permission: 'canViewChildrenInfo',
+              },
+            ],
           },
           {
             section: 'Comunicação',
@@ -1009,21 +1009,21 @@ function DashboardSidebarComponent() {
                 href: '/guardian/messages',
                 icon: 'mail',
                 label: 'Mensagens',
-                permission: 'canCommunicateWithSchool'
+                permission: 'canCommunicateWithSchool',
               },
               {
                 href: '/guardian/meetings',
                 icon: 'video_call',
                 label: 'Reuniões',
-                permission: 'canScheduleMeetings'
+                permission: 'canScheduleMeetings',
               },
               {
                 href: '/guardian/announcements',
                 icon: 'campaign',
                 label: 'Comunicados',
-                permission: 'canReceiveAnnouncements'
-              }
-            ]
+                permission: 'canReceiveAnnouncements',
+              },
+            ],
           },
           {
             section: 'Financeiro',
@@ -1032,43 +1032,33 @@ function DashboardSidebarComponent() {
                 href: '/guardian/payments',
                 icon: 'payments',
                 label: 'Pagamentos',
-                permission: 'canViewPayments'
+                permission: 'canViewPayments',
               },
               {
                 href: '/guardian/invoices',
                 icon: 'receipt',
                 label: 'Boletos',
-                permission: 'canViewBoletos'
+                permission: 'canViewBoletos',
               },
               {
                 href: '/guardian/history',
                 icon: 'history',
                 label: 'Histórico',
-                permission: 'canViewFinancialHistory'
-              }
-            ]
-          }
-        ];
-        break;
+                permission: 'canViewFinancialHistory',
+              },
+            ],
+          },
+        ]
+        break
 
       default:
-        roleSpecificItems = [];
+        roleSpecificItems = []
     }
 
-    return [...commonItems, ...roleSpecificItems];
-  }, [selectedRole]);
+    return [...commonItems, ...roleSpecificItems]
+  }, [selectedRole])
 
-    // Para o SYSTEM_ADMIN, apenas usamos os itens específicos do papel, sem adicionar os itens comuns
-    const navItems = selectedRole === UserRole.SYSTEM_ADMIN 
-      ? (() => {
-          try {
-            return getSystemAdminMenuItems() || [];
-          } catch (error) {
-            console.error('Erro ao carregar menu do System Admin:', error);
-            return [];
-          }
-        })()
-      : getNavItems();
+  const navItems = getNavItems()
 
   // Verificações de segurança após todos os hooks
   if (!theme || !theme.colors || !theme.colors.sidebar) {

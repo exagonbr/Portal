@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { isDevelopment } from '@/utils/env';
 
 /**
  * Componente para debug de problemas de hidratação
@@ -14,7 +15,7 @@ export default function HydrationDebugger() {
     setMounted(true);
 
     // Só executar em desenvolvimento
-    if (process.env.NODE_ENV !== 'development') {
+    if (!isDevelopment()) {
       return;
     }
 
@@ -59,7 +60,7 @@ export default function HydrationDebugger() {
   }, []);
 
   // Não renderizar nada em produção
-  if (process.env.NODE_ENV !== 'development') {
+  if (!isDevelopment()) {
     return null;
   }
 

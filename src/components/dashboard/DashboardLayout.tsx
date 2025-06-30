@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import SafeDashboardSidebar from '@/components/SafeDashboardSidebar'
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
 import { useTheme } from '@/contexts/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { UpdateNotificationCompact } from '@/components/UpdateNotificationCompact'
@@ -224,7 +224,7 @@ export default function DashboardLayout({
       <div className="flex h-screen w-screen overflow-hidden" style={{ backgroundColor: theme.colors.background.secondary }}>
       {/* Left Sidebar - Ajustado para ser responsivo */}
       <div className="hidden md:block">
-        <SafeDashboardSidebar />
+        <DashboardSidebar />
       </div>
       
       {/* Main Content Area */}
@@ -759,7 +759,7 @@ export default function DashboardLayout({
       {mobileMenuOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden" onClick={() => setMobileMenuOpen(false)}>
           <div className="absolute inset-y-0 left-0 w-64 shadow-xl" style={{ backgroundColor: theme.colors.background.primary }} onClick={(e) => e.stopPropagation()}>
-            <SafeDashboardSidebar />
+            <DashboardSidebar />
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { runAuthDiagnostic, AuthDiagnosticResult } from '@/utils/auth-diagnostic';
+import { isDevelopment } from '@/utils/env';
 import {
   Shield,
   Building2,
@@ -261,7 +262,7 @@ function SystemAdminDashboardContent() {
     initializeGlobalErrorHandler();
     
     // Executar testes de chunk error (apenas em desenvolvimento)
-    if (process.env.NODE_ENV === 'development') {
+    if (isDevelopment()) {
       runAllChunkErrorTests().catch(console.error);
     }
     

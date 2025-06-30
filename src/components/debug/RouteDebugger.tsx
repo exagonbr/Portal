@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { isDevelopment, isProduction, getNodeEnv } from '@/utils/env';
 
 interface RouteInfo {
   currentPath: string;
@@ -20,7 +21,7 @@ export function RouteDebugger() {
 
   useEffect(() => {
     // Só mostrar em desenvolvimento ou quando explicitamente solicitado
-    const shouldShow = process.env.NODE_ENV === 'development' || 
+    const shouldShow = isDevelopment() ||
                       localStorage.getItem('debug_routes') === 'true';
     
     if (shouldShow) {
@@ -126,8 +127,8 @@ export function RouteDebugger() {
   };
 
   // Só renderizar se debug estiver ativo
-  if (process.env.NODE_ENV === 'production' && 
-      typeof window !== 'undefined' && 
+  if (isProduction() &&
+      typeof window !== 'undefined' &&
       localStorage.getItem('debug_routes') !== 'true') {
     return null;
   }
@@ -232,7 +233,7 @@ export function RouteDebugger() {
 
             <div className="text-xs text-gray-500">
               <div>Timestamp: {routeInfo.timestamp}</div>
-              <div>Ambiente: {process.env.NODE_ENV}</div>
+              <div>Ambiente: {getNodeEnv()}</div>
             </div>
           </div>
         </div>

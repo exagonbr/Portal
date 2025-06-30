@@ -418,6 +418,7 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: 'my-value',
     CACHE_VERSION: cacheVersion,
+    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
   },
 };
 

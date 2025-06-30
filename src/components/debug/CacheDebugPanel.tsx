@@ -1,12 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { isProduction } from '@/utils/env';
 import { cacheManager, getCacheStats, clearAllCache } from '@/utils/cacheManager';
 import { useCacheInvalidation } from '@/hooks/useSmartCache';
 
 interface CacheStats {
   memory: {
-    memoryEntries: number;
+    hits: number;
+    misses: number;
+    sets: number;
+    deletes: number;
+    size: number;
     memorySize: number;
     enabled: boolean;
     defaultTTL: number;
@@ -96,7 +101,7 @@ export function CacheDebugPanel() {
   };
 
   // Só mostrar em desenvolvimento ou para admins
-  if (process.env.NODE_ENV === 'production') {
+  if (isProduction()) {
     return null;
   }
 
@@ -137,7 +142,7 @@ export function CacheDebugPanel() {
                   Cache em Memória
                 </h4>
                 <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                  <div>Entradas: {stats.memory.memoryEntries}</div>
+                  <div>Entradas: {stats.memory.size}</div>
                   <div>Tamanho: {formatSize(stats.memory.memorySize)}</div>
                   <div>TTL Padrão: {stats.memory.defaultTTL}s</div>
                   <div>Status: {stats.memory.enabled ? '✅ Ativo' : '❌ Inativo'}</div>

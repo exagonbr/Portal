@@ -541,152 +541,31 @@ class SystemAdminService {
    */
   async getUsersByRole(): Promise<Record<string, number>> {
     try {
-      console.log('📊 [SYSTEM-ADMIN-SERVICE] Iniciando getUsersByRole...');
-      
-      // Usar o token validator para verificação mais robusta
-      const authStatus = isAuthenticated();
-      const currentToken = getCurrentToken();
-      
-      console.log('🔍 [SYSTEM-ADMIN-SERVICE] Status de autenticação:', {
-        authenticated: authStatus.authenticated,
-        tokenValid: authStatus.tokenValid,
-        needsRefresh: authStatus.needsRefresh,
-        hasToken: !!currentToken,
-        tokenLength: currentToken ? currentToken.length : 0,
-        error: authStatus.error
-      });
-      
-      if (!currentToken) {
-        console.warn('❌ [SYSTEM-ADMIN-SERVICE] Nenhum token encontrado em nenhuma fonte');
-        throw new Error('Token de autorização não fornecido');
+      const response = await apiClient.get<any>(`/users/stats`);
+      if (response.success && response.data?.users_by_role) {
+        return response.data.users_by_role;
       }
-      
-      if (!authStatus.authenticated) {
-        console.warn('❌ [SYSTEM-ADMIN-SERVICE] Token inválido ou expirado:', authStatus.error);
-        throw new Error(`Sessão expirada ou não autenticada. Por favor, faça login novamente.`);
-      }
-      
-      // Sincronizar token com apiClient antes da requisição
-      await syncTokenWithApiClient(currentToken);
-      
-      console.log('✅ [SYSTEM-ADMIN-SERVICE] Token válido, fazendo requisição...');
-      
-      const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`users/stats`);
-      
-      console.log('📊 [SYSTEM-ADMIN-SERVICE] Resposta recebida:', {
-        success: response.success,
-        hasData: !!response.data,
-        dataKeys: response.data ? Object.keys(response.data) : [],
-        message: response.message
-      });
-      
-      if (response.success && response.data?.data?.users_by_role) {
-        const usersData = response.data.data.users_by_role;
-        console.log('✅ [SYSTEM-ADMIN-SERVICE] Dados de usuários por função:', usersData);
-        return usersData;
-      }
-      
-      const errorMessage = response.message || 'Falha ao carregar dados de usuários';
-      console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro na resposta:', errorMessage);
-      
-      // Fornecer informações mais específicas sobre o erro
-      if (errorMessage.includes('Token inválido') || errorMessage.includes('Token expirado')) {
-        console.error('🔍 [SYSTEM-ADMIN-SERVICE] Diagnóstico do token:', {
-          currentToken: currentToken ? `${currentToken.substring(0, 10)}...` : null,
-          tokenLength: currentToken ? currentToken.length : 0,
-          authStatus: JSON.stringify(authStatus)
-        });
-        throw new Error(`Erro de autenticação: ${errorMessage}. Verifique se você está logado corretamente.`);
-      }
-      
-      throw new Error(errorMessage);
-    } catch (error: unknown) {
-      console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro ao carregar usuários por função:', error);
-      
-      // Executar diagnóstico detalhado em caso de erro
-      console.group('🔍 [SYSTEM-ADMIN-SERVICE] Diagnóstico de erro');
-      const diagnostics = runAuthDiagnostics();
-      console.log('📋 Diagnóstico completo:', diagnostics);
-      console.groupEnd();
-      
-      // Se for erro de autenticação, tentar auto-refresh antes de falhar
-      if (error instanceof Error && (
-        error.message.includes('Token de autorização não fornecido') ||
-        error.message.includes('Token de autenticação inválido') ||
-        error.message.includes('401') ||
-        error.message.includes('Unauthorized')
-      )) {
-        console.log('🔄 [SYSTEM-ADMIN-SERVICE] Tentando auto-refresh do token...');
-        
-        try {
-          const refreshSuccess = await autoRefreshToken();
-          if (refreshSuccess) {
-            console.log('✅ [SYSTEM-ADMIN-SERVICE] Auto-refresh bem-sucedido, tentando novamente...');
-            // Tentar a requisição novamente com o novo token
-            const response = await apiClient.get<{ data: { users_by_role: Record<string, number> } }>(`users/stats`);
-            
-            if (response.success && response.data?.data?.users_by_role) {
-              const usersData = response.data.data.users_by_role;
-              console.log('✅ [SYSTEM-ADMIN-SERVICE] Dados obtidos após refresh:', usersData);
-              return usersData;
-            }
-          } else {
-            // Se o refresh falhar, fornecer uma mensagem mais clara
-            throw new Error('Sua sessão expirou. Por favor, faça login novamente para continuar.');
-          }
-        } catch (refreshError: unknown) {
-          console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro no auto-refresh:', refreshError);
-          // Fornecer uma mensagem mais útil para o usuário
-          throw new Error('Não foi possível renovar sua sessão. Por favor, faça login novamente.');
-        }
-      }
-      
-      // Para outros erros, usar fallback
-      console.warn('⚠️ [SYSTEM-ADMIN-SERVICE] Usando dados de fallback devido ao erro:', error);
-      return {
-        'STUDENT': 14890,
-        'TEACHER': 2456,
-        'PARENT': 1087,
-        'COORDINATOR': 234,
-        'ADMIN': 67,
-        'SYSTEM_ADMIN': 8
-      };
+      console.warn('getUsersByRole failed, returning fallback.', response.message);
+      return this.getFallbackUserStats().users_by_role;
+    } catch (error) {
+      console.error('Error in getUsersByRole, returning fallback:', error);
+      return this.getFallbackUserStats().users_by_role;
     }
   }
 
   /**
    * Obtém dados completos de analytics do sistema
    */
-  async getSystemAnalytics(): Promise<{
-    userGrowth: Array<{ month: string; users: number; growth: number }>;
-    sessionTrends: Array<{ hour: string; sessions: number }>;
-    deviceUsage: Array<{ device: string; percentage: number; users: number }>;
-    institutionDistribution: Array<{ name: string; users: number; schools: number }>;
-    roleDistribution: Array<{ role: string; count: number; percentage: number }>;
-    performanceMetrics: {
-      avgResponseTime: number;
-      errorRate: number;
-      uptime: number;
-      throughput: number;
-    };
-  }> {
+  async getSystemAnalytics(): Promise<any> {
     try {
-      const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/analytics`);
-      
-      // Add debug logging
-      console.log('Analytics response:', response);
-      
+      const response = await apiClient.get<any>(`/dashboard/analytics`);
       if (response.success && response.data) {
-        // If success is true, return the data directly
-        return response.data.data || response.data;
+        return response.data;
       }
-      
-      // If success is false, throw error with message
-      throw new Error(response.message || 'Falha ao carregar analytics');
-    } catch (error: unknown) {
-      console.error('Erro ao carregar analytics do sistema:', error);
-      
-      // Fallback with simulated data
+      console.warn('getSystemAnalytics failed, returning fallback.', response.message);
+      return this.getFallbackAnalytics();
+    } catch (error) {
+      console.error('Error in getSystemAnalytics, returning fallback:', error);
       return this.getFallbackAnalytics();
     }
   }
@@ -694,43 +573,18 @@ class SystemAdminService {
   /**
    * Obtém métricas de engajamento dos usuários
    */
-  async getUserEngagementMetrics(): Promise<{
-    dailyActiveUsers: number[];
-    weeklyActiveUsers: number[];
-    monthlyActiveUsers: number[];
-    retentionRate: number;
-    averageSessionDuration: number;
-    bounceRate: number;
-    topFeatures: Array<{ name: string; usage: number }>;
-  }> {
-    return withAutoRefresh(async () => {
-      try {
-        const response = await apiClient.get<{ success: boolean; data: any; message?: string }>(`/dashboard/engagement`);
-        
-        // Add debug logging
-        console.log('Engagement metrics response:', response);
-        
-        if (response.success && response.data) {
-          const data = response.data.data || response.data;
-          
-          // Garantir que topFeatures seja sempre um array válido
-          if (!Array.isArray(data.topFeatures)) {
-            console.warn('topFeatures não é um array válido, usando array vazio');
-            data.topFeatures = [];
-          }
-          
-          return data;
-        }
-        
-        // If success is false, throw error with message
-        throw new Error(response.message || 'Falha ao carregar métricas de engajamento');
-      } catch (error: unknown) {
-        console.error('Erro ao carregar métricas de engajamento:', error);
-        
-        // Fallback with simulated data
-        return this.getFallbackEngagementMetrics();
+  async getUserEngagementMetrics(): Promise<any> {
+    try {
+      const response = await apiClient.get<any>(`/dashboard/engagement`);
+      if (response.success && response.data) {
+        return response.data;
       }
-    });
+      console.warn('getUserEngagementMetrics failed, returning fallback.', response.message);
+      return this.getFallbackEngagementMetrics();
+    } catch (error) {
+      console.error('Error in getUserEngagementMetrics, returning fallback:', error);
+      return this.getFallbackEngagementMetrics();
+    }
   }
 
   /**
@@ -1480,80 +1334,31 @@ class SystemAdminService {
   }
 
   async getAwsConnectionStats(): Promise<any> {
-    return withAutoRefresh(async () => {
-      try {
-        // Verificar autenticação
-        const isAuthenticated = await this.ensureAuthentication();
-        if (!isAuthenticated) {
-          console.warn('⚠️ [AWS-STATS] Falha na autenticação, retornando null');
-          return null;
-        }
-
-        console.log('📊 [AWS-STATS] Fazendo requisição para /aws/connection-logs/stats...');
-        const response = await apiClient.get<any>(`/aws/connection-logs/stats`);
-        
-        if (response.success && response.data) {
-          console.log('✅ [AWS-STATS] Dados obtidos com sucesso');
-          return response.data;
-        }
-        
-        console.warn('⚠️ [AWS-STATS] Resposta sem sucesso ou dados:', response);
-        throw new Error(response.message || 'Falha ao carregar estatísticas da AWS');
-      } catch (error: unknown) {
-        console.error('❌ [AWS-STATS] Erro ao carregar estatísticas da AWS:', error);
-        
-        // Verificar se é erro de autenticação
-        this.handleAuthError(error, 'AWS-STATS');
-        
-        return null;
+    try {
+      const response = await apiClient.get<any>(`/aws/connection-logs/stats`);
+      if (response.success && response.data) {
+        return response.data;
       }
-    });
+      console.warn('getAwsConnectionStats failed, returning fallback.', response.message);
+      return null; // Returning null as a fallback
+    } catch (error) {
+      console.error('Error in getAwsConnectionStats, returning fallback:', error);
+      return null; // Returning null as a fallback
+    }
   }
 
   async getRealUserStats(): Promise<any> {
-    return withAutoRefresh(async () => {
-      try {
-        // Verificar autenticação
-        const authStatus = isAuthenticated();
-        if (!authStatus.authenticated) {
-          console.warn('⚠️ [REAL-USER-STATS] Falha na autenticação, usando fallback');
-          // Usar dados de fallback sem lançar erro para melhor experiência do usuário
-          return this.getFallbackUserStats();
-        }
-
-        console.log('📊 [REAL-USER-STATS] Fazendo requisição para /users/stats...');
-        const response = await apiClient.get<any>(`/users/stats`);
-        
-        if (response.success && response.data) {
-          console.log('✅ [REAL-USER-STATS] Dados obtidos com sucesso');
-          return response.data;
-        }
-        
-        console.warn('⚠️ [REAL-USER-STATS] Resposta sem sucesso ou dados:', response);
-        // Verificar se é erro de autenticação na resposta
-        if (response.message && (
-          response.message.includes('Token') || 
-          response.message.includes('autenticação') || 
-          response.message.includes('autorização') ||
-          response.message.includes('401')
-        )) {
-          // Usar dados de fallback sem interromper a experiência do usuário
-          console.log('📊 [REAL-USER-STATS] Erro de autenticação detectado, usando fallback');
-          return this.getFallbackUserStats();
-        }
-        
-        throw new Error(response.message || 'Falha ao carregar estatísticas de usuários');
-      } catch (error: unknown) {
-        console.error('❌ [REAL-USER-STATS] Erro ao carregar estatísticas de usuários:', error);
-        
-        // Verificar se é erro de autenticação
-        this.handleAuthError(error, 'REAL-USER-STATS');
-        
-        // Para outros tipos de erro, retornar dados de fallback
-        console.log('📊 [REAL-USER-STATS] Retornando dados de fallback devido ao erro');
-        return this.getFallbackUserStats();
+    try {
+      const response = await apiClient.get<any>(`/users/stats`);
+      if (response.success && response.data) {
+        return response.data;
       }
-    });
+      console.warn('getRealUserStats failed, returning fallback.', response.message);
+      return this.getFallbackUserStats();
+    } catch (error) {
+      console.error('Error in getRealUserStats, returning fallback:', error);
+      return this.getFallbackUserStats();
+    }
   }
 }
 
