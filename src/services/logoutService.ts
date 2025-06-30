@@ -265,7 +265,7 @@ export class LogoutService {
       console.error('❌ LogoutService: Erro no logout, forçando redirecionamento:', error);
       // Forçar redirecionamento mesmo com erro
       if (typeof window !== 'undefined') {
-        window.location.href = '/login?error=logout_failed';
+        window.location.href = '/auth/login?error=logout_failed';
       }
     }
   }

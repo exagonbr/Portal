@@ -3,6 +3,23 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 // Schema de validação para criação de notificação
 const createNotificationSchema = z.object({
   title: z.string().min(3, 'Título deve ter pelo menos 3 caracteres'),
@@ -147,12 +164,12 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: notifications.length,
-          totalPages: Math.ceil(notifications.length / limit, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+          totalPages: Math.ceil(notifications.length / limit)
         },
         unread_count: unreadCount
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
@@ -192,13 +209,14 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createNotificationSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json({ 
+      return NextResponse.json({
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten(, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).fieldErrors
+          errors: validationResult.error.flatten().fieldErrors
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       )
     }
 

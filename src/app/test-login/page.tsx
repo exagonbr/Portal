@@ -148,7 +148,7 @@ export default function TestLoginPage() {
           </button>
           
           <button
-            onClick={() => router.push('/login')}
+            onClick={() => router.push('/auth/login')}
             className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700"
           >
             Ir para Login Real

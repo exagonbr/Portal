@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 import { getInternalApiUrl } from '@/config/env';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 
 
 // Handler para requisições OPTIONS (preflight)
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validar token e sessão com o backend
-    const response = await fetch(getInternalApiUrl('/api/auth/optimized/validate'), {
+    const response = await fetch(getInternalApiUrl('/auth/optimized/validate'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar token e sessão com o backend
-    const response = await fetch(getInternalApiUrl('/api/auth/optimized/validate'), {
+    const response = await fetch(getInternalApiUrl('/auth/optimized/validate'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

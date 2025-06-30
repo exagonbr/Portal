@@ -185,22 +185,46 @@ class SystemAdminService {
         return false;
       }
 
-      // Validar token
-      const tokenValidation = validateToken(currentToken);
-      if (!tokenValidation.isValid) {
-        console.warn('⚠️ [AUTH-CHECK] Token inválido, tentando refresh automático');
+      // Validar token usando a função isAuthenticated para diagnóstico completo
+      const authStatus = isAuthenticated();
+      if (!authStatus.authenticated) {
+        console.warn('⚠️ [AUTH-CHECK] Token inválido:', authStatus.error);
+        
+        // Tentar refresh automático
+        console.log('🔄 [AUTH-CHECK] Tentando refresh automático do token');
         const refreshSuccess = await autoRefreshToken();
         if (!refreshSuccess) {
           console.error('❌ [AUTH-CHECK] Falha no refresh do token');
+          
+          // Registrar diagnóstico detalhado
+          const diagnostics = runAuthDiagnostics();
+          console.log('🔍 [AUTH-CHECK] Diagnóstico após falha no refresh:', diagnostics);
+          
           return false;
         }
+        
+        console.log('✅ [AUTH-CHECK] Refresh do token bem-sucedido');
       }
 
       // Sincronizar token com apiClient
       await syncTokenWithApiClient();
+      
+      // Verificar novamente após sincronização
+      const finalAuthStatus = isAuthenticated();
+      if (!finalAuthStatus.authenticated) {
+        console.error('❌ [AUTH-CHECK] Token ainda inválido após sincronização');
+        return false;
+      }
+      
+      console.log('✅ [AUTH-CHECK] Autenticação verificada com sucesso');
       return true;
     } catch (error) {
       console.error('❌ [AUTH-CHECK] Erro na verificação de autenticação:', error);
+      
+      // Registrar diagnóstico detalhado em caso de erro
+      const diagnostics = runAuthDiagnostics();
+      console.log('🔍 [AUTH-CHECK] Diagnóstico após erro:', diagnostics);
+      
       return false;
     }
   }
@@ -209,14 +233,34 @@ class SystemAdminService {
    * Trata erros de autenticação de forma centralizada
    */
   private handleAuthError(error: unknown, context: string): void {
-    if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
-      console.log(`🔄 [${context}] Erro 401 detectado, limpando tokens`);
+    // Verificar se é erro de autenticação
+    const isAuthError = error && typeof error === 'object' && (
+      'status' in error && error.status === 401 ||
+      'message' in error && typeof error.message === 'string' && (
+        error.message.includes('Token') ||
+        error.message.includes('autenticação') ||
+        error.message.includes('autorização') ||
+        error.message.includes('401') ||
+        error.message.includes('Unauthorized')
+      )
+    );
+
+    if (isAuthError) {
+      console.log(`🔄 [${context}] Erro de autenticação detectado, limpando tokens`);
+      
+      // Executar diagnóstico antes de limpar
+      const diagnostics = runAuthDiagnostics();
+      console.log(`🔍 [${context}] Diagnóstico antes da limpeza:`, diagnostics);
+      
+      // Limpar tokens
       clearAllTokens();
       
       // Redirecionar para login se estivermos no browser
       if (typeof window !== 'undefined') {
         console.log(`🔄 [${context}] Redirecionando para login...`);
-        window.location.href = '/login';
+        
+        // Adicionar parâmetro para indicar que houve erro de autenticação
+        window.location.href = '/auth/login?auth_error=expired';
       }
     }
   }
@@ -524,7 +568,7 @@ class SystemAdminService {
       
       if (!authStatus.authenticated) {
         console.warn('❌ [SYSTEM-ADMIN-SERVICE] Token inválido ou expirado:', authStatus.error);
-        throw new Error(`Token de autenticação inválido: ${authStatus.error}`);
+        throw new Error(`Sessão expirada ou não autenticada. Por favor, faça login novamente.`);
       }
       
       // Sincronizar token com apiClient antes da requisição
@@ -553,9 +597,9 @@ class SystemAdminService {
       // Fornecer informações mais específicas sobre o erro
       if (errorMessage.includes('Token inválido') || errorMessage.includes('Token expirado')) {
         console.error('🔍 [SYSTEM-ADMIN-SERVICE] Diagnóstico do token:', {
-          currentToken: !!currentToken,
+          currentToken: currentToken ? `${currentToken.substring(0, 10)}...` : null,
           tokenLength: currentToken ? currentToken.length : 0,
-          authStatus: authStatus
+          authStatus: JSON.stringify(authStatus)
         });
         throw new Error(`Erro de autenticação: ${errorMessage}. Verifique se você está logado corretamente.`);
       }
@@ -591,13 +635,15 @@ class SystemAdminService {
               console.log('✅ [SYSTEM-ADMIN-SERVICE] Dados obtidos após refresh:', usersData);
               return usersData;
             }
+          } else {
+            // Se o refresh falhar, fornecer uma mensagem mais clara
+            throw new Error('Sua sessão expirou. Por favor, faça login novamente para continuar.');
           }
         } catch (refreshError: unknown) {
           console.error('❌ [SYSTEM-ADMIN-SERVICE] Erro no auto-refresh:', refreshError);
+          // Fornecer uma mensagem mais útil para o usuário
+          throw new Error('Não foi possível renovar sua sessão. Por favor, faça login novamente.');
         }
-        
-        // Se chegou aqui, o refresh falhou ou não resolveu o problema
-        throw error;
       }
       
       // Para outros erros, usar fallback
@@ -792,19 +838,19 @@ class SystemAdminService {
       const authStatus = isAuthenticated();
       if (!authStatus.authenticated) {
         clearAllTokens(); // Limpar tokens inválidos
-        throw new Error('Token de autenticação inválido. Faça login novamente.');
+        throw new Error('Sua sessão expirou. Por favor, faça login novamente para continuar usando o sistema.');
       }
       
       const token = getCurrentToken();
       if (!token) {
-        throw new Error('Token de autenticação não encontrado. Faça login novamente.');
+        throw new Error('Token de autenticação não encontrado. Por favor, faça login novamente.');
       }
       
       // Validar token específico
       const tokenValidation = validateToken(token);
       if (!tokenValidation.isValid) {
         clearAllTokens();
-        throw new Error('Token de autenticação inválido. Faça login novamente.');
+        throw new Error('Sessão inválida ou expirada. Por favor, faça login novamente para continuar.');
       }
       
       // Token pode precisar ser renovado em breve, mas ainda é válido
@@ -842,7 +888,7 @@ class SystemAdminService {
       
       // Verificar se é erro de autenticação
       if (errorMessage.includes('Token') || errorMessage.includes('autenticação') || errorMessage.includes('autorização')) {
-        throw new Error('Token de autenticação inválido. Faça login novamente.');
+        throw new Error('Sua sessão expirou. Por favor, faça login novamente para continuar usando o sistema.');
       }
       
       throw new Error(errorMessage);
@@ -1480,9 +1526,10 @@ class SystemAdminService {
     return withAutoRefresh(async () => {
       try {
         // Verificar autenticação
-        const isAuthenticated = await this.ensureAuthentication();
-        if (!isAuthenticated) {
+        const authStatus = isAuthenticated();
+        if (!authStatus.authenticated) {
           console.warn('⚠️ [REAL-USER-STATS] Falha na autenticação, usando fallback');
+          // Usar dados de fallback sem lançar erro para melhor experiência do usuário
           return this.getFallbackUserStats();
         }
 
@@ -1495,6 +1542,18 @@ class SystemAdminService {
         }
         
         console.warn('⚠️ [REAL-USER-STATS] Resposta sem sucesso ou dados:', response);
+        // Verificar se é erro de autenticação na resposta
+        if (response.message && (
+          response.message.includes('Token') || 
+          response.message.includes('autenticação') || 
+          response.message.includes('autorização') ||
+          response.message.includes('401')
+        )) {
+          // Usar dados de fallback sem interromper a experiência do usuário
+          console.log('📊 [REAL-USER-STATS] Erro de autenticação detectado, usando fallback');
+          return this.getFallbackUserStats();
+        }
+        
         throw new Error(response.message || 'Falha ao carregar estatísticas de usuários');
       } catch (error: unknown) {
         console.error('❌ [REAL-USER-STATS] Erro ao carregar estatísticas de usuários:', error);

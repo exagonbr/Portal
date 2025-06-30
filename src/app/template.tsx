@@ -5,15 +5,15 @@ import { usePathname } from 'next/navigation'
 // Rotas que não devem usar o layout de dashboard (completamente públicas)
 const publicRoutes = [
   '/', // Página inicial (login)
-  '/login',
-  '/register',
+  '/auth/login',
+  '/auth/register',
   '/forgot-password',
   '/auth-error',
   '/offline',
   // Rotas do portal público
   '/portal',
   '/portal/books',
-  '/portal/videos', 
+  '/portal/videos',
   '/portal/courses',
   '/portal/assignments',
   '/portal/dashboard',

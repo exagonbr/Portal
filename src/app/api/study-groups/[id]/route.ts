@@ -3,6 +3,23 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 // Schema de validação para atualização de grupo
 const updateStudyGroupSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').optional(),
@@ -84,10 +101,10 @@ export async function GET(
 
     // Verificar permissões de visualização
     const userRole = session.user?.role
-    const canView = 
+    const canView =
       group.visibility === 'PUBLIC' ||
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       !!userMembership ||
       (group.visibility === 'CLASS_ONLY' && group.class_id) // Verificar se está na turma
 
@@ -164,13 +181,14 @@ export async function PUT(
     // Validar dados
     const validationResult = updateStudyGroupSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json({ 
+      return NextResponse.json({
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten(, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).fieldErrors
+          errors: validationResult.error.flatten().fieldErrors
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       )
     }
 

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/api/cache/set')`, {
+    const response = await fetch(`getInternalApiUrl('/cache/set')`, {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/api/cache/set')`, {
+    const response = await fetch(`getInternalApiUrl('/cache/set')`, {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -58,7 +58,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/api/cache/set')`, {
+    const response = await fetch(`getInternalApiUrl('/cache/set')`, {
       method: 'PATCH',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),

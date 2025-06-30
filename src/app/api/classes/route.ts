@@ -3,6 +3,22 @@ import { z } from 'zod'
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 
 // Schema de validação para criação de turma
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
 const createClassSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   course_id: z.string().uuid('ID de curso inválido'),
@@ -134,9 +150,7 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: classes.length,
-          totalPages: Math.ceil(classes.length / limit, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+          totalPages: Math.ceil(classes.length / limit)
         }
       }
     })
@@ -176,13 +190,14 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = createClassSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json({ 
+      return NextResponse.json({
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten(, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).fieldErrors
+          errors: validationResult.error.flatten().fieldErrors
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       )
     }
 

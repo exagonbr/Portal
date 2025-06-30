@@ -199,7 +199,7 @@ export async function withAutoRefresh<T>(
           clearAllTokens();
           // Redirecionar para login se necessário
           if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            window.location.href = '/auth/login';
           }
         }
         

@@ -109,7 +109,7 @@ export function useOptimizedAuth() {
       console.log('✅ Logout otimizado realizado');
       
       // Redirecionar para login
-      router.push('/login');
+      router.push('/auth/login');
 
       return result;
     } catch (err: any) {
@@ -123,7 +123,7 @@ export function useOptimizedAuth() {
       console.error('❌ Erro no logout otimizado:', errorMessage);
       
       // Ainda assim redirecionar para login
-      router.push('/login');
+      router.push('/auth/login');
       
       return {
         success: false,

@@ -173,7 +173,7 @@ export function emergencyReset(): void {
     
     // Redirecionar para login após delay
     setTimeout(() => {
-      window.location.href = '/login?emergency=true';
+      window.location.href = '/auth/login?emergency=true';
     }, 1000);
   }
 } 

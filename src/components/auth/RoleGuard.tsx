@@ -25,11 +25,11 @@ function RoleGuardContent({
       if (!user) {
         // Se não há usuário, limpar dados e redirecionar para login
         clearAllDataForUnauthorized().then(() => {
-          router.push('/login?error=unauthorized');
+          router.push('/auth/login?error=unauthorized');
         }).catch((error) => {
           console.error('❌ Erro durante limpeza de dados:', error);
           // Redirecionar mesmo com erro na limpeza
-          router.push('/login?error=unauthorized');
+          router.push('/auth/login?error=unauthorized');
         });
       } else {
         // SYSTEM_ADMIN pode acessar TODAS as rotas

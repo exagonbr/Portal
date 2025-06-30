@@ -136,7 +136,7 @@ export default function DebugAuthPage() {
             <button
               onClick={() => {
                 if (typeof window !== 'undefined') {
-                  window.location.href = '/login';
+                  window.location.href = '/auth/login';
                 }
               }}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getInternalApiUrl } from '@/config/env';
+import { getCorsHeaders, createCorsOptionsResponse } from '@/config/cors';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     // Tentar buscar configurações do backend
     try {
-      const backendUrl = getInternalApiUrl('/api/settings/public');
+      const backendUrl = getInternalApiUrl('/settings/public');
       const backendResponse = await fetch(backendUrl, {
         method: 'GET',
         headers: {

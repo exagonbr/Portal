@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth, useAuthSafe } from '@/contexts/AuthContext'
 import { UserRole, ROLE_PERMISSIONS } from '@/types/roles'
 import { motion } from 'framer-motion'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -20,15 +20,37 @@ function ProtectedRouteContent({
   children,
   requiredRole,
   requiredPermission,
-  redirectTo = '/login',
+  redirectTo = '/auth/login',
   showUnauthorized = true
 }: ProtectedRouteProps) {
-  const { user, loading } = useAuth()
+  const authContext = useAuthSafe()
   const router = useRouter()
   const { theme } = useTheme()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [reloadCounter, setReloadCounter] = useState(0)
+
+  // Se o contexto não estiver disponível ainda, mostrar loading
+  if (!authContext) {
+    return (
+      <div 
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: theme.colors.background.primary }}
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-t-transparent rounded-full"
+          style={{ 
+            borderColor: theme.colors.primary.DEFAULT,
+            borderTopColor: 'transparent'
+          }}
+        />
+      </div>
+    )
+  }
+
+  const { user, loading } = authContext
 
   // Tratamento de erro e recuperação automática
   useEffect(() => {

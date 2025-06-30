@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthentication } from '@/lib/auth-utils'
 import { getInternalApiUrl } from '@/config/env'
+import { getCorsHeaders, createCorsOptionsResponse } from '@/config/cors'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     console.log('✅ Autenticação bem-sucedida, usuário:', authResult.user?.email)
 
     // Fazer requisição para o backend usando URL configurada (endpoint administrativo)
-    const backendUrl = getInternalApiUrl('/api/settings')
+    const backendUrl = getInternalApiUrl('/settings')
     console.log('🌐 Tentando conectar com backend (endpoint administrativo):', backendUrl)
     
     const backendResponse = await fetch(backendUrl, {
@@ -81,7 +82,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     
     // Fazer requisição para o backend usando URL configurada
-    const backendUrl = getInternalApiUrl('/api/settings')
+    const backendUrl = getInternalApiUrl('/settings')
     const backendResponse = await fetch(backendUrl, {
       method: 'PUT',
       headers: {
@@ -123,15 +124,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { action } = body
     
-    let endpoint = '/api/settings'
+    let endpoint = '/settings'
     
     // Determinar endpoint baseado na ação
     if (action === 'reset') {
-      endpoint = '/api/settings/reset'
+      endpoint = '/settings/reset'
     } else if (action === 'test-aws') {
-      endpoint = '/api/settings/test-aws'
+      endpoint = '/settings/test-aws'
     } else if (action === 'test-email') {
-      endpoint = '/api/settings/test-email'
+      endpoint = '/settings/test-email'
     }
     
     // Fazer requisição para o backend usando URL configurada

@@ -16,7 +16,7 @@ export function ClientAuthGuard({
   children, 
   requireAuth = true, 
   allowedRoles = [], 
-  redirectTo = '/login' 
+  redirectTo = '/auth/login'
 }: ClientAuthGuardProps) {
   const { user, loading } = useAuth();
   const router = useRouter();

@@ -21,7 +21,7 @@ interface RoleProtectedRouteProps {
 export function RoleProtectedRoute({
   children,
   allowedRoles,
-  fallbackPath = '/login',
+  fallbackPath = '/auth/login',
   showLoading = true,
   loadingComponent,
   unauthorizedComponent

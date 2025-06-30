@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRedisClient } from '@/config/redis';
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
 
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
@@ -65,12 +81,12 @@ export async function POST(request: NextRequest) {
     } catch (redisError) {
       console.error('❌ Redis: Erro ao invalidar sessão:', redisError);
       // Continue even if Redis fails - don't block logout
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Sessão invalidada (com avisos no Redis, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })',
+      return NextResponse.json({
+        success: true,
+        message: 'Sessão invalidada (com avisos no Redis)',
         warning: 'Erro no Redis, mas logout continuou'
+      }, {
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
       });
     }
 
@@ -83,14 +99,15 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ API: Erro crítico ao invalidar sessão:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
         success: true, // Retorna sucesso para não bloquear logout
-        message: 'Sessão invalidada (com erros recuperáveis, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })',
+        message: 'Sessão invalidada (com erros recuperáveis)',
         error: 'Erro interno, mas logout foi processado'
       },
-      { status: 200 } // 200 para não bloquear o logout
+      {
+        status: 200, // 200 para não bloquear o logout
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      }
     );
   }
 }

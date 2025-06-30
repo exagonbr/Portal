@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import mysql from 'mysql2/promise'
 import { Pool } from 'pg'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 interface MySQLConnection {
   host: string
   port: number
@@ -187,10 +204,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: error.message || 'Erro interno durante migração',
-      duration: Date.now(, {
+      duration: Date.now() - startTime
+    }, {
+      status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }) - startTime
-    }, { status: 500 })
+    })
   }
 }
 

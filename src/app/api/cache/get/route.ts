@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(getInternalApiUrl('/api/cache/get'), {
+    const response = await fetch(getInternalApiUrl('/cache/get'), {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),

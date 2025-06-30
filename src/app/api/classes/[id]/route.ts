@@ -3,6 +3,23 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 // Schema de validação para atualização de turma
 const updateClassSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').optional(),
@@ -122,13 +139,14 @@ export async function PUT(
     // Validar dados
     const validationResult = updateClassSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json({ 
+      return NextResponse.json({
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten(, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).fieldErrors
+          errors: validationResult.error.flatten().fieldErrors
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       )
     }
 
@@ -161,12 +179,10 @@ export async function PUT(
     if (updateData.max_students !== undefined) {
       const currentStudents = existingClass.students?.length || 0
       if (updateData.max_students < currentStudents) {
-        return NextResponse.json({ error: `Número máximo de alunos não pode ser menor que o número atual (${currentStudents}, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })` }, { 
-      status: 400,
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+        return NextResponse.json({ error: `Número máximo de alunos não pode ser menor que o número atual (${currentStudents})` }, {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        })
       }
     }
 

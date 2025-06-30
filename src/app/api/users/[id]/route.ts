@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../lib/auth-headers';
 
 import { getInternalApiUrl } from '@/config/env';
+import { createCorsOptionsResponse } from '@/config/cors';
 
 
 // Handler para requisições OPTIONS (preflight)
@@ -15,7 +16,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`getInternalApiUrl('/api/users/${params.id}')`, {
+    const response = await fetch(getInternalApiUrl(`/users/${params.id}`), {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });
@@ -39,7 +40,7 @@ export async function PUT(
   try {
     const body = await request.json();
 
-    const response = await fetch(`getInternalApiUrl('/api/users/${params.id}')`, {
+    const response = await fetch(getInternalApiUrl(`/users/${params.id}`), {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -62,7 +63,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const response = await fetch(`getInternalApiUrl('/api/users/${params.id}')`, {
+    const response = await fetch(getInternalApiUrl(`/users/${params.id}`), {
       method: 'DELETE',
       headers: prepareAuthHeaders(request),
     });

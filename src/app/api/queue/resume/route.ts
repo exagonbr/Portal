@@ -11,7 +11,7 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const url = `getInternalApiUrl('/api/queue/resume')`;
+    const url = `getInternalApiUrl('/queue/resume')`;
 
     const response = await fetch(url, {
       method: 'POST',

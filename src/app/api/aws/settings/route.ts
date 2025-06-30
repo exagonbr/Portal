@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(getInternalApiUrl('/api/aws/settings'), {
+    const response = await fetch(getInternalApiUrl('/aws/settings'), {
       method: 'GET',
       headers: {
         'Authorization': authHeader,
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const response = await fetch(getInternalApiUrl('/api/aws/settings'), {
+    const response = await fetch(getInternalApiUrl('/aws/settings'), {
       method: 'POST',
       headers: {
         'Authorization': authHeader,
@@ -148,7 +148,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const response = await fetch(getInternalApiUrl('/api/aws/settings'), {
+    const response = await fetch(getInternalApiUrl('/aws/settings'), {
       method: 'DELETE',
       headers: {
         'Authorization': authHeader,

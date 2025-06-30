@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ThemeSelectorCompact } from '@/components/ui/ThemeSelector';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, useAuthSafe } from '@/contexts/AuthContext';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { clearAllDataForUnauthorized } from '@/utils/clearAllData';
 import { getDashboardPath } from '@/utils/roleRedirect';
@@ -15,11 +15,32 @@ import { MotionDiv, MotionH1, MotionP, ClientOnly } from '@/components/ui/Motion
 
 export function LoginPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const authContext = useAuthSafe(); // Usar versão segura primeiro
   const searchParams = useSearchParams();
   const [showUnauthorizedMessage, setShowUnauthorizedMessage] = useState(false);
   const { theme } = useTheme();
   const { settings, isLoading } = useSystemSettings();
+
+  // Se o contexto não estiver disponível ainda, mostrar loading
+  if (!authContext) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.background.primary }}>
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <MotionDiv 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-8 h-8 border-2 border-t-transparent rounded-full mx-auto"
+              style={{ borderColor: theme.colors.primary.DEFAULT }}
+            />
+            <p className="mt-2" style={{ color: theme.colors.text.secondary }}>Carregando...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { user } = authContext;
 
   useEffect(() => {
     const error = searchParams?.get('error');

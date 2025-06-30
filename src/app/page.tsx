@@ -1,45 +1,54 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { LoginPage } from '@/components/auth/LoginPage';
-import { getDashboardPath } from '@/utils/roleRedirect';
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    // Se o usuário já está autenticado, redirecionar para o dashboard apropriado
-    if (!loading && user) {
-      const normalizedRole = user.role?.toLowerCase();
-      const dashboardPath = getDashboardPath(normalizedRole || user.role);
-      
-      if (dashboardPath) {
-        console.log(`🏠 Usuário já autenticado, redirecionando para: ${dashboardPath}`);
-        router.push(dashboardPath);
-      } else {
-        console.warn(`⚠️ Dashboard não encontrado para role ${user.role}, usando fallback`);
-        router.push('/dashboard/student');
-      }
+    if (status === 'loading') return;
+
+    if (!session) {
+      router.push('/auth/login');
+      return;
     }
-  }, [user, loading, router]);
 
-  // Se está carregando ou usuário está autenticado, mostrar loading
-  if (loading || user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {loading ? 'Verificando autenticação...' : 'Redirecionando...'}
-          </p>
-        </div>
+    // Redirecionar baseado no role do usuário
+    const userRole = session.user?.role;
+    
+    switch (userRole) {
+      case 'SYSTEM_ADMIN':
+        router.push('/dashboard/system-admin');
+        break;
+      case 'INSTITUTION_MANAGER':
+        router.push('/dashboard/institution-manager');
+        break;
+      case 'COORDINATOR':
+        router.push('/dashboard/coordinator');
+        break;
+      case 'STUDENT':
+        router.push('/dashboard/student');
+        break;
+      case 'TEACHER':
+        router.push('/dashboard/teacher');
+        break;
+      case 'GUARDIAN':
+        router.push('/dashboard/guardian');
+        break;
+      default:
+        router.push('/auth/login');
+    }
+  }, [session, status, router]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Redirecionando...</p>
       </div>
-    );
-  }
-
-  // Se não está autenticado, mostrar página de login
-  return <LoginPage />;
+    </div>
+  );
 }

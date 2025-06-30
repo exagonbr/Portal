@@ -133,7 +133,7 @@ export default function DebugAuthTokenPage() {
                 🗑️ Limpar Todos os Tokens
               </button>
               <button
-                onClick={() => window.location.href = '/login'}
+                onClick={() => window.location.href = '/auth/login'}
                 className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
               >
                 🔐 Ir para Login

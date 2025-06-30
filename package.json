@@ -105,7 +105,7 @@
     "dgram": "^1.0.1",
     "eslint": "^9.29.0",
     "eslint-config-next": "^15.3.4",
-    "glob": "^11.0.2",
+    "glob": "^11.0.3",
     "https-localhost": "^4.7.1",
     "lighthouse": "^11.3.0",
     "next-clear-cache": "^1.0.7",
@@ -122,7 +122,7 @@
     "webpack-dev-server": "^5.2.2"
   },
   "overrides": {
-    "glob": "^11.0.2",
+    "glob": "^11.0.3",
     "inflight": "npm:@types/node@^20.0.0"
   }
 }

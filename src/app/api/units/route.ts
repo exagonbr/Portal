@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    const response = await fetch(getInternalApiUrl('/api/units'), {
+    const response = await fetch(getInternalApiUrl('/units'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

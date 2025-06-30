@@ -3,6 +3,22 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
 // Schema de validação para atualização de tópico
 const updateTopicSchema = z.object({
   title: z.string().min(5, 'Título deve ter pelo menos 5 caracteres').max(200).optional(),
@@ -152,13 +168,14 @@ export async function PUT(
     // Validar dados
     const validationResult = updateTopicSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json({ 
+      return NextResponse.json({
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten(, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).fieldErrors
+          errors: validationResult.error.flatten().fieldErrors
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       )
     }
 

@@ -95,7 +95,7 @@ class MiddlewareUtils {
       
       // Se estamos redirecionando para login após logout, limpar query params problemáticos
       if (url.includes('/login') && url.includes('error=unauthorized')) {
-        redirectUrl = '/login?logout=true';
+        redirectUrl = '/auth/login?logout=true';
       }
     }
     

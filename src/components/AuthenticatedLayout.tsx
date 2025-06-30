@@ -21,11 +21,11 @@ export default function AuthenticatedLayout({
       if (!user) {
         // Limpar todos os dados antes de redirecionar para login
         clearAllDataForUnauthorized().then(() => {
-          router.push('/login?error=unauthorized')
+          router.push('/auth/login?error=unauthorized')
         }).catch((error) => {
           console.error('❌ Erro durante limpeza de dados:', error);
           // Redirecionar mesmo com erro na limpeza
-          router.push('/login?error=unauthorized')
+          router.push('/auth/login?error=unauthorized')
         });
       } else if (requiredRole && user.role !== requiredRole) {
         router.push(user.role === 'student' ? '/dashboard/student' : '/dashboard/teacher')

@@ -37,7 +37,7 @@ export default function DebugTokenPage() {
 
           <div className="mt-6 text-center">
             <a
-              href="/login"
+              href="/auth/login"
               className="inline-block bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
             >
               Voltar ao Login

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 import { getInternalApiUrl } from '@/config/env';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
 
 /**
  * Endpoint para renovar o token de autenticação
@@ -30,9 +31,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Enviar requisição para o backend para renovar o token
-    console.log(`🔄 API Refresh: Chamando backend em ${getInternalApiUrl('/api/auth/optimized/refresh')}`);
+    console.log(`🔄 API Refresh: Chamando backend em ${getInternalApiUrl('/auth/optimized/refresh')}`);
     
-    const response = await fetch(getInternalApiUrl('/api/auth/optimized/refresh'), {
+    const response = await fetch(getInternalApiUrl('/auth/optimized/refresh'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

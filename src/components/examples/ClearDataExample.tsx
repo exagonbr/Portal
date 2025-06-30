@@ -22,13 +22,13 @@ export const ClearDataExample = () => {
   const handleLogout = async () => {
     // Exemplo 3: Usar limpeza completa diretamente
     await clearAllDataForUnauthorized();
-    window.location.href = '/login';
+    window.location.href = '/auth/login';
   };
 
   const handleQuickAuthClear = () => {
     // Exemplo 4: Limpeza rápida apenas de dados de autenticação
     clearAuthDataOnly();
-    window.location.href = '/login';
+    window.location.href = '/auth/login';
   };
 
   return (

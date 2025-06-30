@@ -103,7 +103,7 @@ export default function TestJuliaLoginPage() {
 
         <div className="mt-6 text-center">
           <a
-            href="/login"
+            href="/auth/login"
             className="text-blue-600 hover:text-blue-800 text-sm underline"
           >
             ← Voltar para login normal

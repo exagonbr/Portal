@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-
 import { getInternalApiUrl } from '@/config/env';
+import { getCorsHeaders, createCorsOptionsResponse } from '@/config/cors';
 
 
 // Handler para requisições OPTIONS (preflight)
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fazer requisição para o backend
-    const response = await fetch(`getInternalApiUrl('/api/auth/register')`, {
+    const response = await fetch(getInternalApiUrl('/auth/register'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

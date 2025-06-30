@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const searchParams = url.searchParams;
     
     // Construir URL do backend com parâmetros
-    const backendUrl = new URL(getInternalApiUrl('/api/tv-shows'));
+    const backendUrl = new URL(getInternalApiUrl('/tv-shows'));
     searchParams.forEach((value, key) => {
       backendUrl.searchParams.append(key, value);
     });
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const response = await fetch(getInternalApiUrl('/api/tv-shows'), {
+    const response = await fetch(getInternalApiUrl('/tv-shows'), {
       method: 'POST',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),

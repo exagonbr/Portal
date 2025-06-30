@@ -21,7 +21,7 @@ export default function AuthenticatedDashboardLayout({
       
       // Usar setTimeout para evitar problemas de hidratação
       setTimeout(() => {
-        router.push('/login?error=unauthorized');
+        router.push('/auth/login?error=unauthorized');
       }, 100);
     }
   }, [loading, user, router, redirecting])

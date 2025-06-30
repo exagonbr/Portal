@@ -237,7 +237,7 @@ export const logout = async (): Promise<void> => {
 
   // Redirecionar para login se estiver no browser
   if (typeof window !== 'undefined') {
-    window.location.href = '/login';
+    window.location.href = '/auth/login';
   }
 };
 

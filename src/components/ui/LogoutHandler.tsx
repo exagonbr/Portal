@@ -101,11 +101,11 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // 7. Redirecionar para login
-      router.push('/login');
+      router.push('/auth/login');
       
       // 8. Recarregar a página para garantir limpeza completa
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = '/auth/login';
       }, 100);
 
     } catch (error) {
@@ -117,9 +117,9 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
         sessionStorage.clear();
       }
       
-      router.push('/login');
+      router.push('/auth/login');
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = '/auth/login';
       }, 100);
     } finally {
       setIsLoggingOut(false);

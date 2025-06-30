@@ -3,6 +3,23 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 // Schema de validação para geração de relatório
 const generateReportSchema = z.object({
   type: z.enum([
@@ -193,12 +210,12 @@ export async function GET(request: NextRequest) {
           page,
           limit,
           total: reportsWithInfo.length,
-          totalPages: Math.ceil(reportsWithInfo.length / limit, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+          totalPages: Math.ceil(reportsWithInfo.length / limit)
         },
         stats
       }
+    }, {
+      headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
 
   } catch (error) {
@@ -227,13 +244,14 @@ export async function POST(request: NextRequest) {
     // Validar dados
     const validationResult = generateReportSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json({ 
+      return NextResponse.json({
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten(, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).fieldErrors
+          errors: validationResult.error.flatten().fieldErrors
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       )
     }
 

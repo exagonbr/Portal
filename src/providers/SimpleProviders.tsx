@@ -5,11 +5,11 @@ import dynamic from 'next/dynamic'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
 
 // Importações dinâmicas sem tratamento de erro que mostra telas
-const AuthProvider = dynamic(() => 
+const AuthWrapper = dynamic(() => 
   import('@/contexts/AuthContext')
-    .then(mod => ({ default: mod.AuthProvider }))
+    .then(mod => ({ default: mod.AuthWrapper }))
     .catch(error => {
-      console.error('❌ Erro ao carregar AuthProvider:', error);
+      console.error('❌ Erro ao carregar AuthWrapper:', error);
       // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
     }), {
@@ -77,6 +77,7 @@ function MinimalLoadingFallback() {
  */
 export function SimpleProviders({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false)
+  const [providersReady, setProvidersReady] = useState(false)
 
   // Configurar manipulador global de erros
   useEffect(() => {
@@ -94,8 +95,19 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
     };
   }, [])
 
-  // Não renderizar nada até estar montado no cliente
-  if (!mounted) {
+  // Aguardar um pouco mais para garantir que os providers estão prontos
+  useEffect(() => {
+    if (mounted) {
+      const timer = setTimeout(() => {
+        setProvidersReady(true);
+      }, 150);
+
+      return () => clearTimeout(timer);
+    }
+  }, [mounted]);
+
+  // Não renderizar nada até estar montado no cliente e providers prontos
+  if (!mounted || !providersReady) {
     return null;
   }
 
@@ -107,7 +119,7 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <NavigationLoadingProvider>
               <Suspense fallback={null}>
-                <AuthProvider>
+                <AuthWrapper>
                   <Suspense fallback={null}>
                     <GamificationProvider>
                       <Suspense fallback={null}>
@@ -117,7 +129,7 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
                       </Suspense>
                     </GamificationProvider>
                   </Suspense>
-                </AuthProvider>
+                </AuthWrapper>
               </Suspense>
             </NavigationLoadingProvider>
           </Suspense>

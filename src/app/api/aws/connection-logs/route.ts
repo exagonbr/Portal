@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
     const queryString = searchParams.toString();
 
     const apiUrl = queryString 
-      ? `${getInternalApiUrl('/api/aws/connection-logs')}?${queryString}`
-      : getInternalApiUrl('/api/aws/connection-logs');
+      ? `${getInternalApiUrl('/aws/connection-logs')}?${queryString}`
+      : getInternalApiUrl('/aws/connection-logs');
 
     const response = await fetch(apiUrl, {
       method: 'GET',

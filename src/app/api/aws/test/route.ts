@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(getInternalApiUrl('/api/aws/test'), {
+    const response = await fetch(getInternalApiUrl('/aws/test'), {
       method: 'GET',
       headers: {
         'Authorization': authHeader,

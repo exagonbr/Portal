@@ -24,6 +24,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Wrapper que garante que o AuthProvider está pronto antes de renderizar children
+ */
+export function AuthWrapper({ children }: { children: React.ReactNode }) {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Aguardar um pouco para garantir que o contexto está pronto
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!isReady) {
+    return null; // Ou um loading spinner minimalista
+  }
+
+  return <AuthProvider>{children}</AuthProvider>;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserEssentials | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionStorage.removeItem(redirectKey);
           
           // Rota de emergência baseada no contexto
-          const emergencyRoute = currentPath.includes('/login') ? '/portal/books' : '/login?reset=true';
+          const emergencyRoute = currentPath.includes('/login') ? '/portal/books' : '/auth/login?reset=true';
           window.location.href = emergencyRoute;
           return;
         }
@@ -446,7 +468,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Redirecionar para login com parâmetro de logout
       console.log('🎯 Redirecionando para login após logout completo');
-      safeRedirect('/login?logout=true');
+      safeRedirect('/auth/login?logout=true');
       
     } catch (err: any) {
       console.error('❌ Erro no logout:', err);
@@ -472,7 +494,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Redirecionar mesmo com erro
-      safeRedirect('/login?logout=true&error=cleanup_failed');
+      safeRedirect('/auth/login?logout=true&error=cleanup_failed');
     } finally {
       setLoading(false);
     }
@@ -538,22 +560,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Hook para usar o contexto de autenticação
+ * Hook para usar o contexto de autenticação com melhor tratamento de loading
  */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
+    // Em vez de lançar erro imediatamente, verificar se estamos em um estado de loading
+    if (typeof window !== 'undefined') {
+      console.warn('⚠️ useAuth: Contexto não encontrado, possivelmente ainda carregando...');
+    }
     throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
 }
 
 /**
+ * Hook seguro para usar o contexto de autenticação que não falha durante loading
+ */
+export function useAuthSafe() {
+  const context = useContext(AuthContext);
+  return context; // Retorna undefined se não estiver disponível
+}
+
+/**
  * Hook para exigir autenticação - Simplificado
  */
-export function useRequireAuth(redirectTo = '/login') {
-  const { user, loading } = useAuth();
+export function useRequireAuth(redirectTo = '/auth/login') {
+  const authContext = useAuthSafe();
   const router = useRouter();
+  
+  // Se o contexto não estiver disponível, aguardar
+  if (!authContext) {
+    return { user: null, loading: true, isAuthenticated: false };
+  }
+  
+  const { user, loading } = authContext;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -575,8 +616,15 @@ export function useRequireAuth(redirectTo = '/login') {
  * Hook para exigir roles específicas
  */
 export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard') {
-  const { user, loading, hasRole } = useAuth();
+  const authContext = useAuthSafe();
   const router = useRouter();
+  
+  // Se o contexto não estiver disponível, aguardar
+  if (!authContext) {
+    return { user: null, loading: true, hasRole: false, isAuthenticated: false };
+  }
+  
+  const { user, loading, hasRole } = authContext;
 
   const hasAllowedRole = allowedRoles.some(role => hasRole(role));
 
@@ -604,8 +652,15 @@ export function useRequireRole(allowedRoles: string[], redirectTo = '/dashboard'
  * Hook para verificar permissões específicas
  */
 export function useRequirePermission(requiredPermissions: string[], redirectTo = '/dashboard') {
-  const { user, loading, hasAllPermissions } = useAuth();
+  const authContext = useAuthSafe();
   const router = useRouter();
+  
+  // Se o contexto não estiver disponível, aguardar
+  if (!authContext) {
+    return { user: null, loading: true, hasPermissions: false, isAuthenticated: false };
+  }
+  
+  const { user, loading, hasAllPermissions } = authContext;
 
   const hasRequiredPermissions = hasAllPermissions(requiredPermissions);
 

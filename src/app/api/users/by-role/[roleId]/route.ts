@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../../lib/auth-headers';
 
 import { getInternalApiUrl } from '@/config/env';
+import { createCorsOptionsResponse } from '@/config/cors';
 
 
 // Handler para requisições OPTIONS (preflight)
@@ -15,7 +16,7 @@ export async function GET(
   { params }: { params: { roleId: string } }
 ) {
   try {
-    const response = await fetch(`getInternalApiUrl('/api/users?role_id=${params.roleId}')`, {
+    const response = await fetch(getInternalApiUrl(`/users?role_id=${params.roleId}`), {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });

@@ -6,6 +6,23 @@ import knex from '@/config/database'
 import { activityTracker } from '@/services/activityTrackingService'
 import { ActivityType } from '@/types/activity'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
+
 // Schema de validação para filtros de relatório de uso
 const usageReportSchema = z.object({
   period: z.enum(['7d', '30d', '90d', '1y', 'custom']).default('30d'),
@@ -368,13 +385,14 @@ export async function GET(request: NextRequest) {
     const validationResult = usageReportSchema.safeParse(filters)
     if (!validationResult.success) {
       console.log('❌ Filtros inválidos:', validationResult.error.flatten().fieldErrors)
-      return NextResponse.json({ 
+      return NextResponse.json({
           error: 'Filtros inválidos',
-          errors: validationResult.error.flatten(, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).fieldErrors
+          errors: validationResult.error.flatten().fieldErrors
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       )
     }
 
@@ -409,9 +427,9 @@ export async function GET(request: NextRequest) {
       success: true,
       data: usageData,
       filters: validatedFilters,
-      generated_at: new Date(, {
+      generated_at: new Date().toISOString()
+    }, {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).toISOString()
     })
 
   } catch (error) {

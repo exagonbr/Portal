@@ -352,7 +352,7 @@ export function emergencyLoopReset(): void {
   
   // Recarregar página após 2 segundos
   setTimeout(() => {
-    window.location.href = '/login?reset=true';
+    window.location.href = '/auth/login?reset=true';
   }, 2000);
 }
 

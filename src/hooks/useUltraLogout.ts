@@ -30,7 +30,7 @@ export function useUltraLogout() {
       
       // Fallback: redirecionamento manual
       if (typeof window !== 'undefined') {
-        window.location.href = '/login?logout=error';
+        window.location.href = '/auth/login?logout=error';
       }
       
       return false;
@@ -47,7 +47,7 @@ export function useUltraLogout() {
       
       // Fallback: redirecionamento manual
       if (typeof window !== 'undefined') {
-        window.location.href = '/login?logout=error';
+        window.location.href = '/auth/login?logout=error';
       }
       
       return false;
@@ -71,7 +71,7 @@ export function useUltraLogout() {
       }
       
       // Redirecionar imediatamente
-      window.location.href = '/login?logout=emergency';
+      window.location.href = '/auth/login?logout=emergency';
       
       return true;
     } catch (error) {

@@ -3,6 +3,22 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 
+// Funções CORS
+function getCorsHeaders(origin?: string) {
+  return {
+    'Access-Control-Allow-Origin': origin || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  }
+}
+
+function createCorsOptionsResponse(origin?: string) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(origin)
+  })
+}
 // Schema de validação para matricular aluno
 const enrollStudentSchema = z.object({
   student_id: z.string().uuid('ID de estudante inválido')
@@ -100,9 +116,7 @@ export async function GET(
           page,
           limit,
           total: students.length,
-          totalPages: Math.ceil(students.length / limit, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+          totalPages: Math.ceil(students.length / limit)
         }
       }
     })
@@ -137,13 +151,14 @@ export async function POST(
     // Validar dados
     const validationResult = enrollStudentSchema.safeParse(body)
     if (!validationResult.success) {
-      return NextResponse.json({ 
+      return NextResponse.json({
           error: 'Dados inválidos',
-          errors: validationResult.error.flatten(, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    }).fieldErrors
+          errors: validationResult.error.flatten().fieldErrors
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: getCorsHeaders(request.headers.get('origin') || undefined)
+        }
       )
     }
 

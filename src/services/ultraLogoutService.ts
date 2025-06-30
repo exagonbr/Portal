@@ -488,8 +488,8 @@ export class UltraLogoutService {
       
       // Múltiplas tentativas de redirecionamento
       const redirectMethods = [
-        () => window.location.href = '/login?logout=ultra_complete',
-        () => window.location.replace('/login?logout=ultra_complete'),
+        () => window.location.href = '/auth/login?logout=ultra_complete',
+        () => window.location.replace('/auth/login?logout=ultra_complete'),
         () => window.location.assign('/login?logout=ultra_complete'),
         () => {
           if (window.history) {
@@ -512,7 +512,7 @@ export class UltraLogoutService {
       console.error('❌ Erro no redirecionamento:', error);
       // Fallback final
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        window.location.href = '/auth/login';
       }
     }
   }
