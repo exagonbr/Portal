@@ -4,11 +4,6 @@ import './globals.css';
 import { SimpleProviders } from '@/providers/SimpleProviders';
 import { isDevelopment } from '@/utils/env';
 
-// Importar debugger HTTP 500 em desenvolvimento
-if (isDevelopment()) {
-  import('@/utils/debug-http-500');
-}
-
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {

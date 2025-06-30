@@ -12,7 +12,6 @@ import {
   initializeFirefoxCompatibility
 } from '../utils/firefox-compatibility';
 import { CORS_HEADERS } from '@/config/cors';
-import { logHttp500Error } from '../utils/debug-http-500';
 
 // Configuração otimizada para comunicação direta
 const API_CONFIG = {
@@ -342,9 +341,6 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        if (response.status === 500) {
-          logHttp500Error(url, options.method || 'GET', endpoint, response.status, data, responseText, options.headers as Record<string, string>, Object.fromEntries(response.headers.entries()));
-        }
         throw {
           message: data.message || data.error || `HTTP ${response.status}`,
           status: response.status,
