@@ -560,6 +560,11 @@ function DashboardSidebarComponent() {
             icon: 'chat',
             label: 'Mensagens',
           },
+          {
+            href: '/notifications',
+            icon: 'notifications',
+            label: 'Notificações',
+          },
         ],
       },
     ]
@@ -595,6 +600,23 @@ function DashboardSidebarComponent() {
                 href: '/institution/students',
                 icon: 'group',
                 label: 'Alunos',
+                permission: 'canManageInstitutionUsers',
+              },
+            ],
+          },
+          {
+            section: 'Comunicação',
+            items: [
+              {
+                href: '/notifications/send',
+                icon: 'send',
+                label: 'Enviar Comunicação',
+                permission: 'canManageInstitutionUsers',
+              },
+              {
+                href: '/notifications/sent',
+                icon: 'history',
+                label: 'Comunicações Enviadas',
                 permission: 'canManageInstitutionUsers',
               },
             ],
@@ -705,6 +727,23 @@ function DashboardSidebarComponent() {
                 icon: 'grade',
                 label: 'Avaliações',
                 permission: 'canViewAcademicAnalytics',
+              },
+            ],
+          },
+          {
+            section: 'Comunicação',
+            items: [
+              {
+                href: '/notifications/send',
+                icon: 'send',
+                label: 'Enviar Comunicação',
+                permission: 'canCoordinateDepartments',
+              },
+              {
+                href: '/notifications/sent',
+                icon: 'history',
+                label: 'Comunicações Enviadas',
+                permission: 'canCoordinateDepartments',
               },
             ],
           },
@@ -848,6 +887,23 @@ function DashboardSidebarComponent() {
                 href: '/forum',
                 icon: 'forum',
                 label: 'Fórum',
+                permission: 'canCommunicateWithStudents',
+              },
+            ],
+          },
+          {
+            section: 'Comunicação',
+            items: [
+              {
+                href: '/notifications/send',
+                icon: 'send',
+                label: 'Enviar Comunicação',
+                permission: 'canCommunicateWithStudents',
+              },
+              {
+                href: '/notifications/sent',
+                icon: 'history',
+                label: 'Comunicações Enviadas',
                 permission: 'canCommunicateWithStudents',
               },
             ],

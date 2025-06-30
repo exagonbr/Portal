@@ -1,0 +1,66 @@
+/* Estilos customizados para o Quill Editor - compatível com React 18 */
+
+.quill-container {
+  position: relative;
+  width: 100%;
+}
+
+.quill-container .ql-editor {
+  min-height: 150px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.quill-container .ql-toolbar {
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}
+
+.quill-container .ql-container {
+  border-bottom: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.quill-container .ql-editor.ql-blank::before {
+  font-style: italic;
+  color: #999;
+}
+
+/* Correções para React 18 - evitar problemas de layout */
+.quill-container .ql-editor p {
+  margin-bottom: 0.5em;
+}
+
+.quill-container .ql-editor:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Loading state */
+.quill-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .quill-container .ql-toolbar {
+    padding: 8px;
+  }
+  
+  .quill-container .ql-editor {
+    min-height: 120px;
+    font-size: 16px; /* Evitar zoom no iOS */
+  }
+}

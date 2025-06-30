@@ -4,10 +4,7 @@ import { authMiddleware } from '../middleware/auth.middleware';
 import {
   createApiResponse,
   createPaginatedResponse,
-  formatUnitResponse,
-  UnitFilters,
-  CreateUnitRequest,
-  UpdateUnitRequest
+  formatUnitResponse
 } from '../types/api-responses';
 
 const router = Router();

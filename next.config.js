@@ -31,7 +31,7 @@ const nextConfig = {
   },
 
   // Configurações de desenvolvimento
-  reactStrictMode: !isDev, // Apenas em produção para evitar problemas de desenvolvimento
+  reactStrictMode: false, // Desabilitado devido à incompatibilidade do react-quill com findDOMNode
   productionBrowserSourceMaps: false,
   
   // ESLint

@@ -3,13 +3,19 @@
 import React, { ReactNode, useState, useEffect, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
-import { SessionProvider } from 'next-auth/react'
+// import { SessionProvider } from 'next-auth/react' // Desabilitado - usando AuthContext customizado
 import { AuthWrapper } from '../contexts/AuthContext'
 import { isDevelopment } from '@/utils/env'
 
-const ThemeProvider = dynamic(() => 
+const ThemeProvider = dynamic(() =>
   import('@/contexts/ThemeContext')
-    .then(mod => ({ default: mod.ThemeProvider }))
+    .then(mod => {
+      if (!mod.ThemeProvider) {
+        console.warn('ThemeProvider não encontrado, usando fallback');
+        return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      }
+      return { default: mod.ThemeProvider };
+    })
     .catch(error => {
       if (isDevelopment()) {
         console.error('❌ Erro ao carregar ThemeProvider:', error);
@@ -21,9 +27,15 @@ const ThemeProvider = dynamic(() =>
   loading: () => null
 })
 
-const GamificationProvider = dynamic(() => 
+const GamificationProvider = dynamic(() =>
   import('@/contexts/GamificationContext')
-    .then(mod => ({ default: mod.GamificationProvider }))
+    .then(mod => {
+      if (!mod.GamificationProvider) {
+        console.warn('GamificationProvider não encontrado, usando fallback');
+        return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      }
+      return { default: mod.GamificationProvider };
+    })
     .catch(error => {
       if (isDevelopment()) {
         console.error('❌ Erro ao carregar GamificationProvider:', error);
@@ -37,7 +49,13 @@ const GamificationProvider = dynamic(() =>
 
 const NavigationLoadingProvider = dynamic(() =>
   import('@/contexts/NavigationLoadingContext')
-    .then(mod => ({ default: mod.NavigationLoadingProvider }))
+    .then(mod => {
+      if (!mod.NavigationLoadingProvider) {
+        console.warn('NavigationLoadingProvider não encontrado, usando fallback');
+        return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      }
+      return { default: mod.NavigationLoadingProvider };
+    })
     .catch(error => {
       if (isDevelopment()) {
         console.error('❌ Erro ao carregar NavigationLoadingProvider:', error);
@@ -51,13 +69,19 @@ const NavigationLoadingProvider = dynamic(() =>
 
 const ToastManager = dynamic(() =>
   import('@/components/ToastManager')
-    .then(mod => ({ default: mod.ToastManager }))
+    .then(mod => {
+      if (!mod.ToastManager) {
+        console.warn('ToastManager não encontrado, usando fallback');
+        return { default: () => null };
+      }
+      return { default: mod.ToastManager };
+    })
     .catch(error => {
       if (isDevelopment()) {
         console.error('❌ Erro ao carregar ToastManager:', error);
       }
       // Retornar um componente vazio em caso de erro
-      return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      return { default: () => null };
     }), {
   ssr: false,
   loading: () => null
@@ -65,7 +89,13 @@ const ToastManager = dynamic(() =>
 
 const UpdateProvider = dynamic(() =>
   import('@/components/PWAUpdateManager')
-    .then(mod => ({ default: mod.UpdateProvider }))
+    .then(mod => {
+      if (!mod.UpdateProvider) {
+        console.warn('UpdateProvider não encontrado, usando fallback');
+        return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
+      }
+      return { default: mod.UpdateProvider };
+    })
     .catch(error => {
       if (isDevelopment()) {
         console.error('❌ Erro ao carregar UpdateProvider:', error);
@@ -101,7 +131,7 @@ function AuthWrapperWithErrorBoundary({ children }: { children: ReactNode }) {
 /**
  * Providers simplificados SEM telas de erro
  */
-export function SimpleProviders({ children }: { children: ReactNode }) {
+function SimpleProviders({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
   // Configurar manipulador global de erros apenas no cliente
@@ -133,23 +163,22 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <NavigationLoadingProvider>
               <Suspense fallback={null}>
-                <SessionProvider>
-                  <AuthWrapperWithErrorBoundary>
-                    <Suspense fallback={null}>
-                      <UpdateProvider>
-                        <Suspense fallback={null}>
-                          <GamificationProvider>
-                            <Suspense fallback={null}>
-                              <ToastManager>
-                                {children}
-                              </ToastManager>
-                            </Suspense>
-                          </GamificationProvider>
-                        </Suspense>
-                      </UpdateProvider>
-                    </Suspense>
-                  </AuthWrapperWithErrorBoundary>
-                </SessionProvider>
+                {/* SessionProvider desabilitado - usando AuthContext customizado */}
+                <AuthWrapperWithErrorBoundary>
+                  <Suspense fallback={null}>
+                    <UpdateProvider>
+                      <Suspense fallback={null}>
+                        <GamificationProvider>
+                          <Suspense fallback={null}>
+                            <ToastManager>
+                              {children}
+                            </ToastManager>
+                          </Suspense>
+                        </GamificationProvider>
+                      </Suspense>
+                    </UpdateProvider>
+                  </Suspense>
+                </AuthWrapperWithErrorBoundary>
               </Suspense>
             </NavigationLoadingProvider>
           </Suspense>
@@ -158,3 +187,6 @@ export function SimpleProviders({ children }: { children: ReactNode }) {
     </div>
   )
 }
+
+// Exportação explícita para evitar problemas com lazy loading
+export default SimpleProviders;

@@ -1,23 +1,28 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useAuthSafe } from '@/contexts/AuthContext';
 
 export default function HomePage() {
-  const { data: session, status } = useSession();
+  const authContext = useAuthSafe();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return;
+    // Aguardar o contexto de autenticação estar disponível
+    if (!authContext) return;
 
-    if (!session) {
+    const { user, loading } = authContext;
+
+    if (loading) return;
+
+    if (!user) {
       router.push('/auth/login');
       return;
     }
 
     // Redirecionar baseado no role do usuário
-    const userRole = session.user?.role;
+    const userRole = user.role;
     
     switch (userRole) {
       case 'SYSTEM_ADMIN':
@@ -41,7 +46,7 @@ export default function HomePage() {
       default:
         router.push('/auth/login');
     }
-  }, [session, status, router]);
+  }, [authContext, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
