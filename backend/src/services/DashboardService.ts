@@ -1,9 +1,6 @@
-import { AppDataSource } from '../config/typeorm.config';
-import { User } from '../entities/User';
 import { getRedisClient } from '../config/redis';
 import { SessionService } from './SessionService';
 import { UserRepository } from '../repositories/UserRepository';
-import { MoreThanOrEqual } from 'typeorm';
 
 interface DashboardStats {
   users: {
