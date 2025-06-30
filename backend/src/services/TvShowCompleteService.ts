@@ -62,17 +62,14 @@ export class TvShowCompleteService {
         pf.extension as poster_extension,
         bf.sha256hex as backdrop_sha256hex,
         bf.extension as backdrop_extension,
-        COALESCE(v.video_count, 0) as video_count
+        (
+          SELECT COUNT(DISTINCT v.id)
+          FROM video v
+          WHERE v.show_id = ts.id AND (v.deleted IS NULL OR v.deleted = false)
+        ) as video_count
       FROM tv_show ts
       LEFT JOIN file pf ON ts.poster_image_id = pf.id
       LEFT JOIN file bf ON ts.backdrop_image_id = bf.id
-      LEFT JOIN (
-        SELECT show_id, COUNT(DISTINCT id) as video_count
-        FROM video
-        WHERE (deleted IS NULL OR deleted = false)
-        AND show_id IS NOT NULL
-        GROUP BY show_id
-      ) v ON ts.id = v.show_id
       WHERE (ts.deleted IS NULL OR ts.deleted = false)
     `;
 

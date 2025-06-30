@@ -14,8 +14,9 @@ export class TvShowCompleteController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string | undefined;
 
-      const result = await this.tvShowService.getAllTvShows(page, limit);
+      const result = await this.tvShowService.getAllTvShows(page, limit, search);
 
       return res.json({
         success: true,
