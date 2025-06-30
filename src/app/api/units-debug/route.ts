@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { authOptionsDebug } from '@/lib/auth-debug'
 import { z } from 'zod'
 import { getInternalApiUrl } from '@/config/env';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {

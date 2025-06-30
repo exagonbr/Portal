@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 import { prisma } from '@/lib/prisma'
 
 interface UserQueryResult {
@@ -60,3 +60,4 @@ export async function GET(req: NextRequest) {
     )
   }
 }
+

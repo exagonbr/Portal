@@ -5,6 +5,7 @@ import { z } from 'zod'
 import knex from '@/config/database'
 import { activityTracker } from '@/services/activityTrackingService'
 import { ActivityType } from '@/types/activity'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -29,7 +30,7 @@ const usageReportSchema = z.object({
   date_from: z.string().nullable().optional(),
   date_to: z.string().nullable().optional(),
   institution_id: z.string().nullable().optional(),
-  role: z.enum(['all', 'STUDENT', 'TEACHER', 'MANAGER', 'PARENT', 'INSTITUTION_ADMIN', 'SYSTEM_ADMIN', 'admin', 'system_admin', 'institution_manager', 'academic_coordinator', 'manager', 'teacher', 'student', 'guardian']).default('all'),
+  role: z.enum(['all', 'STUDENT', 'TEACHER', 'MANAGER', 'PARENT', 'INSTITUTION_MANAGER', 'SYSTEM_ADMIN', 'admin', 'system_admin', 'institution_manager', 'academic_coordinator', 'manager', 'teacher', 'student', 'guardian']).default('all'),
   activity_type: z.enum(['all', 'login', 'logout', 'login_failed', 'page_view', 'video_start', 'video_play', 'video_pause', 'video_stop', 'video_complete', 'video_seek', 'content_access', 'quiz_start', 'quiz_attempt', 'quiz_complete', 'assignment_start', 'assignment_submit', 'assignment_complete', 'book_open', 'book_read', 'book_bookmark', 'course_enroll', 'course_complete', 'lesson_start', 'lesson_complete', 'forum_post', 'forum_reply', 'chat_message', 'file_download', 'file_upload', 'search', 'profile_update', 'settings_change', 'notification_read', 'session_timeout', 'error', 'system_action']).default('all'),
   user_name: z.string().nullable().optional(),
   institution_name: z.string().nullable().optional()
@@ -95,7 +96,7 @@ async function getUsageDataFromDatabase(filters: any): Promise<UsageStats> {
         'TEACHER': 'isTeacher', 
         'MANAGER': 'isManager',
         'PARENT': 'isParent',
-        'INSTITUTION_ADMIN': 'isAdmin',
+        'INSTITUTION_MANAGER': 'isAdmin',
         'SYSTEM_ADMIN': 'isAdmin'
       }
       const mappedRole = roleMapping[filters.role] || filters.role
@@ -357,7 +358,7 @@ export async function GET(request: NextRequest) {
     const userRole = session.user?.role
     console.log('👤 Role do usuário:', userRole)
     
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'system_admin', 'admin', 'institution_manager'].includes(userRole)) {
+    if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'system_admin', 'admin', 'institution_manager'].includes(userRole)) {
       console.log('🚫 Usuário sem permissão')
       return NextResponse.json({ error: 'Sem permissão para acessar relatórios de uso' }, { 
       status: 403,
@@ -455,7 +456,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar permissões
     const userRole = session.user?.role
-    if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'system_admin', 'admin', 'institution_manager'].includes(userRole)) {
+    if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'system_admin', 'admin', 'institution_manager'].includes(userRole)) {
       return NextResponse.json({ error: 'Sem permissão para exportar relatórios de uso' }, { 
       status: 403,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

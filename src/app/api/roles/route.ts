@@ -2,23 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
 import { mockRoles, findRoleByName } from './mockDatabase'
-
-// Funções CORS
-function getCorsHeaders(origin?: string) {
-  return {
-    'Access-Control-Allow-Origin': origin || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
-  }
-}
-
-function createCorsOptionsResponse(origin?: string) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: getCorsHeaders(origin)
-  })
-}
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Schema de validação para criação de role
 const createRoleSchema = z.object({
@@ -58,7 +42,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Verificar permissões
-      if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
+      if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'])) {
         return NextResponse.json({ error: 'Sem permissão para listar roles' }, { 
       status: 403,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

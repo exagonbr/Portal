@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Função para gerar dados de engajamento baseados no horário
 function generateEngagementData() {
@@ -185,7 +186,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se tem permissão para ver métricas de engajamento
-    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'ACADEMIC_COORDINATOR'])) {
+    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'ACADEMIC_COORDINATOR'])) {
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { status: 403 }

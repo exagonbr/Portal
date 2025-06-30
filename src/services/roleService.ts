@@ -1,11 +1,5 @@
 import { apiClient, handleApiError, ApiClientError } from '@/lib/api-client';
-import {
-  cacheService,
-  CacheKeys,
-  CacheTTL,
-  withCache,
-  invalidateRoleCache
-} from './cacheService';
+import { cacheService } from './cacheService';
 import { queueService, JobTypes } from './queueService';
 import {
   RoleResponseDto,
@@ -71,85 +65,80 @@ export class RoleService {
         throw new Error('Ordem de classificação inválida');
       }
 
-      // Gera chave de cache baseada nos parâmetros
-      const cacheKey = CacheKeys.ROLE_LIST(JSON.stringify({ page, limit, sortBy, sortOrder, filters }));
+      // Converte filtros para parâmetros de query
+      const searchParams: Record<string, string | number | boolean> = {
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      };
 
-      return await withCache(cacheKey, async () => {
-        // Converte filtros para parâmetros de query
-        const searchParams: Record<string, string | number | boolean> = {
-          page,
-          limit,
-          sortBy,
-          sortOrder
-        };
-
-        // Adiciona filtros se fornecidos
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            searchParams[key] = value;
-          }
-        });
-
-        const response = await apiClient.get<any>(
-          this.baseEndpoint,
-          searchParams
-        );
-
-        if (!response.success) {
-          throw new Error(response.message || 'Falha ao buscar roles');
+      // Adiciona filtros se fornecidos
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          searchParams[key] = value;
         }
+      });
 
-        // A API local retorna { success: true, data: [...] } para acesso público
-        // ou { success: true, data: { items: [...], pagination: {...} } } para acesso autenticado
-        let items: RoleResponseDto[] = [];
-        let total = 0;
+      const response = await apiClient.get<any>(
+        this.baseEndpoint,
+        searchParams
+      );
 
-        if (Array.isArray(response.data)) {
-          // Resposta pública: array direto
-          items = response.data;
+      if (!response.success) {
+        throw new Error(response.message || 'Falha ao buscar roles');
+      }
+
+      // A API local retorna { success: true, data: [...] } para acesso público
+      // ou { success: true, data: { items: [...], pagination: {...} } } para acesso autenticado
+      let items: RoleResponseDto[] = [];
+      let total = 0;
+
+      if (Array.isArray(response.data)) {
+        // Resposta pública: array direto
+        items = response.data;
+        total = items.length;
+      } else if (response.data?.items && Array.isArray(response.data.items)) {
+        // Resposta paginada
+        items = response.data.items;
+        total = response.data.total || response.data.pagination?.total || items.length;
+      } else if (response.data?.data) {
+        // Resposta aninhada
+        if (Array.isArray(response.data.data)) {
+          items = response.data.data;
           total = items.length;
-        } else if (response.data?.items && Array.isArray(response.data.items)) {
-          // Resposta paginada
-          items = response.data.items;
-          total = response.data.total || response.data.pagination?.total || items.length;
-        } else if (response.data?.data) {
-          // Resposta aninhada
-          if (Array.isArray(response.data.data)) {
-            items = response.data.data;
-            total = items.length;
-          } else if (response.data.data.items) {
-            items = response.data.data.items;
-            total = response.data.data.total || response.data.data.pagination?.total || items.length;
-          }
+        } else if (response.data.data.items) {
+          items = response.data.data.items;
+          total = response.data.data.total || response.data.data.pagination?.total || items.length;
         }
+      }
 
-        // Garante que a resposta tem a estrutura correta
-        const paginatedResponse: PaginatedResponseDto<RoleResponseDto> = {
-          items,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit),
-            hasNext: page * limit < total,
-            hasPrev: page > 1
-          },
-          total,
+      // Garante que a resposta tem a estrutura correta
+      const paginatedResponse: PaginatedResponseDto<RoleResponseDto> = {
+        items,
+        pagination: {
           page,
           limit,
+          total,
           totalPages: Math.ceil(total / limit),
           hasNext: page * limit < total,
           hasPrev: page > 1
-        };
+        },
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1
+      };
 
-        // Validação adicional da resposta
-        if (!Array.isArray(paginatedResponse.items)) {
-          this.logger.warn('Resposta inválida: items não é um array');
-          paginatedResponse.items = [];
-        }
+      // Validação adicional da resposta
+      if (!Array.isArray(paginatedResponse.items)) {
+        this.logger.warn('Resposta inválida: items não é um array');
+        paginatedResponse.items = [];
+      }
 
-        return paginatedResponse;
-      }, CacheTTL.MEDIUM);
+      return paginatedResponse;
     } catch (error) {
       this.logger.error('Erro ao buscar roles:', error);
       
@@ -190,29 +179,25 @@ export class RoleService {
         throw new Error('ID da role é obrigatório');
       }
 
-      const cacheKey = CacheKeys.ROLE_BY_ID(id);
+      const response = await apiClient.get<ApiResponse<RoleResponseDto>>(`${this.baseEndpoint}/${id}`);
 
-      return await withCache(cacheKey, async () => {
-        const response = await apiClient.get<ApiResponse<RoleResponseDto>>(`${this.baseEndpoint}/${id}`);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Role não encontrada');
+      }
 
-        if (!response.success || !response.data) {
-          throw new Error(response.message || 'Role não encontrada');
-        }
+      // Garante que todos os campos obrigatórios estão presentes
+      const role: RoleResponseDto = {
+        id: response.data.data?.id || '',
+        name: response.data.data?.name || '',
+        description: response.data.data?.description,
+        active: response.data.data?.active ?? true,
+        users_count: response.data.data?.users_count || 0,
+        created_at: response.data.data?.created_at || new Date().toISOString(),
+        updated_at: response.data.data?.updated_at || new Date().toISOString(),
+        status: ''
+      };
 
-        // Garante que todos os campos obrigatórios estão presentes
-        const role: RoleResponseDto = {
-          id: response.data.data?.id || '',
-          name: response.data.data?.name || '',
-          description: response.data.data?.description,
-          active: response.data.data?.active ?? true,
-          users_count: response.data.data?.users_count || 0,
-          created_at: response.data.data?.created_at || new Date().toISOString(),
-          updated_at: response.data.data?.updated_at || new Date().toISOString(),
-          status: ''
-        };
-
-        return role;
-      }, CacheTTL.MEDIUM);
+      return role;
     } catch (error) {
       console.error(`Erro ao buscar role ${id}:`, error);
       
@@ -251,9 +236,6 @@ export class RoleService {
         throw new Error(response.message || 'Falha ao criar role');
       }
 
-      // Invalida cache relacionado a roles
-      await invalidateRoleCache();
-
       return response.data;
     } catch (error) {
       console.error('Erro ao criar role:', error);
@@ -287,9 +269,6 @@ export class RoleService {
       if (!response.success || !response.data) {
         throw new Error(response.message || 'Falha ao atualizar role');
       }
-
-      // Invalida cache específico da role
-      await invalidateRoleCache(id);
 
       return response.data;
     } catch (error) {
@@ -327,9 +306,6 @@ export class RoleService {
       if (!response.success) {
         throw new Error(response.message || 'Falha ao deletar role');
       }
-
-      // Invalida cache específico da role
-      await invalidateRoleCache(id);
     } catch (error) {
       console.error(`Erro ao deletar role ${id}:`, error);
       
@@ -391,12 +367,28 @@ export class RoleService {
         dataType: typeof response.data,
         dataKeys: response.data ? Object.keys(response.data) : [],
         hasItems: !!(response.data?.items || response.data?.data?.items),
-        responseStructure: response.data
+        responseStructure: response.data,
+        message: response.message,
+        errors: response.errors
       });
 
       if (!response.success) {
-        this.logger.error('API retornou erro:', response.message);
-        throw new Error(response.message || 'Falha ao buscar roles');
+        // Tratamento mais detalhado do erro
+        let errorMessage = 'Falha ao buscar roles';
+        
+        if (response.message) {
+          errorMessage = response.message;
+        } else if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+          errorMessage = response.errors.join(', ');
+        }
+        
+        this.logger.error('API retornou erro:', {
+          message: response.message,
+          errors: response.errors,
+          finalErrorMessage: errorMessage
+        });
+        
+        throw new Error(errorMessage);
       }
 
       // Tentar diferentes estruturas de resposta
@@ -518,22 +510,18 @@ export class RoleService {
     usersCount: Record<string, number>;
   }> {
     try {
-      const cacheKey = CacheKeys.ROLE_STATS;
+      const response = await apiClient.get<{
+        total: number;
+        active: number;
+        inactive: number;
+        usersCount: Record<string, number>;
+      }>(`${this.baseEndpoint}/stats`);
 
-      return await withCache(cacheKey, async () => {
-        const response = await apiClient.get<{
-          total: number;
-          active: number;
-          inactive: number;
-          usersCount: Record<string, number>;
-        }>(`${this.baseEndpoint}/stats`);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Falha ao buscar estatísticas');
+      }
 
-        if (!response.success || !response.data) {
-          throw new Error(response.message || 'Falha ao buscar estatísticas');
-        }
-
-        return response.data;
-      }, CacheTTL.STATS);
+      return response.data;
     } catch (error) {
       console.error('Erro ao buscar estatísticas das roles:', error);
       // Traduz a mensagem de erro para português
@@ -652,9 +640,6 @@ export class RoleService {
         timeout: 300000 // 5 minutos
       });
 
-      // Invalida cache de roles após adicionar à fila
-      await invalidateRoleCache();
-
       return { jobId };
     } catch (error) {
       console.error('Erro ao importar roles:', error);
@@ -673,30 +658,26 @@ export class RoleService {
    */
   async getPermissionsForRole(roleId: string): Promise<any> {
     try {
-      const cacheKey = CacheKeys.ROLE_PERMISSIONS(roleId);
+      const response = await apiClient.get<ApiResponse<any>>(`${this.baseEndpoint}/${roleId}/permissions`);
       
-      return await withCache(cacheKey, async () => {
-        const response = await apiClient.get<ApiResponse<any>>(`${this.baseEndpoint}/${roleId}/permissions`);
-        
-        if (!response.success || !response.data) {
-          this.logger.warn(`Permissões não encontradas para role ${roleId}`);
-          return {
-            roleId,
-            roleName: '',
-            permissionGroups: [],
-            totalPermissions: 0,
-            enabledPermissions: 0
-          };
-        }
-        
-        return response.data.data || {
+      if (!response.success || !response.data) {
+        this.logger.warn(`Permissões não encontradas para role ${roleId}`);
+        return {
           roleId,
           roleName: '',
           permissionGroups: [],
           totalPermissions: 0,
           enabledPermissions: 0
         };
-      }, CacheTTL.MEDIUM);
+      }
+      
+      return response.data.data || {
+        roleId,
+        roleName: '',
+        permissionGroups: [],
+        totalPermissions: 0,
+        enabledPermissions: 0
+      };
     } catch (error) {
       this.logger.error(`Erro ao buscar permissões para role ${roleId}`, error);
       return {

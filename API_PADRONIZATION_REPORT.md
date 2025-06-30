@@ -23,7 +23,7 @@ Padronizar e deixar funcional todos os endpoints da API, corrigindo os erros 404
 - ✅ Endpoint para estatísticas de conexão AWS
 - ✅ Autenticação híbrida (NextAuth + JWT)
 - ✅ Fallback com dados mock
-- ✅ Verificação de permissões (SYSTEM_ADMIN, INSTITUTION_ADMIN)
+- ✅ Verificação de permissões (SYSTEM_ADMIN, INSTITUTION_MANAGER)
 
 #### `src/app/api/dashboard/analytics/route.ts`
 - ✅ Analytics completo do dashboard
@@ -154,7 +154,7 @@ node src/app/api/test-endpoints.js
 
 ### 3. **Verificação de Roles**
 - `SYSTEM_ADMIN`: Acesso total
-- `INSTITUTION_ADMIN`: Acesso institucional
+- `INSTITUTION_MANAGER`: Acesso institucional
 - `ACADEMIC_COORDINATOR`: Acesso acadêmico
 - `TEACHER`: Acesso de professor
 - `STUDENT`: Acesso de estudante

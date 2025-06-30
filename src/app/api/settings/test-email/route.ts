@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import nodemailer from 'nodemailer'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 
 // Handler para requisições OPTIONS (preflight)

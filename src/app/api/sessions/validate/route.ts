@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sessionService } from '../../../../services/sessionService';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // POST /api/sessions/validate - Valida uma sessão
 

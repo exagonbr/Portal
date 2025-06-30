@@ -4,7 +4,7 @@ export * from './Class';
 export * from './EducationCycle';
 export * from './UserClass';
 export * from './SchoolManager';
-export * from './User';
+export * from './Users';
 export * from './Course';
 export * from './Module';
 export * from './Lesson';

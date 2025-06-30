@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { activityTracker } from '@/services/activityTrackingService'
 import { ViewingStatus } from '@/types/activity'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Função para criar headers CORS
 function getCorsHeaders(origin?: string) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import mysql from 'mysql2/promise'
 import { Pool } from 'pg'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {

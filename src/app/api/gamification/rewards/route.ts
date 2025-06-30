@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { DEFAULT_REWARDS } from '@/constants/gamification';
 import { Reward } from '@/types/gamification';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Mock database for now
 let mockRewards = new Map<string, Reward[]>();

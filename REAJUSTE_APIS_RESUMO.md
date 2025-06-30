@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
+    if (!hasRequiredRole(session.user?.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'])) {
       return NextResponse.json(
         { error: 'Sem permissão' },
         { status: 403 }

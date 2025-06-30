@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
 
       // Verificar se é admin
       const userRole = tokenValidation.payload.role;
-      if (!['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
+      if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)) {
         return NextResponse.json(
           { success: false, message: 'Acesso negado' },
           { 

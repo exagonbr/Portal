@@ -36,7 +36,7 @@ O backend configurado na URL `https://portal.sabercon.com.br/api` estava:
 ```typescript
 const mockUsers = {
   'admin@sabercon.edu.br': { role: 'SYSTEM_ADMIN' },
-  'gestor@sabercon.edu.br': { role: 'INSTITUTION_ADMIN' },
+  'gestor@sabercon.edu.br': { role: 'INSTITUTION_MANAGER' },
   'coordenador@sabercon.edu.br': { role: 'ACADEMIC_COORDINATOR' },
   'professor@sabercon.edu.br': { role: 'TEACHER' },
   'estudante@sabercon.edu.br': { role: 'STUDENT' }
@@ -77,7 +77,7 @@ const mockUsers = {
 ### Teste de Autenticação
 ```
 ✅ admin@sabercon.edu.br: Login OK - Role: SYSTEM_ADMIN
-✅ gestor@sabercon.edu.br: Login OK - Role: INSTITUTION_ADMIN  
+✅ gestor@sabercon.edu.br: Login OK - Role: INSTITUTION_MANAGER  
 ✅ coordenador@sabercon.edu.br: Login OK - Role: ACADEMIC_COORDINATOR
 ✅ professor@sabercon.edu.br: Login OK - Role: TEACHER
 ✅ estudante@sabercon.edu.br: Login OK - Role: STUDENT
@@ -112,7 +112,7 @@ const mockUsers = {
 | Email | Senha | Role | Permissões |
 |-------|-------|------|------------|
 | `admin@sabercon.edu.br` | `password123` | SYSTEM_ADMIN | Todas |
-| `gestor@sabercon.edu.br` | `password123` | INSTITUTION_ADMIN | Gestão institucional |
+| `gestor@sabercon.edu.br` | `password123` | INSTITUTION_MANAGER | Gestão institucional |
 | `coordenador@sabercon.edu.br` | `password123` | ACADEMIC_COORDINATOR | Gestão de cursos |
 | `professor@sabercon.edu.br` | `password123` | TEACHER | Gestão de turmas |
 | `estudante@sabercon.edu.br` | `password123` | STUDENT | Visualização de conteúdo |

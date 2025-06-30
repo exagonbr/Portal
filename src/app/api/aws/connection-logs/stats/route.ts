@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se é admin
-    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
+    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'])) {
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { 

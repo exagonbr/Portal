@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { API_CONFIG } from '../../../../config/constants';
-import { createCorsOptionsResponse, getCorsHeaders } from '../../../../config/cors';
 import * as jwt from 'jsonwebtoken';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Rate limiting inteligente para evitar loops
 const requestCounts = new Map<string, { count: number; lastReset: number; lastRequest: number; pattern: string[]; consecutiveRequests: number; blockedUntil?: number; isMobile?: boolean }>();
@@ -406,7 +406,7 @@ export async function POST(request: NextRequest) {
             id: 'gestor',
             name: 'Gestor Institucional',
             email: 'gestor@sabercon.edu.br',
-            role: 'INSTITUTION_ADMIN',
+            role: 'INSTITUTION_MANAGER',
             permissions: ['manage_institution'],
             institutionId: 'inst_sabercon',
             institution_name: 'SaberCon (Fallback)'
@@ -690,14 +690,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Login realizado com sucesso',
-      user: userDataForCookie,
-      token: token, // Incluir o token na resposta para uso em headers Authorization
+      data: {
+        user: userDataForCookie,
+        token: token, // Incluir o token na resposta para uso em headers Authorization
+        refreshToken: data.refreshToken,
+        expiresIn: 3600 // 1 hora em segundos
+      },
       redirectTo: data.redirectTo || '/dashboard',
       // Instruir o frontend para salvar o token no localStorage também
       saveTokenToStorage: true
     }, {
       headers: {
-        'X-RateLimit-Remaining': rateLimit.remaining.toString()
+        'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+        ...getCorsHeaders(request.headers.get('origin') || undefined)
       }
     });
 

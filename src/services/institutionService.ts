@@ -91,32 +91,33 @@ const getAuthToken = (): string | null => {
   console.log('🔍 InstitutionService: Procurando token de autenticação...');
   
   // 1. Tentar obter token de localStorage primeiro
-  let token = localStorage.getItem('auth_token') || 
+  let token = localStorage.getItem('auth_token') ||
               localStorage.getItem('token') ||
               localStorage.getItem('authToken') ||
               sessionStorage.getItem('token') ||
               sessionStorage.getItem('auth_token');
   
-  if (token) {
+  if (token && token !== 'null' && token !== 'undefined' && token.length > 10) {
     console.log('✅ InstitutionService: Token encontrado no localStorage/sessionStorage');
     return token;
   }
   
   // 2. Se não encontrar no storage, tentar obter dos cookies
-  if (!token) {
-    console.log('🔍 InstitutionService: Procurando token nos cookies...');
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'auth_token' || name === 'token' || name === 'authToken') {
-        token = decodeURIComponent(value);
+  console.log('🔍 InstitutionService: Procurando token nos cookies...');
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'auth_token' || name === 'token' || name === 'authToken') {
+      const decodedValue = decodeURIComponent(value);
+      if (decodedValue && decodedValue !== 'null' && decodedValue !== 'undefined' && decodedValue.length > 10) {
+        token = decodedValue;
         console.log('✅ InstitutionService: Token encontrado nos cookies');
         break;
       }
     }
   }
   
-  // 3. Como último recurso, tentar obter da sessão de usuário (se houver)
+  // 3. Tentar obter da sessão de usuário (se houver)
   if (!token) {
     console.log('🔍 InstitutionService: Procurando token na sessão do usuário...');
     try {
@@ -127,7 +128,7 @@ const getAuthToken = (): string | null => {
       if (userCookie) {
         const userSessionValue = userCookie.split('=')[1];
         const userData = JSON.parse(decodeURIComponent(userSessionValue));
-        if (userData && userData.token) {
+        if (userData && userData.token && userData.token.length > 10) {
           token = userData.token;
           console.log('✅ InstitutionService: Token encontrado na sessão do usuário');
         }
@@ -137,26 +138,27 @@ const getAuthToken = (): string | null => {
     }
   }
   
-  // 4. Tentar obter do contexto de autenticação (se disponível)
-  if (!token) {
-    console.log('🔍 InstitutionService: Tentando obter token do contexto de autenticação...');
+  // 4. Verificar se o token é um JWT válido
+  if (token && token.length > 10) {
     try {
-      // Verificar se existe um evento customizado com o token
-      const authEvent = new CustomEvent('getAuthToken');
-      window.dispatchEvent(authEvent);
-      
-      // Verificar se o token foi definido em uma variável global
-      if ((window as any).__AUTH_TOKEN__) {
-        token = (window as any).__AUTH_TOKEN__;
-        console.log('✅ InstitutionService: Token encontrado no contexto global');
+      // Verificar se é um JWT (tem 3 partes separadas por ponto)
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        console.log('✅ InstitutionService: Token JWT válido encontrado');
+        return token;
+      } else {
+        console.warn('⚠️ InstitutionService: Token encontrado não é um JWT válido');
+        token = null;
       }
     } catch (error) {
-      console.warn('⚠️ InstitutionService: Erro ao obter token do contexto:', error);
+      console.warn('⚠️ InstitutionService: Erro ao validar token JWT:', error);
+      token = null;
     }
   }
   
   if (!token) {
-    console.warn('❌ InstitutionService: Nenhum token de autenticação encontrado');
+    console.warn('❌ InstitutionService: Nenhum token JWT válido encontrado');
+    console.log('🔍 InstitutionService: Cookies disponíveis:', document.cookie);
   } else {
     console.log('✅ InstitutionService: Token de autenticação obtido com sucesso');
   }
@@ -457,8 +459,15 @@ export class InstitutionService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha ao criar instituição');
+        let errorMessage = 'Falha ao criar instituição';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          console.warn('⚠️ Erro ao fazer parse da resposta de erro:', parseError);
+          errorMessage = `Erro ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -500,8 +509,26 @@ export class InstitutionService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha ao atualizar instituição');
+        let errorMessage = 'Falha ao atualizar instituição';
+        let responseText = '';
+        
+        try {
+          responseText = await response.text();
+          
+          // Tentar fazer parse como JSON
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          console.warn('⚠️ Erro ao fazer parse da resposta de erro:', parseError);
+          errorMessage = `Erro ${response.status}: ${response.statusText}`;
+          
+          // Se for erro 500, mostrar mais detalhes
+          if (response.status === 500) {
+            errorMessage += responseText ? ` - ${responseText.substring(0, 200)}` : '';
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -543,8 +570,15 @@ export class InstitutionService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha ao excluir instituição');
+        let errorMessage = 'Falha ao excluir instituição';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          console.warn('⚠️ Erro ao fazer parse da resposta de erro:', parseError);
+          errorMessage = `Erro ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Erro ao excluir instituição:', error);

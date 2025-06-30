@@ -1110,7 +1110,7 @@ export default function ManageUsers() {
     }
     
     // Verificar role do usuário
-    const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'admin']
+    const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'admin']
     const userRole = user.role?.toUpperCase()
     
     console.log('🔐 Verificação de permissões:', {

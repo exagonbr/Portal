@@ -29,8 +29,8 @@ As APIs possuem rate limiting configurado:
 
 O sistema possui 6 níveis de acesso:
 1. **SYSTEM_ADMIN** - Acesso total
-2. **INSTITUTION_ADMIN** - Gerencia instituição
-3. **SCHOOL_MANAGER** - Gerencia escola
+2. **INSTITUTION_MANAGER** - Gerencia instituição
+3. **COORDINATOR** - Gerencia escola
 4. **TEACHER** - Professor
 5. **STUDENT** - Aluno
 6. **GUARDIAN** - Responsável

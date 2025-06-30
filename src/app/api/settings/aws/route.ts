@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Simulação de banco de dados - em produção, usar um banco real
 let awsSettingsData = {

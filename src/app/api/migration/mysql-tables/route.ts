@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import mysql from 'mysql2/promise'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 interface MySQLConnection {
   host: string

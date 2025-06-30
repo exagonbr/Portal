@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthentication } from '@/lib/auth-utils'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 
 // Handler para requisições OPTIONS (preflight)

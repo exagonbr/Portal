@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createCorsOptionsResponse } from '../../../../config/cors';
 import { getInternalApiUrl } from '../../../../config/env';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 
 // Handler para requisições OPTIONS (preflight)

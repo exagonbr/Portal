@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { BADGES } from '@/constants/gamification';
 import { Badge, UserBadge } from '@/types/gamification';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Mock database for now
 let mockUserBadges = new Map<string, UserBadge[]>();

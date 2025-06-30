@@ -131,7 +131,7 @@ curl -X POST http://localhost:3002/api/auth/login \
 
 ### Teste de Credenciais Válidas
 - ✅ **admin@sabercon.edu.br** → SYSTEM_ADMIN
-- ✅ **gestor@sabercon.edu.br** → INSTITUTION_ADMIN  
+- ✅ **gestor@sabercon.edu.br** → INSTITUTION_MANAGER  
 - ✅ **coordenador@sabercon.edu.br** → ACADEMIC_COORDINATOR
 - ✅ **professor@sabercon.edu.br** → TEACHER
 - ✅ **estudante@sabercon.edu.br** → STUDENT
@@ -168,7 +168,7 @@ curl -X POST http://localhost:3002/api/auth/login \
 | Email | Senha | Role | Descrição |
 |-------|-------|------|-----------|
 | `admin@sabercon.edu.br` | `password123` | SYSTEM_ADMIN | Administrador do sistema |
-| `gestor@sabercon.edu.br` | `password123` | INSTITUTION_ADMIN | Gestor institucional |
+| `gestor@sabercon.edu.br` | `password123` | INSTITUTION_MANAGER | Gestor institucional |
 | `coordenador@sabercon.edu.br` | `password123` | ACADEMIC_COORDINATOR | Coordenador acadêmico |
 | `professor@sabercon.edu.br` | `password123` | TEACHER | Professor |
 | `estudante@sabercon.edu.br` | `password123` | STUDENT | Estudante |

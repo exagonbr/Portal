@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -53,8 +54,8 @@ const mockBooks = new Map()
 // Função utilitária para normalizar o valor do userRole
 function normalizeUserRole(role: string | undefined): string | undefined {
   switch (role) {
-    case 'INSTITUTION_ADMIN':
-    case 'SCHOOL_MANAGER':
+    case 'INSTITUTION_MANAGER':
+    case 'COORDINATOR':
       return 'INSTITUTION_MANAGER';
     default:
       return role;
@@ -264,7 +265,7 @@ export async function DELETE(
     const userRole = normalizeUserRole(session.user?.role);
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       userRole === 'LIBRARIAN'
 
     if (!canDelete) {

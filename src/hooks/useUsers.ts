@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { userService } from '@/services/userService'
+import { usersService, UsersResponseDto, UsersFilterDto } from '@/services/usersService'
 import { roleService } from '@/services/roleService'
 import { institutionService } from '@/services/institutionService'
-import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api'
+import { RoleResponseDto, InstitutionResponseDto } from '@/types/api'
 import { useToast } from '@/components/ToastManager'
 
 interface UseUsersOptions {
@@ -11,7 +11,7 @@ interface UseUsersOptions {
 
 interface UseUsersReturn {
   // Data
-  users: UserResponseDto[]
+  users: UsersResponseDto[]
   roles: RoleResponseDto[]
   institutions: InstitutionResponseDto[]
   
@@ -29,8 +29,8 @@ interface UseUsersReturn {
   
   // Filters and search
   searchTerm: string
-  filters: UserFilterDto
-  sortBy: 'name' | 'email' | 'created_at'
+  filters: UsersFilterDto
+  sortBy: 'name' | 'fullName' | 'email' | 'dateCreated' | 'lastUpdated'
   sortOrder: 'asc' | 'desc'
   
   // Error handling
@@ -43,16 +43,16 @@ interface UseUsersReturn {
   setCurrentPage: (page: number) => void
   setItemsPerPage: (size: number) => void
   setSearchTerm: (term: string) => void
-  setFilters: (filters: UserFilterDto) => void
-  setSortBy: (sortBy: 'name' | 'email' | 'created_at') => void
+  setFilters: (filters: UsersFilterDto) => void
+  setSortBy: (sortBy: 'name' | 'fullName' | 'email' | 'dateCreated' | 'lastUpdated') => void
   setSortOrder: (order: 'asc' | 'desc') => void
   clearFilters: () => void
   hasActiveFilters: () => boolean
   
   // CRUD operations
   createUser: (userData: any) => Promise<void>
-  updateUser: (id: string, userData: any) => Promise<void>
-  deleteUser: (id: string) => Promise<void>
+  updateUser: (id: number, userData: any) => Promise<void>
+  deleteUser: (id: number) => Promise<void>
 }
 
 export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
@@ -61,7 +61,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
   const isMountedRef = useRef(true)
 
   // Data state
-  const [users, setUsers] = useState<UserResponseDto[]>([])
+  const [users, setUsers] = useState<UsersResponseDto[]>([])
   const [roles, setRoles] = useState<RoleResponseDto[]>([])
   const [institutions, setInstitutions] = useState<InstitutionResponseDto[]>([])
 
@@ -79,8 +79,8 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
 
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState('')
-  const [filters, setFilters] = useState<UserFilterDto>({})
-  const [sortBy, setSortBy] = useState<'name' | 'email' | 'created_at'>('name')
+  const [filters, setFilters] = useState<UsersFilterDto>({})
+  const [sortBy, setSortBy] = useState<'name' | 'fullName' | 'email' | 'dateCreated' | 'lastUpdated'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // Error state
@@ -155,7 +155,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
     if (showLoadingIndicator) setLoading(true)
 
     try {
-      const params: UserFilterDto = {
+      const params: UsersFilterDto = {
         page: currentPage,
         limit: itemsPerPage,
         sortBy,
@@ -163,26 +163,33 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
         ...filters,
       }
 
-      console.log('🔍 Buscando usuários com parâmetros:', params)
+      console.log('🔍 [useUsers] Buscando usuários com parâmetros:', params)
 
       const response = searchTerm
-        ? await userService.searchUsers(searchTerm, params)
-        : await userService.getUsers(params)
+        ? await usersService.searchUsers(searchTerm, params)
+        : await usersService.getUsers(params)
 
       if (!response || !response.items || !Array.isArray(response.items)) {
-        console.error('❌ Resposta inválida do userService:', response)
+        console.error('❌ [useUsers] Resposta inválida do usersService:', response)
         throw new Error('Formato de resposta inválido do servidor')
       }
 
+      console.log('📥 [useUsers] Resposta recebida:', {
+        totalItems: response.items.length,
+        pagination: response.pagination,
+        primeiroUsuario: response.items[0]?.name || response.items[0]?.fullName,
+        ultimoUsuario: response.items[response.items.length - 1]?.name || response.items[response.items.length - 1]?.fullName
+      })
+
       // Enrich users with role and institution names
       const enrichedUsers = response.items.map(user => {
-        const role = roles.find(r => r.id === user.role_id)
-        const institution = institutions.find(i => i.id === user.institution_id)
+        const role = roles.find(r => r.id === (user.roleId || user.role_id))
+        const institution = institutions.find(i => i.id === String(user.institutionId || user.institution_id))
         
         return {
           ...user,
-          role_name: role?.name || 'Não definida',
-          institution_name: institution?.name || 'Não vinculada',
+          role_name: user.role_name || role?.name || 'Não definida',
+          institution_name: user.institution_name || institution?.name || 'Não vinculada',
         }
       })
 
@@ -192,9 +199,9 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
         setTotalItems(response.pagination.total)
       }
 
-      console.log(`✅ ${enrichedUsers.length} usuários carregados com sucesso`)
+      console.log(`✅ [useUsers] ${enrichedUsers.length} usuários carregados com sucesso`)
     } catch (error: any) {
-      console.error('❌ Erro ao carregar usuários:', error)
+      console.error('❌ [useUsers] Erro ao carregar usuários:', error)
       showError(error.message || 'Erro ao carregar usuários')
       
       if (isMountedRef.current) {
@@ -230,7 +237,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
   // CRUD operations
   const createUser = useCallback(async (userData: any) => {
     try {
-      await userService.createUser(userData)
+      await usersService.createUser(userData)
       showSuccess('Usuário criado com sucesso!')
       await loadUsers()
     } catch (error: any) {
@@ -239,9 +246,9 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
     }
   }, [loadUsers, showSuccess])
 
-  const updateUser = useCallback(async (id: string, userData: any) => {
+  const updateUser = useCallback(async (id: number, userData: any) => {
     try {
-      await userService.updateUser(id, userData)
+      await usersService.updateUser(id, userData)
       showSuccess('Usuário atualizado com sucesso!')
       await loadUsers()
     } catch (error: any) {
@@ -250,9 +257,9 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
     }
   }, [loadUsers, showSuccess])
 
-  const deleteUser = useCallback(async (id: string) => {
+  const deleteUser = useCallback(async (id: number) => {
     try {
-      await userService.deleteUser(id)
+      await usersService.deleteUser(id)
       showSuccess('Usuário excluído com sucesso!')
       await loadUsers()
     } catch (error: any) {
@@ -271,7 +278,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
     setCurrentPage(1) // Reset to first page
   }, [])
 
-  const setFiltersAndReload = useCallback((newFilters: UserFilterDto) => {
+  const setFiltersAndReload = useCallback((newFilters: UsersFilterDto) => {
     setFilters(newFilters)
     setCurrentPage(1) // Reset to first page when filters change
   }, [])

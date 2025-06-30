@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import db from '../../../../../backend/src/config/database'
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 interface SeedConfig {
   users?: boolean

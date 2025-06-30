@@ -488,23 +488,6 @@ export function LoginForm() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            <button
-              type="button"
-              onClick={async () => {
-                console.log('🔍 Executando diagnóstico de login...');
-                const { debugLogin } = await import('@/utils/debug-login');
-                await debugLogin(values.email || 'test@example.com', values.password || 'test123');
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-medium transition-all duration-200"
-              style={{
-                backgroundColor: theme.colors.background.secondary,
-                border: `1px dashed ${theme.colors.border.DEFAULT}`,
-                color: theme.colors.text.secondary
-              }}
-            >
-              <span className="material-symbols-outlined text-sm">bug_report</span>
-              Debug Login (Dev Only)
-            </button>
           </MotionDiv>
         )}
       </div>

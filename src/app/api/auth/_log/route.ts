@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createCorsOptionsResponse, getCorsHeaders } from '../../../../config/cors';
 import * as jwt from 'jsonwebtoken';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Tipos para logs de autenticação
 interface AuthLogEntry {
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
     // Verificar permissões (apenas admins podem ver todos os logs)
     const userRole = tokenValidation.payload.role;
     const currentUserId = tokenValidation.payload.userId;
-    const isAdmin = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole);
+    const isAdmin = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole);
 
     const url = new URL(request.url);
     const params: LogQueryParams = {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +48,7 @@ function generateDashboardSummary(userRole: string) {
         }
       };
 
-    case 'INSTITUTION_ADMIN':
+    case 'INSTITUTION_MANAGER':
     case 'INSTITUTION_MANAGER':
       return {
         ...baseSummary,

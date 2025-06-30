@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Mock database for now
 let mockXPData = new Map();

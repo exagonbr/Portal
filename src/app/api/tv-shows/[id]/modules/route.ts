@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../../lib/auth-headers';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 import { getInternalApiUrl } from '@/config/env';
 

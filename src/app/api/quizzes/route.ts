@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -249,7 +250,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar permissões
     const userRole = session.user?.role
-    if (!userRole || !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'TEACHER'].includes(userRole)) {
+    if (!userRole || !['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(userRole)) {
       return NextResponse.json({ error: 'Sem permissão para criar quizzes' }, { 
       status: 403,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

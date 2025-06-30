@@ -196,15 +196,29 @@ export default function ManageInstitutions() {
         const newInstitution = await institutionService.createInstitution(data)
         showSuccess("Sucesso", "Instituição criada com sucesso!")
         console.log('✅ Nova instituição criada:', newInstitution)
+        
+        // Adicionar a nova instituição à lista local se estivermos na primeira página
+        if (currentPage === 1) {
+          setInstitutions(prevInstitutions => [newInstitution, ...prevInstitutions.slice(0, itemsPerPage - 1)])
+          setTotalItems(prev => prev + 1)
+        }
+        
       } else if (modalMode === 'edit' && modalInstitution) {
         const updatedInstitution = await institutionService.updateInstitution(modalInstitution.id, data)
         showSuccess("Sucesso", "Instituição atualizada com sucesso!")
         console.log('✅ Instituição atualizada:', updatedInstitution)
+        
+        // Atualizar a instituição na lista local
+        setInstitutions(prevInstitutions =>
+          prevInstitutions.map(inst =>
+            inst.id === modalInstitution.id ? updatedInstitution : inst
+          )
+        )
       }
       
       closeModal()
       
-      // Recarregar a lista
+      // Recarregar a lista para garantir sincronização completa
       await fetchInstitutions(currentPage, searchQuery, false)
     } catch (error) {
       console.error('❌ Erro ao salvar instituição:', error)
@@ -222,8 +236,23 @@ export default function ManageInstitutions() {
       const statusText = updatedInstitution.is_active ? 'ativada' : 'desativada'
       showSuccess("Status alterado", `Instituição ${statusText} com sucesso!`)
       
-      // Recarregar a lista
-      await fetchInstitutions(currentPage, searchQuery, false)
+      // Atualizar o estado local imediatamente para feedback visual rápido
+      setInstitutions(prevInstitutions =>
+        prevInstitutions.map(inst =>
+          inst.id === institution.id
+            ? { ...inst, is_active: updatedInstitution.is_active }
+            : inst
+        )
+      )
+      
+      // Recalcular estatísticas com os dados atualizados
+      const updatedInstitutions = institutions.map(inst =>
+        inst.id === institution.id
+          ? { ...inst, is_active: updatedInstitution.is_active }
+          : inst
+      )
+      calculateStats(updatedInstitutions)
+      
     } catch (error) {
       console.error('❌ Erro ao alterar status da instituição:', error)
       showError("Erro ao alterar status", "Não foi possível alterar o status da instituição.")

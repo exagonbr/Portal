@@ -26,7 +26,7 @@ const testUsers = [
   {
     email: 'gestor@sabercon.edu.br',
     password: 'password123',
-    expectedRole: 'INSTITUTION_ADMIN'
+    expectedRole: 'INSTITUTION_MANAGER'
   },
   {
     email: 'coordenador@sabercon.edu.br',

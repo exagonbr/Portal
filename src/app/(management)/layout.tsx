@@ -21,7 +21,7 @@ export default function ManagementLayout({
     }
 
     // Verificar se o usuário tem permissão para acessar área de gestão
-    const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'];
+    const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR'];
     if (!allowedRoles.includes(session.user?.role || '')) {
       router.push('/dashboard');
       return;
@@ -36,7 +36,7 @@ export default function ManagementLayout({
     );
   }
 
-  if (!session || !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'].includes(session.user?.role || '')) {
+  if (!session || !['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR'].includes(session.user?.role || '')) {
     return null;
   }
 

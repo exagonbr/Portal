@@ -38,7 +38,7 @@ headers: {
 
 #### ✅ Criada: `/api/dashboard/summary/route.ts`
 - Fornece resumo personalizado do dashboard baseado no role do usuário
-- Suporte para todos os roles: SYSTEM_ADMIN, INSTITUTION_ADMIN, TEACHER, STUDENT, GUARDIAN
+- Suporte para todos os roles: SYSTEM_ADMIN, INSTITUTION_MANAGER, TEACHER, STUDENT, GUARDIAN
 - Dados específicos por tipo de usuário
 
 #### ✅ Criada: `/api/dashboard/health/route.ts`

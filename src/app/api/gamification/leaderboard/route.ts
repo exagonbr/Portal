@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { LeaderboardEntry } from '@/types/gamification';
 import { LEADERBOARD_LIMITS } from '@/constants/gamification';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Mock database for now
 let mockUserStats = new Map<string, {

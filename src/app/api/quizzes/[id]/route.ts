@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -113,7 +114,7 @@ export async function GET(
     // Verificar permissões
     const userRole = session.user?.role
     const isCreator = quiz.created_by === session.user?.id
-    const isAdmin = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
+    const isAdmin = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)
     const isTeacher = userRole === 'TEACHER'
     const isStudent = userRole === 'STUDENT'
 
@@ -251,7 +252,7 @@ export async function PUT(
     const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       (userRole === 'TEACHER' && existingQuiz.created_by === session.user?.id)
 
     if (!canEdit) {
@@ -362,7 +363,7 @@ export async function DELETE(
     const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       (userRole === 'TEACHER' && existingQuiz.created_by === session.user?.id)
 
     if (!canDelete) {

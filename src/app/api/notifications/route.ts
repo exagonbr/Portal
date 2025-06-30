@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -195,7 +196,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar permissões
     const userRole = session.user?.role
-    const canSendNotifications = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER', 'TEACHER'].includes(userRole)
+    const canSendNotifications = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'TEACHER'].includes(userRole)
     
     if (!canSendNotifications) {
       return NextResponse.json({ error: 'Sem permissão para enviar notificações' }, { 
@@ -230,7 +231,7 @@ export async function POST(request: NextRequest) {
     })
     }
 
-    if (notificationData.recipient_type === 'INSTITUTION' && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
+    if (notificationData.recipient_type === 'INSTITUTION' && !['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)) {
       return NextResponse.json({ error: 'Sem permissão para enviar notificações para toda a instituição' }, { 
       status: 403,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

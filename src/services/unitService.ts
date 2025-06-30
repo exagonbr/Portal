@@ -80,13 +80,26 @@ class UnitService {
         fullResponse: JSON.stringify(response, null, 2)
       });
       
-      if (!response.success || !response.data) {
-        console.error('❌ UnitService.list - Formato de resposta inválido:', {
-          responseData: response.data,
-          success: response.success,
-          responseType: typeof response.data
+      // Verificar se a resposta foi bem-sucedida
+      if (!response.success) {
+        console.error('❌ UnitService.list - API retornou erro:', response.message);
+        throw new Error(response.message || 'API returned error');
+      }
+
+      // Verificar se os dados existem e têm a estrutura esperada
+      if (!response.data) {
+        console.error('❌ UnitService.list - Dados não encontrados na resposta');
+        throw new Error('No data returned from API');
+      }
+
+      // Verificar se a estrutura está correta (items e pagination)
+      if (!response.data.items || !Array.isArray(response.data.items)) {
+        console.error('❌ UnitService.list - Estrutura de dados inválida:', {
+          hasItems: !!response.data.items,
+          itemsType: typeof response.data.items,
+          isArray: Array.isArray(response.data.items)
         });
-        throw new Error('Invalid response format from API');
+        throw new Error('Invalid data structure from API');
       }
       
       return response.data;
@@ -104,8 +117,12 @@ class UnitService {
       
       console.log('✅ UnitService.getById - Resposta recebida', response);
       
-      if (!response.success || !response.data) {
-        throw new Error('Invalid response format from API');
+      if (!response.success) {
+        throw new Error(response.message || 'API returned error');
+      }
+
+      if (!response.data) {
+        throw new Error('No data returned from API');
       }
       
       return response.data;
@@ -123,8 +140,12 @@ class UnitService {
       
       console.log('✅ UnitService.create - Resposta recebida', response);
       
-      if (!response.success || !response.data) {
-        throw new Error('Invalid response format from API');
+      if (!response.success) {
+        throw new Error(response.message || 'API returned error');
+      }
+
+      if (!response.data) {
+        throw new Error('No data returned from API');
       }
       
       return response.data;
@@ -142,8 +163,12 @@ class UnitService {
       
       console.log('✅ UnitService.update - Resposta recebida', response);
       
-      if (!response.success || !response.data) {
-        throw new Error('Invalid response format from API');
+      if (!response.success) {
+        throw new Error(response.message || 'API returned error');
+      }
+
+      if (!response.data) {
+        throw new Error('No data returned from API');
       }
       
       return response.data;
@@ -162,7 +187,7 @@ class UnitService {
       console.log('✅ UnitService.delete - Resposta recebida', response);
       
       if (!response.success) {
-        throw new Error('Invalid response format from API');
+        throw new Error(response.message || 'API returned error');
       }
     } catch (error) {
       console.error('❌ UnitService.delete - Erro:', error);
@@ -187,8 +212,12 @@ class UnitService {
       
       console.log('✅ UnitService.search - Resposta recebida', response);
       
-      if (!response.success || !response.data) {
-        throw new Error('Invalid response format from API');
+      if (!response.success) {
+        throw new Error(response.message || 'API returned error');
+      }
+
+      if (!response.data) {
+        throw new Error('No data returned from API');
       }
       
       return response.data;

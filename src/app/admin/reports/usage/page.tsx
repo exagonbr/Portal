@@ -171,7 +171,7 @@ export default function UsageReportsPage() {
       case 'MANAGER': return <UserCheck className="w-5 h-5" />
       case 'PARENT': return <Users className="w-5 h-5" />
       case 'ADMIN': return <Activity className="w-5 h-5" />
-      case 'INSTITUTION_ADMIN': return <School className="w-5 h-5" />
+      case 'INSTITUTION_MANAGER': return <School className="w-5 h-5" />
       case 'SYSTEM_ADMIN': return <Activity className="w-5 h-5" />
       default: return <Users className="w-5 h-5" />
     }
@@ -184,7 +184,7 @@ export default function UsageReportsPage() {
       case 'MANAGER': return 'Gestores'
       case 'PARENT': return 'Responsáveis'
       case 'ADMIN': return 'Administradores'
-      case 'INSTITUTION_ADMIN': return 'Admins Instituição'
+      case 'INSTITUTION_MANAGER': return 'Admins Instituição'
       case 'SYSTEM_ADMIN': return 'Admins Sistema'
       default: return role
     }
@@ -324,7 +324,7 @@ export default function UsageReportsPage() {
                 <option value="TEACHER">👨‍🏫 Professores</option>
                 <option value="MANAGER">👨‍💼 Gestores</option>
                 <option value="PARENT">👨‍👩‍👧‍👦 Responsáveis</option>
-                <option value="INSTITUTION_ADMIN">🏛️ Admins Instituição</option>
+                <option value="INSTITUTION_MANAGER">🏛️ Admins Instituição</option>
                 <option value="SYSTEM_ADMIN">⚙️ Admins Sistema</option>
               </select>
             </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connection as db } from '@/config/database'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {

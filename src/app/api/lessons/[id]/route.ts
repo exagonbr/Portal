@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -103,7 +104,7 @@ export async function GET(
     const userRole = session.user?.role
     const canViewDetails = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       userRole === 'TEACHER' ||
       (userRole === 'STUDENT' && lesson.is_published && lesson.is_active)
 
@@ -197,7 +198,7 @@ export async function PUT(
     const userRole = session.user?.role
     const canEdit = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       (userRole === 'TEACHER' && existingLesson.created_by === session.user?.id)
 
     if (!canEdit) {
@@ -299,7 +300,7 @@ export async function DELETE(
     const userRole = session.user?.role
     const canDelete = 
       userRole === 'SYSTEM_ADMIN' ||
-      userRole === 'INSTITUTION_ADMIN' ||
+      userRole === 'INSTITUTION_MANAGER' ||
       (userRole === 'TEACHER' && existingLesson.created_by === session.user?.id)
 
     if (!canDelete) {

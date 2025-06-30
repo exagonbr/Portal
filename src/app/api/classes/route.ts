@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Schema de validação para criação de turma
 // Funções CORS
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     // Aplicar filtros baseados no role do usuário
     const userRole = session.user?.role
-    if (userRole === 'SCHOOL_MANAGER' && session.user && 'school_id' in session.user && session.user.school_id) {
+    if (userRole === 'COORDINATOR' && session.user && 'school_id' in session.user && session.user.school_id) {
       const userSchoolId = (session.user as any).school_id;
       classes = classes.filter(cls => cls.school_id === userSchoolId)
     } else if (userRole === 'TEACHER') {
@@ -178,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar permissões
     const userRole = session.user?.role
-    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_MANAGER'])) {
+    if (!hasRequiredRole(userRole, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR'])) {
       return NextResponse.json({ error: 'Sem permissão para criar turmas' }, { 
       status: 403,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -203,8 +204,8 @@ export async function POST(request: NextRequest) {
 
     const classData = validationResult.data
 
-    // Se for SCHOOL_MANAGER, forçar a escola dele
-    if (userRole === 'SCHOOL_MANAGER' && session.user && 'school_id' in session.user && session.user.school_id) {
+    // Se for COORDINATOR, forçar a escola dele
+    if (userRole === 'COORDINATOR' && session.user && 'school_id' in session.user && session.user.school_id) {
       const userSchoolId = (session.user as any).school_id;
       classData.school_id = userSchoolId;
     }

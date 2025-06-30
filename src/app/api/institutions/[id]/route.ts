@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prepareAuthHeaders } from '../../lib/auth-headers';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 import { getInternalApiUrl } from '@/config/env';
-import { createCorsOptionsResponse } from '@/config/cors';
 
 
 // Handler para requisições OPTIONS (preflight)
@@ -16,7 +16,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(getInternalApiUrl(`/institutions/${resolvedParams.id}`), {
+    const resolvedParams = await params;
+    const response = await fetch(getInternalApiUrl(`/api/institutions/${resolvedParams.id}`), {
       method: 'GET',
       headers: prepareAuthHeaders(request),
     });
@@ -38,9 +39,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
 
-    const response = await fetch(getInternalApiUrl(`/institutions/${resolvedParams.id}`), {
+    const response = await fetch(getInternalApiUrl(`/api/institutions/${resolvedParams.id}`), {
       method: 'PUT',
       headers: prepareAuthHeaders(request),
       body: JSON.stringify(body),
@@ -63,7 +65,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(getInternalApiUrl(`/institutions/${resolvedParams.id}`), {
+    const resolvedParams = await params;
+    const response = await fetch(getInternalApiUrl(`/api/institutions/${resolvedParams.id}`), {
       method: 'DELETE',
       headers: prepareAuthHeaders(request),
     });
@@ -78,4 +81,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}

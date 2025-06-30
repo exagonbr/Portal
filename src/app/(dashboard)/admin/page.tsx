@@ -6,7 +6,7 @@ import { Header } from '@/components/layout';
 export default function AdminDashboard() {
   const { isLoading, user } = useAuth({
     required: true,
-    allowedRoles: ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN']
+    allowedRoles: ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']
   });
 
   if (isLoading) {

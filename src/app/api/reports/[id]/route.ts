@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -74,7 +75,7 @@ export async function GET(
     // Verificar permissões
     const userRole = session.user?.role
     const isOwner = report.created_by === session.user?.id
-    const isAdmin = ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
+    const isAdmin = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)
     
     // Verificar se pode visualizar
     const canView = 
@@ -188,7 +189,7 @@ export async function PUT(
     const userRole = session.user?.role
     const canEdit = 
       existingReport.created_by === session.user?.id ||
-      ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
+      ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)
 
     if (!canEdit) {
       return NextResponse.json({ error: 'Sem permissão para editar este relatório' }, { 

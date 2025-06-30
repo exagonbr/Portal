@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se tem permissão para ver status de saúde
-    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'])) {
+    if (!hasRequiredRole(session.user.role, ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'])) {
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { status: 403 }

@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthentication, hasRequiredRole } from '@/lib/auth-utils';
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Função para gerar dados do sistema baseados no horário
 function generateSystemData() {

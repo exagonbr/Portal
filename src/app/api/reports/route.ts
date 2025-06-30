@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -112,7 +113,7 @@ export async function GET(request: NextRequest) {
       if (report.created_by === session.user?.id) return true
       
       // Admins podem ver todos
-      if (['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) return true
+      if (['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)) return true
       
       // Verificar visibilidade
       if (report.visibility === 'PUBLIC') return true
@@ -165,7 +166,7 @@ export async function GET(request: NextRequest) {
     // Adicionar informações extras
     const reportsWithInfo = reports.map(report => {
       const isOwner = report.created_by === session.user?.id
-      const canEdit = isOwner || ['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)
+      const canEdit = isOwner || ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)
       const canDelete = isOwner || userRole === 'SYSTEM_ADMIN'
       
       return {
@@ -261,7 +262,7 @@ export async function POST(request: NextRequest) {
     const userRole = session.user?.role
     
     // Relatórios financeiros apenas para admins
-    if (reportData.type === 'FINANCIAL' && !['SYSTEM_ADMIN', 'INSTITUTION_ADMIN'].includes(userRole)) {
+    if (reportData.type === 'FINANCIAL' && !['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)) {
       return NextResponse.json({ error: 'Sem permissão para gerar relatórios financeiros' }, { 
       status: 403,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

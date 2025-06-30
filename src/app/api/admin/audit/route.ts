@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { UserRole } from '@/types/roles'
 import knex from '@/config/database'
+import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
 
 // Função para criar headers CORS
 function getCorsHeaders(origin?: string) {
