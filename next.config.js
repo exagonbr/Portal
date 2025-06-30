@@ -31,7 +31,7 @@ const nextConfig = {
   },
 
   // Configurações de desenvolvimento
-  reactStrictMode: false, // Desabilitado devido à incompatibilidade do react-quill com findDOMNode
+  reactStrictMode: true, // Habilitado - react-quill agora é compatível com React 18
   productionBrowserSourceMaps: false,
   
   // ESLint
