@@ -4,8 +4,8 @@
   "private": true,
   "uniqueName": "portal-educacional",
   "scripts": {
-    "dev": "npx next-clear-cache . && next dev",
-    "build": "npx next-clear-cache . && node scripts/cache-version.js && next build",
+    "dev": "next dev",
+    "build": "node scripts/cache-version.js && next build",
     "start": "next start",
     "lint": "next lint",
     "fix:webpack": "node scripts/fix-webpack-hot-reload.js",
