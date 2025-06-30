@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { UserRole } from '@prisma/client'
 import { apiClient } from '@/lib/api-client'
 import { pushNotificationService } from '@/services/pushNotificationService'
 import { isAuthenticated, getCurrentToken, validateToken, syncTokenWithApiClient, clearAllTokens } from '@/utils/token-validator'
@@ -71,8 +70,8 @@ export default function SendNotificationPage() {
     }
 
     // Verificar se o usuário tem permissão para enviar notificações
-    const restrictedRoles: UserRole[] = [UserRole.GUARDIAN, UserRole.STUDENT]
-    if (restrictedRoles.includes(user.role as UserRole)) {
+    const restrictedRoles: string[] = ['GUARDIAN', 'STUDENT']
+    if (restrictedRoles.includes(user.role)) {
       router.push('/notifications')
       return
     }
@@ -120,15 +119,15 @@ export default function SendNotificationPage() {
         }
         // Buscar usuários do backend baseado na role do usuário atual
         let roles = ''
-        const userRole = user?.role as UserRole
+        const userRole = user?.role
         
-        if (userRole === UserRole.SYSTEM_ADMIN) {
+        if (userRole === 'SYSTEM_ADMIN') {
           roles = 'INSTITUTION_ADMIN,SCHOOL_MANAGER,TEACHER,STUDENT,GUARDIAN'
-        } else if (userRole === UserRole.INSTITUTION_ADMIN) {
+        } else if (userRole === 'INSTITUTION_MANAGER') {
           roles = 'SCHOOL_MANAGER,TEACHER,STUDENT,GUARDIAN'
-        } else if (userRole === UserRole.SCHOOL_MANAGER) {
+        } else if (userRole === 'COORDINATOR') {
           roles = 'TEACHER,STUDENT,GUARDIAN'
-        } else if (userRole === UserRole.TEACHER) {
+        } else if (userRole === 'TEACHER') {
           roles = 'STUDENT,GUARDIAN'
         }
 
@@ -164,15 +163,15 @@ export default function SendNotificationPage() {
         ]
 
         let filteredUsers: User[] = []
-        const userRole = user?.role as UserRole
+        const userRole = user?.role
         
-        if (userRole === UserRole.SYSTEM_ADMIN) {
+        if (userRole === 'SYSTEM_ADMIN') {
           filteredUsers = mockUsers
-        } else if (userRole === UserRole.INSTITUTION_ADMIN) {
+        } else if (userRole === 'INSTITUTION_MANAGER') {
           filteredUsers = mockUsers.filter(u => ['SCHOOL_MANAGER', 'TEACHER', 'STUDENT', 'GUARDIAN'].includes(u.role))
-        } else if (userRole === UserRole.SCHOOL_MANAGER) {
+        } else if (userRole === 'COORDINATOR') {
           filteredUsers = mockUsers.filter(u => ['TEACHER', 'STUDENT', 'GUARDIAN'].includes(u.role))
-        } else if (userRole === UserRole.TEACHER) {
+        } else if (userRole === 'TEACHER') {
           filteredUsers = mockUsers.filter(u => ['STUDENT', 'GUARDIAN'].includes(u.role))
         }
 
@@ -186,9 +185,9 @@ export default function SendNotificationPage() {
   }, [user])
 
   const getAvailableRoles = () => {
-    const userRole = user?.role as UserRole
+    const userRole = user?.role
     
-    if (userRole === UserRole.SYSTEM_ADMIN) {
+    if (userRole === 'SYSTEM_ADMIN') {
       return [
         { value: 'INSTITUTION_ADMIN', label: 'Administradores Institucionais' },
         { value: 'SCHOOL_MANAGER', label: 'Gestores Escolares' },
@@ -196,20 +195,20 @@ export default function SendNotificationPage() {
         { value: 'STUDENT', label: 'Estudantes' },
         { value: 'GUARDIAN', label: 'Responsáveis' }
       ]
-    } else if (userRole === UserRole.INSTITUTION_ADMIN) {
+    } else if (userRole === 'INSTITUTION_MANAGER') {
       return [
         { value: 'SCHOOL_MANAGER', label: 'Gestores Escolares' },
         { value: 'TEACHER', label: 'Professores' },
         { value: 'STUDENT', label: 'Estudantes' },
         { value: 'GUARDIAN', label: 'Responsáveis' }
       ]
-    } else if (userRole === UserRole.SCHOOL_MANAGER) {
+    } else if (userRole === 'COORDINATOR') {
       return [
         { value: 'TEACHER', label: 'Professores' },
         { value: 'STUDENT', label: 'Estudantes' },
         { value: 'GUARDIAN', label: 'Responsáveis' }
       ]
-    } else if (userRole === UserRole.TEACHER) {
+    } else if (userRole === 'TEACHER') {
       return [
         { value: 'STUDENT', label: 'Estudantes' },
         { value: 'GUARDIAN', label: 'Responsáveis' }
@@ -723,8 +722,8 @@ export default function SendNotificationPage() {
   }
 
   // Verificar se o usuário pode acessar esta página
-  const restrictedRoles: UserRole[] = [UserRole.GUARDIAN, UserRole.STUDENT]
-  if (!user || restrictedRoles.includes(user.role as UserRole)) {
+  const restrictedRoles: string[] = ['GUARDIAN', 'STUDENT']
+  if (!user || restrictedRoles.includes(user.role)) {
     return (
       <div className="container-responsive spacing-y-responsive">
         <div className="text-center">

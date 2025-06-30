@@ -161,7 +161,7 @@ export class GroupController {
     try {
       const { id: groupId } = req.params;
       const { user_id, role = 'member' } = req.body;
-      const addedBy = req.user?.userId || 'system'; // Pegar do middleware de auth
+      const addedBy = (req.user as any)?.userId || 'system'; // Pegar do middleware de auth
       
       const member = await this.groupService.addMemberToGroup(groupId, user_id, addedBy, role);
       
@@ -211,7 +211,7 @@ export class GroupController {
     try {
       const { id: groupId } = req.params;
       const { user_ids } = req.body;
-      const addedBy = req.user?.userId || 'system';
+      const addedBy = (req.user as any)?.userId || 'system';
       
       if (!Array.isArray(user_ids) || user_ids.length === 0) {
         res.status(400).json({

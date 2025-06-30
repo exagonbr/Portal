@@ -715,6 +715,14 @@ export const isTokenExpired = (): boolean => {
   return !SessionManager.isSessionActive();
 };
 
+export const setAuthToken = (token: string): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('auth_token', token);
+    console.log('✅ Token salvo no localStorage');
+  }
+  apiClient.setAuthToken(token);
+};
+
 /**
  * Renovação de sessão simplificada - apenas estende a sessão atual
  */

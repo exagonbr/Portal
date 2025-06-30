@@ -30,7 +30,10 @@ export class User {
   email: string;
 
   @Column()
-  password: string;
+  password?: string;
+
+  @Column({ nullable: true, unique: true })
+  googleId?: string;
 
   @Column()
   name: string;
@@ -116,13 +119,16 @@ export class User {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
-    if (this.password && !this.password.startsWith('$2')) {
+    if (this.password && this.password.length > 0 && !this.password.startsWith('$2')) {
       const salt = await bcrypt.genSalt(12);
       this.password = await bcrypt.hash(this.password, salt);
     }
   }
 
   async comparePassword(password: string): Promise<boolean> {
+    if (!this.password) {
+      return false;
+    }
     return bcrypt.compare(password, this.password);
   }
 

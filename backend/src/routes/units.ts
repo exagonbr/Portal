@@ -52,8 +52,8 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query = query.where('unit.institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query = query.where('unit.institution_id', (req.user as any)?.institutionId);
     }
 
     // Get total count for pagination
@@ -116,8 +116,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
       .where('unit.deleted', false);
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query.where('unit.institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query.where('unit.institution_id', (req.user as any)?.institutionId);
     }
 
     const unit = await query.first();
@@ -178,7 +178,7 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 
     // If user has institution_id, enforce it
-    if (req.user?.institutionId && institution_id !== req.user.institutionId) {
+    if ((req.user as any)?.institutionId && institution_id !== (req.user as any)?.institutionId) {
       return res.status(403).json({ 
         success: false,
         error: 'Cannot create unit for different institution' 
@@ -193,7 +193,7 @@ router.post('/', authMiddleware, async (req, res) => {
       .insert({
         id: nextId,
         name,
-        institution_id: institution_id || req.user?.institutionId,
+        institution_id: institution_id || (req.user as any)?.institutionId,
         deleted: false,
         version: '1',
         date_created: new Date(),
@@ -242,8 +242,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const query = db('unit').where('id', req.params.id).where('deleted', false);
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query.where('institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query.where('institution_id', (req.user as any)?.institutionId);
     }
 
     const updateData: any = {
@@ -306,8 +306,8 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const query = db('unit').where('id', req.params.id).where('deleted', false);
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query.where('institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query.where('institution_id', (req.user as any)?.institutionId);
     }
 
     // Soft delete - marcar como deleted
@@ -377,8 +377,8 @@ router.get('/search', authMiddleware, async (req, res) => {
     }
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query = query.where('unit.institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query = query.where('unit.institution_id', (req.user as any)?.institutionId);
     }
 
     const units = await query.limit(50); // Limit search results

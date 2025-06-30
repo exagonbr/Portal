@@ -31,8 +31,8 @@ interface SMTPConfig {
     user: string;
     pass: string;
   };
-  tls: {
-    rejectUnauthorized: boolean;
+  tls?: {
+    rejectUnauthorized?: boolean;
   };
 }
 
@@ -91,18 +91,25 @@ class EmailService {
   }
 
   private async getEmailConfigFromEnv(): Promise<SMTPConfig> {
-    return {
+    const config: SMTPConfig = {
       host: env.SMTP_HOST || 'localhost',
-      port: parseInt(env.SMTP_PORT || '587'),
-      secure: env.SMTP_SECURE === 'true',
-      auth: env.SMTP_USER && env.SMTP_PASS ? {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASS
-      } : undefined,
-      tls: {
-        rejectUnauthorized: env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false'
-      }
+      port: parseInt(env.SMTP_PORT || '587', 10),
+      secure: (env.SMTP_SECURE || 'false').toLowerCase() === 'true',
+      auth: (env.SMTP_USER && env.SMTP_PASS)
+        ? { user: env.SMTP_USER, pass: env.SMTP_PASS }
+        : undefined,
     };
+
+    // Adicionar tls.rejectUnauthorized apenas se for explicitamente 'false'.
+    // Deixar o nodemailer usar seus padrões para outros casos é mais seguro e
+    // evita conflitos com a negociação STARTTLS.
+    if ((env.SMTP_TLS_REJECT_UNAUTHORIZED || '').toLowerCase() === 'false') {
+      config.tls = {
+        rejectUnauthorized: false,
+      };
+    }
+
+    return config;
   }
 
   private async getEmailConfigFromDatabase(): Promise<SMTPConfig> {
@@ -124,7 +131,7 @@ class EmailService {
 
       console.log('✅ Configurações de email encontradas no banco de dados');
       
-      return {
+      const config: SMTPConfig = {
         host: emailSettings.email_smtp_host,
         port: parseInt(emailSettings.email_smtp_port?.toString() || '587'),
         secure: emailSettings.email_smtp_secure === true || emailSettings.email_smtp_secure === 'true',
@@ -132,10 +139,14 @@ class EmailService {
           user: emailSettings.email_smtp_user,
           pass: emailSettings.email_smtp_password
         } : undefined,
-        tls: {
-          rejectUnauthorized: true
-        }
       };
+
+      // A configuração do banco de dados não tem uma opção para rejectUnauthorized,
+      // então não definimos `tls` para usar o padrão do nodemailer.
+      // Se fosse necessário, uma nova configuração 'email_smtp_reject_unauthorized'
+      // deveria ser adicionada ao SystemSettingsService.
+
+      return config;
     } catch (error) {
       console.error('Erro ao buscar configurações de email do banco:', error);
       return { 
@@ -240,6 +251,26 @@ class EmailService {
       `,
       text: 'Alerta do Sistema - {{type}}: {{message}}'
     });
+
+    // Template de verificação de email
+    this.templates.set('email-verification', {
+      subject: 'Verifique seu endereço de email - Portal Sabercon',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2563eb;">Verificação de Email</h1>
+          <p>Olá <strong>{{name}}</strong>,</p>
+          <p>Obrigado por se registrar. Por favor, clique no botão abaixo para verificar seu endereço de email:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="{{verificationUrl}}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Verificar Email
+            </a>
+          </div>
+          <p>Se você não criou uma conta, nenhuma outra ação é necessária.</p>
+          <p>Atenciosamente,<br>Equipe Portal Sabercon</p>
+        </div>
+      `,
+      text: 'Verifique seu email - Portal Sabercon. Link: {{verificationUrl}}'
+    });
   }
 
   private renderTemplate(templateName: string, data: Record<string, any>): EmailTemplate | null {
@@ -340,6 +371,17 @@ class EmailService {
       data: {
         name: userName,
         resetUrl: `${env.FRONTEND_URL}/reset-password?token=${resetToken}`
+      }
+    });
+  }
+
+  async sendVerificationEmail(userEmail: string, userName: string, verificationToken: string): Promise<boolean> {
+    return this.sendEmail({
+      to: userEmail,
+      template: 'email-verification',
+      data: {
+        name: userName,
+        verificationUrl: `${env.FRONTEND_URL}/verify-email?token=${verificationToken}`
       }
     });
   }

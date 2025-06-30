@@ -45,7 +45,7 @@ router.get('/get', async (req, res) => {
     }
 
     // Log detalhado da requisição de cache
-    logger.info(`Cache request for key: ${key}`, { userId: req.user?.email });
+    logger.info(`Cache request for key: ${key}`, { userId: (req.user as any)?.email });
 
     const redis = getRedisClient();
     const value = await redis.get(key);
@@ -53,7 +53,7 @@ router.get('/get', async (req, res) => {
     if (value) {
       try {
         const jsonValue = JSON.parse(value);
-        logger.info(`Cache hit for key: ${key}`, { userId: req.user?.email });
+        logger.info(`Cache hit for key: ${key}`, { userId: (req.user as any)?.email });
         return res.json({
           success: true,
           data: jsonValue,
@@ -61,7 +61,7 @@ router.get('/get', async (req, res) => {
           from_cache: true
         });
       } catch (e) {
-        logger.info(`Cache hit for key: ${key} (non-JSON value)`, { userId: req.user?.email });
+        logger.info(`Cache hit for key: ${key} (non-JSON value)`, { userId: (req.user as any)?.email });
         return res.json({
           success: true,
           data: value,
@@ -71,11 +71,11 @@ router.get('/get', async (req, res) => {
       }
     } else {
       // Implementação de fallback para chaves específicas
-      logger.warn(`Cache miss for key: ${key}`, { userId: req.user?.email });
+      logger.warn(`Cache miss for key: ${key}`, { userId: (req.user as any)?.email });
       
       // Verificar se a chave está relacionada a roles
       if (key.startsWith('portal_sabercon:roles:')) {
-        logger.info(`Attempting fallback for roles cache: ${key}`, { userId: req.user?.email });
+        logger.info(`Attempting fallback for roles cache: ${key}`, { userId: (req.user as any)?.email });
         
         try {
           // Extrair os parâmetros da chave
@@ -90,7 +90,7 @@ router.get('/get', async (req, res) => {
                 logger.info('Parsed params for roles list:', params);
               } catch (e) {
                 const errorMessage = e instanceof Error ? e.message : String(e);
-                logger.error(`Error parsing role list params: ${errorMessage}`, { userId: req.user?.email });
+                logger.error(`Error parsing role list params: ${errorMessage}`, { userId: (req.user as any)?.email });
               }
             }
             
@@ -100,7 +100,7 @@ router.get('/get', async (req, res) => {
             if (result.success && result.data) {
               // Armazenar no cache para futuras requisições
               await redis.set(key, JSON.stringify(result.data), 'EX', TTL.CACHE);
-              logger.info(`Data fetched from database and stored in cache: ${key}`, { userId: req.user?.email });
+              logger.info(`Data fetched from database and stored in cache: ${key}`, { userId: (req.user as any)?.email });
               
               return res.json({
                 success: true,
@@ -123,7 +123,7 @@ router.get('/get', async (req, res) => {
             if (result.success && result.data) {
               // Armazenar no cache para futuras requisições
               await redis.set(key, JSON.stringify(result.data), 'EX', TTL.CACHE);
-              logger.info(`Active roles fetched from database and stored in cache: ${key}`, { userId: req.user?.email });
+              logger.info(`Active roles fetched from database and stored in cache: ${key}`, { userId: (req.user as any)?.email });
               
               return res.json({
                 success: true,
@@ -139,7 +139,7 @@ router.get('/get', async (req, res) => {
           const errorStack = fallbackError instanceof Error ? fallbackError.stack : undefined;
           
           logger.error(`Fallback error for key ${key}: ${errorMessage}`, {
-            userId: req.user?.email,
+            userId: (req.user as any)?.email,
             stack: errorStack
           });
         }
@@ -157,7 +157,7 @@ router.get('/get', async (req, res) => {
     const errorStack = error instanceof Error ? error.stack : undefined;
     
     logger.error(`Error getting cache value: ${errorMessage}`, {
-      userId: req.user?.email,
+      userId: (req.user as any)?.email,
       stack: errorStack,
       key: req.query.key
     });
@@ -225,7 +225,7 @@ router.post('/set', async (req, res) => {
       }
 
       logger.info(`Cache set for key: ${key}`, { 
-        userId: req.user?.email,
+        userId: (req.user as any)?.email,
         ttl: cacheTTL,
         valueSize: serializedValue.length
       });
@@ -239,7 +239,7 @@ router.post('/set', async (req, res) => {
     } catch (redisError) {
       const errorMessage = redisError instanceof Error ? redisError.message : String(redisError);
       logger.error(`Redis error setting cache: ${errorMessage}`, {
-        userId: req.user?.email,
+        userId: (req.user as any)?.email,
         key,
         stack: redisError instanceof Error ? redisError.stack : undefined
       });
@@ -252,7 +252,7 @@ router.post('/set', async (req, res) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error(`Error setting cache value: ${errorMessage}`, {
-      userId: req.user?.email,
+      userId: (req.user as any)?.email,
       stack: error instanceof Error ? error.stack : undefined
     });
     
@@ -300,7 +300,7 @@ router.post('/delete', async (req, res) => {
       const result = await redis.del(key);
 
       logger.info(`Cache delete for key: ${key}`, { 
-        userId: req.user?.email,
+        userId: (req.user as any)?.email,
         deleted: result > 0
       });
 
@@ -313,7 +313,7 @@ router.post('/delete', async (req, res) => {
     } catch (redisError) {
       const errorMessage = redisError instanceof Error ? redisError.message : String(redisError);
       logger.error(`Redis error deleting cache: ${errorMessage}`, {
-        userId: req.user?.email,
+        userId: (req.user as any)?.email,
         key,
         stack: redisError instanceof Error ? redisError.stack : undefined
       });
@@ -326,7 +326,7 @@ router.post('/delete', async (req, res) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error(`Error deleting cache value: ${errorMessage}`, {
-      userId: req.user?.email,
+      userId: (req.user as any)?.email,
       stack: error instanceof Error ? error.stack : undefined
     });
     
@@ -381,7 +381,7 @@ router.post('/invalidate', async (req, res) => {
       }
 
       logger.info(`Cache invalidate pattern: ${pattern}`, { 
-        userId: req.user?.email,
+        userId: (req.user as any)?.email,
         keysFound: keys.length,
         deletedCount
       });
@@ -396,7 +396,7 @@ router.post('/invalidate', async (req, res) => {
     } catch (redisError) {
       const errorMessage = redisError instanceof Error ? redisError.message : String(redisError);
       logger.error(`Redis error invalidating pattern: ${errorMessage}`, {
-        userId: req.user?.email,
+        userId: (req.user as any)?.email,
         pattern,
         stack: redisError instanceof Error ? redisError.stack : undefined
       });
@@ -409,7 +409,7 @@ router.post('/invalidate', async (req, res) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error(`Error invalidating cache pattern: ${errorMessage}`, {
-      userId: req.user?.email,
+      userId: (req.user as any)?.email,
       stack: error instanceof Error ? error.stack : undefined
     });
     
@@ -458,7 +458,7 @@ router.post('/clear', requireRole(['SYSTEM_ADMIN']), async (req, res) => {
       }
 
       logger.info(`Cache clear with pattern: ${searchPattern}`, { 
-        userId: req.user?.email,
+        userId: (req.user as any)?.email,
         keysFound: keys.length,
         deletedCount
       });
@@ -473,7 +473,7 @@ router.post('/clear', requireRole(['SYSTEM_ADMIN']), async (req, res) => {
     } catch (redisError) {
       const errorMessage = redisError instanceof Error ? redisError.message : String(redisError);
       logger.error(`Redis error clearing cache: ${errorMessage}`, {
-        userId: req.user?.email,
+        userId: (req.user as any)?.email,
         pattern,
         stack: redisError instanceof Error ? redisError.stack : undefined
       });
@@ -486,7 +486,7 @@ router.post('/clear', requireRole(['SYSTEM_ADMIN']), async (req, res) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error(`Error clearing cache: ${errorMessage}`, {
-      userId: req.user?.email,
+      userId: (req.user as any)?.email,
       stack: error instanceof Error ? error.stack : undefined
     });
     

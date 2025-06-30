@@ -156,7 +156,7 @@ router.post('/refresh', OptimizedAuthController.refreshToken);
  *       401:
  *         description: Token inválido ou expirado
  */
-router.get('/profile', optimizedAuthMiddleware, OptimizedAuthController.getProfile);
+router.get('/profile', (req: any, res: any, next: any) => optimizedAuthMiddleware(req as any, res, next), (req: any, res: any) => OptimizedAuthController.getProfile(req, res));
 
 /**
  * @swagger
@@ -174,7 +174,7 @@ router.get('/profile', optimizedAuthMiddleware, OptimizedAuthController.getProfi
  *       401:
  *         description: Token inválido ou expirado
  */
-router.get('/validate', optimizedAuthMiddleware, OptimizedAuthController.validateToken);
+router.get('/validate', (req: any, res: any, next: any) => optimizedAuthMiddleware(req as any, res, next), (req: any, res: any) => OptimizedAuthController.validateToken(req, res));
 
 /**
  * @swagger
@@ -199,7 +199,7 @@ router.get('/validate', optimizedAuthMiddleware, OptimizedAuthController.validat
  *       401:
  *         description: Token inválido ou expirado
  */
-router.get('/permission/:permission', optimizedAuthMiddleware, OptimizedAuthController.hasPermission);
+router.get('/permission/:permission', (req: any, res: any, next: any) => optimizedAuthMiddleware(req as any, res, next), (req: any, res: any) => OptimizedAuthController.hasPermission(req, res));
 
 /**
  * @swagger
@@ -215,7 +215,7 @@ router.get('/permission/:permission', optimizedAuthMiddleware, OptimizedAuthCont
  *       200:
  *         description: Logout realizado com sucesso
  */
-router.post('/logout', optimizedAuthMiddleware, OptimizedAuthController.logout);
+router.post('/logout', (req: any, res: any, next: any) => optimizedAuthMiddleware(req as any, res, next), (req: any, res: any) => OptimizedAuthController.logout(req, res));
 
 /**
  * Rota de teste para debug do login

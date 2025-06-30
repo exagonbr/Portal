@@ -4,11 +4,16 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import { responseTimeMiddleware } from '../middleware/logging';
+import passport from 'passport';
+import { setupPassport } from './passport';
 
 /**
  * Configura todos os middlewares da aplicação
  */
 export function setupMiddlewares(app: express.Application): void {
+  // Passport
+  setupPassport();
+  app.use(passport.initialize());
   // Middlewares de segurança - Simplificado
   app.use(helmet({
     contentSecurityPolicy: false, // Desabilitar CSP que pode causar problemas

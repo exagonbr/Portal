@@ -146,14 +146,14 @@ export const requireRole = (roles: string[]) => {
     }
 
     // SYSTEM_ADMIN tem acesso a TODAS as rotas
-    const userRole = req.user.role?.toLowerCase();
+    const userRole = (req.user as any).role?.toLowerCase();
     if (userRole === 'system_admin') {
       console.log('✅ SYSTEM_ADMIN detectado, permitindo acesso total à rota:', req.path);
       return next();
     }
 
     // Se não há role definido, permitir acesso com warning (compatibilidade)
-    if (!req.user.role) {
+    if (!(req.user as any).role) {
       console.warn('⚠️ Usuário sem role acessando rota protegida:', req.path);
       return next();
     }
@@ -162,7 +162,7 @@ export const requireRole = (roles: string[]) => {
     const allowedRoles = roles.map(role => role.toLowerCase());
     
     if (!allowedRoles.includes(userRole)) {
-      console.warn(`❌ Acesso negado para role ${req.user.role} na rota ${req.path}. Necessário: ${roles.join(', ')}`);
+      console.warn(`❌ Acesso negado para role ${(req.user as any).role} na rota ${req.path}. Necessário: ${roles.join(', ')}`);
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions'
@@ -179,7 +179,7 @@ export const requireInstitution = (
   res: Response,
   next: NextFunction
 ): Response | void => {
-  if (!req.user?.institutionId) {
+  if (!(req.user as any)?.institutionId) {
     return res.status(403).json({
       success: false,
       message: 'Institution access required'
@@ -317,7 +317,7 @@ export const requireRoleSmart = (roles: string[]) => {
         });
       }
 
-      const userRole = req.user.role?.toLowerCase();
+      const userRole = (req.user as any).role?.toLowerCase();
       
       // SYSTEM_ADMIN tem acesso a TODAS as rotas
       if (userRole === 'system_admin') {

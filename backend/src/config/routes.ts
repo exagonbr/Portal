@@ -2,6 +2,7 @@ import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger';
 import apiRoutes from '../routes';
+import authRoutes from '../routes/auth';
 
 /**
  * Configura todas as rotas da aplicação
@@ -29,6 +30,9 @@ export function setupRoutes(app: express.Application): void {
   app.get('/backend', (_, res) => {
     res.redirect('/backend/docs');
   });
+
+  // Auth routes
+  app.use('/auth', authRoutes);
 
   // Mount API Routes
   app.use('/api', apiRoutes);

@@ -8,11 +8,10 @@
 import express from 'express';
 import { query, validationResult } from 'express-validator';
 import { DashboardService } from '../services/DashboardService';
-import { 
+import {
   validateJWTSimple,
   validateJWTSmart,
-  requireRoleSmart,
-  AuthenticatedRequest
+  requireRoleSmart
 } from '../middleware/sessionMiddleware';
 
 const router = express.Router();
@@ -58,9 +57,9 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/system', 
-  validateJWTSimple, // Usar validação ultra-simples para evitar loops
-  async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/system',
+  (req: any, res: any, next: any) => validateJWTSimple(req, res, next), // Usar validação ultra-simples para evitar loops
+  async (req: any, res: express.Response) => {
     try {
       console.log('🔍 Dashboard system acessado por:', req.user?.email);
       
@@ -182,9 +181,9 @@ async function getSimplifiedSystemDashboard() {
  *       200:
  *         description: Dashboard básico retornado
  */
-router.get('/system-safe', 
-  validateJWTSimple,
-  async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/system-safe',
+  (req: any, res: any, next: any) => validateJWTSimple(req, res, next),
+  async (req: any, res: express.Response) => {
     try {
       console.log('🛡️ Dashboard system-safe acessado por:', req.user?.email);
       
@@ -276,7 +275,7 @@ router.get('/system-safe',
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/user', validateJWTSmart, async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/user', (req, res, next) => validateJWTSmart(req as any, res, next), async (req: any, res: express.Response) => {
   try {
     const userId = req.user!.userId;
     const dashboardData = await DashboardService.getUserDashboard(userId);
@@ -329,10 +328,10 @@ router.get('/user', validateJWTSmart, async (req: AuthenticatedRequest, res: exp
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/metrics/realtime', 
-  validateJWTSmart, 
-  requireRoleSmart(['admin', 'SYSTEM_ADMIN']), 
-  async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/metrics/realtime',
+  (req: any, res: any, next: any) => validateJWTSmart(req as any, res, next),
+  (req: any, res: any, next: any) => requireRoleSmart(['admin', 'SYSTEM_ADMIN'])(req as any, res, next),
+  async (req: any, res: express.Response) => {
     try {
       const metrics = await DashboardService.getRealTimeMetrics();
 
@@ -409,14 +408,14 @@ router.get('/metrics/realtime',
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/analytics', 
-  validateJWTSmart, 
-  requireRoleSmart(['admin', 'SYSTEM_ADMIN']),
+router.get('/analytics',
+  (req: any, res: any, next: any) => validateJWTSmart(req as any, res, next),
+  (req: any, res: any, next: any) => requireRoleSmart(['admin', 'SYSTEM_ADMIN'])(req as any, res, next),
   [
     query('type').isIn(['users', 'sessions', 'activity']).withMessage('Tipo deve ser users, sessions ou activity'),
     query('period').optional().isIn(['day', 'week', 'month']).withMessage('Período deve ser day, week ou month')
   ],
-  async (req: AuthenticatedRequest, res: express.Response) => {
+  async (req: any, res: express.Response) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -480,7 +479,7 @@ router.get('/analytics',
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/summary', validateJWTSmart, async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/summary', (req, res, next) => validateJWTSmart(req as any, res, next), async (req: any, res: express.Response) => {
   try {
     const userId = req.user!.userId;
     const userRole = req.user!.role;
@@ -578,7 +577,7 @@ router.get('/summary', validateJWTSmart, async (req: AuthenticatedRequest, res: 
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/notifications', validateJWTSmart, async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/notifications', (req, res, next) => validateJWTSmart(req as any, res, next), async (req: any, res: express.Response) => {
   try {
     // Implementação simulada de notificações
     const notifications = [
@@ -648,10 +647,10 @@ router.get('/notifications', validateJWTSmart, async (req: AuthenticatedRequest,
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/health', 
-  validateJWTSmart, 
-  requireRoleSmart(['admin', 'SYSTEM_ADMIN']), 
-  async (req: AuthenticatedRequest, res: express.Response) => {
+router.get('/health',
+  (req: any, res: any, next: any) => validateJWTSmart(req as any, res, next),
+  (req: any, res: any, next: any) => requireRoleSmart(['admin', 'SYSTEM_ADMIN'])(req as any, res, next),
+  async (req: any, res: express.Response) => {
     try {
       // Verifica saúde dos componentes
       const realTimeMetrics = await DashboardService.getRealTimeMetrics();

@@ -62,7 +62,7 @@ router.get('/generate-test-jwt', async (req, res) => {
 });
 
 // Rota para testar validação JWT
-router.get('/test-jwt-validation', validateJWTSmart, async (req, res) => {
+router.get('/test-jwt-validation', (req, res, next) => validateJWTSmart(req as any, res, next), async (req, res) => {
   try {
     console.log('🧪 [DEBUG] Testando validação JWT...');
     console.log('🔍 [DEBUG] req.user:', req.user);
@@ -87,9 +87,9 @@ router.get('/test-jwt-validation', validateJWTSmart, async (req, res) => {
 });
 
 // Rota para testar validação JWT + Role
-router.get('/test-jwt-and-role', 
-  validateJWTSmart, 
-  requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager']), 
+router.get('/test-jwt-and-role',
+  (req, res, next) => validateJWTSmart(req as any, res, next),
+  (req, res, next) => requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager'])(req as any, res, next),
   async (req, res) => {
     try {
       console.log('🧪 [DEBUG] Testando JWT + Role...');
@@ -101,7 +101,7 @@ router.get('/test-jwt-and-role',
         data: {
           user: req.user,
           allowedRoles: ['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager'],
-          userRole: req.user?.role,
+          userRole: (req.user as any)?.role,
           timestamp: new Date().toISOString(),
           middlewares: ['validateJWTSmart', 'requireRoleSmart']
         }
@@ -118,9 +118,9 @@ router.get('/test-jwt-and-role',
 );
 
 // Rota para simular a mesma validação da rota /api/users original
-router.get('/simulate-users-route', 
-  validateJWTSmart, 
-  requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager']), 
+router.get('/simulate-users-route',
+  (req, res, next) => validateJWTSmart(req as any, res, next),
+  (req, res, next) => requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager'])(req as any, res, next),
   async (req, res) => {
     try {
       console.log('🎭 [DEBUG] Simulando rota /api/users...');
@@ -275,7 +275,7 @@ router.get('/full-diagnosis', async (req, res) => {
 });
 
 // Rota de debug para verificar estrutura da tabela
-router.get('/debug-table', validateJWTSmart, requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager']), async (req, res) => {
+router.get('/debug-table', (req, res, next) => validateJWTSmart(req as any, res, next), (req, res, next) => requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager'])(req as any, res, next), async (req, res) => {
   try {
     console.log('🔍 [DEBUG-TABLE] Verificando estrutura da tabela users...');
     

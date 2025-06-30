@@ -81,7 +81,7 @@ export const dataSourceOptions: DataSourceOptions = {
     TvShowAuthor,
     TvShowGenre
   ],
-  migrations: ['src/migrations/*.ts'],
+  migrations: ['src/database/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],
 };
 

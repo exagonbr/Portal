@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { UserEssentials, Permission } from '@/types/auth';
 import * as authService from '@/services/auth';
 import { getDashboardPath } from '@/utils/roleRedirect';
+import { jwtDecode } from 'jwt-decode';
 
 interface AuthContextType {
   user: UserEssentials | null;
@@ -12,6 +13,7 @@ interface AuthContextType {
   error: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  handleGoogleLogin: (token: string) => Promise<void>;
   register: (name: string, email: string, password: string, type: 'student' | 'teacher') => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -284,6 +286,41 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
   }, [safeRedirect]);
 
   /**
+   * Login com Google
+   */
+  const handleGoogleLogin = useCallback(async (token: string) => {
+    try {
+      console.log('🔐 AuthContext: Iniciando login com Google');
+      setLoading(true);
+      setError(null);
+
+      // 1. Salvar o token
+      authService.setAuthToken(token);
+
+      // 2. Decodificar o token
+      const decodedUser = jwtDecode<UserEssentials>(token);
+
+      // 3. Atualizar o estado do usuário
+      setUser(decodedUser);
+      setError(null);
+
+      // 4. Redirecionar
+      const normalizedRole = decodedUser.role?.toLowerCase();
+      const dashboardPath = getDashboardPath(normalizedRole);
+      safeRedirect(dashboardPath || '/dashboard/student');
+
+    } catch (err: any) {
+      const errorMessage = err.message || 'Erro ao fazer login com Google';
+      console.error('❌ Erro no login com Google:', errorMessage);
+      setError(errorMessage);
+      await logout(); // Limpar tudo em caso de erro
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [safeRedirect]);
+
+  /**
    * Logout do usuário - Limpeza completa melhorada
    */
   const logout = useCallback(async () => {
@@ -536,6 +573,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
     error,
     isAuthenticated,
     login,
+    handleGoogleLogin,
     register,
     logout,
     refreshUser,

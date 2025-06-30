@@ -61,7 +61,7 @@ router.get('/stats-test', async (req, res) => {
  *       403:
  *         description: Forbidden
  */
-router.get('/stats', validateTokenUltraSimple, async (req, res) => {
+router.get('/stats', (req, res, next) => validateTokenUltraSimple(req as any, res, next), async (req, res) => {
   const startTime = Date.now();
   const timeoutMs = 45000; // 45 segundos de timeout
   
@@ -339,7 +339,7 @@ router.get('/', validateJWTSmart, requireRoleSmart(['admin', 'SYSTEM_ADMIN', 'IN
  */
 router.get('/me', validateJWTSmart, async (req, res) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req.user as any)?.userId;
     
     if (!userId) {
       return res.status(401).json({
@@ -403,7 +403,7 @@ router.get('/me', validateJWTSmart, async (req, res) => {
  */
 router.put('/me', validateJWTSmart, async (req, res) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req.user as any)?.userId;
     
     if (!userId) {
       return res.status(401).json({
@@ -811,7 +811,7 @@ router.delete('/:id', authMiddleware, requireRole(['admin', 'SYSTEM_ADMIN']), as
     }
 
     // Não permitir que o admin delete a si mesmo
-    if (req.user?.userId === id) {
+    if ((req.user as any)?.userId === id) {
       return res.status(400).json({
         success: false,
         message: 'Não é possível deletar seu próprio usuário'

@@ -3,7 +3,7 @@ import morgan from 'morgan';
 
 // Custom token for user ID
 morgan.token('user-id', (req: Request) => {
-  return req.user?.email || 'anonymous';
+  return (req.user as any)?.email || 'anonymous';
 });
 
 // Custom token for response time in a more readable format
@@ -58,7 +58,7 @@ export const slowRequestLogger = (threshold: number = 1000) => {
     res.on('finish', () => {
       const duration = Date.now() - start;
       if (duration > threshold) {
-        console.warn(`🐌 Slow request detected: ${req.method} ${req.originalUrl} took ${duration}ms - User: ${req.user?.userId || 'anonymous'}`);
+        console.warn(`🐌 Slow request detected: ${req.method} ${req.originalUrl} took ${duration}ms - User: ${(req.user as any)?.userId || 'anonymous'}`);
       }
     });
     
@@ -73,7 +73,7 @@ export const errorLogger = (err: any, req: Request, res: Response, next: NextFun
     method: req.method,
     url: req.originalUrl,
     userAgent: req.get('User-Agent'),
-    email: req.user?.email || 'anonymous',
+    email: (req.user as any)?.email || 'anonymous',
     ip: req.ip,
     error: {
       message: err.message,
@@ -102,7 +102,7 @@ export const duplicateRequestLogger = () => {
   }, 300000);
   
   return (req: Request, res: Response, next: NextFunction) => {
-    const key = `${req.method}:${req.originalUrl}:${req.user?.userId || req.ip}`;
+    const key = `${req.method}:${req.originalUrl}:${(req.user as any)?.userId || req.ip}`;
     const now = Date.now();
     const existing = requestCounts.get(key);
     

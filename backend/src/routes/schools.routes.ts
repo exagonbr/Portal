@@ -16,8 +16,8 @@ router.get('/', authMiddleware, async (req, res) => {
       .orderBy('name');
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query.where('institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query.where('institution_id', (req.user as any)?.institutionId);
     }
 
     const schools = await query;
@@ -53,8 +53,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
     const query = db('schools').where({ id: req.params.id });
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query.where('institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query.where('institution_id', (req.user as any)?.institutionId);
     }
 
     const school = await query.first();
@@ -101,7 +101,7 @@ router.post('/', authMiddleware, async (req, res) => {
     } = req.body;
 
     // If user has institution_id, enforce it
-    if (req.user?.institutionId && institution_id !== req.user.institutionId) {
+    if ((req.user as any)?.institutionId && institution_id !== (req.user as any)?.institutionId) {
       return res.status(403).json({ error: 'Cannot create school for different institution' });
     }
 
@@ -117,7 +117,7 @@ router.post('/', authMiddleware, async (req, res) => {
         zip_code,
         phone,
         email,
-        institution_id: institution_id || req.user?.institutionId,
+        institution_id: institution_id || (req.user as any)?.institutionId,
         is_active: true
       })
       .returning('*');
@@ -160,8 +160,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const query = db('schools').where({ id: req.params.id });
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query.where('institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query.where('institution_id', (req.user as any)?.institutionId);
     }
 
     const [school] = await query
@@ -212,8 +212,8 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     const query = db('schools').where({ id: req.params.id });
 
     // Filter by institution if user has institution_id
-    if (req.user?.institutionId) {
-      query.where('institution_id', req.user.institutionId);
+    if ((req.user as any)?.institutionId) {
+      query.where('institution_id', (req.user as any)?.institutionId);
     }
 
     const deleted = await query.delete();
