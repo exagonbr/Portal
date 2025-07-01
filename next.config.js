@@ -57,6 +57,11 @@ const nextConfig = {
     ],
     // Melhorar performance de compilação
     webpackBuildWorker: true,
+    // Aumentar timeout para processamento de erros
+    serverComponentsExternalPackages: ['epubjs'],
+    // Configuração para melhorar o handling de erros
+    workerThreads: false,
+    cpus: 1,
   },
 
   // Pacotes externos para componentes do servidor
