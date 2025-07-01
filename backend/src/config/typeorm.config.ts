@@ -1,6 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 import { User } from '../entities/User';
+import { Users } from '../entities/Users';
 import { Role } from '../entities/Role';
 import { Institution } from '../entities/Institution';
 import { School } from '../entities/School';
@@ -50,6 +51,7 @@ export const dataSourceOptions: DataSourceOptions = {
   logging: environment === 'development',
   entities: [
     User,
+    Users,
     Role,
     Institution,
     School,

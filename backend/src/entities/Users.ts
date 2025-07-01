@@ -12,7 +12,7 @@ import {
   Index
 } from 'typeorm';
 import bcrypt from 'bcryptjs';
-import { Role } from './Role';
+import { Role, UserRole } from './Role';
 import { Institution } from './Institution';
 import { UserClass } from './UserClass';
 import { SchoolManager } from './SchoolManager';
@@ -188,5 +188,37 @@ export class Users {
   toJSON() {
     const { password, ...user } = this;
     return user;
+  }
+
+  // Método para determinar a role baseada nas flags booleanas
+  public determineRoleFromFlags(): UserRole {
+    // Prioridade: SYSTEM_ADMIN > INSTITUTION_MANAGER > ACADEMIC_COORDINATOR > TEACHER > STUDENT > GUARDIAN
+    if (this.isAdmin) {
+      return UserRole.SYSTEM_ADMIN;
+    }
+    if (this.isManager || this.isInstitutionManager) {
+      return UserRole.INSTITUTION_MANAGER;
+    }
+    if (this.isCoordinator) {
+      return UserRole.ACADEMIC_COORDINATOR;
+    }
+    if (this.isTeacher) {
+      return UserRole.TEACHER;
+    }
+    if (this.isStudent) {
+      return UserRole.STUDENT;
+    }
+    if (this.isGuardian) {
+      return UserRole.GUARDIAN;
+    }
+    
+    // Default para STUDENT se nenhuma flag estiver definida
+    return UserRole.STUDENT;
+  }
+
+  // Método para verificar se o usuário tem uma role válida ou pode ter uma atribuída
+  public hasValidRole(): boolean {
+    return !!(this.role || this.isAdmin || this.isManager || this.isInstitutionManager || 
+              this.isCoordinator || this.isTeacher || this.isStudent || this.isGuardian);
   }
 }
