@@ -51,6 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('Logging out: removing token and user');
     removeToken();
     setUser(null);
+    apiClient.defaults.headers.common['Authorization'] = '';
     apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
     router.push('/login');
     toast.success('Você foi desconectado.');
@@ -68,6 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (token) {
       const decodedPayload = decodeToken(token);
       if (decodedPayload && decodedPayload.exp * 1000 > Date.now()) {
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setUser({
           id: decodedPayload.id,
           name: decodedPayload.name,
@@ -96,6 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       console.log('Login successful, storing token:', accessToken);
       setToken(accessToken);
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
       const decodedPayload = decodeToken(accessToken);
       if (decodedPayload) {
         setUser({
