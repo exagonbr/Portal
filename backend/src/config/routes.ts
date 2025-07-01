@@ -5,6 +5,7 @@ import apiRoutes from '../routes';
 import authRoutes from '../routes/auth';
 import publicRoutes from '../routes/public';
 import optimizedAuthRouter from '../routes/optimizedAuth.routes';
+import sessionsRouter from '../routes/sessions';
 import { requireAuth } from '../middleware/requireAuth';
 
 /**
@@ -34,16 +35,21 @@ export function setupRoutes(app: express.Application): void {
     res.redirect('/backend/docs');
   });
 
+  // 🔓 ROTAS PÚBLICAS (SEM AUTENTICAÇÃO NECESSÁRIA)
   // Auth routes (login, refresh, logout - no auth required)
   app.use('/api/auth', authRoutes);
   app.use('/api/auth/optimized', optimizedAuthRouter);
-
-  // Public routes (no auth required) - MUST be before protected routes
+  
+  // Public routes (no auth required)
   app.use('/api/public', publicRoutes);
+  
+  // Sessions routes (login não precisa de auth, mas logout sim - configurado internamente)
+  app.use('/api/sessions', sessionsRouter);
 
-  // 🔐 TODAS AS ROTAS PROTEGIDAS COM REQUIREAUTH
-  // Aplicar requireAuth em todas as rotas da API
-  app.use('/api', requireAuth, apiRoutes);
+  // 🔐 ROTAS PROTEGIDAS (COM AUTENTICAÇÃO OBRIGATÓRIA)
+  // Aplicar requireAuth apenas nas rotas que realmente precisam
+  // Nota: As rotas individuais devem aplicar requireAuth conforme necessário
+  app.use('/api', apiRoutes);
 
   // Mount direct routes for compatibility (without /api prefix)
   // These routes will have optional authentication for public endpoints
