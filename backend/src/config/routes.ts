@@ -34,12 +34,12 @@ export function setupRoutes(app: express.Application): void {
     res.redirect('/backend/docs');
   });
 
-  // Public routes (no auth required)
-  app.use('/api', publicRoutes);
-
   // Auth routes (login, refresh, logout - no auth required)
   app.use('/api/auth', authRoutes);
   app.use('/api/auth/optimized', optimizedAuthRouter);
+
+  // Public routes (no auth required) - MUST be before protected routes
+  app.use('/api/public', publicRoutes);
 
   // 🔐 TODAS AS ROTAS PROTEGIDAS COM REQUIREAUTH
   // Aplicar requireAuth em todas as rotas da API
