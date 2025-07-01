@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
+import { JWT_CONFIG } from '../config/jwt';
 
 // Helper function to check if a string is valid base64
 function isValidBase64(str: string): boolean {
@@ -94,8 +95,8 @@ export async function validateJWTToken(token: string) {
     }
   }
 
-  // Use only the primary JWT secret - no multiple attempts to avoid loops
-  const jwtSecret = process.env.JWT_SECRET || 'ExagonTech';
+  // Use only the primary JWT secret from JWT_CONFIG - no multiple attempts to avoid loops
+  const jwtSecret = JWT_CONFIG.JWT_SECRET;
 
   try {
     console.log('🔑 Tentando validação JWT com secret principal...');

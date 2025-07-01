@@ -1,45 +1,53 @@
 /**
- * Configuração JWT Centralizada - HARDCODED para Produção
- * Secrets consistentes entre frontend e backend
+ * Configuração JWT Centralizada - ÚNICA FONTE DE VERDADE
+ * Compartilhada entre Frontend e Backend
  */
 
-// JWT Secrets hardcoded - MESMOS para frontend e backend
 export const JWT_CONFIG = {
-  // Secret principal para assinatura de tokens
+  // Secret único para toda aplicação
   JWT_SECRET: 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789',
   
-  // Secret para NextAuth (compatibilidade)
-  NEXTAUTH_SECRET: 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789',
+  // Tempos de expiração
+  TOKEN_EXPIRY: '1h',        // Access token: 1 hora
+  REFRESH_TOKEN_EXPIRY: '7d', // Refresh token: 7 dias
   
-  // Configurações de token
-  TOKEN_EXPIRY: '7d', // 7 dias
-  REFRESH_TOKEN_EXPIRY: '30d', // 30 dias
-  
-  // Algoritmo de assinatura
+  // Algoritmo padrão
   ALGORITHM: 'HS256' as const,
   
   // Issuer e audience
   ISSUER: 'portal.sabercon.com.br',
   AUDIENCE: 'portal.sabercon.com.br',
-  
-  // Headers padrão
-  HEADERS: {
-    typ: 'JWT',
-    alg: 'HS256'
-  }
 } as const;
 
-// Função para validar se o secret está correto
-export const validateJwtSecret = (secret?: string): boolean => {
-  return secret === JWT_CONFIG.JWT_SECRET;
-};
+// Interface para payload do Access Token
+export interface AccessTokenPayload {
+  userId: string;
+  email: string;
+  name: string;
+  role: string;
+  permissions: string[];
+  institutionId?: string;
+  sessionId: string;
+  type: 'access';
+  iat?: number;
+  exp?: number;
+}
 
-// Função para obter o secret (sempre retorna o hardcoded)
+// Interface para payload do Refresh Token
+export interface RefreshTokenPayload {
+  userId: string;
+  sessionId: string;
+  type: 'refresh';
+  iat?: number;
+  exp?: number;
+}
+
+// Função helper para obter o secret
 export const getJwtSecret = (): string => {
   return JWT_CONFIG.JWT_SECRET;
 };
 
-// Função para obter configurações completas do JWT
+// Função helper para obter configurações
 export const getJwtConfig = () => {
   return {
     secret: JWT_CONFIG.JWT_SECRET,
@@ -49,14 +57,5 @@ export const getJwtConfig = () => {
     audience: JWT_CONFIG.AUDIENCE
   };
 };
-
-// Log de inicialização (apenas em desenvolvimento)
-if (typeof console !== 'undefined' && process.env.NODE_ENV === 'development') {
-  console.log('🔐 [JWT-CONFIG] Configuração JWT inicializada:');
-  console.log(`   Secret Length: ${JWT_CONFIG.JWT_SECRET.length} chars`);
-  console.log(`   Token Expiry: ${JWT_CONFIG.TOKEN_EXPIRY}`);
-  console.log(`   Algorithm: ${JWT_CONFIG.ALGORITHM}`);
-  console.log(`   Issuer: ${JWT_CONFIG.ISSUER}`);
-}
 
 export default JWT_CONFIG;

@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { activityTracker } from '@/services/activityTrackingService'
 import { CreateActivityData, ActivityType } from '@/types/activity'
 import { z } from 'zod'
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { validateJWTToken } from '@/lib/auth-utils'
 
 // Função para criar headers CORS
 function getCorsHeaders(origin?: string) {
@@ -52,11 +51,21 @@ export async function OPTIONS(request: NextRequest) {
   return createCorsOptionsResponse(origin);
 }
 
+async function authenticate(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  const token = authHeader.substring(7).trim();
+  const session = await validateJWTToken(token);
+  return session;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verificar autenticação
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
+    const session = await authenticate(request);
+    if (!session) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
@@ -129,8 +138,8 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Verificar autenticação
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
+    const session = await authenticate(request);
+    if (!session) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
@@ -181,7 +190,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.log('❌ Erro ao obter atividades:', error)
-    
+
     return NextResponse.json(
       { 
         success: false, 
@@ -190,4 +199,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

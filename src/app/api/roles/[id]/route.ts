@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
 import { mockRoles, findRoleById, findRoleByName } from '../mockDatabase'
 import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors'
+import { validateJWTToken } from '@/lib/auth-utils'
 
 // Funções CORS
 function getCorsHeaders(origin?: string) {
@@ -30,21 +29,29 @@ const updateRoleSchema = z.object({
   active: z.boolean().optional()
 })
 
-// GET - Obter role por ID
-
 // Handler para requisições OPTIONS (preflight)
 export async function OPTIONS(request: NextRequest) {
   const origin = request.headers.get('origin') || undefined;
   return createCorsOptionsResponse(origin);
 }
 
+async function authenticate(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  const token = authHeader.substring(7).trim();
+  const session = await validateJWTToken(token);
+  return session;
+}
+
+// GET - Obter role por ID
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await authenticate(request);
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
@@ -53,7 +60,7 @@ export async function GET(
     }
 
     const resolvedParams = await params
-    const id = resolvedParams.id
+    const roleId = resolvedParams.id
     const role = findRoleById(roleId)
 
     if (!role) {
@@ -71,7 +78,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.log(`Erro ao buscar role ${resolvedParams.id}:`, error)
+    console.log(`Erro ao buscar role ${await params.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -85,8 +92,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await authenticate(request);
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
@@ -103,7 +109,7 @@ export async function PUT(
     }
 
     const resolvedParams = await params
-    const id = resolvedParams.id
+    const roleId = resolvedParams.id
     const existingRole = findRoleById(roleId)
 
     if (!existingRole) {
@@ -161,7 +167,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.log(`Erro ao atualizar role ${resolvedParams.id}:`, error)
+    console.log(`Erro ao atualizar role ${await params.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -175,8 +181,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await authenticate(request);
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
@@ -193,7 +198,7 @@ export async function DELETE(
     }
 
     const resolvedParams = await params
-    const id = resolvedParams.id
+    const roleId = resolvedParams.id
     const existingRole = findRoleById(roleId)
 
     if (!existingRole) {
@@ -222,7 +227,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.log(`Erro ao deletar role ${resolvedParams.id}:`, error)
+    console.log(`Erro ao deletar role ${await params.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

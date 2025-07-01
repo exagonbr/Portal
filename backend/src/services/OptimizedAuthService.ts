@@ -3,10 +3,7 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../database/connection';
 import { generateSlug } from '../utils/slug';
-import { getJwtSecret, JWT_CONFIG } from '../config/jwt';
-
-const JWT_SECRET = getJwtSecret();
-const REFRESH_SECRET = getJwtSecret(); // Usar o mesmo secret para consistência
+import { JWT_CONFIG, AccessTokenPayload, RefreshTokenPayload } from '../config/jwt';
 
 interface User {
   id: string;
@@ -38,32 +35,7 @@ interface AuthResponse {
   message: string;
 }
 
-interface AccessTokenPayload {
-  userId: string;
-  id: string;
-  uuid: string;
-  email: string;
-  name: string;
-  role: string;
-  role_id: string;
-  role_name: string;
-  role_slug: string;
-  permissions: string[];
-  institutionId: string;
-  institutionName: string;
-  sessionId: string;
-  type: 'access';
-  iat: number;
-  exp: number;
-}
 
-interface RefreshTokenPayload {
-  userId: string;
-  sessionId: string;
-  type: 'refresh';
-  iat: number;
-  exp: number;
-}
 
 export class OptimizedAuthService {
   private static readonly SALT_ROUNDS = 12;
@@ -137,27 +109,13 @@ export class OptimizedAuthService {
       // Gerar sessionId único
       const sessionId = uuidv4();
 
-      // Gerar tokens JWT padrão
-      const accessToken = this.generateAccessToken({
-        userId: user.id,
-        id: user.id,
-        uuid: user.uuid,
-        email: user.email,
-        name: user.name,
-        role: roleName.toUpperCase(),
-        role_id: user.role_id,
-        role_name: roleName.toUpperCase(),
-        role_slug: roleSlug,
-        permissions: permissions,
-        institutionId: user.institution_id,
-        institutionName: user.institution_name,
-        sessionId
-      });
+      // Adicionar role e permissions ao objeto user
+      user.role_name = roleName.toUpperCase();
+      user.permissions = permissions;
 
-      const refreshToken = this.generateRefreshToken({
-        userId: user.id,
-        sessionId
-      });
+      // Gerar tokens JWT padrão
+      const accessToken = this.generateAccessToken(user, sessionId);
+      const refreshToken = this.generateRefreshToken(user.id, sessionId);
 
       // Preparar resposta do usuário
       const userResponse: UserWithRole = {
@@ -299,49 +257,41 @@ export class OptimizedAuthService {
   /**
    * Gerar Access Token JWT padrão
    */
-  private static generateAccessToken(payload: {
-    userId: string;
-    id: string;
-    uuid: string;
-    email: string;
-    name: string;
-    role: string;
-    role_id: string;
-    role_name: string;
-    role_slug: string;
-    permissions: string[];
-    institutionId: string;
-    institutionName: string;
-    sessionId: string;
-  }): string {
-    const tokenPayload = {
-      ...payload,
-      type: 'access',
-      iat: Math.floor(Date.now() / 1000)
+  private static generateAccessToken(user: any, sessionId: string): string {
+    const tokenPayload: Omit<AccessTokenPayload, 'iat' | 'exp'> = {
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role_name || 'STUDENT',
+      permissions: user.permissions || [],
+      institutionId: user.institution_id,
+      sessionId,
+      type: 'access'
     };
 
-    return jwt.sign(tokenPayload, JWT_SECRET, {
+    return jwt.sign(tokenPayload, JWT_CONFIG.JWT_SECRET, {
       expiresIn: JWT_CONFIG.TOKEN_EXPIRY,
-      algorithm: JWT_CONFIG.ALGORITHM
+      algorithm: JWT_CONFIG.ALGORITHM,
+      issuer: JWT_CONFIG.ISSUER,
+      audience: JWT_CONFIG.AUDIENCE
     });
   }
 
   /**
    * Gerar Refresh Token JWT padrão
    */
-  private static generateRefreshToken(payload: {
-    userId: string;
-    sessionId: string;
-  }): string {
-    const tokenPayload = {
-      ...payload,
-      type: 'refresh',
-      iat: Math.floor(Date.now() / 1000)
+  private static generateRefreshToken(userId: string, sessionId: string): string {
+    const tokenPayload: Omit<RefreshTokenPayload, 'iat' | 'exp'> = {
+      userId,
+      sessionId,
+      type: 'refresh'
     };
 
-    return jwt.sign(tokenPayload, REFRESH_SECRET, {
+    return jwt.sign(tokenPayload, JWT_CONFIG.JWT_SECRET, {
       expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRY,
-      algorithm: JWT_CONFIG.ALGORITHM
+      algorithm: JWT_CONFIG.ALGORITHM,
+      issuer: JWT_CONFIG.ISSUER,
+      audience: JWT_CONFIG.AUDIENCE
     });
   }
 
@@ -350,7 +300,11 @@ export class OptimizedAuthService {
    */
   static async validateAccessToken(token: string): Promise<AccessTokenPayload | null> {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as AccessTokenPayload;
+      const decoded = jwt.verify(token, JWT_CONFIG.JWT_SECRET, {
+        algorithms: [JWT_CONFIG.ALGORITHM],
+        issuer: JWT_CONFIG.ISSUER,
+        audience: JWT_CONFIG.AUDIENCE
+      }) as AccessTokenPayload;
       
       if (decoded.type !== 'access') {
         throw new Error('Token type inválido');
@@ -377,7 +331,11 @@ export class OptimizedAuthService {
    */
   static async validateRefreshToken(token: string): Promise<RefreshTokenPayload | null> {
     try {
-      const decoded = jwt.verify(token, REFRESH_SECRET) as RefreshTokenPayload;
+      const decoded = jwt.verify(token, JWT_CONFIG.JWT_SECRET, {
+        algorithms: [JWT_CONFIG.ALGORITHM],
+        issuer: JWT_CONFIG.ISSUER,
+        audience: JWT_CONFIG.AUDIENCE
+      }) as RefreshTokenPayload;
       
       if (decoded.type !== 'refresh') {
         throw new Error('Token type inválido');

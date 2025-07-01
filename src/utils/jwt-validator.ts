@@ -4,6 +4,7 @@
  */
 
 import jwt from 'jsonwebtoken';
+import { JWT_CONFIG } from '../config/jwt';
 
 export interface JWTValidationResult {
   success: boolean;
@@ -13,7 +14,7 @@ export interface JWTValidationResult {
 }
 
 /**
- * Valida JWT usando apenas o secret principal (evita loops)
+ * Valida JWT usando apenas o secret principal do JWT_CONFIG (evita loops)
  */
 export function validateJWTWithMultipleSecrets(token: string): JWTValidationResult {
   console.log('🔑 [JWT-VALIDATOR] Iniciando validação JWT simplificada...');
@@ -34,8 +35,8 @@ export function validateJWTWithMultipleSecrets(token: string): JWTValidationResu
     };
   }
 
-  // Usar apenas o secret principal para evitar loops
-  const secret = process.env.JWT_SECRET || 'ExagonTech';
+  // Usar o secret principal do JWT_CONFIG para evitar loops
+  const secret = JWT_CONFIG.JWT_SECRET;
   
   try {
     console.log(`🔑 [JWT-VALIDATOR] Tentando secret: ${secret.substring(0, 5)}...`);

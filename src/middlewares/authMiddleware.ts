@@ -1,4 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { JWT_CONFIG } from '../config/jwt';
+
+// Extend Express Request interface to include user property
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: {
+      userId?: string;
+      email?: string;
+      role?: string;
+      permissions?: string[];
+    };
+  }
+}
 
 export const authMiddleware = (
   req: Request,
@@ -16,16 +30,22 @@ export const authMiddleware = (
       });
     }
 
-    // For now, we'll do a basic validation
-    // In a real implementation, you would validate the JWT token here
-    // and extract user information from it
-    
-    // Mock user data - in production this would come from token validation
-    // Using the AuthTokenPayload structure from backend
+    // Validate JWT token using centralized JWT_CONFIG
+    const decoded = jwt.verify(token, JWT_CONFIG.JWT_SECRET) as any;
+
+    if (!decoded || (typeof decoded !== 'object')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Token inválido'
+      });
+    }
+
+    // Attach user info from token payload to request object
     req.user = {
-      userId: 'user-id',
-      email: 'user@example.com',
-      role: 'user'
+      userId: decoded.userId || decoded.sub,
+      email: decoded.email,
+      role: decoded.role,
+      permissions: decoded.permissions || []
     };
 
     next();
