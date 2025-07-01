@@ -281,8 +281,8 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 overflow-hidden">
-            <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 p-4 sm:p-6 lg:p-8">
+          <div className="flex-1">
+            <div className="p-4 sm:p-6 lg:p-8">
               {viewMode === 'grid' ? (
                 // Grid View
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
@@ -427,8 +427,8 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
 
         {/* Modal de Detalhes Completos */}
         {showFullDetails && selectedCert && (
-          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-70 p-2 sm:p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[95vw] sm:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[95vh] overflow-hidden flex flex-col">
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-70 p-2 sm:p-4"  style={{ width: '800px', height: 'auto' }}>
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[95vw] sm:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[95vh] flex flex-col">
               {/* Header do Modal de Detalhes */}
               <div className="flex-shrink-0 bg-gradient-to-r from-indigo-600 via-blue-700 to-purple-800 text-white p-4 sm:p-6">
                 <div className="flex items-center justify-between">
@@ -458,7 +458,7 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 <div className="space-y-6 sm:space-y-8">
                   {/* Banner Principal */}
-                  <div className="relative bg-gradient-to-br from-indigo-600 via-blue-700 to-purple-800 p-6 sm:p-8 lg:p-12 rounded-3xl shadow-2xl border-4 border-white overflow-hidden">
+                  <div className="relative bg-gradient-to-br from-indigo-600 via-blue-700 to-purple-800 p-6 sm:p-8 lg:p-12 rounded-3xl shadow-2xl border-4 border-white">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20"></div>
                     <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
                     <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
@@ -636,7 +636,7 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-1 xs:p-2 sm:p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-[98vw] xs:max-w-[95vw] sm:max-w-2xl w-full max-h-[98vh] xs:max-h-[95vh] sm:max-h-[90vh] overflow-hidden mx-1 xs:mx-2 sm:mx-0">
+      <div className="bg-white rounded-lg shadow-xl max-w-[98vw] xs:max-w-[95vw] sm:max-w-2xl w-full max-h-[98vh] xs:max-h-[95vh] sm:max-h-[90vh]  mx-1 xs:mx-2 sm:mx-0">
         {/* Header */}
         <div className="flex items-center justify-between p-3 xs:p-4 sm:p-6 border-b">
           <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-gray-900 truncate">
