@@ -135,3 +135,16 @@ export const useAuthSafe = () => {
   }
   return context;
 };
+
+/**
+ * Hook para usar o contexto de autenticação
+ * 
+ * Alias para useAuthSafe para manter compatibilidade com componentes que importam useAuth
+ */
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
