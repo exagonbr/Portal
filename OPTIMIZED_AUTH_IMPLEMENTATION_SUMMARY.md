@@ -175,12 +175,12 @@ node scripts/test-optimized-auth.js
 ### 2. Teste manual com curl
 ```bash
 # Login
-curl -X POST http://localhost:3001/api/auth/optimized/login \
+curl -X POST https://portal.sabercon.com.br/api/auth/optimized/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@exemplo.com","password":"senha123"}'
 
 # Validar token
-curl -X GET http://localhost:3001/api/auth/optimized/validate \
+curl -X GET https://portal.sabercon.com.br/api/auth/optimized/validate \
   -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 

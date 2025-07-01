@@ -50,7 +50,7 @@ interface Certificate {
 
 ### Backend (Node.js/Express)
 
-Base URL: `http://localhost:3001/api/certificates`
+Base URL: `https://portal.sabercon.com.br/api/certificates`
 
 #### GET /api/certificates
 Listar certificados com filtros e paginação.

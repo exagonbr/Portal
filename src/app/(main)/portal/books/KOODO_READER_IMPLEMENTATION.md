@@ -351,7 +351,7 @@ const updatedSidebarItems = useMemo(() => {
 
 ### 📝 **Para Testar:**
 
-1. **Acesse**: `http://localhost:3000/portal/books`
+1. **Acesse**: `https://portal.sabercon.com.br/portal/books`
 2. **Explore sidebar**: Clique em cada seção
 3. **Teste visualizações**: Grid, Lista, Capas, Tabela
 4. **Use filtros**: Busca, categorias, formatos

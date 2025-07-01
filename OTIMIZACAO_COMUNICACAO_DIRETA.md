@@ -68,7 +68,7 @@ const getBaseUrls = () => {
       API_BASE_URL: 'https://portal.sabercon.com.br/api',
       
       // Servidor (SSR): usa URL interna direta
-      INTERNAL_API_URL: 'http://localhost:3001/api'
+      INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
     };
   }
 };

@@ -79,7 +79,7 @@ Todas as configurações agora estão organizadas em seções no `.env`:
 # ===========================================
 # NEXT.JS / FRONTEND
 # ===========================================
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://portal.sabercon.com.br
 NEXTAUTH_SECRET=ExagonTech
 
 # ===========================================

@@ -72,8 +72,8 @@ async function runTests() {
   console.log('2. 🌍 Testando diferentes origens na rota AWS...');
   const origins = [
     'https://portal.sabercon.com.br',
-    'http://localhost:3000',
-    'https://localhost:3000',
+    'https://portal.sabercon.com.br',
+    'https://portal.sabercon.com.br',
     'https://example.com'
   ];
 

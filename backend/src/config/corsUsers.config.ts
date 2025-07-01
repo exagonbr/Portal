@@ -17,8 +17,8 @@ export interface CorsUsersConfig {
 export const corsUsersConfig: CorsUsersConfig = {
   // Origens permitidas para APIs gerais de usuários
   allowedOrigins: [
-    'http://localhost:3000',
-    'http://localhost:3001', 
+    'https://portal.sabercon.com.br',
+    'https://portal.sabercon.com.br/api', 
     'http://localhost:8080',
     'http://localhost:4200', // Angular dev server
     'http://localhost:5173', // Vite dev server
@@ -35,8 +35,8 @@ export const corsUsersConfig: CorsUsersConfig = {
   adminOrigins: [
     'https://portal.sabercon.com.br',
     'https://portal.sabercon.com.br/api',
-    'http://localhost:3000', // Para desenvolvimento
-    'http://localhost:3001', // Para desenvolvimento alternativo
+    'https://portal.sabercon.com.br', // Para desenvolvimento
+    'https://portal.sabercon.com.br/api', // Para desenvolvimento alternativo
     ...(process.env.ADMIN_ORIGINS ? process.env.ADMIN_ORIGINS.split(',').map(o => o.trim()) : [])
   ],
 

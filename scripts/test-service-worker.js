@@ -36,16 +36,16 @@ async function testServiceWorker() {
     });
 
     // Navegar para a página
-    console.log(chalk.yellow('📱 Navegando para http://localhost:3000...'));
+    console.log(chalk.yellow('📱 Navegando para https://portal.sabercon.com.br...'));
     
     try {
-      await page.goto('http://localhost:3000', { 
+      await page.goto('https://portal.sabercon.com.br', { 
         waitUntil: 'networkidle0',
         timeout: 30000
       });
     } catch (error) {
       console.log(chalk.red('❌ Erro ao carregar página:'), error.message);
-      console.log(chalk.yellow('💡 Certifique-se de que o servidor está rodando em localhost:3000'));
+      console.log(chalk.yellow('💡 Certifique-se de que o servidor está rodando em portal.sabercon.com.br'));
       return;
     }
 

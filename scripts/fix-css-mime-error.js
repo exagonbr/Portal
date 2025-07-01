@@ -131,7 +131,7 @@ console.log('   1. Reinicie o servidor de desenvolvimento');
 console.log('   2. Teste se o erro de MIME type CSS foi resolvido');
 console.log('   3. Verifique se os arquivos CSS carregam corretamente');
 console.log('');
-console.log('🔗 Para testar: http://localhost:3000/test-css.css');
+console.log('🔗 Para testar: https://portal.sabercon.com.br/test-css.css');
 console.log('   (Deve retornar Content-Type: text/css)');
 console.log('');
 console.log('✅ Correção concluída!'); 

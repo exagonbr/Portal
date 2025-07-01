@@ -124,7 +124,7 @@ module.exports = {
         PORT: 3000,
         NEXT_PUBLIC_APP_URL: 'http://portal.sabercon.com.br:3000',
         NEXT_PUBLIC_API_URL: 'http://portal.sabercon.com.br:3001/api',
-        INTERNAL_API_URL: 'http://localhost:3001/api'
+        INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
       }
     },
     {
@@ -149,7 +149,7 @@ NODE_ENV=production
 # URLs diretas
 NEXT_PUBLIC_APP_URL=http://portal.sabercon.com.br:3000
 NEXT_PUBLIC_API_URL=http://portal.sabercon.com.br:3001/api
-INTERNAL_API_URL=http://localhost:3001/api
+INTERNAL_API_URL=https://portal.sabercon.com.br/api
 
 # Sem proxy
 DISABLE_NEXTJS_PROXY=true
@@ -254,10 +254,10 @@ journalctl -u portal-sabercon -f
 ### Verificação de Saúde
 ```bash
 # Testar frontend
-curl -I http://localhost:3000
+curl -I https://portal.sabercon.com.br
 
 # Testar backend
-curl -I http://localhost:3001/api/_health
+curl -I https://portal.sabercon.com.br/api/_health
 
 # Status completo
 portal-status
@@ -293,8 +293,8 @@ ufw status
 #### 3. Problemas de conectividade
 ```bash
 # Testar conectividade local
-curl http://localhost:3000
-curl http://localhost:3001/api/_health
+curl https://portal.sabercon.com.br
+curl https://portal.sabercon.com.br/api/_health
 
 # Verificar DNS
 nslookup portal.sabercon.com.br

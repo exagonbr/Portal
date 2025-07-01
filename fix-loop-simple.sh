@@ -75,7 +75,7 @@ cat > temp_rewrites.js << 'EOF'
     
     // Apenas em desenvolvimento usar proxy
     const isDev = process.env.NODE_ENV === 'development';
-    const apiDestination = 'http://localhost:3001/api/:path*';
+    const apiDestination = 'https://portal.sabercon.com.br/api/:path*';
     
     console.log(`🔄 Proxy configurado para desenvolvimento: ${apiDestination}`);
     
@@ -101,7 +101,7 @@ sed -i '/async rewrites()/,/},/c\
     \
     // Apenas em desenvolvimento usar proxy\
     const isDev = process.env.NODE_ENV === '\''development'\'';\
-    const apiDestination = '\''http://localhost:3001/api/:path*'\'';\
+    const apiDestination = '\''https://portal.sabercon.com.br/api/:path*'\'';\
     \
     console.log(`🔄 Proxy configurado para desenvolvimento: ${apiDestination}`);\
     \

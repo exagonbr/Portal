@@ -87,8 +87,8 @@ async function testDifferentOrigins() {
   
   const testOrigins = [
     'https://portal.sabercon.com.br',
-    'http://localhost:3000',
-    'https://localhost:3000',
+    'https://portal.sabercon.com.br',
+    'https://portal.sabercon.com.br',
     'https://example.com'
   ];
   

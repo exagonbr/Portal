@@ -1,7 +1,7 @@
 # Correção de Loop de Requisições 429 - Resumo das Implementações
 
 ## Problema Identificado
-O erro `POST http://localhost:3000/api/auth/login 429 (Too Many Requests)` estava sendo causado por um loop de requisições de login, provavelmente originado por:
+O erro `POST https://portal.sabercon.com.br/api/auth/login 429 (Too Many Requests)` estava sendo causado por um loop de requisições de login, provavelmente originado por:
 
 1. **Interceptadores PWA** fazendo requisições repetidas
 2. **Service Worker** interceptando e re-executando requisições

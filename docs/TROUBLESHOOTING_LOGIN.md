@@ -4,7 +4,7 @@
 
 1. **Acesse a página de debug** (apenas em desenvolvimento):
    ```
-   http://localhost:3000/debug-login
+   https://portal.sabercon.com.br/debug-login
    ```
 
 2. **Verifique o console do navegador** (F12) para mensagens de erro detalhadas.
@@ -27,7 +27,7 @@
 
 ```env
 # Para desenvolvimento local
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+NEXT_PUBLIC_API_URL=https://portal.sabercon.com.br/api
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8080/api
 BACKEND_URL=http://localhost:8080/api
 JWT_SECRET=ExagonTech
@@ -66,7 +66,7 @@ JWT_SECRET=ExagonTech
 
 **Solução**:
 1. Verifique a configuração CORS no backend (`backend/src/app.ts`)
-2. Certifique-se de que `http://localhost:3000` está na lista de origens permitidas
+2. Certifique-se de que `https://portal.sabercon.com.br` está na lista de origens permitidas
 
 ### 4. Erro de Conexão com Banco de Dados
 

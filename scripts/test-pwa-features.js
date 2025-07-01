@@ -15,7 +15,7 @@ async function testPWAFeatures() {
 
     // Test 1: Service Worker Registration
     console.log(chalk.yellow('Testing Service Worker Registration...'));
-    await page.goto('http://localhost:3000');
+    await page.goto('https://portal.sabercon.com.br');
     const serviceWorker = await page.evaluate(() => {
       return Boolean(navigator.serviceWorker.controller);
     });

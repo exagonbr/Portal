@@ -9,14 +9,14 @@ echo
 # Verificar se as portas estão ativas
 echo "🔍 Verificando serviços..."
 
-if curl -s http://localhost:3000 > /dev/null; then
+if curl -s https://portal.sabercon.com.br > /dev/null; then
     echo "✅ Frontend (Next.js) rodando na porta 3000"
 else
     echo "❌ Frontend não está rodando na porta 3000"
     echo "   Execute: npm run dev"
 fi
 
-if curl -s http://localhost:3001/api/_health > /dev/null 2>&1; then
+if curl -s https://portal.sabercon.com.br/api/_health > /dev/null 2>&1; then
     echo "✅ Backend API rodando na porta 3001"
 else
     echo "❌ Backend não está rodando na porta 3001"
@@ -27,7 +27,7 @@ echo
 echo "🌐 Testando comunicação direta..."
 
 # Testar se o frontend consegue acessar a API diretamente
-if curl -s -o /dev/null -w "%{http_code}" "http://localhost:3001/api/_health" | grep -q "200"; then
+if curl -s -o /dev/null -w "%{http_code}" "https://portal.sabercon.com.br/api/_health" | grep -q "200"; then
     echo "✅ Backend API respondendo diretamente"
 else
     echo "⚠️  Backend API pode ter problemas"
@@ -35,14 +35,14 @@ fi
 
 echo
 echo "📋 Configuração atual:"
-echo "   Frontend: http://localhost:3000"
-echo "   Backend:  http://localhost:3001/api"
+echo "   Frontend: https://portal.sabercon.com.br"
+echo "   Backend:  https://portal.sabercon.com.br/api"
 echo "   Nginx:    NÃO NECESSÁRIO ❌"
 echo "   Proxy:    DESABILITADO ✅"
 echo
 echo "🎯 Para usar:"
-echo "   1. Acesse: http://localhost:3000"
-echo "   2. API calls vão direto para: http://localhost:3001/api"
+echo "   1. Acesse: https://portal.sabercon.com.br"
+echo "   2. API calls vão direto para: https://portal.sabercon.com.br/api"
 echo "   3. Sem redirecionamentos desnecessários!"
 echo
 echo "✅ Comunicação direta funcionando!" 

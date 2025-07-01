@@ -6,7 +6,7 @@
 const fetch = require('node-fetch');
 const chalk = require('chalk');
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'https://portal.sabercon.com.br';
 const LOGIN_ENDPOINT = '/api/auth/login';
 
 console.log(chalk.blue('🧪 Teste do Sistema de Prevenção de Loops'));

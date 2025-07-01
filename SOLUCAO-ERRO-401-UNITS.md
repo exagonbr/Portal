@@ -105,7 +105,7 @@ Criado arquivo [`backend/src/routes/users-debug.ts`](backend/src/routes/users-de
 **PROBLEMA COMPLETAMENTE RESOLVIDO!**
 
 ```bash
-curl -H "Authorization: Bearer [JWT_VÁLIDO]" "http://localhost:3001/api/users?page=1&limit=10&sortBy=name&sortOrder=asc"
+curl -H "Authorization: Bearer [JWT_VÁLIDO]" "https://portal.sabercon.com.br/api/users?page=1&limit=10&sortBy=name&sortOrder=asc"
 # Retorna: HTTP 200 OK com 4671 usuários
 ```
 
@@ -119,12 +119,12 @@ curl -H "Authorization: Bearer [JWT_VÁLIDO]" "http://localhost:3001/api/users?p
 
 ### Teste com JWT válido:
 ```bash
-curl -i -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ0ZXN0LXVzZXItMTIzIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwibmFtZSI6IlRlc3QgVXNlciIsInJvbGUiOiJhZG1pbiIsInBlcm1pc3Npb25zIjpbInJlYWQiLCJ3cml0ZSJdLCJpbnN0aXR1dGlvbklkIjoidGVzdC1pbnN0aXR1dGlvbiIsInNlc3Npb25JZCI6InNlc3Npb25fMTc1MTE1NTUwODM0OCIsImlhdCI6MTc1MTE1NTUwOCwiZXhwIjoxNzUxMjQxOTA4fQ.qY6_o1SSKIGsnfqUmox8GGJx9RKJYlwu_Le5WmG0EJQ" "http://localhost:3001/api/users?page=1&limit=10"
+curl -i -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ0ZXN0LXVzZXItMTIzIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwibmFtZSI6IlRlc3QgVXNlciIsInJvbGUiOiJhZG1pbiIsInBlcm1pc3Npb25zIjpbInJlYWQiLCJ3cml0ZSJdLCJpbnN0aXR1dGlvbklkIjoidGVzdC1pbnN0aXR1dGlvbiIsInNlc3Npb25JZCI6InNlc3Npb25fMTc1MTE1NTUwODM0OCIsImlhdCI6MTc1MTE1NTUwOCwiZXhwIjoxNzUxMjQxOTA4fQ.qY6_o1SSKIGsnfqUmox8GGJx9RKJYlwu_Le5WmG0EJQ" "https://portal.sabercon.com.br/api/users?page=1&limit=10"
 ```
 
 ### Teste do frontend:
 ```bash
-curl -i -H "Authorization: Bearer [JWT_TOKEN]" "http://localhost:3000/api/debug/auth"
+curl -i -H "Authorization: Bearer [JWT_TOKEN]" "https://portal.sabercon.com.br/api/debug/auth"
 ```
 
 ## Status

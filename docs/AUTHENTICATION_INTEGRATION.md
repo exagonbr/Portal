@@ -33,7 +33,7 @@ npm install
 npm run dev
 ```
 
-O backend deve estar rodando em `http://localhost:3001`
+O backend deve estar rodando em `https://portal.sabercon.com.br/api`
 
 ### 2. Iniciar o Frontend
 
@@ -44,11 +44,11 @@ npm install
 npm run dev
 ```
 
-O frontend estará em `http://localhost:3000`
+O frontend estará em `https://portal.sabercon.com.br`
 
 ### 3. Página de Teste
 
-Acesse: `http://localhost:3000/test-auth-integration`
+Acesse: `https://portal.sabercon.com.br/test-auth-integration`
 
 Esta página permite:
 - Testar a conexão com o backend
@@ -90,9 +90,9 @@ Esta página permite:
 
 ### Frontend (.env.local)
 ```env
-BACKEND_URL=http://localhost:3001
+BACKEND_URL=https://portal.sabercon.com.br/api
 API_VERSION=v1
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://portal.sabercon.com.br
 NEXTAUTH_SECRET=your-secret-key-here
 ```
 
@@ -101,7 +101,7 @@ NEXTAUTH_SECRET=your-secret-key-here
 PORT=3001
 JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRES_IN=24h
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=https://portal.sabercon.com.br
 ```
 
 ## Troubleshooting

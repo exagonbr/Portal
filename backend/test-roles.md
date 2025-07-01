@@ -19,25 +19,25 @@ npm run assign-teacher-role
 
 #### a) Obter estatísticas:
 ```bash
-curl -X GET http://localhost:3001/api/roles/stats \
+curl -X GET https://portal.sabercon.com.br/api/roles/stats \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 #### b) Listar roles:
 ```bash
-curl -X GET http://localhost:3001/api/roles \
+curl -X GET https://portal.sabercon.com.br/api/roles \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 #### c) Dados para frontend:
 ```bash
-curl -X GET http://localhost:3001/api/roles/frontend \
+curl -X GET https://portal.sabercon.com.br/api/roles/frontend \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 #### d) Grupos de permissões:
 ```bash
-curl -X GET http://localhost:3001/api/roles/permission-groups \
+curl -X GET https://portal.sabercon.com.br/api/roles/permission-groups \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -45,7 +45,7 @@ curl -X GET http://localhost:3001/api/roles/permission-groups \
 ```bash
 cd ../ # voltar para raiz
 npm run dev
-# Navegar para http://localhost:3000/admin/roles
+# Navegar para https://portal.sabercon.com.br/admin/roles
 ```
 
 ## ✅ Resultados Esperados

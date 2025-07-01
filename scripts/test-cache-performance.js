@@ -45,7 +45,7 @@ async function testCachePerformance() {
     
     console.log('📊 Primeira visita (sem cache)...');
     const firstVisitStart = Date.now();
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle0' });
+    await page.goto('https://portal.sabercon.com.br', { waitUntil: 'networkidle0' });
     const firstVisitTime = Date.now() - firstVisitStart;
     
     console.log(`⏱️  Primeira visita: ${firstVisitTime}ms`);
@@ -103,7 +103,7 @@ async function testCachePerformance() {
     
     // Testar cache de API
     console.log('\n🌐 Testando cache de API...');
-    await page.goto('http://localhost:3000/dashboard', { waitUntil: 'networkidle0' });
+    await page.goto('https://portal.sabercon.com.br/dashboard', { waitUntil: 'networkidle0' });
     
     const apiRequests = responses.filter(r => r.url.includes('/api/'));
     console.log(`🔌 Requisições de API: ${apiRequests.length}`);
@@ -144,7 +144,7 @@ async function testDevCache() {
     // Testar endpoint de health
     console.log('🔍 Testando endpoint de health...');
     const healthStart = Date.now();
-    const healthResponse = await fetch('http://localhost:3000/api/health');
+    const healthResponse = await fetch('https://portal.sabercon.com.br/api/health');
     const healthTime = Date.now() - healthStart;
     
     console.log(`⏱️  Health check: ${healthTime}ms`);
@@ -158,7 +158,7 @@ async function testDevCache() {
     
   } catch (error) {
     console.error('❌ Erro ao testar cache em desenvolvimento:', error.message);
-    console.log('💡 Certifique-se de que a aplicação está rodando em http://localhost:3000');
+    console.log('💡 Certifique-se de que a aplicação está rodando em https://portal.sabercon.com.br');
   }
 }
 

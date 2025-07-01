@@ -14,7 +14,7 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 
 // Configuração
-const BASE_URL = process.env.API_URL || 'http://localhost:3001/api';
+const BASE_URL = process.env.API_URL || 'https://portal.sabercon.com.br/api';
 const TEST_EMAIL = process.env.TEST_EMAIL || 'admin@exemplo.com';
 const TEST_PASSWORD = process.env.TEST_PASSWORD || 'senha123';
 

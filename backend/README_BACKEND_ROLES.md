@@ -72,7 +72,7 @@ Sistema completo de gerenciamento de roles/permissões para o Portal Educacional
 
 #### Via API:
 ```bash
-curl -X POST http://localhost:3001/api/roles/assign-teacher-role \
+curl -X POST https://portal.sabercon.com.br/api/roles/assign-teacher-role \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json"
 ```

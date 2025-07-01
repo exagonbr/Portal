@@ -138,7 +138,7 @@ console.log('\n🎉 Correção concluída!');
 console.log('\n📋 Próximos passos:');
 console.log('1. Execute: npm run dev');
 console.log('2. Aguarde o servidor inicializar completamente');
-console.log('3. Abra o navegador em http://localhost:3000');
+console.log('3. Abra o navegador em https://portal.sabercon.com.br');
 console.log('4. Pressione Ctrl+Shift+R para forçar reload sem cache');
 console.log('\n⚠️ Se ainda houver problemas:');
 console.log('- Feche completamente o navegador e reabra');

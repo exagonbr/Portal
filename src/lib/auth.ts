@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
           // Fazer requisição para o backend de autenticação
           const backendUrl = process.env.FORCE_PRODUCTION_BACKEND === 'true'
             ? 'https://portal.sabercon.com.br/api'
-            : 'http://localhost:3001/api';
+            : 'https://portal.sabercon.com.br/api';
           
           const response = await fetch(`${backendUrl}/auth/optimized/login`, {
             method: 'POST',

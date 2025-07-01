@@ -10,7 +10,7 @@ const http = require('http');
 
 // Configurações
 const BASE_URL = 'https://portal.sabercon.com.br';
-const LOCAL_URL = 'http://localhost:3000';
+const LOCAL_URL = 'https://portal.sabercon.com.br';
 
 // Cores para output
 const colors = {

@@ -25,17 +25,17 @@ POST /api/auth/login
 
 ```bash
 # Teste do endpoint otimizado
-curl -X POST http://localhost:3001/api/auth/optimized/login \
+curl -X POST https://portal.sabercon.com.br/api/auth/optimized/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@exemplo.com","password":"senha123"}'
 
 # Teste do endpoint antigo
-curl -X POST http://localhost:3001/api/auth/login \
+curl -X POST https://portal.sabercon.com.br/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@exemplo.com","password":"senha123"}'
 
 # Teste de debug
-curl -X POST http://localhost:3001/api/auth/optimized/test-login \
+curl -X POST https://portal.sabercon.com.br/api/auth/optimized/test-login \
   -H "Content-Type: application/json" \
   -d '{"email":"teste@exemplo.com","password":"teste123"}'
 ```

@@ -33,7 +33,7 @@ server {
         set $forwarded_scheme https;
     }
     
-    # Frontend → localhost:3000
+    # Frontend → portal.sabercon.com.br
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -46,7 +46,7 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
     
-    # Backend API → localhost:3001/api/ (SEM RATE LIMITING)
+    # Backend API → portal.sabercon.com.br/api/ (SEM RATE LIMITING)
     location /api/ {
         proxy_pass http://127.0.0.1:3001/api/;
         proxy_http_version 1.1;

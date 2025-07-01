@@ -68,16 +68,16 @@ export const SPECIFIC_CORS_HEADERS = {
     'Access-Control-Max-Age': CORS_CONFIG.maxAge.toString(),
     'Allow': CORS_CONFIG.methods.join(', '),
   },
-  'http://localhost:3000': {
-    'Access-Control-Allow-Origin': 'http://localhost:3000',
+  'https://portal.sabercon.com.br': {
+    'Access-Control-Allow-Origin': 'https://portal.sabercon.com.br',
     'Access-Control-Allow-Methods': CORS_CONFIG.methods.join(', '),
     'Access-Control-Allow-Headers': CORS_CONFIG.allowedHeaders.join(', '),
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Max-Age': CORS_CONFIG.maxAge.toString(),
     'Allow': CORS_CONFIG.methods.join(', '),
   },
-  'http://localhost:3001': {
-    'Access-Control-Allow-Origin': 'http://localhost:3001',
+  'https://portal.sabercon.com.br/api': {
+    'Access-Control-Allow-Origin': 'https://portal.sabercon.com.br/api',
     'Access-Control-Allow-Methods': CORS_CONFIG.methods.join(', '),
     'Access-Control-Allow-Headers': CORS_CONFIG.allowedHeaders.join(', '),
     'Access-Control-Allow-Credentials': 'true',

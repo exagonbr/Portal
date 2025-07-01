@@ -104,7 +104,7 @@ async function showSystemInfo() {
   console.log(`   Versão Node.js: ${process.version}`);
   console.log(`   Porta da API: ${process.env.PORT || 3001}`);
   console.log(`   URL do Redis: ${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`);
-  console.log(`   CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+  console.log(`   CORS Origin: ${process.env.CORS_ORIGIN || 'https://portal.sabercon.com.br'}`);
   console.log(`   JWT Secret: ${process.env.JWT_SECRET ? '✅ Configurado' : '❌ Usando padrão'}`);
   
   // Verifica configurações importantes

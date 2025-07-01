@@ -9,8 +9,8 @@ const https = require('https');
 const http = require('http');
 
 // Configuração
-const BACKEND_URL = process.argv[2] || 'http://localhost:3001/api';
-const FRONTEND_URL = process.argv[3] || 'http://localhost:3000';
+const BACKEND_URL = process.argv[2] || 'https://portal.sabercon.com.br/api';
+const FRONTEND_URL = process.argv[3] || 'https://portal.sabercon.com.br';
 
 console.log('🧪 Testando rotas de refresh token...');
 console.log(`📡 Backend URL: ${BACKEND_URL}`);

@@ -9,8 +9,8 @@ const http = require('http');
 const https = require('https');
 
 // URLs para testar
-const BACKEND_URL = 'http://localhost:3001';
-const FRONTEND_URL = 'http://localhost:3000';
+const BACKEND_URL = 'https://portal.sabercon.com.br/api';
+const FRONTEND_URL = 'https://portal.sabercon.com.br';
 const PRODUCTION_URL = 'https://portal.sabercon.com.br';
 
 console.log('🔐 TESTANDO API COM AUTENTICAÇÃO');

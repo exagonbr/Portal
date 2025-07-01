@@ -6,7 +6,7 @@
 
 const chalk = require('chalk');
 
-const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
+const BASE_URL = process.env.TEST_URL || 'https://portal.sabercon.com.br';
 const BACKEND_URL = process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api';
 
 console.log(chalk.blue.bold('🧪 TESTE DE CORREÇÃO DE TIMEOUT - API Users Stats\n'));

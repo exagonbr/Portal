@@ -62,7 +62,7 @@ cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.backup.
 cat > /etc/nginx/sites-available/default << 'EOF'
 # Portal Sabercon - Configuração Temporária (Rate Limiting Permissivo)
 # SSL terminado no ALB/CloudFront
-# Frontend: localhost:3000 | Backend: localhost:3001
+# Frontend: portal.sabercon.com.br | Backend: portal.sabercon.com.br
 
 server {
     listen 80;
@@ -84,7 +84,7 @@ server {
     limit_conn conn_limit_per_ip 100;
     limit_conn conn_limit_per_server 5000;
     
-    # Frontend (raiz do site) → localhost:3000
+    # Frontend (raiz do site) → portal.sabercon.com.br
     location / {
         # Rate limiting muito suave para frontend
         limit_req zone=general burst=50 nodelay;
@@ -135,7 +135,7 @@ server {
         }
     }
     
-    # Backend API → localhost:3001/api/ (SEM rate limiting rigoroso)
+    # Backend API → portal.sabercon.com.br/api/ (SEM rate limiting rigoroso)
     location /api/ {
         # Rate limiting muito permissivo para API
         limit_req zone=api burst=100 nodelay;
@@ -206,7 +206,7 @@ server {
         proxy_read_timeout 60s;
     }
     
-    # Backend direto → localhost:3001/
+    # Backend direto → portal.sabercon.com.br/
     location /backend/ {
         proxy_pass http://api_backend/;
         proxy_http_version 1.1;

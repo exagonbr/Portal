@@ -6,24 +6,24 @@ class AuthController {
     try {
       const payload = req.user;
       if (!payload || !payload.id) {
-        return res.status(401).redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/login?error=auth_failed`);
+        return res.status(401).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=auth_failed`);
       }
 
       const user = await AuthService.getUserById(payload.id);
       if (!user) {
-        return res.status(404).redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/login?error=user_not_found`);
+        return res.status(404).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=user_not_found`);
       }
 
       // Assumindo que o objeto User tem a relação de Role carregada
       const role = user.role;
       if (!role) {
-        return res.status(500).redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/login?error=role_not_found`);
+        return res.status(500).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=role_not_found`);
       }
 
       const token = AuthService.generateToken(user, role);
       
       // Usar URL de produção ou fallback para desenvolvimento
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
       
       console.log('🔐 Google OAuth: Redirecionando usuário após autenticação');
       console.log('👤 Usuário:', user.email);
@@ -34,7 +34,7 @@ class AuthController {
       console.error('❌ Erro durante autenticação Google:', error);
       
       // Redirecionar para página de erro em caso de falha
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
       res.redirect(`${frontendUrl}/auth/login?error=google_auth_failed`);
     }
   }

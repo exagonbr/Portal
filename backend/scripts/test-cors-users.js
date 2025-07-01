@@ -9,9 +9,9 @@ const axios = require('axios');
 const colors = require('colors');
 
 // Configurações do teste
-const BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
+const BASE_URL = process.env.API_BASE_URL || 'https://portal.sabercon.com.br/api';
 const TEST_ORIGINS = [
-  'http://localhost:3000',
+  'https://portal.sabercon.com.br',
   'https://portal.sabercon.com.br',
   'https://admin.sabercon.com.br',
   'https://malicious-site.com', // Esta deve ser rejeitada

@@ -8,7 +8,7 @@ info:
     email: dev@portal.com
 
 servers:
-  - url: http://localhost:3001/api
+  - url: https://portal.sabercon.com.br/api
     description: Servidor de desenvolvimento
   - url: https://api.portal.com
     description: Servidor de produção

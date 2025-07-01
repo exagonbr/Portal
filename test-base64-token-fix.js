@@ -7,8 +7,8 @@
 
 const chalk = require('chalk');
 
-const FRONTEND_URL = 'http://localhost:3000';
-const BACKEND_URL = 'http://localhost:3001';
+const FRONTEND_URL = 'https://portal.sabercon.com.br';
+const BACKEND_URL = 'https://portal.sabercon.com.br/api';
 
 // Test token from cookie_jar.txt (base64-encoded JSON)
 const BASE64_TOKEN = 'eyJ1c2VySWQiOiJhZG1pbiIsImVtYWlsIjoiYWRtaW5Ac2FiZXJjb24uZWR1LmJyIiwibmFtZSI6IkFkbWluaXN0cmFkb3IiLCJyb2xlIjoiU1lTVEVNX0FETUlOIiwiaW5zdGl0dXRpb25JZCI6Imluc3Rfc2FiZXJjb24iLCJwZXJtaXNzaW9ucyI6WyJhbGwiXSwiaWF0IjoxNzUwMTA5MTg0LCJleHAiOjE3NTAxOTU1ODR9';

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'https://portal.sabercon.com.br/api';
 
 // Lista de APIs para testar
 const APIs_TO_TEST = [

@@ -8,8 +8,8 @@ const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
 
 const JWT_SECRET = 'ExagonTech';
-const BACKEND_URL = 'http://localhost:3001/api';
-const FRONTEND_URL = 'http://localhost:3000/api';
+const BACKEND_URL = 'https://portal.sabercon.com.br/api';
+const FRONTEND_URL = 'https://portal.sabercon.com.br/api';
 
 async function getValidToken() {
   console.log('🔐 OBTENDO TOKEN VÁLIDO DO BACKEND');

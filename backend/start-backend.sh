@@ -46,9 +46,9 @@ EOF
 fi
 
 echo "🌟 Iniciando servidor..."
-echo "📍 Servidor será iniciado em: http://localhost:3001"
-echo "📋 Health check: http://localhost:3001/health"
-echo "📚 API Docs: http://localhost:3001/backend/docs"
+echo "📍 Servidor será iniciado em: https://portal.sabercon.com.br/api"
+echo "📋 Health check: https://portal.sabercon.com.br/api/health"
+echo "📚 API Docs: https://portal.sabercon.com.br/api/backend/docs"
 echo ""
 echo "Para parar o servidor, pressione Ctrl+C"
 echo ""

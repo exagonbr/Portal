@@ -103,7 +103,7 @@ Script automatizado para testar:
 ## 🚀 Como Testar
 
 ### Teste Manual do Service Worker
-1. Abra: `http://localhost:3001/test-sw.html`
+1. Abra: `https://portal.sabercon.com.br/api/test-sw.html`
 2. Verifique se o Service Worker registra sem erros
 3. Confirme que o cache está funcionando
 

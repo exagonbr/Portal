@@ -169,7 +169,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 ```typescript
 // backend - Configurar CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'https://portal.sabercon.com.br',
   credentials: true,
   allowedHeaders: ['Authorization', 'Content-Type', 'X-Auth-Token']
 }));

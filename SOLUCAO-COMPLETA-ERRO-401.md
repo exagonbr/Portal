@@ -13,10 +13,10 @@ O erro 401 ocorre porque o **frontend não está enviando o token JWT** no heade
 ## 🔍 Análise do Log de Erro
 
 ```
-127.0.0.1 - - [29/Jun/2025:00:13:46 +0000] "GET /api/users?page=1&limit=10&sortBy=name&sortOrder=asc HTTP/1.1" 401 67 "http://localhost:3000/admin/users"
+127.0.0.1 - - [29/Jun/2025:00:13:46 +0000] "GET /api/users?page=1&limit=10&sortBy=name&sortOrder=asc HTTP/1.1" 401 67 "https://portal.sabercon.com.br/admin/users"
 ```
 
-**Problema**: A requisição do frontend (`http://localhost:3000/admin/users`) para o backend (`http://localhost:3001/api/users`) não contém o header `Authorization: Bearer <token>`.
+**Problema**: A requisição do frontend (`https://portal.sabercon.com.br/admin/users`) para o backend (`https://portal.sabercon.com.br/api/users`) não contém o header `Authorization: Bearer <token>`.
 
 ## 🔧 Solução
 
@@ -124,7 +124,7 @@ console.log('Token atual:', localStorage.getItem('auth_token'));
 localStorage.setItem('auth_token', 'SEU_JWT_TOKEN_AQUI');
 
 // 3. Fazer requisição de teste
-fetch('http://localhost:3001/api/users?page=1&limit=10', {
+fetch('https://portal.sabercon.com.br/api/users?page=1&limit=10', {
   headers: {
     'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
     'Content-Type': 'application/json'
@@ -137,7 +137,7 @@ fetch('http://localhost:3001/api/users?page=1&limit=10', {
 
 ### 2. Teste via cURL (Confirmado ✅)
 ```bash
-curl -i -H "Authorization: Bearer SEU_TOKEN" "http://localhost:3001/api/users?page=1&limit=10"
+curl -i -H "Authorization: Bearer SEU_TOKEN" "https://portal.sabercon.com.br/api/users?page=1&limit=10"
 # Resultado: HTTP 200 OK com dados dos usuários
 ```
 

@@ -10,14 +10,14 @@ const https = require('https');
 
 const URLS_TO_TEST = [
   'https://portal.sabercon.com.br/api/tv-shows?page=1&limit=12',
-  'http://localhost:3000/api/tv-shows?page=1&limit=12',
-  'http://localhost:3001/api/tv-shows?page=1&limit=12',
+  'https://portal.sabercon.com.br/api/tv-shows?page=1&limit=12',
+  'https://portal.sabercon.com.br/api/tv-shows?page=1&limit=12',
 ];
 
 const ORIGINS_TO_TEST = [
   'https://portal.sabercon.com.br',
-  'http://localhost:3000',
-  'http://localhost:3001',
+  'https://portal.sabercon.com.br',
+  'https://portal.sabercon.com.br/api',
   null // Sem origem
 ];
 
@@ -248,7 +248,7 @@ async function runTests() {
   console.log('─'.repeat(50));
   
   // Testar apenas URLs que funcionaram
-  const workingUrl = URLS_TO_TEST.find(url => url.includes('localhost:3001'));
+  const workingUrl = URLS_TO_TEST.find(url => url.includes('portal.sabercon.com.br'));
   if (workingUrl) {
     const loopResult = await testMultipleRequests(workingUrl, 10);
     

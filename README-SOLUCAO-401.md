@@ -35,7 +35,7 @@ node test-backend-auth.js
 
 ```bash
 # Abrir no navegador
-http://localhost:3000/test-auth-fix.html
+https://portal.sabercon.com.br/test-auth-fix.html
 ```
 
 ## 🚀 Como Resolver o Problema
@@ -44,7 +44,7 @@ http://localhost:3000/test-auth-fix.html
 
 **Opção A - Via API do Backend:**
 ```bash
-curl http://localhost:3001/api/users-debug/generate-test-jwt
+curl https://portal.sabercon.com.br/api/users-debug/generate-test-jwt
 ```
 
 **Opção B - Via Node.js:**
@@ -66,7 +66,7 @@ const token = jwt.sign({
 ```bash
 # Substitua TOKEN_AQUI pelo JWT gerado
 curl -H "Authorization: Bearer TOKEN_AQUI" \
-     "http://localhost:3001/api/users?page=1&limit=10&sortBy=name&sortOrder=asc"
+     "https://portal.sabercon.com.br/api/users?page=1&limit=10&sortBy=name&sortOrder=asc"
 ```
 
 ### Passo 3: Verificar Logs do Backend
@@ -100,18 +100,18 @@ node test-backend-auth.js
 
 ```bash
 # 1. Testar saúde do backend
-curl http://localhost:3001/api/health
+curl https://portal.sabercon.com.br/api/health
 
 # 2. Gerar JWT de teste
-curl http://localhost:3001/api/users-debug/generate-test-jwt
+curl https://portal.sabercon.com.br/api/users-debug/generate-test-jwt
 
 # 3. Testar validação JWT
 curl -H "Authorization: Bearer JWT_AQUI" \
-     http://localhost:3001/api/users-debug/test-jwt-validation
+     https://portal.sabercon.com.br/api/users-debug/test-jwt-validation
 
 # 4. Testar API users original
 curl -H "Authorization: Bearer JWT_AQUI" \
-     "http://localhost:3001/api/users?page=1&limit=10"
+     "https://portal.sabercon.com.br/api/users?page=1&limit=10"
 ```
 
 ## 🔍 Diagnóstico de Problemas
@@ -165,15 +165,15 @@ node test-backend-auth.js
 ### Gerar JWT e Testar API
 ```bash
 # 1. Gerar JWT
-JWT=$(curl -s http://localhost:3001/api/users-debug/generate-test-jwt | jq -r '.data.token')
+JWT=$(curl -s https://portal.sabercon.com.br/api/users-debug/generate-test-jwt | jq -r '.data.token')
 
 # 2. Testar API
-curl -H "Authorization: Bearer $JWT" "http://localhost:3001/api/users?page=1&limit=10"
+curl -H "Authorization: Bearer $JWT" "https://portal.sabercon.com.br/api/users?page=1&limit=10"
 ```
 
 ### Debug Completo
 ```bash
-curl http://localhost:3001/api/users-debug/full-diagnosis | jq
+curl https://portal.sabercon.com.br/api/users-debug/full-diagnosis | jq
 ```
 
 ## ✅ Critérios de Sucesso
@@ -190,7 +190,7 @@ curl http://localhost:3001/api/users-debug/full-diagnosis | jq
 ### Backend não responde
 ```bash
 # Verificar se está rodando
-curl http://localhost:3001/api/health
+curl https://portal.sabercon.com.br/api/health
 # Se falhar, iniciar backend
 cd backend && npm start
 ```

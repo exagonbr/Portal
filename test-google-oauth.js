@@ -13,9 +13,9 @@ console.log('=====================================\n');
 
 // Configurações
 const PRODUCTION_URL = 'https://portal.sabercon.com.br';
-const DEV_URL = 'http://localhost:3000';
+const DEV_URL = 'https://portal.sabercon.com.br';
 const BACKEND_PROD = 'https://portal.sabercon.com.br/api';
-const BACKEND_DEV = 'http://localhost:3001';
+const BACKEND_DEV = 'https://portal.sabercon.com.br/api';
 
 // Função para fazer requisição HTTP/HTTPS
 function makeRequest(url) {
@@ -91,10 +91,10 @@ async function runTests() {
   console.log('\n5️⃣ URLs que devem estar no Google Console:');
   console.log('   📍 Authorized JavaScript origins:');
   console.log(`      • ${PRODUCTION_URL}`);
-  console.log(`      • http://localhost:3000`);
+  console.log(`      • https://portal.sabercon.com.br`);
   console.log('\n   📍 Authorized redirect URIs:');
   console.log(`      • ${BACKEND_PROD}/auth/google/callback`);
-  console.log(`      • http://localhost:3001/auth/google/callback`);
+  console.log(`      • https://portal.sabercon.com.br/api/auth/google/callback`);
 
   console.log('\n✅ TESTE CONCLUÍDO!');
   console.log('=====================================');

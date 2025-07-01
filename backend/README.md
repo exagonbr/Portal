@@ -113,7 +113,7 @@ REDIS_DB=0
 REDIS_TLS=false
 
 # CORS SETTINGS
-CORS_ORIGIN=http://localhost:3000
+CORS_ORIGIN=https://portal.sabercon.com.br
 CORS_CREDENTIALS=true
 
 # ADMIN USER SETTINGS
@@ -153,7 +153,7 @@ npm start
 ## 📚 Documentação da API
 
 ### Swagger UI
-Acesse a documentação interativa em: `http://localhost:3001/api-docs`
+Acesse a documentação interativa em: `https://portal.sabercon.com.br/api-docs`
 
 ### Principais Endpoints
 
@@ -367,7 +367,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 🆘 Suporte
 
-- **Documentação**: `http://localhost:3001/api-docs`
+- **Documentação**: `https://portal.sabercon.com.br/api-docs`
 - **Issues**: Abra uma issue no repositório
 - **Email**: dev@portal.sabercon.com
 

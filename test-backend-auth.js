@@ -14,7 +14,7 @@ const https = require('https');
 const http = require('http');
 
 // Configurações
-const BACKEND_URL = 'http://localhost:3001';
+const BACKEND_URL = 'https://portal.sabercon.com.br/api';
 const JWT_SECRET = 'ExagonTech';
 
 // Cores para output
@@ -108,7 +108,7 @@ async function testBackendHealth() {
     }
   } catch (error) {
     log(`❌ Erro ao conectar com backend: ${error.message}`, 'red');
-    log('💡 Certifique-se de que o backend está rodando em http://localhost:3001', 'yellow');
+    log('💡 Certifique-se de que o backend está rodando em https://portal.sabercon.com.br/api', 'yellow');
     return false;
   }
 }

@@ -4,9 +4,9 @@ async function testLoopFix() {
   console.log(chalk.blue.bold('\n🔧 Testando Correção de Loops de Requisições\n'));
 
   const testUrls = [
-    'http://localhost:3001/api/settings',
-    'http://localhost:3001/api/dashboard/metrics/realtime',
-    'http://localhost:3001/api/tv-shows?page=1&limit=12',
+    'https://portal.sabercon.com.br/api/settings',
+    'https://portal.sabercon.com.br/api/dashboard/metrics/realtime',
+    'https://portal.sabercon.com.br/api/tv-shows?page=1&limit=12',
     'https://portal.sabercon.com.br/api/settings',
     'https://portal.sabercon.com.br/api/dashboard/metrics/realtime'
   ];

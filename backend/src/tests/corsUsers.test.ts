@@ -23,10 +23,10 @@ describe('CORS Users Middleware Tests', () => {
       
       const response = await request(app)
         .get('/test')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'https://portal.sabercon.com.br')
         .expect(200);
 
-      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+      expect(response.headers['access-control-allow-origin']).toBe('https://portal.sabercon.com.br');
       expect(response.headers['access-control-allow-credentials']).toBe('true');
     });
 
@@ -54,7 +54,7 @@ describe('CORS Users Middleware Tests', () => {
     it('should handle preflight OPTIONS requests', async () => {
       const response = await request(app)
         .options('/test')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'https://portal.sabercon.com.br')
         .set('Access-Control-Request-Method', 'GET')
         .set('Access-Control-Request-Headers', 'Authorization')
         .expect(200);
@@ -66,7 +66,7 @@ describe('CORS Users Middleware Tests', () => {
     it('should set security headers', async () => {
       const response = await request(app)
         .get('/test')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'https://portal.sabercon.com.br')
         .expect(200);
 
       expect(response.headers['x-content-type-options']).toBe('nosniff');
@@ -113,7 +113,7 @@ describe('CORS Users Middleware Tests', () => {
     it('should set additional security headers for admin endpoints', async () => {
       const response = await request(app)
         .post('/admin-test')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'https://portal.sabercon.com.br')
         .send({ test: 'data' })
         .expect(200);
 
@@ -210,7 +210,7 @@ describe('CORS Users Middleware Tests', () => {
     it('should allow standard headers', async () => {
       const response = await request(app)
         .options('/headers-test')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'https://portal.sabercon.com.br')
         .set('Access-Control-Request-Method', 'POST')
         .set('Access-Control-Request-Headers', 'Content-Type,Authorization')
         .expect(200);
@@ -223,7 +223,7 @@ describe('CORS Users Middleware Tests', () => {
     it('should expose necessary response headers', async () => {
       const response = await request(app)
         .post('/headers-test')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'https://portal.sabercon.com.br')
         .send({ test: 'data' })
         .expect(200);
 

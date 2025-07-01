@@ -16,7 +16,9 @@ import { CORS_HEADERS } from '@/config/cors';
 // Configuração otimizada para comunicação direta
 const API_CONFIG = {
   // URL base única - comunicação direta via Nginx
-  baseUrl: 'http://localhost:3000/api', // Ajuste conforme necessário para produção
+  baseUrl: process.env.NODE_ENV === 'production'
+    ? 'https://portal.sabercon.com.br/api'
+    : 'https://portal.sabercon.com.br/api',
   timeout: 40000, // Reduzido para melhor UX
   retryAttempts: 2, // Reduzido para evitar sobrecarga
   retryDelay: 800,

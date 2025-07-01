@@ -64,9 +64,9 @@ echo ""
 
 # URLs para testar
 urls=(
-    "http://localhost:3001/api/docs"
-    "http://localhost:3001/api/health"
-    "http://localhost:3001/api/docs.json"
+    "https://portal.sabercon.com.br/api/docs"
+    "https://portal.sabercon.com.br/api/health"
+    "https://portal.sabercon.com.br/api/docs.json"
 )
 
 echo "🧪 Testando URLs para detectar loops..."
@@ -86,7 +86,7 @@ echo "🔄 Teste específico de loop - fazendo 10 requisições para /api/docs..
 
 loop_detected=false
 for i in {1..10}; do
-    response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/docs 2>/dev/null)
+    response=$(curl -s -o /dev/null -w "%{http_code}" https://portal.sabercon.com.br/api/docs 2>/dev/null)
     if [ "$response" = "301" ] || [ "$response" = "302" ]; then
         echo "   Requisição $i: $response (redirecionamento)"
         loop_detected=true

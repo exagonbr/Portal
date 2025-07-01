@@ -47,9 +47,9 @@
 
 ### 6. Configuração de Ambiente (`.env.local`)
 ```env
-BACKEND_URL=http://localhost:3001
+BACKEND_URL=https://portal.sabercon.com.br/api
 API_VERSION=v1
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://portal.sabercon.com.br
 NEXTAUTH_SECRET=your-secret-key-here
 ```
 
@@ -74,7 +74,7 @@ npm run dev
 ```
 
 ### 3. Testar Autenticação
-- Acesse: http://localhost:3000/test-auth-integration
+- Acesse: https://portal.sabercon.com.br/test-auth-integration
 - Teste a conexão com o backend
 - Faça login com diferentes usuários
 

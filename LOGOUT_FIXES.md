@@ -119,7 +119,7 @@ Se estiver usando um proxy reverso, certifique-se de que as configurações não
 ```nginx
 # Exemplo para Nginx
 location / {
-    proxy_pass http://localhost:3000;
+    proxy_pass https://portal.sabercon.com.br;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3001/api/tv-shows';
+const BASE_URL = 'https://portal.sabercon.com.br/api/tv-shows';
 const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczMzc1MjgwMCwiZXhwIjoxNzMzODM5MjAwfQ.P3qOI0QVyxPjJb3sTWEz_EjJP_Ysf7mKdJYqGl4vSho';
 
 const headers = {

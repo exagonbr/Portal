@@ -112,7 +112,7 @@ sleep 3
 
 # Testar a rota /api/docs
 echo "📡 Testando /api/docs..."
-RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/docs 2>/dev/null || echo "000")
+RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://portal.sabercon.com.br/api/docs 2>/dev/null || echo "000")
 
 if [ "$RESPONSE" = "200" ]; then
     echo "✅ /api/docs respondendo com 200 (sem loop)"
@@ -125,7 +125,7 @@ fi
 
 # Testar health check
 echo "📡 Testando health check..."
-HEALTH_RESPONSE=$(curl -s http://localhost:3001/api/health 2>/dev/null | grep -o '"status":"OK"' || echo "")
+HEALTH_RESPONSE=$(curl -s https://portal.sabercon.com.br/api/health 2>/dev/null | grep -o '"status":"OK"' || echo "")
 
 if [ ! -z "$HEALTH_RESPONSE" ]; then
     echo "✅ Health check funcionando"

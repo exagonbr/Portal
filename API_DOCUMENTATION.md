@@ -500,20 +500,20 @@ Content-Type: application/json
 
 ### Login
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST https://portal.sabercon.com.br/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "senha123"}'
 ```
 
 ### Listar Cursos (Autenticado)
 ```bash
-curl -X GET http://localhost:3000/api/courses \
+curl -X GET https://portal.sabercon.com.br/api/courses \
   -H "Authorization: Bearer <token>"
 ```
 
 ### Criar Tarefa
 ```bash
-curl -X POST http://localhost:3000/api/assignments \
+curl -X POST https://portal.sabercon.com.br/api/assignments \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{

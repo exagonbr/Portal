@@ -140,7 +140,7 @@ Para verificar se está **IDÊNTICO** ao koodo-reader:
 ### Problema: PDF não abre
 ```bash
 # Verificar se o arquivo existe
-curl -I http://localhost:3000/books/sample.pdf
+curl -I https://portal.sabercon.com.br/books/sample.pdf
 ```
 
 ### Problema: EPUB não renderiza

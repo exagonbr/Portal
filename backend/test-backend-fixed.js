@@ -1,6 +1,6 @@
 const http = require('http');
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'https://portal.sabercon.com.br/api';
 
 function makeRequest(path, options = {}) {
   return new Promise((resolve, reject) => {

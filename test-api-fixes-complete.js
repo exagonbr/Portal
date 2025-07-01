@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const FRONTEND_URL = 'http://localhost:3000';
-const BACKEND_URL = 'http://localhost:3001';
+const FRONTEND_URL = 'https://portal.sabercon.com.br';
+const BACKEND_URL = 'https://portal.sabercon.com.br/api';
 
 // APIs que estão no frontend (Next.js)
 const FRONTEND_APIS = [

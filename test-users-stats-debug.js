@@ -27,7 +27,7 @@ async function testUsersStats() {
   console.log('🔐 Token gerado:', token.substring(0, 50) + '...');
   
   try {
-    const response = await fetch('http://localhost:3001/api/users/stats', {
+    const response = await fetch('https://portal.sabercon.com.br/api/users/stats', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -79,7 +79,7 @@ async function testWithSimpleToken() {
   const base64Token = Buffer.from(JSON.stringify(simplePayload)).toString('base64');
   
   try {
-    const response = await fetch('http://localhost:3001/api/users/stats', {
+    const response = await fetch('https://portal.sabercon.com.br/api/users/stats', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${base64Token}`,
@@ -101,7 +101,7 @@ async function testDatabaseConnection() {
   console.log('\n\n🗄️ Testando conexão direta com a database...');
   
   try {
-    const response = await fetch('http://localhost:3001/api/institutions?limit=1', {
+    const response = await fetch('https://portal.sabercon.com.br/api/institutions?limit=1', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${jwt.sign({

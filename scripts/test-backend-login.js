@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
 
 const JWT_SECRET = 'ExagonTech';
-const BACKEND_URL = 'http://localhost:3001/api';
+const BACKEND_URL = 'https://portal.sabercon.com.br/api';
 
 async function testBackendLoginDetailed() {
   console.log('🔍 TESTE DETALHADO DO LOGIN DO BACKEND');

@@ -8,8 +8,8 @@
 const http = require('http');
 const https = require('https');
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const BACKEND_URL = process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';
 
 console.log('🧪 Testando configurações de CORS...\n');
 
@@ -99,8 +99,8 @@ async function testDifferentOrigins() {
   console.log('3. 🌍 Testando diferentes origens...');
   
   const testOrigins = [
-    'http://localhost:3000',
-    'https://localhost:3000',
+    'https://portal.sabercon.com.br',
+    'https://portal.sabercon.com.br',
     'http://127.0.0.1:3000',
     'https://portal.sabercon.com.br',
     'https://example.com',

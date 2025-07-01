@@ -11,7 +11,7 @@ Crie um arquivo `.env.local` na raiz do projeto:
 cp .env.local.example .env.local
 
 # Edite o arquivo com a URL do seu backend
-NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=https://portal.sabercon.com.br/api
 ```
 
 ### 2. Verificar Backend
@@ -34,7 +34,7 @@ Acesse a página de teste: `/admin/users/test`
 ### 1. Verificar se o Backend está Rodando
 
 O frontend espera que o backend esteja disponível em:
-- **Desenvolvimento**: `http://localhost:3001/api`
+- **Desenvolvimento**: `https://portal.sabercon.com.br/api`
 - **Produção**: URL configurada em `NEXT_PUBLIC_API_URL`
 
 ### 2. Logs de Debug
@@ -108,7 +108,7 @@ GET /api/user?page=1&limit=10&sortBy=name&sortOrder=asc
 
 3. **Configure o .env.local**
    ```
-   NEXT_PUBLIC_API_URL=http://localhost:3001
+   NEXT_PUBLIC_API_URL=https://portal.sabercon.com.br/api
    ```
 
 4. **Verifique CORS no backend**
@@ -117,7 +117,7 @@ GET /api/user?page=1&limit=10&sortBy=name&sortOrder=asc
 #### ❌ "A resposta da API não contém dados válidos"
 1. **Teste o endpoint diretamente**
    ```bash
-   curl http://localhost:3001/api/user
+   curl https://portal.sabercon.com.br/api/user
    ```
 
 2. **Verifique a estrutura da resposta**

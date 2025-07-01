@@ -4,7 +4,7 @@
 
 ```
 Erro no mapa de código: Error: request failed with status 404
-URL do recurso: http://localhost:3000/portal/%3Canonymous%20code%3E
+URL do recurso: https://portal.sabercon.com.br/portal/%3Canonymous%20code%3E
 URL do mapa de código: installHook.js.map
 ```
 
@@ -115,7 +115,7 @@ npm run dev
 
 ## 📖 **Teste do KoodoViewer:**
 
-1. **Acesse**: `http://localhost:3000/portal/books`
+1. **Acesse**: `https://portal.sabercon.com.br/portal/books`
 2. **Teste PDF**: Clique em qualquer livro PDF
 3. **Teste EPUB**: Clique em qualquer livro EPUB
 4. **Navegação**: Use ←/→, zoom, temas

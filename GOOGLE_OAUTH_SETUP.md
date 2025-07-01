@@ -18,13 +18,13 @@ Para que o login com Google funcione em produção, você precisa configurar as 
 #### **Authorized JavaScript origins:**
 ```
 https://portal.sabercon.com.br
-http://localhost:3000
+https://portal.sabercon.com.br
 ```
 
 #### **Authorized redirect URIs:**
 ```
 https://portal.sabercon.com.br/api/auth/google/callback
-http://localhost:3001/auth/google/callback
+https://portal.sabercon.com.br/api/auth/google/callback
 ```
 
 ### 🔧 **4. Credenciais Atuais**
@@ -34,9 +34,9 @@ http://localhost:3001/auth/google/callback
 ### 🧪 **5. Testar a Configuração**
 
 #### **Em Desenvolvimento:**
-1. Acesse: http://localhost:3000/auth/login
+1. Acesse: https://portal.sabercon.com.br/auth/login
 2. Clique em "Entrar com o Google"
-3. Deve redirecionar para: `http://localhost:3001/auth/google`
+3. Deve redirecionar para: `https://portal.sabercon.com.br/api/auth/google`
 
 #### **Em Produção:**
 1. Acesse: https://portal.sabercon.com.br/auth/login

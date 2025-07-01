@@ -3,7 +3,7 @@ const testAPI = async () => {
   try {
     console.log('🔍 Testando API /api/tv-shows...')
     
-    const response = await fetch('http://localhost:3001/api/tv-shows?page=1&limit=5')
+    const response = await fetch('https://portal.sabercon.com.br/api/tv-shows?page=1&limit=5')
     
     console.log('Status:', response.status)
     console.log('Status Text:', response.statusText)

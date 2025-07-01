@@ -42,7 +42,7 @@
     "seed:make": "knex seed:make",
     "assign-teacher-role": "node -r ts-node/register src/scripts/assignTeacherRole.ts",
     "test:cors": "node ../scripts/test-cors.js",
-    "test:cors:dev": "set BACKEND_URL=http://localhost:3001&& set FRONTEND_URL=http://localhost:3000&& node ../scripts/test-cors.js",
+    "test:cors:dev": "set BACKEND_URL=https://portal.sabercon.com.br/api&& set FRONTEND_URL=https://portal.sabercon.com.br&& node ../scripts/test-cors.js",
     "test:cors:prod": "set BACKEND_URL=https://portal.sabercon.com.br&& set FRONTEND_URL=https://portal.sabercon.com.br&& node ../scripts/test-cors.js"
   },
   "keywords": [

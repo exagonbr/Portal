@@ -87,7 +87,7 @@ criticalFiles.forEach(file => {
 
 // 7. Iniciar servidor de desenvolvimento
 console.log('\n🚀 Iniciando servidor de desenvolvimento...');
-console.log('📍 URL: http://localhost:3000');
+console.log('📍 URL: https://portal.sabercon.com.br');
 console.log('🔧 Configurações aplicadas:');
 console.log('   - Middleware CSS ativo');
 console.log('   - Error boundaries configurados');

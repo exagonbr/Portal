@@ -19,7 +19,7 @@ console.log('🔑 Token JWT gerado:', token);
 // Testar API
 const testAPI = async () => {
   try {
-    const response = await fetch('http://localhost:3001/api/certificates?page=1&limit=10', {
+    const response = await fetch('https://portal.sabercon.com.br/api/certificates?page=1&limit=10', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

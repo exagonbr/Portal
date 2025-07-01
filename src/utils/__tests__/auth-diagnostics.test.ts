@@ -43,7 +43,7 @@ Object.defineProperty(window, 'navigator', {
 // Mock do location
 Object.defineProperty(window, 'location', {
   value: {
-    href: 'http://localhost:3000/test',
+    href: 'https://portal.sabercon.com.br/test',
     hostname: 'localhost',
   },
 });
@@ -66,7 +66,7 @@ describe('Auth Diagnostics', () => {
       expect(result).toMatchObject({
         timestamp: expect.any(String),
         browser: 'Test Browser',
-        url: 'http://localhost:3000/test',
+        url: 'https://portal.sabercon.com.br/test',
         token: {
           found: false,
         },

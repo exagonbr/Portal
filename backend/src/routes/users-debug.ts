@@ -46,7 +46,7 @@ router.get('/generate-test-jwt', async (req, res) => {
         payload,
         secret: secret,
         usage: {
-          curl: `curl -H "Authorization: Bearer ${token}" "http://localhost:3001/api/users?page=1&limit=10"`,
+          curl: `curl -H "Authorization: Bearer ${token}" "https://portal.sabercon.com.br/api/users?page=1&limit=10"`,
           headers: {
             'Authorization': `Bearer ${token}`
           }

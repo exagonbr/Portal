@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-const BASE_URL = 'http://localhost:3000/api';
+const BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'https://portal.sabercon.com.br/api'
+  : 'https://portal.sabercon.com.br/api';
 
 // Lista de endpoints para testar
 const ENDPOINTS = [

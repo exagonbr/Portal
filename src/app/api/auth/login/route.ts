@@ -332,7 +332,7 @@ export async function POST(request: NextRequest) {
       // Determinar URL do backend baseado no ambiente
       const backendBaseUrl = process.env.NODE_ENV === 'production'
         ? 'https://portal.sabercon.com.br/api'
-        : 'http://localhost:3001/api';
+        : 'https://portal.sabercon.com.br/api';
       const backendUrl = `${backendBaseUrl}/auth/optimized/login`;
       
       console.log(`🌐 BACKEND REQUEST: Tentando ${backendUrl}`);

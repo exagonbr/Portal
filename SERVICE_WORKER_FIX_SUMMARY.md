@@ -83,7 +83,7 @@ node scripts/test-service-worker.js
 1. Abrir DevTools (F12)
 2. Ir para aba **Application**
 3. Seção **Service Workers**
-4. Verificar se aparece: `https://localhost:3000/sw.js - activated and is running`
+4. Verificar se aparece: `https://portal.sabercon.com.br/sw.js - activated and is running`
 
 ### 3. Verificação de Console
 Procurar por logs:

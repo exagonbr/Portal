@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = 'https://portal.sabercon.com.br/api';
 
 async function testVideoFiles() {
   console.log('🎬 Testando busca de vídeos com arquivos...\n');

@@ -342,7 +342,7 @@ cat >> /etc/nginx/sites-available/default << 'EOF'
     limit_conn conn_limit_per_ip 20;
     limit_conn conn_limit_per_server 1000;
     
-    # Frontend (raiz do site) → localhost:3000
+    # Frontend (raiz do site) → portal.sabercon.com.br
     location / {
         # Rate limiting suave para frontend
         limit_req zone=general burst=10 nodelay;
@@ -393,7 +393,7 @@ cat >> /etc/nginx/sites-available/default << 'EOF'
         }
     }
     
-    # Backend API → localhost:3001/api/
+    # Backend API → portal.sabercon.com.br/api/
     location /api/ {
         # Rate limiting mais rigoroso para API
         limit_req zone=api burst=50 nodelay;
@@ -457,7 +457,7 @@ cat >> /etc/nginx/sites-available/default << 'EOF'
         proxy_read_timeout 60s;
     }
     
-    # Backend direto → localhost:3001/
+    # Backend direto → portal.sabercon.com.br/
     location /backend/ {
         proxy_pass http://api_backend/;
         proxy_http_version 1.1;

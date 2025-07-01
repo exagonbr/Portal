@@ -49,8 +49,8 @@ Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-C
 
 ### Múltiplas Origens
 - ✅ `https://portal.sabercon.com.br` - PERMITIDO
-- ✅ `http://localhost:3000` - PERMITIDO  
-- ✅ `https://localhost:3000` - PERMITIDO
+- ✅ `https://portal.sabercon.com.br` - PERMITIDO  
+- ✅ `https://portal.sabercon.com.br` - PERMITIDO
 - ✅ `https://example.com` - PERMITIDO
 
 ### Todas as Rotas AWS

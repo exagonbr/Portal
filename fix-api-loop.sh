@@ -102,16 +102,16 @@ fi
 # 4. Testar conectividade
 log "4. Testando conectividade..."
 
-echo "🧪 Testando localhost:3000 (frontend):"
-curl -s -I http://localhost:3000 | head -5 || echo "❌ Frontend não responde"
+echo "🧪 Testando portal.sabercon.com.br (frontend):"
+curl -s -I https://portal.sabercon.com.br | head -5 || echo "❌ Frontend não responde"
 echo ""
 
-echo "🧪 Testando localhost:3001 (backend):"
-curl -s -I http://localhost:3001 | head -5 || echo "❌ Backend não responde"
+echo "🧪 Testando portal.sabercon.com.br (backend):"
+curl -s -I https://portal.sabercon.com.br/api | head -5 || echo "❌ Backend não responde"
 echo ""
 
-echo "🧪 Testando localhost:3001/api/ (backend API):"
-curl -s -I http://localhost:3001/api/ | head -5 || echo "❌ Backend API não responde"
+echo "🧪 Testando portal.sabercon.com.br/api/ (backend API):"
+curl -s -I https://portal.sabercon.com.br/api/ | head -5 || echo "❌ Backend API não responde"
 echo ""
 
 # 5. Verificar logs recentes
@@ -140,7 +140,7 @@ echo "✅ SOLUÇÕES RECOMENDADAS:"
 echo ""
 echo "1️⃣  CONFIGURAR VARIÁVEIS DE AMBIENTE DO FRONTEND:"
 echo "   Criar/editar .env.production:"
-echo "   NEXT_PUBLIC_API_URL=http://localhost:3001/api"
+echo "   NEXT_PUBLIC_API_URL=https://portal.sabercon.com.br/api"
 echo "   # OU para desenvolvimento:"
 echo "   NEXT_PUBLIC_API_URL=/api"
 echo ""
@@ -154,7 +154,7 @@ echo ""
 
 echo "3️⃣  CONFIGURAR CORS NO BACKEND:"
 echo "   app.use(cors({"
-echo "     origin: ['https://portal.sabercon.com.br', 'http://localhost:3000'],"
+echo "     origin: ['https://portal.sabercon.com.br', 'https://portal.sabercon.com.br'],"
 echo "     credentials: true"
 echo "   }))"
 echo ""
@@ -166,7 +166,7 @@ echo "     async rewrites() {"
 echo "       return ["
 echo "         {"
 echo "           source: '/api/:path*',"
-echo "           destination: 'http://localhost:3001/api/:path*'"
+echo "           destination: 'https://portal.sabercon.com.br/api/:path*'"
 echo "         }"
 echo "       ]"
 echo "     }"
@@ -211,7 +211,7 @@ NEXT_PUBLIC_API_URL=/api
 
 # Configurações de API (interno)
 API_BASE_URL=http://127.0.0.1:3001/api
-INTERNAL_API_URL=http://localhost:3001
+INTERNAL_API_URL=https://portal.sabercon.com.br/api
 
 # Configurações de segurança
 NEXT_PUBLIC_SECURE_COOKIES=true
@@ -238,7 +238,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3001/api/:path*'
+        destination: 'https://portal.sabercon.com.br/api/:path*'
       }
     ]
   }

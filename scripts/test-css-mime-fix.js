@@ -93,11 +93,11 @@ const main = async () => {
       console.log('   • Cache configurado corretamente');
       console.log('');
       console.log('🔗 URLs para testar:');
-      console.log('   • http://localhost:3000/test-css.css');
-      console.log('   • http://localhost:3000/_next/static/css/');
+      console.log('   • https://portal.sabercon.com.br/test-css.css');
+      console.log('   • https://portal.sabercon.com.br/_next/static/css/');
       console.log('');
       console.log('📱 Teste também a página system-admin:');
-      console.log('   • http://localhost:3000/dashboard/system-admin');
+      console.log('   • https://portal.sabercon.com.br/dashboard/system-admin');
     } else {
       console.log('❌ Ainda há problemas com MIME type CSS');
       console.log('');

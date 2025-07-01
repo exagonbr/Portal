@@ -152,8 +152,8 @@ export async function GET(request: NextRequest) {
 node src/app/api/test-all-apis.js
 
 # Ou testar manualmente endpoints específicos
-curl -X GET http://localhost:3000/api/health
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X GET https://portal.sabercon.com.br/api/health
+curl -X POST https://portal.sabercon.com.br/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@sabercon.edu.br","password":"password123"}'
 ```

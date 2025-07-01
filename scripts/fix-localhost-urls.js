@@ -51,19 +51,19 @@ const filesToFix = [
 // Padrões de substituição
 const replacements = [
   {
-    pattern: /const BACKEND_URL = process\.env\.NEXT_PUBLIC_API_URL \|\| process\.env\.BACKEND_URL \|\| 'http:\/\/localhost:3001\/api';?/g,
+    pattern: /const BACKEND_URL = process\.env\.NEXT_PUBLIC_API_URL \|\| process\.env\.BACKEND_URL \|\| 'http:\/\/portal.sabercon.com.br\/api';?/g,
     replacement: "import { getInternalApiUrl } from '@/config/env';"
   },
   {
-    pattern: /const BACKEND_URL = process\.env\.BACKEND_URL \|\| 'http:\/\/localhost:3001';?/g,
+    pattern: /const BACKEND_URL = process\.env\.BACKEND_URL \|\| 'http:\/\/portal.sabercon.com.br';?/g,
     replacement: "import { getInternalApiUrl } from '@/config/env';"
   },
   {
-    pattern: /const BACKEND_URL = process\.env\.NEXT_PUBLIC_BACKEND_URL \|\| 'http:\/\/localhost:3001';?/g,
+    pattern: /const BACKEND_URL = process\.env\.NEXT_PUBLIC_BACKEND_URL \|\| 'http:\/\/portal.sabercon.com.br';?/g,
     replacement: "import { getInternalApiUrl } from '@/config/env';"
   },
   {
-    pattern: /const BACKEND_URL = process\.env\.NEXT_PUBLIC_API_URL \|\| 'http:\/\/localhost:3001\/api';?/g,
+    pattern: /const BACKEND_URL = process\.env\.NEXT_PUBLIC_API_URL \|\| 'http:\/\/portal.sabercon.com.br\/api';?/g,
     replacement: "import { getInternalApiUrl } from '@/config/env';"
   },
   // Substituições de uso

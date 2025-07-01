@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
 
 const JWT_SECRET = 'ExagonTech';
-const FRONTEND_URL = 'http://localhost:3000';
+const FRONTEND_URL = 'https://portal.sabercon.com.br';
 
 async function testFrontendLogin() {
   console.log('🔐 TESTANDO FLUXO COMPLETO DE LOGIN NO FRONTEND');
@@ -155,7 +155,7 @@ async function testTokenComparison() {
   try {
     // Token do backend direto
     console.log('🏢 OBTENDO TOKEN DO BACKEND DIRETO');
-    const backendResponse = await fetch('http://localhost:3001/api/auth/optimized/login', {
+    const backendResponse = await fetch('https://portal.sabercon.com.br/api/auth/optimized/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ async function testTokenComparison() {
     
     // Token do frontend (proxy)
     console.log('🌐 OBTENDO TOKEN DO FRONTEND (PROXY)');
-    const frontendResponse = await fetch('http://localhost:3000/api/auth/login', {
+    const frontendResponse = await fetch('https://portal.sabercon.com.br/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

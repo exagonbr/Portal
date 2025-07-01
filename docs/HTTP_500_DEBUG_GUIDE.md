@@ -56,13 +56,13 @@
 
 ```bash
 # Testar /api/settings/public
-curl -X GET http://localhost:3001/api/settings/public
+curl -X GET https://portal.sabercon.com.br/api/settings/public
 
 # Testar /api/status  
-curl -X GET http://localhost:3001/api/status
+curl -X GET https://portal.sabercon.com.br/api/status
 
 # Testar /api/health (deve funcionar)
-curl -X GET http://localhost:3001/api/health
+curl -X GET https://portal.sabercon.com.br/api/health
 ```
 
 ### Resultados Esperados

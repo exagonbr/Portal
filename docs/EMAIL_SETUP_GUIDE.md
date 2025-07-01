@@ -92,7 +92,7 @@ TLS/SSL: Marcado
 Use o endpoint `/api/notifications/email/verify` para verificar o status:
 
 ```bash
-curl -X GET http://localhost:3001/api/notifications/email/verify \
+curl -X GET https://portal.sabercon.com.br/api/notifications/email/verify \
   -H "Authorization: Bearer SEU_TOKEN"
 ```
 
@@ -126,7 +126,7 @@ O sistema registra logs detalhados:
 
 ### Via API
 ```bash
-curl -X POST http://localhost:3001/api/settings/reconfigure-email \
+curl -X POST https://portal.sabercon.com.br/api/settings/reconfigure-email \
   -H "Authorization: Bearer SEU_TOKEN"
 ```
 

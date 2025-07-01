@@ -60,8 +60,8 @@ NODE_ENV=development
 ### Origens Padrão
 
 #### Desenvolvimento
-- `http://localhost:3000`
-- `http://localhost:3001`
+- `https://portal.sabercon.com.br`
+- `https://portal.sabercon.com.br/api`
 - `http://localhost:8080`
 - `http://localhost:4200` (Angular)
 - `http://localhost:5173` (Vite)
@@ -156,12 +156,12 @@ curl -H "Origin: https://app.sabercon.com.br" \
      -H "Access-Control-Request-Method: GET" \
      -H "Access-Control-Request-Headers: Authorization" \
      -X OPTIONS \
-     http://localhost:3001/api/users/me
+     https://portal.sabercon.com.br/api/users/me
 
 # Teste de origem não permitida
 curl -H "Origin: https://site-malicioso.com" \
      -X GET \
-     http://localhost:3001/api/users/me
+     https://portal.sabercon.com.br/api/users/me
 ```
 
 ### Respostas Esperadas

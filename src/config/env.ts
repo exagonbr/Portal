@@ -28,7 +28,7 @@ const getBaseUrls = () => {
       API_BASE_URL: 'https://portal.sabercon.com.br/api',
       
       // Servidor (SSR): usa URL interna direta
-      INTERNAL_API_URL: 'http://localhost:3001/api'
+      INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
     };
   }
   
@@ -37,7 +37,7 @@ const getBaseUrls = () => {
     FRONTEND_URL: 'https://portal.sabercon.com.br',
     BACKEND_URL: 'https://portal.sabercon.com.br/api',
     API_BASE_URL: 'https://portal.sabercon.com.br/api',
-    INTERNAL_API_URL: 'http://localhost:3001/api'
+    INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
   };
 };
 
@@ -51,7 +51,7 @@ try {
     FRONTEND_URL: 'https://portal.sabercon.com.br',
     BACKEND_URL: 'https://portal.sabercon.com.br/api',
     API_BASE_URL: 'https://portal.sabercon.com.br/api',
-    INTERNAL_API_URL: 'http://localhost:3001/api'
+    INTERNAL_API_URL: 'https://portal.sabercon.com.br/api'
   };
 }
 
@@ -103,7 +103,7 @@ export const getInternalApiUrl = (path: string = '') => {
     return `${baseUrl}${cleanPath}`;
   } catch (error) {
     console.warn('Erro ao obter Internal API URL, usando fallback:', error);
-    return `http://localhost:3001/api${path.startsWith('/') ? path : `/${path}`}`;
+    return `https://portal.sabercon.com.br/api${path.startsWith('/') ? path : `/${path}`}`;
   }
 };
 

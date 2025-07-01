@@ -1,7 +1,9 @@
 // Script para testar todos os endpoints da API
 // Execute com: node src/app/api/test-endpoints.js
 
-const BASE_URL = 'http://localhost:3000/api';
+const BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'https://portal.sabercon.com.br/api'
+  : 'https://portal.sabercon.com.br/api';
 
 // Token de teste (substitua por um token válido)
 const TEST_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbiIsImVtYWlsIjoiYWRtaW5Ac2FiZXJjb24uZWR1LmJyIiwibmFtZSI6IkFkbWluaXN0cmFkb3IiLCJyb2xlIjoiU1lTVEVNX0FETUlOIiwiaW5zdGl0dXRpb25JZCI6Imluc3Rfc2FiZXJjb24iLCJwZXJtaXNzaW9ucyI6W10sImlhdCI6MTczODM0NzI5NCwiZXhwIjoxNzM4NDMzNjk0fQ.Ej6Ej6Ej6Ej6Ej6Ej6Ej6Ej6Ej6Ej6Ej6Ej6Ej6Ej6';

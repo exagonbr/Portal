@@ -52,8 +52,8 @@ const fetchTvShows = useCallback(async (page = 1, search = '') => {
 - ✅ **Permitir TODAS as origens** (`*`)
 - ✅ Headers específicos para URLs solicitadas:
   - `https://portal.sabercon.com.br`
-  - `http://localhost:3000`
-  - `http://localhost:3001`
+  - `https://portal.sabercon.com.br`
+  - `https://portal.sabercon.com.br/api`
 - ✅ Métodos HTTP completos incluindo **HEAD**
 - ✅ Headers expandidos para melhor compatibilidade
 
@@ -154,9 +154,9 @@ getLoopPrevention()?.setEnabled(true);
 ### URLs Permitidas:
 - ✅ `https://portal.sabercon.com.br`
 - ✅ `https://portal.sabercon.com.br/api`
-- ✅ `http://localhost:3001`
 - ✅ `https://portal.sabercon.com.br/api`
-- ✅ `http://localhost:3000`
+- ✅ `https://portal.sabercon.com.br/api`
+- ✅ `https://portal.sabercon.com.br`
 
 ### Headers CORS Configurados:
 - ✅ `Access-Control-Allow-Origin: *`

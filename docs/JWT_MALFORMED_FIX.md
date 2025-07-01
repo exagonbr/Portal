@@ -100,7 +100,7 @@ catch (jwtError) {
 ## Teste de Validação
 
 ```bash
-curl -X GET "http://localhost:3001/api/tv-shows" \
+curl -X GET "https://portal.sabercon.com.br/api/tv-shows" \
   -H "Authorization: Bearer eyJ1c2VySWQiOiJhZG1pbiIsImVtYWlsIjoiYWRtaW5AZXhhZ29udGVjaC5jb20iLCJuYW1lIjoiQWRtaW5pc3RyYWRvciBkbyBTaXN0ZW1hIiwicm9sZSI6InN5c3RlbV9hZG1pbiIsInBlcm1pc3Npb25zIjpbIioiXSwiaW5zdGl0dXRpb25JZCI6bnVsbCwic2Vzc2lvbklkIjoic2Vzc2lvbl8xNzM1MTQxNTQzMTcxIiwiaWF0IjoxNzM1MTQxNTQzLCJleHAiOjE3MzUyMjc5NDN9"
 ```
 
