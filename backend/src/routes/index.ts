@@ -9,6 +9,7 @@ import pushSubscriptionRoutes from './pushSubscription';
 import notificationsRoutes from './notifications';
 import institutionsPublicRouter from './institutions.public';
 import institutionsRouter from './institutions';
+import publicRouter from './public';
 import usersRouter from './users';
 import usersDebugRouter from './users-debug';
 import coursesRouter from './courses';
@@ -81,6 +82,7 @@ router.use('/push-subscriptions', pushSubscriptionRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/institutions', institutionsRouter); // Rotas administrativas (com autenticação)
 router.use('/institutions-public', institutionsPublicRouter); // Rotas públicas
+router.use('/public', publicRouter); // Rotas públicas gerais
 router.use('/users', usersRouter);
 router.use('/users-debug', usersDebugRouter);
 router.use('/courses', coursesRouter);
