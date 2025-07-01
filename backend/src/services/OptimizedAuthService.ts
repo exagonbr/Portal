@@ -66,8 +66,6 @@ interface RefreshTokenPayload {
 }
 
 export class OptimizedAuthService {
-  private static readonly ACCESS_TOKEN_EXPIRY = '1h'; // 1 hora para access token
-  private static readonly REFRESH_TOKEN_EXPIRY = '7d'; // 7 dias para refresh token
   private static readonly SALT_ROUNDS = 12;
 
   /**
