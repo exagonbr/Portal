@@ -30,7 +30,7 @@ const API_BASE = `/api/institutions`;
 
 // Configuração de timeout para requisições
 const REQUEST_TIMEOUT = 30000; // 30 segundos
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 
 // Função para criar fetch com timeout
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout: number = REQUEST_TIMEOUT): Promise<Response> => {
@@ -98,7 +98,13 @@ const createAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken();
   
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    console.log('🔐 Token found, adding to headers:', {
+      tokenLength: token.length,
+      preview: token.substring(0, 20) + '...',
+      isBearer: token.startsWith('Bearer ')
+    });
+    // If token already includes 'Bearer ', use as is, otherwise add it
+    headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
   } else {
     console.warn('⚠️ InstitutionService: Nenhum token de autenticação encontrado');
   }
@@ -126,7 +132,11 @@ export class InstitutionService {
       console.log('🔗 Fetching institutions from:', url);
       
       const headers = createAuthHeaders();
-      console.log('📋 Request headers:', headers);
+      console.log('📋 Request headers:', {
+        hasAuth: !!headers.Authorization,
+        authType: headers.Authorization?.startsWith('Bearer ') ? 'Bearer' : 'None',
+        contentType: headers['Content-Type']
+      });
       
       const response = await fetchWithRetry(url, {
         method: 'GET',
@@ -139,9 +149,13 @@ export class InstitutionService {
         const errorText = await response.text();
         console.log('❌ Response error:', errorText);
         
-        // Se for erro de autenticação (401), retornar dados simulados
+        // Se for erro de autenticação (401), logar detalhes e retornar dados simulados
         if (response.status === 401) {
-          console.warn('⚠️ Erro de autenticação, retornando dados simulados');
+          console.warn('⚠️ Erro de autenticação (401):', {
+            headers: headers,
+            token: getAuthToken() ? 'Present' : 'Missing',
+            errorText
+          });
           return this.getFallbackInstitutions(options);
         }
         

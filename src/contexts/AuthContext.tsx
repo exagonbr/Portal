@@ -48,6 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Função de logout centralizada
   const logout = useCallback(() => {
+    console.log('Logging out: removing token and user');
     removeToken();
     setUser(null);
     apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
@@ -62,6 +63,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    console.log('AuthProvider: Checking token on app load:', token ? 'Token found' : 'No token found');
+
     if (token) {
       const decodedPayload = decodeToken(token);
       if (decodedPayload && decodedPayload.exp * 1000 > Date.now()) {
@@ -72,7 +75,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: decodedPayload.role,
           permissions: decodedPayload.permissions || [],
         });
+        console.log('AuthProvider: User set from token:', decodedPayload);
       } else {
+        console.log('AuthProvider: Token expired or invalid, removing token');
         removeToken();
       }
     }
@@ -89,6 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data } = await apiClient.post('/auth/login', { email, password });
       const { accessToken } = data.data;
       
+      console.log('Login successful, storing token:', accessToken);
       setToken(accessToken);
       const decodedPayload = decodeToken(accessToken);
       if (decodedPayload) {

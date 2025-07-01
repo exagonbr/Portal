@@ -102,9 +102,9 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <GamificationProvider>
             <NavigationLoadingProvider>
-            <UpdateProvider>
-            <ToastManager>
-              {children}
+              <UpdateProvider>
+              <ToastManager>
+                {children}
               </ToastManager>
               </UpdateProvider>
             </NavigationLoadingProvider>
