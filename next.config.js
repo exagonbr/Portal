@@ -35,10 +35,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
 
   // Desativar o botão de "dev tools" do Next.js
-  devIndicators: {
-    buildActivity: false,
-    buildActivityPosition: 'bottom-right',
-  },
+  devIndicators: false,
   
   // ESLint
   eslint: {

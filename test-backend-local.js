@@ -5,8 +5,8 @@ async function testLocalBackend() {
   console.log('==================================================');
 
   const testUrls = [
-    'http://localhost:3001/settings/public',
-    'http://localhost:3001/system-settings/public',
+    'http://localhost:3001/apisettings/public',
+    'http://localhost:3001/apisystem-settings/public',
     'http://localhost:3001/api/settings/public',
     'http://localhost:3001/api/system-settings/public'
   ];

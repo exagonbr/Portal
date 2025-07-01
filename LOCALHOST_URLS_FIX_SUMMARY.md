@@ -2,7 +2,7 @@
 
 ## 🎯 Problema Identificado
 
-Em produção (`https://portal.sabercon.com.br/`), várias requisições de API ainda estavam apontando para `http://localhost:3000` e `http://localhost:3001`, causando falhas de conectividade.
+Em produção (`https://portal.sabercon.com.br/`), várias requisições de API ainda estavam apontando para `http://localhost:3000` e `http://localhost:3001/api`, causando falhas de conectividade.
 
 ## 🔍 Diagnóstico Realizado
 
@@ -21,7 +21,7 @@ Criado [`check-localhost-urls.js`](check-localhost-urls.js) que identificou **17
 **URLs Substituídas:**
 - `http://localhost:3000` → `https://portal.sabercon.com.br`
 - `http://localhost:3001/api` → `https://portal.sabercon.com.br/api`
-- `http://localhost:3001` → `https://portal.sabercon.com.br/api`
+- `http://localhost:3001/api` → `https://portal.sabercon.com.br/api`
 - `https://localhost:3000` → `https://portal.sabercon.com.br`
 - `https://localhost:3001` → `https://portal.sabercon.com.br/api`
 
