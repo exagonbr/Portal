@@ -6,7 +6,14 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const { pathname, searchParams } = new URL(request.url);
   
-  // Se for uma tentativa de login, redirecionar para nossa API customizada
+  // Não interceptar rotas do sistema customizado
+  if (pathname.includes('/api/auth/optimized/') ||
+      pathname.includes('/api/auth/login') ||
+      pathname.includes('/api/auth/validate')) {
+    return NextResponse.next();
+  }
+  
+  // Se for uma tentativa de login do NextAuth, redirecionar para nossa API customizada
   if (pathname.includes('signin') || pathname.includes('login')) {
     console.log('🔄 [NEXTAUTH-REDIRECT] Redirecionando login para sistema customizado');
     
@@ -19,24 +26,30 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
   
-  // Para outras rotas do NextAuth, usar nossa API customizada
-  console.log('🔄 [NEXTAUTH-REDIRECT] Usando sistema de autenticação customizado');
+  // Para outras rotas do NextAuth, informar que foi desabilitado
+  console.log('🔄 [NEXTAUTH-REDIRECT] NextAuth desabilitado');
   
   return NextResponse.json(
-    { 
-      success: true,
-      message: 'Sistema de autenticação customizado ativo',
+    {
+      error: 'NextAuth foi desabilitado. Use o sistema de autenticação customizado.',
       redirect: '/api/auth/login',
       timestamp: new Date().toISOString()
     },
-    { status: 200 }
+    { status: 404 }
   );
 }
 
 export async function POST(request: NextRequest) {
   const { pathname } = new URL(request.url);
   
-  // Se for uma tentativa de login via POST, usar nossa API
+  // Não interceptar rotas do sistema customizado
+  if (pathname.includes('/api/auth/optimized/') ||
+      pathname.includes('/api/auth/login') ||
+      pathname.includes('/api/auth/validate')) {
+    return NextResponse.next();
+  }
+  
+  // Se for uma tentativa de login do NextAuth via POST, usar nossa API
   if (pathname.includes('signin') || pathname.includes('login') || pathname.includes('callback')) {
     console.log('🔄 [NEXTAUTH-REDIRECT] Redirecionando POST login para sistema customizado');
     
@@ -63,12 +76,11 @@ export async function POST(request: NextRequest) {
   }
   
   return NextResponse.json(
-    { 
-      success: true,
-      message: 'Sistema de autenticação customizado ativo',
+    {
+      error: 'NextAuth foi desabilitado. Use o sistema de autenticação customizado.',
       redirect: '/api/auth/login',
       timestamp: new Date().toISOString()
     },
-    { status: 200 }
+    { status: 404 }
   );
 }

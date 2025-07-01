@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://127.0.0.1:3001/api';
     const loginUrl = `${backendUrl}/auth/optimized/login`;
 
-    console.log('🔐 [LOGIN-API] Tentativa de login para:', email);
-    console.log('🔗 [LOGIN-API] URL do backend:', loginUrl);
+    console.log('🔐 [CUSTOM-AUTH-LOGIN] Tentativa de login para:', email);
+    console.log('🔗 [CUSTOM-AUTH-LOGIN] URL do backend:', loginUrl);
 
     // Fazer requisição para o backend
     const response = await fetch(loginUrl, {
@@ -35,10 +35,10 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
 
-    console.log('📡 [LOGIN-API] Resposta do backend:', {
+    console.log('📡 [CUSTOM-AUTH-LOGIN] Resposta do backend:', {
       status: response.status,
       success: data.success,
-      hasToken: !!data.data?.token
+      hasToken: !!data.data?.token || !!data.token
     });
 
     if (!response.ok) {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('❌ [LOGIN-API] Erro no login:', error);
+    console.error('❌ [CUSTOM-AUTH-LOGIN] Erro no login:', error);
     
     return NextResponse.json(
       { 
