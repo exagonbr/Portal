@@ -152,13 +152,15 @@ function SimpleProviders({ children }: { children: ReactNode }) {
     };
   }, [])
 
-  // Renderizar uma versão simplificada no servidor
+  // Renderizar uma versão simplificada no servidor que será idêntica no cliente
   if (!mounted) {
     return (
       <div className="min-h-screen w-full" suppressHydrationWarning>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="sr-only">Carregando...</div>}>
           <ThemeProvider>
-            {children}
+            <div suppressHydrationWarning>
+              {children}
+            </div>
           </ThemeProvider>
         </Suspense>
       </div>

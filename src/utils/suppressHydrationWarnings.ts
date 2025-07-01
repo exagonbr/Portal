@@ -15,12 +15,20 @@ export function suppressHydrationWarnings() {
     const message = args[0];
     
     if (typeof message === 'string') {
-      // Avisos de hidratação relacionados a IDs únicos, timestamps, etc.
+      // Avisos de hidratação relacionados a IDs únicos, timestamps, extensões do navegador, etc.
       const hydrationWarnings = [
         'A tree hydrated but some attributes of the server rendered HTML didn\'t match the client properties',
         'Text content does not match server-rendered HTML',
         'Hydration failed because the initial UI does not match what was rendered on the server',
-        'There was an error while hydrating'
+        'There was an error while hydrating',
+        'Hydration failed because the server rendered HTML didn\'t match the client',
+        'bbai-tooltip-injected', // Extensão BBAI
+        'data-grammarly', // Grammarly
+        'data-lastpass', // LastPass
+        'data-extension', // Extensões genéricas
+        'Warning: Extra attributes from the server', // Atributos extras do servidor
+        'Warning: Prop `className` did not match', // Classes CSS diferentes
+        'Warning: Expected server HTML to contain a matching', // HTML não correspondente
       ];
 
       // Se é um aviso de hidratação conhecido, não mostrar

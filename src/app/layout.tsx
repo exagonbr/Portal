@@ -44,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className="h-full antialiased">
+    <html lang="pt-BR" className="h-full antialiased" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -63,6 +63,9 @@ export default function RootLayout({
         
         {/* Service Worker personalizado para limpeza de cache */}
         <script src="/register-sw.js" defer />
+        
+        {/* Script para prevenir problemas de hidratação causados por extensões */}
+        <script src="/cleanup-extensions.js" defer />
       </head>
       <body className={`${inter.className} m-0 p-0 h-full w-full`} suppressHydrationWarning>
         <SimpleProviders>

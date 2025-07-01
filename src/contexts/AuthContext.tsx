@@ -106,6 +106,7 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
 
 /**
  * Wrapper que garante que o AuthProvider está pronto antes de renderizar children
+ * Evita problemas de hidratação ao garantir renderização consistente
  */
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -114,9 +115,13 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Renderizar versão simplificada no servidor
+  // Renderizar versão simplificada no servidor que será idêntica no cliente
   if (!mounted) {
-    return <AuthProvider isInitializing={true}>{children}</AuthProvider>;
+    return (
+      <div suppressHydrationWarning>
+        <AuthProvider isInitializing={true}>{children}</AuthProvider>
+      </div>
+    );
   }
 
   // Renderizar versão completa no cliente
