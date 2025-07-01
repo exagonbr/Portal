@@ -10,7 +10,7 @@ export class CourseController {
 
       return res.json(courses);
     } catch (error) {
-      console.error('Erro ao listar cursos:', error);
+      console.log('Erro ao listar cursos:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -28,7 +28,7 @@ export class CourseController {
 
       return res.json(course);
     } catch (error) {
-      console.error('Erro ao buscar curso:', error);
+      console.log('Erro ao buscar curso:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -48,7 +48,7 @@ export class CourseController {
 
       return res.status(201).json(course);
     } catch (error) {
-      console.error('Erro ao criar curso:', error);
+      console.log('Erro ao criar curso:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -75,7 +75,7 @@ export class CourseController {
 
       return res.json({ message: 'Curso atualizado com sucesso' });
     } catch (error) {
-      console.error('Erro ao atualizar curso:', error);
+      console.log('Erro ao atualizar curso:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -91,7 +91,7 @@ export class CourseController {
 
       return res.json({ message: 'Curso excluído com sucesso' });
     } catch (error) {
-      console.error('Erro ao excluir curso:', error);
+      console.log('Erro ao excluir curso:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -142,7 +142,7 @@ export class CourseController {
         totalPages: Math.ceil(total / limit)
       });
     } catch (error) {
-      console.error('Erro ao buscar cursos:', error);
+      console.log('Erro ao buscar cursos:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -161,7 +161,7 @@ export class CourseController {
 
       return res.json({ message: 'Professor adicionado com sucesso' });
     } catch (error) {
-      console.error('Erro ao adicionar professor:', error);
+      console.log('Erro ao adicionar professor:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -179,7 +179,7 @@ export class CourseController {
 
       return res.json({ message: 'Professor removido com sucesso' });
     } catch (error) {
-      console.error('Erro ao remover professor:', error);
+      console.log('Erro ao remover professor:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -198,7 +198,7 @@ export class CourseController {
 
       return res.json({ message: 'Aluno adicionado com sucesso' });
     } catch (error) {
-      console.error('Erro ao adicionar aluno:', error);
+      console.log('Erro ao adicionar aluno:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -216,7 +216,7 @@ export class CourseController {
 
       return res.json({ message: 'Aluno removido com sucesso' });
     } catch (error) {
-      console.error('Erro ao remover aluno:', error);
+      console.log('Erro ao remover aluno:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }

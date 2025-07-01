@@ -291,7 +291,7 @@ class NotificationApiService {
     
     if (!response.success) {
       const errorMessage = response.message || 'Falha ao enviar notificação';
-      console.error('📧 [NotificationApiService] Erro na resposta:', errorMessage);
+      console.log('📧 [NotificationApiService] Erro na resposta:', errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -313,7 +313,7 @@ class NotificationApiService {
       // Se response.data já tem a estrutura correta
       responseData = response.data;
     } else {
-      console.error('📧 [NotificationApiService] Dados não encontrados na resposta:', response);
+      console.log('📧 [NotificationApiService] Dados não encontrados na resposta:', response);
       throw new Error('Dados de resposta não encontrados');
     }
 

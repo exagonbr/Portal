@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Erro no health check:', error)
+    console.log('Erro no health check:', error)
     return NextResponse.json(
       { 
         status: 'unhealthy', 

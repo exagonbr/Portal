@@ -67,7 +67,7 @@ export const useVideosByShow = (showId: number | null): UseVideosByShowReturn =>
       }
 
     } catch (err) {
-      console.error('Erro ao buscar vídeos:', err);
+      console.log('Erro ao buscar vídeos:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
       setLoading(false);
@@ -136,7 +136,7 @@ export function useVideoById(videoId: string) {
         setVideo(videoData);
 
       } catch (err) {
-        console.error('Erro ao buscar vídeo:', err);
+        console.log('Erro ao buscar vídeo:', err);
         setError(err instanceof Error ? err.message : 'Erro desconhecido');
       } finally {
         setLoading(false);

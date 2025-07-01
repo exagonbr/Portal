@@ -103,7 +103,7 @@ export class UserRepository extends BaseRepository<User> {
       });
       return stats;
     } catch (error) {
-      console.error('Error fetching user stats by role:', error);
+      console.log('Error fetching user stats by role:', error);
       return {};
     }
   }
@@ -121,7 +121,7 @@ export class UserRepository extends BaseRepository<User> {
       });
       return stats;
     } catch (error) {
-      console.error('Error fetching user stats by institution:', error);
+      console.log('Error fetching user stats by institution:', error);
       return {};
     }
   }

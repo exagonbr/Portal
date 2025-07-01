@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao definir cache:', error);
+    console.log('Erro ao definir cache:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -58,7 +58,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao definir cache:', error);
+    console.log('Erro ao definir cache:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -80,7 +80,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao definir cache:', error);
+    console.log('Erro ao definir cache:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

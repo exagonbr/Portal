@@ -16,7 +16,7 @@ export class TVShowController {
         message: 'Coleções recuperadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleções:', error);
+      console.log('Erro ao buscar coleções:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleções',
@@ -57,7 +57,7 @@ export class TVShowController {
         message: 'Coleção recuperada com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleção:', error);
+      console.log('Erro ao buscar coleção:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleção',
@@ -90,7 +90,7 @@ export class TVShowController {
         message: `${collections.length} coleções encontradas para "${searchTerm}"`
       });
     } catch (error) {
-      console.error('Erro ao pesquisar coleções:', error);
+      console.log('Erro ao pesquisar coleções:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao pesquisar coleções',
@@ -123,7 +123,7 @@ export class TVShowController {
         message: 'Coleções populares recuperadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleções populares:', error);
+      console.log('Erro ao buscar coleções populares:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleções populares',
@@ -156,7 +156,7 @@ export class TVShowController {
         message: 'Coleções mais bem avaliadas recuperadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleções mais bem avaliadas:', error);
+      console.log('Erro ao buscar coleções mais bem avaliadas:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleções mais bem avaliadas',
@@ -189,7 +189,7 @@ export class TVShowController {
         message: 'Coleções recentes recuperadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleções recentes:', error);
+      console.log('Erro ao buscar coleções recentes:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleções recentes',

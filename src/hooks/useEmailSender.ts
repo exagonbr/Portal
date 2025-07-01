@@ -89,12 +89,12 @@ export function useEmailSender(): UseEmailSenderReturn {
         throw new Error(response.message || 'Erro ao enviar e-mail')
       }
     } catch (error: any) {
-      console.error('❌ [useEmailSender] Erro ao enviar e-mail:', error)
+      console.log('❌ [useEmailSender] Erro ao enviar e-mail:', error)
       
       let errorMessage = 'Erro ao enviar e-mail'
       
       if (error?.message?.includes('401') || error?.status === 401) {
-        console.error('🔐 [useEmailSender] Erro de autenticação detectado')
+        console.log('🔐 [useEmailSender] Erro de autenticação detectado')
         errorMessage = 'Sessão expirada. Faça login novamente.'
       } else if (error?.response?.data?.message) {
         // Erro da API com mensagem específica

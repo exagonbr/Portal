@@ -63,7 +63,7 @@ async function runCompleteMigration() {
     console.log('✅ Sistema pronto para uso');
 
   } catch (error) {
-    console.error('\n❌ ERRO NA MIGRAÇÃO COMPLETA:', error);
+    console.log('\n❌ ERRO NA MIGRAÇÃO COMPLETA:', error);
     console.log('\n🔧 Para resolver problemas:');
     console.log('1. Verifique as configurações de conexão MySQL');
     console.log('2. Certifique-se que o PostgreSQL está rodando');
@@ -73,7 +73,7 @@ async function runCompleteMigration() {
 }
 
 if (require.main === module) {
-  runCompleteMigration().catch(console.error);
+  runCompleteMigration().catch(console.log);
 }
 
 export default runCompleteMigration; 

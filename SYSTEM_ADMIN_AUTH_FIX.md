@@ -31,7 +31,7 @@ private async ensureAuthentication(): Promise<boolean> {
       console.warn('⚠️ [AUTH-CHECK] Token inválido, tentando refresh automático');
       const refreshSuccess = await autoRefreshToken();
       if (!refreshSuccess) {
-        console.error('❌ [AUTH-CHECK] Falha no refresh do token');
+        console.log('❌ [AUTH-CHECK] Falha no refresh do token');
         return false;
       }
     }
@@ -40,7 +40,7 @@ private async ensureAuthentication(): Promise<boolean> {
     await syncTokenWithApiClient();
     return true;
   } catch (error) {
-    console.error('❌ [AUTH-CHECK] Erro na verificação de autenticação:', error);
+    console.log('❌ [AUTH-CHECK] Erro na verificação de autenticação:', error);
     return false;
   }
 }

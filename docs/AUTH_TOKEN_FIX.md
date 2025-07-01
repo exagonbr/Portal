@@ -10,7 +10,7 @@ O erro "Token inválido ou expirado" estava aparecendo no console como um erro n
 Error: Erro: "Token inválido ou expirado"
     at createConsoleError (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/errors/console-error.js:27:71)
     at handleConsoleError (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/errors/use-error-handler.js:47:54)
-    at console.error (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/globals/intercept-console-error.js:47:57)
+    at console.log (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/globals/intercept-console-error.js:47:57)
     at eval (webpack-internal:///(app-pages-browser)/./src/utils/auth-debug.ts:219:35)
 ```
 
@@ -20,7 +20,7 @@ Error: Erro: "Token inválido ou expirado"
 
 **Antes:**
 ```typescript
-if (result.error) console.error('Erro:', result.error);
+if (result.error) console.log('Erro:', result.error);
 ```
 
 **Depois:**
@@ -168,7 +168,7 @@ node scripts/fix-auth-token.js
 ## 📊 Benefícios das Correções
 
 ### 1. **Redução de Logs Desnecessários**
-- Tokens expirados não geram mais `console.error`
+- Tokens expirados não geram mais `console.log`
 - Mensagens informativas em vez de erros assustadores
 - Contexto claro sobre o que está acontecendo
 
@@ -206,7 +206,7 @@ node scripts/fix-auth-token.js
 ### 1. **Tratamento de Erro Elegante**
 - Use `console.warn` para situações esperadas
 - Use `console.info` para dicas úteis
-- Reserve `console.error` para erros reais e inesperados
+- Reserve `console.log` para erros reais e inesperados
 
 ### 2. **Limpeza Proativa**
 - Verifique expiração antes de usar tokens

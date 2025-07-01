@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error: any) {
-    console.error('❌ [API] Erro ao buscar templates:', error);
+    console.log('❌ [API] Erro ao buscar templates:', error);
     return NextResponse.json(
       {
         success: false,
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error: any) {
-    console.error('❌ [API] Erro ao criar template:', error);
+    console.log('❌ [API] Erro ao criar template:', error);
     return NextResponse.json(
       {
         success: false,

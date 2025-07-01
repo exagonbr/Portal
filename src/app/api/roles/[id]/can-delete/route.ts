@@ -63,7 +63,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error(`Erro ao verificar se role ${resolvedParams.id} pode ser deletada:`, error)
+    console.log(`Erro ao verificar se role ${resolvedParams.id} pode ser deletada:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

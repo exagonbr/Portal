@@ -163,7 +163,7 @@ async function runTests() {
 
 // Executar testes
 if (require.main === module) {
-  runTests().catch(console.error);
+  runTests().catch(console.log);
 }
 
 module.exports = { testAPI, runTests }; 

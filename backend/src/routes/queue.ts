@@ -40,7 +40,7 @@ router.get('/stats', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res)
       data: stats
     });
   } catch (error) {
-    console.error('Error fetching queue stats:', error);
+    console.log('Error fetching queue stats:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -67,7 +67,7 @@ router.post('/pause', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res
       message: 'Queue paused'
     });
   } catch (error) {
-    console.error('Error pausing queue:', error);
+    console.log('Error pausing queue:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -94,7 +94,7 @@ router.post('/resume', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, re
       message: 'Queue resumed'
     });
   } catch (error) {
-    console.error('Error resuming queue:', error);
+    console.log('Error resuming queue:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

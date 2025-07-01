@@ -72,7 +72,7 @@ async function testCustomAuth() {
       console.log('❌ Rota customizada não encontrada');
     }
   } catch (error) {
-    console.error('❌ Erro no GET:', error.message);
+    console.log('❌ Erro no GET:', error.message);
   }
 
   // Teste 2: POST com credenciais de teste
@@ -110,7 +110,7 @@ async function testCustomAuth() {
         console.log('❌ Login falhou:', response.data.message || 'Erro desconhecido');
       }
     } catch (error) {
-      console.error('❌ Erro no login:', error.message);
+      console.log('❌ Erro no login:', error.message);
     }
   }
 
@@ -122,4 +122,4 @@ async function testCustomAuth() {
   return null;
 }
 
-testCustomAuth().catch(console.error);
+testCustomAuth().catch(console.log);

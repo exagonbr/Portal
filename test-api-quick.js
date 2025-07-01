@@ -66,4 +66,4 @@ function makeRequest(url, timeout = 5000) {
   });
 }
 
-quickTest().catch(console.error);
+quickTest().catch(console.log);

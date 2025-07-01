@@ -12,7 +12,7 @@ async function createAdminSimple() {
       .first();
     
     if (!adminRole) {
-      console.error('❌ Role SYSTEM_ADMIN não encontrada!');
+      console.log('❌ Role SYSTEM_ADMIN não encontrada!');
       return;
     }
     
@@ -25,7 +25,7 @@ async function createAdminSimple() {
       .first();
     
     if (!institution) {
-      console.error('❌ Nenhuma instituição encontrada!');
+      console.log('❌ Nenhuma instituição encontrada!');
       return;
     }
     
@@ -89,7 +89,7 @@ async function createAdminSimple() {
     console.log('==========================================');
     
   } catch (error) {
-    console.error('❌ Erro:', error);
+    console.log('❌ Erro:', error);
   } finally {
     await db.destroy();
   }

@@ -121,7 +121,7 @@ export class SessionService {
       
       return sessionData;
     } catch (error) {
-      console.error('Erro ao validar sessão:', error);
+      console.log('Erro ao validar sessão:', error);
       return null;
     }
   }
@@ -147,7 +147,7 @@ export class SessionService {
         );
       }
     } catch (error) {
-      console.error('Erro ao atualizar atividade da sessão:', error);
+      console.log('Erro ao atualizar atividade da sessão:', error);
     }
   }
 
@@ -193,7 +193,7 @@ export class SessionService {
       
       return false;
     } catch (error) {
-      console.error('Erro ao destruir sessão:', error);
+      console.log('Erro ao destruir sessão:', error);
       return false;
     }
   }
@@ -222,7 +222,7 @@ export class SessionService {
       console.log(`✅ ${sessionIds.length} sessões removidas para o usuário ${userId}`);
       return sessionIds.length;
     } catch (error) {
-      console.error('Erro ao destruir todas as sessões do usuário:', error);
+      console.log('Erro ao destruir todas as sessões do usuário:', error);
       return 0;
     }
   }
@@ -262,7 +262,7 @@ export class SessionService {
 
       return sessions.sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
     } catch (error) {
-      console.error('Erro ao obter sessões do usuário:', error);
+      console.log('Erro ao obter sessões do usuário:', error);
       return [];
     }
   }
@@ -275,7 +275,7 @@ export class SessionService {
       const sessionId = await this.redis.get(`${this.REFRESH_TOKEN_PREFIX}${refreshToken}`);
       return sessionId;
     } catch (error) {
-      console.error('Erro ao validar refresh token:', error);
+      console.log('Erro ao validar refresh token:', error);
       return null;
     }
   }
@@ -287,7 +287,7 @@ export class SessionService {
     try {
       await this.redis.del(`${this.REFRESH_TOKEN_PREFIX}${refreshToken}`);
     } catch (error) {
-      console.error('Erro ao remover refresh token:', error);
+      console.log('Erro ao remover refresh token:', error);
     }
   }
 
@@ -305,7 +305,7 @@ export class SessionService {
         await this.redis.setex(`${this.BLACKLISTED_TOKENS_SET}:${token}`, ttl, '1');
       }
     } catch (error) {
-      console.error('Erro ao adicionar token à blacklist:', error);
+      console.log('Erro ao adicionar token à blacklist:', error);
     }
   }
 
@@ -325,7 +325,7 @@ export class SessionService {
       const result = await Promise.race([checkPromise, timeoutPromise]);
       return result;
     } catch (error) {
-      console.error('Erro ao verificar blacklist do token:', error);
+      console.log('Erro ao verificar blacklist do token:', error);
       return false; // Em caso de erro, assumir que não está na blacklist
     }
   }
@@ -383,7 +383,7 @@ export class SessionService {
       console.log('📊 Estatísticas calculadas e armazenadas no cache:', stats);
       return stats;
     } catch (error) {
-      console.error('Erro ao obter estatísticas de sessões:', error);
+      console.log('Erro ao obter estatísticas de sessões:', error);
       
       // Fallback com dados básicos
       const fallbackStats = {
@@ -437,7 +437,7 @@ export class SessionService {
       console.log(`🧹 ${cleanedCount} sessões expiradas removidas`);
       return cleanedCount;
     } catch (error) {
-      console.error('Erro ao limpar sessões expiradas:', error);
+      console.log('Erro ao limpar sessões expiradas:', error);
       return 0;
     }
   }
@@ -488,7 +488,7 @@ export class SessionService {
       
       console.log('✅ Contadores sincronizados:', deviceCounts);
     } catch (error) {
-      console.error('Erro ao sincronizar contadores:', error);
+      console.log('Erro ao sincronizar contadores:', error);
     }
   }
 } 

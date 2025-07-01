@@ -151,5 +151,5 @@ async function testEndpoints() {
 
 // Aguardar um pouco antes de testar (caso o servidor esteja iniciando)
 setTimeout(() => {
-  testEndpoints().catch(console.error);
+  testEndpoints().catch(console.log);
 }, 2000); 

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }, { status: 200 });
     
   } catch (error) {
-    console.error('Erro na rota health-check:', error);
+    console.log('Erro na rota health-check:', error);
     
     return NextResponse.json({
       status: 'error',
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }, { status: 200 });
     
   } catch (error) {
-    console.error('Erro na rota health-check POST:', error);
+    console.log('Erro na rota health-check POST:', error);
     
     return NextResponse.json({
       status: 'error',

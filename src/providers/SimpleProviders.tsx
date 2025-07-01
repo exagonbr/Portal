@@ -18,7 +18,7 @@ const ThemeProvider = dynamic(() =>
     })
     .catch(error => {
       if (isDevelopment()) {
-        console.error('❌ Erro ao carregar ThemeProvider:', error);
+        console.log('❌ Erro ao carregar ThemeProvider:', error);
       }
       // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
@@ -38,7 +38,7 @@ const GamificationProvider = dynamic(() =>
     })
     .catch(error => {
       if (isDevelopment()) {
-        console.error('❌ Erro ao carregar GamificationProvider:', error);
+        console.log('❌ Erro ao carregar GamificationProvider:', error);
       }
       // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
@@ -58,7 +58,7 @@ const NavigationLoadingProvider = dynamic(() =>
     })
     .catch(error => {
       if (isDevelopment()) {
-        console.error('❌ Erro ao carregar NavigationLoadingProvider:', error);
+        console.log('❌ Erro ao carregar NavigationLoadingProvider:', error);
       }
       // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
@@ -78,7 +78,7 @@ const ToastManager = dynamic(() =>
     })
     .catch(error => {
       if (isDevelopment()) {
-        console.error('❌ Erro ao carregar ToastManager:', error);
+        console.log('❌ Erro ao carregar ToastManager:', error);
       }
       // Retornar um componente vazio em caso de erro
       return { default: () => null };
@@ -98,7 +98,7 @@ const UpdateProvider = dynamic(() =>
     })
     .catch(error => {
       if (isDevelopment()) {
-        console.error('❌ Erro ao carregar UpdateProvider:', error);
+        console.log('❌ Erro ao carregar UpdateProvider:', error);
       }
       // Retornar um provider vazio em caso de erro
       return { default: ({ children }: { children: ReactNode }) => <>{children}</> };
@@ -122,7 +122,7 @@ function AuthWrapperWithErrorBoundary({ children }: { children: ReactNode }) {
     return <AuthWrapper>{children}</AuthWrapper>;
   } catch (error) {
     if (isDevelopment()) {
-      console.error('❌ Erro no AuthWrapper:', error);
+      console.log('❌ Erro no AuthWrapper:', error);
     }
     return <>{children}</>;
   }

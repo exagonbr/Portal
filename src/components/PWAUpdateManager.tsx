@@ -53,7 +53,7 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
           }, 60000) // Verificar a cada minuto
         })
         .catch((error) => {
-          console.error('❌ Erro ao registrar Service Worker:', error)
+          console.log('❌ Erro ao registrar Service Worker:', error)
         })
 
       // Escutar mensagens do service worker
@@ -81,7 +81,7 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
         window.location.reload()
       }, 1000)
     } catch (error) {
-      console.error('❌ Erro ao atualizar:', error)
+      console.log('❌ Erro ao atualizar:', error)
       setIsUpdating(false)
     }
   }

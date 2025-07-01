@@ -129,14 +129,14 @@ export class MigrationService {
 
         } catch (error) {
           const errorMsg = `Erro ao migrar TV Show ${tvShow.id} (${tvShow.name}): ${error}`;
-          console.error(`❌ ${errorMsg}`);
+          console.log(`❌ ${errorMsg}`);
           errors.push(errorMsg);
         }
       }
 
     } catch (error) {
       const errorMsg = `Erro geral na migração: ${error}`;
-      console.error(`💥 ${errorMsg}`);
+      console.log(`💥 ${errorMsg}`);
       errors.push(errorMsg);
     } finally {
       await connection.end();

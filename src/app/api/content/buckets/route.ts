@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao listar buckets:', error)
+    console.log('Erro ao listar buckets:', error)
     return NextResponse.json({ error: 'Erro interno do servidor ao listar buckets' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao adicionar bucket:', error)
+    console.log('Erro ao adicionar bucket:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

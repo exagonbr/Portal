@@ -53,7 +53,7 @@ const SidebarLoading = () => {
 const LazyDashboardSidebar = lazy(() => 
   import('./dashboard/DashboardSidebar')
     .catch((error) => {
-      console.error('Erro ao carregar DashboardSidebar:', error)
+      console.log('Erro ao carregar DashboardSidebar:', error)
       // Return fallback silencioso
       return {
         default: () => <SidebarFallback />

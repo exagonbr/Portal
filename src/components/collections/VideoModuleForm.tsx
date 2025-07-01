@@ -106,7 +106,7 @@ export default function VideoModuleForm({
       
       await onSubmit(finalData)
     } catch (error) {
-      console.error('Erro ao salvar vídeo:', error)
+      console.log('Erro ao salvar vídeo:', error)
     }
   }
 

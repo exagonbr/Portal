@@ -67,14 +67,14 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
     } catch (emailError: any) {
-      console.error('Erro ao enviar email:', emailError)
+      console.log('Erro ao enviar email:', emailError)
       return NextResponse.json({
         success: false,
         message: `Erro ao enviar email: ${emailError.message || 'Verifique as configurações'}`
       }, { status: 400 })
     }
   } catch (error) {
-    console.error('Erro ao testar email:', error)
+    console.log('Erro ao testar email:', error)
     return NextResponse.json({ error: 'Erro ao testar configuração de email' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

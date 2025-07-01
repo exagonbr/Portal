@@ -84,7 +84,7 @@ export async function retryDynamicImport<T>(
       
       // Se não é um erro de chunk, não vale a pena tentar novamente
       if (!isChunkLoadError(error)) {
-        console.error('❌ Erro não relacionado a chunk loading:', lastError);
+        console.log('❌ Erro não relacionado a chunk loading:', lastError);
         if (onFailure) {
           onFailure(lastError);
         }
@@ -107,7 +107,7 @@ export async function retryDynamicImport<T>(
   }
 
   if (lastError) {
-    console.error('❌ Todas as tentativas falharam:', lastError);
+    console.log('❌ Todas as tentativas falharam:', lastError);
     if (onFailure) {
       onFailure(lastError);
     }
@@ -137,12 +137,12 @@ export async function importApiClient() {
           }
         },
         onFailure: (error) => {
-          console.error('❌ Falha ao importar api-client após todas as tentativas:', error);
+          console.log('❌ Falha ao importar api-client após todas as tentativas:', error);
         }
       }
     );
   } catch (error) {
-    console.error('❌ Erro crítico ao importar api-client:', error);
+    console.log('❌ Erro crítico ao importar api-client:', error);
     // Retornar um objeto mock para evitar crashes
     return {
       apiClient: {

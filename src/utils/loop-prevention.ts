@@ -78,7 +78,7 @@ class LoopPreventionSystem {
 
       if (this.detectLoop(url, method)) {
         this.blockUrl(url);
-        console.error(`🚨 Loop detectado e bloqueado: ${url}`);
+        console.log(`🚨 Loop detectado e bloqueado: ${url}`);
         
         return new Response(
           JSON.stringify({
@@ -236,7 +236,7 @@ class LoopPreventionSystem {
     
     if (errors >= this.ERROR_THRESHOLD) {
       this.blockUrl(url);
-      console.error(`🚫 URL bloqueada após ${errors} erros 429 consecutivos: ${url}`);
+      console.log(`🚫 URL bloqueada após ${errors} erros 429 consecutivos: ${url}`);
     }
   }
 
@@ -246,7 +246,7 @@ class LoopPreventionSystem {
     
     if (errors >= this.ERROR_THRESHOLD) {
       this.blockUrl(url);
-      console.error(`🚫 URL bloqueada após ${errors} erros consecutivos: ${url}`);
+      console.log(`🚫 URL bloqueada após ${errors} erros consecutivos: ${url}`);
     }
   }
 
@@ -264,7 +264,7 @@ class LoopPreventionSystem {
       
       console.log('🧹 Dados de autenticação limpos devido ao loop detectado');
     } catch (error) {
-      console.error('Erro ao limpar dados de autenticação:', error);
+      console.log('Erro ao limpar dados de autenticação:', error);
     }
   }
 

@@ -33,7 +33,7 @@ async function clearServiceWorkerCache() {
     
     return true;
   } catch (error) {
-    console.error('❌ Erro durante a limpeza:', error);
+    console.log('❌ Erro durante a limpeza:', error);
     return false;
   }
 }
@@ -61,7 +61,7 @@ async function reloadProblematicAssets() {
         console.warn('⚠️ Falha ao recarregar asset:', url, response.status);
       }
     } catch (error) {
-      console.error('❌ Erro ao recarregar asset:', url, error);
+      console.log('❌ Erro ao recarregar asset:', url, error);
     }
   }
 }
@@ -110,7 +110,7 @@ async function diagnoseSWProblems() {
     console.log('📊 Diagnóstico completo:', diagnosis);
     return diagnosis;
   } catch (error) {
-    console.error('❌ Erro no diagnóstico:', error);
+    console.log('❌ Erro no diagnóstico:', error);
     return diagnosis;
   }
 }

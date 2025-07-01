@@ -29,7 +29,7 @@ try {
   console.log('4. Teste as push notifications em /notifications/send\n');
 
 } catch (error) {
-  console.error('❌ Erro ao gerar chaves VAPID:', error);
+  console.log('❌ Erro ao gerar chaves VAPID:', error);
   console.log('\n💡 Certifique-se de que o web-push está instalado:');
   console.log('npm install web-push');
 }

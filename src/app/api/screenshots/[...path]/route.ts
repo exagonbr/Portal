@@ -162,7 +162,7 @@ export async function GET(
     }
 
   } catch (error) {
-    console.error('Erro ao servir screenshot:', error)
+    console.log('Erro ao servir screenshot:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

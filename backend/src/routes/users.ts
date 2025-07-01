@@ -19,7 +19,7 @@ router.get('/stats-test', usersPublicCorsMiddleware, async (req, res) => {
       debug: 'Esta rota não tem middleware de autenticação'
     });
   } catch (error: any) {
-    console.error('❌ [STATS-TEST] Erro:', error);
+    console.log('❌ [STATS-TEST] Erro:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro na rota de teste',
@@ -95,7 +95,7 @@ router.get('/stats', (req, res, next) => validateTokenUltraSimple(req as any, re
     });
     
   } catch (error: any) {
-    console.error('❌ [USERS/STATS] Erro geral:', error);
+    console.log('❌ [USERS/STATS] Erro geral:', error);
     
     // Fallback com dados simulados em caso de erro
     const fallbackStats = {
@@ -267,7 +267,7 @@ router.get('/', usersAdminCorsMiddleware, validateJWTSmart, requireRoleSmart('ad
       message: 'Usuários listados com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/LIST] Erro ao listar usuários:', error);
+    console.log('❌ [USERS/LIST] Erro ao listar usuários:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -338,7 +338,7 @@ router.get('/search', validateJWTSmart, async (req: any, res): Promise<void> => 
       message: 'Pesquisa concluída com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/SEARCH] Erro na pesquisa:', error);
+    console.log('❌ [USERS/SEARCH] Erro na pesquisa:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -395,7 +395,7 @@ router.get('/me', validateJWTSmart, async (req: any, res) => {
       message: 'Perfil obtido com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/ME] Erro ao buscar perfil:', error);
+    console.log('❌ [USERS/ME] Erro ao buscar perfil:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -486,7 +486,7 @@ router.put('/me', validateJWTSmart, async (req: any, res) => {
       message: 'Perfil atualizado com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/ME] Erro ao atualizar perfil:', error);
+    console.log('❌ [USERS/ME] Erro ao atualizar perfil:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -549,7 +549,7 @@ router.get('/:id', validateJWTSmart, async (req: any, res) => {
       message: 'Usuário encontrado com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/GET] Erro ao buscar usuário:', error);
+    console.log('❌ [USERS/GET] Erro ao buscar usuário:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -648,7 +648,7 @@ router.post('/', usersAdminCorsMiddleware, authMiddleware, requireRole('admin', 
       message: 'Usuário criado com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/CREATE] Erro ao criar usuário:', error);
+    console.log('❌ [USERS/CREATE] Erro ao criar usuário:', error);
     
     if (error.message === 'Email já está em uso') {
       return res.status(409).json({
@@ -744,7 +744,7 @@ router.put('/:id', usersAdminCorsMiddleware, authMiddleware, requireRole('admin'
       message: 'Usuário atualizado com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/UPDATE] Erro ao atualizar usuário:', error);
+    console.log('❌ [USERS/UPDATE] Erro ao atualizar usuário:', error);
     
     if (error.message === 'Email já está em uso') {
       return res.status(409).json({
@@ -818,7 +818,7 @@ router.delete('/:id', usersAdminCorsMiddleware, authMiddleware, requireRole('adm
       message: 'Usuário deletado com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/DELETE] Erro ao deletar usuário:', error);
+    console.log('❌ [USERS/DELETE] Erro ao deletar usuário:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -869,7 +869,7 @@ router.post('/:id/activate', usersAdminCorsMiddleware, authMiddleware, requireRo
       message: 'Usuário ativado com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/ACTIVATE] Erro ao ativar usuário:', error);
+    console.log('❌ [USERS/ACTIVATE] Erro ao ativar usuário:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -920,7 +920,7 @@ router.post('/:id/deactivate', usersAdminCorsMiddleware, authMiddleware, require
       message: 'Usuário desativado com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/DEACTIVATE] Erro ao desativar usuário:', error);
+    console.log('❌ [USERS/DEACTIVATE] Erro ao desativar usuário:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -971,7 +971,7 @@ router.post('/:id/reset-password', usersAdminCorsMiddleware, authMiddleware, req
       message: 'Senha resetada com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/RESET-PASSWORD] Erro ao resetar senha:', error);
+    console.log('❌ [USERS/RESET-PASSWORD] Erro ao resetar senha:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -1014,7 +1014,7 @@ router.get('/role/:roleId', validateJWTSmart, async (req: any, res) => {
       message: 'Usuários encontrados com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/BY-ROLE] Erro ao buscar usuários por role:', error);
+    console.log('❌ [USERS/BY-ROLE] Erro ao buscar usuários por role:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',
@@ -1057,7 +1057,7 @@ router.get('/institution/:institutionId', validateJWTSmart, async (req: any, res
       message: 'Usuários encontrados com sucesso'
     });
   } catch (error: any) {
-    console.error('❌ [USERS/BY-INSTITUTION] Erro ao buscar usuários por instituição:', error);
+    console.log('❌ [USERS/BY-INSTITUTION] Erro ao buscar usuários por instituição:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor',

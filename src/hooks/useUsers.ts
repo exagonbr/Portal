@@ -110,7 +110,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
           setRoles(rolesFromApi)
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar roles:', error)
+        console.log('❌ Erro ao carregar roles:', error)
         setAuxiliaryDataError('Falha ao carregar funções.')
         if (isMountedRef.current) {
           setRoles([])
@@ -129,7 +129,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
           setInstitutions(institutionsFromApi)
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar instituições:', error)
+        console.log('❌ Erro ao carregar instituições:', error)
         setAuxiliaryDataError(prev => 
           prev ? `${prev} Falha ao carregar instituições.` : 'Falha ao carregar instituições.'
         )
@@ -170,7 +170,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
         : await usersService.getUsers(params)
 
       if (!response || !response.items || !Array.isArray(response.items)) {
-        console.error('❌ [useUsers] Resposta inválida do usersService:', response)
+        console.log('❌ [useUsers] Resposta inválida do usersService:', response)
         throw new Error('Formato de resposta inválido do servidor')
       }
 
@@ -201,7 +201,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
 
       console.log(`✅ [useUsers] ${enrichedUsers.length} usuários carregados com sucesso`)
     } catch (error: any) {
-      console.error('❌ [useUsers] Erro ao carregar usuários:', error)
+      console.log('❌ [useUsers] Erro ao carregar usuários:', error)
       showError(error.message || 'Erro ao carregar usuários')
       
       if (isMountedRef.current) {
@@ -241,7 +241,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
       showSuccess('Usuário criado com sucesso!')
       await loadUsers()
     } catch (error: any) {
-      console.error('Erro ao criar usuário:', error)
+      console.log('Erro ao criar usuário:', error)
       throw error
     }
   }, [loadUsers, showSuccess])
@@ -252,7 +252,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
       showSuccess('Usuário atualizado com sucesso!')
       await loadUsers()
     } catch (error: any) {
-      console.error('Erro ao atualizar usuário:', error)
+      console.log('Erro ao atualizar usuário:', error)
       throw error
     }
   }, [loadUsers, showSuccess])
@@ -263,7 +263,7 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
       showSuccess('Usuário excluído com sucesso!')
       await loadUsers()
     } catch (error: any) {
-      console.error('Erro ao excluir usuário:', error)
+      console.log('Erro ao excluir usuário:', error)
       throw error
     }
   }, [loadUsers, showSuccess])

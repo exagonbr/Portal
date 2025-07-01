@@ -85,10 +85,10 @@ export default function AdminAuditPage() {
         setLogs(data.logs)
         setPagination(data.pagination)
       } else {
-        console.error('Erro ao buscar logs:', data.error)
+        console.log('Erro ao buscar logs:', data.error)
       }
     } catch (error) {
-      console.error('Erro ao buscar logs:', error)
+      console.log('Erro ao buscar logs:', error)
     } finally {
       setLoading(false)
     }
@@ -107,7 +107,7 @@ export default function AdminAuditPage() {
         setStats(data.stats)
       }
     } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error)
+      console.log('Erro ao buscar estatísticas:', error)
     }
   }
 

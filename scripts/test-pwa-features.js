@@ -99,10 +99,10 @@ async function testPWAFeatures() {
     }
 
   } catch (error) {
-    console.error(chalk.red('\nError during testing:'), error);
+    console.log(chalk.red('\nError during testing:'), error);
   } finally {
     await browser.close();
   }
 }
 
-testPWAFeatures().catch(console.error);
+testPWAFeatures().catch(console.log);

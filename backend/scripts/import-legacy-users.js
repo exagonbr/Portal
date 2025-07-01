@@ -165,7 +165,7 @@ async function importLegacyUsers() {
             error: error.message
           };
           errors.push(errorInfo);
-          console.error(`❌ Erro ao importar usuário ${legacyUser.id} (${legacyUser.email}): ${error.message}`);
+          console.log(`❌ Erro ao importar usuário ${legacyUser.id} (${legacyUser.email}): ${error.message}`);
         }
       }
     });
@@ -208,8 +208,8 @@ async function importLegacyUsers() {
     }
     
   } catch (error) {
-    console.error(`💥 Erro crítico durante a importação: ${error.message}`);
-    console.error(error.stack);
+    console.log(`💥 Erro crítico durante a importação: ${error.message}`);
+    console.log(error.stack);
     process.exit(1);
   } finally {
     // Fechar conexão com o banco
@@ -225,7 +225,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch((error) => {
-      console.error('\n💥 Falha na execução do script:', error.message);
+      console.log('\n💥 Falha na execução do script:', error.message);
       process.exit(1);
     });
 }

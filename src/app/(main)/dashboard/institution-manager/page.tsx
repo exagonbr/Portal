@@ -104,7 +104,7 @@ export default function InstitutionManagerDashboardPage() {
       setInstitutions(response.items);
     } catch (err) {
       setError('Erro ao carregar instituições. Verifique se o backend está rodando.');
-      console.error('Error fetching institutions:', err);
+      console.log('Error fetching institutions:', err);
     } finally {
       setLoading(false);
     }

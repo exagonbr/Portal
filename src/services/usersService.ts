@@ -438,7 +438,7 @@ export class UsersService {
         }
       };
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar usuários:', error);
+      console.log('❌ [UsersService] Erro ao buscar usuários:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -458,7 +458,7 @@ export class UsersService {
 
       return this.mapUsersToFrontend(response.data);
     } catch (error) {
-      console.error(`[UsersService] Erro ao buscar usuário ${id}:`, error);
+      console.log(`[UsersService] Erro ao buscar usuário ${id}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -477,7 +477,7 @@ export class UsersService {
 
       return this.mapUsersToFrontend(response.data);
     } catch (error) {
-      console.error('[UsersService] Erro ao criar usuário:', error);
+      console.log('[UsersService] Erro ao criar usuário:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -496,7 +496,7 @@ export class UsersService {
 
       return this.mapUsersToFrontend(response.data);
     } catch (error) {
-      console.error(`[UsersService] Erro ao atualizar usuário ${id}:`, error);
+      console.log(`[UsersService] Erro ao atualizar usuário ${id}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -512,7 +512,7 @@ export class UsersService {
         throw new Error(response.message || 'Falha ao remover usuário');
       }
     } catch (error) {
-      console.error(`[UsersService] Erro ao remover usuário ${id}:`, error);
+      console.log(`[UsersService] Erro ao remover usuário ${id}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -568,7 +568,7 @@ export class UsersService {
 
       throw new Error('Formato de resposta inválido');
     } catch (error) {
-      console.error('❌ [UsersService] Erro na busca de usuários:', error);
+      console.log('❌ [UsersService] Erro na busca de usuários:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -588,7 +588,7 @@ export class UsersService {
 
       return this.mapUsersToFrontend(response.data);
     } catch (error) {
-      console.error(`[UsersService] Erro ao buscar usuário por email ${email}:`, error);
+      console.log(`[UsersService] Erro ao buscar usuário por email ${email}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -608,7 +608,7 @@ export class UsersService {
 
       return this.mapUsersToFrontend(response.data);
     } catch (error) {
-      console.error(`[UsersService] Erro ao buscar usuário por username ${username}:`, error);
+      console.log(`[UsersService] Erro ao buscar usuário por username ${username}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -626,7 +626,7 @@ export class UsersService {
 
       return true;
     } catch (error) {
-      console.error(`[UsersService] Erro ao ativar usuário ${id}:`, error);
+      console.log(`[UsersService] Erro ao ativar usuário ${id}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -644,7 +644,7 @@ export class UsersService {
 
       return true;
     } catch (error) {
-      console.error(`[UsersService] Erro ao desativar usuário ${id}:`, error);
+      console.log(`[UsersService] Erro ao desativar usuário ${id}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -662,7 +662,7 @@ export class UsersService {
 
       return true;
     } catch (error) {
-      console.error(`[UsersService] Erro ao resetar senha do usuário ${id}:`, error);
+      console.log(`[UsersService] Erro ao resetar senha do usuário ${id}:`, error);
       throw new Error(handleApiError(error));
     }
   }
@@ -690,7 +690,7 @@ export class UsersService {
 
       return response.data as any;
     } catch (error) {
-      console.error('[UsersService] Erro ao buscar estatísticas de usuários:', error);
+      console.log('[UsersService] Erro ao buscar estatísticas de usuários:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -708,7 +708,7 @@ export class UsersService {
       
       return (Array.isArray(response.data) ? response.data : []).map((user: any) => this.mapUsersToFrontend(user));
     } catch (error) {
-      console.error(`[UsersService] Erro ao buscar usuários da role ${roleId}:`, error);
+      console.log(`[UsersService] Erro ao buscar usuários da role ${roleId}:`, error);
       return []; // Retorna array vazio em caso de erro
     }
   }
@@ -726,7 +726,7 @@ export class UsersService {
       
       return (Array.isArray(response.data) ? response.data : []).map((user: any) => this.mapUsersToFrontend(user));
     } catch (error) {
-      console.error(`[UsersService] Erro ao buscar usuários da instituição ${institutionId}:`, error);
+      console.log(`[UsersService] Erro ao buscar usuários da instituição ${institutionId}:`, error);
       return [];
     }
   }
@@ -744,7 +744,7 @@ export class UsersService {
       
       return (Array.isArray(response.data) ? response.data : []).map((user: any) => this.mapUsersToFrontend(user));
     } catch (error) {
-      console.error('[UsersService] Erro ao buscar administradores:', error);
+      console.log('[UsersService] Erro ao buscar administradores:', error);
       return [];
     }
   }
@@ -762,7 +762,7 @@ export class UsersService {
       
       return (Array.isArray(response.data) ? response.data : []).map((user: any) => this.mapUsersToFrontend(user));
     } catch (error) {
-      console.error('[UsersService] Erro ao buscar professores:', error);
+      console.log('[UsersService] Erro ao buscar professores:', error);
       return [];
     }
   }
@@ -780,7 +780,7 @@ export class UsersService {
       
       return (Array.isArray(response.data) ? response.data : []).map((user: any) => this.mapUsersToFrontend(user));
     } catch (error) {
-      console.error('[UsersService] Erro ao buscar estudantes:', error);
+      console.log('[UsersService] Erro ao buscar estudantes:', error);
       return [];
     }
   }
@@ -798,7 +798,7 @@ export class UsersService {
       
       return (Array.isArray(response.data) ? response.data : []).map((user: any) => this.mapUsersToFrontend(user));
     } catch (error) {
-      console.error('[UsersService] Erro ao buscar coordenadores:', error);
+      console.log('[UsersService] Erro ao buscar coordenadores:', error);
       return [];
     }
   }
@@ -819,7 +819,7 @@ export class UsersService {
 
       return { success: true, message: 'Exportação iniciada com sucesso' };
     } catch (error) {
-      console.error('[UsersService] Erro ao exportar usuários:', error);
+      console.log('[UsersService] Erro ao exportar usuários:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -840,7 +840,7 @@ export class UsersService {
 
       return { success: true, message: 'Importação iniciada com sucesso' };
     } catch (error) {
-      console.error('[UsersService] Erro ao importar usuários:', error);
+      console.log('[UsersService] Erro ao importar usuários:', error);
       throw new Error(handleApiError(error));
     }
   }

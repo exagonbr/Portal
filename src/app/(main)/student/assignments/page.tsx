@@ -106,7 +106,7 @@ export default function StudentAssignmentsPage() {
       setAssignments(mockAssignments)
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao buscar atividades:', error)
+      console.log('Erro ao buscar atividades:', error)
       setLoading(false)
     }
   }

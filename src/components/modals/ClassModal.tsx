@@ -41,7 +41,7 @@ export default function ClassModal({ classItem, onClose }: ClassModalProps) {
       const response = await schoolService.list({ limit: 100 });
       setSchools(response.items || []);
     } catch (error) {
-      console.error('Erro ao carregar escolas:', error);
+      console.log('Erro ao carregar escolas:', error);
     }
   };
 

@@ -34,7 +34,7 @@ export function OptimizedLoginForm({ onSuccess, className = '' }: OptimizedLogin
         onSuccess?.();
       }
     } catch (err) {
-      console.error('Erro no login:', err);
+      console.log('Erro no login:', err);
     }
   };
 

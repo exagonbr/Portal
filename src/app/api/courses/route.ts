@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (err: any) {
-    console.error('Erro ao buscar cursos:', err)
+    console.log('Erro ao buscar cursos:', err)
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

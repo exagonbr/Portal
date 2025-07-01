@@ -11,7 +11,7 @@ export async function debugLogin(email: string, password: string) {
         'Accept': 'application/json',
       }
     }).catch(err => {
-      console.error('❌ Erro de rede:', err);
+      console.log('❌ Erro de rede:', err);
       return null;
     });
     
@@ -46,7 +46,7 @@ export async function debugLogin(email: string, password: string) {
         responseData = await loginResponse.json();
         console.log('📦 Dados da resposta:', responseData);
       } catch (jsonError) {
-        console.error('❌ Erro ao parsear JSON:', jsonError);
+        console.log('❌ Erro ao parsear JSON:', jsonError);
         const textResponse = await loginResponse.text();
         console.log('📄 Resposta como texto:', textResponse);
       }
@@ -83,7 +83,7 @@ export async function debugLogin(email: string, password: string) {
         console.log('🌐 Backend - Dados:', backendData);
       }
     } catch (backendError) {
-      console.error('❌ Erro ao conectar diretamente com backend:', backendError);
+      console.log('❌ Erro ao conectar diretamente com backend:', backendError);
     }
     
     // 6. Verificar cookies e sessão
@@ -99,7 +99,7 @@ export async function debugLogin(email: string, password: string) {
     };
     
   } catch (error) {
-    console.error('💥 Erro durante diagnóstico:', error);
+    console.log('💥 Erro durante diagnóstico:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido'

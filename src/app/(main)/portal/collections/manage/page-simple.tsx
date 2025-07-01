@@ -27,7 +27,7 @@ export default function SimpleCollectionsManagePage() {
           setError(data.message || 'Erro ao carregar dados')
         }
       } catch (err) {
-        console.error('Erro:', err)
+        console.log('Erro:', err)
         setError(err instanceof Error ? err.message : 'Erro desconhecido')
       } finally {
         setLoading(false)

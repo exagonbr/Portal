@@ -51,7 +51,7 @@ class ActivityTrackingService {
         await this.flushActivities()
       }
     } catch (error) {
-      console.error('❌ Erro ao rastrear atividade:', error)
+      console.log('❌ Erro ao rastrear atividade:', error)
     }
   }
 
@@ -267,7 +267,7 @@ class ActivityTrackingService {
         })
       }
     } catch (error) {
-      console.error('❌ Erro ao atualizar viewing_status:', error)
+      console.log('❌ Erro ao atualizar viewing_status:', error)
     }
   }
 
@@ -279,7 +279,7 @@ class ActivityTrackingService {
 
       return result || null
     } catch (error) {
-      console.error('❌ Erro ao buscar viewing_status:', error)
+      console.log('❌ Erro ao buscar viewing_status:', error)
       return null
     }
   }
@@ -311,7 +311,7 @@ class ActivityTrackingService {
         })
       }
     } catch (error) {
-      console.error('❌ Erro ao adicionar à watchlist:', error)
+      console.log('❌ Erro ao adicionar à watchlist:', error)
     }
   }
 
@@ -328,7 +328,7 @@ class ActivityTrackingService {
           updated_at: new Date()
         })
     } catch (error) {
-      console.error('❌ Erro ao remover da watchlist:', error)
+      console.log('❌ Erro ao remover da watchlist:', error)
     }
   }
 
@@ -424,7 +424,7 @@ class ActivityTrackingService {
         })()
       }
     } catch (error) {
-      console.error('❌ Erro ao obter estatísticas de atividade:', error)
+      console.log('❌ Erro ao obter estatísticas de atividade:', error)
       throw error
     }
   }
@@ -448,7 +448,7 @@ class ActivityTrackingService {
         total: parseInt(String(totalResult?.count || '0'))
       }
     } catch (error) {
-      console.error('❌ Erro ao buscar atividades do usuário:', error)
+      console.log('❌ Erro ao buscar atividades do usuário:', error)
       throw error
     }
   }
@@ -516,7 +516,7 @@ class ActivityTrackingService {
       await knex('user_activity').insert(activitiesData)
       console.log(`✅ ${activitiesData.length} atividades salvas no banco`)
     } catch (error) {
-      console.error('❌ Erro ao salvar atividades:', error)
+      console.log('❌ Erro ao salvar atividades:', error)
       // Recolocar atividades na fila em caso de erro
       // this.activityQueue.unshift(...activities)
     }

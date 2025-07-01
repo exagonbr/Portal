@@ -133,4 +133,4 @@ async function testNewRoles() {
   console.log('🎯 Sistema pronto para uso em produção!');
 }
 
-testNewRoles().catch(console.error);
+testNewRoles().catch(console.log);

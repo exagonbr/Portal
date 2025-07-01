@@ -59,7 +59,7 @@ const client = new Client({
 client.connect().then(() => {
   console.log('✅ Conexão PostgreSQL OK');
   client.end();
-}).catch(err => console.error('❌ Erro:', err.message));
+}).catch(err => console.log('❌ Erro:', err.message));
 "
 ```
 

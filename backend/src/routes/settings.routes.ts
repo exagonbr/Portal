@@ -23,7 +23,7 @@ router.get('/settings', optimizedAuthMiddleware, async (req: Request, res: Respo
       data: settings
     });
   } catch (error) {
-    console.error('Erro ao buscar configurações:', error);
+    console.log('Erro ao buscar configurações:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Erro ao buscar configurações' 
@@ -47,7 +47,7 @@ router.get('/settings/:category', optimizedAuthMiddleware, async (req: Request, 
       data: settings
     });
   } catch (error) {
-    console.error('Erro ao buscar configurações por categoria:', error);
+    console.log('Erro ao buscar configurações por categoria:', error);
     return res.status(500).json({ 
       success: false,
       error: `Erro ao buscar configurações da categoria ${req.params.category}` 
@@ -81,7 +81,7 @@ router.put('/settings', optimizedAuthMiddleware, async (req: Request, res: Respo
       message: 'Configurações atualizadas com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao atualizar configurações:', error);
+    console.log('Erro ao atualizar configurações:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Erro ao atualizar configurações' 
@@ -104,7 +104,7 @@ router.post('/settings/reset', optimizedAuthMiddleware, async (req: Request, res
       message: 'Configurações resetadas para padrão com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao resetar configurações:', error);
+    console.log('Erro ao resetar configurações:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Erro ao resetar configurações' 
@@ -151,14 +151,14 @@ router.post('/settings/test-aws', optimizedAuthMiddleware, async (req: Request, 
         message: 'Conexão AWS estabelecida com sucesso!'
       });
     } catch (awsError: any) {
-      console.error('Erro AWS:', awsError);
+      console.log('Erro AWS:', awsError);
       return res.status(400).json({
         success: false,
         message: `Erro ao conectar com AWS: ${awsError.message || 'Verifique as credenciais'}`
       });
     }
   } catch (error) {
-    console.error('Erro ao testar conexão AWS:', error);
+    console.log('Erro ao testar conexão AWS:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Erro ao testar conexão AWS' 
@@ -217,14 +217,14 @@ router.post('/settings/test-email', optimizedAuthMiddleware, async (req: Request
         message: 'Email de teste enviado com sucesso!'
       });
     } catch (emailError: any) {
-      console.error('Erro ao enviar email:', emailError);
+      console.log('Erro ao enviar email:', emailError);
       return res.status(400).json({
         success: false,
         message: `Erro ao enviar email: ${emailError.message || 'Verifique as configurações'}`
       });
     }
   } catch (error) {
-    console.error('Erro ao testar email:', error);
+    console.log('Erro ao testar email:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Erro ao testar configuração de email' 
@@ -254,7 +254,7 @@ router.post('/settings/reconfigure-email', optimizedAuthMiddleware, async (req: 
       }
     });
   } catch (error) {
-    console.error('Erro ao reconfigurar serviço de email:', error);
+    console.log('Erro ao reconfigurar serviço de email:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Erro ao reconfigurar serviço de email' 

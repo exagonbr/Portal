@@ -13,7 +13,7 @@ const clearLocalStorage = (): void => {
     localStorage.clear();
     console.log('✅ localStorage limpo');
   } catch (error) {
-    console.error('❌ Erro ao limpar localStorage:', error);
+    console.log('❌ Erro ao limpar localStorage:', error);
   }
 };
 
@@ -27,7 +27,7 @@ const clearSessionStorage = (): void => {
     sessionStorage.clear();
     console.log('✅ sessionStorage limpo');
   } catch (error) {
-    console.error('❌ Erro ao limpar sessionStorage:', error);
+    console.log('❌ Erro ao limpar sessionStorage:', error);
   }
 };
 
@@ -62,7 +62,7 @@ const clearAllCookies = (): void => {
     }
     console.log('✅ Cookies limpos');
   } catch (error) {
-    console.error('❌ Erro ao limpar cookies:', error);
+    console.log('❌ Erro ao limpar cookies:', error);
   }
 };
 
@@ -87,7 +87,7 @@ const clearIndexedDB = async (): Promise<void> => {
               resolve();
             };
             deleteReq.onerror = () => {
-              console.error(`❌ Erro ao deletar IndexedDB '${db.name}'`);
+              console.log(`❌ Erro ao deletar IndexedDB '${db.name}'`);
               reject(deleteReq.error);
             };
             deleteReq.onblocked = () => {
@@ -134,7 +134,7 @@ const clearIndexedDB = async (): Promise<void> => {
     
     console.log('✅ IndexedDB limpo');
   } catch (error) {
-    console.error('❌ Erro ao limpar IndexedDB:', error);
+    console.log('❌ Erro ao limpar IndexedDB:', error);
   }
 };
 
@@ -159,7 +159,7 @@ const clearServiceWorkerCache = async (): Promise<void> => {
     await Promise.allSettled(deletePromises);
     console.log('✅ Service Worker cache limpo');
   } catch (error) {
-    console.error('❌ Erro ao limpar Service Worker cache:', error);
+    console.log('❌ Erro ao limpar Service Worker cache:', error);
   }
 };
 
@@ -181,7 +181,7 @@ const clearBrowserCache = async (): Promise<void> => {
       }
     }
   } catch (error) {
-    console.error('❌ Erro ao tentar limpar cache do navegador:', error);
+    console.log('❌ Erro ao tentar limpar cache do navegador:', error);
   }
 };
 
@@ -207,7 +207,7 @@ export const clearAllDataForUnauthorized = async (): Promise<void> => {
     
     console.log('✅ Limpeza completa de dados concluída');
   } catch (error) {
-    console.error('❌ Erro durante limpeza completa de dados:', error);
+    console.log('❌ Erro durante limpeza completa de dados:', error);
     // Mesmo com erro, continuar com o redirecionamento
   }
 };
@@ -263,7 +263,7 @@ export const clearAuthDataOnly = (): void => {
     
     console.log('✅ Dados de autenticação limpos');
   } catch (error) {
-    console.error('❌ Erro ao limpar dados de autenticação:', error);
+    console.log('❌ Erro ao limpar dados de autenticação:', error);
   }
 };
 

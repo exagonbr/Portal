@@ -51,7 +51,7 @@ export class OptimizedAuthController {
 
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`❌ Erro no login (${duration}ms):`, error.message);
+      console.log(`❌ Erro no login (${duration}ms):`, error.message);
 
       if (error.message === 'Credenciais inválidas' || error.message === 'Email inválido') {
         res.status(401).json({
@@ -107,7 +107,7 @@ export class OptimizedAuthController {
       });
 
     } catch (error: any) {
-      console.error('Erro ao renovar token:', error);
+      console.log('Erro ao renovar token:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -148,7 +148,7 @@ export class OptimizedAuthController {
       });
 
     } catch (error: any) {
-      console.error('Erro ao obter perfil:', error);
+      console.log('Erro ao obter perfil:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -188,7 +188,7 @@ export class OptimizedAuthController {
       });
 
     } catch (error: any) {
-      console.error('Erro ao validar token:', error);
+      console.log('Erro ao validar token:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -235,7 +235,7 @@ export class OptimizedAuthController {
       });
 
     } catch (error: any) {
-      console.error('Erro ao verificar permissão:', error);
+      console.log('Erro ao verificar permissão:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -262,7 +262,7 @@ export class OptimizedAuthController {
       });
 
     } catch (error: any) {
-      console.error('Erro no logout:', error);
+      console.log('Erro no logout:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',

@@ -128,7 +128,7 @@ export default function TVShowAdminPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar TV Shows:', error)
+      console.log('Erro ao carregar TV Shows:', error)
       setTvShows([])
     } finally {
       setIsLoading(false)
@@ -180,7 +180,7 @@ export default function TVShowAdminPage() {
       alert('Erro ao criar coleção. Tente novamente.')
       return false
     } catch (error) {
-      console.error('Erro ao criar TV Show:', error)
+      console.log('Erro ao criar TV Show:', error)
       alert('Erro ao criar coleção. Tente novamente.')
       return false
     } finally {
@@ -233,7 +233,7 @@ export default function TVShowAdminPage() {
       alert('Erro ao atualizar coleção. Tente novamente.')
       return false
     } catch (error) {
-      console.error('Erro ao atualizar TV Show:', error)
+      console.log('Erro ao atualizar TV Show:', error)
       alert('Erro ao atualizar coleção. Tente novamente.')
       return false
     } finally {
@@ -273,7 +273,7 @@ export default function TVShowAdminPage() {
       alert('Erro ao excluir coleção. Tente novamente.')
       return false
     } catch (error) {
-      console.error('Erro ao excluir TV Show:', error)
+      console.log('Erro ao excluir TV Show:', error)
       alert('Erro ao excluir coleção. Tente novamente.')
       return false
     }

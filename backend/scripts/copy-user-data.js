@@ -76,7 +76,7 @@ async function copyUserData() {
         console.log(`✅ Usuário inserido: ID antigo ${user.id} -> novo UUID ${newId}`);
       } catch (err) {
         errorCount++;
-        console.error(`❌ Erro ao inserir usuário ${user.id}: ${err.message}`);
+        console.log(`❌ Erro ao inserir usuário ${user.id}: ${err.message}`);
       }
     }
     
@@ -93,7 +93,7 @@ async function copyUserData() {
     console.log('✅ Mapeamento de IDs salvo em id_mapping.json');
     
   } catch (error) {
-    console.error(`❌ Erro durante a cópia de dados: ${error.message}`);
+    console.log(`❌ Erro durante a cópia de dados: ${error.message}`);
   } finally {
     // Fechar a conexão com o banco
     await db.destroy();

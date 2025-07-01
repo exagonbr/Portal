@@ -10,7 +10,7 @@ export class UsersService {
       console.log('✅ [UsersService] Todos os usuários encontrados:', result.items.length);
       return result.items;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar todos os usuários:', error);
+      console.log('❌ [UsersService] Erro ao buscar todos os usuários:', error);
       throw error;
     }
   }
@@ -21,7 +21,7 @@ export class UsersService {
       console.log('✅ [UsersService] Administradores encontrados:', result.items.length);
       return result.items;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar administradores:', error);
+      console.log('❌ [UsersService] Erro ao buscar administradores:', error);
       throw error;
     }
   }
@@ -32,7 +32,7 @@ export class UsersService {
       console.log('✅ [UsersService] Professores encontrados:', result.items.length);
       return result.items;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar professores:', error);
+      console.log('❌ [UsersService] Erro ao buscar professores:', error);
       throw error;
     }
   }
@@ -43,7 +43,7 @@ export class UsersService {
       console.log('✅ [UsersService] Estudantes encontrados:', result.items.length);
       return result.items;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar estudantes:', error);
+      console.log('❌ [UsersService] Erro ao buscar estudantes:', error);
       throw error;
     }
   }
@@ -54,7 +54,7 @@ export class UsersService {
       console.log('✅ [UsersService] Responsáveis encontrados:', result.items.length);
       return result.items;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar responsáveis:', error);
+      console.log('❌ [UsersService] Erro ao buscar responsáveis:', error);
       throw error;
     }
   }
@@ -65,7 +65,7 @@ export class UsersService {
       console.log('✅ [UsersService] Coordenadores encontrados:', result.items.length);
       return result.items;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar coordenadores:', error);
+      console.log('❌ [UsersService] Erro ao buscar coordenadores:', error);
       throw error;
     }
   }
@@ -76,7 +76,7 @@ export class UsersService {
       console.log('✅ [UsersService] Gestores de instituição encontrados:', result.items.length);
       return result.items;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar gestores de instituição:', error);
+      console.log('❌ [UsersService] Erro ao buscar gestores de instituição:', error);
       throw error;
     }
   }
@@ -91,7 +91,7 @@ export class UsersService {
       }
       return updatedUser;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao realizar soft delete do usuário:', error);
+      console.log('❌ [UsersService] Erro ao realizar soft delete do usuário:', error);
       throw error;
     }
   }
@@ -125,7 +125,7 @@ export class UsersService {
       
       return !!updated;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao alterar senha:', error);
+      console.log('❌ [UsersService] Erro ao alterar senha:', error);
       throw error;
     }
   }
@@ -138,7 +138,7 @@ export class UsersService {
       }
       return updatedUser;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao bloquear conta do usuário:', error);
+      console.log('❌ [UsersService] Erro ao bloquear conta do usuário:', error);
       throw error;
     }
   }
@@ -151,7 +151,7 @@ export class UsersService {
       }
       return updatedUser;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao desbloquear conta do usuário:', error);
+      console.log('❌ [UsersService] Erro ao desbloquear conta do usuário:', error);
       throw error;
     }
   }
@@ -186,7 +186,7 @@ export class UsersService {
         return null;
       }
     } catch (error) {
-      console.error('❌ [UsersService] Erro na autenticação:', error);
+      console.log('❌ [UsersService] Erro na autenticação:', error);
       throw error;
     }
   }
@@ -213,7 +213,7 @@ export class UsersService {
       
       return result;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar usuários:', error);
+      console.log('❌ [UsersService] Erro ao buscar usuários:', error);
       throw error;
     }
   }
@@ -235,7 +235,7 @@ export class UsersService {
       
       return user;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar usuário por ID:', error);
+      console.log('❌ [UsersService] Erro ao buscar usuário por ID:', error);
       throw error;
     }
   }
@@ -257,7 +257,7 @@ export class UsersService {
       
       return user;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar usuário por email:', error);
+      console.log('❌ [UsersService] Erro ao buscar usuário por email:', error);
       throw error;
     }
   }
@@ -279,7 +279,7 @@ export class UsersService {
       
       return user;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar usuário por username:', error);
+      console.log('❌ [UsersService] Erro ao buscar usuário por username:', error);
       throw error;
     }
   }
@@ -320,7 +320,7 @@ export class UsersService {
       
       return newUser;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao criar usuário:', error);
+      console.log('❌ [UsersService] Erro ao criar usuário:', error);
       throw error;
     }
   }
@@ -361,7 +361,7 @@ export class UsersService {
       
       return updatedUser;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao atualizar usuário:', error);
+      console.log('❌ [UsersService] Erro ao atualizar usuário:', error);
       throw error;
     }
   }
@@ -387,7 +387,7 @@ export class UsersService {
       
       return deleted;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao remover usuário:', error);
+      console.log('❌ [UsersService] Erro ao remover usuário:', error);
       throw error;
     }
   }
@@ -407,7 +407,7 @@ export class UsersService {
       
       return activated;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao ativar usuário:', error);
+      console.log('❌ [UsersService] Erro ao ativar usuário:', error);
       throw error;
     }
   }
@@ -427,7 +427,7 @@ export class UsersService {
       
       return deactivated;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao desativar usuário:', error);
+      console.log('❌ [UsersService] Erro ao desativar usuário:', error);
       throw error;
     }
   }
@@ -445,7 +445,7 @@ export class UsersService {
       
       return users;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar usuários por role:', error);
+      console.log('❌ [UsersService] Erro ao buscar usuários por role:', error);
       return [];
     }
   }
@@ -463,7 +463,7 @@ export class UsersService {
       
       return users;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao buscar usuários por instituição:', error);
+      console.log('❌ [UsersService] Erro ao buscar usuários por instituição:', error);
       return [];
     }
   }
@@ -509,7 +509,7 @@ export class UsersService {
       
       return stats;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao obter estatísticas:', error);
+      console.log('❌ [UsersService] Erro ao obter estatísticas:', error);
       throw error;
     }
   }
@@ -536,7 +536,7 @@ export class UsersService {
       
       return result;
     } catch (error) {
-      console.error('❌ [UsersService] Erro na pesquisa:', error);
+      console.log('❌ [UsersService] Erro na pesquisa:', error);
       throw error;
     }
   }
@@ -566,7 +566,7 @@ export class UsersService {
       
       return !!updated;
     } catch (error) {
-      console.error('❌ [UsersService] Erro ao resetar senha:', error);
+      console.log('❌ [UsersService] Erro ao resetar senha:', error);
       throw error;
     }
   }

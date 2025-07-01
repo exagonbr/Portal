@@ -100,7 +100,7 @@ export default function TeacherReportsPage() {
         setLoading(false)
       }, 1000)
     } catch (error) {
-      console.error('Erro ao carregar dados do relatório:', error)
+      console.log('Erro ao carregar dados do relatório:', error)
       setLoading(false)
     }
   }

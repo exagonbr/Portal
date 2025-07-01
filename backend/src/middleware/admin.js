@@ -29,7 +29,7 @@ module.exports = function adminMiddleware(req, res, next) {
     // Usuário é admin, continuar
     next();
   } catch (error) {
-    console.error('Erro no middleware de admin:', error);
+    console.log('Erro no middleware de admin:', error);
     res.status(500).json({ error: 'Erro ao verificar permissões' });
   }
 }; 

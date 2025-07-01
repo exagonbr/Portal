@@ -63,7 +63,7 @@ async function checkAdminUser() {
     }
     
   } catch (error) {
-    console.error('❌ Erro ao verificar usuário admin:', error);
+    console.log('❌ Erro ao verificar usuário admin:', error);
   } finally {
     await db.destroy();
   }

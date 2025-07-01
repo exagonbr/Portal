@@ -206,8 +206,8 @@ async function main() {
     
     await runAllTests();
   } catch (error) {
-    console.error('❌ Erro ao conectar com o servidor:'.red, error.message);
-    console.error('💡 Certifique-se de que o backend está rodando em:', BASE_URL);
+    console.log('❌ Erro ao conectar com o servidor:'.red, error.message);
+    console.log('💡 Certifique-se de que o backend está rodando em:', BASE_URL);
     process.exit(1);
   }
 }

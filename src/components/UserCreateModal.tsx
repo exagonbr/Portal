@@ -73,7 +73,7 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
           ]);
         }
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
+        console.log('Erro ao carregar dados:', error);
         showError('Erro ao carregar dados necessários');
       } finally {
         setLoadingData(false);
@@ -137,7 +137,7 @@ export function UserCreateModal({ onClose, onSuccess }: UserCreateModalProps) {
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error('Erro ao criar usuário:', error);
+      console.log('Erro ao criar usuário:', error);
       showError(error.message || 'Erro ao criar usuário');
     } finally {
       setIsLoading(false);

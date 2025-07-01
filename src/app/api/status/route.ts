@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Erro na rota /api/status:', error);
+    console.log('Erro na rota /api/status:', error);
     
     return NextResponse.json({
       status: 'error',

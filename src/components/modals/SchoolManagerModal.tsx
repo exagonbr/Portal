@@ -65,7 +65,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
       setSchools(schoolsResponse.items || []);
       setUsers(usersResponse.items || []);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.log('Erro ao carregar dados:', error);
     }
   };
 
@@ -74,7 +74,7 @@ export default function SchoolManagerModal({ isOpen, onClose, onSuccess, schoolI
       const response = await schoolManagerService.getBySchool(schoolId);
       setManagers(response.data || []);
     } catch (error) {
-      console.error('Erro ao carregar gestores:', error);
+      console.log('Erro ao carregar gestores:', error);
     }
   };
 

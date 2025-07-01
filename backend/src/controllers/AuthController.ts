@@ -31,7 +31,7 @@ class AuthController {
       
       res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
-      console.error('❌ Erro durante autenticação Google:', error);
+      console.log('❌ Erro durante autenticação Google:', error);
       
       // Redirecionar para página de erro em caso de falha
       const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';

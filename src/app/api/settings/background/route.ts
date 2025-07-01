@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Erro ao buscar configurações de background:', error)
+    console.log('Erro ao buscar configurações de background:', error)
     return NextResponse.json({ error: 'Erro ao buscar configurações de background' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Erro ao salvar configurações de background:', error)
+    console.log('Erro ao salvar configurações de background:', error)
     return NextResponse.json({ error: 'Erro ao salvar configurações de background' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

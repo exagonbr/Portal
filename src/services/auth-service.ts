@@ -45,7 +45,7 @@ class AuthStorage {
     try {
       localStorage.setItem(key, value);
     } catch (error) {
-      console.error(`Erro ao salvar ${key}:`, error);
+      console.log(`Erro ao salvar ${key}:`, error);
     }
   }
 
@@ -54,7 +54,7 @@ class AuthStorage {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error(`Erro ao remover ${key}:`, error);
+      console.log(`Erro ao remover ${key}:`, error);
     }
   }
 
@@ -123,7 +123,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       message: response.message || 'Erro ao fazer login',
     };
   } catch (error) {
-    console.error('❌ Erro no login:', error);
+    console.log('❌ Erro no login:', error);
     return {
       success: false,
       message: handleApiError(error),
@@ -179,7 +179,7 @@ export const register = async (
       message: response.message || 'Erro ao registrar usuário',
     };
   } catch (error) {
-    console.error('Erro no registro:', error);
+    console.log('Erro no registro:', error);
     return {
       success: false,
       message: handleApiError(error),
@@ -212,7 +212,7 @@ export const getCurrentUser = (): UserEssentials | null => {
       return userEssentials;
     }
   } catch (error) {
-    console.error('❌ Erro ao parsear dados do usuário:', error);
+    console.log('❌ Erro ao parsear dados do usuário:', error);
     AuthStorage.remove(AUTH_STORAGE.USER);
   }
 
@@ -297,7 +297,7 @@ export const refreshToken = async (): Promise<boolean> => {
 
     return false;
   } catch (error) {
-    console.error('Erro ao renovar token:', error);
+    console.log('Erro ao renovar token:', error);
     return false;
   }
 };
@@ -308,7 +308,7 @@ export const listUsers = async (): Promise<User[]> => {
     const response = await apiClient.get<User[]>('/users');
     return response.data || [];
   } catch (error) {
-    console.error('Erro ao listar usuários:', error);
+    console.log('Erro ao listar usuários:', error);
     throw new Error(handleApiError(error));
   }
 };
@@ -321,7 +321,7 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
     }
     return response.data;
   } catch (error) {
-    console.error('Erro ao criar usuário:', error);
+    console.log('Erro ao criar usuário:', error);
     throw new Error(handleApiError(error));
   }
 };
@@ -334,7 +334,7 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
     if (error instanceof ApiClientError && error.status === 404) {
       return null;
     }
-    console.error('Erro ao atualizar usuário:', error);
+    console.log('Erro ao atualizar usuário:', error);
     throw new Error(handleApiError(error));
   }
 };
@@ -347,7 +347,7 @@ export const deleteUser = async (id: string): Promise<boolean> => {
     if (error instanceof ApiClientError && error.status === 404) {
       return false;
     }
-    console.error('Erro ao deletar usuário:', error);
+    console.log('Erro ao deletar usuário:', error);
     throw new Error(handleApiError(error));
   }
 }; 

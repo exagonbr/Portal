@@ -152,7 +152,7 @@ export function LoginForm() {
           clearTimeout(timeoutId);
         } catch (error: any) {
           clearTimeout(timeoutId);
-          console.error('Erro durante o login:', error);
+          console.log('Erro durante o login:', error);
           
           // Verificar se é erro de rate limit
           if (error.message && error.message.includes('Too Many Requests')) {
@@ -166,7 +166,7 @@ export function LoginForm() {
                 retrySeconds = parseInt(error.retryAfter, 10);
               }
             } catch (e) {
-              console.error('Erro ao extrair tempo de retry:', e);
+              console.log('Erro ao extrair tempo de retry:', e);
             }
             
             setRetryAfter(retrySeconds);
@@ -182,7 +182,7 @@ export function LoginForm() {
           setLoginAttemptInProgress(false);
         }
       } catch (outerError) {
-        console.error('Erro externo durante processo de login:', outerError);
+        console.log('Erro externo durante processo de login:', outerError);
         setSubmitError('Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.');
         setLoginAttemptInProgress(false);
       }

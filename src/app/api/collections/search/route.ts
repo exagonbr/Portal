@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao pesquisar coleções:', error);
+    console.log('Erro ao pesquisar coleções:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

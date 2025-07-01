@@ -35,7 +35,7 @@ function withErrorBoundary<T extends object>(Component: React.ComponentType<T>) 
     try {
       return <Component {...props} />;
     } catch (error) {
-      console.error('Erro no sidebar:', error);
+      console.log('Erro no sidebar:', error);
       // Retornar um sidebar básico em caso de erro
       return (
         <div className="w-64 bg-blue-900 border-r border-blue-800 flex flex-col h-screen">
@@ -478,7 +478,7 @@ function DashboardSidebarComponent() {
         console.log('❌ Usuário não é SYSTEM_ADMIN, ignorando mudança de role');
       }
     } catch (error) {
-      console.error('❌ Erro durante mudança de role:', error);
+      console.log('❌ Erro durante mudança de role:', error);
     }
   }, [userRole, pathname, router, selectedRole]);
 
@@ -499,7 +499,7 @@ function DashboardSidebarComponent() {
       setIsLoggingOut(true);
       await logout();
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      console.log('Erro ao fazer logout:', error);
     } finally {
       setIsLoggingOut(false);
     }
@@ -525,7 +525,7 @@ function DashboardSidebarComponent() {
       try {
         return getSystemAdminMenuItems() || []
       } catch (error) {
-        console.error('Erro ao carregar menu do System Admin:', error)
+        console.log('Erro ao carregar menu do System Admin:', error)
         return []
       }
     }

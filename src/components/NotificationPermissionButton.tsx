@@ -35,7 +35,7 @@ export default function NotificationPermissionButton({
         // Você pode adicionar uma mensagem explicativa aqui
       }
     } catch (error) {
-      console.error('❌ Erro ao solicitar permissão:', error);
+      console.log('❌ Erro ao solicitar permissão:', error);
     } finally {
       setIsRequesting(false);
     }

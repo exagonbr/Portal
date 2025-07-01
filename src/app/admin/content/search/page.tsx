@@ -135,7 +135,7 @@ export default function AdminContentSearchPage() {
       setContents(initialContents)
       
     } catch (err) {
-      console.error('Erro ao carregar buckets:', err)
+      console.log('Erro ao carregar buckets:', err)
       setError('Erro ao carregar buckets. Tente novamente.')
     } finally {
       setBucketsLoading(false)
@@ -191,7 +191,7 @@ export default function AdminContentSearchPage() {
         [activeTab]: combinedFiles
       }))
     } catch (err) {
-      console.error('Erro ao carregar arquivos:', err)
+      console.log('Erro ao carregar arquivos:', err)
       setError(`Erro ao carregar arquivos da categoria ${activeTab}. Tente novamente.`)
     } finally {
       setLoading(false)
@@ -232,7 +232,7 @@ export default function AdminContentSearchPage() {
           console.log(`✓ Carregados ${combinedFiles.length} arquivos para ${bucket.category}`)
           
         } catch (bucketError) {
-          console.error(`Erro ao carregar bucket ${bucket.category}:`, bucketError)
+          console.log(`Erro ao carregar bucket ${bucket.category}:`, bucketError)
           allFiles[bucket.category] = [] // Adicionar array vazio em caso de erro
         }
       }
@@ -241,7 +241,7 @@ export default function AdminContentSearchPage() {
       console.log('✅ Todos os buckets carregados com sucesso')
       
     } catch (err) {
-      console.error('Erro ao carregar todos os arquivos:', err)
+      console.log('Erro ao carregar todos os arquivos:', err)
       setError('Erro ao carregar arquivos de alguns buckets. Tente novamente.')
     } finally {
       setLoading(false)
@@ -275,7 +275,7 @@ export default function AdminContentSearchPage() {
       setShowBucketModal(false)
       
     } catch (err) {
-      console.error('Erro ao adicionar bucket:', err)
+      console.log('Erro ao adicionar bucket:', err)
       setError('Erro ao adicionar bucket. Verifique se o bucket existe na AWS.')
     } finally {
       setLoading(false)
@@ -357,7 +357,7 @@ export default function AdminContentSearchPage() {
         await loadFiles() // Recarregar dados
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao substituir arquivo:', error)
+        console.log('Erro ao substituir arquivo:', error)
         setError('Erro ao substituir arquivo')
       } finally {
         setLoading(false)
@@ -375,7 +375,7 @@ export default function AdminContentSearchPage() {
         setNewName('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao renomear arquivo:', error)
+        console.log('Erro ao renomear arquivo:', error)
         setError('Erro ao renomear arquivo')
       } finally {
         setLoading(false)
@@ -398,7 +398,7 @@ export default function AdminContentSearchPage() {
         setTargetBucket('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao mover arquivo:', error)
+        console.log('Erro ao mover arquivo:', error)
         setError('Erro ao mover arquivo')
       } finally {
         setLoading(false)
@@ -415,7 +415,7 @@ export default function AdminContentSearchPage() {
         setShowDeleteModal(false)
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao deletar arquivo:', error)
+        console.log('Erro ao deletar arquivo:', error)
         setError('Erro ao deletar arquivo')
       } finally {
         setLoading(false)
@@ -442,7 +442,7 @@ export default function AdminContentSearchPage() {
         setRefTags('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao criar referência:', error)
+        console.log('Erro ao criar referência:', error)
         setError('Erro ao criar referência no banco')
       } finally {
         setLoading(false)
@@ -483,7 +483,7 @@ export default function AdminContentSearchPage() {
         setSelectedCollection('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao vincular à coleção:', error)
+        console.log('Erro ao vincular à coleção:', error)
         setError('Erro ao vincular arquivo à coleção')
       } finally {
         setLoading(false)
@@ -516,7 +516,7 @@ export default function AdminContentSearchPage() {
         setBookDescription('')
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao adicionar à biblioteca de livros:', error)
+        console.log('Erro ao adicionar à biblioteca de livros:', error)
         setError('Erro ao adicionar arquivo à biblioteca de livros')
       } finally {
         setLoading(false)
@@ -548,7 +548,7 @@ export default function AdminContentSearchPage() {
         setShowUnlinkModal(false)
         setSelectedItem(null)
       } catch (error) {
-        console.error('Erro ao desvincular arquivo:', error)
+        console.log('Erro ao desvincular arquivo:', error)
         setError('Erro ao desvincular arquivo')
       } finally {
         setLoading(false)

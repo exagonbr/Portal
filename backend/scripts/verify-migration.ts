@@ -96,7 +96,7 @@ async function verifyMigration() {
     }
 
   } catch (error) {
-    console.error('❌ Erro na verificação:', error);
+    console.log('❌ Erro na verificação:', error);
     throw error;
   } finally {
     await pg.destroy();
@@ -104,7 +104,7 @@ async function verifyMigration() {
 }
 
 if (require.main === module) {
-  verifyMigration().catch(console.error);
+  verifyMigration().catch(console.log);
 }
 
 export default verifyMigration; 

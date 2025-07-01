@@ -94,11 +94,11 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao verificar referências:', error)
+    console.log('❌ Erro ao verificar referências:', error)
     
     // Log detalhado do erro para debug
     if (error instanceof Error) {
-      console.error('Detalhes do erro:', {
+      console.log('Detalhes do erro:', {
         message: error.message,
         stack: error.stack
       })
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao criar referência:', error)
+    console.log('Erro ao criar referência:', error)
     return NextResponse.json({ error: 'Erro ao criar referência no banco' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

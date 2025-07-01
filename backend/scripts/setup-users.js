@@ -20,7 +20,7 @@ async function setupUsers() {
     console.log('🎉 Configuração da tabela Users concluída!');
     
   } catch (error) {
-    console.error('❌ Erro durante a configuração:', error);
+    console.log('❌ Erro durante a configuração:', error);
   } finally {
     await db.destroy();
   }

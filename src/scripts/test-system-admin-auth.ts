@@ -41,7 +41,7 @@ async function testSystemAdminAuth() {
         hasRoleData: !!userStats?.users_by_role
       });
     } catch (error) {
-      console.error('❌ Erro em getRealUserStats:', error);
+      console.log('❌ Erro em getRealUserStats:', error);
     }
     console.log('');
 
@@ -52,7 +52,7 @@ async function testSystemAdminAuth() {
       console.log('✅ getRoleStats executado com sucesso');
       console.log('Dados recebidos:', roleStats ? 'Dados presentes' : 'Null/undefined');
     } catch (error) {
-      console.error('❌ Erro em getRoleStats:', error);
+      console.log('❌ Erro em getRoleStats:', error);
     }
     console.log('');
 
@@ -63,14 +63,14 @@ async function testSystemAdminAuth() {
       console.log('✅ getAwsConnectionStats executado com sucesso');
       console.log('Dados recebidos:', awsStats ? 'Dados presentes' : 'Null/undefined');
     } catch (error) {
-      console.error('❌ Erro em getAwsConnectionStats:', error);
+      console.log('❌ Erro em getAwsConnectionStats:', error);
     }
     console.log('');
 
     console.log('✅ [TEST-SYSTEM-ADMIN-AUTH] Testes concluídos');
 
   } catch (error) {
-    console.error('❌ [TEST-SYSTEM-ADMIN-AUTH] Erro geral nos testes:', error);
+    console.log('❌ [TEST-SYSTEM-ADMIN-AUTH] Erro geral nos testes:', error);
   }
 }
 

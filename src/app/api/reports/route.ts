@@ -220,7 +220,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao listar relatórios:', error)
+    console.log('Erro ao listar relatórios:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -353,7 +353,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('Erro ao gerar relatório:', error)
+    console.log('Erro ao gerar relatório:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

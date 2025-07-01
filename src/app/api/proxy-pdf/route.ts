@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Erro no proxy PDF:', error)
+    console.log('Erro no proxy PDF:', error)
     return NextResponse.json({ error: 'Erro interno ao processar o PDF' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

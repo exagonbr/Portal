@@ -130,7 +130,7 @@ async function checkVideoFileRelations() {
     }
 
   } catch (error) {
-    console.error('❌ Erro na verificação:', error);
+    console.log('❌ Erro na verificação:', error);
   } finally {
     await db.destroy();
     console.log('\n🔌 Conexão com o banco fechada');

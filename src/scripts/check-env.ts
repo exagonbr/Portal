@@ -15,7 +15,7 @@ console.log('📁 Caminho do .env:', envPath);
 const result = dotenv.config({ path: envPath });
 
 if (result.error) {
-  console.error('❌ Erro ao carregar .env:', result.error);
+  console.log('❌ Erro ao carregar .env:', result.error);
 } else {
   console.log('✅ .env carregado com sucesso\n');
 }
@@ -53,5 +53,5 @@ import('../config/env').then(module => {
   console.log(`   getInternalApiUrl('/users/stats'): ${getInternalApiUrl('/users/stats')}`);
   console.log(`   BACKEND_URL (ENV_CONFIG): ${ENV_CONFIG.BACKEND_URL}`);
 }).catch(error => {
-  console.error('❌ Erro ao importar config/env.ts:', error);
+  console.log('❌ Erro ao importar config/env.ts:', error);
 });

@@ -80,7 +80,7 @@ window.location.href = '/login';
 ```typescript
 // Diagnóstico detalhado quando há erro de token
 if (errorMessage.includes('Token inválido') || errorMessage.includes('Token expirado')) {
-  console.error('🔍 [SYSTEM-ADMIN-SERVICE] Diagnóstico do token:', {
+  console.log('🔍 [SYSTEM-ADMIN-SERVICE] Diagnóstico do token:', {
     currentToken: !!currentToken,
     tokenLength: currentToken ? currentToken.length : 0,
     authStatus: authStatus

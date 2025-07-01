@@ -384,7 +384,7 @@ export default function DashboardHeader() {
                       try {
                         await logout();
                       } catch (error) {
-                        console.error('Erro ao fazer logout:', error);
+                        console.log('Erro ao fazer logout:', error);
                       } finally {
                         setIsLoggingOut(false);
                       }

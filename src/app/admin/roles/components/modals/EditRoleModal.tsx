@@ -66,7 +66,7 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({
       
       setSelectedPermissions(permissionsMap)
     } catch (error) {
-      console.error('Erro ao carregar permissões:', error)
+      console.log('Erro ao carregar permissões:', error)
       // Fallback para permissões da role se disponível
       if (role.permissions) {
         const permissionsMap: Record<string, boolean> = {}

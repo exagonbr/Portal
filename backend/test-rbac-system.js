@@ -109,8 +109,8 @@ async function testRBACSystem() {
     console.log('4. Testar cada role individualmente');
     
   } catch (error) {
-    console.error('❌ Erro no teste RBAC:', error.message);
-    console.error('Stack:', error.stack);
+    console.log('❌ Erro no teste RBAC:', error.message);
+    console.log('Stack:', error.stack);
   }
   
   process.exit(0);

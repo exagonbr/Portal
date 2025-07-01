@@ -528,7 +528,7 @@ router.get('/stats', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res)
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error getting cache stats:', errorMessage);
+    console.log('Error getting cache stats:', errorMessage);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

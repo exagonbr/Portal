@@ -99,7 +99,7 @@ async function testBackendLogin() {
       return null;
     }
   } catch (error) {
-    console.error('❌ Erro ao testar login no backend:', error.message);
+    console.log('❌ Erro ao testar login no backend:', error.message);
     return null;
   }
 }
@@ -132,7 +132,7 @@ async function testBackendValidation(token) {
       console.log('❌ Validação no backend falhou');
     }
   } catch (error) {
-    console.error('❌ Erro ao testar validação no backend:', error.message);
+    console.log('❌ Erro ao testar validação no backend:', error.message);
   }
 }
 
@@ -159,7 +159,7 @@ async function testFrontendLogin() {
       return null;
     }
   } catch (error) {
-    console.error('❌ Erro ao testar login no frontend:', error.message);
+    console.log('❌ Erro ao testar login no frontend:', error.message);
     return null;
   }
 }
@@ -192,7 +192,7 @@ async function testFrontendValidation(token) {
       console.log('❌ Validação no frontend falhou');
     }
   } catch (error) {
-    console.error('❌ Erro ao testar validação no frontend:', error.message);
+    console.log('❌ Erro ao testar validação no frontend:', error.message);
   }
 }
 
@@ -216,7 +216,7 @@ async function testNextAuthRedirect() {
       console.log('❌ Redirecionamento do NextAuth falhou');
     }
   } catch (error) {
-    console.error('❌ Erro ao testar redirecionamento:', error.message);
+    console.log('❌ Erro ao testar redirecionamento:', error.message);
   }
 }
 
@@ -254,4 +254,4 @@ async function main() {
 }
 
 // Executar testes
-main().catch(console.error);
+main().catch(console.log);

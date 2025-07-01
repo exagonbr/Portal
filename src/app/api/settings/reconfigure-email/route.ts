@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Erro ao reconfigurar serviço de email:', error)
+    console.log('Erro ao reconfigurar serviço de email:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

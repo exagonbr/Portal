@@ -107,7 +107,7 @@ export class InstitutionRepository extends BaseRepository<Institution> {
       // Map each result from DB format to model format
       return results.map(this.mapToModel);
     } catch (error) {
-      console.error('Erro na consulta de instituições:', error);
+      console.log('Erro na consulta de instituições:', error);
       throw error;
     }
   }

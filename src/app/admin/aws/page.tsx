@@ -117,7 +117,7 @@ export default function AdminAwsPage() {
       }
     } catch (error) {
       toast.error('Erro ao salvar configurações AWS')
-      console.error('Erro ao salvar:', error)
+      console.log('Erro ao salvar:', error)
     } finally {
       setSaving(false)
     }
@@ -215,7 +215,7 @@ export default function AdminAwsPage() {
         }
       })
     } catch (error) {
-      console.error('Erro ao carregar métricas:', error)
+      console.log('Erro ao carregar métricas:', error)
     }
   }
 

@@ -71,7 +71,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error(`Erro ao buscar role ${resolvedParams.id}:`, error)
+    console.log(`Erro ao buscar role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -161,7 +161,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error(`Erro ao atualizar role ${resolvedParams.id}:`, error)
+    console.log(`Erro ao atualizar role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -222,7 +222,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error(`Erro ao deletar role ${resolvedParams.id}:`, error)
+    console.log(`Erro ao deletar role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

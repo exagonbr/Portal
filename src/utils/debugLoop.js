@@ -41,7 +41,7 @@ function log(message, color = 'reset') {
     }
     fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
   } catch (error) {
-    console.error('Erro ao salvar log:', error);
+    console.log('Erro ao salvar log:', error);
   }
 }
 

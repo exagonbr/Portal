@@ -17,7 +17,7 @@ export const useRedirectWithClearData = () => {
       await clearAllDataForUnauthorized();
       router.push(`/login?error=${reason}`);
     } catch (error) {
-      console.error('❌ Erro durante limpeza de dados no redirecionamento:', error);
+      console.log('❌ Erro durante limpeza de dados no redirecionamento:', error);
       // Redirecionar mesmo com erro na limpeza
       router.push(`/login?error=${reason}`);
     }
@@ -32,7 +32,7 @@ export const useRedirectWithClearData = () => {
       clearAuthDataOnly();
       router.push(url);
     } catch (error) {
-      console.error('❌ Erro durante limpeza de dados de autenticação:', error);
+      console.log('❌ Erro durante limpeza de dados de autenticação:', error);
       // Redirecionar mesmo com erro na limpeza
       router.push(url);
     }
@@ -47,7 +47,7 @@ export const useRedirectWithClearData = () => {
       await clearAllDataForUnauthorized();
       router.push(url);
     } catch (error) {
-      console.error('❌ Erro durante limpeza completa de dados:', error);
+      console.log('❌ Erro durante limpeza completa de dados:', error);
       // Redirecionar mesmo com erro na limpeza
       router.push(url);
     }

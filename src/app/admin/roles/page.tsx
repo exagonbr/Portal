@@ -115,7 +115,7 @@ export default function RolesPermissionsPage() {
       console.log(`✅ ${mockPermissions.length} permissões carregadas`);
       
     } catch (error) {
-      console.error('❌ Erro ao carregar dados:', error);
+      console.log('❌ Erro ao carregar dados:', error);
       showError('Erro ao carregar roles e permissões');
       
       // Fallback para dados simulados em caso de erro
@@ -186,7 +186,7 @@ export default function RolesPermissionsPage() {
       resetForm();
       await loadData();
     } catch (error: any) {
-      console.error('Erro ao salvar função:', error);
+      console.log('Erro ao salvar função:', error);
       showError(error.message || 'Erro ao salvar função. Tente novamente.');
     } finally {
       setSubmitting(false);
@@ -209,7 +209,7 @@ export default function RolesPermissionsPage() {
       showSuccess(role.active ? 'Função desativada' : 'Função ativada');
       await loadData();
     } catch (error: any) {
-      console.error('Erro ao alterar status:', error);
+      console.log('Erro ao alterar status:', error);
       showError(error.message || 'Erro ao alterar status da função');
     }
   };
@@ -224,7 +224,7 @@ export default function RolesPermissionsPage() {
       showSuccess('Função excluída com sucesso!');
       await loadData();
     } catch (error: any) {
-      console.error('Erro ao excluir função:', error);
+      console.log('Erro ao excluir função:', error);
       showError(error.message || 'Erro ao excluir função');
     }
   };

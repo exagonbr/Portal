@@ -118,7 +118,7 @@ async function handleProxyRequest(
     return NextResponse.json(data, { status: response.status });
 
   } catch (error) {
-    console.error(`Erro no proxy ${method} ${endpoint}:`, error);
+    console.log(`Erro no proxy ${method} ${endpoint}:`, error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
@@ -193,7 +193,7 @@ export async function backendRequest<T = any>(
     };
 
   } catch (error) {
-    console.error(`Erro na requisição ${method} ${endpoint}:`, error);
+    console.log(`Erro na requisição ${method} ${endpoint}:`, error);
     throw error;
   }
 }

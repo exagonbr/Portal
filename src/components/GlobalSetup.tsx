@@ -31,7 +31,7 @@ export default function GlobalSetup() {
         (window as any).loopStats = () => loopPrevention.getStats();
       }
     } catch (error) {
-      console.error('❌ Erro ao inicializar prevenção de loops:', error);
+      console.log('❌ Erro ao inicializar prevenção de loops:', error);
     }
 
     // Desabilitar logs desnecessários em produção
@@ -43,7 +43,7 @@ export default function GlobalSetup() {
 
     // Configurar tratamento global de erros
     window.addEventListener('unhandledrejection', (event) => {
-      console.error('Unhandled promise rejection:', event.reason);
+      console.log('Unhandled promise rejection:', event.reason);
       event.preventDefault();
     });
 

@@ -93,7 +93,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
       }
       
     } catch (err) {
-      console.error('❌ Erro ao buscar usuário da sessão:', err);
+      console.log('❌ Erro ao buscar usuário da sessão:', err);
       setUser(null);
       setError(null); // Não definir erro para não afetar UX
     } finally {
@@ -194,7 +194,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
         }
       }
     } catch (error) {
-      console.error('❌ Erro no redirecionamento:', error);
+      console.log('❌ Erro no redirecionamento:', error);
       // Fallback para window.location
       if (typeof window !== 'undefined') {
         window.location.href = path;
@@ -296,12 +296,12 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
         safeRedirect(redirectPath);
       } else {
         const errorMessage = response.message || 'Falha no login';
-        console.error('🔐 Login falhou:', errorMessage);
+        console.log('🔐 Login falhou:', errorMessage);
         throw new Error(errorMessage);
       }
     } catch (err: any) {
       const errorMessage = err.message || 'Erro ao fazer login';
-      console.error('❌ Erro no login:', errorMessage);
+      console.log('❌ Erro no login:', errorMessage);
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -354,12 +354,12 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
         }
       } else {
         const errorMessage = response.message || 'Falha no registro';
-        console.error('🔐 Registro falhou:', errorMessage);
+        console.log('🔐 Registro falhou:', errorMessage);
         throw new Error(errorMessage);
       }
     } catch (err: any) {
       const errorMessage = err.message || 'Erro ao registrar usuário';
-      console.error('❌ Erro no registro:', errorMessage);
+      console.log('❌ Erro no registro:', errorMessage);
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -393,7 +393,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
 
     } catch (err: any) {
       const errorMessage = err.message || 'Erro ao fazer login com Google';
-      console.error('❌ Erro no login com Google:', errorMessage);
+      console.log('❌ Erro no login com Google:', errorMessage);
       setError(errorMessage);
       await logout(); // Limpar tudo em caso de erro
       throw new Error(errorMessage);
@@ -457,7 +457,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
           try {
             localStorage.clear();
           } catch (fallbackError) {
-            console.error('❌ Erro no fallback do localStorage:', fallbackError);
+            console.log('❌ Erro no fallback do localStorage:', fallbackError);
           }
         }
         
@@ -580,7 +580,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
       safeRedirect('/auth/login?logout=true');
       
     } catch (err: any) {
-      console.error('❌ Erro no logout:', err);
+      console.log('❌ Erro no logout:', err);
       
       // Garantir limpeza de emergência mesmo com erro
       try {
@@ -599,7 +599,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
           });
         }
       } catch (cleanupError) {
-        console.error('❌ Erro na limpeza de emergência:', cleanupError);
+        console.log('❌ Erro na limpeza de emergência:', cleanupError);
       }
       
       // Redirecionar mesmo com erro

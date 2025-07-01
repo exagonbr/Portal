@@ -203,7 +203,7 @@ async function importFromMySQLToPostgreSQL() {
             error: error.message
           };
           errors.push(errorInfo);
-          console.error(`❌ Erro ao migrar usuário ${mysqlUser.id} (${mysqlUser.email}): ${error.message}`);
+          console.log(`❌ Erro ao migrar usuário ${mysqlUser.id} (${mysqlUser.email}): ${error.message}`);
         }
       }
     });
@@ -249,8 +249,8 @@ async function importFromMySQLToPostgreSQL() {
     }
     
   } catch (error) {
-    console.error(`💥 Erro crítico durante a migração: ${error.message}`);
-    console.error(error.stack);
+    console.log(`💥 Erro crítico durante a migração: ${error.message}`);
+    console.log(error.stack);
     process.exit(1);
   } finally {
     // Fechar conexões
@@ -271,7 +271,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch((error) => {
-      console.error('\n💥 Falha na execução da migração:', error.message);
+      console.log('\n💥 Falha na execução da migração:', error.message);
       process.exit(1);
     });
 }

@@ -24,11 +24,11 @@ async function login() {
       console.log('✅ Login realizado com sucesso');
       return data.token;
     } else {
-      console.error('❌ Erro no login:', data.message);
+      console.log('❌ Erro no login:', data.message);
       return null;
     }
   } catch (error) {
-    console.error('❌ Erro ao fazer login:', error.message);
+    console.log('❌ Erro ao fazer login:', error.message);
     return null;
   }
 }
@@ -70,7 +70,7 @@ async function testVideoFileEndpoint(token, videoId) {
       return false;
     }
   } catch (error) {
-    console.error('❌ Erro ao testar endpoint:', error.message);
+    console.log('❌ Erro ao testar endpoint:', error.message);
     return false;
   }
 }
@@ -104,6 +104,6 @@ async function main() {
 
 // Executar teste
 main().catch(error => {
-  console.error('❌ Erro fatal:', error);
+  console.log('❌ Erro fatal:', error);
   process.exit(1);
 }); 

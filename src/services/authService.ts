@@ -51,7 +51,7 @@ export class AuthService {
         user: compatibleUser
       };
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.log('Erro no login:', error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 401) {
@@ -123,7 +123,7 @@ export class AuthService {
         user: compatibleUser
       };
     } catch (error) {
-      console.error('Erro no registro:', error);
+      console.log('Erro no registro:', error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 409) {
@@ -172,7 +172,7 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      console.error('Erro ao buscar usuário atual:', error);
+      console.log('Erro ao buscar usuário atual:', error);
       
       // Se for erro de autenticação, limpa dados
       if (isAuthError(error)) {
@@ -191,7 +191,7 @@ export class AuthService {
       // Tenta fazer logout no servidor
       await apiClient.post('/auth/logout');
     } catch (error) {
-      console.error('Erro no logout do servidor:', error);
+      console.log('Erro no logout do servidor:', error);
       // Continua com logout local mesmo se houver erro no servidor
     } finally {
       // Sempre limpa dados locais
@@ -255,7 +255,7 @@ export class AuthService {
           return expDate <= new Date();
         }
       } catch (error) {
-        console.error('Erro ao decodificar token:', error);
+        console.log('Erro ao decodificar token:', error);
       }
     }
     
@@ -311,7 +311,7 @@ export class AuthService {
       });
 
       if (!response.ok) {
-        console.error('Erro na resposta do refresh token:', response.status);
+        console.log('Erro na resposta do refresh token:', response.status);
         if (response.status === 401) {
           this.clearAuthData();
         }
@@ -321,7 +321,7 @@ export class AuthService {
       const data = await response.json();
       
       if (!data.success) {
-        console.error('Falha no refresh token:', data.message);
+        console.log('Falha no refresh token:', data.message);
         this.clearAuthData();
         return false;
       }
@@ -333,7 +333,7 @@ export class AuthService {
       console.log('Token renovado com sucesso');
       return true;
     } catch (error) {
-      console.error('Erro ao renovar token:', error);
+      console.log('Erro ao renovar token:', error);
       // Não limpar dados em caso de erro de rede
       if (error instanceof Error && error.message.includes('fetch failed')) {
         console.warn('Erro de rede ao renovar token, tentando manter sessão atual');
@@ -358,7 +358,7 @@ export class AuthService {
         throw new Error(response.message || 'Falha ao alterar senha');
       }
     } catch (error) {
-      console.error('Erro ao alterar senha:', error);
+      console.log('Erro ao alterar senha:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -374,7 +374,7 @@ export class AuthService {
         throw new Error(response.message || 'Falha ao solicitar recuperação de senha');
       }
     } catch (error) {
-      console.error('Erro ao solicitar recuperação de senha:', error);
+      console.log('Erro ao solicitar recuperação de senha:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -393,7 +393,7 @@ export class AuthService {
         throw new Error(response.message || 'Falha ao redefinir senha');
       }
     } catch (error) {
-      console.error('Erro ao redefinir senha:', error);
+      console.log('Erro ao redefinir senha:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -513,7 +513,7 @@ export const listUsers = async (): Promise<User[]> => {
     const result = await userService.getUsers();
     return result.items.map(user => authService['convertToCompatibleUser'](user));
   } catch (error) {
-    console.error('Erro ao listar usuários:', error);
+    console.log('Erro ao listar usuários:', error);
     return [];
   }
 };
@@ -549,7 +549,7 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
     const result = await userService.createUser(createData);
     return authService['convertToCompatibleUser'](result);
   } catch (error) {
-    console.error('Erro ao criar usuário:', error);
+    console.log('Erro ao criar usuário:', error);
     throw error;
   }
 };
@@ -588,7 +588,7 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
     const result = await userService.updateUser(id, updateData);
     return result ? authService['convertToCompatibleUser'](result) : null;
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
+    console.log('Erro ao atualizar usuário:', error);
     return null;
   }
 };
@@ -599,7 +599,7 @@ export const deleteUser = async (id: string): Promise<boolean> => {
     await userService.deleteUser(id);
     return true;
   } catch (error) {
-    console.error('Erro ao deletar usuário:', error);
+    console.log('Erro ao deletar usuário:', error);
     return false;
   }
 };

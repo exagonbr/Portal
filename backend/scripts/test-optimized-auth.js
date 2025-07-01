@@ -223,7 +223,7 @@ async function runAllTests() {
     console.log('   - [ ] Logs funcionando');
 
   } catch (error) {
-    console.error('❌ Erro geral nos testes:', error.message);
+    console.log('❌ Erro geral nos testes:', error.message);
   }
 }
 

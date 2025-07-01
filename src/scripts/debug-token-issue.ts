@@ -16,7 +16,7 @@ export async function debugTokenIssue() {
   });
   
   if (!currentToken) {
-    console.error('❌ [DEBUG-TOKEN] Nenhum token encontrado!');
+    console.log('❌ [DEBUG-TOKEN] Nenhum token encontrado!');
     console.log('💡 [DEBUG-TOKEN] Verificando storage...');
     
     if (typeof window !== 'undefined') {
@@ -105,7 +105,7 @@ export async function debugTokenIssue() {
     };
     
   } catch (error) {
-    console.error('❌ [DEBUG-TOKEN] Erro na requisição:', error);
+    console.log('❌ [DEBUG-TOKEN] Erro na requisição:', error);
     return {
       hasToken: true,
       tokenValid: validation.isValid,

@@ -104,7 +104,7 @@ export default function CollectionForm({
     try {
       await onSubmit(formData)
     } catch (error) {
-      console.error('Erro ao salvar coleção:', error)
+      console.log('Erro ao salvar coleção:', error)
     }
   }
 

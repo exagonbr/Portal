@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar estatísticas dos grupos:', error);
+    console.log('Erro ao buscar estatísticas dos grupos:', error);
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

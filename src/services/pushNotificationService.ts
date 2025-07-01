@@ -56,7 +56,7 @@ class PushNotificationService {
 
       this.isInitialized = true;
     } catch (error) {
-      console.error('Error initializing push notifications:', error);
+      console.log('Error initializing push notifications:', error);
       // Marca como inicializado mesmo com erro para evitar tentativas repetidas
       this.isInitialized = true;
     }
@@ -106,7 +106,7 @@ class PushNotificationService {
       
       return permission;
     } catch (error) {
-      console.error('❌ Erro ao solicitar permissão para notificações:', error);
+      console.log('❌ Erro ao solicitar permissão para notificações:', error);
       return 'denied';
     }
   }
@@ -167,7 +167,7 @@ class PushNotificationService {
         }
       }
       
-      console.error('Error saving push subscription:', error);
+      console.log('Error saving push subscription:', error);
       // Não propaga o erro para evitar quebrar a aplicação
       return;
     }
@@ -222,7 +222,7 @@ class PushNotificationService {
         }
       }
     } catch (error) {
-      console.error('Error unsubscribing from push notifications:', error);
+      console.log('Error unsubscribing from push notifications:', error);
       // Não propaga o erro para evitar quebrar a aplicação
     }
   }
@@ -252,7 +252,7 @@ class PushNotificationService {
         const subscription = await this.swRegistration.pushManager.getSubscription();
         subscribed = !!subscription;
       } catch (error) {
-        console.error('Error checking subscription status:', error);
+        console.log('Error checking subscription status:', error);
       }
     }
 

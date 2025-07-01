@@ -368,7 +368,7 @@ export default function SendNotificationPage() {
       setActiveTab('templates');
 
     } catch (error) {
-      console.error('Erro ao enviar notificação:', error);
+      console.log('Erro ao enviar notificação:', error);
       showError('Erro ao enviar notificação. Tente novamente.');
     } finally {
       setIsLoading(false);

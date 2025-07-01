@@ -36,7 +36,7 @@ async function testFrontendLogin() {
     
     if (!loginResponse.ok) {
       const errorText = await loginResponse.text();
-      console.error('❌ Erro no login:', errorText);
+      console.log('❌ Erro no login:', errorText);
       return;
     }
     
@@ -47,7 +47,7 @@ async function testFrontendLogin() {
     console.log('📊 Token:', loginData.data?.token ? 'Presente' : 'Ausente');
     
     if (!loginData.data?.token) {
-      console.error('❌ Token não encontrado na resposta do login');
+      console.log('❌ Token não encontrado na resposta do login');
       return;
     }
     
@@ -67,7 +67,7 @@ async function testFrontendLogin() {
         exp: new Date(decoded.exp * 1000).toISOString()
       });
     } catch (jwtError) {
-      console.error('❌ Token inválido:', jwtError.message);
+      console.log('❌ Token inválido:', jwtError.message);
       return;
     }
     
@@ -92,7 +92,7 @@ async function testFrontendLogin() {
       console.log('📊 Dados:', Array.isArray(institutionsData.data) ? `Array com ${institutionsData.data.length} itens` : 'Não é array');
     } else {
       const errorText = await institutionsResponse.text();
-      console.error('❌ Erro no endpoint institutions:', institutionsResponse.status, errorText);
+      console.log('❌ Erro no endpoint institutions:', institutionsResponse.status, errorText);
       
       if (institutionsResponse.status === 401) {
         console.log('\n🔍 ANÁLISE DO ERRO 401:');
@@ -140,11 +140,11 @@ async function testFrontendLogin() {
       console.log('✅ Segunda requisição funcionou - problema não é com armazenamento');
     } else {
       const errorText = await secondInstitutionsResponse.text();
-      console.error('❌ Segunda requisição falhou:', errorText);
+      console.log('❌ Segunda requisição falhou:', errorText);
     }
     
   } catch (error) {
-    console.error('❌ Erro no teste:', error.message);
+    console.log('❌ Erro no teste:', error.message);
   }
 }
 
@@ -168,7 +168,7 @@ async function testTokenComparison() {
     });
     
     if (!backendResponse.ok) {
-      console.error('❌ Erro no backend direto');
+      console.log('❌ Erro no backend direto');
       return;
     }
     
@@ -190,7 +190,7 @@ async function testTokenComparison() {
     });
     
     if (!frontendResponse.ok) {
-      console.error('❌ Erro no frontend');
+      console.log('❌ Erro no frontend');
       return;
     }
     
@@ -229,14 +229,14 @@ async function testTokenComparison() {
         });
         
       } catch (decodeError) {
-        console.error('❌ Erro ao decodificar tokens:', decodeError.message);
+        console.log('❌ Erro ao decodificar tokens:', decodeError.message);
       }
     } else {
       console.log('✅ Tokens idênticos - problema não é no proxy');
     }
     
   } catch (error) {
-    console.error('❌ Erro na comparação:', error.message);
+    console.log('❌ Erro na comparação:', error.message);
   }
 }
 
@@ -251,4 +251,4 @@ async function main() {
   console.log('3. Se os tokens são iguais mas ainda há erro 401, o problema é no middleware de auth');
 }
 
-main().catch(console.error);
+main().catch(console.log);

@@ -82,7 +82,7 @@ class RequestMonitor {
       timestamp: new Date().toISOString()
     };
     
-    console.error('Loop de requisições detectado:', report);
+    console.log('Loop de requisições detectado:', report);
     
     // Aqui você pode adicionar código para enviar o relatório para um serviço de monitoramento
     // Por exemplo: enviar para analytics, Sentry, etc.

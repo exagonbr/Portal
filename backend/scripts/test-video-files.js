@@ -68,7 +68,7 @@ async function testVideoFiles() {
     }
     
   } catch (error) {
-    console.error('❌ Erro no teste:', error.response?.data || error.message);
+    console.log('❌ Erro no teste:', error.response?.data || error.message);
   }
 
   console.log('\n🎉 Teste de vídeos com arquivos concluído!');

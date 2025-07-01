@@ -26,7 +26,7 @@ export async function GET(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar módulos do TV Show:', error);
+    console.log('Erro ao buscar módulos do TV Show:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

@@ -114,7 +114,7 @@ export default function SystemAdminUnitsPage() {
           return;
         }
       } catch (directError) {
-        console.error('❌ Direct fetch failed:', directError);
+        console.log('❌ Direct fetch failed:', directError);
       }
       
       // Fallback para o serviço original
@@ -157,7 +157,7 @@ export default function SystemAdminUnitsPage() {
         console.log(`✅ ${institutionsArray.length} instituições carregadas com sucesso`);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar instituições:', error);
+      console.log('❌ Erro ao carregar instituições:', error);
       showError('Erro ao carregar instituições. Verifique sua conexão.');
       setInstitutions([]);
     } finally {
@@ -203,7 +203,7 @@ export default function SystemAdminUnitsPage() {
       setUnits(unitsData);
       console.log(`✅ ${unitsData.length} unidades carregadas com sucesso`);
     } catch (error) {
-      console.error('❌ Erro ao carregar unidades:', error);
+      console.log('❌ Erro ao carregar unidades:', error);
       showError('Erro ao carregar unidades');
       // Em caso de erro, definir array vazio para evitar crashes
       setUnits([]);
@@ -246,7 +246,7 @@ export default function SystemAdminUnitsPage() {
       resetForm();
       await loadData(); // Aguardar o carregamento
     } catch (error: any) {
-      console.error('Erro ao salvar unidade:', error);
+      console.log('Erro ao salvar unidade:', error);
       
       // Tratamento de erros mais específico
       if (error.response?.status === 400) {

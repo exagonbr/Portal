@@ -87,7 +87,7 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error('❌ Erro ao renomear arquivo:', error)
+    console.log('❌ Erro ao renomear arquivo:', error)
     
     // Verificar tipos de erro específicos
     if (error instanceof Error) {

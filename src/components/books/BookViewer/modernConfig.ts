@@ -212,7 +212,7 @@ export const configUtils = {
       localStorage.setItem(key, JSON.stringify(config));
       console.log('✅ Configuração salva:', key);
     } catch (error) {
-      console.error('❌ Erro ao salvar configuração:', error);
+      console.log('❌ Erro ao salvar configuração:', error);
     }
   },
 
@@ -231,7 +231,7 @@ export const configUtils = {
         }
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar configuração:', error);
+      console.log('❌ Erro ao carregar configuração:', error);
     }
 
     return null;

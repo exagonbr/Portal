@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         try {
           await connection.end()
         } catch (closeError) {
-          console.error('Erro ao fechar conexão:', closeError)
+          console.log('Erro ao fechar conexão:', closeError)
         }
       }
       
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
     
   } catch (error: any) {
-    console.error('Erro ao testar conexão MySQL:', error)
+    console.log('Erro ao testar conexão MySQL:', error)
     
     return NextResponse.json({
       success: false,

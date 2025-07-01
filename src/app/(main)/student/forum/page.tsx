@@ -135,7 +135,7 @@ export default function StudentForumPage() {
       setPosts(mockPosts)
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao buscar posts:', error)
+      console.log('Erro ao buscar posts:', error)
       setLoading(false)
     }
   }

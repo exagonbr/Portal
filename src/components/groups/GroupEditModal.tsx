@@ -114,7 +114,7 @@ export const GroupEditModal: React.FC<GroupEditModalProps> = ({
       await onSubmit(changedData);
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar grupo:', error);
+      console.log('Erro ao atualizar grupo:', error);
     } finally {
       setLoading(false);
     }

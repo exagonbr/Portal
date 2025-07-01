@@ -116,7 +116,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onUserAd
       onClose();
     } catch (err) {
       setError('Falha ao salvar usuário. Tente novamente.');
-      console.error('Error saving user:', err);
+      console.log('Error saving user:', err);
     } finally {
       setLoading(false);
     }

@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Erro ao buscar configurações de email:', error)
+    console.log('Erro ao buscar configurações de email:', error)
     return NextResponse.json({ error: 'Erro ao buscar configurações de email' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Erro ao salvar configurações de email:', error)
+    console.log('Erro ao salvar configurações de email:', error)
     return NextResponse.json({ error: 'Erro ao salvar configurações de email' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

@@ -18,7 +18,7 @@ app.use('/api', routes);
 
 // Tratamento de erros
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
+  console.log(err.stack);
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
@@ -33,7 +33,7 @@ app.listen(PORT, async () => {
 
     console.log(`Servidor rodando na porta ${PORT}`);
   } catch (error) {
-    console.error('Erro ao iniciar o servidor:', error);
+    console.log('Erro ao iniciar o servidor:', error);
     process.exit(1);
   }
 }); 

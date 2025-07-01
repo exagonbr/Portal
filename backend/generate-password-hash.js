@@ -18,7 +18,7 @@ async function generateHash() {
     console.log(`UPDATE users SET password = '${hash}' WHERE email = 'admin@sabercon.edu.br';`);
     
   } catch (error) {
-    console.error('❌ Erro:', error);
+    console.log('❌ Erro:', error);
   }
 }
 

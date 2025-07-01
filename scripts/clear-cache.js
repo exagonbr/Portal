@@ -25,7 +25,7 @@ function removeDirectory(dirPath) {
       fs.rmSync(dirPath, { recursive: true, force: true });
       console.log(`✅ Removido: ${dirPath}`);
     } catch (error) {
-      console.error(`❌ Erro ao remover ${dirPath}:`, error.message);
+      console.log(`❌ Erro ao remover ${dirPath}:`, error.message);
     }
   } else {
     console.log(`⏭️  Não encontrado: ${dirPath}`);

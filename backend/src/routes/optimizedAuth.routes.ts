@@ -102,7 +102,7 @@ router.post(
 
       await OptimizedAuthController.login(req, res);
     } catch (error) {
-      console.error('Erro na rota de login:', error);
+      console.log('Erro na rota de login:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',

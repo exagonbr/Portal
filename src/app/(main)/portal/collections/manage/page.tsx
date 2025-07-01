@@ -192,7 +192,7 @@ export default function TVShowsManagePage() {
       alert('Erro ao criar coleção. Tente novamente.')
       return false
     } catch (error) {
-      console.error('Erro ao criar TV Show:', error)
+      console.log('Erro ao criar TV Show:', error)
       alert('Erro ao criar coleção. Tente novamente.')
       return false
     } finally {
@@ -246,7 +246,7 @@ export default function TVShowsManagePage() {
       alert('Erro ao atualizar coleção. Tente novamente.')
       return false
     } catch (error) {
-      console.error('Erro ao atualizar TV Show:', error)
+      console.log('Erro ao atualizar TV Show:', error)
       alert('Erro ao atualizar coleção. Tente novamente.')
       return false
     } finally {
@@ -287,7 +287,7 @@ export default function TVShowsManagePage() {
       alert('Erro ao excluir coleção. Tente novamente.')
       return false
     } catch (error) {
-      console.error('Erro ao excluir TV Show:', error)
+      console.log('Erro ao excluir TV Show:', error)
       alert('Erro ao excluir coleção. Tente novamente.')
       return false
     }
@@ -359,7 +359,7 @@ export default function TVShowsManagePage() {
       const result = await response.json()
       return result.url || null
     } catch (error) {
-      console.error('Erro no upload:', error)
+      console.log('Erro no upload:', error)
       return null
     }
   }
@@ -414,7 +414,7 @@ export default function TVShowsManagePage() {
       }
     }
     
-    console.error('❌ Nenhum token de autenticação encontrado!')
+    console.log('❌ Nenhum token de autenticação encontrado!')
     console.log('💡 Verificando se existe sessão ativa...')
     
     // Em último caso, verificar se há dados de usuário logado
@@ -470,10 +470,10 @@ export default function TVShowsManagePage() {
           }
         }
       } else {
-        console.error('Erro na resposta da API:', response.status, response.statusText)
+        console.log('Erro na resposta da API:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('Erro ao carregar TV Shows:', error)
+      console.log('Erro ao carregar TV Shows:', error)
       setTvShows([])
     } finally {
       setIsLoading(false)
@@ -517,7 +517,7 @@ export default function TVShowsManagePage() {
             
             // VALIDAÇÃO: Detectar valores absurdos e resetar para 0
             if (videoCount > 10000) {
-              console.error(`🚨 VALOR ABSURDO DETECTADO: ${show.name} tem ${videoCount} vídeos - RESETANDO PARA 0`)
+              console.log(`🚨 VALOR ABSURDO DETECTADO: ${show.name} tem ${videoCount} vídeos - RESETANDO PARA 0`)
               videoCount = 0
             }
             
@@ -581,7 +581,7 @@ export default function TVShowsManagePage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao calcular estatísticas:', error)
+      console.log('Erro ao calcular estatísticas:', error)
       
       // Em caso de erro, calcular com base nos dados já carregados
       const fallbackTotalVideos = tvShows.reduce((sum, show) => {
@@ -628,7 +628,7 @@ export default function TVShowsManagePage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar detalhes do TV Show:', error)
+      console.log('Erro ao carregar detalhes do TV Show:', error)
       setSelectedTvShow(null)
       setModules({})
     } finally {

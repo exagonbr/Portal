@@ -139,7 +139,7 @@ async function createAdminUser() {
     console.log('==========================================');
     
   } catch (error) {
-    console.error('❌ Erro ao criar usuário admin:', error);
+    console.log('❌ Erro ao criar usuário admin:', error);
     throw error;
   } finally {
     await db.destroy();

@@ -38,7 +38,7 @@ export const getRedisClient = (): Redis => {
     });
 
     redis.on('error', (error) => {
-      console.error('❌ Erro na conexão Redis:', error);
+      console.log('❌ Erro na conexão Redis:', error);
     });
 
     redis.on('close', () => {
@@ -81,7 +81,7 @@ export const getQueueRedisClient = (): Redis => {
     });
 
     queueRedis.on('error', (error) => {
-      console.error('❌ Erro na conexão Redis para filas:', error);
+      console.log('❌ Erro na conexão Redis para filas:', error);
     });
 
     queueRedis.on('close', () => {
@@ -104,7 +104,7 @@ export const testRedisConnection = async (): Promise<boolean> => {
     console.log('✅ Teste de conexão Redis bem-sucedido');
     return true;
   } catch (error) {
-    console.error('❌ Falha no teste de conexão Redis:', error);
+    console.log('❌ Falha no teste de conexão Redis:', error);
     return false;
   }
 };
@@ -117,7 +117,7 @@ export const testQueueRedisConnection = async (): Promise<boolean> => {
     console.log('✅ Teste de conexão Redis para filas bem-sucedido');
     return true;
   } catch (error) {
-    console.error('❌ Falha no teste de conexão Redis para filas:', error);
+    console.log('❌ Falha no teste de conexão Redis para filas:', error);
     return false;
   }
 };

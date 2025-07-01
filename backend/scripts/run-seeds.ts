@@ -11,7 +11,7 @@ async function main() {
     // Verificar se o arquivo de configuração existe
     const knexfilePath = path.join(__dirname, '..', 'knexfile.ts');
     if (!fs.existsSync(knexfilePath)) {
-      console.error('❌ Arquivo knexfile.ts não encontrado!');
+      console.log('❌ Arquivo knexfile.ts não encontrado!');
       process.exit(1);
     }
 
@@ -45,7 +45,7 @@ async function main() {
     console.log('\n🚀 Sistema pronto para uso!');
 
   } catch (error) {
-    console.error('❌ Erro ao executar seeds:', error);
+    console.log('❌ Erro ao executar seeds:', error);
     process.exit(1);
   }
 }

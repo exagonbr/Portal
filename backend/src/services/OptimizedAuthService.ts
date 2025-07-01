@@ -187,7 +187,7 @@ export class OptimizedAuthService {
       const endTime = Date.now();
       const duration = endTime - startTime;
       
-      console.error(`❌ [${new Date().toISOString()}] Erro no login para: ${email} (${duration}ms)`, error.message);
+      console.log(`❌ [${new Date().toISOString()}] Erro no login para: ${email} (${duration}ms)`, error.message);
       throw error;
     }
   }
@@ -367,7 +367,7 @@ export class OptimizedAuthService {
       
       return decoded;
     } catch (error) {
-      console.error('Erro ao validar access token:', error);
+      console.log('Erro ao validar access token:', error);
       return null;
     }
   }
@@ -394,7 +394,7 @@ export class OptimizedAuthService {
       
       return decoded;
     } catch (error) {
-      console.error('Erro ao validar refresh token:', error);
+      console.log('Erro ao validar refresh token:', error);
       return null;
     }
   }
@@ -439,7 +439,7 @@ export class OptimizedAuthService {
       };
 
     } catch (error) {
-      console.error('Erro ao renovar access token:', error);
+      console.log('Erro ao renovar access token:', error);
       return null;
     }
   }
@@ -488,7 +488,7 @@ export class OptimizedAuthService {
       return userResponse;
 
     } catch (error) {
-      console.error('Erro ao buscar usuário por ID:', error);
+      console.log('Erro ao buscar usuário por ID:', error);
       return null;
     }
   }
@@ -508,7 +508,7 @@ export class OptimizedAuthService {
       return user.permissions.includes(permission);
 
     } catch (error) {
-      console.error('Erro ao verificar permissão:', error);
+      console.log('Erro ao verificar permissão:', error);
       return false;
     }
   }

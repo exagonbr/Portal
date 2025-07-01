@@ -97,7 +97,7 @@ export const usersCorsMiddleware = (req: Request, res: Response, next: NextFunct
   // Aplicar CORS
   cors(usersCorsOptions)(req, res, (err) => {
     if (err) {
-      console.error(`❌ [USERS-CORS] Erro CORS: ${err.message} para origem: ${origin}`);
+      console.log(`❌ [USERS-CORS] Erro CORS: ${err.message} para origem: ${origin}`);
       return res.status(403).json({
         success: false,
         message: 'Acesso negado pelo CORS',
@@ -131,7 +131,7 @@ export const usersPublicCorsMiddleware = (req: Request, res: Response, next: Nex
   
   cors(usersPublicCorsOptions)(req, res, (err) => {
     if (err) {
-      console.error(`❌ [USERS-PUBLIC-CORS] Erro: ${err.message}`);
+      console.log(`❌ [USERS-PUBLIC-CORS] Erro: ${err.message}`);
       return res.status(403).json({
         success: false,
         message: 'Acesso negado pelo CORS',
@@ -157,7 +157,7 @@ export const usersAdminCorsMiddleware = (req: Request, res: Response, next: Next
   
   cors(usersAdminCorsOptions)(req, res, (err) => {
     if (err) {
-      console.error(`❌ [USERS-ADMIN-CORS] Acesso administrativo negado: ${err.message} para origem: ${origin}`);
+      console.log(`❌ [USERS-ADMIN-CORS] Acesso administrativo negado: ${err.message} para origem: ${origin}`);
       return res.status(403).json({
         success: false,
         message: 'Acesso administrativo negado pelo CORS',

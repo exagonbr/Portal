@@ -79,8 +79,8 @@ async function testTokenPermissions() {
     }
     
   } catch (error) {
-    console.error('❌ Erro no teste:', error.message);
-    console.error('Stack:', error.stack);
+    console.log('❌ Erro no teste:', error.message);
+    console.log('Stack:', error.stack);
   }
   
   process.exit(0);

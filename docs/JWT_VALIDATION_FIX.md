@@ -60,7 +60,7 @@ Arquivo: `backend/src/utils/tokenValidation.ts`
 
 #### Antes:
 ```typescript
-console.error('Both JWT and base64 validation failed:', { 
+console.log('Both JWT and base64 validation failed:', { 
   jwtError: jwtError.message, 
   base64Error: base64Error.message 
 });

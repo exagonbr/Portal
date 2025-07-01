@@ -190,7 +190,7 @@ async function testServiceWorker() {
     await page.waitForTimeout(2000);
 
   } catch (error) {
-    console.error(chalk.red('❌ Erro durante o teste:'), error.message);
+    console.log(chalk.red('❌ Erro durante o teste:'), error.message);
   } finally {
     if (browser) {
       await browser.close();
@@ -200,7 +200,7 @@ async function testServiceWorker() {
 
 // Executar se chamado diretamente
 if (require.main === module) {
-  testServiceWorker().catch(console.error);
+  testServiceWorker().catch(console.log);
 }
 
 module.exports = { testServiceWorker }; 

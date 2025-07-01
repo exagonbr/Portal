@@ -6,7 +6,7 @@ beforeAll(async () => {
     await db.raw('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
     await db.raw('SELECT 1');
   } catch (error) {
-    console.error('Error connecting to database:', error);
+    console.log('Error connecting to database:', error);
     throw error;
   }
 });

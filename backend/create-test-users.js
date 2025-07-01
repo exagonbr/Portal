@@ -153,7 +153,7 @@ async function createTestUsers() {
     console.log('\n🚀 Agora você pode testar o login com qualquer um desses usuários!');
 
   } catch (error) {
-    console.error('❌ Erro ao criar usuários de teste:', error);
+    console.log('❌ Erro ao criar usuários de teste:', error);
   } finally {
     await db.destroy();
   }

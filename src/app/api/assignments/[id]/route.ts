@@ -145,7 +145,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Erro ao buscar tarefa:', error)
+    console.log('Erro ao buscar tarefa:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -257,7 +257,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('Erro ao atualizar tarefa:', error)
+    console.log('Erro ao atualizar tarefa:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -325,7 +325,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('Erro ao deletar tarefa:', error)
+    console.log('Erro ao deletar tarefa:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

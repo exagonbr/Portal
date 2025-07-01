@@ -30,7 +30,7 @@ class SettingsService {
       decrypted += decipher.final('utf8');
       return decrypted;
     } catch (error) {
-      console.error('Erro ao descriptografar:', error);
+      console.log('Erro ao descriptografar:', error);
       return '';
     }
   }
@@ -152,7 +152,7 @@ class SettingsService {
 
       return { success: true, message: 'Conexão S3 estabelecida com sucesso' };
     } catch (error) {
-      console.error('Erro ao testar conexão S3:', error);
+      console.log('Erro ao testar conexão S3:', error);
       return { 
         success: false, 
         message: error.message || 'Erro ao conectar com S3',
@@ -192,7 +192,7 @@ class SettingsService {
 
       return { success: true, message: 'Email de teste enviado com sucesso' };
     } catch (error) {
-      console.error('Erro ao testar conexão de email:', error);
+      console.log('Erro ao testar conexão de email:', error);
       return { 
         success: false, 
         message: error.message || 'Erro ao conectar com servidor de email',

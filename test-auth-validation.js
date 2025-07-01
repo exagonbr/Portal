@@ -395,7 +395,7 @@ async function runAuthValidationTests() {
 
 // Executar testes se chamado diretamente
 if (require.main === module) {
-  runAuthValidationTests().catch(console.error);
+  runAuthValidationTests().catch(console.log);
 }
 
 module.exports = {

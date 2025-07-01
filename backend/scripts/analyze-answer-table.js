@@ -181,7 +181,7 @@ async function analyzeAnswerTable() {
     }
 
   } catch (error) {
-    console.error('❌ Erro durante análise:', error.message);
+    console.log('❌ Erro durante análise:', error.message);
   } finally {
     if (mysqlConnection) await mysqlConnection.end();
     if (pgClient) await pgClient.end();
@@ -255,7 +255,7 @@ function checkTypeCompatibility(mysqlType, pgType, mysqlCol, pgCol) {
 
 // Executar análise
 if (require.main === module) {
-  analyzeAnswerTable().catch(console.error);
+  analyzeAnswerTable().catch(console.log);
 }
 
 module.exports = { analyzeAnswerTable }; 

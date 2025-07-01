@@ -64,7 +64,7 @@ export const optimizedAuthMiddleware = async (
 
     next();
   } catch (error) {
-    console.error('Erro no middleware de autenticação:', error);
+    console.log('Erro no middleware de autenticação:', error);
     res.status(401).json({
       success: false,
       message: 'Falha na autenticação',

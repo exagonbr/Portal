@@ -16,7 +16,7 @@ export function LoadingStatesDemo() {
   const smartRefresh = useSmartRefresh({
     fallbackUrl: '/dashboard',
     onSuccess: () => console.log('Refresh bem-sucedido!'),
-    onError: (error) => console.error('Erro no refresh:', error)
+    onError: (error) => console.log('Erro no refresh:', error)
   });
 
   const simulateProgress = () => {

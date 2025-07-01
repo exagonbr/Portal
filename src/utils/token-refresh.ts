@@ -89,7 +89,7 @@ export async function refreshAuthToken(): Promise<TokenRefreshResult> {
       }
     } else {
       const errorText = await refreshResponse.text();
-      console.error('❌ [TOKEN-REFRESH] Erro no refresh:', {
+      console.log('❌ [TOKEN-REFRESH] Erro no refresh:', {
         status: refreshResponse.status,
         error: errorText
       });
@@ -111,7 +111,7 @@ export async function refreshAuthToken(): Promise<TokenRefreshResult> {
     }
 
   } catch (error) {
-    console.error('❌ [TOKEN-REFRESH] Erro durante refresh:', error);
+    console.log('❌ [TOKEN-REFRESH] Erro durante refresh:', error);
     
     return {
       success: false,
@@ -193,7 +193,7 @@ export async function withAutoRefresh<T>(
         // Tentar operação novamente com novo token
         return await operation();
       } else {
-        console.error('❌ [TOKEN-REFRESH] Refresh falhou, propagando erro original');
+        console.log('❌ [TOKEN-REFRESH] Refresh falhou, propagando erro original');
         
         if (refreshResult.shouldRelogin) {
           clearAllTokens();

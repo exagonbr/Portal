@@ -30,7 +30,7 @@ export async function GET(
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar membros do grupo:', error);
+    console.log('Erro ao buscar membros do grupo:', error);
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -61,7 +61,7 @@ export async function POST(
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao adicionar membro ao grupo:', error);
+    console.log('Erro ao adicionar membro ao grupo:', error);
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

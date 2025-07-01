@@ -97,7 +97,7 @@ async function seedRoles() {
     console.log('🎉 Seed de roles concluído!');
 
   } catch (error) {
-    console.error('❌ Erro ao fazer seed de roles:', error);
+    console.log('❌ Erro ao fazer seed de roles:', error);
   } finally {
     await knex.destroy();
   }

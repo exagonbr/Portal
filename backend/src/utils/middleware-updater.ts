@@ -52,7 +52,7 @@ export function withErrorHandling(handler: any) {
     try {
       await handler(req, res, next);
     } catch (error) {
-      console.error(`❌ Erro na rota ${req.path}:`, error);
+      console.log(`❌ Erro na rota ${req.path}:`, error);
       
       // Resposta de fallback
       if (!res.headersSent) {
@@ -80,7 +80,7 @@ export function withTimeout(handler: any, timeoutMs: number = 10000) {
     try {
       await Promise.race([handlerPromise, timeoutPromise]);
     } catch (error) {
-      console.error(`⚠️ Timeout ou erro na rota ${req.path}:`, error);
+      console.log(`⚠️ Timeout ou erro na rota ${req.path}:`, error);
       
       if (!res.headersSent) {
         res.status(500).json({

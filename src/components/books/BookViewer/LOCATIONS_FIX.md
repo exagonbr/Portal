@@ -42,7 +42,7 @@ try {
     setState(prev => ({ ...prev, currentPage: newPage }));
   }
 } catch (error) {
-  console.error('❌ Erro ao navegar para página EPUB:', error);
+  console.log('❌ Erro ao navegar para página EPUB:', error);
   setState(prev => ({ ...prev, currentPage: newPage }));
 }
 ```

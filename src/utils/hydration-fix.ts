@@ -51,8 +51,8 @@ export function ClientOnly({
 // Função para suprimir avisos de hidratação em desenvolvimento
 export function suppressHydrationWarning(): void {
   if (isDevelopment() && isClient()) {
-    const originalError = console.error;
-    console.error = (...args: any[]) => {
+    const originalError = console.log;
+    console.log = (...args: any[]) => {
       if (
         typeof args[0] === 'string' &&
         (args[0].includes('Hydration failed') ||

@@ -100,4 +100,4 @@ function makeRequest(url, timeout = 15000) {
 }
 
 // Executar o teste
-testCertificatesAPI().catch(console.error);
+testCertificatesAPI().catch(console.log);

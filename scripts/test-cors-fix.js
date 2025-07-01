@@ -285,6 +285,6 @@ async function runTests() {
 
 // Executar testes
 runTests().catch(error => {
-  console.error('❌ Erro ao executar testes:', error);
+  console.log('❌ Erro ao executar testes:', error);
   process.exit(1);
 }); 

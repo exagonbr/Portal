@@ -56,7 +56,7 @@ export const authOptions: NextAuthOptions = {
           
           return null;
         } catch (error) {
-          console.error('Erro na autenticação:', error);
+          console.log('Erro na autenticação:', error);
           return null;
         }
       }

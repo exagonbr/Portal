@@ -141,7 +141,7 @@ router.get('/', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('Erro ao buscar certificados:', error);
+    console.log('Erro ao buscar certificados:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -168,7 +168,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('Erro ao buscar certificado:', error);
+    console.log('Erro ao buscar certificado:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -196,7 +196,7 @@ router.post('/', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('Erro ao criar certificado:', error);
+    console.log('Erro ao criar certificado:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -230,7 +230,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('Erro ao atualizar certificado:', error);
+    console.log('Erro ao atualizar certificado:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -260,7 +260,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('Erro ao excluir certificado:', error);
+    console.log('Erro ao excluir certificado:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

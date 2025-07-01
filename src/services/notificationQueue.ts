@@ -61,7 +61,7 @@ export const initializeNotificationQueue = () => {
       // Successfully processed
       return;
     } catch (error) {
-      console.error('Error processing notification:', error);
+      console.log('Error processing notification:', error);
       throw error;
     }
   });
@@ -103,7 +103,7 @@ if (typeof window !== 'undefined') {
       await apiClient.post('/notifications/cleanup', params);
       console.log('Notification cleanup completed');
     } catch (error) {
-      console.error('Error during notification cleanup:', error);
+      console.log('Error during notification cleanup:', error);
       throw error;
     }
   });

@@ -178,10 +178,10 @@ async function testTvShowCRUD() {
     console.log('\n🎉 Teste CRUD completo finalizado!');
 
   } catch (error) {
-    console.error('❌ Erro geral no teste:', error.message);
+    console.log('❌ Erro geral no teste:', error.message);
     if (error.response) {
-      console.error('📄 Status:', error.response.status);
-      console.error('📋 Dados:', error.response.data);
+      console.log('📄 Status:', error.response.status);
+      console.log('📋 Dados:', error.response.data);
     }
   }
 }

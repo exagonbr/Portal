@@ -44,7 +44,7 @@ async function testProdSimple() {
     }
     
   } catch (error: any) {
-    console.error('❌ Erro geral:', error.message);
+    console.log('❌ Erro geral:', error.message);
   }
 }
 

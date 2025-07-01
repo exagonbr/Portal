@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Erro ao buscar configurações AWS:', error);
+    console.log('Erro ao buscar configurações AWS:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Erro ao criar configurações AWS:', error);
+    console.log('Erro ao criar configurações AWS:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
@@ -183,7 +183,7 @@ export async function DELETE(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Erro ao deletar configurações AWS:', error);
+    console.log('Erro ao deletar configurações AWS:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 

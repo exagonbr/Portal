@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao obter sessão:', error);
+    console.log('Erro ao obter sessão:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
@@ -329,7 +329,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao criar sessão:', error);
+    console.log('Erro ao criar sessão:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
@@ -395,7 +395,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao atualizar sessão:', error);
+    console.log('Erro ao atualizar sessão:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
@@ -562,7 +562,7 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao deletar sessão:', error);
+    console.log('Erro ao deletar sessão:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       {

@@ -41,7 +41,7 @@ export default function DebugLoginPage() {
       console.log('✅ Diagnóstico completo:', diagnosticResults);
       
     } catch (error) {
-      console.error('❌ Erro durante diagnóstico:', error);
+      console.log('❌ Erro durante diagnóstico:', error);
       setResults({
         error: error instanceof Error ? error.message : 'Erro desconhecido',
         stack: error instanceof Error ? error.stack : undefined

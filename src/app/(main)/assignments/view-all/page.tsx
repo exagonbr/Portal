@@ -134,7 +134,7 @@ export default function ViewAllAssignmentsPage() {
 
       setAssignments(mockAssignments);
     } catch (error) {
-      console.error('Erro ao carregar tarefas:', error);
+      console.log('Erro ao carregar tarefas:', error);
     } finally {
       setLoading(false);
     }

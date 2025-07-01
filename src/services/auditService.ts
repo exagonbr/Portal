@@ -168,7 +168,7 @@ class AuditService {
         console.log('[AUDIT]', entries.length, 'entries:', entries)
       }
     } catch (error) {
-      console.error('[AUDIT] Erro ao salvar logs:', error)
+      console.log('[AUDIT] Erro ao salvar logs:', error)
       // Re-adicionar à fila em caso de erro
       this.queue.unshift(...entries)
     }

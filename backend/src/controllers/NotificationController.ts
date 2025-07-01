@@ -85,7 +85,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao verificar configuração de email:', error);
+      console.log('Erro ao verificar configuração de email:', error);
       
       res.status(500).json({
         success: false,
@@ -208,7 +208,7 @@ class NotificationController {
         });
       }
     } catch (error) {
-      console.error('Error sending verification email:', error);
+      console.log('Error sending verification email:', error);
       
       // Marcar como falhado se temos o logId
       if (logId) {
@@ -404,7 +404,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao enviar notificação:', error);
+      console.log('Erro ao enviar notificação:', error);
       
       res.status(500).json({
         success: false,
@@ -482,7 +482,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao buscar notificações:', error);
+      console.log('Erro ao buscar notificações:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -524,7 +524,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao buscar notificações enviadas:', error);
+      console.log('Erro ao buscar notificações enviadas:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -570,7 +570,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao buscar notificação:', error);
+      console.log('Erro ao buscar notificação:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -628,7 +628,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao criar notificação:', error);
+      console.log('Erro ao criar notificação:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -670,7 +670,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao atualizar notificação:', error);
+      console.log('Erro ao atualizar notificação:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -702,7 +702,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao deletar notificação:', error);
+      console.log('Erro ao deletar notificação:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -734,7 +734,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao marcar notificação como lida:', error);
+      console.log('Erro ao marcar notificação como lida:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -776,7 +776,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao marcar notificações como lidas:', error);
+      console.log('Erro ao marcar notificações como lidas:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -808,7 +808,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao marcar todas as notificações como lidas:', error);
+      console.log('Erro ao marcar todas as notificações como lidas:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -850,7 +850,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao deletar notificações:', error);
+      console.log('Erro ao deletar notificações:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -904,7 +904,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao buscar estatísticas da notificação:', error);
+      console.log('Erro ao buscar estatísticas da notificação:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -936,7 +936,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao cancelar notificação agendada:', error);
+      console.log('Erro ao cancelar notificação agendada:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -984,7 +984,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao reagendar notificação:', error);
+      console.log('Erro ao reagendar notificação:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -1023,7 +1023,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao enviar notificação:', error);
+      console.log('Erro ao enviar notificação:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -1063,7 +1063,7 @@ class NotificationController {
       });
 
     } catch (error) {
-      console.error('Erro ao limpar notificações antigas:', error);
+      console.log('Erro ao limpar notificações antigas:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'

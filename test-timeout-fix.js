@@ -199,7 +199,7 @@ async function runAllTests() {
     }
     
   } catch (error) {
-    console.error(chalk.red.bold('\n💥 ERRO GERAL NO TESTE:'), error);
+    console.log(chalk.red.bold('\n💥 ERRO GERAL NO TESTE:'), error);
   }
 }
 

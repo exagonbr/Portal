@@ -83,7 +83,7 @@ async function testHealthCheck() {
       return false;
     }
   } catch (error) {
-    console.error('❌ Erro no health check:', error.message);
+    console.log('❌ Erro no health check:', error.message);
     return false;
   }
 }
@@ -104,7 +104,7 @@ async function testAuthStatus() {
       return false;
     }
   } catch (error) {
-    console.error('❌ Erro na API de autenticação:', error.message);
+    console.log('❌ Erro na API de autenticação:', error.message);
     return false;
   }
 }
@@ -131,7 +131,7 @@ async function testLogin(credentials) {
       return null;
     }
   } catch (error) {
-    console.error('❌ Erro no login:', error.message);
+    console.log('❌ Erro no login:', error.message);
     return null;
   }
 }
@@ -161,7 +161,7 @@ async function testValidation(token) {
       console.log('❌ Validação falhou');
     }
   } catch (error) {
-    console.error('❌ Erro na validação:', error.message);
+    console.log('❌ Erro na validação:', error.message);
   }
 }
 
@@ -185,7 +185,7 @@ async function testFrontendLogin() {
       return null;
     }
   } catch (error) {
-    console.error('❌ Erro no login via frontend:', error.message);
+    console.log('❌ Erro no login via frontend:', error.message);
     return null;
   }
 }
@@ -244,4 +244,4 @@ async function runProductionTests() {
 }
 
 // Executar testes
-runProductionTests().catch(console.error);
+runProductionTests().catch(console.log);

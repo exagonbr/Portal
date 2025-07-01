@@ -11,7 +11,7 @@ import UnifiedBookViewer from '@/components/books/BookViewer/UnifiedBookViewer'
 // Importação dinâmica sem telas de erro problemáticas
 const KoodoViewer = dynamic(
   () => import('@/components/books/BookViewer').catch(error => {
-    console.error('Erro ao carregar BookViewer:', error);
+    console.log('Erro ao carregar BookViewer:', error);
     // Retornar um componente vazio em caso de erro
     return {
       default: () => null
@@ -54,18 +54,18 @@ export default function BookViewerPage({ params }: { params: Promise<{ id: strin
         if (foundBook) {
           // Verificar se o livro tem filePath
           if (!foundBook.filePath) {
-            console.error('Livro não tem filePath definido:', foundBook)
+            console.log('Livro não tem filePath definido:', foundBook)
             setError('Este livro não está disponível para leitura no momento.')
             return
           }
           setBook(foundBook)
         } else {
           // Livro não encontrado
-          console.error('Livro não encontrado com ID:', bookId)
+          console.log('Livro não encontrado com ID:', bookId)
           router.push('/portal/books')
         }
       } catch (error) {
-        console.error('Erro ao carregar livro:', error)
+        console.log('Erro ao carregar livro:', error)
         router.push('/portal/books')
       } finally {
         setLoading(false)

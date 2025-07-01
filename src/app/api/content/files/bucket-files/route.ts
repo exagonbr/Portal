@@ -96,7 +96,7 @@ async function listAllS3Files(bucket: string): Promise<S3FileInfo[]> {
 
     return files
   } catch (error) {
-    console.error('Erro ao listar arquivos S3:', error)
+    console.log('Erro ao listar arquivos S3:', error)
     return []
   }
 }
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao buscar arquivos do bucket:', error)
+    console.log('Erro ao buscar arquivos do bucket:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

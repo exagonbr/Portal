@@ -83,7 +83,7 @@ const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) =>
         { value: 'inst3', label: 'Instituição 3' }
       ]);
     } catch (err) {
-      console.error('Erro ao carregar dados:', err);
+      console.log('Erro ao carregar dados:', err);
       setError('Erro ao carregar informações necessárias');
     }
   };
@@ -176,7 +176,7 @@ const UserModal: React.FC<UserModalProps> = ({ show, onClose, user, onSave }) =>
       onSave();
       onClose();
     } catch (err: any) {
-      console.error('Erro ao salvar usuário:', err);
+      console.log('Erro ao salvar usuário:', err);
       setError(err.message || 'Erro ao salvar usuário');
     } finally {
       setLoading(false);

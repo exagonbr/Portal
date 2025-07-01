@@ -35,7 +35,7 @@ router.get('/', optimizedAuthMiddleware, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching schools:', error);
+    console.log('Error fetching schools:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Internal server error' 
@@ -71,7 +71,7 @@ router.get('/:id', optimizedAuthMiddleware, async (req, res) => {
       data: school
     });
   } catch (error) {
-    console.error('Error fetching school:', error);
+    console.log('Error fetching school:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Internal server error' 
@@ -128,7 +128,7 @@ router.post('/', optimizedAuthMiddleware, async (req, res) => {
       message: 'School created successfully'
     });
   } catch (error) {
-    console.error('Error creating school:', error);
+    console.log('Error creating school:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Internal server error' 
@@ -194,7 +194,7 @@ router.put('/:id', optimizedAuthMiddleware, async (req, res) => {
       message: 'School updated successfully'
     });
   } catch (error) {
-    console.error('Error updating school:', error);
+    console.log('Error updating school:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Internal server error' 
@@ -230,7 +230,7 @@ router.delete('/:id', optimizedAuthMiddleware, async (req, res) => {
       message: 'School deleted successfully' 
     });
   } catch (error) {
-    console.error('Error deleting school:', error);
+    console.log('Error deleting school:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Internal server error' 

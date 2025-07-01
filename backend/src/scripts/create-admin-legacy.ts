@@ -69,7 +69,7 @@ async function createAdminLegacy() {
     console.log('==========================================');
     
   } catch (error) {
-    console.error('❌ Erro:', error);
+    console.log('❌ Erro:', error);
   } finally {
     await db.destroy();
   }

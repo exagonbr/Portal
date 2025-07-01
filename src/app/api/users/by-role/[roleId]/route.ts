@@ -25,7 +25,7 @@ export async function GET(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar usuários por role:', error);
+    console.log('Erro ao buscar usuários por role:', error);
     return NextResponse.json(
       { 
         success: false, 

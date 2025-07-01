@@ -153,7 +153,7 @@ async function testSimple() {
     console.log('5. ✅ Dados corretos incluídos no token JWT e cookie');
     
   } catch (error) {
-    console.error('❌ Erro:', error.message);
+    console.log('❌ Erro:', error.message);
   }
 }
 

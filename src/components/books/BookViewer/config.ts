@@ -78,7 +78,7 @@ export const storage = {
     try {
       localStorage.setItem(`${VIEWER_CONFIG.storage.prefix}-${key}`, JSON.stringify(value))
     } catch (error) {
-      console.error('Erro ao salvar no localStorage:', error)
+      console.log('Erro ao salvar no localStorage:', error)
     }
   },
   
@@ -86,7 +86,7 @@ export const storage = {
     try {
       localStorage.removeItem(`${VIEWER_CONFIG.storage.prefix}-${key}`)
     } catch (error) {
-      console.error('Erro ao remover do localStorage:', error)
+      console.log('Erro ao remover do localStorage:', error)
     }
   }
 }

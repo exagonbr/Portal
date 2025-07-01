@@ -20,7 +20,7 @@ try {
   
   console.log('Certificados gerados com sucesso!');
 } catch (error) {
-  console.error('Erro ao gerar certificados:', error.message);
+  console.log('Erro ao gerar certificados:', error.message);
   console.log('\nPara gerar certificados SSL, você precisa:');
   console.log('1. Instalar mkcert: https://github.com/FiloSottile/mkcert');
   console.log('2. Executar: npm run generate-certificates');

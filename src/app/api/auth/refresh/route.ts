@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         return newResponse;
       }
       
-      console.error(`❌ API Refresh: Erro ${response.status} ao renovar token`);
+      console.log(`❌ API Refresh: Erro ${response.status} ao renovar token`);
       return NextResponse.json(
         { success: false, message: 'Erro ao renovar token' },
         { status: response.status }
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     
     if (!data.success || !data.data) {
-      console.error('❌ API Refresh: Resposta inválida do backend:', data);
+      console.log('❌ API Refresh: Resposta inválida do backend:', data);
       return NextResponse.json(
         { success: false, message: data.message || 'Erro desconhecido' },
         { status: 500 }
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     return responseObj;
   } catch (error) {
-    console.error('❌ API Refresh: Erro crítico ao renovar token:', error);
+    console.log('❌ API Refresh: Erro crítico ao renovar token:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

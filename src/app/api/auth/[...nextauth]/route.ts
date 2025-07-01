@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data, { status: response.status });
       
     } catch (error) {
-      console.error('❌ [NEXTAUTH-REDIRECT] Erro ao redirecionar login:', error);
+      console.log('❌ [NEXTAUTH-REDIRECT] Erro ao redirecionar login:', error);
     }
   }
   

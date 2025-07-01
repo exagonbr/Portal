@@ -138,7 +138,7 @@ export function safeRedirect(
       router.push(path);
       return true;
     } catch (error) {
-      console.error('❌ ERRO NO REDIRECIONAMENTO:', error);
+      console.log('❌ ERRO NO REDIRECIONAMENTO:', error);
       
       // Fallback para window.location
       if (typeof window !== 'undefined') {
@@ -168,7 +168,7 @@ export function emergencyReset(): void {
       localStorage.removeItem('auth_token');
       sessionStorage.clear();
     } catch (error) {
-      console.error('❌ Erro ao limpar storage:', error);
+      console.log('❌ Erro ao limpar storage:', error);
     }
     
     // Redirecionar para login após delay

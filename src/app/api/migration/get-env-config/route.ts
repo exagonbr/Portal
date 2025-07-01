@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao buscar configurações do .env:', error)
+    console.log('Erro ao buscar configurações do .env:', error)
     
     return NextResponse.json({
       success: false,

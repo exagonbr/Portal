@@ -98,7 +98,7 @@ export class QueueService {
             // Process jobs in parallel
             await Promise.all(jobs.map(job => this.processJob(job)));
         } catch (error) {
-            console.error('Error processing jobs:', error);
+            console.log('Error processing jobs:', error);
         } finally {
             this.isProcessing = false;
         }
@@ -132,7 +132,7 @@ export class QueueService {
                     completed_at: new Date()
                 });
         } catch (error) {
-            console.error(`Error processing job ${job.id}:`, error);
+            console.log(`Error processing job ${job.id}:`, error);
 
             if (job.attempts + 1 >= job.max_attempts) {
                 await this.markJobFailed(job.id, error instanceof Error ? error.message : 'Unknown error');
@@ -163,7 +163,7 @@ export class QueueService {
 
         this.processingInterval = setInterval(() => {
             this.processJobs().catch(error => {
-                console.error('Error in job processing interval:', error);
+                console.log('Error in job processing interval:', error);
             });
         }, this.pollInterval);
     }

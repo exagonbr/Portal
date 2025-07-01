@@ -138,7 +138,7 @@ function processRouteFile(filePath) {
     }
     
   } catch (error) {
-    console.error(`   ❌ Erro ao processar ${filePath}:`, error.message);
+    console.log(`   ❌ Erro ao processar ${filePath}:`, error.message);
   }
 }
 
@@ -147,7 +147,7 @@ function main() {
   console.log('🚀 Iniciando adição de CORS a todas as rotas API...\n');
   
   if (!fs.existsSync(API_DIR)) {
-    console.error(`❌ Diretório ${API_DIR} não encontrado!`);
+    console.log(`❌ Diretório ${API_DIR} não encontrado!`);
     process.exit(1);
   }
   

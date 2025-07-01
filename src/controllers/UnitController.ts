@@ -7,7 +7,7 @@ class UnitController {
       const units = await Unit.query().orderBy('name');
       return res.json(units);
     } catch (error) {
-      console.error('Erro ao listar unidades:', error);
+      console.log('Erro ao listar unidades:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -20,7 +20,7 @@ class UnitController {
 
       return res.json(units);
     } catch (error) {
-      console.error('Erro ao listar unidades:', error);
+      console.log('Erro ao listar unidades:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -38,7 +38,7 @@ class UnitController {
 
       return res.json(unit);
     } catch (error) {
-      console.error('Erro ao buscar unidade:', error);
+      console.log('Erro ao buscar unidade:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -57,7 +57,7 @@ class UnitController {
 
       return res.status(201).json(unit);
     } catch (error) {
-      console.error('Erro ao criar unidade:', error);
+      console.log('Erro ao criar unidade:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -83,7 +83,7 @@ class UnitController {
 
       return res.json({ message: 'Unidade atualizada com sucesso' });
     } catch (error) {
-      console.error('Erro ao atualizar unidade:', error);
+      console.log('Erro ao atualizar unidade:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -99,7 +99,7 @@ class UnitController {
 
       return res.json({ message: 'Unidade excluída com sucesso' });
     } catch (error) {
-      console.error('Erro ao excluir unidade:', error);
+      console.log('Erro ao excluir unidade:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -139,7 +139,7 @@ class UnitController {
         totalPages: Math.ceil(units.total / limit)
       });
     } catch (error) {
-      console.error('Erro ao buscar unidades:', error);
+      console.log('Erro ao buscar unidades:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }

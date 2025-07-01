@@ -216,7 +216,7 @@ try {
   // Sucesso
 } catch (error) {
   // Erro já tratado e com mensagem amigável
-  console.error('Erro:', error.message);
+  console.log('Erro:', error.message);
   
   // Exibir para o usuário
   showErrorMessage(error.message);

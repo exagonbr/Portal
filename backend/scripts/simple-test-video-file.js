@@ -52,7 +52,7 @@ try {
       
       process.exit(0);
     } catch (error) {
-      console.error('❌ Erro na query:', error.message);
+      console.log('❌ Erro na query:', error.message);
       process.exit(1);
     }
   }
@@ -60,6 +60,6 @@ try {
   testQuery();
   
 } catch (error) {
-  console.error('❌ Erro ao importar database:', error.message);
+  console.log('❌ Erro ao importar database:', error.message);
   process.exit(1);
 } 

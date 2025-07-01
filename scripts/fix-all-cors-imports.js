@@ -95,7 +95,7 @@ function fixCorsImports(filePath) {
     return true;
 
   } catch (error) {
-    console.error(`❌ Erro ao processar ${filePath}:`, error.message);
+    console.log(`❌ Erro ao processar ${filePath}:`, error.message);
     return false;
   }
 }

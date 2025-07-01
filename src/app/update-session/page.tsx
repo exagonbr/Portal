@@ -48,7 +48,7 @@ export default function UpdateSessionPage() {
           setStatus('❌ Nenhuma sessão encontrada');
         }
       } catch (error) {
-        console.error('Erro ao atualizar sessão:', error);
+        console.log('Erro ao atualizar sessão:', error);
         setStatus('❌ Erro ao atualizar sessão');
       }
     }

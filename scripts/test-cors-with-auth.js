@@ -288,6 +288,6 @@ async function runAuthTests() {
 
 // Executar testes
 runAuthTests().catch(error => {
-  console.error('❌ Erro ao executar testes:', error);
+  console.log('❌ Erro ao executar testes:', error);
   process.exit(1);
 }); 

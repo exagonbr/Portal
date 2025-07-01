@@ -486,7 +486,7 @@ async getUsersByRole(): Promise<Record<string, number>> {
     }
     throw new Error(response.message || 'Falha ao carregar dados');
   } catch (error) {
-    console.error('Erro:', error);
+    console.log('Erro:', error);
     return fallbackData;
   }
 }

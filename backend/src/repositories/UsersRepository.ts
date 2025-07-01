@@ -22,7 +22,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return this.mapDatabaseToUsers(result);
     } catch (error) {
-      console.error('Error finding user by email:', error);
+      console.log('Error finding user by email:', error);
       throw error;
     }
   }
@@ -40,7 +40,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return this.mapDatabaseToUsers(result);
     } catch (error) {
-      console.error('Error finding user by username:', error);
+      console.log('Error finding user by username:', error);
       throw error;
     }
   }
@@ -57,7 +57,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return this.mapDatabaseToUsers(result);
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.log('Error creating user:', error);
       throw error;
     }
   }
@@ -79,7 +79,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return this.mapDatabaseToUsers(result);
     } catch (error) {
-      console.error('Error updating user:', error);
+      console.log('Error updating user:', error);
       throw error;
     }
   }
@@ -95,7 +95,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return deletedRows > 0;
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.log('Error deleting user:', error);
       throw error;
     }
   }
@@ -120,7 +120,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return this.mapDatabaseToUsers(result);
     } catch (error) {
-      console.error('Error getting user with role and institution:', error);
+      console.log('Error getting user with role and institution:', error);
       // Fallback para busca simples
       const user = await this.findById(id);
       return user;
@@ -199,7 +199,7 @@ export class UsersRepository extends BaseRepository<Users> {
         }
       };
     } catch (error) {
-      console.error('Error getting users:', error);
+      console.log('Error getting users:', error);
       throw error;
     }
   }
@@ -215,7 +215,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return results.map(result => this.mapDatabaseToUsers(result));
     } catch (error) {
-      console.error('Error getting users by role:', error);
+      console.log('Error getting users by role:', error);
       return [];
     }
   }
@@ -231,7 +231,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return results.map(result => this.mapDatabaseToUsers(result));
     } catch (error) {
-      console.error('Error getting users by institution:', error);
+      console.log('Error getting users by institution:', error);
       return [];
     }
   }
@@ -253,7 +253,7 @@ export class UsersRepository extends BaseRepository<Users> {
       });
       return stats;
     } catch (error) {
-      console.error('Error fetching user stats by role:', error);
+      console.log('Error fetching user stats by role:', error);
       return {};
     }
   }
@@ -275,7 +275,7 @@ export class UsersRepository extends BaseRepository<Users> {
       });
       return stats;
     } catch (error) {
-      console.error('Error fetching user stats by institution:', error);
+      console.log('Error fetching user stats by institution:', error);
       return {};
     }
   }
@@ -295,7 +295,7 @@ export class UsersRepository extends BaseRepository<Users> {
         
       return parseInt(String(result?.count || '0'), 10);
     } catch (error) {
-      console.error('Error counting new users this month:', error);
+      console.log('Error counting new users this month:', error);
       return 0;
     }
   }
@@ -314,7 +314,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return updatedRows > 0;
     } catch (error) {
-      console.error('Error activating user:', error);
+      console.log('Error activating user:', error);
       throw error;
     }
   }
@@ -333,7 +333,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return updatedRows > 0;
     } catch (error) {
-      console.error('Error deactivating user:', error);
+      console.log('Error deactivating user:', error);
       throw error;
     }
   }
@@ -351,7 +351,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return result || null;
     } catch (error) {
-      console.error('Error finding user by email with password:', error);
+      console.log('Error finding user by email with password:', error);
       throw error;
     }
   }
@@ -369,7 +369,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return result || null;
     } catch (error) {
-      console.error('Error finding user by id with password:', error);
+      console.log('Error finding user by id with password:', error);
       throw error;
     }
   }
@@ -490,7 +490,7 @@ export class UsersRepository extends BaseRepository<Users> {
       
       return this.mapDatabaseToUsers(result);
     } catch (error) {
-      console.error('Error finding user by id:', error);
+      console.log('Error finding user by id:', error);
       throw error;
     }
   }
@@ -514,7 +514,7 @@ export class UsersRepository extends BaseRepository<Users> {
       const result = await query.count('id as count').first();
       return parseInt(String(result?.count || '0'), 10);
     } catch (error) {
-      console.error('Error counting users:', error);
+      console.log('Error counting users:', error);
       return 0;
     }
   }
@@ -538,7 +538,7 @@ export class UsersRepository extends BaseRepository<Users> {
       const results = await query.orderBy('fullName', 'asc');
       return results.map(result => this.mapDatabaseToUsers(result));
     } catch (error) {
-      console.error('Error finding all users:', error);
+      console.log('Error finding all users:', error);
       return [];
     }
   }

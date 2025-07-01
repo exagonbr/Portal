@@ -17,7 +17,7 @@ class SettingsController {
         message: 'Configurações AWS obtidas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar configurações AWS:', error);
+      console.log('Erro ao buscar configurações AWS:', error);
       res.status(500).json({ 
         success: false,
         message: 'Erro ao buscar configurações AWS' 
@@ -34,7 +34,7 @@ class SettingsController {
         message: 'Configurações AWS salvas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao salvar configurações AWS:', error);
+      console.log('Erro ao salvar configurações AWS:', error);
       res.status(500).json({ 
         success: false,
         message: 'Erro ao salvar configurações AWS' 
@@ -51,7 +51,7 @@ class SettingsController {
         message: 'Configurações AWS deletadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao deletar configurações AWS:', error);
+      console.log('Erro ao deletar configurações AWS:', error);
       res.status(500).json({ 
         success: false,
         message: 'Erro ao deletar configurações AWS' 
@@ -75,7 +75,7 @@ class SettingsController {
         message: 'Configurações de plano de fundo obtidas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar configurações de plano de fundo:', error);
+      console.log('Erro ao buscar configurações de plano de fundo:', error);
       res.status(500).json({ 
         success: false,
         message: 'Erro ao buscar configurações de plano de fundo' 
@@ -92,7 +92,7 @@ class SettingsController {
         message: 'Configurações de plano de fundo salvas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao salvar configurações de plano de fundo:', error);
+      console.log('Erro ao salvar configurações de plano de fundo:', error);
       res.status(500).json({ 
         success: false,
         message: 'Erro ao salvar configurações de plano de fundo' 
@@ -109,7 +109,7 @@ class SettingsController {
       }
       res.json(settings);
     } catch (error) {
-      console.error('Erro ao buscar configurações gerais:', error);
+      console.log('Erro ao buscar configurações gerais:', error);
       res.status(500).json({ error: 'Erro ao buscar configurações gerais' });
     }
   }
@@ -119,7 +119,7 @@ class SettingsController {
       const settings = await settingsService.saveGeneralSettings(req.body);
       res.json(settings);
     } catch (error) {
-      console.error('Erro ao salvar configurações gerais:', error);
+      console.log('Erro ao salvar configurações gerais:', error);
       res.status(500).json({ error: 'Erro ao salvar configurações gerais' });
     }
   }
@@ -133,7 +133,7 @@ class SettingsController {
       }
       res.json(settings);
     } catch (error) {
-      console.error('Erro ao buscar configurações de segurança:', error);
+      console.log('Erro ao buscar configurações de segurança:', error);
       res.status(500).json({ error: 'Erro ao buscar configurações de segurança' });
     }
   }
@@ -143,7 +143,7 @@ class SettingsController {
       const settings = await settingsService.saveSecuritySettings(req.body);
       res.json(settings);
     } catch (error) {
-      console.error('Erro ao salvar configurações de segurança:', error);
+      console.log('Erro ao salvar configurações de segurança:', error);
       res.status(500).json({ error: 'Erro ao salvar configurações de segurança' });
     }
   }
@@ -157,7 +157,7 @@ class SettingsController {
       }
       res.json(settings);
     } catch (error) {
-      console.error('Erro ao buscar configurações de email:', error);
+      console.log('Erro ao buscar configurações de email:', error);
       res.status(500).json({ error: 'Erro ao buscar configurações de email' });
     }
   }
@@ -167,7 +167,7 @@ class SettingsController {
       const settings = await settingsService.saveEmailSettings(req.body);
       res.json(settings);
     } catch (error) {
-      console.error('Erro ao salvar configurações de email:', error);
+      console.log('Erro ao salvar configurações de email:', error);
       res.status(500).json({ error: 'Erro ao salvar configurações de email' });
     }
   }
@@ -182,7 +182,7 @@ class SettingsController {
         res.status(400).json(result);
       }
     } catch (error) {
-      console.error('Erro ao testar conexão S3:', error);
+      console.log('Erro ao testar conexão S3:', error);
       res.status(500).json({ 
         success: false, 
         message: 'Erro ao testar conexão S3',
@@ -200,7 +200,7 @@ class SettingsController {
         res.status(400).json(result);
       }
     } catch (error) {
-      console.error('Erro ao testar conexão de email:', error);
+      console.log('Erro ao testar conexão de email:', error);
       res.status(500).json({ 
         success: false, 
         message: 'Erro ao testar conexão de email',
@@ -219,7 +219,7 @@ class SettingsController {
         message: 'Todas as configurações obtidas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar todas as configurações:', error);
+      console.log('Erro ao buscar todas as configurações:', error);
       res.status(500).json({ 
         success: false,
         message: 'Erro ao buscar configurações' 

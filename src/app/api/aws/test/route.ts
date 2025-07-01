@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Erro ao testar conexão AWS:', error);
+    console.log('Erro ao testar conexão AWS:', error);
     
     // Fallback com dados mock em caso de erro
     const mockTestResult = {

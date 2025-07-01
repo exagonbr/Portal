@@ -168,7 +168,7 @@ export default function TeacherGradesPage() {
         setLoading(false)
       }, 1000)
     } catch (error) {
-      console.error('Erro ao carregar avaliações:', error)
+      console.log('Erro ao carregar avaliações:', error)
       setLoading(false)
     }
   }

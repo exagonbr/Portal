@@ -87,7 +87,7 @@ export default function HierarchicalDashboard() {
         activeClasses: 0 // Placeholder - implementar quando necessário
       });
     } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error);
+      console.log('Erro ao carregar dados do dashboard:', error);
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function HierarchicalDashboard() {
       const schoolsData = await schoolService.getByInstitution(institutionId);
       setSchools(schoolsData);
     } catch (error) {
-      console.error('Erro ao carregar escolas:', error);
+      console.log('Erro ao carregar escolas:', error);
     }
   };
 
@@ -107,7 +107,7 @@ export default function HierarchicalDashboard() {
       const classesData = await classService.getBySchool(schoolId);
       setClasses(classesData);
     } catch (error) {
-      console.error('Erro ao carregar turmas:', error);
+      console.log('Erro ao carregar turmas:', error);
     }
   };
 

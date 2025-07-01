@@ -24,7 +24,7 @@ const SessionManager: React.FC = () => {
         setStats(data);
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
+      console.log('Erro ao carregar estatísticas:', error);
     }
   };
 
@@ -40,7 +40,7 @@ const SessionManager: React.FC = () => {
         setError('Erro ao carregar sessões do usuário');
       }
     } catch (error) {
-      console.error('Erro ao carregar sessões:', error);
+      console.log('Erro ao carregar sessões:', error);
       setError('Erro ao carregar sessões');
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ const SessionManager: React.FC = () => {
         setError('Erro ao remover sessão');
       }
     } catch (error) {
-      console.error('Erro ao remover sessão:', error);
+      console.log('Erro ao remover sessão:', error);
       setError('Erro ao remover sessão');
     }
   };
@@ -82,7 +82,7 @@ const SessionManager: React.FC = () => {
         setError('Erro ao remover sessões do usuário');
       }
     } catch (error) {
-      console.error('Erro ao remover sessões:', error);
+      console.log('Erro ao remover sessões:', error);
       setError('Erro ao remover sessões');
     }
   };
@@ -105,7 +105,7 @@ const SessionManager: React.FC = () => {
         setError('Erro ao limpar sessões expiradas');
       }
     } catch (error) {
-      console.error('Erro ao limpar sessões:', error);
+      console.log('Erro ao limpar sessões:', error);
       setError('Erro ao limpar sessões');
     }
   };

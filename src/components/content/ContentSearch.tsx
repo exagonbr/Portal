@@ -40,7 +40,7 @@ export default function ContentSearch() {
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
-      console.error('Search error:', err);
+      console.log('Search error:', err);
     } finally {
       setSearching(false);
     }

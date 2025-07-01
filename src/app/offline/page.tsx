@@ -79,7 +79,7 @@ export default function OfflinePage() {
         throw new Error('Servidor não disponível');
       }
     } catch (error) {
-      console.error('Erro ao tentar reconectar:', error);
+      console.log('Erro ao tentar reconectar:', error);
       setIsReconnecting(false);
       // Mostrar feedback de erro
     }

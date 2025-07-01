@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
             rowCount: parseInt(rowCount.toString())
           })
         } catch (error) {
-          console.error(`Erro ao contar registros da tabela ${tableName}:`, error)
+          console.log(`Erro ao contar registros da tabela ${tableName}:`, error)
           tables.push({
             name: tableName,
             rowCount: 0
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('Erro ao listar tabelas MySQL:', error)
+    console.log('Erro ao listar tabelas MySQL:', error)
     
     return NextResponse.json({
       success: false,

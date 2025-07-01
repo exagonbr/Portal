@@ -122,4 +122,4 @@ async function runTests() {
   console.log('- Verifique os logs do backend para mais detalhes');
 }
 
-runTests().catch(console.error); 
+runTests().catch(console.log); 

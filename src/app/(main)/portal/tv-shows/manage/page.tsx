@@ -87,11 +87,11 @@ export default function TvShowManagePage() {
         setTotalPages(data.data.totalPages || 1);
         setCurrentPage(data.data.page || 1);
       } else {
-        console.error('API retornou erro:', data.message);
+        console.log('API retornou erro:', data.message);
         setTvShows([]);
       }
     } catch (error) {
-      console.error('Erro ao carregar TV Shows:', error);
+      console.log('Erro ao carregar TV Shows:', error);
       setTvShows([]);
     } finally {
       setLoading(false);
@@ -118,11 +118,11 @@ export default function TvShowManagePage() {
       if (data.success) {
         setModules(data.data || {});
       } else {
-        console.error('API retornou erro:', data.message);
+        console.log('API retornou erro:', data.message);
         setModules({});
       }
     } catch (error) {
-      console.error('Erro ao carregar módulos:', error);
+      console.log('Erro ao carregar módulos:', error);
       setModules({});
     }
   }, []);

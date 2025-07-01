@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error) {
-    console.error('Search error:', error);
+    console.log('Search error:', error);
     return NextResponse.json({ error: 'Failed to perform search' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

@@ -149,7 +149,7 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
           errorMessage.includes("ChunkLoadError") ||
           errorMessage.includes("Loading chunk") ||
           errorMessage.includes("Loading CSS chunk")) {
-        console.error('🔥 Chunk loading error capturado:', event.error);
+        console.log('🔥 Chunk loading error capturado:', event.error);
         setError(event.error);
         setHasError(true);
         event.preventDefault();
@@ -163,7 +163,7 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
           reasonMessage.includes("ChunkLoadError") ||
           reasonMessage.includes("Loading chunk") ||
           reasonMessage.includes("Loading CSS chunk")) {
-        console.error('🔥 Promise rejection capturada:', event.reason);
+        console.log('🔥 Promise rejection capturada:', event.reason);
         setError(event.reason);
         setHasError(true);
         event.preventDefault();
@@ -252,7 +252,7 @@ function SystemAdminDashboardContent() {
           console.log('✅ [DASHBOARD] Autenticação funcionando corretamente');
         }
       } catch (error) {
-        console.error('❌ [DASHBOARD] Erro no diagnóstico de autenticação:', error);
+        console.log('❌ [DASHBOARD] Erro no diagnóstico de autenticação:', error);
       }
     };
 
@@ -263,7 +263,7 @@ function SystemAdminDashboardContent() {
     
     // Executar testes de chunk error (apenas em desenvolvimento)
     if (isDevelopment()) {
-      runAllChunkErrorTests().catch(console.error);
+      runAllChunkErrorTests().catch(console.log);
     }
     
 
@@ -321,7 +321,7 @@ function SystemAdminDashboardContent() {
       }
 
     } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error);
+      console.log('Erro ao carregar dados do dashboard:', error);
       
       // Verificar se é erro de chunk loading
       const errorMessage = (error as any)?.message || '';
@@ -343,7 +343,7 @@ function SystemAdminDashboardContent() {
       const data = await systemAdminService.getSystemDashboard();
       setDashboardData(data);
     } catch (error) {
-      console.error('Erro ao carregar dashboard do sistema:', error);
+      console.log('Erro ao carregar dashboard do sistema:', error);
       toast.error('Erro ao carregar dados do dashboard');
     }
   };
@@ -389,7 +389,7 @@ function SystemAdminDashboardContent() {
       setInstitutionStats(stats);
       console.log('📈 Estatísticas das instituições:', stats);
     } catch (error) {
-      console.error('Erro ao carregar instituições:', error);
+      console.log('Erro ao carregar instituições:', error);
       // Fallback para dados básicos se a API falhar
       try {
         const basicResult = await InstitutionService.getActiveInstitutions();
@@ -402,7 +402,7 @@ function SystemAdminDashboardContent() {
         }));
         setInstitutions(basicInstitutions);
       } catch (fallbackError) {
-        console.error('Erro no fallback das instituições:', fallbackError);
+        console.log('Erro no fallback das instituições:', fallbackError);
         toast.error('Erro ao carregar dados das instituições');
       }
     }
@@ -413,7 +413,7 @@ function SystemAdminDashboardContent() {
       const result = await systemAdminService.getRoleStats();
       setRoleStats(result);
     } catch (error) {
-      console.error('Erro ao carregar estatísticas de roles:', error);
+      console.log('Erro ao carregar estatísticas de roles:', error);
     }
   };
 
@@ -422,7 +422,7 @@ function SystemAdminDashboardContent() {
       const result = await systemAdminService.getAwsConnectionStats();
       setAwsStats(result);
     } catch (error) {
-      console.error('Erro ao carregar estatísticas AWS:', error);
+      console.log('Erro ao carregar estatísticas AWS:', error);
     }
   };
 
@@ -502,7 +502,7 @@ function SystemAdminDashboardContent() {
 
       setAlerts(systemAlerts);
     } catch (error) {
-      console.error('Erro ao carregar alertas do sistema:', error);
+      console.log('Erro ao carregar alertas do sistema:', error);
       // Set default alerts in case of error
       setAlerts([
         {
@@ -522,7 +522,7 @@ function SystemAdminDashboardContent() {
       const usersByRole = await systemAdminService.getUsersByRole();
       setRealUsersByRole(usersByRole);
     } catch (error) {
-      console.error('Erro ao carregar usuários por função:', error);
+      console.log('Erro ao carregar usuários por função:', error);
     }
   };
 
@@ -534,7 +534,7 @@ function SystemAdminDashboardContent() {
         setRealUsersByRole(result.users_by_role);
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas reais de usuários:', error);
+      console.log('Erro ao carregar estatísticas reais de usuários:', error);
     }
   };
 
@@ -543,7 +543,7 @@ function SystemAdminDashboardContent() {
       const analytics = await systemAdminService.getSystemAnalytics();
       setSystemAnalytics(analytics);
     } catch (error) {
-      console.error('Erro ao carregar analytics do sistema:', error);
+      console.log('Erro ao carregar analytics do sistema:', error);
     }
   };
 
@@ -564,7 +564,7 @@ function SystemAdminDashboardContent() {
         setEngagementMetrics(null);
       }
     } catch (error) {
-      console.error('Erro ao carregar métricas de engajamento:', error);
+      console.log('Erro ao carregar métricas de engajamento:', error);
       setEngagementMetrics(null);
     }
   };
@@ -614,12 +614,12 @@ function SystemAdminDashboardContent() {
             return updatedData;
           });
         } catch (serializationError) {
-          console.error('❌ [ERROR] Erro de serialização ao atualizar estado:', serializationError);
+          console.log('❌ [ERROR] Erro de serialização ao atualizar estado:', serializationError);
           throw new Error('Erro de serialização ao atualizar métricas em tempo real');
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar métricas em tempo real:', error);
+      console.log('Erro ao carregar métricas em tempo real:', error);
       
       // Verificar se é erro de chunk loading
       const errorMessage = (error as any)?.message || '';

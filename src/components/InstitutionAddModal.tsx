@@ -69,7 +69,7 @@ export function InstitutionAddModal({ isOpen, onClose, onSave, title }: Institut
       })
       setErrors({})
     } catch (error) {
-      console.error('Erro ao salvar instituição:', error)
+      console.log('Erro ao salvar instituição:', error)
     } finally {
       setLoading(false)
     }

@@ -24,7 +24,7 @@ async function testRoleService() {
     });
     
   } catch (error) {
-    console.error('❌ Erro no teste:', error);
+    console.log('❌ Erro no teste:', error);
   }
 }
 

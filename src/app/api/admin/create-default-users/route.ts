@@ -387,7 +387,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Erro ao criar usuários padrão:', error)
+    console.log('Erro ao criar usuários padrão:', error)
     return NextResponse.json({
       success: false,
       error: error.message || 'Erro interno do servidor'

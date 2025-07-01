@@ -140,7 +140,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
         })
       })
     } catch (error) {
-      console.error('❌ Erro ao rastrear atividade:', error)
+      console.log('❌ Erro ao rastrear atividade:', error)
     }
   }, [user])
 
@@ -199,7 +199,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
         entity_id: videoId.toString()
       })
     } catch (error) {
-      console.error('❌ Erro ao rastrear progresso do vídeo:', error)
+      console.log('❌ Erro ao rastrear progresso do vídeo:', error)
     }
   }, [trackActivity, trackVideoEvents, user])
 
@@ -281,7 +281,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
         notes
       })
     } catch (error) {
-      console.error('❌ Erro ao adicionar à watchlist:', error)
+      console.log('❌ Erro ao adicionar à watchlist:', error)
     }
   }, [trackActivity, user])
 
@@ -307,7 +307,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}): A
         tv_show_id: tvShowId
       })
     } catch (error) {
-      console.error('❌ Erro ao remover da watchlist:', error)
+      console.log('❌ Erro ao remover da watchlist:', error)
     }
   }, [trackActivity, user])
 

@@ -162,7 +162,7 @@ async function runTests() {
     
     console.log(chalk.blue('\n🏁 Testes concluídos!'));
   } catch (error) {
-    console.error(chalk.red('\n❌ Erro durante os testes:'), error);
+    console.log(chalk.red('\n❌ Erro durante os testes:'), error);
   }
 }
 

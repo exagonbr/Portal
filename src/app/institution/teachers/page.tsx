@@ -136,7 +136,7 @@ export default function InstitutionTeachersPage() {
       setTeachers(mockTeachers)
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao buscar professores:', error)
+      console.log('Erro ao buscar professores:', error)
       setLoading(false)
     }
   }

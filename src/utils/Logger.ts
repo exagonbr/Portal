@@ -21,6 +21,6 @@ export class Logger {
   }
 
   error(message: string, error?: any): void {
-    console.error(`[${this.context}] ${message}`, error || '');
+    console.log(`[${this.context}] ${message}`, error || '');
   }
 }

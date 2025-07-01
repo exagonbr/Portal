@@ -52,7 +52,7 @@ export default function SchoolModal({ school, onClose }: SchoolModalProps) {
       const response = await institutionService.getAll();
       setInstitutions(response);
     } catch (error) {
-      console.error('Erro ao carregar instituições:', error);
+      console.log('Erro ao carregar instituições:', error);
     }
   };
 

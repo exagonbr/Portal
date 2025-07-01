@@ -46,7 +46,7 @@ async function testMigration() {
     console.log('\n🎉 Teste de migração concluído!');
     
   } catch (error) {
-    console.error('💥 Erro durante o teste:', error);
+    console.log('💥 Erro durante o teste:', error);
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();

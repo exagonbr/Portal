@@ -84,7 +84,7 @@ async function convertToUserTable() {
         }
       } catch (err) {
         errorCount++;
-        console.error(`❌ Erro ao inserir usuário ${user.id}: ${err.message}`);
+        console.log(`❌ Erro ao inserir usuário ${user.id}: ${err.message}`);
       }
     }
     
@@ -103,7 +103,7 @@ async function convertToUserTable() {
     console.log('✅ Mapeamento de IDs salvo em id_mapping_uuid_to_int.json');
     
   } catch (error) {
-    console.error(`❌ Erro durante a conversão: ${error.message}`);
+    console.log(`❌ Erro durante a conversão: ${error.message}`);
   } finally {
     // Fechar a conexão com o banco
     await db.destroy();

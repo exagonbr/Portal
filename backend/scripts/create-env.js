@@ -108,7 +108,7 @@ function main() {
       fs.writeFileSync(envExamplePath, envTemplate);
       console.log('✅ Arquivo .env.example criado/atualizado com sucesso!');
     } catch (error) {
-      console.error('❌ Erro ao criar .env.example:', error.message);
+      console.log('❌ Erro ao criar .env.example:', error.message);
       process.exit(1);
     }
     
@@ -147,7 +147,7 @@ function main() {
     console.log('\n📚 Documentação completa em: docs/ENVIRONMENT_VARIABLES.md');
     
   } catch (error) {
-    console.error('❌ Erro ao criar arquivo .env:', error.message);
+    console.log('❌ Erro ao criar arquivo .env:', error.message);
     process.exit(1);
   }
 }

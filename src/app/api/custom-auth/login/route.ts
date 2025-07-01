@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('❌ [CUSTOM-AUTH-LOGIN] Erro no login:', error);
+    console.log('❌ [CUSTOM-AUTH-LOGIN] Erro no login:', error);
     
     return NextResponse.json(
       { 

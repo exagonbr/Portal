@@ -78,7 +78,7 @@ async function testBackendLoginDetailed() {
                 exp: new Date(decoded.exp * 1000).toISOString()
               });
             } catch (jwtError) {
-              console.error('❌ Erro ao validar token:', jwtError.message);
+              console.log('❌ Erro ao validar token:', jwtError.message);
             }
           } else {
             console.log('❌ Token não encontrado em data');
@@ -111,12 +111,12 @@ async function testBackendLoginDetailed() {
       }
       
     } catch (parseError) {
-      console.error('❌ Erro ao parsear JSON:', parseError.message);
+      console.log('❌ Erro ao parsear JSON:', parseError.message);
       console.log('📄 Resposta como texto:', responseText);
     }
     
   } catch (error) {
-    console.error('💥 Erro na requisição:', error.message);
+    console.log('💥 Erro na requisição:', error.message);
   }
 }
 
@@ -146,7 +146,7 @@ async function testDirectTokenValidation() {
     console.log('✅ Token validado com sucesso');
     console.log('📋 Payload:', decoded);
   } catch (error) {
-    console.error('❌ Erro na validação:', error.message);
+    console.log('❌ Erro na validação:', error.message);
   }
 }
 
@@ -165,4 +165,4 @@ async function main() {
   console.log('   4. Se há erros no console do backend');
 }
 
-main().catch(console.error);
+main().catch(console.log);

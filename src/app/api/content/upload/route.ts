@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       uploadUrl: uploadResponse.uploadUrl
     });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.log('Upload error:', error);
     return NextResponse.json(
       { error: 'Failed to process upload' },
       { status: 500 }

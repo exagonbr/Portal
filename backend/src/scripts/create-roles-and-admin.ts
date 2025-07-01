@@ -104,7 +104,7 @@ async function createRolesAndAdmin() {
       .first();
 
     if (!adminRole) {
-      console.error('❌ Role SYSTEM_ADMIN não encontrada!');
+      console.log('❌ Role SYSTEM_ADMIN não encontrada!');
       return;
     }
 
@@ -120,7 +120,7 @@ async function createRolesAndAdmin() {
         .first();
       
       if (!institution) {
-        console.error('❌ Nenhuma instituição ativa encontrada!');
+        console.log('❌ Nenhuma instituição ativa encontrada!');
         return;
       }
     }
@@ -206,7 +206,7 @@ async function createRolesAndAdmin() {
     console.log('==========================================');
     
   } catch (error) {
-    console.error('❌ Erro:', error);
+    console.log('❌ Erro:', error);
   } finally {
     await db.destroy();
   }

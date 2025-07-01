@@ -32,7 +32,7 @@ async function testTypeORMConnection() {
     console.log('📊 Teste de conexão TypeORM concluído com sucesso!');
 
   } catch (error) {
-    console.error('❌ Erro no teste TypeORM:', error);
+    console.log('❌ Erro no teste TypeORM:', error);
     throw error;
   } finally {
     if (AppDataSource.isInitialized) {
@@ -49,6 +49,6 @@ testTypeORMConnection()
     process.exit(0);
   })
   .catch((error) => {
-    console.error('💥 Teste falhou:', error);
+    console.log('💥 Teste falhou:', error);
     process.exit(1);
   }); 

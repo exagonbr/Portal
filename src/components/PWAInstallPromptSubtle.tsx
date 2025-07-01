@@ -44,7 +44,7 @@ export function PWAInstallPromptSubtle({ registration }: PWAInstallPromptProps) 
       setDeferredPrompt(null)
       setShowPrompt(false)
     } catch (error) {
-      console.error('❌ Erro ao instalar PWA:', error)
+      console.log('❌ Erro ao instalar PWA:', error)
     } finally {
       setIsInstalling(false)
     }

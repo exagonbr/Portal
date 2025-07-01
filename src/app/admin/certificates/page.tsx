@@ -388,7 +388,7 @@ export default function ManageCertificates() {
       }
 
     } catch (error: any) {
-      console.error('Erro ao carregar certificados:', error);
+      console.log('Erro ao carregar certificados:', error);
       showError(error.message || 'Erro ao carregar certificados');
       setCertificates([]);
       setTotalPages(1);
@@ -428,7 +428,7 @@ export default function ManageCertificates() {
         { id: 3, name: 'Programa Educativo 3' }
       ]);
     } catch (error) {
-      console.error('Erro ao carregar usuários e TV shows:', error);
+      console.log('Erro ao carregar usuários e TV shows:', error);
     }
   };
 
@@ -494,7 +494,7 @@ export default function ManageCertificates() {
         throw new Error(result.message || 'Erro ao salvar certificado');
       }
     } catch (error: any) {
-      console.error('Erro ao salvar certificado:', error);
+      console.log('Erro ao salvar certificado:', error);
       showError(error.message || 'Erro ao salvar certificado');
     }
   }
@@ -517,7 +517,7 @@ export default function ManageCertificates() {
       showSuccess('Certificado excluído com sucesso!')
       loadCertificates()
     } catch (error: any) {
-      console.error('Erro ao excluir certificado:', error)
+      console.log('Erro ao excluir certificado:', error)
       showError(error.message || 'Erro ao excluir certificado')
     }
   }
@@ -571,7 +571,7 @@ export default function ManageCertificates() {
     try {
       showSuccess('Exportação iniciada! Você receberá um email quando estiver pronta.')
     } catch (error: any) {
-      console.error('Erro ao exportar:', error)
+      console.log('Erro ao exportar:', error)
       showError(error.message || 'Erro ao exportar certificados')
     }
   }

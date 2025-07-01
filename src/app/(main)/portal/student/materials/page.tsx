@@ -147,7 +147,7 @@ export default function AllStudyMaterialsPage() {
 
       setMaterials(mockMaterials);
     } catch (error) {
-      console.error('Erro ao carregar materiais:', error);
+      console.log('Erro ao carregar materiais:', error);
     } finally {
       setLoading(false);
     }

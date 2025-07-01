@@ -97,9 +97,9 @@ async function testAuthDirect() {
     }
     
   } catch (error) {
-    console.error('❌ Erro geral:', error.message);
-    console.error(error.stack);
+    console.log('❌ Erro geral:', error.message);
+    console.log(error.stack);
   }
 }
 
-testAuthDirect().catch(console.error);
+testAuthDirect().catch(console.log);

@@ -79,7 +79,7 @@ export async function GET(
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Error fetching unit:', error)
+    console.log('Error fetching unit:', error)
     return NextResponse.json({ error: 'Internal server error' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -125,7 +125,7 @@ export async function PUT(
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Error updating unit:', error)
+    console.log('Error updating unit:', error)
     return NextResponse.json({ error: 'Internal server error' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -167,7 +167,7 @@ export async function DELETE(
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Error deleting unit:', error)
+    console.log('Error deleting unit:', error)
     return NextResponse.json({ error: 'Internal server error' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

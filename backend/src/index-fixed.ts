@@ -165,7 +165,7 @@ app.use('*', (req, res) => {
 
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('🚨 Error occurred:', {
+  console.log('🚨 Error occurred:', {
     timestamp: new Date().toISOString(),
     method: req.method,
     url: req.originalUrl,
@@ -208,7 +208,7 @@ async function startServer() {
     });
     
   } catch (error) {
-    console.error('❌ Erro ao iniciar servidor:', error);
+    console.log('❌ Erro ao iniciar servidor:', error);
     process.exit(1);
   }
 }

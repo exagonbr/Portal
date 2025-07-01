@@ -22,14 +22,14 @@ export async function testApiClientLoading(): Promise<boolean> {
       
       return true;
     } else {
-      console.error('❌ Api-client não encontrado no módulo');
+      console.log('❌ Api-client não encontrado no módulo');
       return false;
     }
   } catch (error) {
-    console.error('❌ Erro ao testar carregamento do api-client:', error);
+    console.log('❌ Erro ao testar carregamento do api-client:', error);
     
     if (isChunkLoadError(error)) {
-      console.error('🚨 Erro identificado como ChunkLoadError');
+      console.log('🚨 Erro identificado como ChunkLoadError');
     }
     
     return false;
@@ -51,7 +51,7 @@ export async function simulateChunkError(): Promise<void> {
   if (isChunkError) {
     console.log('✅ Sistema de detecção de ChunkLoadError funcionando');
   } else {
-    console.error('❌ Sistema de detecção de ChunkLoadError com problema');
+    console.log('❌ Sistema de detecção de ChunkLoadError com problema');
   }
 }
 
@@ -74,6 +74,6 @@ export async function runChunkTests(): Promise<void> {
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   // Aguardar um pouco após o carregamento da página
   setTimeout(() => {
-    runChunkTests().catch(console.error);
+    runChunkTests().catch(console.log);
   }, 2000);
 } 

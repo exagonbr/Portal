@@ -26,7 +26,7 @@ export async function GET(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar instituição:', error);
+    console.log('Erro ao buscar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -52,7 +52,7 @@ export async function PUT(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao atualizar instituição:', error);
+    console.log('Erro ao atualizar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -75,7 +75,7 @@ export async function DELETE(
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao deletar instituição:', error);
+    console.log('Erro ao deletar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

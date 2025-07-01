@@ -127,7 +127,7 @@ export const validateJWTAndSession = async (
           userAuth.sessionId = newSessionId;
           req.sessionId = newSessionId;
         } catch (sessionError) {
-          console.error('Erro ao criar sessão de compatibilidade:', sessionError);
+          console.log('Erro ao criar sessão de compatibilidade:', sessionError);
           return res.status(401).json({
             success: false,
             message: 'Sessão inválida ou expirada'
@@ -531,7 +531,7 @@ export const validateJWTSimple = async (
     req.user = userAuth;
     next();
   } catch (error) {
-    console.error('Erro no middleware de validação JWT simples:', error);
+    console.log('Erro no middleware de validação JWT simples:', error);
     return res.status(401).json({
       success: false,
       message: 'Falha na autenticação'
@@ -568,7 +568,7 @@ export const validateJWTSmart = async (
     // Para outras rotas, usar validação completa
     return validateJWTAndSession(req, res, next);
   } catch (error) {
-    console.error('Erro no middleware inteligente:', error);
+    console.log('Erro no middleware inteligente:', error);
     // Fallback para validação simples em caso de erro
     return validateJWTSimple(req, res, next);
   }
@@ -619,7 +619,7 @@ export const requireRoleSmart = (roles: string[]) => {
       console.log('✅ Acesso permitido para role:', userRole, 'na rota:', req.path);
       next();
     } catch (error) {
-      console.error('Erro no middleware de role inteligente:', error);
+      console.log('Erro no middleware de role inteligente:', error);
       // Em caso de erro, permitir acesso com warning
       console.warn('⚠️ Erro na verificação de role, permitindo acesso');
       next();
@@ -647,7 +647,7 @@ export const withTimeout = (middleware: any, timeoutMs: number = 5000) => {
       await Promise.race([middlewarePromise, timeoutPromise]);
       next();
     } catch (error) {
-      console.error(`⚠️ Timeout ou erro no middleware para ${req.path}:`, error);
+      console.log(`⚠️ Timeout ou erro no middleware para ${req.path}:`, error);
       // Fallback: usar validação simples
       return validateJWTSimple(req, res, next);
     }
@@ -830,7 +830,7 @@ export const validateTokenUltraSimple = async (
       }
     }
   } catch (error: any) {
-    console.error('❌ validateTokenUltraSimple error:', error);
+    console.log('❌ validateTokenUltraSimple error:', error);
     return res.status(500).json({
       success: false,
       error: 'Erro interno na validação do token',

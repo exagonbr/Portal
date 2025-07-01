@@ -283,7 +283,7 @@ export default function CreateUserForm({ onClose, onSuccess, roles, institutions
       onSuccess()
       onClose()
     } catch (error: any) {
-      console.error('❌ Erro ao criar usuário:', {
+      console.log('❌ Erro ao criar usuário:', {
         error,
         status: error.response?.status || error.status,
         message: error.message,
@@ -298,7 +298,7 @@ export default function CreateUserForm({ onClose, onSuccess, roles, institutions
         showError('Você não está autenticado. Por favor, faça login novamente.')
       } else if (error.response?.status === 403 || error.status === 403) {
         const errorMessage = error.response?.data?.message || error.message || 'Você não tem permissão para criar usuários.'
-        console.error('🚫 Erro 403 detalhado:', {
+        console.log('🚫 Erro 403 detalhado:', {
           errorMessage,
           responseData: error.response?.data,
           userRole: JSON.parse(localStorage.getItem('user') || '{}')?.role,

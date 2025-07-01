@@ -31,7 +31,7 @@ const testAPI = async () => {
     console.log('📊 Status:', response.status);
     console.log('📋 Resposta:', JSON.stringify(data, null, 2));
   } catch (error) {
-    console.error('❌ Erro:', error.message);
+    console.log('❌ Erro:', error.message);
   }
 };
 

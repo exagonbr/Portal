@@ -37,7 +37,7 @@ async function checkUsersSchema() {
     });
     
   } catch (error) {
-    console.error('❌ Erro ao verificar schema:', error);
+    console.log('❌ Erro ao verificar schema:', error);
   } finally {
     await db.destroy();
   }

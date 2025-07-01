@@ -90,7 +90,7 @@ class RequestMonitor {
 ```typescript
 // Verificar se deve bloquear a requisição por loop
 if (requestMonitor.shouldBlockRequest(requestUrl)) {
-  console.error('🚨 Requisição bloqueada por loop detectado:', requestUrl)
+  console.log('🚨 Requisição bloqueada por loop detectado:', requestUrl)
   return
 }
 ```

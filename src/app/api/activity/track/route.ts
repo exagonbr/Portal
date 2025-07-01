@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao rastrear atividade:', error)
+    console.log('❌ Erro ao rastrear atividade:', error)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao obter atividades:', error)
+    console.log('❌ Erro ao obter atividades:', error)
     
     return NextResponse.json(
       { 

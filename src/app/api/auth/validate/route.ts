@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('❌ [VALIDATE-API] Erro na validação:', error);
+    console.log('❌ [VALIDATE-API] Erro na validação:', error);
     
     return NextResponse.json(
       { 

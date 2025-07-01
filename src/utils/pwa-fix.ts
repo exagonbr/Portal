@@ -96,7 +96,7 @@ class PWALoopFixer {
         
         return response;
       } catch (error) {
-        console.error('❌ Erro na requisição interceptada:', error);
+        console.log('❌ Erro na requisição interceptada:', error);
         throw error;
       }
     };
@@ -120,7 +120,7 @@ class PWALoopFixer {
     
     // Se muitas tentativas de login em pouco tempo
     if (this.detector.loginAttempts > 5) {
-      console.error('🚨 Loop de Login Detectado!', {
+      console.log('🚨 Loop de Login Detectado!', {
         attempts: this.detector.loginAttempts,
         timeWindow: '1 minuto',
         url
@@ -156,7 +156,7 @@ class PWALoopFixer {
 
     // Verificar se excedeu o threshold
     if (this.detector.requestCount > this.detector.threshold) {
-      console.error('🚨 PWA Loop Detectado!', {
+      console.log('🚨 PWA Loop Detectado!', {
         url,
         count: this.detector.requestCount,
         timeWindow: this.detector.windowMs,
@@ -222,7 +222,7 @@ class PWALoopFixer {
       }, 3000);
 
     } catch (error) {
-      console.error('❌ Erro durante correção de loop de login:', error);
+      console.log('❌ Erro durante correção de loop de login:', error);
       // Fallback: recarregar imediatamente
       window.location.reload();
     }
@@ -257,7 +257,7 @@ class PWALoopFixer {
 
       console.log('✅ PWA Loop Fixer: Dados de autenticação limpos');
     } catch (error) {
-      console.error('❌ Erro ao limpar dados de autenticação:', error);
+      console.log('❌ Erro ao limpar dados de autenticação:', error);
     }
   }
 
@@ -281,7 +281,7 @@ class PWALoopFixer {
         console.log('✅ PWA Loop Fixer: Cache de autenticação limpo');
       }
     } catch (error) {
-      console.error('❌ Erro ao limpar cache de autenticação:', error);
+      console.log('❌ Erro ao limpar cache de autenticação:', error);
     }
   }
 
@@ -310,7 +310,7 @@ class PWALoopFixer {
       
       console.log('✅ PWA Loop Fixer: Correção de emergência aplicada');
     } catch (error) {
-      console.error('❌ Erro na correção de emergência:', error);
+      console.log('❌ Erro na correção de emergência:', error);
     }
   }
 
@@ -375,7 +375,7 @@ class PWALoopFixer {
       }, 5000);
       
     } catch (error) {
-      console.error('❌ Erro ao mostrar notificação:', error);
+      console.log('❌ Erro ao mostrar notificação:', error);
     }
   }
 
@@ -435,7 +435,7 @@ class PWALoopFixer {
         console.log('✅ PWA Loop Fixer: Cache do service worker limpo');
       }
     } catch (error) {
-      console.error('❌ Erro ao limpar cache:', error);
+      console.log('❌ Erro ao limpar cache:', error);
     }
   }
 
@@ -452,7 +452,7 @@ class PWALoopFixer {
         }
       }
     } catch (error) {
-      console.error('❌ Erro ao desregistrar service worker:', error);
+      console.log('❌ Erro ao desregistrar service worker:', error);
     }
   }
 
@@ -476,7 +476,7 @@ class PWALoopFixer {
 
       console.log('✅ PWA Loop Fixer: Storage PWA limpo');
     } catch (error) {
-      console.error('❌ Erro ao limpar storage PWA:', error);
+      console.log('❌ Erro ao limpar storage PWA:', error);
     }
   }
 
@@ -515,7 +515,7 @@ class PWALoopFixer {
         });
       }
     }).catch(error => {
-      console.error('❌ PWA Loop Fixer: Erro ao monitorar service worker:', error);
+      console.log('❌ PWA Loop Fixer: Erro ao monitorar service worker:', error);
     });
   }
 
@@ -637,7 +637,7 @@ export async function emergencyPWAFix(): Promise<void> {
     window.location.reload();
 
   } catch (error) {
-    console.error('❌ Erro na correção de emergência:', error);
+    console.log('❌ Erro na correção de emergência:', error);
     // Fallback: recarregar página mesmo com erro
     window.location.reload();
   }
@@ -691,7 +691,7 @@ export async function diagnosePWAState(): Promise<{
       diagnosis.recommendation = 'Service Workers não são suportados neste navegador';
     }
   } catch (error) {
-    console.error('❌ Erro ao diagnosticar PWA:', error);
+    console.log('❌ Erro ao diagnosticar PWA:', error);
     diagnosis.recommendation = 'Erro ao diagnosticar - considere recarregar a página';
   }
 

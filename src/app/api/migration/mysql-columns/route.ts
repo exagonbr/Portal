@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('Erro ao obter colunas da tabela MySQL:', error)
+    console.log('Erro ao obter colunas da tabela MySQL:', error)
     
     let errorMessage = error.message
     

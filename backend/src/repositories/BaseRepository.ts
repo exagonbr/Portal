@@ -78,7 +78,7 @@ export abstract class BaseRepository<T> {
         .first();
       return parseInt(result?.count as string) || 0;
     } catch (error) {
-      console.error(`Erro ao contar registros na tabela ${this.tableName}:`, error);
+      console.log(`Erro ao contar registros na tabela ${this.tableName}:`, error);
       throw error;
     }
   }

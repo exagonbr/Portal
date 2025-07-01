@@ -51,7 +51,7 @@ async function cleanMigrations() {
     console.log('✅ Sistema pronto para migration fresh');
     
   } catch (error) {
-    console.error('\n❌ ERRO DURANTE LIMPEZA:', error);
+    console.log('\n❌ ERRO DURANTE LIMPEZA:', error);
     await db.destroy();
     process.exit(1);
   }

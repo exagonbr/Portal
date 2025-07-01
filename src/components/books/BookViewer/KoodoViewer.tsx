@@ -752,7 +752,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       await new Promise(resolve => setTimeout(resolve, 200));
       console.log('✅ Cleanup completo finalizado');
     } catch (error) {
-      console.error('❌ Erro durante cleanup:', error);
+      console.log('❌ Erro durante cleanup:', error);
     }
   }, [rendition, epubBook]);
 
@@ -844,7 +844,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       return buffer;
 
     } catch (error) {
-      console.error('❌ Erro ao carregar arquivo como buffer:', error);
+      console.log('❌ Erro ao carregar arquivo como buffer:', error);
       throw new Error(`Falha no download: ${error instanceof Error ? error.message : error}`);
     } finally {
       setIsDownloading(false);
@@ -874,7 +874,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       console.warn('⚠️ Buffer não parece ser um arquivo ZIP/EPUB válido');
       return false;
     } catch (error) {
-      console.error('❌ Erro ao validar buffer EPUB:', error);
+      console.log('❌ Erro ao validar buffer EPUB:', error);
       return false;
     }
   }, []);
@@ -1079,7 +1079,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       return book;
       
     } catch (error) {
-      console.error(`❌ Estratégia ${attempt} falhou:`, error);
+      console.log(`❌ Estratégia ${attempt} falhou:`, error);
       logEpubState('STRATEGY_FAILED', { attempt, error: error instanceof Error ? error.message : error });
       
       if (attempt < maxAttempts) {
@@ -1320,12 +1320,12 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
             
             console.log('✅ EPUB inicializado com sucesso e DOM estável!');
           } catch (error) {
-            console.error('❌ Erro no rendered handler:', error);
+            console.log('❌ Erro no rendered handler:', error);
           }
         });
 
         newRendition.on('error', (error: any) => {
-          console.error('❌ Erro na renderização EPUB:', error);
+          console.log('❌ Erro na renderização EPUB:', error);
         });
 
         // Gerar localizações em background
@@ -1365,12 +1365,12 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
         setState(prev => ({ ...prev, loading: false }));
 
       } catch (bufferError) {
-        console.error('❌ Erro com ArrayBuffer:', bufferError);
+        console.log('❌ Erro com ArrayBuffer:', bufferError);
         throw bufferError;
       }
 
     } catch (error) {
-      console.error('❌ Erro crítico ao inicializar EPUB:', error);
+      console.log('❌ Erro crítico ao inicializar EPUB:', error);
       
       // Determinar tipo de erro para mensagem mais específica
       let errorMessage = 'Falha ao carregar EPUB';
@@ -1421,7 +1421,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
       console.log('✅ PDF pronto para renderização');
       
     } catch (error) {
-      console.error('❌ Erro ao inicializar PDF:', error);
+      console.log('❌ Erro ao inicializar PDF:', error);
       setState(prev => ({ 
         ...prev, 
         loading: false, 
@@ -1484,7 +1484,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
           await initializePDF(fileUrl);
         }
       } catch (error) {
-        console.error('Erro na inicialização:', error);
+        console.log('Erro na inicialização:', error);
         setState(prev => ({ 
           ...prev, 
           loading: false, 
@@ -1943,7 +1943,7 @@ const KoodoViewer: React.FC<KoodoViewerProps> = ({
               setState(prev => ({ ...prev, totalPages: numPages }));
             }}
             onLoadError={(error) => {
-              console.error('❌ Erro PDF:', error);
+              console.log('❌ Erro PDF:', error);
               setState(prev => ({ ...prev, error: 'Falha ao carregar PDF' }));
             }}
             options={pdfOptions}
@@ -2279,6 +2279,6 @@ KoodoViewer.displayName = 'KoodoViewer';
 // Verificação de tipo para desenvolvimento
 if (process.env.NODE_ENV === 'development') {
   if (typeof KoodoViewer !== 'function') {
-    console.error('⚠️ KoodoViewer não é uma função válida:', typeof KoodoViewer);
+    console.log('⚠️ KoodoViewer não é uma função válida:', typeof KoodoViewer);
   }
 } 

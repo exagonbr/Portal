@@ -26,7 +26,7 @@ import Link from 'next/link';
 // Função simples para notificações (substitui react-hot-toast)
 const toast = {
   success: (message: string) => console.log('✅ Success:', message),
-  error: (message: string) => console.error('❌ Error:', message)
+  error: (message: string) => console.log('❌ Error:', message)
 };
 
 interface SchoolUnit extends UnitResponseDto {
@@ -117,7 +117,7 @@ export default function InstitutionSchoolsPage() {
       
       setSchools(schoolsData);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.log('Erro ao carregar dados:', error);
       toast.error('Erro ao carregar dados');
     } finally {
       setLoading(false);

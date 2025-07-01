@@ -24,7 +24,7 @@ export class GroupController {
         total: groups.length
       });
     } catch (error) {
-      console.error('Erro ao buscar grupos:', error);
+      console.log('Erro ao buscar grupos:', error);
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor'
@@ -51,7 +51,7 @@ export class GroupController {
         data: group
       });
     } catch (error) {
-      console.error('Erro ao buscar grupo:', error);
+      console.log('Erro ao buscar grupo:', error);
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor'
@@ -71,7 +71,7 @@ export class GroupController {
         message: 'Grupo criado com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao criar grupo:', error);
+      console.log('Erro ao criar grupo:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao criar grupo'
@@ -101,7 +101,7 @@ export class GroupController {
         message: 'Grupo atualizado com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao atualizar grupo:', error);
+      console.log('Erro ao atualizar grupo:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao atualizar grupo'
@@ -128,7 +128,7 @@ export class GroupController {
         message: 'Grupo excluído com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao excluir grupo:', error);
+      console.log('Erro ao excluir grupo:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao excluir grupo'
@@ -148,7 +148,7 @@ export class GroupController {
         total: members.length
       });
     } catch (error) {
-      console.error('Erro ao buscar membros do grupo:', error);
+      console.log('Erro ao buscar membros do grupo:', error);
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor'
@@ -171,7 +171,7 @@ export class GroupController {
         message: 'Membro adicionado ao grupo com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao adicionar membro ao grupo:', error);
+      console.log('Erro ao adicionar membro ao grupo:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao adicionar membro'
@@ -198,7 +198,7 @@ export class GroupController {
         message: 'Membro removido do grupo com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao remover membro do grupo:', error);
+      console.log('Erro ao remover membro do grupo:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao remover membro'
@@ -229,7 +229,7 @@ export class GroupController {
         message: `${members.length} membros adicionados ao grupo`
       });
     } catch (error) {
-      console.error('Erro ao adicionar membros em lote:', error);
+      console.log('Erro ao adicionar membros em lote:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao adicionar membros'
@@ -249,7 +249,7 @@ export class GroupController {
         total: permissions.length
       });
     } catch (error) {
-      console.error('Erro ao buscar permissões do grupo:', error);
+      console.log('Erro ao buscar permissões do grupo:', error);
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor'
@@ -286,7 +286,7 @@ export class GroupController {
         message: 'Permissão do grupo definida com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao definir permissão do grupo:', error);
+      console.log('Erro ao definir permissão do grupo:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao definir permissão'
@@ -329,7 +329,7 @@ export class GroupController {
         message: 'Permissão removida do grupo com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao remover permissão do grupo:', error);
+      console.log('Erro ao remover permissão do grupo:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao remover permissão'
@@ -359,7 +359,7 @@ export class GroupController {
         message: `${results.length} permissões definidas para o grupo`
       });
     } catch (error) {
-      console.error('Erro ao definir permissões em lote:', error);
+      console.log('Erro ao definir permissões em lote:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao definir permissões'
@@ -377,7 +377,7 @@ export class GroupController {
         data: stats
       });
     } catch (error) {
-      console.error('Erro ao buscar estatísticas dos grupos:', error);
+      console.log('Erro ao buscar estatísticas dos grupos:', error);
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor'
@@ -412,7 +412,7 @@ export class GroupController {
         message: 'Grupo clonado com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao clonar grupo:', error);
+      console.log('Erro ao clonar grupo:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao clonar grupo'
@@ -437,7 +437,7 @@ export class GroupController {
         data: permissions
       });
     } catch (error) {
-      console.error('Erro ao calcular permissões efetivas:', error);
+      console.log('Erro ao calcular permissões efetivas:', error);
       res.status(500).json({
         success: false,
         error: 'Erro interno do servidor'
@@ -475,7 +475,7 @@ export class GroupController {
         message: 'Permissão contextual definida com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao definir permissão contextual:', error);
+      console.log('Erro ao definir permissão contextual:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Erro ao definir permissão'

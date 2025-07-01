@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error) {
-    console.error('Erro no registro:', error);
+    console.log('Erro no registro:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
           try {
             response = JSON.parse(responseText)
           } catch (parseError) {
-            console.error('❌ JSON parse error:', parseError)
+            console.log('❌ JSON parse error:', parseError)
             throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`)
           }
           
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     throw new Error(`Todos os endpoints falharam. Último erro: ${lastError}`)
 
   } catch (error: any) {
-    console.error('❌ Erro ao carregar configurações:', error.message || error)
+    console.log('❌ Erro ao carregar configurações:', error.message || error)
     
     // Fallback com configurações padrão expandidas
     console.log('🔄 Usando configurações padrão como fallback')
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
         headers: getCorsHeaders(request.headers.get('origin') || undefined)
       })
     } catch (fallbackError: any) {
-      console.error('❌ Erro crítico no fallback:', fallbackError)
+      console.log('❌ Erro crítico no fallback:', fallbackError)
       
       // Último recurso - resposta JSON mínima
       return new NextResponse(JSON.stringify({
@@ -204,7 +204,7 @@ export async function PUT(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao salvar configurações:', error)
+    console.log('Erro ao salvar configurações:', error)
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro na ação de configurações:', error)
+    console.log('Erro na ação de configurações:', error)
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

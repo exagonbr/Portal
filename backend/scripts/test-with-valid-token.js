@@ -69,7 +69,7 @@ const req = http.request(options, (res) => {
 });
 
 req.on('error', (e) => {
-  console.error(`❌ Erro na requisição: ${e.message}`);
+  console.log(`❌ Erro na requisição: ${e.message}`);
   process.exit(1);
 });
 

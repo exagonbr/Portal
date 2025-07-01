@@ -109,7 +109,7 @@ export function LogoutHandler({ onLogout, children }: LogoutHandlerProps) {
       }, 100);
 
     } catch (error) {
-      console.error('Erro durante logout:', error);
+      console.log('Erro durante logout:', error);
       
       // Fallback: forçar limpeza e redirecionamento mesmo com erro
       if (typeof window !== 'undefined') {

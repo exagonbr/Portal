@@ -37,7 +37,7 @@ class SystemSettingsService {
       decrypted += decipher.final('utf8');
       return decrypted;
     } catch (error) {
-      console.error('Erro ao descriptografar:', error);
+      console.log('Erro ao descriptografar:', error);
       return encryptedText; // Retorna o valor original se não conseguir descriptografar
     }
   }
@@ -102,7 +102,7 @@ class SystemSettingsService {
 
       return result;
     } catch (error) {
-      console.error('Erro ao buscar configurações:', error);
+      console.log('Erro ao buscar configurações:', error);
       throw new Error('Erro ao buscar configurações do sistema');
     }
   }
@@ -137,7 +137,7 @@ class SystemSettingsService {
 
       return result;
     } catch (error) {
-      console.error('Erro ao buscar configurações por categoria:', error);
+      console.log('Erro ao buscar configurações por categoria:', error);
       throw new Error(`Erro ao buscar configurações da categoria ${category}`);
     }
   }
@@ -164,7 +164,7 @@ class SystemSettingsService {
       // Converter para o tipo correto
       return this.parseValue(value, setting.type);
     } catch (error) {
-      console.error('Erro ao buscar configuração:', error);
+      console.log('Erro ao buscar configuração:', error);
       throw new Error(`Erro ao buscar configuração ${key}`);
     }
   }
@@ -213,7 +213,7 @@ class SystemSettingsService {
       await trx.commit();
     } catch (error) {
       await trx.rollback();
-      console.error('Erro ao atualizar configurações:', error);
+      console.log('Erro ao atualizar configurações:', error);
       throw new Error('Erro ao atualizar configurações do sistema');
     }
   }
@@ -248,7 +248,7 @@ class SystemSettingsService {
         .where('key', key)
         .delete();
     } catch (error) {
-      console.error('Erro ao deletar configuração:', error);
+      console.log('Erro ao deletar configuração:', error);
       throw new Error(`Erro ao deletar configuração ${key}`);
     }
   }
@@ -270,7 +270,7 @@ class SystemSettingsService {
 
       return formatted;
     } catch (error) {
-      console.error('Erro ao buscar configurações formatadas:', error);
+      console.log('Erro ao buscar configurações formatadas:', error);
       throw new Error('Erro ao buscar configurações formatadas');
     }
   }
@@ -338,7 +338,7 @@ class SystemSettingsService {
       await trx.commit();
     } catch (error) {
       await trx.rollback();
-      console.error('Erro ao resetar configurações:', error);
+      console.log('Erro ao resetar configurações:', error);
       throw new Error('Erro ao resetar configurações para padrão');
     }
   }

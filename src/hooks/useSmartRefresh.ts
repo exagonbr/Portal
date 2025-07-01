@@ -213,7 +213,7 @@ export function useErrorRefresh(onRetry?: () => Promise<void>) {
         window.location.reload();
       }
     } catch (error) {
-      console.error('Erro durante retry:', error);
+      console.log('Erro durante retry:', error);
     } finally {
       setIsRetrying(false);
     }

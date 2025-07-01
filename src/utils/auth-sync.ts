@@ -67,7 +67,7 @@ export async function getValidTokenFromProduction(): Promise<AuthSyncResult> {
 
     throw new Error('Todas as credenciais falharam');
   } catch (error) {
-    console.error('Erro ao obter token de produção:', error);
+    console.log('Erro ao obter token de produção:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Erro desconhecido'

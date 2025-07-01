@@ -51,8 +51,8 @@ async function createTestUser() {
     console.log('🔐 Senha: senha123');
     
   } catch (error) {
-    console.error('❌ Erro:', error.message);
-    console.error('Stack:', error.stack);
+    console.log('❌ Erro:', error.message);
+    console.log('Stack:', error.stack);
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();

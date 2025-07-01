@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     console.log('🔍 Resultado da autenticação:', authResult ? 'Sucesso' : 'Falha')
     
     if (!authResult || !authResult.user) {
-      console.error('❌ Autenticação falhou - acesso negado para rota administrativa')
+      console.log('❌ Autenticação falhou - acesso negado para rota administrativa')
       return NextResponse.json(
         { success: false, message: 'Não autorizado' },
         { status: 401 }
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     if (!backendResponse.ok) {
       const errorText = await backendResponse.text()
-      console.error('❌ Erro do backend:', backendResponse.status, errorText)
+      console.log('❌ Erro do backend:', backendResponse.status, errorText)
       throw new Error(`Backend error: ${backendResponse.status} - ${errorText}`)
     }
 
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao carregar configurações administrativas:', error)
+    console.log('❌ Erro ao carregar configurações administrativas:', error)
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -102,7 +102,7 @@ export async function PUT(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao salvar configurações:', error)
+    console.log('Erro ao salvar configurações:', error)
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro na ação de configurações:', error)
+    console.log('Erro na ação de configurações:', error)
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

@@ -159,7 +159,7 @@ export const authMiddleware = async (
       }
     }
   } catch (error) {
-    console.error('Erro no middleware de validação JWT:', error);
+    console.log('Erro no middleware de validação JWT:', error);
     return res.status(500).json({
       success: false,
       error: 'Falha na autenticação',
@@ -276,7 +276,7 @@ export const requireRoleSmart = (roles: string[]) => {
       console.log('✅ Acesso permitido para role:', userRole, 'na rota:', req.path);
       next();
     } catch (error) {
-      console.error('Erro no middleware de role inteligente:', error);
+      console.log('Erro no middleware de role inteligente:', error);
       // Em caso de erro, permitir acesso com warning
       console.warn('⚠️ Erro na verificação de role, permitindo acesso');
       next();

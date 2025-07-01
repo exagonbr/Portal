@@ -37,7 +37,7 @@ export default function SystemStatusBanner() {
       setHealth(data)
       setLastCheck(new Date())
     } catch (error) {
-      console.error('Erro ao verificar saúde do sistema:', error)
+      console.log('Erro ao verificar saúde do sistema:', error)
       setHealth({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),

@@ -186,7 +186,7 @@ export function useSystemSettings() {
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('❌ Erro na resposta:', errorText)
+        console.log('❌ Erro na resposta:', errorText)
         throw new Error(`Erro ao carregar configurações: ${response.status} - ${errorText}`)
       }
 
@@ -204,7 +204,7 @@ export function useSystemSettings() {
         throw new Error(data.error || 'Erro ao carregar configurações')
       }
     } catch (err) {
-      console.error('Erro ao carregar configurações:', err)
+      console.log('Erro ao carregar configurações:', err)
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
       
       // Fallback para localStorage
@@ -214,7 +214,7 @@ export function useSystemSettings() {
           const parsed = JSON.parse(savedSettings)
           setSettings({ ...defaultFullSettings, ...parsed })
         } catch (parseError) {
-          console.error('Erro ao carregar configurações do localStorage:', parseError)
+          console.log('Erro ao carregar configurações do localStorage:', parseError)
           setSettings(defaultFullSettings)
         }
       }
@@ -242,7 +242,7 @@ export function useSystemSettings() {
       ]
       setAvailableVideos(videos)
     } catch (error) {
-      console.error('Erro ao carregar vídeos:', error)
+      console.log('Erro ao carregar vídeos:', error)
     }
   }
 
@@ -297,7 +297,7 @@ export function useSystemSettings() {
         throw new Error(data.error || 'Erro ao salvar configurações')
       }
     } catch (err) {
-      console.error('Erro ao salvar configurações:', err)
+      console.log('Erro ao salvar configurações:', err)
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
       return false
     } finally {
@@ -339,7 +339,7 @@ export function useSystemSettings() {
       const data = await response.json()
       return data
     } catch (error) {
-      console.error('Erro ao testar conexão AWS:', error)
+      console.log('Erro ao testar conexão AWS:', error)
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Erro ao testar conexão com AWS'
@@ -386,7 +386,7 @@ export function useSystemSettings() {
       const data = await response.json()
       return data
     } catch (error) {
-      console.error('Erro ao testar email:', error)
+      console.log('Erro ao testar email:', error)
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Erro ao testar conexão de email'
@@ -426,7 +426,7 @@ export function useSystemSettings() {
         throw new Error(data.error || 'Erro ao resetar configurações')
       }
     } catch (err) {
-      console.error('Erro ao resetar configurações:', err)
+      console.log('Erro ao resetar configurações:', err)
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
       return false
     } finally {

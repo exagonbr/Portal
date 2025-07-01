@@ -147,7 +147,7 @@ export default function InstitutionStudentsPage() {
       setStudents(mockStudents)
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao buscar alunos:', error)
+      console.log('Erro ao buscar alunos:', error)
       setLoading(false)
     }
   }

@@ -41,7 +41,7 @@ function testEndpoint(path, method = 'GET', data = null) {
     });
 
     req.on('error', (error) => {
-      console.error('Erro:', error.message);
+      console.log('Erro:', error.message);
       reject(error);
     });
 
@@ -71,7 +71,7 @@ async function runTests() {
 
     console.log('\n✅ Testes concluídos!');
   } catch (error) {
-    console.error('❌ Erro durante os testes:', error.message);
+    console.log('❌ Erro durante os testes:', error.message);
   }
 }
 

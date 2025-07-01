@@ -131,7 +131,7 @@ async function testLoopFix() {
 
 // Executar se chamado diretamente
 if (require.main === module) {
-  testLoopFix().catch(console.error);
+  testLoopFix().catch(console.log);
 }
 
 module.exports = { testLoopFix }; 

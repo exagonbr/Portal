@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao buscar certificados:', error);
+    console.log('Erro ao buscar certificados:', error);
     return NextResponse.json(
       { 
         success: false, 

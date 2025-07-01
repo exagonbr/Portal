@@ -83,7 +83,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('❌ Erro ao buscar dados do arquivo do vídeo:', error);
+    console.log('❌ Erro ao buscar dados do arquivo do vídeo:', error);
     
     return NextResponse.json({
       success: false,

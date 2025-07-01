@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      console.error('❌ [UNITS-DEBUG] Erro na resposta do backend:', errorData);
+      console.log('❌ [UNITS-DEBUG] Erro na resposta do backend:', errorData);
       
       return NextResponse.json({
           error: errorData.message || 'Failed to fetch units',
@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('❌ [UNITS-DEBUG] Erro na requisição:', error)
+    console.log('❌ [UNITS-DEBUG] Erro na requisição:', error)
     return NextResponse.json({
         error: 'Internal server error',
         debug: {
@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('❌ [UNITS-DEBUG] Erro na criação:', error)
+    console.log('❌ [UNITS-DEBUG] Erro na criação:', error)
     return NextResponse.json({
         error: 'Internal server error',
         debug: {

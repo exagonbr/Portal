@@ -17,7 +17,7 @@ export const errorLogger = (err: any, req: Request, res: Response, next: NextFun
     }
   };
   
-  console.error('🚨 Error occurred:', JSON.stringify(errorInfo, null, 2));
+  console.log('🚨 Error occurred:', JSON.stringify(errorInfo, null, 2));
   
   // Gravar em arquivo para análise
   const fs = require('fs');
@@ -33,7 +33,7 @@ export const errorLogger = (err: any, req: Request, res: Response, next: NextFun
     const logEntry = `${new Date().toISOString()} - ${JSON.stringify(errorInfo)}\n`;
     fs.appendFileSync(logPath, logEntry);
   } catch (e) {
-    console.error('Erro ao escrever log:', e);
+    console.log('Erro ao escrever log:', e);
   }
   
   next(err);

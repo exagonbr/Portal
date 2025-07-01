@@ -74,14 +74,14 @@ async function debugSettings() {
         console.log('🧹 Limpeza concluída');
         
       } catch (updateError) {
-        console.error('❌ Erro na operação de update:', updateError.message);
-        console.error('Stack completo:', updateError.stack);
+        console.log('❌ Erro na operação de update:', updateError.message);
+        console.log('Stack completo:', updateError.stack);
       }
     }
     
   } catch (error) {
-    console.error('❌ Erro geral:', error.message);
-    console.error('Stack completo:', error.stack);
+    console.log('❌ Erro geral:', error.message);
+    console.log('Stack completo:', error.stack);
   } finally {
     await db.destroy();
     console.log('🔌 Conexão fechada');
@@ -89,4 +89,4 @@ async function debugSettings() {
 }
 
 // Executar debug
-debugSettings().catch(console.error); 
+debugSettings().catch(console.log); 

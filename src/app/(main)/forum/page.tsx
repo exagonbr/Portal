@@ -241,7 +241,7 @@ export default function ForumPage() {
         setLoading(false);
       }, 1000);
     } catch (error) {
-      console.error('Erro ao carregar tópicos:', error);
+      console.log('Erro ao carregar tópicos:', error);
       setLoading(false);
     }
   };

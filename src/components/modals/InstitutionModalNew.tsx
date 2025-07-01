@@ -126,7 +126,7 @@ export function InstitutionModalNew({ isOpen, onClose, onSave, institution, mode
       }
       onClose()
     } catch (error) {
-      console.error('Erro ao salvar instituição:', error)
+      console.log('Erro ao salvar instituição:', error)
     } finally {
       setLoading(false)
     }

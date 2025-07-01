@@ -39,7 +39,7 @@ export const useSessionMonitor = (userId?: string): UseSessionMonitorReturn => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      console.error('Erro ao carregar estatísticas:', err);
+      console.log('Erro ao carregar estatísticas:', err);
     }
   }, []);
 
@@ -57,7 +57,7 @@ export const useSessionMonitor = (userId?: string): UseSessionMonitorReturn => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      console.error('Erro ao carregar sessões do usuário:', err);
+      console.log('Erro ao carregar sessões do usuário:', err);
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export const useSessionMonitor = (userId?: string): UseSessionMonitorReturn => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      console.error('Erro ao remover sessão:', err);
+      console.log('Erro ao remover sessão:', err);
       return false;
     }
   }, [refreshStats]);
@@ -102,7 +102,7 @@ export const useSessionMonitor = (userId?: string): UseSessionMonitorReturn => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      console.error('Erro ao remover sessões do usuário:', err);
+      console.log('Erro ao remover sessões do usuário:', err);
       return false;
     }
   }, [refreshStats]);
@@ -127,7 +127,7 @@ export const useSessionMonitor = (userId?: string): UseSessionMonitorReturn => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      console.error('Erro ao limpar sessões expiradas:', err);
+      console.log('Erro ao limpar sessões expiradas:', err);
       return 0;
     }
   }, [refreshStats, refreshUserSessions, userId]);
@@ -213,7 +213,7 @@ export const useSessionValidation = () => {
       setIsValid(data.valid);
       return data.valid;
     } catch (error) {
-      console.error('Erro ao validar sessão:', error);
+      console.log('Erro ao validar sessão:', error);
       setIsValid(false);
       return false;
     } finally {
@@ -243,7 +243,7 @@ export const useSessionValidation = () => {
 
       return response.ok;
     } catch (error) {
-      console.error('Erro ao estender sessão:', error);
+      console.log('Erro ao estender sessão:', error);
       return false;
     }
   }, []);

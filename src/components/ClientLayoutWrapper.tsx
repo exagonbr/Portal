@@ -44,7 +44,7 @@ export default function ClientLayoutWrapper({ children, fallback }: ClientLayout
         clearTimeout(timer);
       };
     } catch (error) {
-      console.error('❌ Erro na inicialização do ClientLayoutWrapper:', error);
+      console.log('❌ Erro na inicialização do ClientLayoutWrapper:', error);
       setMounted(true);
     }
   }, []);

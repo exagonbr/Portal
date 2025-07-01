@@ -125,7 +125,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
             console.log(`✅ Login realizado com sucesso para ${user.email}, sessão: ${sessionId}`);
             resolve({ success: true, user });
           } catch (error) {
-            console.error('Erro ao criar sessão:', error);
+            console.log('Erro ao criar sessão:', error);
             // Fallback para autenticação tradicional
             setCookie('auth_token', 'dummy_token_value');
             setCookie('user_data', encodeURIComponent(JSON.stringify(user)));
@@ -174,7 +174,7 @@ export const register = async (
         console.log(`✅ Registro realizado com sucesso para ${newUser.email}, sessão: ${sessionId}`);
         resolve({ success: true, user: newUser });
       } catch (error) {
-        console.error('Erro ao criar sessão no registro:', error);
+        console.log('Erro ao criar sessão no registro:', error);
         // Fallback para autenticação tradicional
         setCookie('auth_token', 'dummy_token_value');
         setCookie('user_data', encodeURIComponent(JSON.stringify(newUser)));
@@ -193,7 +193,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
     try {
       return JSON.parse(userStr);
     } catch (error) {
-      console.error('Error parsing user data:', error);
+      console.log('Error parsing user data:', error);
       return null;
     }
   }
@@ -224,7 +224,7 @@ export const logout = async (): Promise<void> => {
       
       setTimeout(() => resolve(), 500);
     } catch (error) {
-      console.error('Erro durante logout:', error);
+      console.log('Erro durante logout:', error);
       // Continua com limpeza local mesmo se houver erro
       safeLocalStorage.removeItem('session_id');
       safeLocalStorage.removeItem('auth_token');

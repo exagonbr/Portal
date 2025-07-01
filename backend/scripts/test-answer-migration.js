@@ -215,12 +215,12 @@ async function testAnswerMigration() {
     console.log('\n✅ Análise concluída!');
 
   } catch (error) {
-    console.error('❌ Erro durante o teste:', error.message);
+    console.log('❌ Erro durante o teste:', error.message);
     if (error.code) {
-      console.error('   Código do erro:', error.code);
+      console.log('   Código do erro:', error.code);
     }
     if (error.sqlMessage) {
-      console.error('   Mensagem SQL:', error.sqlMessage);
+      console.log('   Mensagem SQL:', error.sqlMessage);
     }
   } finally {
     if (mysqlConnection) {
@@ -236,7 +236,7 @@ async function testAnswerMigration() {
 
 // Executar teste
 if (require.main === module) {
-  testAnswerMigration().catch(console.error);
+  testAnswerMigration().catch(console.log);
 }
 
 module.exports = { testAnswerMigration }; 

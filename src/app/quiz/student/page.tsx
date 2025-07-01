@@ -127,7 +127,7 @@ export default function StudentQuizPage() {
 
       setQuizzes(mockQuizzes);
     } catch (error) {
-      console.error('Erro ao carregar quizzes:', error);
+      console.log('Erro ao carregar quizzes:', error);
     } finally {
       setLoading(false);
     }

@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Erro ao testar conexão S3:', error)
+    console.log('Erro ao testar conexão S3:', error)
     return NextResponse.json(
       { 
         success: false, 

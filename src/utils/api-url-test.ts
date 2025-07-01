@@ -16,8 +16,8 @@ if (typeof window !== 'undefined') {
     
     // Verificar se há duplicação de /api
     if (fullUrl.includes('/api/api/')) {
-      console.error('❌ URL DUPLICADA DETECTADA:', fullUrl);
-      console.error('Endpoint original:', endpoint);
+      console.log('❌ URL DUPLICADA DETECTADA:', fullUrl);
+      console.log('Endpoint original:', endpoint);
     } else {
       console.log('✅ URL correta:', fullUrl);
     }
@@ -50,12 +50,12 @@ export function testApiUrls() {
       console.log(`URL construída: ${fullUrl}`);
       
       if (fullUrl.includes('/api/api/')) {
-        console.error(`❌ PROBLEMA: URL duplicada para ${endpoint}`);
+        console.log(`❌ PROBLEMA: URL duplicada para ${endpoint}`);
       } else {
         console.log(`✅ OK: URL correta para ${endpoint}`);
       }
     } catch (error) {
-      console.error(`❌ Erro ao testar ${endpoint}:`, error);
+      console.log(`❌ Erro ao testar ${endpoint}:`, error);
     }
   });
   

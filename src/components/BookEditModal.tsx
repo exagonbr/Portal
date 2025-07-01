@@ -103,7 +103,7 @@ export function BookEditModal({ isOpen, onClose, onSave, book, title }: BookEdit
       await onSave(formData)
       onClose()
     } catch (error) {
-      console.error('Erro ao salvar livro:', error)
+      console.log('Erro ao salvar livro:', error)
     } finally {
       setLoading(false)
     }

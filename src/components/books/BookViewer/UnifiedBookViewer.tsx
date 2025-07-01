@@ -110,8 +110,8 @@ export default function UnifiedBookViewer({
   }
 
   const onPdfLoadError = (error: Error) => {
-    console.error('Erro ao carregar PDF:', error)
-    console.error('URL do PDF:', bookUrl)
+    console.log('Erro ao carregar PDF:', error)
+    console.log('URL do PDF:', bookUrl)
     setError(`Erro ao carregar o PDF: ${error.message}`)
     setLoading(false)
   }

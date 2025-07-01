@@ -66,7 +66,7 @@ export class PushSubscriptionController {
                 data: {}
             });
         } catch (error) {
-            console.error('Error registering push subscription:', error);
+            console.log('Error registering push subscription:', error);
             return res.status(500).json({
                 success: false,
                 message: 'Failed to register push subscription'
@@ -96,7 +96,7 @@ export class PushSubscriptionController {
                 data: {}
             });
         } catch (error) {
-            console.error('Error removing push subscription:', error);
+            console.log('Error removing push subscription:', error);
             return res.status(500).json({
                 success: false,
                 message: 'Failed to remove push subscription'
@@ -144,13 +144,13 @@ export class PushSubscriptionController {
                     await this.sendNotification(subscription, payload);
                     sentCount++;
                 } catch (error) {
-                    console.error(`Error sending notification to subscription ${subscription.endpoint}:`, error);
+                    console.log(`Error sending notification to subscription ${subscription.endpoint}:`, error);
                 }
             }
 
             return sentCount;
         } catch (error) {
-            console.error('Error sending notification to user:', error);
+            console.log('Error sending notification to user:', error);
             throw error;
         }
     }
@@ -166,7 +166,7 @@ export class PushSubscriptionController {
 
             return totalSent;
         } catch (error) {
-            console.error('Error sending notifications to users:', error);
+            console.log('Error sending notifications to users:', error);
             throw error;
         }
     }
@@ -179,7 +179,7 @@ export class PushSubscriptionController {
 
             return subscriptions;
         } catch (error) {
-            console.error('Error getting user subscriptions:', error);
+            console.log('Error getting user subscriptions:', error);
             throw error;
         }
     }
@@ -226,7 +226,7 @@ export class PushSubscriptionController {
                         await this.sendNotification(subscription, payload);
                         sentCount++;
                     } catch (error) {
-                        console.error(`Error sending notification to subscription ${subscription.endpoint}:`, error);
+                        console.log(`Error sending notification to subscription ${subscription.endpoint}:`, error);
                     }
                 }
             }
@@ -237,7 +237,7 @@ export class PushSubscriptionController {
                 data: { sentCount }
             });
         } catch (error) {
-            console.error('Error sending bulk notification:', error);
+            console.log('Error sending bulk notification:', error);
             return res.status(500).json({
                 success: false,
                 message: 'Failed to send bulk notification'

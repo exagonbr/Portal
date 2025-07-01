@@ -88,4 +88,4 @@ async function testAuthSync() {
   console.log('\n✅ Teste de sincronização concluído!');
 }
 
-testAuthSync().catch(console.error);
+testAuthSync().catch(console.log);

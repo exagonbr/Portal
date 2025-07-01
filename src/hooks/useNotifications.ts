@@ -140,7 +140,7 @@ export function useNotifications() {
         setError(null)
       } catch (err) {
         setError('Erro ao carregar notificações')
-        console.error('Erro ao carregar notificações:', err)
+        console.log('Erro ao carregar notificações:', err)
       } finally {
         setLoading(false)
       }

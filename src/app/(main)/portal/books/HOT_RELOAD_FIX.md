@@ -40,7 +40,7 @@ KoodoViewer.displayName = 'KoodoViewer';
 // Verificação de tipo para desenvolvimento
 if (process.env.NODE_ENV === 'development') {
   if (typeof KoodoViewer !== 'function') {
-    console.error('⚠️ KoodoViewer não é uma função válida:', typeof KoodoViewer);
+    console.log('⚠️ KoodoViewer não é uma função válida:', typeof KoodoViewer);
   }
 }
 ```
@@ -70,7 +70,7 @@ if (!isViewerReady) {
 
 // Verificar se foi carregado corretamente
 if (!KoodoViewer) {
-  console.error('❌ KoodoViewer não foi carregado corretamente');
+  console.log('❌ KoodoViewer não foi carregado corretamente');
   return <ErrorComponent />;
 }
 ```

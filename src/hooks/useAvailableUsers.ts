@@ -82,11 +82,11 @@ export function useAvailableUsers(userRole?: string) {
           setAvailableUsers(formattedUsers)
         }
       } catch (error: any) {
-        console.error('❌ [useAvailableUsers] Erro ao carregar usuários:', error)
+        console.log('❌ [useAvailableUsers] Erro ao carregar usuários:', error)
         
         // Verificar se é erro de autenticação
         if (error?.status === 401 || error?.message?.includes('401')) {
-          console.error('🔐 [useAvailableUsers] Erro de autenticação detectado')
+          console.log('🔐 [useAvailableUsers] Erro de autenticação detectado')
           // Não chamar clearAllTokens aqui para evitar loops
           setError('Sessão expirada. Faça login novamente.')
         }

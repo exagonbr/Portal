@@ -97,7 +97,7 @@ self.addEventListener('fetch', (event) => {
           cache: 'no-cache',
           mode: 'cors'
         }).catch((fetchError) => {
-          console.error('⚠️ Service Worker: Fetch direto também falhou:', request.url, fetchError);
+          console.log('⚠️ Service Worker: Fetch direto também falhou:', request.url, fetchError);
           
           // Se tudo falhar, retornar resposta de erro apropriada
           if (request.destination === 'style' || request.url.includes('.css')) {
@@ -115,7 +115,7 @@ self.addEventListener('fetch', (event) => {
       })
     );
   } catch (error) {
-    console.error('⚠️ Service Worker: Erro crítico no fetch listener:', error);
+    console.log('⚠️ Service Worker: Erro crítico no fetch listener:', error);
     // Não interceptar se houver erro crítico
     return;
   }

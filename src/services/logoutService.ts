@@ -28,7 +28,7 @@ export class LogoutService {
 
       console.log('✅ LogoutService: Logout completo realizado com sucesso');
     } catch (error) {
-      console.error('❌ LogoutService: Erro durante logout:', error);
+      console.log('❌ LogoutService: Erro durante logout:', error);
       // Executar limpeza de emergência
       await this.emergencyCleanup();
       throw error;
@@ -63,12 +63,12 @@ export class LogoutService {
 
       console.log('✅ LogoutService: localStorage limpo');
     } catch (error) {
-      console.error('❌ LogoutService: Erro ao limpar localStorage:', error);
+      console.log('❌ LogoutService: Erro ao limpar localStorage:', error);
       // Fallback: limpar tudo
       try {
         localStorage.clear();
       } catch (fallbackError) {
-        console.error('❌ LogoutService: Erro no fallback do localStorage:', fallbackError);
+        console.log('❌ LogoutService: Erro no fallback do localStorage:', fallbackError);
       }
     }
   }
@@ -84,7 +84,7 @@ export class LogoutService {
       sessionStorage.clear();
       console.log('✅ LogoutService: sessionStorage limpo');
     } catch (error) {
-      console.error('❌ LogoutService: Erro ao limpar sessionStorage:', error);
+      console.log('❌ LogoutService: Erro ao limpar sessionStorage:', error);
     }
   }
 
@@ -128,7 +128,7 @@ export class LogoutService {
 
       console.log('✅ LogoutService: Cookies limpos');
     } catch (error) {
-      console.error('❌ LogoutService: Erro ao limpar cookies:', error);
+      console.log('❌ LogoutService: Erro ao limpar cookies:', error);
     }
   }
 
@@ -154,7 +154,7 @@ export class LogoutService {
         console.warn('⚠️ LogoutService: Erro ao notificar backend sobre logout');
       }
     } catch (error) {
-      console.error('❌ LogoutService: Erro ao notificar backend:', error);
+      console.log('❌ LogoutService: Erro ao notificar backend:', error);
       // Não bloqueia o logout se falhar
     }
   }
@@ -171,20 +171,20 @@ export class LogoutService {
         try {
           localStorage.clear();
         } catch (e) {
-          console.error('Erro ao limpar localStorage na emergência:', e);
+          console.log('Erro ao limpar localStorage na emergência:', e);
         }
         
         // Limpar sessionStorage
         try {
           sessionStorage.clear();
         } catch (e) {
-          console.error('Erro ao limpar sessionStorage na emergência:', e);
+          console.log('Erro ao limpar sessionStorage na emergência:', e);
         }
       }
       
       console.log('✅ LogoutService: Limpeza de emergência concluída');
     } catch (error) {
-      console.error('❌ LogoutService: Erro na limpeza de emergência:', error);
+      console.log('❌ LogoutService: Erro na limpeza de emergência:', error);
     }
   }
 
@@ -228,7 +228,7 @@ export class LogoutService {
         window.location.href = redirectUrl;
       }
     } catch (error) {
-      console.error('❌ LogoutService: Erro no logout, forçando redirecionamento:', error);
+      console.log('❌ LogoutService: Erro no logout, forçando redirecionamento:', error);
       // Forçar redirecionamento mesmo com erro
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/login?error=logout_failed';

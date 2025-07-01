@@ -146,7 +146,7 @@ export function PWARegistration() {
       }, 500);
       
     } catch (error) {
-      console.error('Failed to update service worker:', error);
+      console.log('Failed to update service worker:', error);
       setIsUpdating(false);
       setUpdateProgress(0);
       // Remover flag de atualização em caso de erro

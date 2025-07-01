@@ -189,7 +189,7 @@ export const initializeServices = async () => {
     console.log('Serviços inicializados com sucesso');
     return true;
   } catch (error) {
-    console.error('Erro ao inicializar serviços:', error);
+    console.log('Erro ao inicializar serviços:', error);
     return false;
   }
 };
@@ -202,7 +202,7 @@ export const clearAllData = async () => {
     services.queue.stopProcessing();
     console.log('Dados limpos com sucesso');
   } catch (error) {
-    console.error('Erro ao limpar dados:', error);
+    console.log('Erro ao limpar dados:', error);
   }
 };
 

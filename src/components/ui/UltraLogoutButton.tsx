@@ -53,7 +53,7 @@ export function UltraLogoutButton({
       }
       // Se success = true, o usuário será redirecionado, então não precisamos resetar o estado
     } catch (error) {
-      console.error('❌ UltraLogoutButton: Erro no logout:', error);
+      console.log('❌ UltraLogoutButton: Erro no logout:', error);
       setIsLoggingOut(false);
     }
   };

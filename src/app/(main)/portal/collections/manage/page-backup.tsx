@@ -60,7 +60,7 @@ export default function TVShowsManagePage() {
         setError(data.message || 'Erro ao carregar dados')
       }
     } catch (err) {
-      console.error('Erro ao carregar TV Shows:', err)
+      console.log('Erro ao carregar TV Shows:', err)
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
     } finally {
       setIsLoading(false)

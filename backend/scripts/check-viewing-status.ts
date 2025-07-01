@@ -40,10 +40,10 @@ async function checkViewingStatus() {
     console.log('\nSample row:', sampleRow);
 
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
   } finally {
     await connection.end();
   }
 }
 
-checkViewingStatus().catch(console.error);
+checkViewingStatus().catch(console.log);

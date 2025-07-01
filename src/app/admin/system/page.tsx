@@ -62,7 +62,7 @@ export default function AdminSystemPage() {
         setSystemInfo(infoData)
         setActivities(activitiesData)
       } catch (error) {
-        console.error("Failed to fetch system data:", error)
+        console.log("Failed to fetch system data:", error)
         // Adicionar tratamento de erro para o usuário, se necessário
       } finally {
         setLoading(false)

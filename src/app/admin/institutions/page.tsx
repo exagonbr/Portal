@@ -83,7 +83,7 @@ export default function ManageInstitutions() {
         showSuccess("Atualizado", "Lista de instituições atualizada com sucesso!")
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar instituições:', error)
+      console.log('❌ Erro ao carregar instituições:', error)
       showError("Erro ao carregar instituições", "Não foi possível carregar a lista de instituições.")
     } finally {
       setLoading(false)
@@ -165,7 +165,7 @@ export default function ManageInstitutions() {
       // Recarregar a lista
       await fetchInstitutions(currentPage, searchQuery, false)
     } catch (error) {
-      console.error('❌ Erro ao excluir instituição:', error)
+      console.log('❌ Erro ao excluir instituição:', error)
       showError("Erro ao excluir instituição", "Não foi possível excluir a instituição.")
     } finally {
       setLoading(false)
@@ -221,7 +221,7 @@ export default function ManageInstitutions() {
       // Recarregar a lista para garantir sincronização completa
       await fetchInstitutions(currentPage, searchQuery, false)
     } catch (error) {
-      console.error('❌ Erro ao salvar instituição:', error)
+      console.log('❌ Erro ao salvar instituição:', error)
       showError("Erro ao salvar instituição", "Não foi possível salvar a instituição.")
     } finally {
       setLoading(false)
@@ -254,7 +254,7 @@ export default function ManageInstitutions() {
       calculateStats(updatedInstitutions)
       
     } catch (error) {
-      console.error('❌ Erro ao alterar status da instituição:', error)
+      console.log('❌ Erro ao alterar status da instituição:', error)
       showError("Erro ao alterar status", "Não foi possível alterar o status da instituição.")
     } finally {
       setLoading(false)

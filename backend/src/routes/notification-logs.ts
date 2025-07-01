@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
 
     return res.json(result);
   } catch (error) {
-    console.error('Erro ao listar logs de notificação:', error);
+    console.log('Erro ao listar logs de notificação:', error);
     return res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -53,7 +53,7 @@ router.get('/:id', async (req, res) => {
 
     return res.json(log);
   } catch (error) {
-    console.error('Erro ao buscar log de notificação:', error);
+    console.log('Erro ao buscar log de notificação:', error);
     return res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -74,7 +74,7 @@ router.get('/stats/summary', async (req, res) => {
 
     res.json(stats);
   } catch (error) {
-    console.error('Erro ao buscar estatísticas:', error);
+    console.log('Erro ao buscar estatísticas:', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -95,7 +95,7 @@ router.get('/by-recipient/:recipient', async (req, res) => {
 
     res.json(logs);
   } catch (error) {
-    console.error('Erro ao buscar logs por destinatário:', error);
+    console.log('Erro ao buscar logs por destinatário:', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -112,7 +112,7 @@ router.get('/by-token/:token', async (req, res) => {
 
     res.json(logs);
   } catch (error) {
-    console.error('Erro ao buscar logs por token:', error);
+    console.log('Erro ao buscar logs por token:', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -133,7 +133,7 @@ router.put('/:id/mark-opened', async (req, res) => {
 
     return res.json({ message: 'Email marcado como aberto', log });
   } catch (error) {
-    console.error('Erro ao marcar email como aberto:', error);
+    console.log('Erro ao marcar email como aberto:', error);
     return res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -154,7 +154,7 @@ router.put('/:id/mark-clicked', async (req, res) => {
 
     return res.json({ message: 'Email marcado como clicado', log });
   } catch (error) {
-    console.error('Erro ao marcar email como clicado:', error);
+    console.log('Erro ao marcar email como clicado:', error);
     return res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
@@ -176,7 +176,7 @@ router.delete('/cleanup', async (req, res) => {
       deletedCount 
     });
   } catch (error) {
-    console.error('Erro ao limpar logs antigos:', error);
+    console.log('Erro ao limpar logs antigos:', error);
     res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });

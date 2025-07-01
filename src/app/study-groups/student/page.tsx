@@ -224,7 +224,7 @@ export default function StudyGroupsPage() {
 
       setStudyGroups(mockGroups);
     } catch (error) {
-      console.error('Erro ao carregar grupos:', error);
+      console.log('Erro ao carregar grupos:', error);
     } finally {
       setLoading(false);
     }
@@ -265,7 +265,7 @@ export default function StudyGroupsPage() {
 
       setMySessions(mockSessions);
     } catch (error) {
-      console.error('Erro ao carregar sessões:', error);
+      console.log('Erro ao carregar sessões:', error);
     }
   };
 

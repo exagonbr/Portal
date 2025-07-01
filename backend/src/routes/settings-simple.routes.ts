@@ -55,7 +55,7 @@ router.get('/public', async (req: Request, res: Response) => {
       data: defaultSettings
     });
   } catch (error) {
-    console.error('❌ Erro ao buscar configurações públicas:', error);
+    console.log('❌ Erro ao buscar configurações públicas:', error);
     return res.status(500).json({ 
       success: false,
       error: 'Erro ao buscar configurações públicas'

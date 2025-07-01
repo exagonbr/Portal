@@ -47,7 +47,7 @@ export const testDatabaseConnection = async (): Promise<boolean> => {
     console.log('✅ Conexão com PostgreSQL estabelecida com sucesso');
     return true;
   } catch (error) {
-    console.error('❌ Erro ao conectar com PostgreSQL:', error);
+    console.log('❌ Erro ao conectar com PostgreSQL:', error);
     return false;
   }
 };
@@ -58,7 +58,7 @@ export const closeDatabaseConnection = async (): Promise<void> => {
     await db.destroy();
     console.log('🔌 Conexão com PostgreSQL fechada');
   } catch (error) {
-    console.error('❌ Erro ao fechar conexão com PostgreSQL:', error);
+    console.log('❌ Erro ao fechar conexão com PostgreSQL:', error);
   }
 };
 
@@ -68,7 +68,7 @@ export const runMigrations = async (): Promise<void> => {
     await db.migrate.latest();
     console.log('✅ Migrations executadas com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao executar migrations:', error);
+    console.log('❌ Erro ao executar migrations:', error);
     throw error;
   }
 };
@@ -79,7 +79,7 @@ export const runSeeds = async (): Promise<void> => {
     await db.seed.run();
     console.log('✅ Seeds executados com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao executar seeds:', error);
+    console.log('❌ Erro ao executar seeds:', error);
     throw error;
   }
 };

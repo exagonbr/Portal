@@ -193,7 +193,7 @@ export default function EmailComposer({
       })
       console.log('✅ [EmailComposer] Email enviado com sucesso')
     } catch (error) {
-      console.error('❌ [EmailComposer] Erro ao enviar email:', error)
+      console.log('❌ [EmailComposer] Erro ao enviar email:', error)
     }
   }
 

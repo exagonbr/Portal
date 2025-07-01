@@ -63,7 +63,7 @@ export async function POST(
       headers: getCorsHeaders(origin)
     });
   } catch (error) {
-    console.error('Erro ao testar conexão AWS:', error);
+    console.log('Erro ao testar conexão AWS:', error);
     const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },

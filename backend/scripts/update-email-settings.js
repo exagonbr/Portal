@@ -34,7 +34,7 @@ async function updateEmailSettings(settings) {
     });
 
   } catch (error) {
-    console.error('❌ Error updating email settings:', error);
+    console.log('❌ Error updating email settings:', error);
     throw error;
   } finally {
     // Close the database connection
@@ -47,7 +47,7 @@ async function updateEmailSettings(settings) {
 const appPassword = process.argv[2];
 
 if (!appPassword) {
-  console.error('❌ Please provide the app password as an argument');
+  console.log('❌ Please provide the app password as an argument');
   console.log('Usage: node update-email-settings.js "your-app-password-here"');
   process.exit(1);
 }
@@ -56,6 +56,6 @@ if (!appPassword) {
 updateEmailSettings({
   'email_smtp_password': appPassword
 }).catch(error => {
-  console.error('Failed to update settings:', error);
+  console.log('Failed to update settings:', error);
   process.exit(1);
 });

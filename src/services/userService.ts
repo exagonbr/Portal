@@ -134,7 +134,7 @@ class UserService {
       console.log('✅ [UserService] Estatísticas obtidas com sucesso');
       return result.data;
     } catch (error) {
-      console.error('❌ [UserService] Erro ao obter estatísticas:', error);
+      console.log('❌ [UserService] Erro ao obter estatísticas:', error);
       throw error;
     }
   }
@@ -185,7 +185,7 @@ class UserService {
         pagination: result.pagination
       };
     } catch (error) {
-      console.error('❌ [UserService] Erro ao listar usuários:', error);
+      console.log('❌ [UserService] Erro ao listar usuários:', error);
       throw error;
     }
   }
@@ -221,7 +221,7 @@ class UserService {
       console.log('✅ [UserService] Usuário encontrado:', result.data.fullName);
       return result.data;
     } catch (error) {
-      console.error('❌ [UserService] Erro ao buscar usuário:', error);
+      console.log('❌ [UserService] Erro ao buscar usuário:', error);
       throw error;
     }
   }
@@ -254,7 +254,7 @@ class UserService {
       console.log('✅ [UserService] Perfil obtido:', result.data.fullName);
       return result.data;
     } catch (error) {
-      console.error('❌ [UserService] Erro ao obter perfil:', error);
+      console.log('❌ [UserService] Erro ao obter perfil:', error);
       throw error;
     }
   }
@@ -288,7 +288,7 @@ class UserService {
       console.log('✅ [UserService] Perfil atualizado com sucesso');
       return result.data;
     } catch (error) {
-      console.error('❌ [UserService] Erro ao atualizar perfil:', error);
+      console.log('❌ [UserService] Erro ao atualizar perfil:', error);
       throw error;
     }
   }
@@ -325,7 +325,7 @@ class UserService {
       console.log('✅ [UserService] Usuário criado:', result.data.fullName);
       return result.data;
     } catch (error) {
-      console.error('❌ [UserService] Erro ao criar usuário:', error);
+      console.log('❌ [UserService] Erro ao criar usuário:', error);
       throw error;
     }
   }
@@ -365,7 +365,7 @@ class UserService {
       console.log('✅ [UserService] Usuário atualizado:', result.data.fullName);
       return result.data;
     } catch (error) {
-      console.error('❌ [UserService] Erro ao atualizar usuário:', error);
+      console.log('❌ [UserService] Erro ao atualizar usuário:', error);
       throw error;
     }
   }
@@ -400,7 +400,7 @@ class UserService {
 
       console.log('✅ [UserService] Usuário removido com sucesso');
     } catch (error) {
-      console.error('❌ [UserService] Erro ao remover usuário:', error);
+      console.log('❌ [UserService] Erro ao remover usuário:', error);
       throw error;
     }
   }
@@ -432,7 +432,7 @@ class UserService {
 
       console.log('✅ [UserService] Usuário ativado com sucesso');
     } catch (error) {
-      console.error('❌ [UserService] Erro ao ativar usuário:', error);
+      console.log('❌ [UserService] Erro ao ativar usuário:', error);
       throw error;
     }
   }
@@ -464,7 +464,7 @@ class UserService {
 
       console.log('✅ [UserService] Usuário desativado com sucesso');
     } catch (error) {
-      console.error('❌ [UserService] Erro ao desativar usuário:', error);
+      console.log('❌ [UserService] Erro ao desativar usuário:', error);
       throw error;
     }
   }
@@ -496,7 +496,7 @@ class UserService {
 
       console.log('✅ [UserService] Senha resetada com sucesso');
     } catch (error) {
-      console.error('❌ [UserService] Erro ao resetar senha:', error);
+      console.log('❌ [UserService] Erro ao resetar senha:', error);
       throw error;
     }
   }
@@ -542,7 +542,7 @@ class UserService {
         pagination: result.pagination
       };
     } catch (error) {
-      console.error('❌ [UserService] Erro na pesquisa:', error);
+      console.log('❌ [UserService] Erro na pesquisa:', error);
       throw error;
     }
   }
@@ -575,7 +575,7 @@ class UserService {
       console.log('✅ [UserService] Usuários encontrados por role:', result.data.length);
       return result.data;
     } catch (error) {
-      console.error('❌ [UserService] Erro ao buscar usuários por role:', error);
+      console.log('❌ [UserService] Erro ao buscar usuários por role:', error);
       throw error;
     }
   }
@@ -608,7 +608,7 @@ class UserService {
       console.log('✅ [UserService] Usuários encontrados por instituição:', result.data.length);
       return result.data;
     } catch (error) {
-      console.error('❌ [UserService] Erro ao buscar usuários por instituição:', error);
+      console.log('❌ [UserService] Erro ao buscar usuários por instituição:', error);
       throw error;
     }
   }

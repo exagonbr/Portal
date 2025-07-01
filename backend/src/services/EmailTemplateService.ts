@@ -49,7 +49,7 @@ export class EmailTemplateService {
       console.log(`✅ [EmailTemplateService] Encontrados ${templates.length} templates`);
       return templates;
     } catch (error) {
-      console.error('❌ [EmailTemplateService] Erro ao buscar templates:', error);
+      console.log('❌ [EmailTemplateService] Erro ao buscar templates:', error);
       throw new Error('Erro ao buscar templates de email');
     }
   }
@@ -72,7 +72,7 @@ export class EmailTemplateService {
       console.log(`✅ [EmailTemplateService] Template encontrado: ${template.name}`);
       return template;
     } catch (error) {
-      console.error(`❌ [EmailTemplateService] Erro ao buscar template ${id}:`, error);
+      console.log(`❌ [EmailTemplateService] Erro ao buscar template ${id}:`, error);
       throw new Error('Erro ao buscar template de email');
     }
   }
@@ -96,7 +96,7 @@ export class EmailTemplateService {
       console.log(`✅ [EmailTemplateService] Template encontrado: ${template.name}`);
       return template;
     } catch (error) {
-      console.error(`❌ [EmailTemplateService] Erro ao buscar template '${name}':`, error);
+      console.log(`❌ [EmailTemplateService] Erro ao buscar template '${name}':`, error);
       throw new Error('Erro ao buscar template de email');
     }
   }
@@ -139,7 +139,7 @@ export class EmailTemplateService {
       console.log(`✅ [EmailTemplateService] Template criado: ${created.name}`);
       return created;
     } catch (error) {
-      console.error('❌ [EmailTemplateService] Erro ao criar template:', error);
+      console.log('❌ [EmailTemplateService] Erro ao criar template:', error);
       throw error;
     }
   }
@@ -181,7 +181,7 @@ export class EmailTemplateService {
       console.log(`✅ [EmailTemplateService] Template atualizado: ${updated.name}`);
       return updated;
     } catch (error) {
-      console.error(`❌ [EmailTemplateService] Erro ao atualizar template ${id}:`, error);
+      console.log(`❌ [EmailTemplateService] Erro ao atualizar template ${id}:`, error);
       throw error;
     }
   }
@@ -205,7 +205,7 @@ export class EmailTemplateService {
       console.log(`✅ [EmailTemplateService] Template excluído: ${deleted.name}`);
       return deleted;
     } catch (error) {
-      console.error(`❌ [EmailTemplateService] Erro ao excluir template ${id}:`, error);
+      console.log(`❌ [EmailTemplateService] Erro ao excluir template ${id}:`, error);
       throw error;
     }
   }
@@ -222,7 +222,7 @@ export class EmailTemplateService {
 
       return await this.update(id, { is_active: !existing.is_active });
     } catch (error) {
-      console.error(`❌ [EmailTemplateService] Erro ao alterar status do template ${id}:`, error);
+      console.log(`❌ [EmailTemplateService] Erro ao alterar status do template ${id}:`, error);
       throw error;
     }
   }
@@ -241,7 +241,7 @@ export class EmailTemplateService {
       console.log(`✅ [EmailTemplateService] Encontradas ${categories.length} categorias`);
       return categories;
     } catch (error) {
-      console.error('❌ [EmailTemplateService] Erro ao buscar categorias:', error);
+      console.log('❌ [EmailTemplateService] Erro ao buscar categorias:', error);
       throw new Error('Erro ao buscar categorias');
     }
   }

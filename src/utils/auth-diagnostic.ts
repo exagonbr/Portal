@@ -285,7 +285,7 @@ async function attemptTokenRefresh(): Promise<string | null> {
 
     return null;
   } catch (error) {
-    console.error('❌ [AUTH-DIAGNOSTIC] Erro ao tentar refresh:', error);
+    console.log('❌ [AUTH-DIAGNOSTIC] Erro ao tentar refresh:', error);
     return null;
   }
 }

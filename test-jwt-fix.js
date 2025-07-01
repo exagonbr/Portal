@@ -260,7 +260,7 @@ async function runJWTFixTest() {
 
 // Executar teste
 if (require.main === module) {
-  runJWTFixTest().catch(console.error);
+  runJWTFixTest().catch(console.log);
 }
 
 module.exports = { runJWTFixTest, getCurrentToken, testTokenWithAPIs, testJWTSecrets };

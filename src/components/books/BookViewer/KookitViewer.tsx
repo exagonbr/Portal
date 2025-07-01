@@ -64,7 +64,7 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
       setIsLoading(true);
     },
     onError: (error) => {
-      console.error('Erro no refresh inteligente:', error);
+      console.log('Erro no refresh inteligente:', error);
     },
     onMaxAttemptsReached: () => {
       setError('Não foi possível recarregar o livro após várias tentativas. Tente novamente mais tarde.');
@@ -147,13 +147,13 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
         });
         
         renderer.on('error', (error: any) => {
-          console.error('Erro ao renderizar:', error);
+          console.log('Erro ao renderizar:', error);
           setError('Erro ao renderizar o livro');
           setIsLoading(false);
         });
       }
     } catch (err) {
-      console.error('Erro ao inicializar Kookit:', err);
+      console.log('Erro ao inicializar Kookit:', err);
       setError(`Falha ao inicializar o visualizador: ${err instanceof Error ? err.message : String(err)}`);
       setIsLoading(false);
     }
@@ -226,7 +226,7 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
         kookitRef.current.goToPosition({ index: page - 1 });
         setCurrentPage(page);
       } catch (err) {
-        console.error('Erro ao navegar:', err);
+        console.log('Erro ao navegar:', err);
       }
     }
   };
@@ -236,7 +236,7 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
       try {
         kookitRef.current.next();
       } catch (err) {
-        console.error('Erro ao avançar página:', err);
+        console.log('Erro ao avançar página:', err);
       }
     }
   };
@@ -246,7 +246,7 @@ const KookitViewer: React.FC<KookitViewerProps> = ({ book, onClose }) => {
       try {
         kookitRef.current.prev();
       } catch (err) {
-        console.error('Erro ao retroceder página:', err);
+        console.log('Erro ao retroceder página:', err);
       }
     }
   };

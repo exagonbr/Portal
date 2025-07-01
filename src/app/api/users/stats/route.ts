@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Verificar se há token de autenticação
     if (!headers['Authorization'] && !headers['X-Auth-Token'] && !headers['Cookie']) {
-      console.error('❌ [/api/users/stats] ERRO CRÍTICO: Nenhum método de autenticação encontrado!');
+      console.log('❌ [/api/users/stats] ERRO CRÍTICO: Nenhum método de autenticação encontrado!');
       return NextResponse.json(
         {
           success: false,
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     // Usar o handler seguro para processar a resposta
     return await handleApiResponse(response, '/api/users/stats');
   } catch (error) {
-    console.error('❌ [/api/users/stats] Erro ao buscar estatísticas de usuários:', error);
+    console.log('❌ [/api/users/stats] Erro ao buscar estatísticas de usuários:', error);
     
     // Tratar erro de timeout especificamente
     if (error instanceof Error && error.name === 'AbortError') {

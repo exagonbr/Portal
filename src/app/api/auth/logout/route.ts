@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           console.warn(`⚠️ API: Resposta inesperada do backend durante logout: ${response.status}`);
         }
       } catch (error) {
-        console.error('⚠️ API: Erro ao notificar backend sobre logout:', error);
+        console.log('⚠️ API: Erro ao notificar backend sobre logout:', error);
         // Continuamos com o logout mesmo se falhar a comunicação com o backend
       }
     }
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('❌ API: Erro crítico no logout:', error);
+    console.log('❌ API: Erro crítico no logout:', error);
     
     // Mesmo com erro, tentamos limpar os cookies
     const errorResponse = NextResponse.json(

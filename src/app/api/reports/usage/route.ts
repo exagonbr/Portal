@@ -265,7 +265,7 @@ async function getUsageDataFromDatabase(filters: any): Promise<UsageStats> {
     return result
 
   } catch (error) {
-    console.error('❌ Erro ao consultar banco de dados:', error)
+    console.log('❌ Erro ao consultar banco de dados:', error)
     console.log('🔄 Retornando dados mock devido ao erro')
     return getMockUsageData(filters)
   }
@@ -434,7 +434,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao obter dados de uso:', error)
+    console.log('❌ Erro ao obter dados de uso:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -497,7 +497,7 @@ export async function POST(request: NextRequest) {
     }, { status: 202 })
 
   } catch (error) {
-    console.error('Erro ao exportar relatório:', error)
+    console.log('Erro ao exportar relatório:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

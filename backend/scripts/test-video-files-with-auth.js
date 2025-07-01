@@ -24,7 +24,7 @@ async function login() {
       return false;
     }
   } catch (error) {
-    console.error('❌ Erro no login:', error.response?.data || error.message);
+    console.log('❌ Erro no login:', error.response?.data || error.message);
     return false;
   }
 }
@@ -133,7 +133,7 @@ async function testVideoFiles() {
     }
     
   } catch (error) {
-    console.error('❌ Erro no teste:', error.response?.data || error.message);
+    console.log('❌ Erro no teste:', error.response?.data || error.message);
     if (error.response?.status === 401) {
       console.log('🔐 Erro de autenticação - token pode ter expirado');
     }

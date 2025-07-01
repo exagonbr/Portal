@@ -284,7 +284,7 @@ export default function UniversalVideoPlayer({
     })
     
     if (!video.url || !video.url.trim()) {
-      console.error('❌ URL do vídeo está vazia:', video)
+      console.log('❌ URL do vídeo está vazia:', video)
       return ''
     }
     
@@ -534,12 +534,12 @@ export default function UniversalVideoPlayer({
   }
   
   if (!currentVideo) {
-    console.error('❌ UniversalVideoPlayer: currentVideo não está definido')
+    console.log('❌ UniversalVideoPlayer: currentVideo não está definido')
     return null;
   }
   
   if (!currentVideo.url || !currentVideo.url.trim()) {
-    console.error('❌ UniversalVideoPlayer: URL do vídeo atual está vazia:', currentVideo)
+    console.log('❌ UniversalVideoPlayer: URL do vídeo atual está vazia:', currentVideo)
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black">
         <div className="text-center text-white p-8">

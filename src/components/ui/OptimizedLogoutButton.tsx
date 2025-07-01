@@ -26,7 +26,7 @@ export function OptimizedLogoutButton({
     try {
       await logout();
     } catch (error) {
-      console.error('Erro no logout:', error);
+      console.log('Erro no logout:', error);
     }
   };
 
@@ -63,7 +63,7 @@ export function OptimizedLogoutMenuItem({
       await logout();
       onLogout?.();
     } catch (error) {
-      console.error('Erro no logout:', error);
+      console.log('Erro no logout:', error);
     }
   };
 
@@ -92,7 +92,7 @@ export function useOptimizedLogout() {
       await logout();
       return { success: true };
     } catch (error) {
-      console.error('Erro no logout:', error);
+      console.log('Erro no logout:', error);
       return { success: false, error };
     }
   };

@@ -27,7 +27,7 @@ self.addEventListener('install', (event) => {
         return cache.addAll(STATIC_ASSETS);
       })
       .catch((error) => {
-        console.error('Service Worker: Failed to cache static assets', error);
+        console.log('Service Worker: Failed to cache static assets', error);
       })
   );
   
@@ -165,7 +165,7 @@ async function cacheFirstStrategy(request) {
     
     return networkResponse;
   } catch (error) {
-    console.error('Service Worker: Failed to fetch and cache', error);
+    console.log('Service Worker: Failed to fetch and cache', error);
     throw error;
   }
 }
@@ -176,7 +176,7 @@ async function networkOnlyStrategy(request) {
     const response = await fetch(request);
     return response;
   } catch (error) {
-    console.error('Service Worker: API request failed', error);
+    console.log('Service Worker: API request failed', error);
     // Retornar uma Response válida em caso de erro
     return new Response(
       JSON.stringify({ 
@@ -283,7 +283,7 @@ async function handleClearCache(event, payload) {
       event.ports[0].postMessage(errorResponse);
     }
     
-    console.error('❌ Erro ao limpar cache:', error);
+    console.log('❌ Erro ao limpar cache:', error);
   }
 }
 
@@ -315,7 +315,7 @@ async function handleGetCacheInfo(event) {
       event.ports[0].postMessage(errorResponse);
     }
     
-    console.error('❌ Erro ao obter informações do cache:', error);
+    console.log('❌ Erro ao obter informações do cache:', error);
   }
 }
 

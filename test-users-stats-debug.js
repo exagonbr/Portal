@@ -136,4 +136,4 @@ async function runAllTests() {
   console.log('💡 Verifique os logs do backend para mais detalhes.');
 }
 
-runAllTests().catch(console.error); 
+runAllTests().catch(console.log); 

@@ -294,7 +294,7 @@ export function EnhancedErrorState({
 
   // Em produção, apenas logar o erro e não mostrar tela
   if (process.env.NODE_ENV === 'production') {
-    console.error('Erro capturado:', { title, message, details });
+    console.log('Erro capturado:', { title, message, details });
     return null;
   }
 

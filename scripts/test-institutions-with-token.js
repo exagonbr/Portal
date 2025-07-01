@@ -47,10 +47,10 @@ async function getValidToken() {
       }
     }
     
-    console.error('❌ Falha ao obter token');
+    console.log('❌ Falha ao obter token');
     return null;
   } catch (error) {
-    console.error('❌ Erro ao obter token:', error.message);
+    console.log('❌ Erro ao obter token:', error.message);
     return null;
   }
 }
@@ -78,7 +78,7 @@ async function testBackendInstitutions(token) {
       console.log('📊 Dados:', typeof data.data, Array.isArray(data.data) ? `Array com ${data.data.length} itens` : 'Não é array');
     } else {
       const errorText = await response.text();
-      console.error('❌ Erro no backend:', response.status, errorText);
+      console.log('❌ Erro no backend:', response.status, errorText);
       
       if (response.status === 401) {
         console.log('\n🔍 ANÁLISE DO ERRO 401:');
@@ -95,7 +95,7 @@ async function testBackendInstitutions(token) {
       }
     }
   } catch (error) {
-    console.error('❌ Erro na requisição backend:', error.message);
+    console.log('❌ Erro na requisição backend:', error.message);
   }
 }
 
@@ -122,7 +122,7 @@ async function testFrontendInstitutions(token) {
       console.log('📊 Dados:', typeof data.data, Array.isArray(data.data) ? `Array com ${data.data.length} itens` : 'Não é array');
     } else {
       const errorText = await response.text();
-      console.error('❌ Erro no frontend:', response.status, errorText);
+      console.log('❌ Erro no frontend:', response.status, errorText);
       
       if (response.status === 401) {
         console.log('\n🔍 ANÁLISE DO ERRO 401:');
@@ -139,7 +139,7 @@ async function testFrontendInstitutions(token) {
       }
     }
   } catch (error) {
-    console.error('❌ Erro na requisição frontend:', error.message);
+    console.log('❌ Erro na requisição frontend:', error.message);
   }
 }
 
@@ -173,7 +173,7 @@ async function testTokenValidation(token) {
     }
     
   } catch (error) {
-    console.error('❌ Erro na validação:', error.message);
+    console.log('❌ Erro na validação:', error.message);
   }
 }
 
@@ -185,7 +185,7 @@ async function main() {
   const token = await getValidToken();
   
   if (!token) {
-    console.error('💥 Não foi possível obter token válido. Abortando testes.');
+    console.log('💥 Não foi possível obter token válido. Abortando testes.');
     return;
   }
   
@@ -205,4 +205,4 @@ async function main() {
   console.log('Se ambos falharam com erro 401, há problema na validação JWT.');
 }
 
-main().catch(console.error);
+main().catch(console.log);

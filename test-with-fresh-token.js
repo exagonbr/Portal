@@ -62,4 +62,4 @@ async function testWithFreshToken() {
   }
 }
 
-testWithFreshToken().catch(console.error);
+testWithFreshToken().catch(console.log);

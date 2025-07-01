@@ -126,7 +126,7 @@ async function testCachePerformance() {
     }
     
   } catch (error) {
-    console.error('❌ Erro durante o teste:', error);
+    console.log('❌ Erro durante o teste:', error);
   } finally {
     if (browser) {
       await browser.close();
@@ -157,7 +157,7 @@ async function testDevCache() {
     }
     
   } catch (error) {
-    console.error('❌ Erro ao testar cache em desenvolvimento:', error.message);
+    console.log('❌ Erro ao testar cache em desenvolvimento:', error.message);
     console.log('💡 Certifique-se de que a aplicação está rodando em https://portal.sabercon.com.br');
   }
 }

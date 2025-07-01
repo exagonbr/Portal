@@ -164,7 +164,7 @@ export const useKookit = ({ fileUrl, fileType, containerId = 'page-area' }: UseK
       renderer.on('error', (error: any) => {
         if (!mountedRef.current) return;
         
-        console.error('❌ Erro no Kookit:', error);
+        console.log('❌ Erro no Kookit:', error);
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -184,7 +184,7 @@ export const useKookit = ({ fileUrl, fileType, containerId = 'page-area' }: UseK
       if (!mountedRef.current) return;
       
       const errorMsg = err instanceof Error ? err.message : 'Erro desconhecido';
-      console.error('❌ Erro ao inicializar Kookit:', errorMsg);
+      console.log('❌ Erro ao inicializar Kookit:', errorMsg);
       
       setState(prev => ({
         ...prev,
@@ -200,7 +200,7 @@ export const useKookit = ({ fileUrl, fileType, containerId = 'page-area' }: UseK
       try {
         rendererRef.current.goToPosition({ index: page - 1 });
       } catch (err) {
-        console.error('Erro ao navegar para página:', err);
+        console.log('Erro ao navegar para página:', err);
       }
     }
   }, [state.totalPages]);
@@ -210,7 +210,7 @@ export const useKookit = ({ fileUrl, fileType, containerId = 'page-area' }: UseK
       try {
         rendererRef.current.next();
       } catch (err) {
-        console.error('Erro ao avançar página:', err);
+        console.log('Erro ao avançar página:', err);
       }
     }
   }, []);
@@ -220,7 +220,7 @@ export const useKookit = ({ fileUrl, fileType, containerId = 'page-area' }: UseK
       try {
         rendererRef.current.prev();
       } catch (err) {
-        console.error('Erro ao retroceder página:', err);
+        console.log('Erro ao retroceder página:', err);
       }
     }
   }, []);
@@ -231,7 +231,7 @@ export const useKookit = ({ fileUrl, fileType, containerId = 'page-area' }: UseK
       try {
         rendererRef.current.setZoom(zoomLevel / 100);
       } catch (err) {
-        console.error('Erro ao aplicar zoom:', err);
+        console.log('Erro ao aplicar zoom:', err);
       }
     }
   }, []);

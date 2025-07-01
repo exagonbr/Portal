@@ -54,7 +54,7 @@ async function enableQueryMonitoring() {
         await client.query('CREATE EXTENSION pg_stat_statements');
         console.log('✅ Extensão pg_stat_statements instalada com sucesso');
       } catch (err) {
-        console.error('❌ Erro ao instalar pg_stat_statements:', err.message);
+        console.log('❌ Erro ao instalar pg_stat_statements:', err.message);
         console.log('Por favor, instale manualmente a extensão pg_stat_statements');
       }
     } else {
@@ -71,7 +71,7 @@ async function enableQueryMonitoring() {
     
     console.log(`✅ Monitoramento de consultas lentas ativado (threshold: ${SLOW_QUERY_THRESHOLD}ms)`);
   } catch (err) {
-    console.error('❌ Erro ao configurar monitoramento:', err);
+    console.log('❌ Erro ao configurar monitoramento:', err);
   } finally {
     client.release();
   }
@@ -135,7 +135,7 @@ async function collectQueryStats() {
     
     console.log(`📊 Coletadas estatísticas de ${result.rows.length} consultas lentas`);
   } catch (err) {
-    console.error('❌ Erro ao coletar estatísticas:', err);
+    console.log('❌ Erro ao coletar estatísticas:', err);
   } finally {
     client.release();
   }
@@ -225,13 +225,13 @@ async function main() {
     console.log(`✅ Monitoramento iniciado. Coletando estatísticas a cada ${MONITORING_INTERVAL/1000}s.`);
     console.log(`📊 Relatórios serão gerados a cada ${REPORT_INTERVAL/60000} minutos.`);
   } catch (err) {
-    console.error('❌ Erro ao iniciar monitoramento:', err);
+    console.log('❌ Erro ao iniciar monitoramento:', err);
     process.exit(1);
   }
 }
 
 // Executar função principal
-main().catch(console.error);
+main().catch(console.log);
 
 // Lidar com encerramento do script
 process.on('SIGINT', async () => {

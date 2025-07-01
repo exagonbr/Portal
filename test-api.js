@@ -10,9 +10,9 @@ const testAPI = async () => {
     console.log('Headers:', Object.fromEntries(response.headers.entries()))
     
     if (!response.ok) {
-      console.error('❌ Erro na resposta:', response.status, response.statusText)
+      console.log('❌ Erro na resposta:', response.status, response.statusText)
       const errorText = await response.text()
-      console.error('Erro detalhado:', errorText)
+      console.log('Erro detalhado:', errorText)
       return
     }
     
@@ -33,7 +33,7 @@ const testAPI = async () => {
     }
     
   } catch (error) {
-    console.error('❌ Erro na requisição:', error.message)
+    console.log('❌ Erro na requisição:', error.message)
   }
 }
 

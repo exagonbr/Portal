@@ -29,7 +29,7 @@ export function initializeGlobalErrorHandler(): void {
       
       // Se exceder o limite, recarregar a página
       if (chunkErrorCount >= MAX_CHUNK_ERRORS) {
-        console.error('❌ Muitos erros de chunk, recarregando página...');
+        console.log('❌ Muitos erros de chunk, recarregando página...');
         window.location.reload();
       }
     }
@@ -46,7 +46,7 @@ export function initializeGlobalErrorHandler(): void {
       
       // Se exceder o limite, recarregar a página
       if (chunkErrorCount >= MAX_CHUNK_ERRORS) {
-        console.error('❌ Muitos erros de chunk em promises, recarregando página...');
+        console.log('❌ Muitos erros de chunk em promises, recarregando página...');
         window.location.reload();
       }
     }
@@ -62,7 +62,7 @@ export function initializeGlobalErrorHandler(): void {
         
         // Se exceder o limite, recarregar a página
         if (chunkErrorCount >= MAX_CHUNK_ERRORS) {
-          console.error('❌ Muitos erros de script, recarregando página...');
+          console.log('❌ Muitos erros de script, recarregando página...');
           window.location.reload();
         }
       }

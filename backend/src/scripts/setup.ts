@@ -28,7 +28,7 @@ async function setupDatabase() {
 
     console.log('✅ Banco de dados configurado com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao configurar banco de dados:', error);
+    console.log('❌ Erro ao configurar banco de dados:', error);
     throw error;
   }
 }
@@ -43,7 +43,7 @@ async function setupRedis() {
     }
     console.log('✅ Redis configurado com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao configurar Redis:', error);
+    console.log('❌ Erro ao configurar Redis:', error);
     throw error;
   }
 }
@@ -62,7 +62,7 @@ async function createDefaultData() {
     
     console.log('✅ Dados padrão criados com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao criar dados padrão:', error);
+    console.log('❌ Erro ao criar dados padrão:', error);
     throw error;
   }
 }
@@ -93,7 +93,7 @@ async function cleanupExpiredSessions() {
     
     console.log(`✅ ${blacklistedKeys.length} chaves de sessão verificadas`);
   } catch (error) {
-    console.error('❌ Erro ao limpar sessões:', error);
+    console.log('❌ Erro ao limpar sessões:', error);
     throw error;
   }
 }
@@ -147,7 +147,7 @@ async function main() {
     console.log('   npm run start (produção)\n');
     
   } catch (error) {
-    console.error('\n❌ Falha no setup:', error);
+    console.log('\n❌ Falha no setup:', error);
     process.exit(1);
   } finally {
     // Fecha conexões
@@ -167,7 +167,7 @@ async function main() {
 // Executa o setup se este arquivo for executado diretamente
 if (require.main === module) {
   main().catch(error => {
-    console.error('Erro fatal no setup:', error);
+    console.log('Erro fatal no setup:', error);
     process.exit(1);
   });
 }

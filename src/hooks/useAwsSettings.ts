@@ -65,7 +65,7 @@ export function useAwsSettings() {
         }
       }
     } catch (err) {
-      console.error('Erro ao carregar configurações AWS:', err)
+      console.log('Erro ao carregar configurações AWS:', err)
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
       
       // Fallback para localStorage
@@ -118,7 +118,7 @@ export function useAwsSettings() {
         throw new Error(data.message || 'Erro ao salvar configurações')
       }
     } catch (err) {
-      console.error('Erro ao salvar configurações AWS:', err)
+      console.log('Erro ao salvar configurações AWS:', err)
       setError(err instanceof Error ? err.message : 'Erro ao salvar configurações')
       
       // Fallback para localStorage
@@ -150,7 +150,7 @@ export function useAwsSettings() {
       setError(null)
       return true
     } catch (err) {
-      console.error('Erro ao resetar configurações:', err)
+      console.log('Erro ao resetar configurações:', err)
       return false
     }
   }
@@ -177,7 +177,7 @@ export function useAwsSettings() {
       const data = await response.json()
       return data
     } catch (err) {
-      console.error('Erro ao testar conexão AWS:', err)
+      console.log('Erro ao testar conexão AWS:', err)
       return {
         success: false,
         message: err instanceof Error ? err.message : 'Erro ao testar conexão'

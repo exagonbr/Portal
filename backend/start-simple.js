@@ -436,7 +436,7 @@ app.use('*', (req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.log('Error:', err);
   
   const status = err.status || err.statusCode || 500;
   const message = err.message || 'Erro interno do servidor';

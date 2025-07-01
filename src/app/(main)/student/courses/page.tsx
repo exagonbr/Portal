@@ -95,7 +95,7 @@ export default function StudentCoursesPage() {
       setCourses(mockCourses)
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao buscar cursos:', error)
+      console.log('Erro ao buscar cursos:', error)
       setLoading(false)
     }
   }

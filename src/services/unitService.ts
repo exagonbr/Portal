@@ -92,19 +92,19 @@ class UnitService {
       
       // Verificar se a resposta foi bem-sucedida
       if (!response.success) {
-        console.error('❌ UnitService.list - API retornou erro:', response.message);
+        console.log('❌ UnitService.list - API retornou erro:', response.message);
         throw new Error(response.message || 'API returned error');
       }
 
       // Verificar se os dados existem e têm a estrutura esperada
       if (!response.data) {
-        console.error('❌ UnitService.list - Dados não encontrados na resposta');
+        console.log('❌ UnitService.list - Dados não encontrados na resposta');
         throw new Error('No data returned from API');
       }
 
       // Verificar se a estrutura está correta (items e pagination)
       if (!response.data.items || !Array.isArray(response.data.items)) {
-        console.error('❌ UnitService.list - Estrutura de dados inválida:', {
+        console.log('❌ UnitService.list - Estrutura de dados inválida:', {
           hasItems: !!response.data.items,
           itemsType: typeof response.data.items,
           isArray: Array.isArray(response.data.items)
@@ -114,7 +114,7 @@ class UnitService {
       
       return response.data;
     } catch (error) {
-      console.error('❌ UnitService.list - Erro:', error);
+      console.log('❌ UnitService.list - Erro:', error);
       throw handleApiError(error as ApiClientError);
     }
   }
@@ -137,7 +137,7 @@ class UnitService {
       
       return response.data;
     } catch (error) {
-      console.error('❌ UnitService.getById - Erro:', error);
+      console.log('❌ UnitService.getById - Erro:', error);
       throw handleApiError(error as ApiClientError);
     }
   }
@@ -160,7 +160,7 @@ class UnitService {
       
       return response.data;
     } catch (error) {
-      console.error('❌ UnitService.create - Erro:', error);
+      console.log('❌ UnitService.create - Erro:', error);
       throw handleApiError(error as ApiClientError);
     }
   }
@@ -183,7 +183,7 @@ class UnitService {
       
       return response.data;
     } catch (error) {
-      console.error('❌ UnitService.update - Erro:', error);
+      console.log('❌ UnitService.update - Erro:', error);
       throw handleApiError(error as ApiClientError);
     }
   }
@@ -200,7 +200,7 @@ class UnitService {
         throw new Error(response.message || 'API returned error');
       }
     } catch (error) {
-      console.error('❌ UnitService.delete - Erro:', error);
+      console.log('❌ UnitService.delete - Erro:', error);
       throw handleApiError(error as ApiClientError);
     }
   }
@@ -232,7 +232,7 @@ class UnitService {
       
       return response.data;
     } catch (error) {
-      console.error('❌ UnitService.search - Erro:', error);
+      console.log('❌ UnitService.search - Erro:', error);
       throw handleApiError(error as ApiClientError);
     }
   }

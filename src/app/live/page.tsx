@@ -25,7 +25,7 @@ export default function LiveClassesPage() {
       const classRecordings = await recordingService.getClassroomRecordings(activeClass.id)
       setRecordings(classRecordings)
     } catch (error) {
-      console.error('Failed to load recordings:', error)
+      console.log('Failed to load recordings:', error)
     }
   }
 

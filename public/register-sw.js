@@ -31,7 +31,7 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
         });
       })
       .catch((error) => {
-        console.error('❌ Erro ao registrar Service Worker:', error);
+        console.log('❌ Erro ao registrar Service Worker:', error);
       });
   });
 
@@ -47,7 +47,7 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
         break;
         
       case 'CACHE_ERROR':
-        console.error('❌ Erro no cache do Service Worker:', data);
+        console.log('❌ Erro no cache do Service Worker:', data);
         break;
         
       default:
@@ -141,7 +141,7 @@ window.clearServiceWorkerCache = async (reason = 'manual') => {
       return result;
       
     } catch (error) {
-      console.error('❌ Erro ao limpar cache via Service Worker:', error);
+      console.log('❌ Erro ao limpar cache via Service Worker:', error);
       throw error;
     }
   } else {
@@ -180,7 +180,7 @@ window.getServiceWorkerCacheInfo = async () => {
       return result;
       
     } catch (error) {
-      console.error('❌ Erro ao obter informações do cache:', error);
+      console.log('❌ Erro ao obter informações do cache:', error);
       throw error;
     }
   } else {

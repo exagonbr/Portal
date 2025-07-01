@@ -25,7 +25,7 @@ async function main() {
     console.log('✅ Sincronização concluída com sucesso!');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Erro na sincronização:', error);
+    console.log('❌ Erro na sincronização:', error);
     process.exit(1);
   }
 }

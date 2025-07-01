@@ -32,7 +32,7 @@ const testFrontendAPI = async () => {
     console.log('📊 Status Frontend:', response.status);
     console.log('📋 Resposta Frontend:', JSON.stringify(data, null, 2));
   } catch (error) {
-    console.error('❌ Erro Frontend:', error.message);
+    console.log('❌ Erro Frontend:', error.message);
   }
 };
 

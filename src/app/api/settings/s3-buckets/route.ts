@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Erro ao listar buckets S3:', error)
+    console.log('Erro ao listar buckets S3:', error)
     return NextResponse.json(
       { 
         error: 'Erro ao listar buckets S3',

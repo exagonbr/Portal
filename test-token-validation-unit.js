@@ -189,4 +189,4 @@ async function runUnitTests() {
 }
 
 // Run the tests
-runUnitTests().catch(console.error);
+runUnitTests().catch(console.log);

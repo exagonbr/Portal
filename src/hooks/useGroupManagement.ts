@@ -35,7 +35,7 @@ export const useGroupManagement = (filters?: GroupFilter) => {
       }
     } catch (err) {
       setError('Erro de conexão ao carregar grupos');
-      console.error('Erro ao buscar grupos:', err);
+      console.log('Erro ao buscar grupos:', err);
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export const useGroupManagement = (filters?: GroupFilter) => {
       }
     } catch (err) {
       setError('Erro de conexão ao criar grupo');
-      console.error('Erro ao criar grupo:', err);
+      console.log('Erro ao criar grupo:', err);
       return null;
     }
   };
@@ -88,7 +88,7 @@ export const useGroupManagement = (filters?: GroupFilter) => {
       }
     } catch (err) {
       setError('Erro de conexão ao atualizar grupo');
-      console.error('Erro ao atualizar grupo:', err);
+      console.log('Erro ao atualizar grupo:', err);
       return null;
     }
   };
@@ -110,7 +110,7 @@ export const useGroupManagement = (filters?: GroupFilter) => {
       }
     } catch (err) {
       setError('Erro de conexão ao excluir grupo');
-      console.error('Erro ao excluir grupo:', err);
+      console.log('Erro ao excluir grupo:', err);
       return false;
     }
   };
@@ -163,7 +163,7 @@ export const useGroupDetails = (groupId: string | null) => {
       }
     } catch (err) {
       setError('Erro de conexão ao carregar detalhes do grupo');
-      console.error('Erro ao buscar detalhes do grupo:', err);
+      console.log('Erro ao buscar detalhes do grupo:', err);
     } finally {
       setLoading(false);
     }
@@ -194,7 +194,7 @@ export const useGroupDetails = (groupId: string | null) => {
       }
     } catch (err) {
       setError('Erro de conexão ao adicionar membro');
-      console.error('Erro ao adicionar membro:', err);
+      console.log('Erro ao adicionar membro:', err);
       return false;
     }
   };
@@ -218,7 +218,7 @@ export const useGroupDetails = (groupId: string | null) => {
       }
     } catch (err) {
       setError('Erro de conexão ao remover membro');
-      console.error('Erro ao remover membro:', err);
+      console.log('Erro ao remover membro:', err);
       return false;
     }
   };
@@ -254,7 +254,7 @@ export const useGroupDetails = (groupId: string | null) => {
       }
     } catch (err) {
       setError('Erro de conexão ao definir permissão');
-      console.error('Erro ao definir permissão:', err);
+      console.log('Erro ao definir permissão:', err);
       return false;
     }
   };
@@ -293,7 +293,7 @@ export const useGroupStats = () => {
       }
     } catch (err) {
       setError('Erro de conexão ao carregar estatísticas');
-      console.error('Erro ao buscar estatísticas:', err);
+      console.log('Erro ao buscar estatísticas:', err);
     } finally {
       setLoading(false);
     }

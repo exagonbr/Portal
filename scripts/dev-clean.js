@@ -100,6 +100,6 @@ console.log('⚠️  Use Ctrl+Shift+R para recarregar com cache limpo');
 try {
   execSync('npm run dev', { stdio: 'inherit' });
 } catch (error) {
-  console.error('❌ Erro ao iniciar servidor:', error.message);
+  console.log('❌ Erro ao iniciar servidor:', error.message);
   process.exit(1);
 } 

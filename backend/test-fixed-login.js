@@ -72,8 +72,8 @@ async function testFixedLogin() {
     console.log('🔐 Senha para teste:', testPassword);
     
   } catch (error) {
-    console.error('❌ Erro:', error.message);
-    console.error('Stack:', error.stack);
+    console.log('❌ Erro:', error.message);
+    console.log('Stack:', error.stack);
   } finally {
     await db.destroy();
     process.exit(0);

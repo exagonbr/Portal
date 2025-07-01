@@ -52,7 +52,7 @@ export default function AuthErrorPage() {
         await clearAllDataForUnauthorized();
         console.log('✅ Dados limpos na página de erro de autenticação');
       } catch (error) {
-        console.error('❌ Erro ao limpar dados:', error);
+        console.log('❌ Erro ao limpar dados:', error);
       } finally {
         setIsClearing(false);
       }

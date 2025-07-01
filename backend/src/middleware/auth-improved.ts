@@ -79,7 +79,7 @@ export const authMiddlewareImproved = async (
     req.user = decoded;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.log('Auth middleware error:', error);
     res.status(401).json({ 
       success: false,
       error: 'Authentication failed' 

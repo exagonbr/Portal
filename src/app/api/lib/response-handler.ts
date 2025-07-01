@@ -28,7 +28,7 @@ export async function safeJsonParse(
   // Check if response is JSON
   if (!contentType || !contentType.includes('application/json')) {
     const text = await response.text();
-    console.error(`❌ [${endpoint}] Non-JSON response:`, text.substring(0, 500));
+    console.log(`❌ [${endpoint}] Non-JSON response:`, text.substring(0, 500));
     
     return {
       error: `Expected JSON but received ${contentType || 'unknown content type'}`,
@@ -40,7 +40,7 @@ export async function safeJsonParse(
     const data = await response.json();
     return { data, isJson: true };
   } catch (error) {
-    console.error(`❌ [${endpoint}] Failed to parse JSON:`, error);
+    console.log(`❌ [${endpoint}] Failed to parse JSON:`, error);
     return {
       error: 'Failed to parse JSON response',
       isJson: false

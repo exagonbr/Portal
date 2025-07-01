@@ -154,7 +154,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     
     // Continuar validação...
   } catch (error) {
-    console.error('❌ Auth middleware error:', error);
+    console.log('❌ Auth middleware error:', error);
     res.status(401).json({ error: 'Invalid authentication token' });
   }
 };
@@ -257,7 +257,7 @@ export class AuthRecovery {
         }
       }
     } catch (error) {
-      console.error('Erro no refresh:', error);
+      console.log('Erro no refresh:', error);
     }
     
     return false;
@@ -288,7 +288,7 @@ if (error.status === 401) {
 // src/utils/auth-metrics.ts
 export class AuthMetrics {
   static track401Error(details: any) {
-    console.error('📊 AUTH_401_ERROR', {
+    console.log('📊 AUTH_401_ERROR', {
       timestamp: new Date().toISOString(),
       url: window.location.href,
       hasToken: details.hasToken,

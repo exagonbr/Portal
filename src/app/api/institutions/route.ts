@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     // Se falhar, retornar erro
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Backend error:', errorText);
+      console.log('❌ Backend error:', errorText);
       
       // Se for erro 401 na rota autenticada, tentar rota pública como fallback
       if (response.status === 401 && hasValidAuthToken) {
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     
     if (!contentType || !contentType.includes('application/json')) {
       const textResponse = await response.text();
-      console.error('❌ Resposta não é JSON:', textResponse);
+      console.log('❌ Resposta não é JSON:', textResponse);
       return NextResponse.json(
         { success: false, message: 'Resposta do backend não é JSON válido' },
         { status: 500 }
@@ -106,8 +106,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('❌ Erro ao buscar instituições:', error);
-    console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
+    console.log('❌ Erro ao buscar instituições:', error);
+    console.log('❌ Error details:', error instanceof Error ? error.message : String(error));
     
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor ao buscar instituições' },
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao criar instituição:', error);
+    console.log('Erro ao criar instituição:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { status: 500 }

@@ -136,11 +136,11 @@ class ApiClient {
         // Verificar se foi configurado corretamente
         const verifyToken = localStorage.getItem('auth_token');
         if (verifyToken !== cleanToken) {
-          console.error('Falha ao armazenar token');
+          console.log('Falha ao armazenar token');
         }
         
       } catch (error) {
-        console.error('Erro ao configurar cookie auth_token:', error);
+        console.log('Erro ao configurar cookie auth_token:', error);
       }
     }
   }
@@ -161,7 +161,7 @@ class ApiClient {
         document.cookie = cookieValue;
         
       } catch (error) {
-        console.error('Erro ao configurar cookie user_data:', error);
+        console.log('Erro ao configurar cookie user_data:', error);
       }
     }
   }

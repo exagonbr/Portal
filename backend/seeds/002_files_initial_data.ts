@@ -255,7 +255,7 @@ export async function seed(knex: any): Promise<void> {
     console.log('   UPDATE files SET uploaded_by = (SELECT id FROM users WHERE email = \'admin@sabercon.edu.br\') WHERE uploaded_by IS NULL;');
     
   } catch (error) {
-    console.error('❌ Erro ao inserir arquivos:', error);
+    console.log('❌ Erro ao inserir arquivos:', error);
     throw error;
   }
 } 

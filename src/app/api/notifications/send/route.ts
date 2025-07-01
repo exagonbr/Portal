@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ [Email Send API] Erro ao enviar email:', error)
+    console.log('❌ [Email Send API] Erro ao enviar email:', error)
     return NextResponse.json({ 
       success: false,
       message: 'Erro interno do servidor' 

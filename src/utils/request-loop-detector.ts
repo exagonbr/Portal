@@ -206,7 +206,7 @@ function notifyRateLimitCallbacks(detected: boolean, reason?: string): void {
     try {
       callback(detected, reason);
     } catch (error) {
-      console.error('Erro ao executar callback de rate limiting:', error);
+      console.log('Erro ao executar callback de rate limiting:', error);
     }
   });
 }
@@ -233,7 +233,7 @@ export function setupRequestLoopDetection(): void {
     try {
       return await originalFetch(input, init);
     } catch (error) {
-      console.error('❌ Erro na requisição:', error);
+      console.log('❌ Erro na requisição:', error);
       throw error;
     }
   };

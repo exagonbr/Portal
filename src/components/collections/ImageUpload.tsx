@@ -70,7 +70,7 @@ export default function ImageUpload({
       setPreview(uploadedUrl)
       
     } catch (error) {
-      console.error('Erro no upload:', error)
+      console.log('Erro no upload:', error)
       alert('Erro ao fazer upload da imagem. Tente novamente.')
       setPreview(currentImage || null)
     } finally {

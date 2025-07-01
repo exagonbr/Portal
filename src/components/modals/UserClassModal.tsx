@@ -54,7 +54,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
       setClasses(classesResponse.items || []);
       setUsers(usersResponse.items || []);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.log('Erro ao carregar dados:', error);
     }
   };
 
@@ -63,7 +63,7 @@ export default function UserClassModal({ isOpen, onClose, onSuccess, classId, us
       const response = await userClassService.getByClass(classId);
       setEnrolledUsers(response.data || []);
     } catch (error) {
-      console.error('Erro ao carregar usuários matriculados:', error);
+      console.log('Erro ao carregar usuários matriculados:', error);
     }
   };
 

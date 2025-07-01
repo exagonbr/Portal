@@ -94,10 +94,10 @@ export default function UsageReportsPage() {
       if (result.success) {
         setUsageData(result.data)
       } else {
-        console.error('Erro ao carregar dados:', result.error)
+        console.log('Erro ao carregar dados:', result.error)
       }
     } catch (error) {
-      console.error('Erro ao carregar dados de uso:', error)
+      console.log('Erro ao carregar dados de uso:', error)
     } finally {
       setIsLoading(false)
     }
@@ -142,7 +142,7 @@ export default function UsageReportsPage() {
         alert('Erro ao iniciar exportação: ' + result.error)
       }
     } catch (error) {
-      console.error('Erro ao exportar:', error)
+      console.log('Erro ao exportar:', error)
       alert('Erro ao exportar relatório')
     }
   }
@@ -159,7 +159,7 @@ export default function UsageReportsPage() {
         year: 'numeric'
       })
     } catch (error) {
-      console.error('Erro ao formatar data:', dateString, error)
+      console.log('Erro ao formatar data:', dateString, error)
       return dateString
     }
   }

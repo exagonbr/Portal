@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Error fetching units:', error)
+    console.log('Error fetching units:', error)
     return NextResponse.json({ error: 'Internal server error' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
   } catch (error) {
-    console.error('Error creating unit:', error)
+    console.log('Error creating unit:', error)
     return NextResponse.json({ error: 'Internal server error' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

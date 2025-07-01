@@ -26,7 +26,7 @@ export const useRolePermissions = (): UseRolePermissionsReturn => {
       const permissionsData = await roleService.getPermissionsForRole(roleId)
       setPermissions(prev => ({ ...prev, [roleId]: permissionsData }))
     } catch (error) {
-      console.error(`Erro ao carregar permissões da role ${roleId}:`, error)
+      console.log(`Erro ao carregar permissões da role ${roleId}:`, error)
       setPermissions(prev => ({ ...prev, [roleId]: null }))
     } finally {
       setLoadingPermissions(prev => ({ ...prev, [roleId]: false }))

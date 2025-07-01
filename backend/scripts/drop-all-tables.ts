@@ -106,7 +106,7 @@ async function dropAllTables() {
     console.log('✅ Banco pronto para migration fresh');
     
   } catch (error) {
-    console.error('\n❌ ERRO DURANTE REMOÇÃO:', error);
+    console.log('\n❌ ERRO DURANTE REMOÇÃO:', error);
     await db.destroy();
     process.exit(1);
   }

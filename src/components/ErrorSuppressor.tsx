@@ -5,8 +5,8 @@ import { useEffect } from 'react';
 export default function ErrorSuppressor() {
   useEffect(() => {
     // Suprimir o erro específico do ResizeObserver que é benigno
-    const originalError = console.error;
-    console.error = (...args) => {
+    const originalError = console.log;
+    console.log = (...args) => {
       // Verificar se é o erro específico do ResizeObserver
       if (
         args.length > 0 &&
@@ -59,7 +59,7 @@ export default function ErrorSuppressor() {
 
     // Cleanup
     return () => {
-      console.error = originalError;
+      console.log = originalError;
       window.removeEventListener('error', handleError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };

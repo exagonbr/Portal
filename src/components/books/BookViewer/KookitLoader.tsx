@@ -64,7 +64,7 @@ const KookitLoader: React.FC<KookitLoaderProps> = ({ children, fallback }) => {
         throw new Error('Biblioteca Kookit não foi carregada corretamente');
       }
     } catch (err) {
-      console.error('❌ Erro ao carregar Kookit:', err);
+      console.log('❌ Erro ao carregar Kookit:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido ao carregar Kookit');
     } finally {
       setIsLoading(false);
@@ -91,7 +91,7 @@ const KookitLoader: React.FC<KookitLoaderProps> = ({ children, fallback }) => {
       };
 
       script.onerror = () => {
-        console.error(`❌ Erro ao carregar script: ${src}`);
+        console.log(`❌ Erro ao carregar script: ${src}`);
         reject(new Error(`Falha ao carregar ${src}`));
       };
 

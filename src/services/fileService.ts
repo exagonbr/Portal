@@ -81,7 +81,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return Array.isArray(result) ? result : []
     } catch (error) {
-      console.error('Erro no serviço de arquivos:', error)
+      console.log('Erro no serviço de arquivos:', error)
       throw error
     }
   }
@@ -105,7 +105,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result || {}
     } catch (error) {
-      console.error('Erro no serviço de arquivos:', error)
+      console.log('Erro no serviço de arquivos:', error)
       throw error
     }
   }
@@ -149,7 +149,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro no upload:', error)
+      console.log('Erro no upload:', error)
       throw error
     }
   }
@@ -185,7 +185,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao substituir arquivo:', error)
+      console.log('Erro ao substituir arquivo:', error)
       throw error
     }
   }
@@ -213,7 +213,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao renomear arquivo:', error)
+      console.log('Erro ao renomear arquivo:', error)
       throw error
     }
   }
@@ -241,7 +241,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao mover arquivo:', error)
+      console.log('Erro ao mover arquivo:', error)
       throw error
     }
   }
@@ -260,7 +260,7 @@ export class FileService {
 
       return true
     } catch (error) {
-      console.error('Erro ao deletar arquivo:', error)
+      console.log('Erro ao deletar arquivo:', error)
       throw error
     }
   }
@@ -288,7 +288,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao atualizar arquivo:', error)
+      console.log('Erro ao atualizar arquivo:', error)
       throw error
     }
   }
@@ -316,7 +316,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao criar referência:', error)
+      console.log('Erro ao criar referência:', error)
       throw error
     }
   }
@@ -341,7 +341,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao buscar arquivos do bucket:', error)
+      console.log('Erro ao buscar arquivos do bucket:', error)
       throw error
     }
   }
@@ -369,7 +369,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao vincular à coleção:', error)
+      console.log('Erro ao vincular à coleção:', error)
       throw error
     }
   }
@@ -397,7 +397,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao adicionar à biblioteca:', error)
+      console.log('Erro ao adicionar à biblioteca:', error)
       throw error
     }
   }
@@ -424,7 +424,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao desvincular do conteúdo:', error)
+      console.log('Erro ao desvincular do conteúdo:', error)
       throw error
     }
   }
@@ -462,7 +462,7 @@ export class FileService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao adicionar à biblioteca de livros:', error)
+      console.log('Erro ao adicionar à biblioteca de livros:', error)
       throw error
     }
   }

@@ -54,7 +54,7 @@ export default function SecurityPoliciesPage() {
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (error) {
-      console.error('Erro ao salvar configurações:', error)
+      console.log('Erro ao salvar configurações:', error)
     } finally {
       setLoading(false)
     }

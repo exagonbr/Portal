@@ -42,7 +42,7 @@ async function testJWTGeneration() {
       exp: new Date(decoded.exp * 1000).toISOString()
     });
   } catch (error) {
-    console.error('❌ Erro ao validar token:', error.message);
+    console.log('❌ Erro ao validar token:', error.message);
   }
   
   return testToken;
@@ -80,17 +80,17 @@ async function testBackendLogin() {
           console.log('✅ Token do backend validado com sucesso');
           console.log('👤 Usuário:', decoded.email || decoded.userId);
         } catch (error) {
-          console.error('❌ Token do backend inválido:', error.message);
+          console.log('❌ Token do backend inválido:', error.message);
         }
         
         return data.token;
       }
     } else {
       const errorText = await response.text();
-      console.error('❌ Erro no login:', errorText);
+      console.log('❌ Erro no login:', errorText);
     }
   } catch (error) {
-    console.error('❌ Erro na requisição:', error.message);
+    console.log('❌ Erro na requisição:', error.message);
   }
   
   return null;
@@ -128,17 +128,17 @@ async function testFrontendLogin() {
           console.log('✅ Token do frontend validado com sucesso');
           console.log('👤 Usuário:', decoded.email || decoded.userId);
         } catch (error) {
-          console.error('❌ Token do frontend inválido:', error.message);
+          console.log('❌ Token do frontend inválido:', error.message);
         }
         
         return data.token;
       }
     } else {
       const errorText = await response.text();
-      console.error('❌ Erro no login frontend:', errorText);
+      console.log('❌ Erro no login frontend:', errorText);
     }
   } catch (error) {
-    console.error('❌ Erro na requisição frontend:', error.message);
+    console.log('❌ Erro na requisição frontend:', error.message);
   }
   
   return null;
@@ -171,10 +171,10 @@ async function testInstitutionsEndpoint(token) {
       console.log('📊 Dados recebidos:', typeof data, Object.keys(data || {}));
     } else {
       const errorText = await response.text();
-      console.error('❌ Erro no endpoint institutions:', errorText);
+      console.log('❌ Erro no endpoint institutions:', errorText);
     }
   } catch (error) {
-    console.error('❌ Erro na requisição institutions:', error.message);
+    console.log('❌ Erro na requisição institutions:', error.message);
   }
 }
 
@@ -205,7 +205,7 @@ async function testDirectBackendInstitutions(token) {
       console.log('📊 Dados recebidos:', typeof data, Object.keys(data || {}));
     } else {
       const errorText = await response.text();
-      console.error('❌ Erro no backend institutions:', errorText);
+      console.log('❌ Erro no backend institutions:', errorText);
       
       // Se for erro 401, vamos analisar mais detalhadamente
       if (response.status === 401) {
@@ -227,7 +227,7 @@ async function testDirectBackendInstitutions(token) {
       }
     }
   } catch (error) {
-    console.error('❌ Erro na requisição backend institutions:', error.message);
+    console.log('❌ Erro na requisição backend institutions:', error.message);
   }
 }
 
@@ -266,9 +266,9 @@ async function main() {
     }
     
   } catch (error) {
-    console.error('💥 Erro geral:', error);
+    console.log('💥 Erro geral:', error);
   }
 }
 
 // Executar diagnóstico
-main().catch(console.error);
+main().catch(console.log);

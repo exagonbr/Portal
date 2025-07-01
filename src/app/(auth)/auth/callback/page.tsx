@@ -21,7 +21,7 @@ export default function AuthCallbackPage() {
     console.log('❌ Erro presente:', error);
 
     if (error) {
-      console.error('❌ Erro no callback do Google:', error);
+      console.log('❌ Erro no callback do Google:', error);
       router.push(`/auth/login?error=${error}`);
       return;
     }
@@ -29,11 +29,11 @@ export default function AuthCallbackPage() {
     if (token) {
       console.log('✅ Token recebido, processando login...');
       handleGoogleLogin(token).catch(error => {
-        console.error("❌ Falha no login Google:", error);
+        console.log("❌ Falha no login Google:", error);
         router.push('/auth/login?error=auth_failed');
       });
     } else {
-      console.error('❌ Token não encontrado no callback');
+      console.log('❌ Token não encontrado no callback');
       router.push('/auth/login?error=missing_token');
     }
   }, [searchParams, handleGoogleLogin, router]);

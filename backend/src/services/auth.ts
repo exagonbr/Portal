@@ -116,7 +116,7 @@ export class AuthService {
       
       return decoded;
     } catch (error) {
-      console.error('Erro ao validar token:', error);
+      console.log('Erro ao validar token:', error);
       return null;
     }
   }
@@ -143,7 +143,7 @@ export class AuthService {
       const permissions = rolePermissions.map(p => p.name);
       return { roleName: role.name, permissions };
     } catch (error) {
-      console.error('Erro ao buscar role e permissões:', error);
+      console.log('Erro ao buscar role e permissões:', error);
       return { roleName: 'STUDENT', permissions: [] };
     }
   }
@@ -210,7 +210,7 @@ export class AuthService {
         message: 'Login realizado com sucesso'
       };
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.log('Erro no login:', error);
       throw new Error(error instanceof Error ? error.message : 'Erro interno no login');
     }
   }
@@ -300,7 +300,7 @@ export class AuthService {
         message: 'Usuário registrado com sucesso'
       };
     } catch (error) {
-      console.error('Erro no registro:', error);
+      console.log('Erro no registro:', error);
       throw new Error(error instanceof Error ? error.message : 'Erro interno no registro');
     }
   }
@@ -333,7 +333,7 @@ export class AuthService {
         permissions
       };
     } catch (error) {
-      console.error('Erro ao buscar usuário por ID:', error);
+      console.log('Erro ao buscar usuário por ID:', error);
       return null;
     }
   }
@@ -363,7 +363,7 @@ export class AuthService {
         user
       };
     } catch (error) {
-      console.error('Erro ao renovar token:', error);
+      console.log('Erro ao renovar token:', error);
       return null;
     }
   }
@@ -384,7 +384,7 @@ export class AuthService {
         message: 'Logout realizado com sucesso'
       };
     } catch (error) {
-      console.error('Erro no logout:', error);
+      console.log('Erro no logout:', error);
       return {
         success: false,
         message: 'Erro interno no logout'
@@ -400,7 +400,7 @@ export class AuthService {
       const user = await this.getUserById(userId);
       return user?.permissions.includes(permission) || false;
     } catch (error) {
-      console.error('Erro ao verificar permissão:', error);
+      console.log('Erro ao verificar permissão:', error);
       return false;
     }
   }
@@ -413,7 +413,7 @@ export class AuthService {
       const user = await this.getUserById(userId);
       return user?.role === role || false;
     } catch (error) {
-      console.error('Erro ao verificar role:', error);
+      console.log('Erro ao verificar role:', error);
       return false;
     }
   }

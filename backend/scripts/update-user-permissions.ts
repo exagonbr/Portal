@@ -189,7 +189,7 @@ async function updateUserPermissions() {
     console.log('✅ Sistema de permissões atualizado e funcionando');
 
   } catch (error) {
-    console.error('\n❌ ERRO DURANTE ATUALIZAÇÃO DE PERMISSÕES:', error);
+    console.log('\n❌ ERRO DURANTE ATUALIZAÇÃO DE PERMISSÕES:', error);
     await db.destroy();
     process.exit(1);
   }

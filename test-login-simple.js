@@ -42,7 +42,7 @@ const req = https.request(options, (res) => {
 });
 
 req.on('error', (error) => {
-  console.error('Erro:', error);
+  console.log('Erro:', error);
 });
 
 req.write(data);

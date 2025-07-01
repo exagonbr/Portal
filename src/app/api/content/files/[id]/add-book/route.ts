@@ -149,7 +149,7 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('❌ Erro ao adicionar livro à biblioteca:', error)
+    console.log('❌ Erro ao adicionar livro à biblioteca:', error)
     
     // Verificar tipos de erro específicos
     if (error instanceof Error) {
@@ -168,7 +168,7 @@ export async function POST(
       }
 
       // Log detalhado para debug
-      console.error('Detalhes do erro:', {
+      console.log('Detalhes do erro:', {
         message: error.message,
         stack: error.stack
       })

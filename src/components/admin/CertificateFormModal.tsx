@@ -123,7 +123,7 @@ export const CertificateFormModal: React.FC<CertificateFormModalProps> = ({
       await onSave(submitData)
       onClose()
     } catch (error) {
-      console.error('Erro ao salvar certificado:', error)
+      console.log('Erro ao salvar certificado:', error)
     } finally {
       setLoading(false)
     }

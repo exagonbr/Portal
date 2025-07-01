@@ -201,7 +201,7 @@ async function testConnections() {
 if (require.main === module) {
   testConnections()
     .catch((error) => {
-      console.error('\n💥 Erro durante o teste:', error.message);
+      console.log('\n💥 Erro durante o teste:', error.message);
       process.exit(1);
     });
 }

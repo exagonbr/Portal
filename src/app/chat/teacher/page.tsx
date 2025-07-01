@@ -165,7 +165,7 @@ export default function ChatWithTeacherPage() {
 
       setTeachers(mockTeachers);
     } catch (error) {
-      console.error('Erro ao carregar professores:', error);
+      console.log('Erro ao carregar professores:', error);
     }
   };
 
@@ -204,7 +204,7 @@ export default function ChatWithTeacherPage() {
 
       setConversations(mockConversations);
     } catch (error) {
-      console.error('Erro ao carregar conversas:', error);
+      console.log('Erro ao carregar conversas:', error);
     }
   };
 

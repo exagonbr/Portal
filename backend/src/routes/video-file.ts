@@ -72,7 +72,7 @@ router.get('/:videoId', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao buscar dados do arquivo do vídeo:', error);
+    console.log('❌ Erro ao buscar dados do arquivo do vídeo:', error);
     
     return res.status(500).json({
       success: false,

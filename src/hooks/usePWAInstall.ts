@@ -123,7 +123,7 @@ export function usePWAInstall() {
 
       return false;
     } catch (error) {
-      console.error('Error installing PWA:', error);
+      console.log('Error installing PWA:', error);
       return false;
     }
   };

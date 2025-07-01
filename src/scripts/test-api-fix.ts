@@ -41,7 +41,7 @@ async function testDirectRequest() {
     const data = await result.json();
     console.log(`   Dados: ${JSON.stringify(data).substring(0, 100)}...`);
   } catch (error) {
-    console.error('   ❌ Erro:', error);
+    console.log('   ❌ Erro:', error);
   }
 }
 
@@ -79,7 +79,7 @@ async function testUsersStats() {
       console.log('   ✅ Endpoint respondeu com sucesso');
     }
   } catch (error) {
-    console.error('   ❌ Erro:', error);
+    console.log('   ❌ Erro:', error);
   }
 }
 

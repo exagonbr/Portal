@@ -75,7 +75,7 @@ export class QueueService {
       console.log(`Job ${type} adicionado à fila:`, response.data.jobId);
       return response.data.jobId;
     } catch (error) {
-      console.error('Erro ao adicionar job à fila:', error);
+      console.log('Erro ao adicionar job à fila:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -120,7 +120,7 @@ export class QueueService {
       
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`❌ QueueService: Erro ao processar jobs (${duration}ms):`, error);
+      console.log(`❌ QueueService: Erro ao processar jobs (${duration}ms):`, error);
       
       // Se for erro de rate limit, aumentar intervalo temporariamente
       if (error instanceof Error && error.message.includes('429')) {
@@ -162,7 +162,7 @@ export class QueueService {
       
       console.log(`Job ${job.id} completado com sucesso`);
     } catch (error) {
-      console.error(`Erro ao processar job ${job.id}:`, error);
+      console.log(`Erro ao processar job ${job.id}:`, error);
       await this.markJobFailed(job.id, error instanceof Error ? error.message : 'Erro desconhecido');
     }
   }
@@ -174,7 +174,7 @@ export class QueueService {
     try {
       await apiClient.patch(`queue/${jobId}/processing`);
     } catch (error) {
-      console.error('Erro ao marcar job como processando:', error);
+      console.log('Erro ao marcar job como processando:', error);
     }
   }
 
@@ -185,7 +185,7 @@ export class QueueService {
     try {
       await apiClient.patch(`queue/${jobId}/completed`);
     } catch (error) {
-      console.error('Erro ao marcar job como completado:', error);
+      console.log('Erro ao marcar job como completado:', error);
     }
   }
 
@@ -196,7 +196,7 @@ export class QueueService {
     try {
       await apiClient.patch(`queue/${jobId}/failed`, { error });
     } catch (err) {
-      console.error('Erro ao marcar job como falhado:', err);
+      console.log('Erro ao marcar job como falhado:', err);
     }
   }
 
@@ -215,7 +215,7 @@ export class QueueService {
         total: 0
       };
     } catch (error) {
-      console.error('Erro ao obter estatísticas da fila:', error);
+      console.log('Erro ao obter estatísticas da fila:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -240,7 +240,7 @@ export class QueueService {
 
       return response.data;
     } catch (error) {
-      console.error('Erro ao listar jobs:', error);
+      console.log('Erro ao listar jobs:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -258,7 +258,7 @@ export class QueueService {
 
       return response.data || null;
     } catch (error) {
-      console.error(`Erro ao obter job ${jobId}:`, error);
+      console.log(`Erro ao obter job ${jobId}:`, error);
       return null;
     }
   }
@@ -271,7 +271,7 @@ export class QueueService {
       const response = await apiClient.delete(`queue/jobs/${jobId}`);
       return response.success;
     } catch (error) {
-      console.error(`Erro ao cancelar job ${jobId}:`, error);
+      console.log(`Erro ao cancelar job ${jobId}:`, error);
       return false;
     }
   }
@@ -284,7 +284,7 @@ export class QueueService {
       const response = await apiClient.post(`queue/jobs/${jobId}/retry`);
       return response.success;
     } catch (error) {
-      console.error(`Erro ao reprocessar job ${jobId}:`, error);
+      console.log(`Erro ao reprocessar job ${jobId}:`, error);
       return false;
     }
   }
@@ -307,7 +307,7 @@ export class QueueService {
 
       return response.data.cleaned;
     } catch (error) {
-      console.error('Erro ao limpar jobs:', error);
+      console.log('Erro ao limpar jobs:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -320,7 +320,7 @@ export class QueueService {
 
     this.processingInterval = setInterval(() => {
       this.processJobs().catch(error => {
-        console.error('Erro no processamento automático:', error);
+        console.log('Erro no processamento automático:', error);
       });
     }, this.pollInterval);
 
@@ -346,7 +346,7 @@ export class QueueService {
       await apiClient.post('queue/pause');
       this.stopProcessing();
     } catch (error) {
-      console.error('Erro ao pausar fila:', error);
+      console.log('Erro ao pausar fila:', error);
       throw new Error(handleApiError(error));
     }
   }
@@ -359,7 +359,7 @@ export class QueueService {
       await apiClient.post('queue/resume');
       this.startProcessing();
     } catch (error) {
-      console.error('Erro ao resumir fila:', error);
+      console.log('Erro ao resumir fila:', error);
       throw new Error(handleApiError(error));
     }
   }

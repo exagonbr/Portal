@@ -46,7 +46,7 @@ function diagnoseAuthProblems() {
           isExpired: parsed.expiresAt ? parsed.expiresAt < Date.now() : 'N/A'
         });
       } catch (error) {
-        console.error(`❌ ${key}: JSON inválido`, error);
+        console.log(`❌ ${key}: JSON inválido`, error);
       }
     } else {
       console.log(`❌ ${key}: não encontrado`);
@@ -108,7 +108,7 @@ function repairAuthProblems() {
   }
   
   if (!validToken) {
-    console.error('❌ Nenhum token JWT válido encontrado');
+    console.log('❌ Nenhum token JWT válido encontrado');
     console.log('💡 Solução: Faça login novamente');
     console.groupEnd();
     return false;
@@ -131,7 +131,7 @@ function repairAuthProblems() {
         console.log('✅ Sessão do usuário válida');
       }
     } catch (error) {
-      console.error('❌ Erro ao validar sessão do usuário:', error);
+      console.log('❌ Erro ao validar sessão do usuário:', error);
       localStorage.removeItem('userSession');
     }
   }
@@ -148,7 +148,7 @@ async function testApiAfterRepair() {
   const token = localStorage.getItem('auth_token') || localStorage.getItem('authToken');
   
   if (!token) {
-    console.error('❌ Nenhum token encontrado para teste');
+    console.log('❌ Nenhum token encontrado para teste');
     console.groupEnd();
     return;
   }
@@ -168,10 +168,10 @@ async function testApiAfterRepair() {
       console.log('✅ API funcionando corretamente!');
       console.log('👤 Usuário autenticado:', data.user?.name, data.user?.role);
     } else {
-      console.error('❌ Erro na API:', response.status, data);
+      console.log('❌ Erro na API:', response.status, data);
     }
   } catch (error) {
-    console.error('❌ Erro de rede:', error);
+    console.log('❌ Erro de rede:', error);
   }
   
   console.groupEnd();

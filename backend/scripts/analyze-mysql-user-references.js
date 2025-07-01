@@ -94,7 +94,7 @@ async function analyzeUserReferences() {
     });
     
   } catch (error) {
-    console.error('Error analyzing database:', error);
+    console.log('Error analyzing database:', error);
   } finally {
     await connection.end();
   }

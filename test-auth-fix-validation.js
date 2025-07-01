@@ -237,7 +237,7 @@ async function runAllTests() {
     console.log('   • Para testar APIs: testApiConnectivity()');
     
   } catch (error) {
-    console.error(chalk.red('\n❌ ERRO NA VALIDAÇÃO:'), error);
+    console.log(chalk.red('\n❌ ERRO NA VALIDAÇÃO:'), error);
   }
 }
 

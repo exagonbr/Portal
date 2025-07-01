@@ -101,4 +101,4 @@ function makeRequest(url, protocol = 'https', timeout = 10000) {
   });
 }
 
-testFrontendBackendConnection().catch(console.error);
+testFrontendBackendConnection().catch(console.log);

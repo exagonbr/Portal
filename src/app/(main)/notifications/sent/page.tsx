@@ -138,7 +138,7 @@ export default function SentNotificationsPage() {
       
       setNotifications(mockNotifications);
     } catch (error) {
-      console.error('Erro ao carregar notificações enviadas:', error);
+      console.log('Erro ao carregar notificações enviadas:', error);
     } finally {
       setIsLoading(false);
     }

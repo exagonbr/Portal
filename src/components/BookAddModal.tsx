@@ -86,7 +86,7 @@ export function BookAddModal({ isOpen, onClose, onSave, title }: BookAddModalPro
       })
       setErrors({})
     } catch (error) {
-      console.error('Erro ao salvar livro:', error)
+      console.log('Erro ao salvar livro:', error)
     } finally {
       setLoading(false)
     }

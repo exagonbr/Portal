@@ -430,7 +430,7 @@ export default function PortalBooksPage() {
         setLoading(false);
       }, 1000);
     } catch (error) {
-      console.error('Erro ao carregar livros:', error);
+      console.log('Erro ao carregar livros:', error);
       setLoading(false);
     }
   };

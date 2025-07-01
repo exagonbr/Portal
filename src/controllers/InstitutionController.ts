@@ -10,7 +10,7 @@ export class InstitutionController {
 
       return res.json(institutions);
     } catch (error) {
-      console.error('Erro ao listar instituições:', error);
+      console.log('Erro ao listar instituições:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -28,7 +28,7 @@ export class InstitutionController {
 
       return res.json(institution);
     } catch (error) {
-      console.error('Erro ao buscar instituição:', error);
+      console.log('Erro ao buscar instituição:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -46,7 +46,7 @@ export class InstitutionController {
 
       return res.status(201).json(institution);
     } catch (error) {
-      console.error('Erro ao criar instituição:', error);
+      console.log('Erro ao criar instituição:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -71,7 +71,7 @@ export class InstitutionController {
 
       return res.json({ message: 'Instituição atualizada com sucesso' });
     } catch (error) {
-      console.error('Erro ao atualizar instituição:', error);
+      console.log('Erro ao atualizar instituição:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -87,7 +87,7 @@ export class InstitutionController {
 
       return res.json({ message: 'Instituição excluída com sucesso' });
     } catch (error) {
-      console.error('Erro ao excluir instituição:', error);
+      console.log('Erro ao excluir instituição:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
@@ -130,7 +130,7 @@ export class InstitutionController {
         totalPages: Math.ceil(total / limit)
       });
     } catch (error) {
-      console.error('Erro ao buscar instituições:', error);
+      console.log('Erro ao buscar instituições:', error);
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }

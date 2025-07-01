@@ -62,7 +62,7 @@ export class TVShowService {
       
       return rows as TVShowCollection[];
     } catch (error) {
-      console.error('Erro ao buscar coleções:', error);
+      console.log('Erro ao buscar coleções:', error);
       throw new Error('Falha ao buscar coleções do banco de dados');
     } finally {
       await connection.end();
@@ -100,7 +100,7 @@ export class TVShowService {
       const collections = rows as TVShowCollection[];
       return collections.length > 0 ? collections[0] : null;
     } catch (error) {
-      console.error('Erro ao buscar coleção:', error);
+      console.log('Erro ao buscar coleção:', error);
       throw new Error('Falha ao buscar coleção do banco de dados');
     } finally {
       await connection.end();
@@ -139,7 +139,7 @@ export class TVShowService {
       
       return rows as TVShowCollection[];
     } catch (error) {
-      console.error('Erro ao pesquisar coleções:', error);
+      console.log('Erro ao pesquisar coleções:', error);
       throw new Error('Falha ao pesquisar coleções no banco de dados');
     } finally {
       await connection.end();
@@ -179,7 +179,7 @@ export class TVShowService {
       
       return rows as TVShowCollection[];
     } catch (error) {
-      console.error('Erro ao buscar coleções populares:', error);
+      console.log('Erro ao buscar coleções populares:', error);
       throw new Error('Falha ao buscar coleções populares do banco de dados');
     } finally {
       await connection.end();
@@ -220,7 +220,7 @@ export class TVShowService {
       
       return rows as TVShowCollection[];
     } catch (error) {
-      console.error('Erro ao buscar coleções mais bem avaliadas:', error);
+      console.log('Erro ao buscar coleções mais bem avaliadas:', error);
       throw new Error('Falha ao buscar coleções mais bem avaliadas do banco de dados');
     } finally {
       await connection.end();
@@ -259,7 +259,7 @@ export class TVShowService {
       
       return rows as TVShowCollection[];
     } catch (error) {
-      console.error('Erro ao buscar coleções recentes:', error);
+      console.log('Erro ao buscar coleções recentes:', error);
       throw new Error('Falha ao buscar coleções recentes do banco de dados');
     } finally {
       await connection.end();

@@ -31,10 +31,10 @@ async function testTvShows() {
     console.log('\n🎉 Teste básico concluído com sucesso!');
 
   } catch (error) {
-    console.error('❌ Erro:', error.message);
+    console.log('❌ Erro:', error.message);
     if (error.response) {
-      console.error('📄 Status:', error.response.status);
-      console.error('📋 Dados:', error.response.data);
+      console.log('📄 Status:', error.response.status);
+      console.log('📋 Dados:', error.response.data);
     }
   }
 }

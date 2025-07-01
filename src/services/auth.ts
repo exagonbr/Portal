@@ -144,7 +144,7 @@ class SessionManager {
 
       return null;
     } catch (error) {
-      console.error('❌ SessionManager: Erro ao recuperar sessão do usuário:', error);
+      console.log('❌ SessionManager: Erro ao recuperar sessão do usuário:', error);
       this.clearSession();
       return null;
     }
@@ -187,7 +187,7 @@ export const listUsers = async (): Promise<User[]> => {
     // Fallback para estrutura antiga
     return result.users || [];
   } catch (error) {
-    console.error('Error listing users:', error);
+    console.log('Error listing users:', error);
     throw error;
   }
 };
@@ -217,7 +217,7 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<User> => {
     // Fallback para estrutura antiga
     return result.user;
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.log('Error creating user:', error);
     throw error;
   }
 };
@@ -250,7 +250,7 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
     // Fallback para estrutura antiga
     return result.user;
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.log('Error updating user:', error);
     throw error;
   }
 };
@@ -351,7 +351,7 @@ export const deleteUser = async (id: string): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.log('Error deleting user:', error);
     throw error;
   }
 };
@@ -416,7 +416,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
         result = await response.json();
         console.log('🔐 Dados da resposta:', result);
       } catch (jsonError) {
-        console.error('❌ Erro ao parsear JSON da resposta:', jsonError);
+        console.log('❌ Erro ao parsear JSON da resposta:', jsonError);
         throw new Error('Resposta inválida do servidor');
       }
       
@@ -484,17 +484,17 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       // Tratamento específico de erros para mobile e Firefox
       if (processedError instanceof Error) {
         if (processedError.name === 'AbortError' || processedError.message.includes('timeout')) {
-          console.error(`❌ Timeout no login (${timeoutMs}ms)`);
+          console.log(`❌ Timeout no login (${timeoutMs}ms)`);
           throw new Error(`Tempo limite excedido. Verifique sua conexão e tente novamente.`);
         }
         
         if (processedError.message.includes('NS_BINDING_ABORTED')) {
-          console.error('🦊 Firefox: Erro NS_BINDING_ABORTED no login');
+          console.log('🦊 Firefox: Erro NS_BINDING_ABORTED no login');
           throw new Error('Conexão interrompida. Tente novamente.');
         }
         
         if (processedError.message.includes('fetch') || processedError.message.includes('network')) {
-          console.error('❌ Erro de rede no login:', processedError);
+          console.log('❌ Erro de rede no login:', processedError);
           throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
         }
       }
@@ -502,7 +502,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
       throw processedError;
     }
   } catch (error) {
-    console.error('❌ Erro no login:', error);
+    console.log('❌ Erro no login:', error);
     
     if (error instanceof Error) {
       throw new Error(error.message);
@@ -551,7 +551,7 @@ export const register = async (
       try {
         result = await response.json();
       } catch (jsonError) {
-        console.error('❌ Erro ao parsear JSON da resposta de registro:', jsonError);
+        console.log('❌ Erro ao parsear JSON da resposta de registro:', jsonError);
         throw new Error('Resposta inválida do servidor');
       }
 
@@ -613,7 +613,7 @@ export const register = async (
       throw fetchError;
     }
   } catch (error) {
-    console.error('❌ Erro no registro:', error);
+    console.log('❌ Erro no registro:', error);
     throw error;
   }
 };
@@ -694,7 +694,7 @@ export const logout = async (): Promise<void> => {
     
     console.log('✅ Logout concluído com sucesso');
   } catch (error) {
-    console.error('❌ Erro durante logout:', error);
+    console.log('❌ Erro durante logout:', error);
     
     // Garantir limpeza mesmo com erro
     SessionManager.clearSession();
@@ -707,7 +707,7 @@ export const isAuthenticated = async (): Promise<boolean> => {
     // Verificar apenas sessão local - sem requisições
     return SessionManager.isSessionActive();
   } catch (error) {
-    console.error('❌ Erro ao verificar autenticação:', error);
+    console.log('❌ Erro ao verificar autenticação:', error);
     return false;
   }
 };
@@ -749,7 +749,7 @@ export const refreshToken = async (): Promise<boolean> => {
     
     return true;
   } catch (error) {
-    console.error('❌ Erro ao renovar sessão:', error);
+    console.log('❌ Erro ao renovar sessão:', error);
     return false;
   }
 };

@@ -81,7 +81,7 @@ export class UnitsController {
 
       return res.json(createPaginatedResponse(formattedUnits, pagination, 'Units retrieved successfully'));
     } catch (error) {
-      console.error('Error retrieving units:', error);
+      console.log('Error retrieving units:', error);
       return res.status(500).json(createApiResponse(
         false,
         undefined,
@@ -130,7 +130,7 @@ export class UnitsController {
         'Unit retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error retrieving unit:', error);
+      console.log('Error retrieving unit:', error);
       return res.status(500).json(createApiResponse(
         false,
         undefined,
@@ -192,7 +192,7 @@ export class UnitsController {
         'Unit created successfully'
       ));
     } catch (error) {
-      console.error('Error creating unit:', error);
+      console.log('Error creating unit:', error);
       return res.status(500).json(createApiResponse(
         false,
         undefined,
@@ -288,7 +288,7 @@ export class UnitsController {
         'Unit updated successfully'
       ));
     } catch (error) {
-      console.error('Error updating unit:', error);
+      console.log('Error updating unit:', error);
       return res.status(500).json(createApiResponse(
         false,
         undefined,
@@ -334,7 +334,7 @@ export class UnitsController {
         'Unit deleted successfully'
       ));
     } catch (error) {
-      console.error('Error deleting unit:', error);
+      console.log('Error deleting unit:', error);
       return res.status(500).json(createApiResponse(
         false,
         undefined,
@@ -402,7 +402,7 @@ export class UnitsController {
         'Unit restored successfully'
       ));
     } catch (error) {
-      console.error('Error restoring unit:', error);
+      console.log('Error restoring unit:', error);
       return res.status(500).json(createApiResponse(
         false,
         undefined,
@@ -450,7 +450,7 @@ export class UnitsController {
         'Units retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error retrieving units by institution:', error);
+      console.log('Error retrieving units by institution:', error);
       return res.status(500).json(createApiResponse(
         false,
         undefined,

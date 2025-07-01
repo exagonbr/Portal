@@ -92,7 +92,7 @@ export default function AdminUsersPage() {
         console.log('✅ Roles carregadas da API:', rolesFromApi.map(r => ({ id: r.id, name: r.name })));
         setRoles(rolesFromApi);
       } catch (error) {
-        console.error('❌ Erro ao carregar roles:', error);
+        console.log('❌ Erro ao carregar roles:', error);
         setAuxiliaryDataError('Falha ao carregar funções. Algumas opções podem estar indisponíveis.');
         setRoles([]);
       }
@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
         console.log('✅ Instituições carregadas da API:', institutionsFromApi.map(i => ({ id: i.id, name: i.name })));
         setInstitutions(institutionsFromApi);
       } catch (error) {
-        console.error('❌ Erro ao carregar instituições:', error);
+        console.log('❌ Erro ao carregar instituições:', error);
         setAuxiliaryDataError(prev =>
           prev ? `${prev} Falha ao carregar instituições.` : 'Falha ao carregar instituições. Algumas opções podem estar indisponíveis.'
         );
@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
       console.log('📊 Dados auxiliares carregados');
 
     } catch (error) {
-      console.error('❌ Erro ao carregar dados auxiliares:', error);
+      console.log('❌ Erro ao carregar dados auxiliares:', error);
       setAuxiliaryDataError('Falha ao carregar dados auxiliares. Algumas opções podem estar indisponíveis.');
     } finally {
       setAuxiliaryDataLoaded(true);
@@ -165,7 +165,7 @@ export default function AdminUsersPage() {
       }
 
     } catch (error: any) {
-      console.error('❌ Erro ao carregar usuários:', error);
+      console.log('❌ Erro ao carregar usuários:', error);
       
       // Mensagem de erro mais específica
       let errorMessage = 'Erro ao carregar usuários';

@@ -36,7 +36,7 @@ export class CertificateService {
 
       return await response.json()
     } catch (error) {
-      console.error('Erro no serviço de certificados:', error)
+      console.log('Erro no serviço de certificados:', error)
       throw error
     }
   }
@@ -57,7 +57,7 @@ export class CertificateService {
 
       return await response.json()
     } catch (error) {
-      console.error('Erro ao buscar certificado:', error)
+      console.log('Erro ao buscar certificado:', error)
       throw error
     }
   }
@@ -82,7 +82,7 @@ export class CertificateService {
 
       return await response.json()
     } catch (error) {
-      console.error('Erro ao criar certificado:', error)
+      console.log('Erro ao criar certificado:', error)
       throw error
     }
   }
@@ -110,7 +110,7 @@ export class CertificateService {
 
       return await response.json()
     } catch (error) {
-      console.error('Erro ao atualizar certificado:', error)
+      console.log('Erro ao atualizar certificado:', error)
       throw error
     }
   }
@@ -134,7 +134,7 @@ export class CertificateService {
 
       return await response.json()
     } catch (error) {
-      console.error('Erro ao excluir certificado:', error)
+      console.log('Erro ao excluir certificado:', error)
       throw error
     }
   }

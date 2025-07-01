@@ -216,7 +216,7 @@ export default function ManagerDashboard() {
       ]);
 
     } catch (error) {
-      console.error('Erro ao carregar dashboard:', error);
+      console.log('Erro ao carregar dashboard:', error);
     } finally {
       setLoading(false);
     }

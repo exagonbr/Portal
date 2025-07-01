@@ -65,7 +65,7 @@ async function testFinalLogin() {
           console.log('✅ Frontend pode usar as permissões para renderizar o menu');
           
         } catch (error) {
-          console.error('❌ Erro ao parsear resposta:', error.message);
+          console.log('❌ Erro ao parsear resposta:', error.message);
           console.log('📄 Resposta raw:', data);
         }
         
@@ -74,7 +74,7 @@ async function testFinalLogin() {
     });
 
     req.on('error', (error) => {
-      console.error('❌ Erro na requisição:', error.message);
+      console.log('❌ Erro na requisição:', error.message);
       
       if (error.code === 'ECONNREFUSED') {
         console.log('\n⚠️ Servidor não está rodando na porta 3001');
@@ -96,7 +96,7 @@ async function testFinalLogin() {
     req.end();
     
   } catch (error) {
-    console.error('❌ Erro no teste:', error.message);
+    console.log('❌ Erro no teste:', error.message);
     process.exit(1);
   }
 }

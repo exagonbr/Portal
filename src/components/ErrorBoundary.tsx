@@ -25,7 +25,7 @@ export class AuthErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log do erro para debugging
-    console.error('❌ AuthErrorBoundary capturou um erro:', error, errorInfo);
+    console.log('❌ AuthErrorBoundary capturou um erro:', error, errorInfo);
     
     // Se for erro relacionado ao AuthContext, tentar recuperar
     if (error.message.includes('useAuth deve ser usado dentro de um AuthProvider')) {

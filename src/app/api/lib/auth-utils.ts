@@ -43,7 +43,7 @@ export async function validateJWTToken(token: string) {
 
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    console.error('JWT_SECRET not configured');
+    console.log('JWT_SECRET not configured');
     return null;
   }
 
@@ -105,7 +105,7 @@ export async function validateJWTToken(token: string) {
       if (fallbackData.userId && fallbackData.email && fallbackData.role) {
         // Verify if token is not expired
         if (fallbackData.exp && fallbackData.exp < Math.floor(Date.now() / 1000)) {
-          console.error('Fallback token expired');
+          console.log('Fallback token expired');
           return null;
         }
         

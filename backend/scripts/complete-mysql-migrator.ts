@@ -46,7 +46,7 @@ class MySQLToPostgresMigrator {
       console.log('✅ Conectado ao MySQL');
       console.log('✅ Conectado ao PostgreSQL');
     } catch (error) {
-      console.error('❌ Erro ao conectar:', error);
+      console.log('❌ Erro ao conectar:', error);
       throw error;
     }
   }
@@ -217,7 +217,7 @@ class MySQLToPostgresMigrator {
       console.log(`   ⚠️ ${this.stats.users.skipped} usuários já existiam`);
       console.log(`   ❌ ${this.stats.users.errors} erros`);
     } catch (error: any) {
-      console.error('   ❌ Erro na migração de usuários:', error.message);
+      console.log('   ❌ Erro na migração de usuários:', error.message);
     }
   }
 
@@ -270,7 +270,7 @@ class MySQLToPostgresMigrator {
 
       console.log(`   ✅ ${this.stats.institutions.migrated} instituições migradas`);
     } catch (error: any) {
-      console.error('   ❌ Erro na migração de instituições:', error.message);
+      console.log('   ❌ Erro na migração de instituições:', error.message);
     }
   }
 
@@ -324,7 +324,7 @@ class MySQLToPostgresMigrator {
 
       console.log(`   ✅ ${this.stats.schools.migrated} escolas migradas`);
     } catch (error: any) {
-      console.error('   ❌ Erro na migração de escolas:', error.message);
+      console.log('   ❌ Erro na migração de escolas:', error.message);
     }
   }
 
@@ -381,7 +381,7 @@ class MySQLToPostgresMigrator {
 
       console.log(`   ✅ ${this.stats.files.migrated} arquivos migrados`);
     } catch (error: any) {
-      console.error('   ❌ Erro na migração de arquivos:', error.message);
+      console.log('   ❌ Erro na migração de arquivos:', error.message);
     }
   }
 
@@ -432,7 +432,7 @@ class MySQLToPostgresMigrator {
 
       console.log(`   ✅ ${this.stats.collections.migrated} coleções migradas`);
     } catch (error: any) {
-      console.error('   ❌ Erro na migração de coleções:', error.message);
+      console.log('   ❌ Erro na migração de coleções:', error.message);
     }
   }
 
@@ -475,7 +475,7 @@ class MySQLToPostgresMigrator {
       await this.printSummary();
       
     } catch (error) {
-      console.error('❌ ERRO NA MIGRAÇÃO:', error);
+      console.log('❌ ERRO NA MIGRAÇÃO:', error);
       throw error;
     } finally {
       await this.disconnect();
@@ -490,7 +490,7 @@ async function runMigration() {
 }
 
 if (require.main === module) {
-  runMigration().catch(console.error);
+  runMigration().catch(console.log);
 }
 
 export default MySQLToPostgresMigrator; 

@@ -142,7 +142,7 @@ async function debugVideoCount() {
     }
     
   } catch (error) {
-    console.error('❌ Erro durante diagnóstico:', error);
+    console.log('❌ Erro durante diagnóstico:', error);
   } finally {
     await client.end();
     console.log('🔚 Conexão fechada');
@@ -150,4 +150,4 @@ async function debugVideoCount() {
 }
 
 // Executar diagnóstico
-debugVideoCount().catch(console.error); 
+debugVideoCount().catch(console.log); 

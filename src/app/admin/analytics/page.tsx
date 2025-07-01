@@ -48,7 +48,7 @@ export default function AdminAnalyticsPage() {
       setLastUpdate(new Date())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar analytics')
-      console.error('Erro ao buscar analytics:', err)
+      console.log('Erro ao buscar analytics:', err)
     } finally {
       setIsLoading(false)
     }
@@ -72,7 +72,7 @@ export default function AdminAnalyticsPage() {
       await analyticsSessionService.terminateSession(sessionId)
       setActiveSessions(prev => prev.filter(s => s.id !== sessionId))
     } catch (err) {
-      console.error('Erro ao terminar sessão:', err)
+      console.log('Erro ao terminar sessão:', err)
     }
   }
 

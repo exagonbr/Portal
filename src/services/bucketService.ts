@@ -97,7 +97,7 @@ export class BucketService {
       const data: BucketListResponse = result
       return data.configured || []
     } catch (error) {
-      console.error('Erro no serviço de buckets:', error)
+      console.log('Erro no serviço de buckets:', error)
       throw error
     }
   }
@@ -121,7 +121,7 @@ export class BucketService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao buscar todos os buckets:', error)
+      console.log('Erro ao buscar todos os buckets:', error)
       throw error
     }
   }
@@ -150,7 +150,7 @@ export class BucketService {
       // Fallback para estrutura antiga
       return result
     } catch (error) {
-      console.error('Erro ao adicionar bucket:', error)
+      console.log('Erro ao adicionar bucket:', error)
       throw error
     }
   }
@@ -161,7 +161,7 @@ export class BucketService {
       const data = await this.getAllBuckets()
       return data.all?.some(bucket => bucket.name === bucketName) || false
     } catch (error) {
-      console.error('Erro ao verificar bucket:', error)
+      console.log('Erro ao verificar bucket:', error)
       return false
     }
   }
@@ -172,7 +172,7 @@ export class BucketService {
       const buckets = await this.getConfiguredBuckets()
       return buckets.find(bucket => bucket.name === bucketName) || null
     } catch (error) {
-      console.error('Erro ao buscar informações do bucket:', error)
+      console.log('Erro ao buscar informações do bucket:', error)
       return null
     }
   }

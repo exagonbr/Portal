@@ -61,7 +61,7 @@ class RecordingService {
 
       return metadata
     } catch (error) {
-      console.error('Failed to save recording:', error)
+      console.log('Failed to save recording:', error)
       throw new Error('Failed to save recording')
     }
   }
@@ -78,7 +78,7 @@ class RecordingService {
         url: signedUrl
       }
     } catch (error) {
-      console.error('Failed to get signed URL for recording:', error)
+      console.log('Failed to get signed URL for recording:', error)
       return recording
     }
   }
@@ -102,7 +102,7 @@ class RecordingService {
       
       return true
     } catch (error) {
-      console.error('Failed to delete recording:', error)
+      console.log('Failed to delete recording:', error)
       return false
     }
   }

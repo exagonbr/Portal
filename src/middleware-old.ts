@@ -130,7 +130,7 @@ class MiddlewareUtils {
     try {
       return JSON.parse(decodeURIComponent(userDataCookie));
     } catch (error) {
-      console.error('Error parsing user data:', error);
+      console.log('Error parsing user data:', error);
       return null;
     }
   }
@@ -209,7 +209,7 @@ class SessionValidator {
           return { valid: true, user: null };
         }
       }
-      console.error('❌ Middleware: Erro ao validar token:', error);
+      console.log('❌ Middleware: Erro ao validar token:', error);
       return { valid: false };
     }
   }
@@ -237,7 +237,7 @@ class SessionValidator {
       
       return { authenticated: validation.valid, user: validation.user };
     } catch (error) {
-      console.error('❌ Middleware: Erro durante verificação de autenticação:', error);
+      console.log('❌ Middleware: Erro durante verificação de autenticação:', error);
       return { authenticated: false };
     }
   }
@@ -280,7 +280,7 @@ class RoleAccessControl {
     // Normaliza a role para lowercase
     const normalizedRole = userRole.toLowerCase();
     if (!isValidRole(normalizedRole)) {
-      console.error(`Role inválida detectada no middleware: ${userRole}`);
+      console.log(`Role inválida detectada no middleware: ${userRole}`);
       return false;
     }
     return true;

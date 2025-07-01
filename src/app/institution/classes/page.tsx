@@ -97,7 +97,7 @@ export default function InstitutionClassesPage() {
       setClasses(mockClasses);
       setLoading(false);
     } catch (error) {
-      console.error('Erro ao buscar turmas:', error);
+      console.log('Erro ao buscar turmas:', error);
       setLoading(false);
     }
   };

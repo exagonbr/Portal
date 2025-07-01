@@ -82,7 +82,7 @@ async function testAllCredentials() {
         console.log('❌ Falhou:', result.data.message || result.data);
       }
     } catch (error) {
-      console.error('❌ Erro:', error.message);
+      console.log('❌ Erro:', error.message);
     }
   }
   

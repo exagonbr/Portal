@@ -73,7 +73,7 @@ export function createAwsRoutes(db: Knex): Router {
       console.log('🔍 AWS connection-logs/stats acessado por:', (req.user as any)?.email);
       await awsController.getConnectionStats(req, res);
     } catch (error) {
-      console.error('❌ Erro na rota AWS stats:', error);
+      console.log('❌ Erro na rota AWS stats:', error);
       // Fallback com dados mock em caso de erro
       res.json({
         success: true,

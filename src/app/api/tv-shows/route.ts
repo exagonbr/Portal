@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Erro ao buscar TV Shows:', error);
+    console.log('Erro ao buscar TV Shows:', error);
     return new NextResponse(
       JSON.stringify({ success: false, message: 'Erro interno do servidor' }),
       {
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Erro ao criar TV Show:', error);
+    console.log('Erro ao criar TV Show:', error);
     return new NextResponse(
       JSON.stringify({ success: false, message: 'Erro interno do servidor' }),
       {

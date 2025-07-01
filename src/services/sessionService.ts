@@ -41,7 +41,7 @@ class SessionService {
       
       return session.isActive && now < expiresAt;
     } catch (error) {
-      console.error('Erro ao verificar validade da sessão:', error);
+      console.log('Erro ao verificar validade da sessão:', error);
       return false;
     }
   }
@@ -65,7 +65,7 @@ class SessionService {
 
       return session;
     } catch (error) {
-      console.error('Erro ao obter sessão:', error);
+      console.log('Erro ao obter sessão:', error);
       return null;
     }
   }
@@ -90,7 +90,7 @@ class SessionService {
       
       return true;
     } catch (error) {
-      console.error('Erro ao estender sessão:', error);
+      console.log('Erro ao estender sessão:', error);
       return false;
     }
   }
@@ -117,7 +117,7 @@ class SessionService {
       
       return sessionId;
     } catch (error) {
-      console.error('Erro ao criar sessão:', error);
+      console.log('Erro ao criar sessão:', error);
       throw error;
     }
   }
@@ -135,7 +135,7 @@ class SessionService {
       }
       return false;
     } catch (error) {
-      console.error('Erro ao remover sessão:', error);
+      console.log('Erro ao remover sessão:', error);
       return false;
     }
   }
@@ -161,7 +161,7 @@ class SessionService {
 
       return activeSessions;
     } catch (error) {
-      console.error('Erro ao obter sessões ativas:', error);
+      console.log('Erro ao obter sessões ativas:', error);
       return [];
     }
   }
@@ -174,7 +174,7 @@ class SessionService {
       const allSessions = await this.getActiveSessions();
       return allSessions.filter(session => session.userId === userId);
     } catch (error) {
-      console.error('Erro ao obter sessões do usuário:', error);
+      console.log('Erro ao obter sessões do usuário:', error);
       return [];
     }
   }
@@ -194,7 +194,7 @@ class SessionService {
       
       return true;
     } catch (error) {
-      console.error('Erro ao atualizar última atividade:', error);
+      console.log('Erro ao atualizar última atividade:', error);
       return false;
     }
   }
@@ -225,7 +225,7 @@ class SessionService {
 
       return cleanedCount;
     } catch (error) {
-      console.error('Erro ao limpar sessões expiradas:', error);
+      console.log('Erro ao limpar sessões expiradas:', error);
       return 0;
     }
   }
@@ -273,7 +273,7 @@ class SessionService {
         averageSessionDuration
       };
     } catch (error) {
-      console.error('Erro ao obter estatísticas das sessões:', error);
+      console.log('Erro ao obter estatísticas das sessões:', error);
       return {
         totalActive: 0,
         byDevice: {},

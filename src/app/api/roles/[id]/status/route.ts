@@ -105,7 +105,7 @@ export async function PATCH(
     })
 
   } catch (error) {
-    console.error(`Erro ao alterar status da role ${resolvedParams.id}:`, error)
+    console.log(`Erro ao alterar status da role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

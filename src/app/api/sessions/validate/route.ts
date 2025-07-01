@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Erro ao validar sessão:', error);
+    console.log('Erro ao validar sessão:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -89,7 +89,7 @@ export async function PUT(request: NextRequest) {
     });
     }
   } catch (error) {
-    console.error('Erro ao estender sessão:', error);
+    console.log('Erro ao estender sessão:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

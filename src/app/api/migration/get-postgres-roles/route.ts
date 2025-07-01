@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('Erro ao buscar roles PostgreSQL:', error)
+    console.log('Erro ao buscar roles PostgreSQL:', error)
     
     return NextResponse.json({
       success: false,

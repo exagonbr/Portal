@@ -36,7 +36,7 @@ export default function DashboardRedirect() {
         const userRole = user.role as UserRole;
         
         if (!userRole) {
-          console.error('❌ DashboardRedirect: Perfil de usuário não identificado');
+          console.log('❌ DashboardRedirect: Perfil de usuário não identificado');
           setError('Perfil de usuário não identificado. Por favor, faça login novamente.');
           return;
         }
@@ -44,7 +44,7 @@ export default function DashboardRedirect() {
         const defaultRoute = getDefaultDashboard(userRole);
         
         if (!defaultRoute) {
-          console.error('❌ DashboardRedirect: Dashboard não encontrado para o perfil');
+          console.log('❌ DashboardRedirect: Dashboard não encontrado para o perfil');
           setError('Erro interno: dashboard não encontrado para seu perfil. Entre em contato com o suporte.');
           return;
         }
@@ -61,7 +61,7 @@ export default function DashboardRedirect() {
         router.push(defaultRoute);
 
       } catch (err) {
-        console.error('❌ DashboardRedirect: Erro no redirecionamento:', err);
+        console.log('❌ DashboardRedirect: Erro no redirecionamento:', err);
         setError('Erro interno. Por favor, tente novamente ou entre em contato com o suporte.');
       }
     }

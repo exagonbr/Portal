@@ -42,7 +42,7 @@ export const useContextualPermissions = (userId?: string) => {
       }
     } catch (err) {
       setError('Erro de conexão ao carregar permissões');
-      console.error('Erro ao buscar permissões:', err);
+      console.log('Erro ao buscar permissões:', err);
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export const useContextualPermissions = (userId?: string) => {
       }
     } catch (err) {
       setError('Erro de conexão ao definir permissão');
-      console.error('Erro ao definir permissão:', err);
+      console.log('Erro ao definir permissão:', err);
       return false;
     }
   };

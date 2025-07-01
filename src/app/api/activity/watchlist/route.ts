@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao adicionar à watchlist:', error)
+    console.log('❌ Erro ao adicionar à watchlist:', error)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -152,7 +152,7 @@ export async function DELETE(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao remover da watchlist:', error)
+    console.log('❌ Erro ao remover da watchlist:', error)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

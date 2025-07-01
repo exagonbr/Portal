@@ -79,7 +79,7 @@ export async function testRetryImport(): Promise<boolean> {
       return false;
     }
   } catch (error) {
-    console.error('❌ Erro no teste de retry import:', error);
+    console.log('❌ Erro no teste de retry import:', error);
     return false;
   }
 }
@@ -105,7 +105,7 @@ export async function testTokenSync(): Promise<boolean> {
       return true; // Falha controlada também é considerada sucesso
     }
   } catch (error) {
-    console.error('❌ Erro no teste de sincronização:', error);
+    console.log('❌ Erro no teste de sincronização:', error);
     return false;
   }
 }

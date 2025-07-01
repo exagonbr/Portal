@@ -44,7 +44,7 @@ export const dashboardService = {
         monthlyGrowth: 0
       }
     } catch (error) {
-      console.error('Erro ao buscar estatísticas do dashboard:', error)
+      console.log('Erro ao buscar estatísticas do dashboard:', error)
       // Retornar dados mock em caso de erro
       return {
         totalUsers: 1250,
@@ -64,7 +64,7 @@ export const dashboardService = {
       const response = await apiClient.get<RecentActivity[]>('/dashboard/activities')
       return response.data || []
     } catch (error) {
-      console.error('Erro ao buscar atividades recentes:', error)
+      console.log('Erro ao buscar atividades recentes:', error)
       // Retornar dados mock em caso de erro
       return [
         {
@@ -100,7 +100,7 @@ export const dashboardService = {
       const response = await apiClient.get<UpcomingEvent[]>('/dashboard/events')
       return response.data || []
     } catch (error) {
-      console.error('Erro ao buscar eventos próximos:', error)
+      console.log('Erro ao buscar eventos próximos:', error)
       // Retornar dados mock em caso de erro
       return [
         {

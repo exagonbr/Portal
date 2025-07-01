@@ -17,10 +17,10 @@ async function run() {
     console.log('Seeds completed.');
 
   } catch (error) {
-    console.error('Error running migrations and seeds:', error);
+    console.log('Error running migrations and seeds:', error);
   } finally {
     await knexInstance.destroy();
   }
 }
 
-run().catch(console.error);
+run().catch(console.log);

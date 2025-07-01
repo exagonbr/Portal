@@ -93,7 +93,7 @@ export const initializeDatabase = async (): Promise<void> => {
     await AppDataSource.initialize();
     console.log('✅ Conexão com PostgreSQL estabelecida com sucesso via TypeORM');
   } catch (error) {
-    console.error('❌ Erro ao conectar com PostgreSQL via TypeORM:', error);
+    console.log('❌ Erro ao conectar com PostgreSQL via TypeORM:', error);
     throw error;
   }
 };
@@ -106,7 +106,7 @@ export const closeDatabaseConnection = async (): Promise<void> => {
       console.log('🔌 Conexão com PostgreSQL fechada');
     }
   } catch (error) {
-    console.error('❌ Erro ao fechar conexão com PostgreSQL:', error);
+    console.log('❌ Erro ao fechar conexão com PostgreSQL:', error);
     throw error;
   }
 };

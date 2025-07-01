@@ -109,7 +109,7 @@ async function seedCollections() {
     console.log(`${sampleCollections.length} coleções foram criadas.`);
     
   } catch (error) {
-    console.error('Erro durante o seed:', error);
+    console.log('Erro durante o seed:', error);
   } finally {
     await prisma.$disconnect();
   }

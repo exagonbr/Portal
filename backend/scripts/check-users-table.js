@@ -34,7 +34,7 @@ async function checkUsersTable() {
     }
     
   } catch (error) {
-    console.error('❌ Erro ao verificar tabela:', error.message);
+    console.log('❌ Erro ao verificar tabela:', error.message);
   } finally {
     await db.destroy();
   }

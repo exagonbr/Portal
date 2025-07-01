@@ -48,7 +48,7 @@ export async function GET(
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('Erro ao buscar certificado:', error);
+    console.log('Erro ao buscar certificado:', error);
     return NextResponse.json(
       { 
         success: false, 
@@ -108,7 +108,7 @@ export async function PUT(
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('Erro ao atualizar certificado:', error);
+    console.log('Erro ao atualizar certificado:', error);
     return NextResponse.json(
       { 
         success: false, 
@@ -166,7 +166,7 @@ export async function DELETE(
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('Erro ao excluir certificado:', error);
+    console.log('Erro ao excluir certificado:', error);
     return NextResponse.json(
       { 
         success: false, 

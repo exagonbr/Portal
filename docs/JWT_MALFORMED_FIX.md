@@ -78,7 +78,7 @@ catch (jwtError) {
       throw new Error('Invalid fallback token structure');
     }
   } catch (base64Error) {
-    console.error('Erro na validação JWT simples - ambos JWT e base64 falharam:', { 
+    console.log('Erro na validação JWT simples - ambos JWT e base64 falharam:', { 
       jwtError: jwtError.message, 
       base64Error: base64Error.message,
       token: token.substring(0, 20) + '...' 

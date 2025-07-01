@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('❌ [LOGIN-API] Erro no login:', error);
+    console.log('❌ [LOGIN-API] Erro no login:', error);
     
     return NextResponse.json(
       { 

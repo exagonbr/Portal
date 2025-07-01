@@ -90,7 +90,7 @@ async function checkTvShowStructure() {
     console.log('\n✅ Verificação concluída!');
     
   } catch (error) {
-    console.error('❌ Erro durante a verificação:', error.message);
+    console.log('❌ Erro durante a verificação:', error.message);
     process.exit(1);
   }
 }

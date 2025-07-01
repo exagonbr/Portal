@@ -117,7 +117,7 @@ export class TvShowCompleteService {
         
         // Se o video_count for maior que 10000, provavelmente há um erro
         if (videoCount > 10000) {
-          console.error(`⚠️ Video count suspeito para TV Show ${tvShow.name} (ID: ${tvShow.id}): ${videoCount}`);
+          console.log(`⚠️ Video count suspeito para TV Show ${tvShow.name} (ID: ${tvShow.id}): ${videoCount}`);
           videoCount = 0; // Resetar para 0 em caso de valor absurdo
         }
         
@@ -143,7 +143,7 @@ export class TvShowCompleteService {
         totalPages
       };
     } catch (error) {
-      console.error('Erro na consulta getAllTvShows:', error);
+      console.log('Erro na consulta getAllTvShows:', error);
       throw new Error(`Erro ao buscar TV Shows: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -203,7 +203,7 @@ export class TvShowCompleteService {
         
         videosGrouped = await Promise.race([videoPromise, timeoutPromise]) as Record<string, FormattedVideo[]>;
       } catch (videoError) {
-        console.error(`Erro ao buscar vídeos para TV Show ${id}:`, videoError);
+        console.log(`Erro ao buscar vídeos para TV Show ${id}:`, videoError);
         // Continuar sem os vídeos em caso de erro
         videosGrouped = {};
       }
@@ -216,7 +216,7 @@ export class TvShowCompleteService {
         questions: [] // Por enquanto vazio
       };
     } catch (error) {
-      console.error('Erro na consulta getTvShowById:', error);
+      console.log('Erro na consulta getTvShowById:', error);
       throw new Error(`Erro ao buscar TV Show: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -310,7 +310,7 @@ export class TvShowCompleteService {
       
       return formattedVideos;
     } catch (error) {
-      console.error('Erro ao buscar vídeos:', error);
+      console.log('Erro ao buscar vídeos:', error);
       return []; // Retornar array vazio em caso de erro
     }
   }
@@ -348,7 +348,7 @@ export class TvShowCompleteService {
 
       return grouped;
     } catch (error) {
-      console.error('Erro ao buscar vídeos agrupados:', error);
+      console.log('Erro ao buscar vídeos agrupados:', error);
       throw new Error('Erro interno do servidor');
     }
   }

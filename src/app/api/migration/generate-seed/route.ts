@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
               usersCreated++
             }
           } catch (error) {
-            console.error(`Erro ao criar usuário ${userData.email} na tabela ${tableName}:`, error)
+            console.log(`Erro ao criar usuário ${userData.email} na tabela ${tableName}:`, error)
           }
         }
       }
@@ -297,7 +297,7 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error: any) {
-    console.error('Erro ao gerar seed:', error)
+    console.log('Erro ao gerar seed:', error)
     return NextResponse.json({
       success: false,
       error: error.message || 'Erro interno do servidor'

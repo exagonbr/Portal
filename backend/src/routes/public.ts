@@ -125,7 +125,7 @@ router.get('/certificates/search', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('Erro ao buscar certificados:', error);
+    console.log('Erro ao buscar certificados:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

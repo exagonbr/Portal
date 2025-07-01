@@ -54,7 +54,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           document.head.appendChild(script);
         });
       } catch (error) {
-        console.error('Erro ao carregar PDF.js:', error);
+        console.log('Erro ao carregar PDF.js:', error);
         onError('Erro ao carregar biblioteca PDF.js');
         return null;
       }
@@ -77,7 +77,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         onDocumentLoaded(pdf.numPages);
         setIsLoading(false);
       } catch (error) {
-        console.error('Erro ao carregar PDF:', error);
+        console.log('Erro ao carregar PDF:', error);
         onError(`Erro ao carregar PDF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         setIsLoading(false);
       }
@@ -133,7 +133,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         setRenderTask(null);
       } catch (error: any) {
         if (error.name !== 'RenderingCancelledException') {
-          console.error('Erro ao renderizar página:', error);
+          console.log('Erro ao renderizar página:', error);
           onError(`Erro ao renderizar página: ${error.message}`);
         }
       }

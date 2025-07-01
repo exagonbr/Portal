@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
       } catch (error: any) {
         const errorMsg = `Erro na tabela ${tableMapping.mysqlTable}: ${error.message}`
         results.errors.push(errorMsg)
-        console.error(errorMsg, error)
+        console.log(errorMsg, error)
       }
     }
 
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Erro durante migração:', error)
+    console.log('Erro durante migração:', error)
     
     // Fechar conexões em caso de erro
     if (mysqlConnection) {
@@ -695,7 +695,7 @@ async function insertBatch(
     const result = await pgClient.query(insertSQL, values)
     return result.rowCount || 0
   } catch (error: any) {
-    console.error(`Erro no lote da tabela ${tableName}:`, error.message)
+    console.log(`Erro no lote da tabela ${tableName}:`, error.message)
     
     // DEBUG: Mostrar valores que causaram erro
     console.log(`🔍 DEBUG VALORES QUE CAUSARAM ERRO:`)
@@ -745,10 +745,10 @@ async function insertBatch(
         const result = await pgClient.query(singleSQL, singleValues)
         inserted += result.rowCount || 0
       } catch (singleError) {
-        console.error(`🔍 DEBUG ERRO INDIVIDUAL:`, singleError instanceof Error ? singleError.message : String(singleError))
+        console.log(`🔍 DEBUG ERRO INDIVIDUAL:`, singleError instanceof Error ? singleError.message : String(singleError))
         // Ignorar erros individuais se preserveData estiver ativo
         if (!preserveData) {
-          console.error(`Erro ao inserir registro individual:`, singleError)
+          console.log(`Erro ao inserir registro individual:`, singleError)
         }
       }
     }

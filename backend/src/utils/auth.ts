@@ -25,7 +25,7 @@ export async function getUserFromRequest(req: Request): Promise<User | null> {
 
         return user || null;
     } catch (error) {
-        console.error('Error getting user from request:', error);
+        console.log('Error getting user from request:', error);
         return null;
     }
 }

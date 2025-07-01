@@ -25,7 +25,7 @@ export class VideoCollectionController {
         message: 'Coleções recuperadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleções:', error);
+      console.log('Erro ao buscar coleções:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleções',
@@ -58,7 +58,7 @@ export class VideoCollectionController {
         message: 'Coleção recuperada com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleção:', error);
+      console.log('Erro ao buscar coleção:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleção',
@@ -92,7 +92,7 @@ export class VideoCollectionController {
         message: 'Coleção criada com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao criar coleção:', error);
+      console.log('Erro ao criar coleção:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao criar coleção',
@@ -126,7 +126,7 @@ export class VideoCollectionController {
         message: 'Coleção atualizada com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao atualizar coleção:', error);
+      console.log('Erro ao atualizar coleção:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao atualizar coleção',
@@ -158,7 +158,7 @@ export class VideoCollectionController {
         message: 'Coleção removida com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao remover coleção:', error);
+      console.log('Erro ao remover coleção:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao remover coleção',
@@ -204,7 +204,7 @@ export class VideoCollectionController {
         message: 'Vídeo criado com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao criar vídeo:', error);
+      console.log('Erro ao criar vídeo:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao criar vídeo',
@@ -238,7 +238,7 @@ export class VideoCollectionController {
         message: 'Vídeo atualizado com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao atualizar vídeo:', error);
+      console.log('Erro ao atualizar vídeo:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao atualizar vídeo',
@@ -270,7 +270,7 @@ export class VideoCollectionController {
         message: 'Vídeo removido com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao remover vídeo:', error);
+      console.log('Erro ao remover vídeo:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao remover vídeo',
@@ -293,7 +293,7 @@ export class VideoCollectionController {
         message: 'Coleções recuperadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleções públicas:', error);
+      console.log('Erro ao buscar coleções públicas:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleções',
@@ -326,7 +326,7 @@ export class VideoCollectionController {
         message: `${collections.length} coleções encontradas para "${searchTerm}"`
       });
     } catch (error) {
-      console.error('Erro ao pesquisar coleções:', error);
+      console.log('Erro ao pesquisar coleções:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao pesquisar coleções',
@@ -359,7 +359,7 @@ export class VideoCollectionController {
         message: 'Coleções populares recuperadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar coleções populares:', error);
+      console.log('Erro ao buscar coleções populares:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar coleções populares',
@@ -382,7 +382,7 @@ export class VideoCollectionController {
         message: `Migração concluída: ${result.migrated} migrados, ${result.skipped} pulados`
       });
     } catch (error) {
-      console.error('Erro na migração:', error);
+      console.log('Erro na migração:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor durante a migração',
@@ -405,7 +405,7 @@ export class VideoCollectionController {
         message: 'Estatísticas de migração recuperadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao buscar estatísticas de migração:', error);
+      console.log('Erro ao buscar estatísticas de migração:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor ao buscar estatísticas',

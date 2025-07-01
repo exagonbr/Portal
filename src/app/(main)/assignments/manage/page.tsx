@@ -103,7 +103,7 @@ export default function TeacherAssignmentsPage() {
         setLoading(false)
       }, 1000)
     } catch (error) {
-      console.error('Erro ao carregar atividades:', error)
+      console.log('Erro ao carregar atividades:', error)
       setLoading(false)
     }
   }

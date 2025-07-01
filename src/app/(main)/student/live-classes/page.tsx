@@ -102,7 +102,7 @@ export default function StudentLiveClassesPage() {
       setLiveClasses(mockClasses)
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao buscar aulas ao vivo:', error)
+      console.log('Erro ao buscar aulas ao vivo:', error)
       setLoading(false)
     }
   }

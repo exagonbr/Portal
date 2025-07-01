@@ -311,7 +311,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao obter logs:', error);
+    console.log('Erro ao obter logs:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
@@ -383,7 +383,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao criar log:', error);
+    console.log('Erro ao criar log:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
@@ -481,7 +481,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao atualizar log:', error);
+    console.log('Erro ao atualizar log:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 
@@ -621,7 +621,7 @@ export async function DELETE(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('Erro ao deletar logs:', error);
+    console.log('Erro ao deletar logs:', error);
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
       { 

@@ -349,7 +349,7 @@ async function main() {
 if (require.main === module) {
   main().catch(error => {
     log(`\n💥 Erro fatal: ${error.message}`, 'red');
-    console.error(error);
+    console.log(error);
     process.exit(1);
   });
 }

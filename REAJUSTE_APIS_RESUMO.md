@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
 
     // Lógica da API...
   } catch (error) {
-    console.error('Erro:', error)
+    console.log('Erro:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

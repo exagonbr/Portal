@@ -51,7 +51,7 @@ class EmailService {
     try {
       await this.setupTransporter();
     } catch (error) {
-      console.error('Erro na inicialização do serviço de email:', error);
+      console.log('Erro na inicialização do serviço de email:', error);
     }
   }
 
@@ -148,7 +148,7 @@ class EmailService {
 
       return config;
     } catch (error) {
-      console.error('Erro ao buscar configurações de email do banco:', error);
+      console.log('Erro ao buscar configurações de email do banco:', error);
       return { 
         host: 'localhost',
         port: 587,
@@ -345,7 +345,7 @@ class EmailService {
 
       return true;
     } catch (error) {
-      console.error('❌ Erro ao enviar email:', error);
+      console.log('❌ Erro ao enviar email:', error);
       console.log('⚠️  O sistema continuará funcionando normalmente sem o envio deste email.');
       return false; // Retorna false em vez de lançar erro
     }

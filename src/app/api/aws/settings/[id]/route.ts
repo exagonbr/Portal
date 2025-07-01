@@ -49,7 +49,7 @@ export async function GET(
       headers: getCorsHeaders(origin)
     });
   } catch (error) {
-    console.error('Erro ao buscar configuração AWS:', error);
+    console.log('Erro ao buscar configuração AWS:', error);
     const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
@@ -99,7 +99,7 @@ export async function PUT(
       headers: getCorsHeaders(origin)
     });
   } catch (error) {
-    console.error('Erro ao atualizar configuração AWS:', error);
+    console.log('Erro ao atualizar configuração AWS:', error);
     const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },
@@ -146,7 +146,7 @@ export async function DELETE(
       headers: getCorsHeaders(origin)
     });
   } catch (error) {
-    console.error('Erro ao deletar configuração AWS:', error);
+    console.log('Erro ao deletar configuração AWS:', error);
     const origin = request.headers.get('origin') || undefined;
     return NextResponse.json(
       { success: false, message: 'Erro interno do servidor' },

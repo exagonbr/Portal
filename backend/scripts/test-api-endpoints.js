@@ -99,7 +99,7 @@ async function testEndpoints() {
     console.log('\n✅ Testes de endpoints concluídos!');
 
   } catch (error) {
-    console.error('❌ Erro durante os testes:', error.message);
+    console.log('❌ Erro durante os testes:', error.message);
   }
 }
 

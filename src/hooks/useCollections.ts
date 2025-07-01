@@ -27,7 +27,7 @@ export const useCollections = (): UseCollectionsReturn => {
   });
 
   const handleApiError = (error: any, defaultMessage: string) => {
-    console.error(defaultMessage, error);
+    console.log(defaultMessage, error);
     setError(error instanceof Error ? error.message : defaultMessage);
   };
 

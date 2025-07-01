@@ -55,14 +55,14 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     })
     } catch (awsError: any) {
-      console.error('Erro AWS:', awsError)
+      console.log('Erro AWS:', awsError)
       return NextResponse.json({
         success: false,
         message: `Erro ao conectar com AWS: ${awsError.message || 'Verifique as credenciais'}`
       }, { status: 400 })
     }
   } catch (error) {
-    console.error('Erro ao testar conexão AWS:', error)
+    console.log('Erro ao testar conexão AWS:', error)
     return NextResponse.json({ error: 'Erro ao testar conexão AWS' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

@@ -23,7 +23,7 @@ export class TvShowCompleteController {
         data: result
       });
     } catch (error) {
-      console.error('Erro no controller getAllTvShows:', error);
+      console.log('Erro no controller getAllTvShows:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -56,7 +56,7 @@ export class TvShowCompleteController {
         }
       });
     } catch (error) {
-      console.error('Erro no controller getTvShowById:', error);
+      console.log('Erro no controller getTvShowById:', error);
       return res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Erro interno do servidor'
@@ -73,7 +73,7 @@ export class TvShowCompleteController {
         data: tvShow
       });
     } catch (error) {
-      console.error('Erro no controller createTvShow:', error);
+      console.log('Erro no controller createTvShow:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -100,7 +100,7 @@ export class TvShowCompleteController {
         data: tvShow
       });
     } catch (error) {
-      console.error('Erro no controller updateTvShow:', error);
+      console.log('Erro no controller updateTvShow:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -127,7 +127,7 @@ export class TvShowCompleteController {
         message: 'TV Show deletado com sucesso'
       });
     } catch (error) {
-      console.error('Erro no controller deleteTvShow:', error);
+      console.log('Erro no controller deleteTvShow:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -156,7 +156,7 @@ export class TvShowCompleteController {
         data: result
       });
     } catch (error) {
-      console.error('Erro no controller searchTvShows:', error);
+      console.log('Erro no controller searchTvShows:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -185,7 +185,7 @@ export class TvShowCompleteController {
         data: videos
       });
     } catch (error) {
-      console.error('Erro no controller getVideosByTvShow:', error);
+      console.log('Erro no controller getVideosByTvShow:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -212,7 +212,7 @@ export class TvShowCompleteController {
         data: moduleGroups
       });
     } catch (error) {
-      console.error('Erro no controller getVideosByTvShowGrouped:', error);
+      console.log('Erro no controller getVideosByTvShowGrouped:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -239,7 +239,7 @@ export class TvShowCompleteController {
         data: video
       });
     } catch (error) {
-      console.error('Erro no controller getVideoById:', error);
+      console.log('Erro no controller getVideoById:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -257,7 +257,7 @@ export class TvShowCompleteController {
         data: video
       });
     } catch (error) {
-      console.error('Erro no controller createVideo:', error);
+      console.log('Erro no controller createVideo:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -284,7 +284,7 @@ export class TvShowCompleteController {
         data: video
       });
     } catch (error) {
-      console.error('Erro no controller updateVideo:', error);
+      console.log('Erro no controller updateVideo:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -311,7 +311,7 @@ export class TvShowCompleteController {
         message: 'Vídeo deletado com sucesso'
       });
     } catch (error) {
-      console.error('Erro no controller deleteVideo:', error);
+      console.log('Erro no controller deleteVideo:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -340,7 +340,7 @@ export class TvShowCompleteController {
         data: questions
       });
     } catch (error) {
-      console.error('Erro no controller getQuestionsByTvShow:', error);
+      console.log('Erro no controller getQuestionsByTvShow:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -367,7 +367,7 @@ export class TvShowCompleteController {
         data: question
       });
     } catch (error) {
-      console.error('Erro no controller getQuestionById:', error);
+      console.log('Erro no controller getQuestionById:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -385,7 +385,7 @@ export class TvShowCompleteController {
         data: question
       });
     } catch (error) {
-      console.error('Erro no controller createQuestion:', error);
+      console.log('Erro no controller createQuestion:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -412,7 +412,7 @@ export class TvShowCompleteController {
         data: question
       });
     } catch (error) {
-      console.error('Erro no controller updateQuestion:', error);
+      console.log('Erro no controller updateQuestion:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -439,7 +439,7 @@ export class TvShowCompleteController {
         message: 'Questão deletada com sucesso'
       });
     } catch (error) {
-      console.error('Erro no controller deleteQuestion:', error);
+      console.log('Erro no controller deleteQuestion:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -468,7 +468,7 @@ export class TvShowCompleteController {
         data: answers
       });
     } catch (error) {
-      console.error('Erro no controller getAnswersByQuestion:', error);
+      console.log('Erro no controller getAnswersByQuestion:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -486,7 +486,7 @@ export class TvShowCompleteController {
         data: answer
       });
     } catch (error) {
-      console.error('Erro no controller createAnswer:', error);
+      console.log('Erro no controller createAnswer:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -513,7 +513,7 @@ export class TvShowCompleteController {
         data: answer
       });
     } catch (error) {
-      console.error('Erro no controller updateAnswer:', error);
+      console.log('Erro no controller updateAnswer:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -540,7 +540,7 @@ export class TvShowCompleteController {
         message: 'Resposta deletada com sucesso'
       });
     } catch (error) {
-      console.error('Erro no controller deleteAnswer:', error);
+      console.log('Erro no controller deleteAnswer:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -569,7 +569,7 @@ export class TvShowCompleteController {
         data: files
       });
     } catch (error) {
-      console.error('Erro no controller getFilesByTvShow:', error);
+      console.log('Erro no controller getFilesByTvShow:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -587,7 +587,7 @@ export class TvShowCompleteController {
         data: file
       });
     } catch (error) {
-      console.error('Erro no controller createFile:', error);
+      console.log('Erro no controller createFile:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -614,7 +614,7 @@ export class TvShowCompleteController {
         data: file
       });
     } catch (error) {
-      console.error('Erro no controller updateFile:', error);
+      console.log('Erro no controller updateFile:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -641,7 +641,7 @@ export class TvShowCompleteController {
         message: 'Arquivo deletado com sucesso'
       });
     } catch (error) {
-      console.error('Erro no controller deleteFile:', error);
+      console.log('Erro no controller deleteFile:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
@@ -670,7 +670,7 @@ export class TvShowCompleteController {
         data: stats
       });
     } catch (error) {
-      console.error('Erro no controller getTvShowStats:', error);
+      console.log('Erro no controller getTvShowStats:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',

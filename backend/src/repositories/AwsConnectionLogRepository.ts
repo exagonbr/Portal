@@ -198,7 +198,7 @@ export class AwsConnectionLogRepository {
         services_used
       };
     } catch (error) {
-      console.error('❌ Erro geral ao obter estatísticas AWS:', error);
+      console.log('❌ Erro geral ao obter estatísticas AWS:', error);
       
       // Retornar dados mínimos em caso de erro crítico
       return {

@@ -23,7 +23,7 @@ export default function AuthenticatedLayout({
         clearAllDataForUnauthorized().then(() => {
           router.push('/auth/login?error=unauthorized')
         }).catch((error) => {
-          console.error('❌ Erro durante limpeza de dados:', error);
+          console.log('❌ Erro durante limpeza de dados:', error);
           // Redirecionar mesmo com erro na limpeza
           router.push('/auth/login?error=unauthorized')
         });

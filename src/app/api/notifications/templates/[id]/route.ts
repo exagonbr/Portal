@@ -130,7 +130,7 @@ export async function GET(
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error: any) {
-    console.error(`❌ [API] Erro ao buscar template ${params.id}:`, error);
+    console.log(`❌ [API] Erro ao buscar template ${params.id}:`, error);
     return NextResponse.json(
       {
         success: false,
@@ -224,7 +224,7 @@ export async function PUT(
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error: any) {
-    console.error(`❌ [API] Erro ao atualizar template ${params.id}:`, error);
+    console.log(`❌ [API] Erro ao atualizar template ${params.id}:`, error);
     return NextResponse.json(
       {
         success: false,
@@ -292,7 +292,7 @@ export async function DELETE(
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
     });
   } catch (error: any) {
-    console.error(`❌ [API] Erro ao excluir template ${params.id}:`, error);
+    console.log(`❌ [API] Erro ao excluir template ${params.id}:`, error);
     return NextResponse.json(
       {
         success: false,

@@ -36,7 +36,7 @@ export class AwsSettingsController {
         }
       });
     } catch (error) {
-      console.error('Erro ao buscar configurações AWS:', error);
+      console.log('Erro ao buscar configurações AWS:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -60,7 +60,7 @@ export class AwsSettingsController {
         data: safeSettings
       });
     } catch (error) {
-      console.error('Erro ao buscar todas as configurações:', error);
+      console.log('Erro ao buscar todas as configurações:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -93,7 +93,7 @@ export class AwsSettingsController {
         }
       });
     } catch (error) {
-      console.error('Erro ao buscar configuração:', error);
+      console.log('Erro ao buscar configuração:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -121,7 +121,7 @@ export class AwsSettingsController {
         }
       });
     } catch (error) {
-      console.error('Erro ao criar configurações:', error);
+      console.log('Erro ao criar configurações:', error);
       
       if (error instanceof Error) {
         res.status(400).json({
@@ -167,7 +167,7 @@ export class AwsSettingsController {
         }
       });
     } catch (error) {
-      console.error('Erro ao atualizar configurações:', error);
+      console.log('Erro ao atualizar configurações:', error);
       
       if (error instanceof Error) {
         res.status(400).json({
@@ -212,7 +212,7 @@ export class AwsSettingsController {
         }
       });
     } catch (error) {
-      console.error('Erro ao ativar configurações:', error);
+      console.log('Erro ao ativar configurações:', error);
       
       if (error instanceof Error) {
         res.status(400).json({
@@ -249,7 +249,7 @@ export class AwsSettingsController {
         message: 'Configurações AWS deletadas com sucesso'
       });
     } catch (error) {
-      console.error('Erro ao deletar configurações:', error);
+      console.log('Erro ao deletar configurações:', error);
       
       if (error instanceof Error) {
         res.status(400).json({
@@ -292,7 +292,7 @@ export class AwsSettingsController {
         }
       });
     } catch (error) {
-      console.error('Erro ao testar conexão:', error);
+      console.log('Erro ao testar conexão:', error);
       
       if (error instanceof Error) {
         res.status(400).json({
@@ -326,7 +326,7 @@ export class AwsSettingsController {
         data: safeSettings
       });
     } catch (error) {
-      console.error('Erro ao buscar histórico:', error);
+      console.log('Erro ao buscar histórico:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -357,7 +357,7 @@ export class AwsSettingsController {
         data: logs
       });
     } catch (error) {
-      console.error('Erro ao buscar logs de conexão:', error);
+      console.log('Erro ao buscar logs de conexão:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -388,7 +388,7 @@ export class AwsSettingsController {
         data: stats
       });
     } catch (error) {
-      console.error('❌ Erro ao buscar estatísticas:', error);
+      console.log('❌ Erro ao buscar estatísticas:', error);
       
       // Retornar dados mock em caso de erro para evitar loops
       const mockStats = {
@@ -424,7 +424,7 @@ export class AwsSettingsController {
         data: trends
       });
     } catch (error) {
-      console.error('Erro ao buscar tendências:', error);
+      console.log('Erro ao buscar tendências:', error);
       res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'

@@ -21,7 +21,7 @@ async function countUsers() {
     
     console.log('✅ Contagem completa!');
   } catch (error) {
-    console.error(`❌ Erro durante a contagem: ${error.message}`);
+    console.log(`❌ Erro durante a contagem: ${error.message}`);
   } finally {
     // Fechar a conexão com o banco
     await db.destroy();

@@ -78,7 +78,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error(`Erro ao buscar permissões da role ${resolvedParams.id}:`, error)
+    console.log(`Erro ao buscar permissões da role ${resolvedParams.id}:`, error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

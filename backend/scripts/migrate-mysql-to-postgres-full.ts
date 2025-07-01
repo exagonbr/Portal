@@ -196,7 +196,7 @@ async function createMySQLBackup(mysqlConn: mysql.Connection, tableNames: string
       backupData[tableName] = rows as any[];
       console.log(`   ✅ Backup da tabela ${tableName}: ${(rows as any[]).length} registros`);
     } catch (error: any) {
-      console.error(`   ❌ Erro ao criar backup da tabela ${tableName}: ${error.message}`);
+      console.log(`   ❌ Erro ao criar backup da tabela ${tableName}: ${error.message}`);
     }
   }
   
@@ -281,7 +281,7 @@ function transformMySQLValueToPostgres(value: any, mysqlType: string): any {
       // Se nada funcionar, tentar diretamente
       return new Date(value);
     } catch (e) {
-      console.error(`Erro ao converter data: ${value}`, e);
+      console.log(`Erro ao converter data: ${value}`, e);
       return new Date(); // Retornar data atual em caso de erro
     }
   }
@@ -749,7 +749,7 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
             console.log(`   ✅ Tabela ${pgTable} criada com sucesso!`);
           }
         } catch (error: any) {
-          console.error(`   ❌ Erro ao criar tabela ${pgTable}: ${error.message}`);
+          console.log(`   ❌ Erro ao criar tabela ${pgTable}: ${error.message}`);
           // Não interromper a migração em caso de erro
           // throw error;
         }
@@ -876,8 +876,8 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
               successCount++;
               console.log(`   ✅ Registro ${successCount}/${pgRows.length} inserido com sucesso`);
             } catch (error: any) {
-              console.error(`   ❌ Erro ao inserir registro na tabela institution: ${error.message}`);
-              console.error(`   ❌ Registro problemático:`, row);
+              console.log(`   ❌ Erro ao inserir registro na tabela institution: ${error.message}`);
+              console.log(`   ❌ Registro problemático:`, row);
               // Continuar com o próximo registro em vez de interromper a migração
             }
           }
@@ -885,13 +885,13 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
           if (successCount > 0) {
             console.log(`   ✅ Inseridos ${successCount} de ${pgRows.length} registros na tabela institution`);
           } else {
-            console.error(`   ❌ Não foi possível inserir nenhum registro na tabela institution`);
+            console.log(`   ❌ Não foi possível inserir nenhum registro na tabela institution`);
           }
           
           console.log(`   ✅ Migração da tabela ${mysqlTable} concluída!`);
           continue; // Pular para a próxima tabela
         } else {
-          console.error(`   ❌ Erro: Conexão PostgreSQL não está disponível`);
+          console.log(`   ❌ Erro: Conexão PostgreSQL não está disponível`);
           continue;
         }
       }
@@ -936,7 +936,7 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
         try {
           // Inserir lote
           if (!pg) {
-            console.error(`   ❌ Erro: Conexão PostgreSQL não está disponível`);
+            console.log(`   ❌ Erro: Conexão PostgreSQL não está disponível`);
             continue;
           }
           
@@ -968,7 +968,7 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
             }
           } catch (error: any) {
             // Caso o INSERT falhe, tentar linha por linha
-            console.error(`   ⚠️ Erro ao inserir em lote, tentando linha por linha: ${error.message}`);
+            console.log(`   ⚠️ Erro ao inserir em lote, tentando linha por linha: ${error.message}`);
             
             let successCount = 0;
             // Tentar inserir cada linha individualmente
@@ -985,7 +985,7 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
                   successCount++;
                 }
               } catch (rowError: any) {
-                console.error(`   ❌ Erro ao inserir linha por linha: ${rowError.message}`);
+                console.log(`   ❌ Erro ao inserir linha por linha: ${rowError.message}`);
                 // Não interromper a migração
                 continue;
               }
@@ -996,7 +996,7 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
             }
           }
         } catch (batchError) {
-          console.error(`   ❌ Erro ao processar lote: ${batchError}`);
+          console.log(`   ❌ Erro ao processar lote: ${batchError}`);
           // Não interromper a migração
           continue;
         }
@@ -1125,8 +1125,8 @@ async function migrateFromMySQLToPostgres(): Promise<void> {
     console.log(`✅ Backup JSON criado em: ${backupFile}`);
     
   } catch (error: any) {
-    console.error('\n❌ ERRO DURANTE A MIGRAÇÃO:');
-    console.error(error);
+    console.log('\n❌ ERRO DURANTE A MIGRAÇÃO:');
+    console.log(error);
     throw error;
   } finally {
     // Fechar conexões
@@ -1143,7 +1143,7 @@ if (require.main === module) {
       process.exit(0);
     })
     .catch(err => {
-      console.error('Erro fatal durante migração:', err);
+      console.log('Erro fatal durante migração:', err);
       process.exit(1);
     });
 }

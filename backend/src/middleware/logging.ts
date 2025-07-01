@@ -82,7 +82,7 @@ export const errorLogger = (err: any, req: Request, res: Response, next: NextFun
     }
   };
   
-  console.error('🚨 Error occurred:', JSON.stringify(errorInfo, null, 2));
+  console.log('🚨 Error occurred:', JSON.stringify(errorInfo, null, 2));
   next(err);
 };
 

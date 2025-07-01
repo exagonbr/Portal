@@ -91,7 +91,7 @@ async function importUsers() {
           }
         } catch (err) {
           errorCount++;
-          console.error(`❌ Erro ao inserir usuário ${user.id}: ${err.message}`);
+          console.log(`❌ Erro ao inserir usuário ${user.id}: ${err.message}`);
         }
       }
     });
@@ -112,7 +112,7 @@ async function importUsers() {
     console.log('✅ Mapeamento de IDs salvo em id_mapping.json');
     
   } catch (error) {
-    console.error(`❌ Erro durante a importação: ${error.message}`);
+    console.log(`❌ Erro durante a importação: ${error.message}`);
   } finally {
     // Fechar a conexão com o banco
     await db.destroy();

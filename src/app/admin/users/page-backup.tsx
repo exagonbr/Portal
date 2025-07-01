@@ -852,7 +852,7 @@ export default function ManageUsers() {
         console.log('✅ Roles carregadas da API:', rolesFromApi.map(r => ({ id: r.id, name: r.name })));
         setRoles(rolesFromApi);
       } catch (error) {
-        console.error('❌ Erro ao carregar roles:', error);
+        console.log('❌ Erro ao carregar roles:', error);
         setAuxiliaryDataError('Falha ao carregar funções. Algumas opções podem estar indisponíveis.');
         setRoles([]);
       } finally {
@@ -864,7 +864,7 @@ export default function ManageUsers() {
         console.log('✅ Instituições carregadas da API:', institutionsFromApi.map(i => ({ id: i.id, name: i.name })));
         setInstitutions(institutionsFromApi);
       } catch (error) {
-        console.error('❌ Erro ao carregar instituições:', error);
+        console.log('❌ Erro ao carregar instituições:', error);
         setAuxiliaryDataError(prev => 
           prev ? `${prev} Falha ao carregar instituições.` : 'Falha ao carregar instituições. Algumas opções podem estar indisponíveis.'
         );
@@ -885,7 +885,7 @@ export default function ManageUsers() {
       });
 
     } catch (error) {
-      console.error('❌ Erro ao carregar dados auxiliares:', error);
+      console.log('❌ Erro ao carregar dados auxiliares:', error);
       setAuxiliaryDataError('Falha ao carregar dados auxiliares. Algumas opções podem estar indisponíveis.');
     } finally {
       setAuxiliaryDataLoaded(true);
@@ -930,7 +930,7 @@ export default function ManageUsers() {
 
       // Verifica se a resposta tem a estrutura esperada
       if (!response || !response.items || !Array.isArray(response.items)) {
-        console.error('❌ Resposta inválida do userService:', response);
+        console.log('❌ Resposta inválida do userService:', response);
         showError('Formato de resposta inválido do servidor');
         setUsers([]);
         setTotalPages(1);
@@ -993,8 +993,8 @@ export default function ManageUsers() {
       }
 
     } catch (error: any) {
-      console.error('❌ Erro ao carregar usuários:', error);
-      console.error('Stack trace:', error.stack);
+      console.log('❌ Erro ao carregar usuários:', error);
+      console.log('Stack trace:', error.stack);
       
       // Mensagem de erro mais específica
       let errorMessage = 'Erro ao carregar usuários';
@@ -1037,7 +1037,7 @@ export default function ManageUsers() {
       setConnectionStatus('connected');
       return true;
     } catch (error) {
-      console.error('❌ Erro ao conectar com o backend:', error);
+      console.log('❌ Erro ao conectar com o backend:', error);
       setConnectionStatus('error');
       showError('Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
       return false;
@@ -1156,7 +1156,7 @@ export default function ManageUsers() {
       showSuccess('Usuário excluído com sucesso!')
       loadUsers()
     } catch (error: any) {
-      console.error('Erro ao excluir usuário:', error)
+      console.log('Erro ao excluir usuário:', error)
       showError(error.message || 'Erro ao excluir usuário')
     }
   }
@@ -1178,7 +1178,7 @@ export default function ManageUsers() {
       setShowStatusChangeModal(false)
       loadUsers()
     } catch (error: any) {
-      console.error('Erro ao alterar status:', error)
+      console.log('Erro ao alterar status:', error)
       showError(error.message || 'Erro ao alterar status do usuário')
     }
   }
@@ -1199,7 +1199,7 @@ export default function ManageUsers() {
       showSuccess('Senha resetada com sucesso! Um email foi enviado ao usuário.')
       setShowResetPasswordModal(false)
     } catch (error: any) {
-      console.error('Erro ao resetar senha:', error)
+      console.log('Erro ao resetar senha:', error)
       showError(error.message || 'Erro ao resetar senha')
     }
   }
@@ -1234,7 +1234,7 @@ export default function ManageUsers() {
       // const result = await userService.exportUsers(filters, 'csv')
       showSuccess('Exportação iniciada! Você receberá um email quando estiver pronta.')
     } catch (error: any) {
-      console.error('Erro ao exportar:', error)
+      console.log('Erro ao exportar:', error)
       showError(error.message || 'Erro ao exportar usuários')
     }
   }
@@ -1249,7 +1249,7 @@ export default function ManageUsers() {
       showSuccess('Importação iniciada! Você receberá um email com o resultado.')
       loadUsers()
     } catch (error: any) {
-      console.error('Erro ao importar:', error)
+      console.log('Erro ao importar:', error)
       showError(error.message || 'Erro ao importar usuários')
     }
   }
@@ -1326,7 +1326,7 @@ export default function ManageUsers() {
       // Rolagem suave para o topo da lista quando mudar de página
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
-      console.error('Erro ao mudar de página:', error);
+      console.log('Erro ao mudar de página:', error);
       showError('Erro ao carregar a página. Tente novamente.');
     }
   }, [showError])
@@ -2163,7 +2163,7 @@ export default function ManageUsers() {
                     setSelectedUser(null);
                     loadUsers();
                   } catch (error: any) {
-                    console.error('Erro ao atualizar usuário:', error);
+                    console.log('Erro ao atualizar usuário:', error);
                     showError(error.message || 'Erro ao atualizar usuário');
                   }
                 }}

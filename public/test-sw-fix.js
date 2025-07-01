@@ -107,7 +107,7 @@ async function clearCacheAndTest() {
     }, 1000);
     
   } catch (error) {
-    console.error('❌ Erro ao limpar cache:', error);
+    console.log('❌ Erro ao limpar cache:', error);
   }
 }
 

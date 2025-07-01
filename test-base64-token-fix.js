@@ -154,4 +154,4 @@ async function runTests() {
 }
 
 // Run the tests
-runTests().catch(console.error);
+runTests().catch(console.log);

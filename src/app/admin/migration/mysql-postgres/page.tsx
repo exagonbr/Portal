@@ -139,7 +139,7 @@ export default function MySQLPostgresMigrationPage() {
         setAvailableRoles(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER', 'STUDENT', 'GUARDIAN', 'COORDINATOR'])
       }
     } catch (error) {
-      console.error('Erro ao carregar roles:', error)
+      console.log('Erro ao carregar roles:', error)
       addLog('error', '❌ Erro ao carregar roles do PostgreSQL')
       // Definir roles padrão em caso de erro
       setAvailableRoles(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER', 'STUDENT', 'GUARDIAN', 'COORDINATOR'])
@@ -208,7 +208,7 @@ export default function MySQLPostgresMigrationPage() {
         addLog('warning', '⚠️ Não foi possível carregar configurações do .env')
       }
     } catch (error) {
-      console.error('Erro ao carregar configurações:', error)
+      console.log('Erro ao carregar configurações:', error)
       addLog('error', '❌ Erro ao carregar configurações do .env')
     }
   }

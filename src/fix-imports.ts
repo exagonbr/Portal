@@ -53,4 +53,4 @@ async function main() {
   console.log('Import fixing completed!');
 }
 
-main().catch(console.error); 
+main().catch(console.log); 

@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao atualizar viewing status:', error)
+    console.log('❌ Erro ao atualizar viewing status:', error)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Erro ao obter viewing status:', error)
+    console.log('❌ Erro ao obter viewing status:', error)
     
     return NextResponse.json(
       { 

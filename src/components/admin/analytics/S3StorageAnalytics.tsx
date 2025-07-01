@@ -56,7 +56,7 @@ export default function S3StorageAnalytics({ data: initialData, bucketName, regi
       setLastUpdated(new Date())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
-      console.error('Erro ao buscar dados do bucket:', err)
+      console.log('Erro ao buscar dados do bucket:', err)
     } finally {
       setIsLoading(false)
     }

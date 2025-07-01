@@ -36,7 +36,7 @@ export const bookService = {
         hasPrev: false
       }
     } catch (error) {
-      console.error('Erro ao buscar livros:', error)
+      console.log('Erro ao buscar livros:', error)
       // Retornar dados mock em caso de erro
       return {
         items: [
@@ -91,7 +91,7 @@ export const bookService = {
       if (!response.data) throw new Error('Livro não encontrado')
       return response.data
     } catch (error) {
-      console.error('Erro ao buscar livro:', error)
+      console.log('Erro ao buscar livro:', error)
       throw error
     }
   },
@@ -102,7 +102,7 @@ export const bookService = {
       if (!response.data) throw new Error('Erro ao criar livro')
       return response.data
     } catch (error) {
-      console.error('Erro ao criar livro:', error)
+      console.log('Erro ao criar livro:', error)
       throw error
     }
   },
@@ -113,7 +113,7 @@ export const bookService = {
       if (!response.data) throw new Error('Erro ao atualizar livro')
       return response.data
     } catch (error) {
-      console.error('Erro ao atualizar livro:', error)
+      console.log('Erro ao atualizar livro:', error)
       throw error
     }
   },
@@ -122,7 +122,7 @@ export const bookService = {
     try {
       await apiClient.delete(`/books/${id}`)
     } catch (error) {
-      console.error('Erro ao excluir livro:', error)
+      console.log('Erro ao excluir livro:', error)
       throw error
     }
   },
@@ -132,7 +132,7 @@ export const bookService = {
       const response = await apiClient.get<BookResponseDto[]>(`/books/category/${category}`)
       return response.data || []
     } catch (error) {
-      console.error('Erro ao buscar livros por categoria:', error)
+      console.log('Erro ao buscar livros por categoria:', error)
       return []
     }
   },
@@ -142,7 +142,7 @@ export const bookService = {
       const response = await apiClient.get<BookResponseDto[]>(`/books/search?q=${encodeURIComponent(query)}`)
       return response.data || []
     } catch (error) {
-      console.error('Erro ao pesquisar livros:', error)
+      console.log('Erro ao pesquisar livros:', error)
       return []
     }
   }

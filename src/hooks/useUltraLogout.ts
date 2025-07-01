@@ -26,7 +26,7 @@ export function useUltraLogout() {
       
       return true;
     } catch (error) {
-      console.error('❌ useUltraLogout: Erro durante logout:', error);
+      console.log('❌ useUltraLogout: Erro durante logout:', error);
       
       // Fallback: redirecionamento manual
       if (typeof window !== 'undefined') {
@@ -43,7 +43,7 @@ export function useUltraLogout() {
       await performUltraLogout();
       return true;
     } catch (error) {
-      console.error('❌ useUltraLogout: Erro durante logout sem confirmação:', error);
+      console.log('❌ useUltraLogout: Erro durante logout sem confirmação:', error);
       
       // Fallback: redirecionamento manual
       if (typeof window !== 'undefined') {
@@ -75,7 +75,7 @@ export function useUltraLogout() {
       
       return true;
     } catch (error) {
-      console.error('❌ useUltraLogout: Erro no logout de emergência:', error);
+      console.log('❌ useUltraLogout: Erro no logout de emergência:', error);
       return false;
     }
   }, []);

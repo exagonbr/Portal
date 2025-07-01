@@ -46,7 +46,7 @@ async function createDefaultUsers() {
     const ifsp = institutions.find(i => i.name === 'IFSP');
     
     if (!sabercon || !ifsp) {
-      console.error('❌ Erro: Instituições padrão não encontradas');
+      console.log('❌ Erro: Instituições padrão não encontradas');
       console.log('Instituições disponíveis:', institutions.map(i => i.name));
       process.exit(1);
     }
@@ -137,7 +137,7 @@ async function createDefaultUsers() {
         
         console.log(`✓ Usuário criado: ${user.email} (${roles.find(r => r.id === user.role_id)?.name})`);
       } catch (error) {
-        console.error(`❌ Erro ao criar usuário ${user.email}:`, error);
+        console.log(`❌ Erro ao criar usuário ${user.email}:`, error);
       }
     }
     
@@ -148,7 +148,7 @@ async function createDefaultUsers() {
     console.log('\n✅ Processo concluído com sucesso!');
     
   } catch (error) {
-    console.error('❌ Erro geral:', error);
+    console.log('❌ Erro geral:', error);
     process.exit(1);
   } finally {
     await client.end();

@@ -92,7 +92,7 @@ async function debugVideoCount() {
     }
     
   } catch (error) {
-    console.error('❌ Erro durante diagnóstico:', error);
+    console.log('❌ Erro durante diagnóstico:', error);
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();
@@ -102,4 +102,4 @@ async function debugVideoCount() {
 }
 
 // Executar diagnóstico
-debugVideoCount().catch(console.error); 
+debugVideoCount().catch(console.log); 

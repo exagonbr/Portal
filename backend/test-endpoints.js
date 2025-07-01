@@ -82,4 +82,4 @@ async function testEndpoints() {
   console.log('\n🏁 Teste concluído!');
 }
 
-testEndpoints().catch(console.error); 
+testEndpoints().catch(console.log); 

@@ -151,7 +151,7 @@ async function testCRUDOperations() {
     console.log('\n🎉 Testes CRUD concluídos com sucesso!');
 
   } catch (error) {
-    console.error('❌ Erro durante os testes:', error.message);
+    console.log('❌ Erro durante os testes:', error.message);
   }
 }
 

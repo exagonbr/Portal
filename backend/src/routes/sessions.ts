@@ -149,7 +149,7 @@ router.post(
         expiresAt: new Date(Date.now() + (remember ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()
       });
     } catch (error: any) {
-      console.error('Erro no login:', error);
+      console.log('Erro no login:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -206,7 +206,7 @@ router.post('/logout', (req, res, next) => validateJWTSmart(req as any, res, nex
       message: 'Logout realizado com sucesso'
     });
   } catch (error) {
-    console.error('Erro no logout:', error);
+    console.log('Erro no logout:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -263,7 +263,7 @@ router.post('/logout-all', (req, res, next) => validateJWTSmart(req as any, res,
       removedSessions
     });
   } catch (error) {
-    console.error('Erro no logout-all:', error);
+    console.log('Erro no logout-all:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -375,7 +375,7 @@ router.post(
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       });
     } catch (error) {
-      console.error('Erro no refresh:', error);
+      console.log('Erro no refresh:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -443,7 +443,7 @@ router.get('/list', (req, res, next) => validateJWTSmart(req as any, res, next),
       sessions: sessionsWithCurrent
     });
   } catch (error) {
-    console.error('Erro ao listar sessões:', error);
+    console.log('Erro ao listar sessões:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -521,7 +521,7 @@ router.delete('/destroy/:sessionId', (req, res, next) => validateJWTSmart(req as
       });
     }
   } catch (error) {
-    console.error('Erro ao destruir sessão:', error);
+    console.log('Erro ao destruir sessão:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -582,7 +582,7 @@ router.get('/stats',
         stats
       });
     } catch (error) {
-      console.error('Erro ao obter estatísticas:', error);
+      console.log('Erro ao obter estatísticas:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -657,7 +657,7 @@ router.get('/validate', (req, res, next) => validateJWTSmart(req as any, res, ne
       sessionId: req.sessionId
     });
   } catch (error) {
-    console.error('Erro na validação de sessão:', error);
+    console.log('Erro na validação de sessão:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erro ao buscar configurações públicas:', error);
+    console.log('Erro ao buscar configurações públicas:', error);
     
     // Fallback de emergência
     return NextResponse.json({

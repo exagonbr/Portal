@@ -46,7 +46,7 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Erro ao vincular arquivo à coleção:', error)
+    console.log('Erro ao vincular arquivo à coleção:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

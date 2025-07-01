@@ -163,7 +163,7 @@ export default function StudentLessonsPage() {
       setModules(groupedModules)
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao buscar aulas:', error)
+      console.log('Erro ao buscar aulas:', error)
       setLoading(false)
     }
   }

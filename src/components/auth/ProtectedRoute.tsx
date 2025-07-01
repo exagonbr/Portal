@@ -49,7 +49,7 @@ function ProtectedRouteContent({
     const handleError = (event: ErrorEvent) => {
       if (event.error &&
           event.error.toString().includes("can't access property \"call\", originalFactory is undefined")) {
-        console.error('⚠️ Erro de factory detectado, preparando recuperação');
+        console.log('⚠️ Erro de factory detectado, preparando recuperação');
         event.preventDefault();
         setHasError(true);
       }
@@ -72,7 +72,7 @@ function ProtectedRouteContent({
             clearAllDataForUnauthorized().then(() => {
               router.push(redirectTo + '?error=unauthorized')
             }).catch((error) => {
-              console.error('❌ Erro durante limpeza de dados:', error);
+              console.log('❌ Erro durante limpeza de dados:', error);
               router.push(redirectTo + '?error=unauthorized')
             });
           } else {
@@ -126,7 +126,7 @@ function ProtectedRouteContent({
         setIsAuthorized(true)
       }
     } catch (error) {
-      console.error('❌ Erro durante verificação de autorização:', error);
+      console.log('❌ Erro durante verificação de autorização:', error);
       setHasError(true);
     }
   }, [authContext, requiredRole, requiredPermission, router, redirectTo, showUnauthorized])
@@ -268,7 +268,7 @@ export default function ProtectedRoute(props: ProtectedRouteProps) {
       <ProtectedRouteContent {...props} />
     );
   } catch (error) {
-    console.error('❌ Erro fatal no ProtectedRoute:', error);
+    console.log('❌ Erro fatal no ProtectedRoute:', error);
     // Fallback para caso de erro fatal
     return (
       <div className="min-h-screen flex items-center justify-center flex-col bg-gray-100">

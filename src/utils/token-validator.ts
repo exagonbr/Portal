@@ -179,7 +179,7 @@ export async function syncTokenWithApiClient(token?: string): Promise<boolean> {
     // Validar token antes de sincronizar
     const validation = validateToken(tokenToSync);
     if (!validation.isValid) {
-      console.error('🔍 [TOKEN-VALIDATOR] Token inválido, não sincronizando:', validation.error);
+      console.log('🔍 [TOKEN-VALIDATOR] Token inválido, não sincronizando:', validation.error);
       return false;
     }
 
@@ -200,7 +200,7 @@ export async function syncTokenWithApiClient(token?: string): Promise<boolean> {
         return true;
       }
     } catch (importError) {
-      console.error('❌ [TOKEN-VALIDATOR] Erro ao importar apiClient:', importError);
+      console.log('❌ [TOKEN-VALIDATOR] Erro ao importar apiClient:', importError);
       
       // Fallback: armazenar token diretamente sem apiClient
       if (typeof window !== 'undefined') {
@@ -212,7 +212,7 @@ export async function syncTokenWithApiClient(token?: string): Promise<boolean> {
       return false;
     }
   } catch (error) {
-    console.error('❌ [TOKEN-VALIDATOR] Erro geral ao sincronizar token:', error);
+    console.log('❌ [TOKEN-VALIDATOR] Erro geral ao sincronizar token:', error);
     
     // Último fallback: tentar armazenar token diretamente
     try {
@@ -223,7 +223,7 @@ export async function syncTokenWithApiClient(token?: string): Promise<boolean> {
         return true;
       }
     } catch (fallbackError) {
-      console.error('❌ [TOKEN-VALIDATOR] Falha no fallback final:', fallbackError);
+      console.log('❌ [TOKEN-VALIDATOR] Falha no fallback final:', fallbackError);
     }
     
     return false;

@@ -95,7 +95,7 @@ async function listS3Files(bucket: string): Promise<S3FileInfo[]> {
 
     return files
   } catch (error) {
-    console.error('Erro ao listar arquivos S3:', error)
+    console.log('Erro ao listar arquivos S3:', error)
     return []
   }
 }
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro na API:', error)
+    console.log('Erro na API:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro no upload:', error)
+    console.log('Erro no upload:', error)
     return NextResponse.json({ error: 'Erro ao fazer upload do arquivo' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -245,7 +245,7 @@ export async function PATCH(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao atualizar arquivo:', error)
+    console.log('Erro ao atualizar arquivo:', error)
     return NextResponse.json({ error: 'Erro ao atualizar arquivo' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
@@ -292,7 +292,7 @@ export async function DELETE(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao deletar arquivo:', error)
+    console.log('Erro ao deletar arquivo:', error)
     return NextResponse.json({ error: 'Erro ao deletar arquivo' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)

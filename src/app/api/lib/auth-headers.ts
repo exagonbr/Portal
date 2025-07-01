@@ -83,7 +83,7 @@ export function prepareAuthHeaders(request: NextRequest): Record<string, string>
 
   // Verificação final - garantir que há algum método de autenticação
   if (!headers['Authorization'] && !headers['X-Auth-Token'] && !headers['Cookie']) {
-    console.error('❌ [AUTH-HEADERS] ERRO: Nenhum método de autenticação encontrado!');
+    console.log('❌ [AUTH-HEADERS] ERRO: Nenhum método de autenticação encontrado!');
     console.log('🔍 [AUTH-HEADERS] Headers da requisição original:', {
       authorization: request.headers.get('Authorization'),
       xAuthToken: request.headers.get('X-Auth-Token'),

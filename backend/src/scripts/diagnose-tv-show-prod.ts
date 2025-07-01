@@ -80,7 +80,7 @@ async function diagnoseTvShowProd() {
     }
 
   } catch (error) {
-    console.error('\n❌ Erro geral:', error);
+    console.log('\n❌ Erro geral:', error);
   }
 }
 
@@ -88,5 +88,5 @@ async function diagnoseTvShowProd() {
 diagnoseTvShowProd().then(() => {
   console.log('\n✅ Diagnóstico concluído');
 }).catch(error => {
-  console.error('\n❌ Erro fatal:', error);
+  console.log('\n❌ Erro fatal:', error);
 });

@@ -31,7 +31,7 @@ async function checkUsersTable() {
     }
     
   } catch (error) {
-    console.error('❌ Erro:', error.message);
+    console.log('❌ Erro:', error.message);
   } finally {
     await db.destroy();
     process.exit(0);

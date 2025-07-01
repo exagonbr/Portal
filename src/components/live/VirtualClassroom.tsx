@@ -77,7 +77,7 @@ export default function VirtualClassroom({
         onRecordingStatusChange?.(status)
       })
     } catch (error) {
-      console.error('Failed to initialize virtual classroom:', error)
+      console.log('Failed to initialize virtual classroom:', error)
     }
   }, [classroomId, title, isHost, user])
 

@@ -33,6 +33,7 @@ const nextConfig = {
   // Configurações de desenvolvimento
   reactStrictMode: true, // Habilitado - react-quill agora é compatível com React 18
   productionBrowserSourceMaps: false,
+  swcMinify: true, // Habilitar minificação SWC
 
   // Desativar o botão de "dev tools" do Next.js
   devIndicators: false,

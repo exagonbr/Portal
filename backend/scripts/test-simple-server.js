@@ -36,7 +36,7 @@ app.post('/api/collections/manage', (req, res) => {
       message: 'Coleção criada com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao criar coleção:', error);
+    console.log('Erro ao criar coleção:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -53,9 +53,9 @@ app.listen(PORT, '127.0.0.1', () => {
 
 // Tratamento de erros
 process.on('uncaughtException', (error) => {
-  console.error('Erro não capturado:', error);
+  console.log('Erro não capturado:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Promise rejeitada não tratada:', reason);
+  console.log('Promise rejeitada não tratada:', reason);
 }); 

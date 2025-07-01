@@ -631,7 +631,7 @@ export default function GuardianDashboardPage() {
       ]);
 
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.log('Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
     }

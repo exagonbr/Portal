@@ -13,7 +13,7 @@ async function getEmailSettings() {
       return acc;
     }, {});
   } catch (error) {
-    console.error('Error fetching email settings:', error);
+    console.log('Error fetching email settings:', error);
     throw error;
   }
 }
@@ -84,7 +84,7 @@ async function testEmailConfiguration() {
     }
 
   } catch (error) {
-    console.error('❌ Error testing email configuration:', error);
+    console.log('❌ Error testing email configuration:', error);
     throw error;
   } finally {
     await db.destroy();
@@ -100,6 +100,6 @@ if (process.argv[2]) {
 
 // Run the test
 testEmailConfiguration().catch(error => {
-  console.error('Test failed:', error);
+  console.log('Test failed:', error);
   process.exit(1);
 });

@@ -87,7 +87,7 @@ function processFile(filePath) {
     }
     return false;
   } catch (error) {
-    console.error(`Erro ao processar ${filePath}:`, error.message);
+    console.log(`Erro ao processar ${filePath}:`, error.message);
     return false;
   }
 }
@@ -125,13 +125,13 @@ function processDirectory(dir) {
           }
         } catch (error) {
           results.errors++;
-          console.error(`❌ Erro em: ${fullPath}`, error.message);
+          console.log(`❌ Erro em: ${fullPath}`, error.message);
         }
       }
     }
   } catch (error) {
     results.errors++;
-    console.error(`❌ Erro ao processar diretório ${dir}:`, error.message);
+    console.log(`❌ Erro ao processar diretório ${dir}:`, error.message);
   }
 
   return results;

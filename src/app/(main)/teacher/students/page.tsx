@@ -117,7 +117,7 @@ export default function TeacherStudentsPage() {
         setLoading(false)
       }, 1000)
     } catch (error) {
-      console.error('Erro ao carregar alunos:', error)
+      console.log('Erro ao carregar alunos:', error)
       setLoading(false)
     }
   }

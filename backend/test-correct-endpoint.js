@@ -65,7 +65,7 @@ async function testCorrectEndpoint() {
                   console.log('❌ Permissões não encontradas no token');
                 }
               } catch (jwtError) {
-                console.error('❌ Erro ao decodificar JWT:', jwtError.message);
+                console.log('❌ Erro ao decodificar JWT:', jwtError.message);
               }
             }
           } else {
@@ -74,7 +74,7 @@ async function testCorrectEndpoint() {
           }
           
         } catch (error) {
-          console.error('❌ Erro ao parsear resposta:', error.message);
+          console.log('❌ Erro ao parsear resposta:', error.message);
           console.log('📄 Resposta raw:', data);
         }
         
@@ -83,7 +83,7 @@ async function testCorrectEndpoint() {
     });
 
     req.on('error', (error) => {
-      console.error('❌ Erro na requisição:', error.message);
+      console.log('❌ Erro na requisição:', error.message);
       process.exit(1);
     });
 
@@ -91,7 +91,7 @@ async function testCorrectEndpoint() {
     req.end();
     
   } catch (error) {
-    console.error('❌ Erro no teste:', error.message);
+    console.log('❌ Erro no teste:', error.message);
     process.exit(1);
   }
 }

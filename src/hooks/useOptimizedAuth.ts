@@ -71,7 +71,7 @@ export function useOptimizedAuth() {
     } catch (err: any) {
       const errorMessage = err.message || 'Erro interno do servidor';
       setError(errorMessage);
-      console.error('❌ Erro no login otimizado:', errorMessage);
+      console.log('❌ Erro no login otimizado:', errorMessage);
       
       return {
         success: false,
@@ -120,7 +120,7 @@ export function useOptimizedAuth() {
       
       const errorMessage = err.message || 'Erro no logout';
       setError(errorMessage);
-      console.error('❌ Erro no logout otimizado:', errorMessage);
+      console.log('❌ Erro no logout otimizado:', errorMessage);
       
       // Ainda assim redirecionar para login
       router.push('/auth/login');
@@ -152,7 +152,7 @@ export function useOptimizedAuth() {
       const result = await response.json();
       return result.success && result.data?.valid;
     } catch (err) {
-      console.error('❌ Erro na validação do token:', err);
+      console.log('❌ Erro na validação do token:', err);
       return false;
     }
   }, []);
@@ -182,7 +182,7 @@ export function useOptimizedAuth() {
 
       return false;
     } catch (err) {
-      console.error('❌ Erro no refresh do token:', err);
+      console.log('❌ Erro no refresh do token:', err);
       return false;
     }
   }, []);
@@ -192,7 +192,7 @@ export function useOptimizedAuth() {
       const userStr = localStorage.getItem('user');
       return userStr ? JSON.parse(userStr) : null;
     } catch (err) {
-      console.error('❌ Erro ao obter usuário atual:', err);
+      console.log('❌ Erro ao obter usuário atual:', err);
       return null;
     }
   }, []);

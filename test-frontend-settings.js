@@ -63,12 +63,12 @@ function testEndpoint(path, method = 'GET', data = null) {
     });
 
     req.on('error', (error) => {
-      console.error('🚨 Erro de requisição:', error.message);
+      console.log('🚨 Erro de requisição:', error.message);
       reject(error);
     });
 
     req.on('timeout', () => {
-      console.error('⏰ Timeout da requisição');
+      console.log('⏰ Timeout da requisição');
       req.destroy();
       reject(new Error('Request timeout'));
     });
@@ -128,7 +128,7 @@ async function runDiagnosticTests() {
       }
       
     } catch (error) {
-      console.error(`❌ Falha no teste ${test.name}:`, error.message);
+      console.log(`❌ Falha no teste ${test.name}:`, error.message);
     }
     
     // Pausa entre testes
@@ -141,4 +141,4 @@ async function runDiagnosticTests() {
 }
 
 // Executar testes
-runDiagnosticTests().catch(console.error);
+runDiagnosticTests().catch(console.log);

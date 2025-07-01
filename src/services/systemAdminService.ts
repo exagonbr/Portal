@@ -189,7 +189,7 @@ class SystemAdminService {
         console.log('🔄 [AUTH-CHECK] Tentando refresh automático do token');
         const refreshSuccess = await autoRefreshToken();
         if (!refreshSuccess) {
-          console.error('❌ [AUTH-CHECK] Falha no refresh do token');
+          console.log('❌ [AUTH-CHECK] Falha no refresh do token');
           
           // Registrar diagnóstico detalhado
           const diagnostics = runAuthDiagnostics();
@@ -207,14 +207,14 @@ class SystemAdminService {
       // Verificar novamente após sincronização
       const finalAuthStatus = isAuthenticated();
       if (!finalAuthStatus.authenticated) {
-        console.error('❌ [AUTH-CHECK] Token ainda inválido após sincronização');
+        console.log('❌ [AUTH-CHECK] Token ainda inválido após sincronização');
         return false;
       }
       
       console.log('✅ [AUTH-CHECK] Autenticação verificada com sucesso');
       return true;
     } catch (error) {
-      console.error('❌ [AUTH-CHECK] Erro na verificação de autenticação:', error);
+      console.log('❌ [AUTH-CHECK] Erro na verificação de autenticação:', error);
       
       // Registrar diagnóstico detalhado em caso de erro
       const diagnostics = runAuthDiagnostics();
@@ -377,7 +377,7 @@ class SystemAdminService {
       }
     }
     
-    console.error(`❌ [SYSTEM-ADMIN] Todas as ${maxRetries} tentativas falharam para: ${url}`);
+    console.log(`❌ [SYSTEM-ADMIN] Todas as ${maxRetries} tentativas falharam para: ${url}`);
     throw lastError!;
   }
 
@@ -420,7 +420,7 @@ class SystemAdminService {
       }
     }
     
-    console.error(`❌ [SYSTEM-ADMIN] Todas as ${maxRetries} tentativas falharam`);
+    console.log(`❌ [SYSTEM-ADMIN] Todas as ${maxRetries} tentativas falharam`);
     throw lastError!;
   }
 
@@ -500,7 +500,7 @@ class SystemAdminService {
         console.log('❌ [SYSTEM-ADMIN] API funcionando mas token inválido:', error);
       }
     } catch (err: unknown) {
-      console.error('❌ [SYSTEM-ADMIN] Erro na requisição de teste:', err);
+      console.log('❌ [SYSTEM-ADMIN] Erro na requisição de teste:', err);
       
       // Analisar o tipo de erro mais detalhadamente
       const errorObj = err as any;
@@ -548,7 +548,7 @@ class SystemAdminService {
       console.warn('getUsersByRole failed, returning fallback.', response.message);
       return this.getFallbackUserStats().users_by_role;
     } catch (error) {
-      console.error('Error in getUsersByRole, returning fallback:', error);
+      console.log('Error in getUsersByRole, returning fallback:', error);
       return this.getFallbackUserStats().users_by_role;
     }
   }
@@ -565,7 +565,7 @@ class SystemAdminService {
       console.warn('getSystemAnalytics failed, returning fallback.', response.message);
       return this.getFallbackAnalytics();
     } catch (error) {
-      console.error('Error in getSystemAnalytics, returning fallback:', error);
+      console.log('Error in getSystemAnalytics, returning fallback:', error);
       return this.getFallbackAnalytics();
     }
   }
@@ -582,7 +582,7 @@ class SystemAdminService {
       console.warn('getUserEngagementMetrics failed, returning fallback.', response.message);
       return this.getFallbackEngagementMetrics();
     } catch (error) {
-      console.error('Error in getUserEngagementMetrics, returning fallback:', error);
+      console.log('Error in getUserEngagementMetrics, returning fallback:', error);
       return this.getFallbackEngagementMetrics();
     }
   }
@@ -637,7 +637,7 @@ class SystemAdminService {
       return this.getFallbackDashboardData();
       
     } catch (error: unknown) {
-      console.error('❌ [SYSTEM-ADMIN] Erro ao carregar dashboard do sistema:', error);
+      console.log('❌ [SYSTEM-ADMIN] Erro ao carregar dashboard do sistema:', error);
       
       const errorObj = error as any;
       // Verificar se é erro de timeout (504 Gateway Timeout)
@@ -668,7 +668,7 @@ class SystemAdminService {
           errorObj?.message?.includes('autenticação') ||
           errorObj?.message?.includes('autorização')) {
         
-        console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
+        console.log('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
         throw new Error('Token de autenticação inválido. Faça login novamente.');
       }
       
@@ -897,7 +897,7 @@ class SystemAdminService {
       };
       
     } catch (error: unknown) {
-      console.error('❌ [SYSTEM-ADMIN] Erro ao carregar status de saúde:', error);
+      console.log('❌ [SYSTEM-ADMIN] Erro ao carregar status de saúde:', error);
       
       const errorObj = error as any;
       // Verificar se é erro de timeout (504 Gateway Timeout)
@@ -928,7 +928,7 @@ class SystemAdminService {
           errorObj?.message?.includes('autenticação') ||
           errorObj?.message?.includes('autorização')) {
         
-        console.error('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
+        console.log('🔐 [SYSTEM-ADMIN] Erro de autenticação detectado');
         throw new Error('Token de autenticação inválido. Faça login novamente.');
       }
       
@@ -978,7 +978,7 @@ class SystemAdminService {
         // If success is false, throw error with message
         throw new Error(response.message || 'Falha ao carregar dados de analytics');
       } catch (error: unknown) {
-        console.error('Erro ao carregar dados de analytics:', error);
+        console.log('Erro ao carregar dados de analytics:', error);
         
         // Fallback with simulated data
         return this.getFallbackAnalyticsData(type, period);
@@ -1000,7 +1000,7 @@ class SystemAdminService {
         
         throw new Error(response.message || 'Falha ao carregar resumo do dashboard');
       } catch (error: unknown) {
-        console.error('Erro ao carregar resumo do dashboard:', error);
+        console.log('Erro ao carregar resumo do dashboard:', error);
         return null;
       }
     });
@@ -1338,7 +1338,7 @@ class SystemAdminService {
       } catch (error: unknown) {
         // Melhora o log de erro para extrair a mensagem de forma mais confiável.
         const message = error instanceof Error ? error.message : String(error);
-        console.error('❌ [ROLE-STATS] Erro ao carregar estatísticas de roles:', message, { originalError: error });
+        console.log('❌ [ROLE-STATS] Erro ao carregar estatísticas de roles:', message, { originalError: error });
         
         // Verificar se é erro de autenticação
         this.handleAuthError(error, 'ROLE-STATS');
@@ -1357,7 +1357,7 @@ class SystemAdminService {
       console.warn('getAwsConnectionStats failed, returning fallback.', response.message);
       return null; // Returning null as a fallback
     } catch (error) {
-      console.error('Error in getAwsConnectionStats, returning fallback:', error);
+      console.log('Error in getAwsConnectionStats, returning fallback:', error);
       return null; // Returning null as a fallback
     }
   }
@@ -1371,7 +1371,7 @@ class SystemAdminService {
       console.warn('getRealUserStats failed, returning fallback.', response.message);
       return this.getFallbackUserStats();
     } catch (error) {
-      console.error('Error in getRealUserStats, returning fallback:', error);
+      console.log('Error in getRealUserStats, returning fallback:', error);
       return this.getFallbackUserStats();
     }
   }

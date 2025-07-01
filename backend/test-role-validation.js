@@ -101,7 +101,7 @@ function testRoleMapping() {
     console.log('4. ✅ Sistema RBAC funcionando corretamente');
 
   } catch (error) {
-    console.error('❌ Erro no teste:', error.message);
+    console.log('❌ Erro no teste:', error.message);
   }
 }
 

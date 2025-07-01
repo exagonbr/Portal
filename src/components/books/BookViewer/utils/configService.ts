@@ -70,7 +70,7 @@ export class ConfigService {
       const newConfig = { ...currentConfig, ...config };
       localStorage.setItem(this.CONFIG_KEY, JSON.stringify(newConfig));
     } catch (error) {
-      console.error('Erro ao salvar configurações:', error);
+      console.log('Erro ao salvar configurações:', error);
     }
   }
 
@@ -95,7 +95,7 @@ export class ConfigService {
       locations[bookKey] = bookLocation;
       localStorage.setItem(this.LOCATIONS_KEY, JSON.stringify(locations));
     } catch (error) {
-      console.error('Erro ao salvar localização do livro:', error);
+      console.log('Erro ao salvar localização do livro:', error);
     }
   }
 
@@ -104,7 +104,7 @@ export class ConfigService {
       const locations = this.getBookLocations();
       return locations[bookKey] || null;
     } catch (error) {
-      console.error('Erro ao carregar localização do livro:', error);
+      console.log('Erro ao carregar localização do livro:', error);
       return null;
     }
   }
@@ -170,7 +170,7 @@ export class ConfigService {
       }
       return true;
     } catch (error) {
-      console.error('Erro ao importar configurações:', error);
+      console.log('Erro ao importar configurações:', error);
       return false;
     }
   }

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Erro ao buscar estatísticas das roles:', error)
+    console.log('Erro ao buscar estatísticas das roles:', error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

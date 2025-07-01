@@ -79,7 +79,7 @@ export function RegisterPage() {
       router.push('/dashboard');
     } catch (err: any) {
       if (isDevelopment()) {
-        console.error('Erro no registro:', err);
+        console.log('Erro no registro:', err);
       }
       setErrors({ 
         general: err.message || 'Erro ao criar conta. Verifique os dados e tente novamente.' 

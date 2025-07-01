@@ -56,7 +56,7 @@ router.get('/generate-test-jwt', async (req, res) => {
       }
     });
   } catch (error: any) {
-    console.error('❌ [DEBUG] Erro ao gerar JWT:', error);
+    console.log('❌ [DEBUG] Erro ao gerar JWT:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro ao gerar JWT de teste',
@@ -81,7 +81,7 @@ router.get('/test-jwt-validation', optimizedAuthMiddleware, async (req, res) => 
       }
     });
   } catch (error: any) {
-    console.error('❌ [DEBUG] Erro na validação JWT:', error);
+    console.log('❌ [DEBUG] Erro na validação JWT:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro na validação JWT',
@@ -111,7 +111,7 @@ router.get('/test-jwt-and-role',
         }
       });
     } catch (error: any) {
-      console.error('❌ [DEBUG] Erro na validação JWT+Role:', error);
+      console.log('❌ [DEBUG] Erro na validação JWT+Role:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro na validação JWT+Role',
@@ -185,7 +185,7 @@ router.get('/simulate-users-route',
         }
       });
     } catch (error: any) {
-      console.error('❌ [DEBUG] Erro na simulação:', error);
+      console.log('❌ [DEBUG] Erro na simulação:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro na simulação da rota users',
@@ -269,7 +269,7 @@ router.get('/full-diagnosis', async (req, res) => {
       data: diagnosis
     });
   } catch (error: any) {
-    console.error('❌ [DEBUG] Erro no diagnóstico:', error);
+    console.log('❌ [DEBUG] Erro no diagnóstico:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro no diagnóstico completo',
@@ -297,7 +297,7 @@ router.get('/debug-table', optimizedAuthMiddleware, requireAnyRole(['SYSTEM_ADMI
       message: 'Estrutura da tabela users'
     });
   } catch (error: any) {
-    console.error('❌ [DEBUG-TABLE] Erro:', error);
+    console.log('❌ [DEBUG-TABLE] Erro:', error);
     
     res.status(500).json({
       success: false,

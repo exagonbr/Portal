@@ -52,7 +52,7 @@ async function main() {
     console.log('Unidades escolares importadas com sucesso!');
 
   } catch (error) {
-    console.error('Erro durante a importação:', error);
+    console.log('Erro durante a importação:', error);
     throw error;
   } finally {
     await mysqlConnection.end();
@@ -94,6 +94,6 @@ async function getOrCreateDefaultInstitution() {
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.log(e);
     process.exit(1);
   }); 

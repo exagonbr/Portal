@@ -91,7 +91,7 @@ export default function ProfilePage() {
         console.log('Perfil atualizado com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error)
+      console.log('Erro ao atualizar perfil:', error)
       // Mostrar mensagem de erro (você pode implementar um toast aqui)
     } finally {
       setLoading(false)

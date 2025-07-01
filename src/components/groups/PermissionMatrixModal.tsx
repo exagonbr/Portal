@@ -112,7 +112,7 @@ export const PermissionMatrixModal: React.FC<PermissionMatrixModalProps> = ({
           return newSet;
         });
       } catch (error) {
-        console.error('Erro ao salvar permissão:', error);
+        console.log('Erro ao salvar permissão:', error);
       }
     }
   };

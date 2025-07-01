@@ -120,7 +120,7 @@ export default function TeacherLessonsPage() {
         setLoading(false)
       }, 1000)
     } catch (error) {
-      console.error('Erro ao carregar aulas:', error)
+      console.log('Erro ao carregar aulas:', error)
       setLoading(false)
     }
   }

@@ -205,7 +205,7 @@ describe('SystemAdminDashboard', () => {
   });
 
   it('handles error boundary correctly', () => {
-    // Mock console.error to avoid noise in test output
+    // Mock console.log to avoid noise in test output
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     
     // This would trigger the error boundary in a real scenario

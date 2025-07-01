@@ -47,7 +47,7 @@ export function RoleProtectedRoute({
           clearAllDataForUnauthorized().then(() => {
             router.push(fallbackPath + '?error=unauthorized');
           }).catch((error) => {
-            console.error('❌ Erro durante limpeza de dados:', error);
+            console.log('❌ Erro durante limpeza de dados:', error);
             router.push(fallbackPath + '?error=unauthorized');
           });
         } else {
@@ -60,7 +60,7 @@ export function RoleProtectedRoute({
 
       // Verifica se a role é válida
       if (!isValidRole(user.role)) {
-        console.error(`Role inválida detectada: ${user.role}`);
+        console.log(`Role inválida detectada: ${user.role}`);
         await logout();
         
         // Se redirecionando para login, limpar dados primeiro
@@ -68,7 +68,7 @@ export function RoleProtectedRoute({
           clearAllDataForUnauthorized().then(() => {
             router.push(fallbackPath + '?error=unauthorized');
           }).catch((error) => {
-            console.error('❌ Erro durante limpeza de dados:', error);
+            console.log('❌ Erro durante limpeza de dados:', error);
             router.push(fallbackPath + '?error=unauthorized');
           });
         } else {

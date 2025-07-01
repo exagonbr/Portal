@@ -98,7 +98,7 @@ export function useForm<T extends { [key: string]: any }>({
       try {
         await onSubmit(values);
       } catch (error) {
-        console.error('Form submission error:', error);
+        console.log('Form submission error:', error);
       } finally {
         setIsSubmitting(false);
       }

@@ -113,7 +113,7 @@ export const useRoles = (): UseRolesReturn => {
       }
       
     } catch (err) {
-      console.error('Erro ao carregar roles:', err)
+      console.log('Erro ao carregar roles:', err)
       setError('Não foi possível carregar as funções. Tente novamente.')
     } finally {
       setLoading(false)
@@ -136,7 +136,7 @@ export const useRoles = (): UseRolesReturn => {
         } : role
       ))
     } catch (err) {
-      console.error(`Erro ao carregar usuários da role ${roleId}:`, err)
+      console.log(`Erro ao carregar usuários da role ${roleId}:`, err)
       setRoles(prev => prev.map(role => 
         role.id === roleId ? { 
           ...role, 
@@ -158,7 +158,7 @@ export const useRoles = (): UseRolesReturn => {
       })
       setAllUsers(response.items as unknown as UserResponseDto[])
     } catch (err) {
-      console.error('Erro ao carregar usuários:', err)
+      console.log('Erro ao carregar usuários:', err)
     }
   }, [])
 

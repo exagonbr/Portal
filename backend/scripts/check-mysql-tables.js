@@ -42,7 +42,7 @@ async function listAllTables() {
     });
     
   } catch (error) {
-    console.error('Error:', error.message);
+    console.log('Error:', error.message);
   } finally {
     await connection.end();
   }

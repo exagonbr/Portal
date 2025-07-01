@@ -107,7 +107,7 @@ export default function TVShowsManagePage() {
       
       const token = getAuthToken();
       if (!token) {
-        console.error('❌ Token de autenticação não encontrado - usuário não está logado');
+        console.log('❌ Token de autenticação não encontrado - usuário não está logado');
         // Tentar redirecionar para login ou mostrar erro
         return null;
       }
@@ -131,14 +131,14 @@ export default function TVShowsManagePage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          console.error(`❌ Erro 401 - Token inválido ou expirado para vídeo ${videoId}`);
+          console.log(`❌ Erro 401 - Token inválido ou expirado para vídeo ${videoId}`);
           // Aqui poderia limpar o token e redirecionar para login
           localStorage.removeItem('auth_token');
           localStorage.removeItem('token');
         } else if (response.status === 404) {
-          console.error(`❌ Erro 404 - Arquivo não encontrado para vídeo ${videoId}`);
+          console.log(`❌ Erro 404 - Arquivo não encontrado para vídeo ${videoId}`);
         } else {
-          console.error(`❌ Erro ${response.status} ao buscar dados do arquivo do vídeo ${videoId}:`, response.statusText);
+          console.log(`❌ Erro ${response.status} ao buscar dados do arquivo do vídeo ${videoId}:`, response.statusText);
         }
         return null;
       }
@@ -161,7 +161,7 @@ export default function TVShowsManagePage() {
 
       return null;
     } catch (error) {
-      console.error(`❌ Erro na requisição para vídeo ${videoId}:`, error);
+      console.log(`❌ Erro na requisição para vídeo ${videoId}:`, error);
       return null;
     }
   }
@@ -228,7 +228,7 @@ export default function TVShowsManagePage() {
       }
     }
     
-    console.error('❌ Nenhum token de autenticação encontrado!')
+    console.log('❌ Nenhum token de autenticação encontrado!')
     console.log('💡 Verificando se existe sessão ativa...')
     
     // Em último caso, verificar se há dados de usuário logado
@@ -304,7 +304,7 @@ export default function TVShowsManagePage() {
       }
     }
     
-    console.error(`❌ Todas as ${maxRetries} tentativas falharam para: ${url}`);
+    console.log(`❌ Todas as ${maxRetries} tentativas falharam para: ${url}`);
     throw lastError!;
   };
 
@@ -353,11 +353,11 @@ export default function TVShowsManagePage() {
           }
         }
       } else {
-        console.error('❌ Erro na resposta da API:', response.status, response.statusText);
+        console.log('❌ Erro na resposta da API:', response.status, response.statusText);
         
         // Se for erro de autenticação, limpar o token e alertar o usuário
         if (response.status === 401) {
-          console.error('❌ Erro de autenticação (401). Limpando token e recarregando.');
+          console.log('❌ Erro de autenticação (401). Limpando token e recarregando.');
           localStorage.removeItem('auth_token');
           localStorage.removeItem('token');
           sessionStorage.removeItem('auth_token');
@@ -368,7 +368,7 @@ export default function TVShowsManagePage() {
         }
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar TV Shows:', error);
+      console.log('❌ Erro ao carregar TV Shows:', error);
       
       // Em caso de erro, usar dados simulados
       console.warn('⚠️ Usando dados simulados devido ao erro');
@@ -418,7 +418,7 @@ export default function TVShowsManagePage() {
             
             // VALIDAÇÃO: Detectar valores absurdos e resetar para 0
             if (videoCount > 10000) {
-              console.error(`🚨 VALOR ABSURDO DETECTADO: ${show.name} tem ${videoCount} vídeos - RESETANDO PARA 0`)
+              console.log(`🚨 VALOR ABSURDO DETECTADO: ${show.name} tem ${videoCount} vídeos - RESETANDO PARA 0`)
               videoCount = 0
             }
             
@@ -481,10 +481,10 @@ export default function TVShowsManagePage() {
           })
         }
       } else {
-        console.error('❌ Erro na resposta da API de estatísticas:', response.status, response.statusText);
+        console.log('❌ Erro na resposta da API de estatísticas:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('❌ Erro ao calcular estatísticas:', error)
+      console.log('❌ Erro ao calcular estatísticas:', error)
       
       // Em caso de erro, calcular com base nos dados já carregados
       const fallbackTotalVideos = tvShows.reduce((sum, show) => {
@@ -537,11 +537,11 @@ export default function TVShowsManagePage() {
           }
         }
       } else {
-        console.error('❌ Erro na resposta da API de detalhes:', response.status, response.statusText);
+        console.log('❌ Erro na resposta da API de detalhes:', response.status, response.statusText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar detalhes do TV Show:', error)
+      console.log('❌ Erro ao carregar detalhes do TV Show:', error)
       setSelectedTvShow(null)
       setModules({})
     } finally {
@@ -681,13 +681,13 @@ export default function TVShowsManagePage() {
     }
     
     if (!selectedTvShow) {
-      console.error('❌ Erro: selectedTvShow não está definido')
+      console.log('❌ Erro: selectedTvShow não está definido')
       alert('Erro: Coleção não selecionada. Tente recarregar a página.')
       return
     }
     
     if (!moduleVideos || moduleVideos.length === 0) {
-      console.error('❌ Erro: Nenhum vídeo encontrado para esta sessão')
+      console.log('❌ Erro: Nenhum vídeo encontrado para esta sessão')
       alert('Erro: Nenhum vídeo disponível nesta sessão.')
       return
     }
@@ -738,7 +738,7 @@ export default function TVShowsManagePage() {
     })
     
     if (videosWithValidUrls.length === 0) {
-      console.error('❌ Erro: Nenhum vídeo com URL válida encontrado')
+      console.log('❌ Erro: Nenhum vídeo com URL válida encontrado')
       alert('Erro: Nenhum vídeo disponível para reprodução. Verifique se os arquivos foram carregados corretamente.')
       return
     }
@@ -793,7 +793,7 @@ export default function TVShowsManagePage() {
     }
     
     if (!video || !video.id) {
-      console.error('❌ Erro: Dados do vídeo inválidos')
+      console.log('❌ Erro: Dados do vídeo inválidos')
       alert('Erro: Dados do vídeo inválidos.')
       return
     }
@@ -825,7 +825,7 @@ export default function TVShowsManagePage() {
     }
     
     if (!videoUrl || !videoUrl.trim()) {
-      console.error('❌ Erro: URL do vídeo não encontrada e não foi possível construir')
+      console.log('❌ Erro: URL do vídeo não encontrada e não foi possível construir')
       alert('Erro: URL do vídeo não disponível. Verifique se o arquivo foi carregado corretamente.')
       return
     }

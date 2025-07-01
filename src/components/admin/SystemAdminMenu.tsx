@@ -233,7 +233,7 @@ export const getSystemAdminMenuItems = (): AdminMenuSection[] => {
   
   return menu;
   } catch (error) {
-    console.error('Erro ao gerar menu do System Admin:', error);
+    console.log('Erro ao gerar menu do System Admin:', error);
     return [
       {
         section: 'Principal',

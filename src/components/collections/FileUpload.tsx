@@ -94,7 +94,7 @@ export default function FileUpload({
       setUploadedFile(uploadedUrl)
       
     } catch (error) {
-      console.error('Erro no upload:', error)
+      console.log('Erro no upload:', error)
       alert('Erro ao fazer upload do arquivo. Tente novamente.')
       setUploadedFile(currentFile || null)
       setFileName('')

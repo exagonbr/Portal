@@ -149,7 +149,7 @@ export const useEpubViewer = ({ fileUrl, onError }: UseEpubViewerProps) => {
       if (!mountedRef.current) return;
       
       const errorMsg = err instanceof Error ? err.message : 'Erro desconhecido';
-      console.error('❌ Erro EPUB:', errorMsg);
+      console.log('❌ Erro EPUB:', errorMsg);
       setError(errorMsg);
       onError?.(errorMsg);
       cleanup();

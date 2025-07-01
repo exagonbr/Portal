@@ -224,4 +224,4 @@ async function runAllTests() {
 }
 
 // Executar testes
-runAllTests().catch(console.error); 
+runAllTests().catch(console.log); 

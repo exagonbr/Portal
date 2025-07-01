@@ -74,4 +74,4 @@ function makeRequest(url, timeout = 5000) {
   });
 }
 
-testLocalBackend().catch(console.error);
+testLocalBackend().catch(console.log);

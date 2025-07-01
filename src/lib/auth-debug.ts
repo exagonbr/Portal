@@ -25,8 +25,8 @@ export function debugAuthConfig() {
   
   // Verificar se CLIENT_ID e CLIENT_SECRET são iguais (erro comum)
   if (config.areGoogleCredentialsEqual) {
-    console.error('❌ [AUTH-DEBUG] ERRO: GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET são iguais!');
-    console.error('❌ [AUTH-DEBUG] Isso causará falha na autenticação Google OAuth');
+    console.log('❌ [AUTH-DEBUG] ERRO: GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET são iguais!');
+    console.log('❌ [AUTH-DEBUG] Isso causará falha na autenticação Google OAuth');
   }
   
   return config;
@@ -95,7 +95,7 @@ export const authOptionsDebug: NextAuthOptions = {
           console.log('❌ [AUTH-DEBUG] Dados inválidos na resposta');
           return null;
         } catch (error) {
-          console.error('❌ [AUTH-DEBUG] Erro na autenticação:', error);
+          console.log('❌ [AUTH-DEBUG] Erro na autenticação:', error);
           return null;
         }
       }
@@ -209,7 +209,7 @@ export async function testSession() {
     
     return session;
   } catch (error) {
-    console.error('❌ [AUTH-DEBUG] Erro ao testar sessão:', error);
+    console.log('❌ [AUTH-DEBUG] Erro ao testar sessão:', error);
     return null;
   }
 }

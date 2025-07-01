@@ -199,7 +199,7 @@ export class RoleService {
 
       return role;
     } catch (error) {
-      console.error(`Erro ao buscar role ${id}:`, error);
+      console.log(`Erro ao buscar role ${id}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 404) {
@@ -238,7 +238,7 @@ export class RoleService {
 
       return response.data;
     } catch (error) {
-      console.error('Erro ao criar role:', error);
+      console.log('Erro ao criar role:', error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 409) {
@@ -272,7 +272,7 @@ export class RoleService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao atualizar role ${id}:`, error);
+      console.log(`Erro ao atualizar role ${id}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 404) {
@@ -307,7 +307,7 @@ export class RoleService {
         throw new Error(response.message || 'Falha ao deletar role');
       }
     } catch (error) {
-      console.error(`Erro ao deletar role ${id}:`, error);
+      console.log(`Erro ao deletar role ${id}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 404) {
@@ -463,7 +463,7 @@ export class RoleService {
 
       return response.items;
     } catch (error) {
-      console.error('Erro ao buscar roles por nome:', error);
+      console.log('Erro ao buscar roles por nome:', error);
       return [];
     }
   }
@@ -484,7 +484,7 @@ export class RoleService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao alterar status da role ${id}:`, error);
+      console.log(`Erro ao alterar status da role ${id}:`, error);
       
       if (error instanceof ApiClientError && error.status === 404) {
         throw new Error('Role não encontrada');
@@ -523,7 +523,7 @@ export class RoleService {
 
       return response.data;
     } catch (error) {
-      console.error('Erro ao buscar estatísticas das roles:', error);
+      console.log('Erro ao buscar estatísticas das roles:', error);
       // Traduz a mensagem de erro para português
       const errorMessage = handleApiError(error);
       if (errorMessage.includes('Failed to')) {
@@ -549,7 +549,7 @@ export class RoleService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao verificar se role ${id} pode ser deletada:`, error);
+      console.log(`Erro ao verificar se role ${id} pode ser deletada:`, error);
       return { canDelete: false, reason: handleApiError(error) };
     }
   }
@@ -574,7 +574,7 @@ export class RoleService {
 
       return response.data;
     } catch (error) {
-      console.error(`Erro ao duplicar role ${id}:`, error);
+      console.log(`Erro ao duplicar role ${id}:`, error);
       
       if (error instanceof ApiClientError) {
         if (error.status === 404) {
@@ -613,7 +613,7 @@ export class RoleService {
 
       return { jobId };
     } catch (error) {
-      console.error('Erro ao exportar roles:', error);
+      console.log('Erro ao exportar roles:', error);
       // Traduz a mensagem de erro para português
       const errorMessage = handleApiError(error);
       if (errorMessage.includes('Failed to')) {
@@ -642,7 +642,7 @@ export class RoleService {
 
       return { jobId };
     } catch (error) {
-      console.error('Erro ao importar roles:', error);
+      console.log('Erro ao importar roles:', error);
       // Traduz a mensagem de erro para português
       const errorMessage = handleApiError(error);
       if (errorMessage.includes('Failed to')) {

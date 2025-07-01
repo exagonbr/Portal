@@ -515,7 +515,7 @@ async function analyzeAllTables() {
     console.log(`📊 ${totalRecords.toLocaleString()} registros para migrar`);
 
   } catch (error) {
-    console.error('❌ Erro durante análise:', error.message);
+    console.log('❌ Erro durante análise:', error.message);
   } finally {
     if (mysqlConnection) {
       await mysqlConnection.end();
@@ -528,7 +528,7 @@ async function analyzeAllTables() {
 
 // Executar análise
 if (require.main === module) {
-  analyzeAllTables().catch(console.error);
+  analyzeAllTables().catch(console.log);
 }
 
 module.exports = { analyzeAllTables }; 

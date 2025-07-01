@@ -82,7 +82,7 @@ export class DashboardService {
         recent: recentActivity
       };
     } catch (error) {
-      console.error('Erro ao obter dashboard do sistema:', error);
+      console.log('Erro ao obter dashboard do sistema:', error);
       // Return a fallback dashboard object to prevent crashes
       return {
         users: { total: 0, active: 0, newThisMonth: 0, byRole: {}, byInstitution: {} },
@@ -136,7 +136,7 @@ export class DashboardService {
         activity: activityData
       };
     } catch (error) {
-      console.error('Erro ao obter dashboard do usuário:', error);
+      console.log('Erro ao obter dashboard do usuário:', error);
       throw new Error('Erro ao obter dashboard do usuário');
     }
   }
@@ -166,7 +166,7 @@ export class DashboardService {
         byInstitution
       };
     } catch (error) {
-      console.error('Erro ao obter estatísticas de usuários:', error);
+      console.log('Erro ao obter estatísticas de usuários:', error);
       return {
         total: 0,
         active: 0,
@@ -212,7 +212,7 @@ export class DashboardService {
 
       return validSessions > 0 ? Math.round(totalDuration / validSessions / 1000 / 60) : 0; // em minutos
     } catch (error) {
-      console.error('Erro ao calcular duração média de sessão:', error);
+      console.log('Erro ao calcular duração média de sessão:', error);
       return 0;
     }
   }
@@ -284,7 +284,7 @@ export class DashboardService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Erro ao obter métricas em tempo real:', error);
+      console.log('Erro ao obter métricas em tempo real:', error);
       return {
         activeUsers: 0,
         activeSessions: 0,
@@ -336,7 +336,7 @@ export class DashboardService {
           throw new Error('Tipo de analytics não suportado');
       }
     } catch (error) {
-      console.error('Erro ao obter dados de analytics:', error);
+      console.log('Erro ao obter dados de analytics:', error);
       throw new Error('Erro ao obter dados de analytics');
     }
   }

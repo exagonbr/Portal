@@ -74,7 +74,7 @@ async function testBitMapping() {
         });
 
       } catch (error) {
-        console.error(`❌ Erro ao testar tabela ${table.TABLE_NAME}:`, error.message);
+        console.log(`❌ Erro ao testar tabela ${table.TABLE_NAME}:`, error.message);
       }
     }
 
@@ -85,7 +85,7 @@ async function testBitMapping() {
     console.log('   Alternativa: Boolean(value)');
 
   } catch (error) {
-    console.error('❌ Erro ao conectar ou testar:', error.message);
+    console.log('❌ Erro ao conectar ou testar:', error.message);
   } finally {
     if (connection) {
       await connection.end();
@@ -94,4 +94,4 @@ async function testBitMapping() {
 }
 
 // Executar teste
-testBitMapping().catch(console.error); 
+testBitMapping().catch(console.log); 

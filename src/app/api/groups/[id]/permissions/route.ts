@@ -30,7 +30,7 @@ export async function GET(
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao buscar permissões do grupo:', error);
+    console.log('Erro ao buscar permissões do grupo:', error);
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -61,7 +61,7 @@ export async function PUT(
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao definir permissão do grupo:', error);
+    console.log('Erro ao definir permissão do grupo:', error);
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -92,7 +92,7 @@ export async function DELETE(
     
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Erro ao remover permissão do grupo:', error);
+    console.log('Erro ao remover permissão do grupo:', error);
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

@@ -80,7 +80,7 @@ export function LoginPage() {
       clearAllDataForUnauthorized().then(() => {
         console.log('✅ Limpeza completa de dados concluída para erro unauthorized');
       }).catch((error) => {
-        console.error('❌ Erro durante limpeza de dados:', error);
+        console.log('❌ Erro durante limpeza de dados:', error);
       });
     }
     
@@ -91,7 +91,7 @@ export function LoginPage() {
       clearAllDataForUnauthorized().then(() => {
         console.log('✅ Limpeza completa de dados concluída para login expirado');
       }).catch((error) => {
-        console.error('❌ Erro durante limpeza de dados:', error);
+        console.log('❌ Erro durante limpeza de dados:', error);
       });
     }
     

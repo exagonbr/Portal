@@ -38,7 +38,7 @@ export class UltraLogoutService {
       await this.forceRedirectToLogin();
       
     } catch (error) {
-      console.error('❌ ULTRA LOGOUT: Erro durante logout:', error);
+      console.log('❌ ULTRA LOGOUT: Erro durante logout:', error);
       
       // Limpeza de emergência
       await this.emergencyCleanup();
@@ -131,7 +131,7 @@ export class UltraLogoutService {
       
       console.log('✅ localStorage limpo completamente');
     } catch (error) {
-      console.error('❌ Erro crítico na limpeza do localStorage:', error);
+      console.log('❌ Erro crítico na limpeza do localStorage:', error);
     }
   }
   
@@ -162,7 +162,7 @@ export class UltraLogoutService {
       
       console.log('✅ sessionStorage limpo completamente');
     } catch (error) {
-      console.error('❌ Erro na limpeza do sessionStorage:', error);
+      console.log('❌ Erro na limpeza do sessionStorage:', error);
     }
   }
   
@@ -236,7 +236,7 @@ export class UltraLogoutService {
       
       console.log('✅ Todos os cookies limpos');
     } catch (error) {
-      console.error('❌ Erro na limpeza de cookies:', error);
+      console.log('❌ Erro na limpeza de cookies:', error);
     }
   }
   
@@ -265,7 +265,7 @@ export class UltraLogoutService {
       
       console.log('✅ Caches do navegador limpos');
     } catch (error) {
-      console.error('❌ Erro na limpeza de caches:', error);
+      console.log('❌ Erro na limpeza de caches:', error);
     }
   }
   
@@ -308,7 +308,7 @@ export class UltraLogoutService {
       
       console.log('✅ IndexedDB limpo');
     } catch (error) {
-      console.error('❌ Erro na limpeza do IndexedDB:', error);
+      console.log('❌ Erro na limpeza do IndexedDB:', error);
     }
   }
   
@@ -346,7 +346,7 @@ export class UltraLogoutService {
       
       console.log('✅ Service Worker cache limpo');
     } catch (error) {
-      console.error('❌ Erro na limpeza do Service Worker:', error);
+      console.log('❌ Erro na limpeza do Service Worker:', error);
     }
   }
   
@@ -387,7 +387,7 @@ export class UltraLogoutService {
       
       console.log('✅ Memória de componentes limpa');
     } catch (error) {
-      console.error('❌ Erro na limpeza da memória:', error);
+      console.log('❌ Erro na limpeza da memória:', error);
     }
   }
   
@@ -410,7 +410,7 @@ export class UltraLogoutService {
       
       console.log('✅ Estado do navegador limpo');
     } catch (error) {
-      console.error('❌ Erro na limpeza do estado do navegador:', error);
+      console.log('❌ Erro na limpeza do estado do navegador:', error);
     }
   }
   
@@ -447,7 +447,7 @@ export class UltraLogoutService {
         }
       }
     } catch (error) {
-      console.error('❌ Erro na notificação do backend:', error);
+      console.log('❌ Erro na notificação do backend:', error);
     }
   }
   
@@ -472,7 +472,7 @@ export class UltraLogoutService {
         console.log('✅ Limpeza de emergência concluída');
       }
     } catch (error) {
-      console.error('❌ Erro na limpeza de emergência:', error);
+      console.log('❌ Erro na limpeza de emergência:', error);
     }
   }
   
@@ -509,7 +509,7 @@ export class UltraLogoutService {
       }
       
     } catch (error) {
-      console.error('❌ Erro no redirecionamento:', error);
+      console.log('❌ Erro no redirecionamento:', error);
       // Fallback final
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/login';

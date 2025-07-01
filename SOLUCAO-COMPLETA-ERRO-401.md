@@ -132,7 +132,7 @@ fetch('https://portal.sabercon.com.br/api/users?page=1&limit=10', {
 })
 .then(response => response.json())
 .then(data => console.log('Resposta:', data))
-.catch(error => console.error('Erro:', error));
+.catch(error => console.log('Erro:', error));
 ```
 
 ### 2. Teste via cURL (Confirmado ✅)

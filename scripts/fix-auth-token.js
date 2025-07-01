@@ -37,7 +37,7 @@ function readFile(filePath) {
   try {
     return fs.readFileSync(filePath, 'utf8');
   } catch (error) {
-    console.error(`❌ Erro ao ler arquivo ${filePath}:`, error.message);
+    console.log(`❌ Erro ao ler arquivo ${filePath}:`, error.message);
     return null;
   }
 }
@@ -66,8 +66,8 @@ function checkAuthMiddleware() {
           issuesFound++;
         }
         
-        if (content.includes('console.error') && content.includes('Token inválido')) {
-          console.warn(`⚠️  ${file}: Usando console.error para tokens inválidos (pode causar logs desnecessários)`);
+        if (content.includes('console.log') && content.includes('Token inválido')) {
+          console.warn(`⚠️  ${file}: Usando console.log para tokens inválidos (pode causar logs desnecessários)`);
           issuesFound++;
         }
         
@@ -90,7 +90,7 @@ function checkApiClient() {
   const apiClientFile = 'src/lib/api-client.ts';
   
   if (!fileExists(apiClientFile)) {
-    console.error(`❌ Arquivo ${apiClientFile} não encontrado!`);
+    console.log(`❌ Arquivo ${apiClientFile} não encontrado!`);
     return 1;
   }
   
@@ -126,7 +126,7 @@ function checkAuthDebugUtils() {
   const authDebugFile = 'src/utils/auth-debug.ts';
   
   if (!fileExists(authDebugFile)) {
-    console.error(`❌ Arquivo ${authDebugFile} não encontrado!`);
+    console.log(`❌ Arquivo ${authDebugFile} não encontrado!`);
     return 1;
   }
   
@@ -152,14 +152,14 @@ function checkAuthDebugUtils() {
     }
   }
   
-  // Verificar se ainda está usando console.error para tokens inválidos
+  // Verificar se ainda está usando console.log para tokens inválidos
   const errorLines = content.split('\n').filter(line => 
-    line.includes('console.error') && 
+    line.includes('console.log') && 
     (line.includes('token') || line.includes('Token'))
   );
   
   if (errorLines.length > 0) {
-    console.warn(`⚠️  ${authDebugFile}: Ainda usando console.error para tokens (${errorLines.length} ocorrências)`);
+    console.warn(`⚠️  ${authDebugFile}: Ainda usando console.log para tokens (${errorLines.length} ocorrências)`);
     issuesFound++;
   }
   
@@ -349,7 +349,7 @@ function fixAuthIssues() {
     return true;
     
   } catch (error) {
-    console.error('❌ Erro ao corrigir problemas:', error);
+    console.log('❌ Erro ao corrigir problemas:', error);
     console.groupEnd();
     return false;
   }
@@ -395,7 +395,7 @@ async function testApiConnection() {
     }
     
   } catch (error) {
-    console.error('❌ Erro na requisição:', error.message);
+    console.log('❌ Erro na requisição:', error.message);
   }
   
   console.groupEnd();
@@ -451,7 +451,7 @@ console.log('  - runFullDiagnosis() - Executar tudo automaticamente');
     fs.writeFileSync(scriptPath, browserScript.trim(), 'utf8');
     console.log(`✅ Script de diagnóstico criado: ${scriptPath}`);
   } catch (error) {
-    console.error(`❌ Erro ao criar script: ${error.message}`);
+    console.log(`❌ Erro ao criar script: ${error.message}`);
   }
 }
 
@@ -475,7 +475,7 @@ function suggestFixes(totalIssues) {
   console.log('');
   
   console.log('1. 📊 Para problemas de logging:');
-  console.log('   • Use console.warn em vez de console.error para tokens inválidos');
+  console.log('   • Use console.warn em vez de console.log para tokens inválidos');
   console.log('   • Adicione contexto informativo aos logs');
   console.log('   • Evite logs excessivos que podem confundir usuários');
   console.log('');

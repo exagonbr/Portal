@@ -88,7 +88,7 @@ export const GroupCreateModal: React.FC<GroupCreateModalProps> = ({
       await onSubmit(formData);
       onClose();
     } catch (error) {
-      console.error('Erro ao criar grupo:', error);
+      console.log('Erro ao criar grupo:', error);
     } finally {
       setLoading(false);
     }

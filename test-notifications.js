@@ -18,7 +18,7 @@ async function login() {
       throw new Error('Login falhou');
     }
   } catch (error) {
-    console.error('❌ Erro no login:', error.response?.data || error.message);
+    console.log('❌ Erro no login:', error.response?.data || error.message);
     throw error;
   }
 }
@@ -42,7 +42,7 @@ async function testEmailVerification(token) {
     
     return response.data;
   } catch (error) {
-    console.error('❌ Erro na verificação de email:', error.response?.data || error.message);
+    console.log('❌ Erro na verificação de email:', error.response?.data || error.message);
     throw error;
   }
 }
@@ -81,7 +81,7 @@ async function testSendNotification(token) {
     
     return response.data;
   } catch (error) {
-    console.error('❌ Erro no envio de notificação:', error.response?.data || error.message);
+    console.log('❌ Erro no envio de notificação:', error.response?.data || error.message);
     throw error;
   }
 }
@@ -103,7 +103,7 @@ async function main() {
     console.log('\n🎉 Todos os testes foram executados!');
     
   } catch (error) {
-    console.error('\n💥 Erro geral nos testes:', error.message);
+    console.log('\n💥 Erro geral nos testes:', error.message);
     process.exit(1);
   }
 }

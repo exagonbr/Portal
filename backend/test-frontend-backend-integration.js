@@ -166,4 +166,4 @@ async function testFrontendBackendIntegration() {
   console.log('📊 Sistema de menus adapta-se automaticamente aos roles');
 }
 
-testFrontendBackendIntegration().catch(console.error);
+testFrontendBackendIntegration().catch(console.log);

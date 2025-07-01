@@ -112,7 +112,7 @@ for (const file of routeFiles) {
       fixedCount++;
     }
   } catch (error) {
-    console.error(`❌ Erro ao processar ${file}:`, error.message);
+    console.log(`❌ Erro ao processar ${file}:`, error.message);
   }
 }
 

@@ -51,7 +51,7 @@ async function checkTvShowTable() {
     }
 
   } catch (error) {
-    console.error('❌ Erro:', error);
+    console.log('❌ Erro:', error);
   } finally {
     await AppDataSource.destroy();
   }

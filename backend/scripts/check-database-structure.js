@@ -22,7 +22,7 @@ async function login() {
     }
     return false;
   } catch (error) {
-    console.error('❌ Erro no login:', error.response?.data || error.message);
+    console.log('❌ Erro no login:', error.response?.data || error.message);
     return false;
   }
 }
@@ -95,7 +95,7 @@ async function checkDatabaseStructure() {
     }
     
   } catch (error) {
-    console.error('❌ Erro na verificação:', error.response?.data || error.message);
+    console.log('❌ Erro na verificação:', error.response?.data || error.message);
   }
 
   console.log('\n🎉 Verificação de estrutura concluída!');

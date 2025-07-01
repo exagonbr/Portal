@@ -210,7 +210,7 @@ async function runAllTests() {
 
 // Executar se chamado diretamente
 if (require.main === module) {
-  runAllTests().catch(console.error);
+  runAllTests().catch(console.log);
 }
 
 module.exports = {

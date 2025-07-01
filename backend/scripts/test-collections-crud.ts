@@ -132,7 +132,7 @@ async function testCollectionsCRUD() {
     console.log('- ✅ Funções auxiliares: OK');
     
   } catch (error) {
-    console.error('💥 Erro durante o teste:', error);
+    console.log('💥 Erro durante o teste:', error);
   } finally {
     if (AppDataSource.isInitialized) {
       await AppDataSource.destroy();

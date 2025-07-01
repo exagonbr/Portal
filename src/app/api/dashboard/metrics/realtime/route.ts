@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Erro ao obter métricas em tempo real:', error);
+    console.log('Erro ao obter métricas em tempo real:', error);
     return NextResponse.json(
       {
         success: false,

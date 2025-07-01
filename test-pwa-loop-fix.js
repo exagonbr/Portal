@@ -221,7 +221,7 @@ async function main() {
     await runTest();
     await testEmergencyFix();
   } catch (error) {
-    console.error(chalk.red('❌ Erro durante o teste:'), error);
+    console.log(chalk.red('❌ Erro durante o teste:'), error);
     process.exit(1);
   }
 }

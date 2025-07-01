@@ -87,7 +87,7 @@ export async function validateSession(token: string, sessionId?: string) {
     };
 
   } catch (error) {
-    console.error('Erro ao validar sessão:', error);
+    console.log('Erro ao validar sessão:', error);
     return {
       valid: false,
       message: 'Erro interno do servidor'

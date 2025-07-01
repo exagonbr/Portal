@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Test auth error:', error)
+    console.log('❌ Test auth error:', error)
     return NextResponse.json(
       { 
         success: false, 

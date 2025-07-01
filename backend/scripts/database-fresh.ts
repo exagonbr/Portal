@@ -43,7 +43,7 @@ async function databaseFresh() {
       await db.raw('SELECT 1');
       console.log('✅ Conexão com PostgreSQL estabelecida');
     } catch (error) {
-      console.error('❌ Erro na conexão com PostgreSQL:', error);
+      console.log('❌ Erro na conexão com PostgreSQL:', error);
       throw error;
     }
 
@@ -124,7 +124,7 @@ async function databaseFresh() {
     console.log('✅ Sistema pronto para uso!');
     
   } catch (error) {
-    console.error('\n❌ ERRO DURANTE DATABASE:FRESH:', error);
+    console.log('\n❌ ERRO DURANTE DATABASE:FRESH:', error);
     process.exit(1);
   }
 }

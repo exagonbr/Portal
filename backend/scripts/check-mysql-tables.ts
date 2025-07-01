@@ -34,10 +34,10 @@ async function checkTables() {
     }
 
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
   } finally {
     await connection.end();
   }
 }
 
-checkTables().catch(console.error);
+checkTables().catch(console.log);

@@ -137,7 +137,7 @@ export class InstitutionService {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Response error:', errorText);
+        console.log('❌ Response error:', errorText);
         
         // Se for erro de autenticação (401), retornar dados simulados
         if (response.status === 401) {
@@ -172,7 +172,7 @@ export class InstitutionService {
       
       // Verificar se a resposta está no formato correto
       if (!result.success || !result.data) {
-        console.error('❌ Invalid API response structure:', result);
+        console.log('❌ Invalid API response structure:', result);
         console.warn('⚠️ Estrutura de resposta inválida, retornando dados simulados');
         return this.getFallbackInstitutions(options);
       }
@@ -190,7 +190,7 @@ export class InstitutionService {
         institutionsArray = result.data.institution;
         paginationData = result.data.pagination || result.pagination;
       } else {
-        console.error('❌ Institution array not found in API response:', result.data);
+        console.log('❌ Institution array not found in API response:', result.data);
         console.warn('⚠️ Array de instituições não encontrado, retornando dados simulados');
         return this.getFallbackInstitutions(options);
       }
@@ -210,7 +210,7 @@ export class InstitutionService {
 
       return migratedData;
     } catch (error) {
-      console.error('❌ Erro ao buscar instituições:', error);
+      console.log('❌ Erro ao buscar instituições:', error);
       
       // Verificar se é erro de timeout
       if (error instanceof Error && error.message.includes('Timeout')) {
@@ -353,7 +353,7 @@ export class InstitutionService {
       // Migrar campos legados se necessário
       return migrateContactFields(validatedResponse.data);
     } catch (error) {
-      console.error('Erro ao buscar instituição:', error);
+      console.log('Erro ao buscar instituição:', error);
       throw error;
     }
   }
@@ -403,7 +403,7 @@ export class InstitutionService {
 
       return migrateContactFields(validatedResponse.data);
     } catch (error) {
-      console.error('Erro ao criar instituição:', error);
+      console.log('Erro ao criar instituição:', error);
       throw error;
     }
   }
@@ -464,7 +464,7 @@ export class InstitutionService {
 
       return migrateContactFields(validatedResponse.data);
     } catch (error) {
-      console.error('Erro ao atualizar instituição:', error);
+      console.log('Erro ao atualizar instituição:', error);
       throw error;
     }
   }
@@ -479,7 +479,7 @@ export class InstitutionService {
       
       return response.items;
     } catch (error) {
-      console.error('Erro ao buscar instituições por nome:', error);
+      console.log('Erro ao buscar instituições por nome:', error);
       throw error;
     }
   }
@@ -504,7 +504,7 @@ export class InstitutionService {
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('Erro ao excluir instituição:', error);
+      console.log('Erro ao excluir instituição:', error);
       throw error;
     }
   }
@@ -529,7 +529,7 @@ export class InstitutionService {
       // Se há usuários ou escolas vinculadas, não pode excluir
       return !stats || (stats.users_count === 0 && stats.schools_count === 0);
     } catch (error) {
-      console.error('Erro ao verificar se instituição pode ser excluída:', error);
+      console.log('Erro ao verificar se instituição pode ser excluída:', error);
       return false;
     }
   }
@@ -547,7 +547,7 @@ export class InstitutionService {
 
       return await this.updateInstitution(id, updatedData);
     } catch (error) {
-      console.error('Erro ao alternar status da instituição:', error);
+      console.log('Erro ao alternar status da instituição:', error);
       throw error;
     }
   }
@@ -561,7 +561,7 @@ export class InstitutionService {
       
       return response.items;
     } catch (error) {
-      console.error('Erro ao obter todas as instituições:', error);
+      console.log('Erro ao obter todas as instituições:', error);
       throw error;
     }
   }
@@ -580,7 +580,7 @@ export class InstitutionService {
       return response.items;
       
     } catch (error) {
-      console.error('❌ Erro ao obter instituições ativas:', error);
+      console.log('❌ Erro ao obter instituições ativas:', error);
       throw error;
     }
   }
@@ -599,7 +599,7 @@ export class InstitutionService {
 
       return await response.blob();
     } catch (error) {
-      console.error('Erro ao exportar instituições:', error);
+      console.log('Erro ao exportar instituições:', error);
       throw error;
     }
   }
@@ -626,7 +626,7 @@ export class InstitutionService {
       const result = await response.json();
       return result.data;
     } catch (error) {
-      console.error('Erro ao importar instituições:', error);
+      console.log('Erro ao importar instituições:', error);
       throw error;
     }
   }

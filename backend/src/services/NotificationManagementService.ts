@@ -447,7 +447,7 @@ class NotificationService {
       await this.notificationRepository.updateStatus(notification.id, 'sent', new Date());
 
     } catch (error) {
-      console.error('Erro ao processar entrega da notificação:', error);
+      console.log('Erro ao processar entrega da notificação:', error);
       await this.notificationRepository.updateStatus(notification.id, 'failed');
     }
   }
@@ -568,7 +568,7 @@ class NotificationService {
             from: process.env.SMTP_FROM_EMAIL || 'noreply@sabercon.com.br'
           });
         } catch (emailError) {
-          console.error('Erro ao enviar email:', emailError);
+          console.log('Erro ao enviar email:', emailError);
         }
       }
     }

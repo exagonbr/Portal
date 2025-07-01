@@ -61,7 +61,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
           document.head.appendChild(script);
         });
       } catch (error) {
-        console.error('Erro ao carregar EPUB.js:', error);
+        console.log('Erro ao carregar EPUB.js:', error);
         onError('Erro ao carregar biblioteca EPUB.js');
         return null;
       }
@@ -123,7 +123,7 @@ const EPUBViewer: React.FC<EPUBViewerProps> = ({
           setIsLoading(false);
         }
       } catch (error) {
-        console.error('Erro ao carregar EPUB:', error);
+        console.log('Erro ao carregar EPUB:', error);
         onError(`Erro ao carregar EPUB: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         setIsLoading(false);
       }

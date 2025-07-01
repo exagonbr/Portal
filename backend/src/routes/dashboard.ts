@@ -80,7 +80,7 @@ router.get('/system',
         data: dashboardData
       });
     } catch (error: any) {
-      console.error('❌ Erro ao obter dashboard do sistema:', error);
+      console.log('❌ Erro ao obter dashboard do sistema:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -149,7 +149,7 @@ async function getSimplifiedSystemDashboard() {
       }
     };
   } catch (error) {
-    console.error('❌ Erro ao obter dashboard simplificado:', error);
+    console.log('❌ Erro ao obter dashboard simplificado:', error);
     
     // Retornar dados mínimos em caso de erro
     return {
@@ -214,7 +214,7 @@ router.get('/system-safe',
         data: safeData
       });
     } catch (error: any) {
-      console.error('❌ Erro no dashboard safe:', error);
+      console.log('❌ Erro no dashboard safe:', error);
       return res.status(200).json({
         success: true,
         data: {
@@ -285,7 +285,7 @@ router.get('/user', (req, res, next) => validateJWTSmart(req as any, res, next),
       data: dashboardData
     });
   } catch (error: any) {
-    console.error('Erro ao obter dashboard do usuário:', error);
+    console.log('Erro ao obter dashboard do usuário:', error);
     return res.status(500).json({
       success: false,
       message: error.message || 'Erro interno do servidor'
@@ -340,7 +340,7 @@ router.get('/metrics/realtime',
         data: metrics
       });
     } catch (error: any) {
-      console.error('Erro ao obter métricas em tempo real:', error);
+      console.log('Erro ao obter métricas em tempo real:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'
@@ -434,7 +434,7 @@ router.get('/analytics',
         data: analyticsData
       });
     } catch (error: any) {
-      console.error('Erro ao obter dados de analytics:', error);
+      console.log('Erro ao obter dados de analytics:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Erro interno do servidor'
@@ -512,7 +512,7 @@ router.get('/summary', (req, res, next) => validateJWTSmart(req as any, res, nex
       data: summary
     });
   } catch (error: any) {
-    console.error('Erro ao obter resumo do dashboard:', error);
+    console.log('Erro ao obter resumo do dashboard:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -604,7 +604,7 @@ router.get('/notifications', (req, res, next) => validateJWTSmart(req as any, re
       data: notifications
     });
   } catch (error: any) {
-    console.error('Erro ao obter notificações:', error);
+    console.log('Erro ao obter notificações:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -681,7 +681,7 @@ router.get('/health',
         data: healthStatus
       });
     } catch (error: any) {
-      console.error('Erro ao verificar saúde do sistema:', error);
+      console.log('Erro ao verificar saúde do sistema:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor'

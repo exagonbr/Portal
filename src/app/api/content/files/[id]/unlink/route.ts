@@ -38,7 +38,7 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('Erro ao desvincular arquivo do conteúdo:', error)
+    console.log('Erro ao desvincular arquivo do conteúdo:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { 
       status: 500,
       headers: getCorsHeaders(request.headers.get('origin') || undefined)
