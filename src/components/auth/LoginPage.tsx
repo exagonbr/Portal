@@ -117,23 +117,53 @@ export function LoginPage() {
     const { user } = authContext;
     
     if (user) {
-      const normalizedRole = user.role?.toLowerCase();
-      const dashboardPath = getDashboardPath(normalizedRole || user.role);
+      // CORREÇÃO: Verificar se há loop de redirecionamento
+      const redirectLoopKey = 'login_redirect_loop_check';
+      const lastRedirectTime = sessionStorage.getItem(redirectLoopKey);
+      const now = Date.now();
       
-      if (dashboardPath) {
-        console.log(`🎯 Redirecionando usuário autenticado para: ${dashboardPath}`);
-        
-        // Adicionar delay para evitar loops e usar router.push
-        setTimeout(() => {
-          router.push(dashboardPath);
-        }, 500);
-      } else {
-        console.warn(`⚠️ Dashboard não encontrado para role ${user.role}, usando fallback`);
-        
-        setTimeout(() => {
-          router.push('/dashboard/student');
-        }, 500);
+      if (lastRedirectTime && (now - parseInt(lastRedirectTime)) < 2000) {
+        console.warn('🔄 Loop de redirecionamento detectado no login, aguardando...');
+        return;
       }
+      
+      sessionStorage.setItem(redirectLoopKey, now.toString());
+      
+      // Verificar se há returnTo válido primeiro
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnTo = urlParams.get('returnTo');
+      let targetPath: string | null = null;
+      
+      if (returnTo) {
+        const decodedReturnTo = decodeURIComponent(returnTo);
+        console.log('🎯 ReturnTo encontrado no login:', decodedReturnTo);
+        
+        // Validar returnTo
+        const validPaths = ['/dashboard/system-admin', '/dashboard/institution-manager', '/dashboard/coordinator', '/dashboard/teacher', '/dashboard/student', '/dashboard/guardian'];
+        
+        if (validPaths.some(path => decodedReturnTo.startsWith(path))) {
+          targetPath = decodedReturnTo;
+          console.log('✅ ReturnTo validado:', targetPath);
+        }
+      }
+      
+      // Se não há returnTo válido, usar dashboard baseado na role
+      if (!targetPath) {
+        const normalizedRole = user.role?.toLowerCase();
+        targetPath = getDashboardPath(normalizedRole || user.role);
+        
+        if (!targetPath) {
+          console.warn(`⚠️ Dashboard não encontrado para role ${user.role}, usando fallback`);
+          targetPath = '/dashboard/student';
+        }
+      }
+      
+      console.log(`🎯 Redirecionando usuário autenticado para: ${targetPath}`);
+      
+      // CORREÇÃO: Usar window.location.href para redirecionamento mais confiável
+      setTimeout(() => {
+        window.location.href = targetPath!;
+      }, 300);
     }
   }, [authContext, router, mounted]);
 

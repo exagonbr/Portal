@@ -423,9 +423,46 @@ class ApiClient {
       // Evitar loop de redirecionamento em rotas de autenticação
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
         this.clearAuth();
-        // Redireciona para a página de login, preservando a URL de destino
-        const returnTo = window.location.pathname + window.location.search;
-        window.location.href = `/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
+        
+        // CORREÇÃO: Verificar se já estamos em um processo de redirecionamento
+        const redirectKey = 'api_auth_redirect_in_progress';
+        const isRedirectInProgress = sessionStorage.getItem(redirectKey);
+        
+        if (isRedirectInProgress) {
+          console.warn('🔄 Redirecionamento de autenticação já em andamento, evitando loop');
+          return {
+            name: 'AuthError',
+            message: 'Redirecionamento em andamento',
+            status: 401,
+            details: error
+          };
+        }
+        
+        // Marcar que estamos redirecionando
+        sessionStorage.setItem(redirectKey, 'true');
+        
+        // Limpar flag após 5 segundos
+        setTimeout(() => {
+          sessionStorage.removeItem(redirectKey);
+        }, 5000);
+        
+        // CORREÇÃO: Melhorar lógica do returnTo
+        const currentPath = window.location.pathname + window.location.search;
+        
+        // Não preservar returnTo se já estamos em uma rota de erro ou redirecionamento
+        const shouldPreserveReturnTo = !currentPath.includes('?returnTo=') && 
+                                      !currentPath.includes('auth/login') &&
+                                      !currentPath.includes('error=') &&
+                                      currentPath !== '/';
+        
+        if (shouldPreserveReturnTo) {
+          const returnTo = encodeURIComponent(currentPath);
+          console.log('🔗 Preservando returnTo:', currentPath);
+          window.location.href = `/auth/login?returnTo=${returnTo}`;
+        } else {
+          console.log('🔗 Redirecionamento simples para login');
+          window.location.href = '/auth/login';
+        }
       }
 
       const currentToken = this.getAuthToken();

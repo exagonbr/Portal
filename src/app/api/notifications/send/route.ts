@@ -32,19 +32,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Verificar permissões
-    const userRole = session.user?.role
-    const canSendNotifications = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'TEACHER'].includes(userRole)
-    
-    if (!canSendNotifications) {
-      return NextResponse.json({ 
-        success: false,
-        message: 'Sem permissão para enviar notificações' 
-      }, { 
-        status: 403,
-        headers: getCorsHeaders(request.headers.get('origin') || undefined)
-      })
-    }
 
     const body = await request.json()
     console.log('📧 [Email Send API] Dados recebidos:', body)
@@ -99,7 +86,7 @@ export async function POST(request: NextRequest) {
       category: body.category || 'email',
       priority: body.priority || 'medium',
       iconType: body.iconType || 'email',
-      sender_id: session.user?.id,
+      sender_id: session.user?.email,
       sender_name: session.user?.name,
       recipients: body.recipients.emails,
       recipient_count: body.recipients.emails.length,

@@ -441,7 +441,8 @@ export const login = async (email: string, password: string): Promise<LoginRespo
         userKeys: userData ? Object.keys(userData) : [],
         role: userData?.role,
         role_slug: userData?.role_slug,
-        permissions: userData?.permissions?.length || 0
+        permissions: userData?.permissions || [],
+        permissions_count: userData?.permissions?.length || 0
       });
 
       // Extrair apenas os campos essenciais do usuário

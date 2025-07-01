@@ -127,38 +127,71 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
         console.log(`🎯 AuthContext: Redirecionando para ${path}`);
         
         // Evitar redirecionamentos circulares
-        const currentPath = window.location.pathname;
-        if (currentPath === path) {
+        const currentPath = window.location.pathname + window.location.search;
+        const targetPath = path;
+        
+        if (currentPath === targetPath || window.location.pathname === path) {
           console.log('🔄 Redirecionamento circular evitado:', path);
           return;
         }
         
-        // Controle de loop mais robusto
-        const redirectKey = 'auth_redirect_count';
+        // CORREÇÃO: Verificar se estamos em um loop de auth/login
+        if (currentPath.includes('/auth/login') && path.includes('/dashboard')) {
+          console.log('✅ Redirecionamento válido: login → dashboard');
+        } else if (currentPath.includes('/dashboard') && path.includes('/auth/login')) {
+          console.log('✅ Redirecionamento válido: dashboard → login (logout)');
+        }
+        
+        // Controle de loop mais robusto - usar chave específica por rota
+        const redirectKey = `auth_redirect_${path.replace(/[^a-zA-Z0-9]/g, '_')}`;
         const redirectCountStr = sessionStorage.getItem(redirectKey) || '0';
         const redirectCount = parseInt(redirectCountStr);
+        const maxRedirects = 2; // Reduzir para ser mais restritivo
         
-        // Se já redirecionou muitas vezes, usar rota de emergência
-        if (redirectCount >= 3) {
-          console.warn('🚨 Muitos redirecionamentos detectados, usando rota de emergência');
+        // Se já redirecionou muitas vezes para a mesma rota, usar rota de emergência
+        if (redirectCount >= maxRedirects) {
+          console.warn('🚨 Muitos redirecionamentos detectados para:', path);
           sessionStorage.removeItem(redirectKey);
           
-          // Rota de emergência baseada no contexto
-          const emergencyRoute = currentPath.includes('/login') ? '/portal/books' : '/auth/login?reset=true';
+          // Rota de emergência mais inteligente baseada no contexto
+          let emergencyRoute = '/portal/books';
+          
+          if (path.includes('/system-admin')) {
+            // Se está tentando acessar system-admin, verificar se é realmente admin
+            if (user?.role === 'SYSTEM_ADMIN') {
+              console.log('🔧 Usuário é SYSTEM_ADMIN, forçando redirecionamento direto');
+              window.location.href = '/dashboard/system-admin';
+              return;
+            } else {
+              emergencyRoute = '/dashboard';
+            }
+          } else if (currentPath.includes('/login')) {
+            emergencyRoute = '/portal/books';
+          } else {
+            emergencyRoute = '/auth/login?reset=true';
+          }
+          
+          console.log('🚨 Usando rota de emergência:', emergencyRoute);
           window.location.href = emergencyRoute;
           return;
         }
         
-        // Incrementar contador de redirecionamentos
+        // Incrementar contador de redirecionamentos para esta rota específica
         sessionStorage.setItem(redirectKey, (redirectCount + 1).toString());
         
-        // Limpar contador após 30 segundos
+        // Limpar contador após 60 segundos (mais tempo para operações normais)
         setTimeout(() => {
           sessionStorage.removeItem(redirectKey);
-        }, 30000);
+        }, 60000);
         
-        // Usar router.push para melhor integração com Next.js
-        router.push(path);
+        // CORREÇÃO: Usar window.location.href para redirecionamentos críticos
+        if (path.includes('/dashboard/system-admin') || path.includes('/auth/login')) {
+          console.log('🔧 Usando window.location.href para redirecionamento crítico');
+          window.location.href = path;
+        } else {
+          // Usar router.push para outros casos
+          router.push(path);
+        }
       }
     } catch (error) {
       console.error('❌ Erro no redirecionamento:', error);
@@ -167,7 +200,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
         window.location.href = path;
       }
     }
-  }, [router]);
+  }, [router, user]);
 
   /**
    * Login do usuário
@@ -201,17 +234,66 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
         // Aguardar um pouco para garantir que a sessão foi salva
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Determinar dashboard baseado na role
-        const normalizedRole = response.user.role?.toUpperCase();
-        const dashboardPath = getDashboardPath(normalizedRole);
+        // CORREÇÃO: Verificar se há returnTo na URL
+        let redirectPath: string | null = null;
         
-        if (dashboardPath) {
-          console.log(`🎯 Redirecionando para dashboard: ${dashboardPath}`);
-          safeRedirect(dashboardPath);
-        } else {
-          console.warn(`⚠️ Dashboard não encontrado para role ${response.user.role}, usando fallback`);
-          safeRedirect('/dashboard/student');
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          const returnTo = urlParams.get('returnTo');
+          
+          if (returnTo) {
+            console.log('🎯 ReturnTo encontrado:', returnTo);
+            
+            // Validar se o returnTo é uma rota válida do sistema
+            const validReturnToPaths = [
+              '/dashboard/system-admin',
+              '/dashboard/institution-manager',
+              '/dashboard/coordinator',
+              '/dashboard/teacher',
+              '/dashboard/student',
+              '/dashboard/guardian',
+              '/dashboard',
+              '/admin',
+              '/portal'
+            ];
+            
+            const isValidReturnTo = validReturnToPaths.some(path => 
+              returnTo.startsWith(path) || returnTo === path
+            );
+            
+            if (isValidReturnTo) {
+              redirectPath = decodeURIComponent(returnTo);
+              console.log('✅ ReturnTo validado:', redirectPath);
+            } else {
+              console.warn('⚠️ ReturnTo inválido ignorado:', returnTo);
+            }
+          }
         }
+        
+        // Se não há returnTo válido, usar dashboard baseado na role
+        if (!redirectPath) {
+          const normalizedRole = response.user.role?.toUpperCase();
+          redirectPath = getDashboardPath(normalizedRole);
+          
+          if (!redirectPath) {
+            console.warn(`⚠️ Dashboard não encontrado para role ${response.user.role}, usando fallback`);
+            redirectPath = '/dashboard/student';
+          }
+        }
+        
+        console.log(`🎯 Redirecionando para: ${redirectPath}`);
+        
+        // Limpar parâmetros de URL antes do redirecionamento
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('returnTo');
+          url.searchParams.delete('error');
+          url.searchParams.delete('auth_error');
+          window.history.replaceState({}, '', url.toString());
+        }
+        
+        // Usar redirecionamento seguro
+        safeRedirect(redirectPath);
       } else {
         const errorMessage = response.message || 'Falha no login';
         console.error('🔐 Login falhou:', errorMessage);

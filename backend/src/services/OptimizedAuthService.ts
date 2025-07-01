@@ -120,7 +120,8 @@ export class OptimizedAuthService {
         email: user.email,
         role: roleName,
         role_slug: roleSlug,
-        permissions: permissions.length,
+        permissions: permissions,
+        permissions_count: permissions.length,
         is_admin: user.is_admin,
         is_teacher: user.is_teacher,
         is_student: user.is_student
