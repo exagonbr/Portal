@@ -1,113 +1,85 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-
-import { getInternalApiUrl } from '@/config/env';
-import { createCorsOptionsResponse, getCorsHeaders } from '@/config/cors';
-
-
-// Handler para requisições OPTIONS (preflight)
-export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin') || undefined;
-  return createCorsOptionsResponse(origin);
-}
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const authToken = cookieStore.get('auth_token')?.value;
-    const sessionId = cookieStore.get('session_id')?.value;
+    // Obter token do header Authorization
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
 
-    if (!authToken) {
+    if (!token) {
       return NextResponse.json(
-        { valid: false, message: 'Token não encontrado' },
+        { 
+          success: false, 
+          message: 'Token não fornecido' 
+        },
         { status: 401 }
       );
     }
 
-    // Validar token e sessão com o backend
-    const response = await fetch(getInternalApiUrl('/auth/optimized/validate'), {
-      method: 'POST',
+    // URL do backend baseada nas variáveis de ambiente
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'https://portal.sabercon.com.br/api';
+    const validateUrl = `${backendUrl}/auth/optimized/validate`;
+
+    console.log('🔍 [VALIDATE-API] Validando token');
+    console.log('🔗 [VALIDATE-API] URL do backend:', validateUrl);
+
+    // Fazer requisição para o backend
+    const response = await fetch(validateUrl, {
+      method: 'GET',
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Accept': 'application/json',
       },
-      body: JSON.stringify({
-        token: authToken,
-        sessionId: sessionId
-      }),
+    });
+
+    const data = await response.json();
+
+    console.log('📡 [VALIDATE-API] Resposta do backend:', {
+      status: response.status,
+      success: data.success,
+      valid: data.data?.valid
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { valid: false, message: 'Token ou sessão inválida' },
-        { status: 401 }
+        { 
+          success: false, 
+          message: data.message || 'Token inválido',
+          details: data
+        },
+        { status: response.status }
       );
     }
 
-    const data = await response.json();
-
+    // Token válido
     return NextResponse.json({
-      valid: true,
-      user: data.user,
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      success: true,
+      message: 'Token válido',
+      data: {
+        valid: data.data.valid,
+        user: data.data.user
+      }
     });
-  } catch (error) {
-    console.error('Erro ao validar token:', error);
+
+  } catch (error: any) {
+    console.error('❌ [VALIDATE-API] Erro na validação:', error);
+    
     return NextResponse.json(
-      { valid: false, message: 'Erro ao validar token' },
+      { 
+        success: false, 
+        message: 'Erro interno do servidor',
+        details: {
+          error: error.message,
+          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        }
+      },
       { status: 500 }
     );
   }
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { token } = body;
-    const cookieStore = await cookies();
-    const sessionId = cookieStore.get('session_id')?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { valid: false, message: 'Token não fornecido' },
-        { status: 400 }
-      );
-    }
-
-    // Validar token e sessão com o backend
-    const response = await fetch(getInternalApiUrl('/auth/optimized/validate'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        token: token,
-        sessionId: sessionId
-      }),
-    });
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { valid: false, message: 'Token ou sessão inválida' },
-        { status: 401 }
-      );
-    }
-
-    const data = await response.json();
-
-    return NextResponse.json({
-      valid: true,
-      user: data.user,
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    });
-  } catch (error) {
-    console.error('Erro ao validar token:', error);
-    return NextResponse.json(
-      { valid: false, message: 'Erro ao validar token' },
-      { status: 500 }
-    );
-  }
+  // Permitir POST também para compatibilidade
+  return GET(request);
 }

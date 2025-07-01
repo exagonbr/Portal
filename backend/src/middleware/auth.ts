@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../config/jwt';
 
 /**
  * Middleware que valida o JWT sem fazer consultas ao banco de dados.
@@ -30,15 +31,7 @@ export const authMiddleware = async (
       });
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      console.error('⚠️  JWT_SECRET não definido');
-      return res.status(500).json({
-        success: false,
-        error: 'Configuração de autenticação incorreta',
-        debug: 'JWT_SECRET environment variable not set'
-      });
-    }
+    const secret = getJwtSecret();
 
     // Detect if this is a real JWT (three segments) vs fallback token
     const parts = token.split('.');

@@ -72,9 +72,9 @@ export class ServerInitializer {
       const server = app.listen(this.PORT, this.HOST, () => {
         this.logger.info(`✅ Servidor rodando na porta ${this.PORT}`);
         this.logger.info(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-        this.logger.info(`📋 Health check: http://localhost:${this.PORT}/health`);
-        this.logger.info(`🔗 API: http://localhost:${this.PORT}/api`);
-        this.logger.info(`📚 Documentação: http://localhost:${this.PORT}/backend/docs`);
+        this.logger.info(`📋 Health check: https://portal.sabercon.com.br/health`);
+        this.logger.info(`🔗 API: https://portal.sabercon.com.br/api`);
+        this.logger.info(`📚 Documentação: https://portal.sabercon.com.br/backend/docs`);
         resolve();
       });
 

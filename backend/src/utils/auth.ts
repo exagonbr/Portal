@@ -1,6 +1,7 @@
 import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 import { db } from '../database';
+import { getJwtSecret } from '../config/jwt';
 
 interface User {
     id: number;
@@ -14,7 +15,7 @@ export async function getUserFromRequest(req: Request): Promise<User | null> {
         const token = req.headers.authorization?.split(' ')[1];
         if (!token) return null;
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
+        const decoded = jwt.verify(token, getJwtSecret()) as { userId: number };
         
         const user = await db('users')
             .leftJoin('roles', 'users.role_id', 'roles.id')

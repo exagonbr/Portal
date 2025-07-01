@@ -15,6 +15,7 @@ import {
 } from '../middleware/sessionMiddleware';
 import { AppDataSource } from '../config/typeorm.config';
 import { User } from '../entities/User';
+import { getJwtSecret } from '../config/jwt';
 
 const router = express.Router();
 
@@ -128,7 +129,7 @@ router.post(
           permissions: user.role?.permissions || [],
           sessionId
         },
-        process.env.JWT_SECRET || 'ExagonTech',
+        getJwtSecret(),
         { expiresIn: remember ? '7d' : '24h' }
       );
 
@@ -364,7 +365,7 @@ router.post(
           permissions: sessionData.permissions,
           sessionId
         },
-        process.env.JWT_SECRET || 'ExagonTech',
+        getJwtSecret(),
         { expiresIn: '24h' }
       );
 

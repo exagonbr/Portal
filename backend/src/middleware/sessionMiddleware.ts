@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { SessionService } from '../services/SessionService';
 import { AuthTokenPayload } from '../types/express';
+import { getJwtSecret } from '../config/jwt';
 
 export interface ClientInfo {
   ipAddress: string;
@@ -78,7 +79,7 @@ export const validateJWTAndSession = async (
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'ExagonTech';
+    const secret = getJwtSecret();
         const decoded = jwt.verify(token, secret) as any;
     
     if (typeof decoded === 'string' || !isValidAuthTokenPayload(decoded)) {
@@ -184,7 +185,7 @@ export const validateJWTOnly = async (
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'ExagonTech';
+    const secret = getJwtSecret();
         const decoded = jwt.verify(token, secret) as any;
     
     if (typeof decoded === 'string' || !isValidAuthTokenPayload(decoded)) {
@@ -338,7 +339,7 @@ export const optionalAuth = async (
       const token = authHeader.substring(7);
       
       if (token) {
-    const secret = process.env.JWT_SECRET || 'ExagonTech';
+    const secret = getJwtSecret();
             const decoded = jwt.verify(token, secret);
         
         if (typeof decoded !== 'string' && isValidAuthTokenPayload(decoded)) {
@@ -450,7 +451,7 @@ export const validateJWTSimple = async (
 
     try {
       // Primeiro, tenta validar como JWT real
-      const secret = process.env.JWT_SECRET || 'ExagonTech';
+      const secret = getJwtSecret();
       const decoded = jwt.verify(token, secret) as any;
       
       if (typeof decoded === 'string' || (!decoded.userId && !decoded.id)) {
@@ -688,15 +689,7 @@ export const validateTokenUltraSimple = async (
       });
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      console.error('⚠️  JWT_SECRET não definido');
-      return res.status(500).json({
-        success: false,
-        error: 'Configuração de autenticação incorreta',
-        debug: 'JWT_SECRET environment variable not set'
-      });
-    }
+    const secret = getJwtSecret();
 
     // Detect if this is a real JWT (three segments) vs fallback token
     const parts = token.split('.');

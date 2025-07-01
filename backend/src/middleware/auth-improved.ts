@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthTokenPayload } from '../types/express';
 import { validateTokenFormat, safeDecodeBase64Token, logTokenValidationError } from '../utils/tokenValidation';
+import { getJwtSecret } from '../config/jwt';
 
 /**
  * Middleware de autenticação melhorado com validação robusta de tokens
@@ -44,7 +45,7 @@ export const authMiddlewareImproved = async (
 
     try {
       // First, try to verify as a real JWT
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as AuthTokenPayload;
+      decoded = jwt.verify(token, getJwtSecret()) as AuthTokenPayload;
     } catch (jwtError) {
       // If JWT verification fails, try to decode as base64 (fallback tokens)
       const base64Result = safeDecodeBase64Token(token);
@@ -123,7 +124,7 @@ export const optionalAuthMiddlewareImproved = async (
 
     try {
       // First, try to verify as a real JWT
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as AuthTokenPayload;
+      decoded = jwt.verify(token, getJwtSecret()) as AuthTokenPayload;
     } catch (jwtError) {
       // If JWT verification fails, try to decode as base64 (fallback tokens)
       const base64Result = safeDecodeBase64Token(token);

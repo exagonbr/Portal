@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 // Configuração
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = 'https://portal.sabercon.com.br/api';
 const VIDEO_ID = '527'; // ID do vídeo de exemplo do payload fornecido
 
 // Função para fazer login e obter token

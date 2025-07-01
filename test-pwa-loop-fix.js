@@ -8,7 +8,7 @@
 const fetch = require('node-fetch');
 const chalk = require('chalk');
 
-const BASE_URL = 'http://localhost:3002';
+const BASE_URL = 'https://portal.sabercon.com.br';
 const TEST_ENDPOINTS = [
   '/api/auth/login',
   '/api/users',

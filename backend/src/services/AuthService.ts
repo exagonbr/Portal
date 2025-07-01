@@ -4,6 +4,7 @@ import { UserRepository } from '../repositories/UserRepository';
 import { AuthTokenPayload } from '../types/express';
 import { Role, UserRole } from '../entities/Role';
 import { RoleRepository } from '../repositories/RoleRepository';
+import { getJwtSecret } from '../config/jwt';
 
 class AuthService {
   private userRepository: UserRepository;
@@ -22,13 +23,13 @@ class AuthService {
       institutionId: user.institution_id,
     };
 
-    return jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
+    return jwt.sign(payload, getJwtSecret(), {
       expiresIn: '1d',
     });
   }
 
   public async validateToken(token: string): Promise<AuthTokenPayload> {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, getJwtSecret());
     return decoded as AuthTokenPayload;
   }
 

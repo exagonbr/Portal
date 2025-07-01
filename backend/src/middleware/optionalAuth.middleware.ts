@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { db } from '../database/connection';
 import { AuthTokenPayload } from '../types/express';
+import { getJwtSecret } from '../config/jwt';
 
 // Helper function to parse cookies from cookie header
 function parseCookies(cookieHeader: string): Record<string, string> {
@@ -44,7 +45,7 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
 
     try {
       // First, try to verify as a real JWT
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'ExagonTech') as AuthTokenPayload;
+      decoded = jwt.verify(token, getJwtSecret()) as AuthTokenPayload;
     } catch (jwtError) {
       // If JWT verification fails, try to decode as base64 (fallback tokens)
       try {

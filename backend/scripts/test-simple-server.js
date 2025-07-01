@@ -47,8 +47,8 @@ app.post('/api/collections/manage', (req, res) => {
 const PORT = 3001;
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`🚀 Servidor de teste rodando na porta ${PORT}`);
-  console.log(`📋 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API: http://localhost:${PORT}/api/collections/manage`);
+  console.log(`📋 Health check: https://portal.sabercon.com.br/health`);
+  console.log(`🔗 API: https://portal.sabercon.com.br/api/collections/manage`);
 });
 
 // Tratamento de erros

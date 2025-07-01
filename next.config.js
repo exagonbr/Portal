@@ -111,14 +111,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'img.youtube.com'
       },
-      // Apenas para desenvolvimento
-      ...(isDev ? [
-        {
-          protocol: 'http',
-          hostname: 'localhost',
-          port: '3001'
-        }
-      ] : [])
+      // Configuração para produção
+      {
+        protocol: 'https',
+        hostname: 'portal.sabercon.com.br'
+      }
     ]
   },
 

@@ -5,6 +5,7 @@ import {
 } from '../middleware/optimizedAuth.middleware';
 import { UserRepository } from '../repositories/UserRepository';
 import * as jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../config/jwt';
 
 const router = express.Router();
 const userRepository = new UserRepository();
@@ -14,7 +15,7 @@ router.get('/generate-test-jwt', async (req, res) => {
   try {
     console.log('🔧 [DEBUG] Gerando JWT de teste...');
     
-    const secret = process.env.JWT_SECRET || 'ExagonTech';
+    const secret = getJwtSecret();
     const payload = {
       userId: 'test-admin-id',
       email: 'admin@sabercon.com.br',
@@ -207,7 +208,7 @@ router.get('/full-diagnosis', async (req, res) => {
     
     if (token) {
       try {
-        const secret = process.env.JWT_SECRET || 'ExagonTech';
+        const secret = getJwtSecret();
         const decoded = jwt.verify(token, secret) as any;
         tokenInfo = {
           valid: true,
@@ -242,7 +243,7 @@ router.get('/full-diagnosis', async (req, res) => {
       timestamp: new Date().toISOString(),
       environment: {
         nodeEnv: process.env.NODE_ENV,
-        jwtSecret: process.env.JWT_SECRET ? 'SET' : 'NOT_SET',
+        jwtSecret: 'HARDCODED',
         port: process.env.PORT || 'default'
       },
       request: {

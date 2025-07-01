@@ -10,7 +10,6 @@ export const env = {
     VAPID_EMAIL: requireEnv('VAPID_EMAIL'),
     VAPID_PUBLIC_KEY: requireEnv('VAPID_PUBLIC_KEY'),
     VAPID_PRIVATE_KEY: requireEnv('VAPID_PRIVATE_KEY'),
-    JWT_SECRET: requireEnv('JWT_SECRET'),
     NODE_ENV: process.env.NODE_ENV || 'development',
     
     // Email configuration

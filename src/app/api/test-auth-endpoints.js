@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const BASE_URL = 'http://localhost:3002';
+const BASE_URL = 'https://portal.sabercon.com.br';
 
 // Cores para output
 const colors = {

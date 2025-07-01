@@ -3,9 +3,10 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../database/connection';
 import { generateSlug } from '../utils/slug';
+import { getJwtSecret, JWT_CONFIG } from '../config/jwt';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ExagonTech';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'ExagonTechRefresh';
+const JWT_SECRET = getJwtSecret();
+const REFRESH_SECRET = getJwtSecret(); // Usar o mesmo secret para consistência
 
 interface User {
   id: string;
@@ -320,9 +321,9 @@ export class OptimizedAuthService {
       iat: Math.floor(Date.now() / 1000)
     };
 
-    return jwt.sign(tokenPayload, JWT_SECRET, { 
-      expiresIn: this.ACCESS_TOKEN_EXPIRY,
-      algorithm: 'HS256'
+    return jwt.sign(tokenPayload, JWT_SECRET, {
+      expiresIn: JWT_CONFIG.TOKEN_EXPIRY,
+      algorithm: JWT_CONFIG.ALGORITHM
     });
   }
 
@@ -339,9 +340,9 @@ export class OptimizedAuthService {
       iat: Math.floor(Date.now() / 1000)
     };
 
-    return jwt.sign(tokenPayload, REFRESH_SECRET, { 
-      expiresIn: this.REFRESH_TOKEN_EXPIRY,
-      algorithm: 'HS256'
+    return jwt.sign(tokenPayload, REFRESH_SECRET, {
+      expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRY,
+      algorithm: JWT_CONFIG.ALGORITHM
     });
   }
 

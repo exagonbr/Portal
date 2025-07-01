@@ -394,8 +394,8 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`✅ Servidor rodando na porta ${PORT}`);
   console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📋 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API: http://localhost:${PORT}/api`);
+  console.log(`📋 Health check: https://portal.sabercon.com.br/health`);
+  console.log(`🔗 API: https://portal.sabercon.com.br/api`);
   console.log('');
   console.log('🎯 Endpoints disponíveis:');
   console.log('  - GET /health');
