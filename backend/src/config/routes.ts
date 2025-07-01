@@ -32,10 +32,10 @@ export function setupRoutes(app: express.Application): void {
     res.redirect('/backend/docs');
   });
 
-  // Auth routes
-  app.use('/auth', authRoutes);
+  // Auth routes (now under /api/auth)
+  app.use('/api/auth', authRoutes);
 
-  // Mount API Routes
+  // Mount API Routes with authentication
   app.use('/api', authMiddleware, apiRoutes);
 
   // Mount direct routes for compatibility (without /api prefix)
