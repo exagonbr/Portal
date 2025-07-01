@@ -21,7 +21,7 @@ import {
   migrateContactFields,
   ensureLegacyCompatibility
 } from '../utils/validation';
-import { getAuthToken } from '@/services/auth';
+import { getAuthToken } from '../services/auth';
 
 // Tipos importados e disponíveis para uso interno
 // Remover re-exports para evitar problemas de dependência circular

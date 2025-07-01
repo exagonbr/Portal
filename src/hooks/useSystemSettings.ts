@@ -1,75 +1,76 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { getAuthToken } from '../services/auth';
 
 export interface BackgroundSettings {
-  type: 'video' | 'image' | 'color'
-  value: string
-  opacity?: number
-  overlay?: boolean
+  type: 'video' | 'image' | 'color';
+  value: string;
+  opacity?: number;
+  overlay?: boolean;
 }
 
 export interface SystemSettings {
-  platformName: string
-  systemUrl: string
-  supportEmail: string
-  loginBackground: BackgroundSettings
+  platformName: string;
+  systemUrl: string;
+  supportEmail: string;
+  loginBackground: BackgroundSettings;
   maintenanceMode: {
-    enabled: boolean
-    message: string
-  }
+    enabled: boolean;
+    message: string;
+  };
   security: {
-    minPasswordLength: number
-    requireSpecialChars: boolean
-    requireNumbers: boolean
-    twoFactorAuth: 'optional' | 'required' | 'disabled'
-    sessionTimeout: number
-  }
+    minPasswordLength: number;
+    requireSpecialChars: boolean;
+    requireNumbers: boolean;
+    twoFactorAuth: 'optional' | 'required' | 'disabled';
+    sessionTimeout: number;
+  };
   email: {
-    smtpServer: string
-    port: number
-    encryption: 'tls' | 'ssl' | 'none'
-    fromEmail: string
-  }
+    smtpServer: string;
+    port: number;
+    encryption: 'tls' | 'ssl' | 'none';
+    fromEmail: string;
+  };
 }
 
 // Interface para as configurações completas do sistema
 export interface FullSystemSettings {
   // Configurações gerais
-  site_name: string
-  site_title: string
-  site_url: string
-  site_description: string
-  maintenance_mode: boolean
+  site_name: string;
+  site_title: string;
+  site_url: string;
+  site_description: string;
+  maintenance_mode: boolean;
   
   // Configurações de aparência
-  logo_light: string
-  logo_dark: string
-  background_type: 'video' | 'image' | 'color'
-  main_background: string
-  primary_color: string
-  secondary_color: string
+  logo_light: string;
+  logo_dark: string;
+  background_type: 'video' | 'image' | 'color';
+  main_background: string;
+  primary_color: string;
+  secondary_color: string;
   
   // Configurações AWS
-  aws_access_key: string
-  aws_secret_key: string
-  aws_region: string
-  aws_bucket_main: string
-  aws_bucket_backup: string
-  aws_bucket_media: string
+  aws_access_key: string;
+  aws_secret_key: string;
+  aws_region: string;
+  aws_bucket_main: string;
+  aws_bucket_backup: string;
+  aws_bucket_media: string;
   
   // Configurações de Email
-  email_smtp_host: string
-  email_smtp_port: number
-  email_smtp_user: string
-  email_smtp_password: string
-  email_smtp_secure: boolean
-  email_from_name: string
-  email_from_address: string
+  email_smtp_host: string;
+  email_smtp_port: number;
+  email_smtp_user: string;
+  email_smtp_password: string;
+  email_smtp_secure: boolean;
+  email_from_name: string;
+  email_from_address: string;
   
   // Configurações de Notificações
-  notifications_email_enabled: boolean
-  notifications_sms_enabled: boolean
-  notifications_push_enabled: boolean
-  notifications_digest_frequency: 'realtime' | 'hourly' | 'daily' | 'weekly'
+  notifications_email_enabled: boolean;
+  notifications_sms_enabled: boolean;
+  notifications_push_enabled: boolean;
+  notifications_digest_frequency: 'realtime' | 'hourly' | 'daily' | 'weekly';
 }
 
 const defaultFullSettings: FullSystemSettings = {
@@ -110,68 +111,47 @@ const defaultFullSettings: FullSystemSettings = {
   notifications_sms_enabled: false,
   notifications_push_enabled: true,
   notifications_digest_frequency: 'daily'
-}
+};
 
 export function useSystemSettings() {
-  const [settings, setSettings] = useState<FullSystemSettings>(defaultFullSettings)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [availableVideos, setAvailableVideos] = useState<string[]>([])
+  const [settings, setSettings] = useState<FullSystemSettings>(defaultFullSettings);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [availableVideos, setAvailableVideos] = useState<string[]>([]);
   
   // Refs para controle de requisições
-  const loadingRef = useRef(false)
-  const lastLoadTimeRef = useRef(0)
-  const CACHE_DURATION = 30000 // 30 segundos de cache
-
-  // Helper function para buscar token de autenticação
-  const getAuthToken = (): string | null => {
-    // Buscar token do localStorage primeiro
-    let token = localStorage.getItem('token') || localStorage.getItem('auth_token')
-    
-    // Se não encontrou no localStorage, tentar buscar dos cookies
-    if (!token && typeof document !== 'undefined') {
-      const cookies = document.cookie.split(';')
-      const authCookie = cookies.find(cookie => cookie.trim().startsWith('auth_token='))
-      if (authCookie) {
-        token = authCookie.split('=')[1]?.trim()
-        // Se encontrou nos cookies, salvar no localStorage para próximas requisições
-        if (token) {
-          localStorage.setItem('auth_token', token)
-        }
-      }
-    }
-    
-    return token
-  }
+  const loadingRef = useRef(false);
+  const lastLoadTimeRef = useRef(0);
+  const CACHE_DURATION = 30000; // 30 segundos de cache
 
   // Carregar configurações da API com controle de cache
   const loadSettings = useCallback(async (forceReload = false) => {
     // Evitar múltiplas requisições simultâneas
     if (loadingRef.current) {
-      console.log('⚠️ Requisição de settings já em andamento, ignorando...')
-      return
+      console.log('⚠️ Requisição de settings já em andamento, ignorando...');
+      return;
     }
 
     // Verificar cache (não recarregar se foi feito recentemente)
-    const now = Date.now()
+    const now = Date.now();
     if (!forceReload && (now - lastLoadTimeRef.current) < CACHE_DURATION) {
-      console.log('⚡ Usando cache de settings (carregado há menos de 30s)')
-      return
+      console.log('⚡ Usando cache de settings (carregado há menos de 30s)');
+      return;
     }
 
     try {
-      loadingRef.current = true
-      setLoading(true)
-      setError(null)
+      loadingRef.current = true;
+      setLoading(true);
+      setError(null);
 
-      const token = getAuthToken()
-      console.log('🔑 Token encontrado:', token ? 'Sim' : 'Não')
-      console.log('🔑 Token source:', token ? (localStorage.getItem('token') ? 'localStorage' : 'cookies') : 'none')
+      const token = getAuthToken();
+      console.log('🔑 Token encontrado:', token ? 'Sim' : 'Não');
+      console.log('🔑 Token source:', token ? (localStorage.getItem('token') ? 'localStorage' : 'cookies') : 'none');
       
       // Adicionar timestamp para evitar cache do navegador
-      const url = `/api/settings?_t=${now}`
-      console.log('📡 Fazendo requisição para rota pública:', url)
+      const url = `/api/settings?_t=${now}`;
+      console.log('📡 Fazendo requisição para rota pública:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -180,55 +160,55 @@ export function useSystemSettings() {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache'
         }
-      })
+      });
 
-      console.log('📡 Resposta recebida:', response.status, response.statusText)
+      console.log('📡 Resposta recebida:', response.status, response.statusText);
 
       if (!response.ok) {
-        const errorText = await response.text()
-        console.log('❌ Erro na resposta:', errorText)
-        throw new Error(`Erro ao carregar configurações: ${response.status} - ${errorText}`)
+        const errorText = await response.text();
+        console.log('❌ Erro na resposta:', errorText);
+        throw new Error(`Erro ao carregar configurações: ${response.status} - ${errorText}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
       
       if (data.success && data.data) {
-        setSettings({ ...defaultFullSettings, ...data.data })
-        lastLoadTimeRef.current = now
+        setSettings({ ...defaultFullSettings, ...data.data });
+        lastLoadTimeRef.current = now;
         
         // Se é fallback, salvar no localStorage
         if (data.fallback) {
-          localStorage.setItem('systemSettings', JSON.stringify(data.data))
+          localStorage.setItem('systemSettings', JSON.stringify(data.data));
         }
       } else {
-        throw new Error(data.error || 'Erro ao carregar configurações')
+        throw new Error(data.error || 'Erro ao carregar configurações');
       }
     } catch (err) {
-      console.log('Erro ao carregar configurações:', err)
-      setError(err instanceof Error ? err.message : 'Erro desconhecido')
+      console.log('Erro ao carregar configurações:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
       
       // Fallback para localStorage
-      const savedSettings = localStorage.getItem('systemSettings')
+      const savedSettings = localStorage.getItem('systemSettings');
       if (savedSettings) {
         try {
-          const parsed = JSON.parse(savedSettings)
-          setSettings({ ...defaultFullSettings, ...parsed })
+          const parsed = JSON.parse(savedSettings);
+          setSettings({ ...defaultFullSettings, ...parsed });
         } catch (parseError) {
-          console.log('Erro ao carregar configurações do localStorage:', parseError)
-          setSettings(defaultFullSettings)
+          console.log('Erro ao carregar configurações do localStorage:', parseError);
+          setSettings(defaultFullSettings);
         }
       }
     } finally {
-      setLoading(false)
-      loadingRef.current = false
+      setLoading(false);
+      loadingRef.current = false;
     }
-  }, [])
+  }, []);
 
   // Carregar apenas uma vez na inicialização
   useEffect(() => {
-    loadSettings()
-    loadAvailableVideos()
-  }, [loadSettings])
+    loadSettings();
+    loadAvailableVideos();
+  }, [loadSettings]);
 
   const loadAvailableVideos = async () => {
     try {
@@ -239,20 +219,20 @@ export function useSystemSettings() {
         '/back_video2.mp4',
         '/back_video3.mp4',
         '/back_video4.mp4'
-      ]
-      setAvailableVideos(videos)
+      ];
+      setAvailableVideos(videos);
     } catch (error) {
-      console.log('Erro ao carregar vídeos:', error)
+      console.log('Erro ao carregar vídeos:', error);
     }
-  }
+  };
 
   const updateSettings = (newSettings: Partial<FullSystemSettings>) => {
-    const updatedSettings = { ...settings, ...newSettings }
-    setSettings(updatedSettings)
+    const updatedSettings = { ...settings, ...newSettings };
+    setSettings(updatedSettings);
     
     // Salvar no localStorage como backup
-    localStorage.setItem('systemSettings', JSON.stringify(updatedSettings))
-  }
+    localStorage.setItem('systemSettings', JSON.stringify(updatedSettings));
+  };
 
   const updateLoginBackground = (background: Partial<BackgroundSettings>) => {
     // Compatibilidade com o formato antigo
@@ -260,20 +240,20 @@ export function useSystemSettings() {
       updateSettings({
         background_type: background.type,
         main_background: background.value || settings.main_background
-      })
+      });
     } else if (background.value) {
       updateSettings({
         main_background: background.value
-      })
+      });
     }
-  }
+  };
 
   const saveSettings = async (newSettings: Partial<FullSystemSettings>): Promise<boolean> => {
-    setSaving(true)
-    setError(null)
+    setSaving(true);
+    setError(null);
     
     try {
-      const token = getAuthToken()
+      const token = getAuthToken();
       
       const response = await fetch('/api/settings/admin', {
         method: 'PUT',
@@ -282,40 +262,40 @@ export function useSystemSettings() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(newSettings)
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Erro ao salvar configurações: ${response.status}`)
+        throw new Error(`Erro ao salvar configurações: ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
       
       if (data.success) {
-        updateSettings(newSettings)
-        return true
+        updateSettings(newSettings);
+        return true;
       } else {
-        throw new Error(data.error || 'Erro ao salvar configurações')
+        throw new Error(data.error || 'Erro ao salvar configurações');
       }
     } catch (err) {
-      console.log('Erro ao salvar configurações:', err)
-      setError(err instanceof Error ? err.message : 'Erro desconhecido')
-      return false
+      console.log('Erro ao salvar configurações:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return false;
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const testAwsConnection = async (credentials: {
-    accessKeyId: string
-    secretAccessKey: string
-    region: string
+    accessKeyId: string;
+    secretAccessKey: string;
+    region: string;
   }): Promise<{
-    success: boolean
-    message: string
-    buckets?: string[]
+    success: boolean;
+    message: string;
+    buckets?: string[];
   }> => {
     try {
-      const token = getAuthToken()
+      const token = getAuthToken();
       
       const response = await fetch('/api/settings/admin', {
         method: 'POST',
@@ -329,37 +309,37 @@ export function useSystemSettings() {
           secretAccessKey: credentials.secretAccessKey,
           region: credentials.region
         })
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `Erro ao testar conexão AWS: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erro ao testar conexão AWS: ${response.status}`);
       }
 
-      const data = await response.json()
-      return data
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.log('Erro ao testar conexão AWS:', error)
+      console.log('Erro ao testar conexão AWS:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Erro ao testar conexão com AWS'
-      }
+      };
     }
-  }
+  };
 
   const testEmailConnection = async (emailConfig: {
-    host: string
-    port: number
-    user: string
-    password: string
-    secure: boolean
-    fromAddress: string
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+    secure: boolean;
+    fromAddress: string;
   }): Promise<{
-    success: boolean
-    message: string
+    success: boolean;
+    message: string;
   }> => {
     try {
-      const token = getAuthToken()
+      const token = getAuthToken();
       
       const response = await fetch('/api/settings/admin', {
         method: 'POST',
@@ -376,30 +356,30 @@ export function useSystemSettings() {
           secure: emailConfig.secure,
           fromAddress: emailConfig.fromAddress
         })
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `Erro ao testar email: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erro ao testar email: ${response.status}`);
       }
 
-      const data = await response.json()
-      return data
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.log('Erro ao testar email:', error)
+      console.log('Erro ao testar email:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Erro ao testar conexão de email'
-      }
+      };
     }
-  }
+  };
 
   const resetSettings = async () => {
     try {
-      setSaving(true)
-      setError(null)
+      setSaving(true);
+      setError(null);
 
-      const token = getAuthToken()
+      const token = getAuthToken();
       
       const response = await fetch('/api/settings/admin', {
         method: 'POST',
@@ -410,35 +390,35 @@ export function useSystemSettings() {
         body: JSON.stringify({
           action: 'reset'
         })
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Erro ao resetar configurações: ${response.status}`)
+        throw new Error(`Erro ao resetar configurações: ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
       
       if (data.success) {
-        setSettings(defaultFullSettings)
-        localStorage.removeItem('systemSettings')
-        return true
+        setSettings(defaultFullSettings);
+        localStorage.removeItem('systemSettings');
+        return true;
       } else {
-        throw new Error(data.error || 'Erro ao resetar configurações')
+        throw new Error(data.error || 'Erro ao resetar configurações');
       }
     } catch (err) {
-      console.log('Erro ao resetar configurações:', err)
-      setError(err instanceof Error ? err.message : 'Erro desconhecido')
-      return false
+      console.log('Erro ao resetar configurações:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      return false;
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const getRandomVideo = () => {
-    if (availableVideos.length === 0) return '/back_video4.mp4'
-    const randomIndex = Math.floor(Math.random() * availableVideos.length)
-    return availableVideos[randomIndex]
-  }
+    if (availableVideos.length === 0) return '/back_video4.mp4';
+    const randomIndex = Math.floor(Math.random() * availableVideos.length);
+    return availableVideos[randomIndex];
+  };
 
   return {
     settings,
@@ -455,5 +435,5 @@ export function useSystemSettings() {
     isLoading: loading, // Compatibilidade
     availableVideos,
     getRandomVideo
-  }
+  };
 }
