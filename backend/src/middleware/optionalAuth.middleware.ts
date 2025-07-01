@@ -54,7 +54,7 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
         // Convert fallback data to AuthTokenPayload format
         if (fallbackData.userId && fallbackData.email && fallbackData.role) {
           decoded = {
-            userId: fallbackData.userId,
+            id: fallbackData.userId,
             email: fallbackData.email,
             name: fallbackData.name,
             role: fallbackData.role,
@@ -77,9 +77,9 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
     }
 
     // For fallback tokens, we trust the decoded data without database lookup
-    if (decoded.userId === 'admin' || decoded.userId === 'gestor' || decoded.userId === 'professor') {
+    if (decoded.id === 'admin' || decoded.id === 'gestor' || decoded.id === 'professor') {
       req.user = {
-        userId: decoded.userId,
+        id: decoded.id,
         email: decoded.email,
         name: decoded.name,
         role: decoded.role,
@@ -95,7 +95,7 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
 
     // For real JWT tokens, get user from database
     const user = await db('users')
-      .where({ id: decoded.userId })
+      .where({ id: decoded.id })
       .select('*')
       .first();
 
@@ -108,7 +108,7 @@ export const optionalAuthMiddleware = async (req: Request, res: Response, next: 
 
     // Add user to request object
     req.user = {
-      userId: decoded.userId,
+      id: decoded.id,
       email: decoded.email,
       name: decoded.name,
       role: decoded.role,

@@ -3,6 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger';
 import apiRoutes from '../routes';
 import authRoutes from '../routes/auth';
+import { authMiddleware } from '../middleware/auth';
 
 /**
  * Configura todas as rotas da aplicação
@@ -35,7 +36,7 @@ export function setupRoutes(app: express.Application): void {
   app.use('/auth', authRoutes);
 
   // Mount API Routes
-  app.use('/api', apiRoutes);
+  app.use('/api', authMiddleware, apiRoutes);
 
   // Mount direct routes for compatibility (without /api prefix)
   // These routes will have optional authentication for public endpoints

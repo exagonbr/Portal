@@ -1,57 +1,47 @@
 export interface Certificate {
-  id: string;
-  user_id: string;
-  course_id?: string;
-  title: string;
-  description?: string;
-  certificate_type: CertificateType;
-  issued_date: string;
-  expiry_date?: string;
-  certificate_url?: string;
-  verification_code: string;
-  metadata?: Record<string, any>;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  id: number;
+  version?: number;
+  date_created: string;
+  last_updated?: string;
+  path?: string;
+  score?: number;
+  tv_show_id?: number;
+  user_id?: number;
+  document?: string;
+  license_code?: string;
+  tv_show_name?: string;
+  recreate?: boolean;
   
   // Relations
   user?: {
-    id: string;
+    id: number;
     name: string;
     email: string;
   };
-  course?: {
-    id: string;
-    title: string;
-    slug: string;
+  tv_show?: {
+    id: number;
+    name: string;
   };
 }
 
-export type CertificateType = 
-  | 'COURSE_COMPLETION'
-  | 'SKILL_CERTIFICATION'
-  | 'PARTICIPATION'
-  | 'ACHIEVEMENT';
-
 export interface CertificateCreateRequest {
-  user_id: string;
-  course_id?: string;
-  title: string;
-  description?: string;
-  certificate_type: CertificateType;
-  expiry_date?: string;
-  certificate_url?: string;
-  metadata?: Record<string, any>;
+  user_id?: number;
+  tv_show_id?: number;
+  path?: string;
+  score?: number;
+  document?: string;
+  license_code?: string;
+  tv_show_name?: string;
+  recreate?: boolean;
 }
 
 export interface CertificateUpdateRequest {
-  title?: string;
-  description?: string;
-  certificate_type?: CertificateType;
-  expiry_date?: string;
-  certificate_url?: string;
-  metadata?: Record<string, any>;
-  is_active?: boolean;
+  path?: string;
+  score?: number;
+  document?: string;
+  license_code?: string;
+  tv_show_name?: string;
+  recreate?: boolean;
 }
 
 export interface CertificateListResponse {
@@ -71,27 +61,26 @@ export interface CertificateResponse {
 }
 
 export interface CertificateFilters {
-  user_id?: string;
-  course_id?: string;
-  certificate_type?: CertificateType;
-  is_active?: boolean;
+  user_id?: number;
+  tv_show_id?: number;
+  score?: number;
+  document?: string;
+  license_code?: string;
+  tv_show_name?: string;
+  recreate?: boolean;
   search?: string;
   page?: number;
   limit?: number;
-  sort_by?: 'issued_date' | 'title' | 'created_at';
+  sort_by?: 'date_created' | 'last_updated' | 'score' | 'tv_show_name';
   sort_order?: 'asc' | 'desc';
 }
 
-export const CERTIFICATE_TYPE_LABELS: Record<CertificateType, string> = {
-  COURSE_COMPLETION: 'Conclusão de Curso',
-  SKILL_CERTIFICATION: 'Certificação de Habilidade',
-  PARTICIPATION: 'Participação',
-  ACHIEVEMENT: 'Conquista'
+export const CERTIFICATE_STATUS_LABELS: Record<string, string> = {
+  'true': 'Ativo para Recriação',
+  'false': 'Não Recriar'
 };
 
-export const CERTIFICATE_TYPE_COLORS: Record<CertificateType, string> = {
-  COURSE_COMPLETION: 'bg-blue-100 text-blue-800',
-  SKILL_CERTIFICATION: 'bg-green-100 text-green-800',
-  PARTICIPATION: 'bg-yellow-100 text-yellow-800',
-  ACHIEVEMENT: 'bg-purple-100 text-purple-800'
+export const CERTIFICATE_STATUS_COLORS: Record<string, string> = {
+  'true': 'bg-green-100 text-green-800',
+  'false': 'bg-gray-100 text-gray-800'
 };

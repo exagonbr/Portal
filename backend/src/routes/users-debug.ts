@@ -1,5 +1,6 @@
 import express from 'express';
-import { validateJWTSmart, requireRoleSmart } from '../middleware/auth';
+import { requireRoleSmart } from '../middleware/auth';
+import { validateJWTSmart } from '../middleware/sessionMiddleware';
 import { UserRepository } from '../repositories/UserRepository';
 import * as jwt from 'jsonwebtoken';
 

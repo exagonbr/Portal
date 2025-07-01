@@ -10,7 +10,7 @@ import {
   BeforeInsert,
   BeforeUpdate
 } from 'typeorm';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 import { Role } from './Role';
 import { Institution } from './Institution';
 import { UserClass } from './UserClass';

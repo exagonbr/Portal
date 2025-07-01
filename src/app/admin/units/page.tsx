@@ -53,7 +53,7 @@ export default function AdminUnitsPage() {
     setIsLoading(true);
     try {
       const response = await unitService.list(filters);
-      setUnits(response.items);
+      setUnits(response.items as unknown as UnitResponseDto[]);
       setTotalItems(response.pagination.total);
     } catch (error) {
       showError('Erro ao carregar unidades');

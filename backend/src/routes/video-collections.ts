@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { VideoCollectionController } from '../controllers/VideoCollectionController';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { requireRole } from '../middleware/auth';
+import { authenticateToken as authMiddleware, authorizeRoles as requireRole } from '../middleware/authMiddleware';
 
 const router = Router();
 const videoCollectionController = new VideoCollectionController();
@@ -12,9 +11,9 @@ router.use(authMiddleware);
 // === ROTAS DE GERENCIAMENTO (ADMIN APENAS) ===
 
 // Aplicar middleware de role para rotas administrativas
-router.use('/manage', requireRole(['SYSTEM_ADMIN']));
-router.use('/migrate', requireRole(['SYSTEM_ADMIN']));
-router.use('/migration', requireRole(['SYSTEM_ADMIN']));
+router.use('/manage', requireRole('SYSTEM_ADMIN'));
+router.use('/migrate', requireRole('SYSTEM_ADMIN'));
+router.use('/migration', requireRole('SYSTEM_ADMIN'));
 
 // Gerenciamento de coleções
 router.get('/manage', videoCollectionController.getAllCollections.bind(videoCollectionController));

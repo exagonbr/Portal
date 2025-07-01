@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { TVShowController } from '../controllers/TVShowController';
 import { VideoCollectionController } from '../controllers/VideoCollectionController';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { requireRole } from '../middleware/auth';
+import { authMiddleware, requireRole } from '../middleware/auth';
 
 const router = Router();
 const videoCollectionController = new VideoCollectionController();

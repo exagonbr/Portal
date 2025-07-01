@@ -24,7 +24,7 @@ export interface PaginationParams {
 
 // DTOs de usuário que correspondem ao backend
 export interface CreateUserDto {
-  name: string;
+  full_name: string;
   email: string;
   password: string;
   role_id: string;
@@ -37,7 +37,7 @@ export interface CreateUserDto {
 }
 
 export interface UpdateUserDto {
-  name?: string;
+  full_name?: string;
   email?: string;
   password?: string;
   role_id?: string;
@@ -51,7 +51,7 @@ export interface UpdateUserDto {
 
 export interface UpdateProfileDto {
   email?: string;
-  name?: string;
+  full_name?: string;
   endereco?: string;
   telefone?: string;
   school_id?: string;
@@ -64,7 +64,7 @@ export interface ChangePasswordDto {
 
 export interface UserResponseDto {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
   role_id: string;
   institution_id: string;
@@ -88,7 +88,7 @@ export interface UserWithRoleDto extends UserResponseDto {
 
 export interface UserFilterDto {
   search?: string;
-  name?: string;
+  full_name?: string;
   email?: string;
   role?: string;
   role_id?: string;
@@ -99,7 +99,7 @@ export interface UserFilterDto {
   created_before?: string;
   page?: number;
   limit?: number;
-  sortBy?: 'name' | 'email' | 'created_at' | 'updated_at';
+  sortBy?: 'full_name' | 'email' | 'created_at' | 'updated_at';
   sortOrder?: 'asc' | 'desc';
 }
 

@@ -130,7 +130,7 @@ export class OptimizedAuthController {
         return;
       }
 
-      const user = await OptimizedAuthService.getUserById(req.user.userId);
+      const user = await OptimizedAuthService.getUserById(req.user.id);
 
       if (!user) {
         res.status(404).json({
@@ -176,7 +176,7 @@ export class OptimizedAuthController {
         data: {
           valid: true,
           user: {
-            userId: req.user.userId,
+            userId: req.user.id,
             email: req.user.email || '',
             name: req.user.name || '',
             role: req.user.role,
@@ -222,7 +222,7 @@ export class OptimizedAuthController {
         return;
       }
 
-      const hasPermission = await OptimizedAuthService.hasPermission(req.user.userId, permission);
+      const hasPermission = await OptimizedAuthService.hasPermission(req.user.id, permission);
 
       res.status(200).json({
         success: true,
@@ -253,7 +253,7 @@ export class OptimizedAuthController {
       // Aqui podemos registrar o logout ou implementar uma blacklist se necessário
       
       if (req.user) {
-        console.log(`🔓 Logout realizado para usuário: ${req.user.email || 'N/A'} (${req.user.userId})`);
+        console.log(`🔓 Logout realizado para usuário: ${req.user.email || 'N/A'} (${req.user.id})`);
       }
 
       res.status(200).json({

@@ -146,6 +146,13 @@ export default function EmailComposer({
 
     if (recipients.length === 0) {
       newErrors.recipients = 'Selecione pelo menos um destinatário'
+    } else {
+      // Validar formato dos emails
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const invalidEmails = recipients.filter(email => !emailRegex.test(email))
+      if (invalidEmails.length > 0) {
+        newErrors.recipients = `Emails inválidos: ${invalidEmails.join(', ')}`
+      }
     }
 
     if (!subject.trim()) {
@@ -165,17 +172,29 @@ export default function EmailComposer({
   }
 
   const handleSend = async () => {
-    if (!validateForm()) return
+    console.log('🔍 [EmailComposer] Tentando enviar email...')
+    console.log('🔍 [EmailComposer] Destinatários:', recipients)
+    console.log('🔍 [EmailComposer] Assunto:', subject)
+    
+    if (!validateForm()) {
+      console.warn('⚠️ [EmailComposer] Validação falhou:', errors)
+      return
+    }
 
-    await onSend({
-      recipients,
-      subject,
-      message: editorMode === 'simple' ? message : htmlContent,
-      htmlContent: editorMode === 'html' ? htmlContent : undefined,
-      iconType: selectedIcon,
-      template: selectedTemplate || undefined,
-      useHtml: editorMode === 'html'
-    })
+    try {
+      await onSend({
+        recipients,
+        subject,
+        message: editorMode === 'simple' ? message : htmlContent,
+        htmlContent: editorMode === 'html' ? htmlContent : undefined,
+        iconType: selectedIcon,
+        template: selectedTemplate || undefined,
+        useHtml: editorMode === 'html'
+      })
+      console.log('✅ [EmailComposer] Email enviado com sucesso')
+    } catch (error) {
+      console.error('❌ [EmailComposer] Erro ao enviar email:', error)
+    }
   }
 
   const handleSaveDraft = () => {

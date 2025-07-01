@@ -1,6 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { requireRole, requireInstitution } from '../middleware/auth';
+import { authenticateToken as authMiddleware, authorizeRoles as requireRole, authorizeInstitution as requireInstitution } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -106,7 +105,7 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -149,7 +148,7 @@ router.post('/', requireRole(['admin', 'teacher']), requireInstitution, async (r
  *       404:
  *         description: Video not found
  */
-router.put('/:id', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -174,7 +173,7 @@ router.put('/:id', requireRole(['admin', 'teacher']), requireInstitution, async 
  *       404:
  *         description: Video not found
  */
-router.delete('/:id', requireRole(['admin', 'teacher']), requireInstitution, async (req, res) => {
+router.delete('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
 });
 

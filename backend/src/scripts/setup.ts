@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { AppDataSource } from '../config/typeorm.config';
-import { AuthService } from '../services/AuthService';
+import AuthService from '../services/AuthService';
 import { getRedisClient, testRedisConnection } from '../config/redis';
 import * as dotenv from 'dotenv';
 

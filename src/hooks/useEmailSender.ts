@@ -38,12 +38,31 @@ export function useEmailSender(): UseEmailSenderReturn {
         await syncTokenWithApiClient(token)
       }
 
+      // Validar dados antes do envio
+      console.log('🔍 [useEmailSender] Dados do email recebidos:', {
+        recipients: emailData.recipients,
+        subject: emailData.subject,
+        messageLength: emailData.message?.length || 0,
+        iconType: emailData.iconType
+      })
+
+      if (!emailData.recipients || emailData.recipients.length === 0) {
+        throw new Error('Nenhum destinatário foi selecionado')
+      }
+
+      // Validar formato dos emails
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const invalidEmails = emailData.recipients.filter(email => !emailRegex.test(email))
+      if (invalidEmails.length > 0) {
+        throw new Error(`Emails inválidos: ${invalidEmails.join(', ')}`)
+      }
+
       // Preparar dados para envio
       const notificationData = {
         title: emailData.subject,
         message: emailData.message,
         type: 'info',
-        category: 'email',
+        category: 'administrative',
         priority: 'medium',
         sendEmail: true,
         sendPush: false,
@@ -77,16 +96,23 @@ export function useEmailSender(): UseEmailSenderReturn {
       if (error?.message?.includes('401') || error?.status === 401) {
         console.error('🔐 [useEmailSender] Erro de autenticação detectado')
         errorMessage = 'Sessão expirada. Faça login novamente.'
+      } else if (error?.response?.data?.message) {
+        // Erro da API com mensagem específica
+        errorMessage = error.response.data.message
+      } else if (error?.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+        // Erros de validação
+        const validationErrors = error.response.data.errors.map((err: any) => err.message).join(', ')
+        errorMessage = `Erro de validação: ${validationErrors}`
       } else if (error instanceof Error) {
         errorMessage = error.message
       }
       
       setError(errorMessage)
       
-      // Limpar erro após 5 segundos
+      // Limpar erro após 8 segundos para dar tempo de ler mensagens mais longas
       setTimeout(() => {
         setError(null)
-      }, 5000)
+      }, 8000)
     } finally {
       setLoading(false)
     }

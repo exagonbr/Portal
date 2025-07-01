@@ -4,7 +4,7 @@ import { UsersController } from '../controllers/UsersController';
 
 export function createUsersRoutes(dataSource: DataSource): Router {
   const router = Router();
-  const usersController = new UsersController(dataSource);
+  const usersController = new UsersController();
 
   // Rotas básicas CRUD
   router.get('/', (req, res) => usersController.getAllUsers(req, res));

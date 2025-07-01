@@ -1,5 +1,6 @@
 export * from './Institution';
 export * from './School';
+export * from './Unit';
 export * from './Class';
 export * from './EducationCycle';
 export * from './UserClass';

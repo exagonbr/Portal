@@ -44,7 +44,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
       } else if (filters.institution_id) {
         users = await this.userRepository.findByInstitution(filters.institution_id);
       } else {
-        users = await this.userRepository.getUsersWithRoleAndInstitution();
+        users = await this.userRepository.findAll();
       }
 
       // Aplicar filtros adicionais no resultado
@@ -247,6 +247,12 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
       }
 
       // Verifica senha atual
+      if (!user.password) {
+        return {
+          success: false,
+          error: 'User has no password set'
+        };
+      }
       const isCurrentPasswordValid = await bcrypt.compare(passwordData.currentPassword, user.password);
       if (!isCurrentPasswordValid) {
         return {
@@ -400,7 +406,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
   protected override async afterCreate(entity: User, userId?: string): Promise<void> {
     this.logger.businessLogic('User created', entity.id, {
       email: entity.email,
-      name: entity.name,
+      name: entity.full_name,
       createdBy: userId
     });
   }
@@ -415,7 +421,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
   protected override async afterDelete(entity: User, userId?: string): Promise<void> {
     this.logger.businessLogic('User deleted', entity.id, {
       email: entity.email,
-      name: entity.name,
+      name: entity.full_name,
       deletedBy: userId
     });
   }

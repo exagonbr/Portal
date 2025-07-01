@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { Knex } from 'knex';
 import { AwsSettingsController } from '../controllers/AwsSettingsController';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { authMiddleware } from '../middleware/auth';
 import { requireRole } from '../middleware/auth';
 import { validateJWTSimple } from '../middleware/sessionMiddleware';
 

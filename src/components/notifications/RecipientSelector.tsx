@@ -21,7 +21,7 @@ export default function RecipientSelector({
   recipients,
   onRecipientsChange,
   availableRecipients,
-  placeholder = "Digite o nome ou e-mail do destinatário"
+  placeholder = "Digite o nome, e-mail do destinatário ou cole emails separados por vírgula"
 }: RecipientSelectorProps) {
   const [inputValue, setInputValue] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -74,14 +74,61 @@ export default function RecipientSelector({
     onRecipientsChange(recipients.filter(r => r !== email))
   }
 
+  const handleInputChange = (value: string) => {
+    setInputValue(value)
+    
+    // Se contém vírgula, processar múltiplos emails
+    if (value.includes(',')) {
+      const emails = value.split(',').map(email => email.trim()).filter(email => email)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      
+      const validEmails = emails.filter(email => {
+        return emailRegex.test(email) && !recipients.includes(email)
+      })
+      
+      if (validEmails.length > 0) {
+        onRecipientsChange([...recipients, ...validEmails])
+        console.log('✅ [RecipientSelector] Emails adicionados:', validEmails)
+      }
+      
+      // Manter apenas o último item se não for um email válido
+      const lastItem = emails[emails.length - 1]
+      setInputValue(emailRegex.test(lastItem) ? '' : lastItem)
+      return
+    }
+    
+    // Filtrar sugestões normalmente
+    if (value.trim()) {
+      const filtered = availableRecipients.filter(recipient =>
+        recipient.name.toLowerCase().includes(value.toLowerCase()) ||
+        recipient.email.toLowerCase().includes(value.toLowerCase())
+      )
+      setFilteredSuggestions(filtered)
+      setShowSuggestions(filtered.length > 0)
+    } else {
+      setShowSuggestions(false)
+    }
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && inputValue.trim()) {
       e.preventDefault()
       // Verificar se é um email válido
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (emailRegex.test(inputValue.trim())) {
-        onRecipientsChange([...recipients, inputValue.trim()])
-        setInputValue('')
+      const email = inputValue.trim()
+      
+      if (emailRegex.test(email)) {
+        // Verificar se o email já não foi adicionado
+        if (!recipients.includes(email)) {
+          onRecipientsChange([...recipients, email])
+          setInputValue('')
+          setShowSuggestions(false)
+          console.log('✅ [RecipientSelector] Email adicionado:', email)
+        } else {
+          console.warn('⚠️ [RecipientSelector] Email já adicionado:', email)
+        }
+      } else {
+        console.warn('⚠️ [RecipientSelector] Email inválido:', email)
       }
     } else if (e.key === 'Backspace' && !inputValue && recipients.length > 0) {
       // Remover último recipient ao pressionar backspace com input vazio
@@ -99,10 +146,17 @@ export default function RecipientSelector({
         <div className="flex flex-wrap gap-2 mb-2">
           {recipients.map((email) => {
             const recipientInfo = getRecipientInfo(email)
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            const isValidEmail = emailRegex.test(email)
+            
             return (
               <div
                 key={email}
-                className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm"
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${
+                  isValidEmail 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'bg-red-100 text-red-700 border border-red-300'
+                }`}
               >
                 {recipientInfo?.avatar ? (
                   <img 
@@ -112,15 +166,20 @@ export default function RecipientSelector({
                   />
                 ) : (
                   <span className="material-symbols-outlined text-sm">
-                    {recipientInfo?.type === 'group' ? 'group' : 'person'}
+                    {!isValidEmail ? 'error' : recipientInfo?.type === 'group' ? 'group' : 'person'}
                   </span>
                 )}
                 <span className="font-medium">
                   {recipientInfo?.name || email}
                 </span>
+                {!isValidEmail && (
+                  <span className="text-xs bg-red-200 px-1 rounded">
+                    Inválido
+                  </span>
+                )}
                 <button
                   onClick={() => removeRecipient(email)}
-                  className="ml-1 hover:text-blue-900"
+                  className={`ml-1 ${isValidEmail ? 'hover:text-blue-900' : 'hover:text-red-900'}`}
                 >
                   <span className="material-symbols-outlined text-sm">close</span>
                 </button>
@@ -132,12 +191,17 @@ export default function RecipientSelector({
           ref={inputRef}
           type="text"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => inputValue.trim() && setShowSuggestions(true)}
           placeholder={recipients.length === 0 ? placeholder : "Adicionar mais destinatários..."}
           className="w-full outline-none text-sm"
         />
+        {recipients.length > 0 && (
+          <div className="mt-2 text-xs text-gray-500">
+            {recipients.length} destinatário(s) selecionado(s). Digite emails ou cole separados por vírgula.
+          </div>
+        )}
       </div>
 
       {/* Dropdown de sugestões */}

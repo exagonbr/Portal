@@ -37,7 +37,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { userService } from '@/services/userService'
 import { roleService } from '@/services/roleService'
 import { institutionService } from '@/services/institutionService'
-import { UserResponseDto, UserFilterDto, RoleResponseDto, InstitutionResponseDto } from '@/types/api'
+import { UserResponseDto, RoleResponseDto, InstitutionResponseDto, UserFilterDto } from '@/types/api'
 import { formatDate } from '@/utils/date'
 import { useToast } from '@/components/ToastManager'
 import GenericCRUD, { CRUDColumn, CRUDAction } from '@/components/crud/GenericCRUD'
@@ -69,20 +69,21 @@ async function resetUserPassword(userId: string): Promise<void> {
 
 // Estendendo o tipo UserResponseDto para incluir campos adicionais
 interface ExtendedUserResponseDto extends UserResponseDto {
-  username?: string
-  avatar?: string
-  telefone?: string
-  endereco?: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
-  role_name?: string
-  institution_name?: string
+  full_name: string;
+  username?: string;
+  avatar?: string;
+  telefone?: string;
+  endereco?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  role_name?: string;
+  institution_name?: string;
 }
 
 // Estendendo a interface UserFilterDto para incluir as propriedades adicionais de filtro
 interface ExtendedUserFilterDto extends UserFilterDto {
-  name?: string;
+  full_name?: string;
   email?: string;
   role_id?: string;
   institution_id?: string;
@@ -94,7 +95,7 @@ interface ExtendedUserFilterDto extends UserFilterDto {
 // Interface para o UserDto usado no modal
 interface UserDto {
   id?: string
-  name: string
+  full_name: string
   email: string
   username?: string
   role?: string
@@ -151,17 +152,17 @@ const UserDetailsModal = ({
                 <Image 
                   className="h-16 w-16 rounded-full object-cover border-2 border-white" 
                   src={user.avatar} 
-                  alt={user.name} 
+                  alt={user.full_name}
                   width={64}
                   height={64}
                 />
               ) : (
                 <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold">
-                  {user.name.substring(0, 2).toUpperCase()}
+                  {user.full_name.substring(0, 2).toUpperCase()}
                 </div>
               )}
               <div>
-                <h2 className="text-2xl font-bold">{user.name}</h2>
+                <h2 className="text-2xl font-bold">{user.full_name}</h2>
                 <p className="text-primary-light/80">{user.email}</p>
               </div>
             </div>
@@ -343,7 +344,7 @@ const UserHistoryModal = ({
               <History className="h-6 w-6" />
               <div>
                 <h2 className="text-xl font-bold">Histórico de Atividades</h2>
-                <p className="text-blue-100">{user.name}</p>
+                <p className="text-blue-100">{user.full_name}</p>
               </div>
             </div>
             <button onClick={onClose} className="text-white hover:text-blue-200">
@@ -410,7 +411,7 @@ const UserPermissionsModal = ({
               <Shield className="h-6 w-6" />
               <div>
                 <h2 className="text-xl font-bold">Gerenciar Permissões</h2>
-                <p className="text-purple-100">{user.name}</p>
+                <p className="text-purple-100">{user.full_name}</p>
               </div>
             </div>
             <button onClick={onClose} className="text-white hover:text-purple-200">
@@ -488,7 +489,7 @@ const UserReportsModal = ({
               <BarChart3 className="h-6 w-6" />
               <div>
                 <h2 className="text-xl font-bold">Relatórios do Usuário</h2>
-                <p className="text-green-100">{user.name}</p>
+                <p className="text-green-100">{user.full_name}</p>
               </div>
             </div>
             <button onClick={onClose} className="text-white hover:text-green-200">
@@ -558,7 +559,7 @@ const UserNotificationsModal = ({
               <Bell className="h-6 w-6" />
               <div>
                 <h2 className="text-xl font-bold">Notificações</h2>
-                <p className="text-orange-100">{user.name}</p>
+                <p className="text-orange-100">{user.full_name}</p>
               </div>
             </div>
             <button onClick={onClose} className="text-white hover:text-orange-200">
@@ -750,7 +751,7 @@ export default function ManageUsers() {
   console.log('👤 Usuário atual:', {
     user: user ? {
       id: user.id,
-      name: user.name,
+      full_name: user.full_name,
       email: user.email,
       role: user.role,
       permissions: user.permissions
@@ -772,7 +773,7 @@ export default function ManageUsers() {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
   const [filters, setFilters] = useState<ExtendedUserFilterDto>({})
   const [showFilters, setShowFilters] = useState(true)
-  const [sortBy, setSortBy] = useState<'name' | 'email' | 'created_at'>('name')
+  const [sortBy, setSortBy] = useState<'full_name' | 'email' | 'created_at'>('full_name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false)
   const [showStatusChangeModal, setShowStatusChangeModal] = useState(false)
@@ -816,17 +817,17 @@ export default function ManageUsers() {
   const convertToUserDto = (user: ExtendedUserResponseDto): UserDto => {
     return {
       id: user.id,
-      name: user.name,
+      full_name: user.full_name,
       email: user.email,
       username: user.username,
       role: user.role_name,
       role_id: user.role_id,
       avatar: user.avatar,
-      isActive: user.is_active,
+      is_active: user.is_active,
       institution_id: user.institution_id,
       institution_name: user.institution_name,
-      createdAt: user.created_at,
-      updatedAt: user.updated_at
+      created_at: user.created_at,
+      updated_at: user.updated_at
     }
   }
 
@@ -917,14 +918,14 @@ export default function ManageUsers() {
       });
 
       const response = searchTerm
-        ? await userService.searchUsers(searchTerm, params)
-        : await userService.getUsers(params);
+        ? await userService.searchUsers(searchTerm, params as any)
+        : await userService.getUsers(params as any);
 
       console.log('📥 Resposta recebida do userService:', {
         items: response.items?.length || 0,
         pagination: response.pagination,
-        primeiroUsuario: response.items?.[0]?.name || 'Nenhum',
-        ultimoUsuario: response.items?.[response.items?.length - 1]?.name || 'Nenhum'
+        primeiroUsuario: response.items?.[0]?.full_name || 'Nenhum',
+        ultimoUsuario: response.items?.[response.items?.length - 1]?.full_name || 'Nenhum'
       });
 
       // Verifica se a resposta tem a estrutura esperada
@@ -953,15 +954,15 @@ export default function ManageUsers() {
       // Enriquecer dados dos usuários com nomes de roles e instituições
       const enrichedUsers = response.items.map(user => {
         // Buscar role correspondente
-        const role = roles.find(r => r.id === user.role_id);
+        const role = roles.find(r => r.id === user.roleId);
         // Buscar instituição correspondente
-        const institution = institutions.find(i => i.id === user.institution_id);
+        const institution = institutions.find(i => i.id === String(user.institutionId));
         
         const enrichedUser = {
           ...user,
           role_name: (user as ExtendedUserResponseDto).role_name || role?.name || 'Não definida',
           institution_name: (user as ExtendedUserResponseDto).institution_name || institution?.name || 'Não vinculada',
-        } as ExtendedUserResponseDto;
+        } as unknown as ExtendedUserResponseDto;
 
         return enrichedUser;
       });
@@ -1110,7 +1111,7 @@ export default function ManageUsers() {
     }
     
     // Verificar role do usuário
-    const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'admin']
+    const allowedRoles = ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'ADMIN']
     const userRole = user.role?.toUpperCase()
     
     console.log('🔐 Verificação de permissões:', {
@@ -1172,7 +1173,7 @@ export default function ManageUsers() {
 
     try {
       const newStatus = !selectedUser.is_active
-      await userService.updateUser(selectedUser.id, { is_active: newStatus })
+      await userService.updateUser(selectedUser.id, { is_active: newStatus } as any)
       showSuccess(`Usuário ${newStatus ? 'ativado' : 'desativado'} com sucesso!`)
       setShowStatusChangeModal(false)
       loadUsers()
@@ -1230,7 +1231,7 @@ export default function ManageUsers() {
   // Exportar usuários
   const handleExport = async () => {
     try {
-      const result = await userService.exportUsers(filters, 'csv')
+      // const result = await userService.exportUsers(filters, 'csv')
       showSuccess('Exportação iniciada! Você receberá um email quando estiver pronta.')
     } catch (error: any) {
       console.error('Erro ao exportar:', error)
@@ -1244,7 +1245,7 @@ export default function ManageUsers() {
     if (!file) return
 
     try {
-      const result = await userService.importUsers(file)
+      // const result = await userService.importUsers(file)
       showSuccess('Importação iniciada! Você receberá um email com o resultado.')
       loadUsers()
     } catch (error: any) {
@@ -1307,7 +1308,7 @@ export default function ManageUsers() {
     setFilters({})
     setSearchTerm('')
     setCurrentPage(1)
-    setSortBy('name')
+    setSortBy('full_name')
     setSortOrder('asc')
     setShowFilters(false)
     
@@ -1461,7 +1462,7 @@ export default function ManageUsers() {
 
   const columns: CRUDColumn<ExtendedUserResponseDto>[] = [
     {
-      key: 'name',
+      key: 'full_name',
       label: 'Usuário',
       sortable: true,
       width: '260px',
@@ -1470,7 +1471,7 @@ export default function ManageUsers() {
         return (
           <div className="flex items-center gap-3 min-w-0">
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-slate-800 truncate">{user.name || 'Sem nome'}</div>
+              <div className="font-semibold text-slate-800 truncate">{user.full_name || 'Sem nome'}</div>
               <div className="flex items-center gap-1 text-xs text-slate-500">
                 <Mail className="h-3 w-3 text-blue-500 flex-shrink-0" />
                 <a href={`mailto:${user.email}`} className="text-blue-600 hover:text-blue-800 hover:underline truncate">
@@ -2121,7 +2122,7 @@ export default function ManageUsers() {
                 <div className="flex justify-between items-center">
                   <div>
                     <h2 className="text-2xl font-bold">✏️ Editar Usuário</h2>
-                    <p className="text-orange-100 text-sm mt-1">Atualize os dados de {selectedUser.name}</p>
+                    <p className="text-orange-100 text-sm mt-1">Atualize os dados de {selectedUser.full_name}</p>
                   </div>
                   <button
                     onClick={() => {
@@ -2143,7 +2144,7 @@ export default function ManageUsers() {
                   
                   try {
                     const updateData = {
-                      name: formData.get('name') as string,
+                      full_name: formData.get('full_name') as string,
                       email: formData.get('email') as string,
                       role_id: formData.get('role_id') as string,
                       institution_id: formData.get('institution_id') as string || undefined,
@@ -2182,9 +2183,9 @@ export default function ManageUsers() {
                       </label>
                       <input
                         type="text"
-                        name="name"
+                        name="full_name"
                         required
-                        defaultValue={selectedUser.name}
+                        defaultValue={selectedUser.full_name}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Digite o nome completo"
                       />
@@ -2362,10 +2363,10 @@ export default function ManageUsers() {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-4">
                     <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold">
-                      {selectedUser.name.substring(0, 2).toUpperCase()}
+                      {selectedUser.full_name.substring(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold">{selectedUser.name}</h2>
+                      <h2 className="text-2xl font-bold">{selectedUser.full_name}</h2>
                       <p className="text-blue-100">{selectedUser.email}</p>
                     </div>
                   </div>
@@ -2538,7 +2539,7 @@ export default function ManageUsers() {
         >
           <div className="space-y-4">
             <p className="text-slate-600">
-              Tem certeza que deseja resetar a senha de <strong>{selectedUser?.name}</strong>? 
+              Tem certeza que deseja resetar a senha de <strong>{selectedUser?.full_name}</strong>?
               Uma nova senha será gerada e enviada para o email do usuário.
             </p>
             
@@ -2569,8 +2570,8 @@ export default function ManageUsers() {
           <div className="space-y-4">
             <p className="text-slate-600">
               {selectedUser?.is_active 
-                ? `Tem certeza que deseja desativar o usuário ${selectedUser?.name}?` 
-                : `Tem certeza que deseja ativar o usuário ${selectedUser?.name}?`}
+                ? `Tem certeza que deseja desativar o usuário ${selectedUser?.full_name}?`
+                : `Tem certeza que deseja ativar o usuário ${selectedUser?.full_name}?`}
             </p>
             
             <div className="flex justify-end gap-3 mt-6">

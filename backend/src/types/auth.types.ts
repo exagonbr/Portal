@@ -1,4 +1,4 @@
-export interface AuthTokenPayload {
+export interface LegacyAuthTokenPayload {
   id: string;
   email: string;
   name: string;
@@ -8,7 +8,7 @@ export interface AuthTokenPayload {
   isActive: boolean;
 }
 
-export interface User extends AuthTokenPayload {
+export interface LegacyUser extends LegacyAuthTokenPayload {
   createdAt: Date;
   updatedAt: Date;
 }

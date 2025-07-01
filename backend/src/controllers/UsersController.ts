@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
-import { DataSource } from 'typeorm';
 import { UsersService } from '../services/UsersService';
 import { CreateUsersData, UpdateUsersData } from '../models/Users';
 
 export class UsersController {
   private usersService: UsersService;
 
-  constructor(dataSource: DataSource) {
-    this.usersService = new UsersService(dataSource);
+  constructor() {
+    this.usersService = new UsersService();
   }
 
   // GET /users
@@ -361,7 +360,7 @@ export class UsersController {
         return;
       }
 
-      const deleted = await this.usersService.softDeleteUser(id);
+      await this.usersService.softDeleteUser(id);
       
       res.json({
         success: true,
@@ -388,7 +387,7 @@ export class UsersController {
         return;
       }
 
-      const activated = await this.usersService.activateUser(id);
+      await this.usersService.activateUser(id);
       
       res.json({
         success: true,
@@ -415,7 +414,7 @@ export class UsersController {
         return;
       }
 
-      const deactivated = await this.usersService.deactivateUser(id);
+      await this.usersService.deactivateUser(id);
       
       res.json({
         success: true,
@@ -442,7 +441,7 @@ export class UsersController {
         return;
       }
 
-      const reset = await this.usersService.resetUserPassword(id);
+      await this.usersService.resetUserPassword(id);
       
       res.json({
         success: true,
@@ -479,7 +478,7 @@ export class UsersController {
         return;
       }
 
-      const changed = await this.usersService.changeUserPassword(id, currentPassword, newPassword);
+      await this.usersService.changeUserPassword(id, currentPassword, newPassword);
       
       res.json({
         success: true,
@@ -506,7 +505,7 @@ export class UsersController {
         return;
       }
 
-      const locked = await this.usersService.lockUserAccount(id);
+      await this.usersService.lockUserAccount(id);
       
       res.json({
         success: true,
@@ -533,7 +532,7 @@ export class UsersController {
         return;
       }
 
-      const unlocked = await this.usersService.unlockUserAccount(id);
+      await this.usersService.unlockUserAccount(id);
       
       res.json({
         success: true,

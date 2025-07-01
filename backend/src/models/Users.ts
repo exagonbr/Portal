@@ -1,11 +1,12 @@
 export interface Users {
-  id: number;
+  toJSON(): unknown;
+  id: string;
   version?: number;
   accountExpired?: boolean;
   accountLocked?: boolean;
   address?: string;
   amountOfMediaEntries?: number;
-  dateCreated: Date;
+  dateCreated: string;
   deleted?: boolean;
   email: string;
   enabled?: boolean;
@@ -13,8 +14,7 @@ export interface Users {
   invitationSent?: boolean;
   isAdmin: boolean;
   language?: string;
-  lastUpdated: Date;
-  password?: string;
+  lastUpdated: string;
   passwordExpired?: boolean;
   pauseVideoOnClick?: boolean;
   phone?: string;
@@ -36,141 +36,98 @@ export interface Users {
   isInstitutionManager?: boolean;
   roleId?: string;
   googleId?: string;
+  // Campos de compatibilidade com o frontend atual
+  name: string; // Mapeado de fullName
+  role_id?: string; // Mapeado de roleId
+  institution_id?: number; // Mapeado de institutionId
+  is_active: boolean; // Mapeado de enabled
+  created_at: string; // Mapeado de dateCreated
+  updated_at: string; // Mapeado de lastUpdated
+  telefone?: string; // Mapeado de phone
+  endereco?: string; // Mapeado de address
 }
 
 export interface CreateUsersData {
   email: string;
   fullName: string;
+  password?: string;
   isAdmin: boolean;
   isManager: boolean;
   isStudent: boolean;
   isTeacher: boolean;
-  resetPassword?: boolean;
-  version?: number;
-  accountExpired?: boolean;
-  accountLocked?: boolean;
-  address?: string;
-  amountOfMediaEntries?: number;
-  deleted?: boolean;
-  enabled?: boolean;
-  invitationSent?: boolean;
-  language?: string;
-  password?: string;
-  passwordExpired?: boolean;
-  pauseVideoOnClick?: boolean;
-  phone?: string;
-  username?: string;
-  uuid?: string;
-  type?: number;
-  certificatePath?: string;
-  isCertified?: boolean;
-  institutionId?: number;
-  subject?: string;
-  subjectDataId?: number;
-  isInstitutionManage?: boolean;
   isCoordinator?: boolean;
   isGuardian?: boolean;
   isInstitutionManager?: boolean;
   roleId?: string;
+  institutionId?: number;
+  enabled?: boolean;
+  resetPassword?: boolean;
+  address?: string;
+  phone?: string;
+  username?: string;
+  language?: string;
   googleId?: string;
 }
 
 export interface UpdateUsersData {
   email?: string;
   fullName?: string;
+  password?: string;
   isAdmin?: boolean;
   isManager?: boolean;
   isStudent?: boolean;
   isTeacher?: boolean;
-  resetPassword?: boolean;
-  version?: number;
-  accountExpired?: boolean;
-  accountLocked?: boolean;
-  address?: string;
-  amountOfMediaEntries?: number;
-  deleted?: boolean;
-  enabled?: boolean;
-  invitationSent?: boolean;
-  language?: string;
-  password?: string;
-  passwordExpired?: boolean;
-  pauseVideoOnClick?: boolean;
-  phone?: string;
-  username?: string;
-  uuid?: string;
-  type?: number;
-  certificatePath?: string;
-  isCertified?: boolean;
-  institutionId?: number;
-  subject?: string;
-  subjectDataId?: number;
-  isInstitutionManage?: boolean;
   isCoordinator?: boolean;
   isGuardian?: boolean;
   isInstitutionManager?: boolean;
   roleId?: string;
-  googleId?: string;
+  institutionId?: number;
+  enabled?: boolean;
+  resetPassword?: boolean;
+  address?: string;
+  phone?: string;
+  username?: string;
+  language?: string;
+  deleted?: boolean;
+  accountLocked?: boolean;
+  accountExpired?: boolean;
 }
 
 export interface UsersWithoutPassword extends Omit<Users, 'password'> {}
 
-// Tipos específicos para diferentes tipos de usuários
-export interface SystemAdminUser extends Users {
-  isAdmin: true;
-  isManager: true;
-  isStudent: false;
-  isTeacher: false;
-  isGuardian: false;
-  isCoordinator: false;
-  isInstitutionManager: false;
+export interface UsersFilterData {
+  search?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  role_id?: string;
+  roleId?: string;
+  institution_id?: number;
+  institutionId?: number;
+  is_active?: boolean;
+  enabled?: boolean;
+  isAdmin?: boolean;
+  isTeacher?: boolean;
+  isStudent?: boolean;
+  isCoordinator?: boolean;
+  isGuardian?: boolean;
+  isInstitutionManager?: boolean;
+  created_after?: string;
+  created_before?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: 'name' | 'fullName' | 'email' | 'dateCreated' | 'lastUpdated';
+  sortOrder?: 'asc' | 'desc';
 }
 
-export interface GuardianUser extends Users {
-  isAdmin: false;
-  isManager: false;
-  isStudent: false;
-  isTeacher: false;
-  isGuardian: true;
-  isCoordinator: false;
-  isInstitutionManager: false;
-}
-
-export interface TeacherUser extends Users {
-  isAdmin: false;
-  isManager: false;
-  isStudent: false;
-  isTeacher: true;
-  isGuardian: false;
-  isCoordinator: false;
-  isInstitutionManager: false;
-}
-
-export interface StudentUser extends Users {
-  isAdmin: false;
-  isManager: false;
-  isStudent: true;
-  isTeacher: false;
-  isGuardian: false;
-  isCoordinator: false;
-  isInstitutionManager: false;
-}
-
-export interface CoordinatorUser extends Users {
-  isAdmin: false;
-  isManager: false;
-  isStudent: false;
-  isTeacher: false;
-  isGuardian: false;
-  isCoordinator: true;
-  isInstitutionManager: false;
-}
-
-export interface InstitutionManagerUser extends Users {
-  isAdmin: false;
-  isManager: true;
-  isStudent: false;
-  isTeacher: false;
-  isGuardian: false;
-  isCoordinator: false;
-  isInstitutionManager: true;
+export interface UsersListResult {
+  items: Users[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }

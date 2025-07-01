@@ -8,30 +8,33 @@ datasource db {
 }
 
 model TVShow {
-  id                  BigInt   @id @default(autoincrement())
+  id                  BigInt        @id @default(autoincrement())
   version             BigInt?
-  api_id              String?  @db.VarChar(255)
+  api_id              String?       @db.VarChar(255)
   backdrop_image_id   BigInt?
-  backdrop_path       String?  @db.VarChar(255)
-  contract_term_end   DateTime @db.Timestamp(6)
-  date_created        DateTime @db.Timestamp(6)
+  backdrop_path       String?       @db.VarChar(255)
+  contract_term_end   DateTime      @db.Timestamp(6)
+  date_created        DateTime      @db.Timestamp(6)
   deleted             Boolean?
-  first_air_date      DateTime @db.Timestamp(6)
-  imdb_id             String?  @db.VarChar(255)
-  last_updated        DateTime @db.Timestamp(6)
+  first_air_date      DateTime      @db.Timestamp(6)
+  imdb_id             String?       @db.VarChar(255)
+  last_updated        DateTime      @db.Timestamp(6)
   manual_input        Boolean?
   manual_support_id   BigInt?
-  manual_support_path String?  @db.VarChar(255)
-  name                String   @db.VarChar(255)
-  original_language   String?  @db.VarChar(255)
+  manual_support_path String?       @db.VarChar(255)
+  name                String        @db.VarChar(255)
+  original_language   String?       @db.VarChar(255)
   overview            String?
   popularity          Float?
   poster_image_id     BigInt?
-  poster_path         String?  @db.VarChar(255)
+  poster_path         String?       @db.VarChar(255)
   producer            String?
   vote_average        Float?
   vote_count          Int?
-  total_load          String?  @db.VarChar(255)
+  total_load          String?       @db.VarChar(255)
+
+  // Relations
+  certificates        certificate[]
 
   @@map("tv_show")
 }
@@ -277,7 +280,12 @@ model certificate {
   tv_show_name String?   @db.VarChar(255)
   recreate     Boolean?  @default(true)
 
+  // Relations
+  user     users?   @relation(fields: [user_id], references: [id], map: "certificate_user_fk")
+  tv_show  TVShow?  @relation(fields: [tv_show_id], references: [id], map: "certificate_tv_show_fk")
+
   @@index([user_id], map: "idx_certificate_user_id")
+  @@index([tv_show_id], map: "idx_certificate_tv_show_id")
 }
 
 model certificates {
@@ -1502,41 +1510,44 @@ model user_unit_class {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model users {
-  id                      BigInt    @id @default(autoincrement())
+  id                      BigInt        @id @default(autoincrement())
   version                 BigInt?
   account_expired         Boolean?
   account_locked          Boolean?
-  address                 String?   @db.VarChar(255)
+  address                 String?       @db.VarChar(255)
   amount_of_media_entries Int?
-  date_created            DateTime? @db.Timestamp(6)
+  date_created            DateTime?     @db.Timestamp(6)
   deleted                 Boolean?
-  email                   String    @db.VarChar(255)
+  email                   String        @db.VarChar(255)
   enabled                 Boolean?
-  full_name               String    @db.VarChar(255)
+  full_name               String        @db.VarChar(255)
   invitation_sent         Boolean?
   is_admin                Boolean
-  language                String?   @db.VarChar(255)
-  last_updated            DateTime? @db.Timestamp(6)
-  password                String?   @db.VarChar(255)
+  language                String?       @db.VarChar(255)
+  last_updated            DateTime?     @db.Timestamp(6)
+  password                String?       @db.VarChar(255)
   password_expired        Boolean?
   pause_video_on_click    Boolean?
-  phone                   String?   @db.VarChar(255)
-  reset_password          Boolean   @default(true)
-  username                String?   @unique(map: "idx_users_username_unique") @db.VarChar(255)
-  uuid                    String?   @db.VarChar(255)
+  phone                   String?       @db.VarChar(255)
+  reset_password          Boolean       @default(true)
+  username                String?       @unique(map: "idx_users_username_unique") @db.VarChar(255)
+  uuid                    String?       @db.VarChar(255)
   is_manager              Boolean
   type                    Int?
-  certificate_path        String?   @db.VarChar(255)
-  is_certified            Boolean?  @default(false)
+  certificate_path        String?       @db.VarChar(255)
+  is_certified            Boolean?      @default(false)
   is_student              Boolean
   is_teacher              Boolean
   institution_id          BigInt?
-  subject                 String?   @db.VarChar(255)
+  subject                 String?       @db.VarChar(255)
   subject_data_id         BigInt?
-  is_institution_manage   Boolean?  @default(false)
-  is_coordinator          Boolean?  @default(false)
-  is_guardian             Boolean?  @default(false)
-  is_institution_manager  Boolean?  @default(false)
+  is_institution_manage   Boolean?      @default(false)
+  is_coordinator          Boolean?      @default(false)
+  is_guardian             Boolean?      @default(false)
+  is_institution_manager  Boolean?      @default(false)
+
+  // Relations
+  certificates            certificate[]
 
   @@index([email], map: "idx_users_email")
 }
@@ -1736,6 +1747,38 @@ model watchlist_entry {
   video_id     BigInt?
 
   @@index([user_id], map: "idx_watchlist_entry_user_id")
+}
+
+model security_policies {
+  id                                    Int      @id @default(autoincrement())
+  
+  // Política de Senhas
+  password_min_length                   Int      @default(8)
+  password_require_uppercase            Boolean  @default(true)
+  password_require_lowercase            Boolean  @default(true)
+  password_require_numbers              Boolean  @default(true)
+  password_require_special_chars        Boolean  @default(true)
+  password_expiry_days                  Int      @default(90)
+  password_prevent_reuse                Int      @default(5)
+  
+  // Política de Contas e Sessões
+  account_max_login_attempts            Int      @default(5)
+  account_lockout_duration_minutes      Int      @default(30)
+  account_session_timeout_minutes       Int      @default(30)
+  account_require_mfa                   Boolean  @default(false)
+  account_inactivity_lockout_days       Int      @default(60)
+  
+  // Política de Dados e Privacidade
+  data_retention_months                 Int      @default(36)
+  data_encrypt_sensitive_data           Boolean  @default(true)
+  data_anonymize_deleted_users          Boolean  @default(true)
+  data_enable_audit_logging             Boolean  @default(true)
+  
+  // Metadados
+  created_by                            String?
+  updated_by                            String?
+  created_at                            DateTime @default(now())
+  updated_at                            DateTime @default(now())
 }
 
 enum UserRole {

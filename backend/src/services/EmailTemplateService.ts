@@ -1,4 +1,4 @@
-import { knex } from '../database/connection';
+import knex from '../config/database';
 
 export interface EmailTemplateDTO {
   id?: number;

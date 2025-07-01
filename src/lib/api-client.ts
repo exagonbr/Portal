@@ -16,8 +16,8 @@ import { CORS_HEADERS } from '@/config/cors';
 // Configuração otimizada para comunicação direta
 const API_CONFIG = {
   // URL base única - comunicação direta via Nginx
-  baseUrl: 'https://portal.sabercon.com.br/api',
-  timeout: 25000, // Reduzido para melhor UX
+  baseUrl: 'http://localhost:3000/api', // Ajuste conforme necessário para produção
+  timeout: 40000, // Reduzido para melhor UX
   retryAttempts: 2, // Reduzido para evitar sobrecarga
   retryDelay: 800,
 } as const;
@@ -418,6 +418,14 @@ class ApiClient {
 
     // Tratar erros de autenticação específicos
     if (error.status === 401) {
+      // Evitar loop de redirecionamento em rotas de autenticação
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
+        this.clearAuth();
+        // Redireciona para a página de login, preservando a URL de destino
+        const returnTo = window.location.pathname + window.location.search;
+        window.location.href = `/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
+      }
+
       const currentToken = this.getAuthToken();
       const hasToken = !!currentToken;
       
@@ -428,49 +436,14 @@ class ApiClient {
         errorDetails: error.details?.message
       });
       
-      let message = 'Token de autenticação inválido! "Erro desconhecido"';
+      let message = 'Sessão inválida ou expirada. Por favor, faça login novamente.';
       
       if (!hasToken) {
         message = 'Token de autenticação não encontrado. Faça login novamente.';
       } else if (error.details?.message?.includes('expirado') || error.details?.message?.includes('expired')) {
-        message = 'Token de autenticação expirado. Faça login novamente.';
+        message = 'Sua sessão expirou. Faça login novamente.';
       } else if (error.details?.message?.includes('inválido') || error.details?.message?.includes('invalid')) {
-        message = 'Token de autenticação inválido. Faça login novamente.';
-      } else if (error.message) {
-        message = `Token de autenticação inválido! "${error.message}"`;
-      } else if (error.details?.message) {
-        message = `Token de autenticação inválido! "${error.details.message}"`;
-      }
-      
-      // Adicionar informações de diagnóstico
-      if (hasToken && currentToken) {
-        try {
-          const parts = currentToken.split('.');
-          const isJWT = parts.length === 3;
-          console.log('🔍 [API-CLIENT] Token details:', {
-            isJWT,
-            parts: parts.length,
-            firstPartLength: parts[0]?.length || 0
-          });
-          
-          if (isJWT) {
-            try {
-              const payload = JSON.parse(atob(parts[1]));
-              const now = Math.floor(Date.now() / 1000);
-              const isExpired = payload.exp && payload.exp < now;
-              console.log('🔍 [API-CLIENT] JWT payload check:', {
-                hasUserId: !!payload.userId,
-                exp: payload.exp,
-                now: now,
-                isExpired
-              });
-            } catch (e) {
-              console.error('🔍 [API-CLIENT] Erro ao decodificar JWT payload:', e);
-            }
-          }
-        } catch (e) {
-          console.error('🔍 [API-CLIENT] Erro no diagnóstico do token:', e);
-        }
+        message = 'Seu token de acesso é inválido. Faça login novamente.';
       }
       
       return {

@@ -1,7 +1,9 @@
+import { Role } from '../entities/Role';
+
 export interface User {
   id: string;
   email: string;
-  password: string;
+  password?: string;
   full_name: string;
   role_id: string;
   institution_id: string;
@@ -13,6 +15,7 @@ export interface User {
   birth_date?: string;
   created_at: Date;
   updated_at: Date;
+  role: Role;
 }
 
 export interface CreateUserData {

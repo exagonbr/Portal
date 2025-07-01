@@ -4,7 +4,8 @@
  */
 
 import { Router } from 'express';
-import { validateJWTSmart, requireRoleSmart } from '../middleware/auth';
+import { requireRoleSmart } from '../middleware/auth';
+import { validateJWTSmart } from '../middleware/sessionMiddleware';
 import { validateJWTSmart as validateJWTSmartSession } from '../middleware/sessionMiddleware';
 
 /**

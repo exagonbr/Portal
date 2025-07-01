@@ -194,7 +194,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
       const response = await authService.login(email, password);
       
       if (response.success && response.user) {
-        console.log('🔐 Login bem-sucedido:', response.user.name, 'Role:', response.user.role);
+        console.log('🔐 Login bem-sucedido:', response.user.full_name, 'Role:', response.user.role);
         setUser(response.user);
         setError(null);
         
@@ -252,7 +252,7 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
       const response = await authService.register(name, email, password, type);
       
       if (response.success && response.user) {
-        console.log('🔐 Registro bem-sucedido:', response.user.name, 'Role:', response.user.role);
+        console.log('🔐 Registro bem-sucedido:', response.user.full_name, 'Role:', response.user.role);
         setUser(response.user);
         setError(null);
         

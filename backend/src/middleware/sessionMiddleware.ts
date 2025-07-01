@@ -90,7 +90,7 @@ export const validateJWTAndSession = async (
 
     // Cria objeto user tipado
     const userAuth: AuthTokenPayload = {
-      userId: decoded.userId,
+      id: decoded.id,
       email: decoded.email,
       name: decoded.name,
       role: decoded.role,
@@ -110,7 +110,7 @@ export const validateJWTAndSession = async (
         try {
           const { sessionId: newSessionId } = await SessionService.createSession(
             {
-              id: userAuth.userId,
+              id: userAuth.id,
               email: userAuth.email,
               name: userAuth.name,
               role_name: userAuth.role,
@@ -195,7 +195,7 @@ export const validateJWTOnly = async (
     }
     
     const userAuth: AuthTokenPayload = {
-      userId: decoded.userId,
+      id: decoded.id,
       email: decoded.email,
       name: decoded.name,
       role: decoded.role,
@@ -343,7 +343,7 @@ export const optionalAuth = async (
         
         if (typeof decoded !== 'string' && isValidAuthTokenPayload(decoded)) {
           const userAuth: AuthTokenPayload = {
-            userId: decoded.userId,
+            id: decoded.id,
             email: decoded.email,
             name: decoded.name,
             role: decoded.role,
@@ -462,7 +462,7 @@ export const validateJWTSimple = async (
       }
       
       userAuth = {
-        userId: decoded.userId,
+        id: decoded.id,
         email: decoded.email || '',
         name: decoded.name || '',
         role: decoded.role || 'user',
@@ -490,7 +490,7 @@ export const validateJWTSimple = async (
           }
           
           userAuth = {
-            userId: fallbackData.userId,
+            id: fallbackData.id,
             email: fallbackData.email,
             name: fallbackData.name || fallbackData.userId,
             role: fallbackData.role,
@@ -714,7 +714,7 @@ export const validateTokenUltraSimple = async (
         }
         
         req.user = {
-          userId: decoded.userId,
+          id: decoded.id,
           email: decoded.email || '',
           name: decoded.name || '',
           role: decoded.role || 'user',
@@ -725,7 +725,7 @@ export const validateTokenUltraSimple = async (
           exp: decoded.exp
         };
         
-        console.log('✅ User authenticated via JWT:', req.user.email, 'Role:', req.user.role);
+        console.log('✅ User authenticated via JWT:', req.user?.email, 'Role:', req.user?.role);
         return next();
       } catch (jwtError: any) {
         console.log('❌ JWT verification failed:', jwtError.message);
@@ -806,7 +806,7 @@ export const validateTokenUltraSimple = async (
         }
 
         req.user = {
-          userId: fallbackData.userId,
+          id: fallbackData.id,
           email: fallbackData.email,
           name: fallbackData.name || fallbackData.userId,
           role: fallbackData.role,
@@ -817,7 +817,7 @@ export const validateTokenUltraSimple = async (
           exp: fallbackData.exp || Math.floor(Date.now() / 1000) + 3600
         };
 
-        console.log('✅ User authenticated via fallback token:', req.user.email, 'Role:', req.user.role);
+        console.log('✅ User authenticated via fallback token:', req.user?.email, 'Role:', req.user?.role);
         return next();
       } catch (error: any) {
         console.log('❌ Fallback token processing failed:', error.message);

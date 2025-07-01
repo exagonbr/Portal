@@ -127,12 +127,12 @@ export const useRoles = (): UseRolesReturn => {
 
     try {
       const response = await userService.getUsersByRole(roleId)
-      setRoles(prev => prev.map(role => 
-        role.id === roleId ? { 
-          ...role, 
-          users: Array.isArray(response) ? response : [],
+      setRoles(prev => prev.map(role =>
+        role.id === roleId ? {
+          ...role,
+          users: Array.isArray(response) ? response as unknown as UserResponseDto[] : [],
           users_count: Array.isArray(response) ? response.length : 0,
-          usersLoading: false 
+          usersLoading: false
         } : role
       ))
     } catch (err) {
@@ -153,10 +153,10 @@ export const useRoles = (): UseRolesReturn => {
       const response = await userService.getUsers({
         page: 1,
         limit: 1000,
-        sortBy: 'name',
+        sortBy: 'fullName',
         sortOrder: 'asc'
       })
-      setAllUsers(response.items)
+      setAllUsers(response.items as unknown as UserResponseDto[])
     } catch (err) {
       console.error('Erro ao carregar usuários:', err)
     }
@@ -250,7 +250,7 @@ export const useRoles = (): UseRolesReturn => {
       // Atribuir usuários sequencialmente para evitar rate limiting
       for (let i = 0; i < userIds.length; i++) {
         const userId = userIds[i]
-        await userService.updateUser(userId, { role_id: roleId })
+        await userService.updateUser(userId, { roleId: roleId })
         
         if (i < userIds.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 50))

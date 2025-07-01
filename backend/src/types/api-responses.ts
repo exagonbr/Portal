@@ -25,12 +25,18 @@ export interface PaginatedApiResponse<T = any> extends ApiResponse<{
 export interface UnitResponse {
   id: string;
   name: string;
-  description: string;
-  type: string;
-  active: boolean;
+  version?: number;
+  deleted?: boolean;
   institution_id: string;
-  created_at: string;
-  updated_at: string;
+  institution_name?: string;
+  date_created?: string;
+  last_updated?: string;
+  // Campos adicionais para compatibilidade com frontend
+  description?: string;
+  type?: string;
+  active?: boolean;
+  created_at?: string;
+  updated_at?: string;
   institution?: {
     id: string;
     name: string;
@@ -56,8 +62,9 @@ export interface UpdateUnitRequest {
 
 export interface UnitFilters {
   search?: string;
-  active?: boolean;
+  active?: boolean | string;
   institution_id?: string;
+  type?: string;
   page?: number;
   limit?: number;
 }
@@ -93,16 +100,22 @@ export const createPaginatedResponse = <T>(
 
 // Helper para formatar unidade
 export const formatUnitResponse = (unit: any): UnitResponse => ({
-  id: unit.id,
+  id: unit.id?.toString(),
   name: unit.name,
+  version: unit.version,
+  deleted: unit.deleted,
+  institution_id: unit.institution_id?.toString(),
+  institution_name: unit.institution_name,
+  date_created: unit.date_created,
+  last_updated: unit.last_updated,
+  // Campos adicionais para compatibilidade com frontend
   description: unit.description || '',
   type: unit.type || 'school',
   active: !unit.deleted,
-  institution_id: unit.institution_id,
   created_at: unit.date_created,
   updated_at: unit.last_updated,
   institution: unit.institution_name ? {
-    id: unit.institution_id,
+    id: unit.institution_id?.toString(),
     name: unit.institution_name,
     created_at: unit.institution_created_at,
     updated_at: unit.institution_updated_at

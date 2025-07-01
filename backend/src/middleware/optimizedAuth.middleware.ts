@@ -51,7 +51,7 @@ export const optimizedAuthMiddleware = async (
 
     // Adicionar dados do usuário à requisição
     req.user = {
-      userId: decoded.userId,
+      id: decoded.userId,
       email: decoded.email,
       name: decoded.name,
       role: decoded.role,
@@ -103,7 +103,7 @@ export const optionalAuthMiddleware = async (
 
     if (decoded) {
       req.user = {
-        userId: decoded.userId,
+        id: decoded.userId,
         email: decoded.email,
         name: decoded.name,
         role: decoded.role,
@@ -193,7 +193,7 @@ export const requireAnyRole = (roles: string[]) => {
       return;
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!req.user.role || !roles.includes(req.user.role)) {
       res.status(403).json({
         success: false,
         message: 'Role insuficiente',

@@ -1,6 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { requireRole } from '../middleware/auth';
+import { authenticateToken as authMiddleware, authorizeRoles as requireRole } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -126,7 +125,7 @@ router.get('/:id', async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', requireRole('admin', 'teacher'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -177,7 +176,7 @@ router.post('/', requireRole(['admin', 'teacher']), async (req, res) => {
  *       404:
  *         description: Quiz not found
  */
-router.put('/:id', requireRole(['admin', 'teacher']), async (req, res) => {
+router.put('/:id', requireRole('admin', 'teacher'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -202,7 +201,7 @@ router.put('/:id', requireRole(['admin', 'teacher']), async (req, res) => {
  *       404:
  *         description: Quiz not found
  */
-router.delete('/:id', requireRole(['admin', 'teacher']), async (req, res) => {
+router.delete('/:id', requireRole('admin', 'teacher'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -264,7 +263,7 @@ router.get('/:id/questions', async (req, res) => {
  *       404:
  *         description: Quiz not found
  */
-router.post('/:id/attempts', requireRole(['student']), async (req, res) => {
+router.post('/:id/attempts', requireRole('student'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -313,7 +312,7 @@ router.post('/:id/attempts', requireRole(['student']), async (req, res) => {
  *       404:
  *         description: Quiz or attempt not found
  */
-router.post('/:id/attempts/:attemptId/submit', requireRole(['student']), async (req, res) => {
+router.post('/:id/attempts/:attemptId/submit', requireRole('student'), async (req, res) => {
   // Implementation will be added in the controller
 });
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { notificationLogService } from '../services/NotificationLogService';
-import { validateJWTSimple } from '../middleware/auth';
+import { validateJWTSimple } from '../middleware/sessionMiddleware';
 
 const router = Router();
 

@@ -1,6 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { requireRole } from '../middleware/auth';
+import { authMiddleware, requireRole } from '../middleware/auth';
 import { getRedisClient, TTL } from '../config/redis';
 import { RoleService } from '../services/RoleService';
 import { Logger } from '../utils/Logger';

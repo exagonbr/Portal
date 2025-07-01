@@ -487,7 +487,6 @@ export default function TVShowsManagePage() {
         }
       } else {
         console.error('❌ Erro na resposta da API de estatísticas:', response.status, response.statusText);
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       console.error('❌ Erro ao calcular estatísticas:', error)

@@ -1,6 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { requireRole } from '../middleware/auth';
+import { authenticateToken as authMiddleware, authorizeRoles as requireRole } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -109,7 +108,7 @@ router.get('/:id', async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/', requireRole('admin', 'teacher'), async (req, res) => {
   // Implementation will be added in the controller
 });
 
@@ -275,7 +274,7 @@ router.post('/:id/messages/:messageId/read', async (req, res) => {
  *       403:
  *         description: Not authorized to modify this chat
  */
-router.post('/:id/participants', requireRole(['admin', 'teacher']), async (req, res) => {
+router.post('/:id/participants', requireRole('admin', 'teacher'), async (req, res) => {
   // Implementation will be added in the controller
 });
 

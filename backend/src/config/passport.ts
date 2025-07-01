@@ -14,18 +14,38 @@ export function setupPassport() {
       async (accessToken, refreshToken, profile, done) => {
         try {
           const userRepository = getRepository(User);
-          let user = await userRepository.findOne({ where: { googleId: profile.id } });
+          let user = await userRepository.findOne({ 
+            where: { googleId: profile.id },
+            relations: ['role']
+          });
 
           if (user) {
-            return done(null, user);
+            return done(null, {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role?.name,
+              institutionId: user.institution_id,
+              permissions: user.role?.permissions || [],
+            });
           }
 
-          user = await userRepository.findOne({ where: { email: profile.emails![0].value } });
+          user = await userRepository.findOne({ 
+            where: { email: profile.emails![0].value },
+            relations: ['role']
+          });
 
           if (user) {
             user.googleId = profile.id;
             await userRepository.save(user);
-            return done(null, user);
+            return done(null, {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role?.name,
+              institutionId: user.institution_id,
+              permissions: user.role?.permissions || [],
+            });
           }
 
           const newUser = userRepository.create({
@@ -36,8 +56,20 @@ export function setupPassport() {
             role_id: '35f57500-9a89-4318-bc9f-9acad28c2fb6', // Default 'student' role
           });
 
-          await userRepository.save(newUser);
-          done(null, newUser);
+          const savedUser = await userRepository.save(newUser);
+          const userWithRole = await userRepository.findOne({
+            where: { id: savedUser.id },
+            relations: ['role']
+          });
+
+          done(null, {
+            id: userWithRole!.id,
+            email: userWithRole!.email,
+            name: userWithRole!.name,
+            role: userWithRole!.role?.name,
+            institutionId: userWithRole!.institution_id,
+            permissions: userWithRole!.role?.permissions || [],
+          });
         } catch (error) {
           done(error, false);
         }
@@ -52,8 +84,18 @@ export function setupPassport() {
   passport.deserializeUser(async (id: string, done) => {
     try {
       const userRepository = getRepository(User);
-      const user = await userRepository.findOneBy({ id });
-      done(null, user);
+      const user = await userRepository.findOne({
+        where: { id },
+        relations: ['role']
+      });
+      done(null, user ? {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role?.name,
+        institutionId: user.institution_id,
+        permissions: user.role?.permissions || [],
+      } : null);
     } catch (error) {
       done(error, false);
     }

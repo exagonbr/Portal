@@ -1,6 +1,6 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { validateJWTSmart, requireRoleSmart, requireRole } from '../middleware/auth';
+import { authMiddleware, requireRole, requireRoleSmart } from '../middleware/auth';
+import { validateJWTSmart } from '../middleware/sessionMiddleware';
 
 const router = express.Router();
 

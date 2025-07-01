@@ -19,6 +19,7 @@ import {
   Shield,
   FileText,
   ExternalLink,
+  Trophy,
   ChevronLeft,
   ChevronRight,
   Plus
@@ -35,9 +36,8 @@ import {
   Certificate,
   CertificateFilters,
   CertificateListResponse,
-  CERTIFICATE_TYPE_LABELS,
-  CERTIFICATE_TYPE_COLORS,
-  CertificateType
+  CERTIFICATE_STATUS_LABELS,
+  CERTIFICATE_STATUS_COLORS
 } from '@/types/certificate'
 import { UserRole } from '@/types/roles'
 
@@ -100,7 +100,9 @@ const CertificateDetailsModal = ({
                 <Award className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">{certificate.title}</h2>
+                <h2 className="text-2xl font-bold">
+                  {certificate.document || certificate.license_code || `Certificado #${certificate.id}`}
+                </h2>
                 <p className="text-purple-100">{certificate.user?.name}</p>
               </div>
             </div>
@@ -118,24 +120,34 @@ const CertificateDetailsModal = ({
             <div>
               <h3 className="text-lg font-semibold text-slate-800 mb-3">Informações do Certificado</h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Award className="h-4 w-4" />
-                  <span>Tipo: {CERTIFICATE_TYPE_LABELS[certificate.certificate_type]}</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Calendar className="h-4 w-4" />
-                  <span>Emitido em: {formatDate(certificate.issued_date)}</span>
-                </div>
-                {certificate.expiry_date && (
+                {certificate.tv_show_name && (
                   <div className="flex items-center gap-2 text-slate-600">
-                    <Calendar className="h-4 w-4" />
-                    <span>Expira em: {formatDate(certificate.expiry_date)}</span>
+                    <Award className="h-4 w-4" />
+                    <span>Programa: {certificate.tv_show_name}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-slate-600">
-                  <Shield className="h-4 w-4" />
-                  <span>Código: {certificate.verification_code}</span>
+                  <Calendar className="h-4 w-4" />
+                  <span>Criado em: {formatDate(certificate.date_created)}</span>
                 </div>
+                {certificate.last_updated && (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Calendar className="h-4 w-4" />
+                    <span>Atualizado em: {formatDate(certificate.last_updated)}</span>
+                  </div>
+                )}
+                {certificate.license_code && (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Shield className="h-4 w-4" />
+                    <span>Código de Licença: {certificate.license_code}</span>
+                  </div>
+                )}
+                {certificate.score !== null && certificate.score !== undefined && (
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Trophy className="h-4 w-4" />
+                    <span>Pontuação: {certificate.score}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -148,30 +160,30 @@ const CertificateDetailsModal = ({
                 </div>
                 <div className="flex items-center gap-2 text-slate-600">
                   <User className="h-4 w-4" />
-                  <span>{certificate.user?.email}</span>
+                  <span>{certificate.user?.email || 'Email não disponível'}</span>
                 </div>
-                {certificate.course && (
+                {certificate.tv_show && (
                   <div className="flex items-center gap-2 text-slate-600">
                     <BookOpen className="h-4 w-4" />
-                    <span>Curso: {certificate.course.title}</span>
+                    <span>TV Show: {certificate.tv_show.name}</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {certificate.description && (
+          {certificate.document && (
             <div className="mt-6 pt-6 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-800 mb-3">Descrição</h3>
-              <p className="text-slate-600">{certificate.description}</p>
+              <h3 className="text-lg font-semibold text-slate-800 mb-3">Documento</h3>
+              <p className="text-slate-600">{certificate.document}</p>
             </div>
           )}
 
-          {certificate.certificate_url && (
+          {certificate.path && (
             <div className="mt-6 pt-6 border-t border-slate-200">
               <h3 className="text-lg font-semibold text-slate-800 mb-3">Arquivo</h3>
               <a
-                href={certificate.certificate_url}
+                href={certificate.path}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -313,8 +325,8 @@ export default function ManageCertificates() {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingCertificate, setEditingCertificate] = useState<Certificate | null>(null)
-  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
-  const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
+  const [users, setUsers] = useState<Array<{ id: number; name: string; email: string }>>([])
+  const [tvShows, setTvShows] = useState<Array<{ id: number; name: string }>>([]);
 
   // Verificar autorização
   useEffect(() => {
@@ -346,10 +358,13 @@ export default function ManageCertificates() {
         page: currentPage.toString(),
         limit: itemsPerPage.toString(),
         ...(filters.search && { search: filters.search }),
-        ...(filters.certificate_type && { certificate_type: filters.certificate_type }),
-        ...(filters.user_id && { user_id: filters.user_id }),
-        ...(filters.course_id && { course_id: filters.course_id }),
-        ...(filters.is_active !== undefined && { is_active: filters.is_active.toString() }),
+        ...(filters.user_id && { user_id: filters.user_id.toString() }),
+        ...(filters.tv_show_id && { tv_show_id: filters.tv_show_id.toString() }),
+        ...(filters.score && { score: filters.score.toString() }),
+        ...(filters.document && { document: filters.document }),
+        ...(filters.license_code && { license_code: filters.license_code }),
+        ...(filters.tv_show_name && { tv_show_name: filters.tv_show_name }),
+        ...(filters.recreate !== undefined && { recreate: filters.recreate.toString() }),
         ...(filters.sort_by && { sort_by: filters.sort_by }),
         ...(filters.sort_order && { sort_order: filters.sort_order }),
       });
@@ -386,11 +401,11 @@ export default function ManageCertificates() {
 
   useEffect(() => {
     loadCertificates();
-    loadUsersAndCourses();
+    loadUsersAndTvShows();
   }, [loadCertificates]);
 
-  // Carregar usuários e cursos para o formulário
-  const loadUsersAndCourses = async () => {
+  // Carregar usuários e TV shows para o formulário
+  const loadUsersAndTvShows = async () => {
     try {
       // Carregar usuários (simplificado - você pode ajustar conforme sua API)
       const usersResponse = await fetch('/api/users?limit=1000');
@@ -398,26 +413,22 @@ export default function ManageCertificates() {
         const usersData = await usersResponse.json();
         if (usersData.success && usersData.data) {
           setUsers(usersData.data.map((u: any) => ({
-            id: u.id,
-            name: u.name,
+            id: Number(u.id),
+            name: u.name || u.full_name,
             email: u.email
           })));
         }
       }
 
-      // Carregar cursos (simplificado - você pode ajustar conforme sua API)
-      const coursesResponse = await fetch('/api/courses?limit=1000');
-      if (coursesResponse.ok) {
-        const coursesData = await coursesResponse.json();
-        if (coursesData.success && coursesData.data) {
-          setCourses(coursesData.data.map((c: any) => ({
-            id: c.id,
-            title: c.title
-          })));
-        }
-      }
+      // Carregar TV Shows (você pode ajustar conforme sua API)
+      // Por enquanto, vamos usar dados mock ou uma API específica
+      setTvShows([
+        { id: 1, name: 'Programa Educativo 1' },
+        { id: 2, name: 'Programa Educativo 2' },
+        { id: 3, name: 'Programa Educativo 3' }
+      ]);
     } catch (error) {
-      console.error('Erro ao carregar usuários e cursos:', error);
+      console.error('Erro ao carregar usuários e TV shows:', error);
     }
   };
 
@@ -567,7 +578,7 @@ export default function ManageCertificates() {
 
   const columns: CRUDColumn<Certificate>[] = [
     {
-      key: 'title',
+      key: 'document',
       label: 'Certificado',
       sortable: true,
       width: '300px',
@@ -579,9 +590,11 @@ export default function ManageCertificates() {
               <Award className="h-8 w-8 text-purple-500" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-slate-800 truncate">{certificate.title}</div>
+              <div className="font-semibold text-slate-800 truncate">
+                {certificate.document || certificate.license_code || `Certificado #${certificate.id}`}
+              </div>
               <div className="text-xs text-slate-500 truncate">
-                {certificate.description || 'Sem descrição'}
+                {certificate.tv_show_name || 'Sem programa associado'}
               </div>
             </div>
           </div>
@@ -607,37 +620,39 @@ export default function ManageCertificates() {
       }
     },
     {
-      key: 'certificate_type',
-      label: 'Tipo',
+      key: 'score',
+      label: 'Pontuação',
       sortable: true,
-      width: '150px',
+      width: '120px',
       render: (value, certificate, index) => {
-        if (!certificate) return '-'
-        const type = certificate.certificate_type
+        if (!certificate || certificate.score === null || certificate.score === undefined) return '-'
         return (
-          <Badge className={`${CERTIFICATE_TYPE_COLORS[type]} px-2 py-1 text-xs font-medium`}>
-            {CERTIFICATE_TYPE_LABELS[type]}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <Trophy className="h-3 w-3 text-yellow-500 flex-shrink-0" />
+            <span className="text-sm font-medium text-slate-700">
+              {certificate.score}
+            </span>
+          </div>
         )
       }
     },
     {
-      key: 'issued_date',
-      label: 'Emissão',
+      key: 'date_created',
+      label: 'Criação',
       sortable: true,
       width: '120px',
       render: (value, certificate, index) => {
-        if (!certificate || !certificate.issued_date) return '-'
-        const date = new Date(certificate.issued_date)
-        const formattedDate = date.toLocaleDateString('pt-BR', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          year: '2-digit' 
+        if (!certificate || !certificate.date_created) return '-'
+        const date = new Date(certificate.date_created)
+        const formattedDate = date.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit'
         })
         return (
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3 text-green-500 flex-shrink-0" />
-            <span className="text-xs font-medium text-slate-700" title={formatDate(certificate.issued_date)}>
+            <span className="text-xs font-medium text-slate-700" title={formatDate(certificate.date_created)}>
               {formattedDate}
             </span>
           </div>
@@ -645,18 +660,18 @@ export default function ManageCertificates() {
       }
     },
     {
-      key: 'is_active',
+      key: 'recreate',
       label: 'Status',
-      width: '90px',
+      width: '120px',
       render: (value, certificate, index) => {
         if (!certificate) return '-'
-        const isActive = certificate.is_active === true
+        const recreateStatus = certificate.recreate?.toString() || 'false'
         return (
           <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-            isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            CERTIFICATE_STATUS_COLORS[recreateStatus]
           }`}>
-            <div className={`h-2 w-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-            {isActive ? "Ativo" : "Inativo"}
+            <div className={`h-2 w-2 rounded-full ${certificate.recreate ? 'bg-green-500' : 'bg-gray-500'} animate-pulse`}></div>
+            {CERTIFICATE_STATUS_LABELS[recreateStatus]}
           </div>
         )
       }
@@ -742,14 +757,14 @@ export default function ManageCertificates() {
                   Busca: &quot;{filters.search}&quot;
                 </span>
               )}
-              {filters.certificate_type && (
+              {filters.tv_show_name && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Tipo: {CERTIFICATE_TYPE_LABELS[filters.certificate_type]}
+                  Programa: {filters.tv_show_name}
                 </span>
               )}
-              {filters.is_active !== undefined && (
+              {filters.recreate !== undefined && (
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  Status: {filters.is_active ? 'Ativo' : 'Inativo'}
+                  Status: {filters.recreate ? 'Recriável' : 'Não Recriável'}
                 </span>
               )}
               <button
@@ -804,40 +819,35 @@ export default function ManageCertificates() {
                 />
               </div>
 
-              {/* Filtro por Tipo */}
+              {/* Filtro por Programa de TV */}
               <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
                 <label className="flex items-center gap-2 text-sm font-semibold text-purple-700">
                   <Award className="h-4 w-4 text-purple-500" />
-                  Tipo
+                  Programa de TV
                 </label>
-                <select
-                  value={filters.certificate_type || ''}
-                  onChange={(e) => updateFilter('certificate_type', e.target.value)}
+                <input
+                  type="text"
+                  value={filters.tv_show_name || ''}
+                  onChange={(e) => updateFilter('tv_show_name', e.target.value)}
+                  placeholder="Nome do programa"
                   className="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
-                >
-                  <option value="">Todos os tipos</option>
-                  {Object.entries(CERTIFICATE_TYPE_LABELS).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
-              {/* Filtro por Status */}
+              {/* Filtro por Status de Recriação */}
               <div className="space-y-2 bg-white p-3 rounded-lg shadow-sm border border-purple-100">
                 <label className="flex items-center gap-2 text-sm font-semibold text-purple-700">
                   <CheckCircle className="h-4 w-4 text-purple-500" />
-                  Status
+                  Status de Recriação
                 </label>
                 <select
-                  value={filters.is_active !== undefined ? filters.is_active.toString() : ''}
-                  onChange={(e) => updateFilter('is_active', e.target.value === '' ? undefined : e.target.value === 'true')}
+                  value={filters.recreate !== undefined ? filters.recreate.toString() : ''}
+                  onChange={(e) => updateFilter('recreate', e.target.value === '' ? undefined : e.target.value === 'true')}
                   className="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                 >
                   <option value="">Todos os status</option>
-                  <option value="true">Ativo</option>
-                  <option value="false">Inativo</option>
+                  <option value="true">Recriável</option>
+                  <option value="false">Não Recriável</option>
                 </select>
               </div>
 
@@ -853,10 +863,10 @@ export default function ManageCertificates() {
                   className="w-full rounded-lg border border-purple-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                 >
                   <option value="">Padrão</option>
-                  <option value="title">Título</option>
-                  <option value="issued_date">Data de Emissão</option>
-                  <option value="certificate_type">Tipo</option>
-                  <option value="created_at">Data de Criação</option>
+                  <option value="tv_show_name">Nome do Programa</option>
+                  <option value="date_created">Data de Criação</option>
+                  <option value="last_updated">Última Atualização</option>
+                  <option value="score">Pontuação</option>
                 </select>
               </div>
             </div>
@@ -955,7 +965,7 @@ export default function ManageCertificates() {
           }}
           onSave={handleSaveCertificate}
           users={users}
-          courses={courses}
+          tvShows={tvShows}
         />
       </div>
     </AuthenticatedLayout>

@@ -25,14 +25,73 @@ export class UserRepository extends BaseRepository<User> {
     return this.delete(id);
   }
 
+  async findById(id: string): Promise<User | null> {
+    const user = await this.db(this.tableName)
+      .where({ [`${this.tableName}.id`]: id })
+      .leftJoin('roles', `${this.tableName}.role_id`, 'roles.id')
+      .select(
+        `${this.tableName}.*`,
+        'roles.name as roleName',
+        'roles.permissions as rolePermissions'
+      )
+      .first();
+
+    if (!user) {
+      return null;
+    }
+
+    const { roleName, rolePermissions, ...userProps } = user;
+    
+    return {
+      ...userProps,
+      role: {
+        id: user.role_id,
+        name: roleName,
+        permissions: rolePermissions,
+      },
+    } as unknown as User;
+  }
+
   async getUserWithRoleAndInstitution(id: string): Promise<any | null> {
-    // This method needs to be fixed to use proper joins if user_roles table exists
     return this.findById(id);
+  }
+
+  async searchUsers(searchTerm: string, institutionId?: string): Promise<User[]> {
+    let query = this.db(this.tableName)
+      .where('full_name', 'ilike', `%${searchTerm}%`)
+      .orWhere('email', 'ilike', `%${searchTerm}%`);
+
+    if (institutionId) {
+      query = query.andWhere({ institution_id: institutionId });
+    }
+
+    return query.select('*');
+  }
+
+  async findByRole(role: string): Promise<User[]> {
+    const roleResult = await this.db('roles').where({ name: role }).first();
+    if (!roleResult) return [];
+    return this.findAll({ role_id: roleResult.id });
+  }
+
+  async findByInstitution(institutionId: string): Promise<User[]> {
+    return this.findAll({ institution_id: institutionId });
+  }
+
+  async getUserCourses(userId: string): Promise<any[]> {
+    return this.db('user_classes')
+      .where({ user_id: userId })
+      .join('classes', 'user_classes.class_id', 'classes.id')
+      .join('courses', 'classes.course_id', 'courses.id')
+      .select('courses.*');
+  }
+
+  async updateLastLogin(userId: string): Promise<void> {
+    await this.update(userId, { last_login: new Date() } as any);
   }
 
   async getUserStatsByRole(): Promise<Record<string, number>> {
     try {
-      // This query assumes a 'role_id' on the users table and a 'roles' table
       const result = await db('users')
         .select('role_id')
         .count('id as count')

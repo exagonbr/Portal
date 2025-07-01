@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { authMiddleware } from '../middleware/auth';
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3';
 import nodemailer from 'nodemailer';
 import SystemSettingsService from '../services/SystemSettingsService';

@@ -3,28 +3,38 @@ import { apiClient, handleApiError, ApiClientError } from '@/lib/api-client';
 export interface Unit {
   id: string;
   name: string;
-  description: string;
-  type: string;
-  active: boolean;
+  version?: number;
+  deleted?: boolean;
   institution_id: string;
-  created_at: string;
-  updated_at: string;
+  institution_name?: string;
+  date_created?: string;
+  last_updated?: string;
+  // Campos adicionais para compatibilidade com frontend
+  description?: string;
+  type?: string;
+  active?: boolean;
+  created_at?: string;
+  updated_at?: string;
   institution?: {
     id: string;
     name: string;
-    created_at: string;
-    updated_at: string;
+    created_at?: string;
+    updated_at?: string;
   };
 }
 
 export interface CreateUnitData {
   name: string;
   institution_id: string;
+  description?: string;
+  type?: string;
 }
 
 export interface UpdateUnitData {
   name?: string;
   institution_id?: string;
+  description?: string;
+  type?: string;
   active?: boolean;
 }
 
