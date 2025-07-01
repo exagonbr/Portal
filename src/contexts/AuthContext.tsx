@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserEssentials | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
   const router = useRouter();
 
   const handleRedirect = useCallback((role: string, source: string) => {
@@ -76,6 +77,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
       
+      // Check if user is authenticated first
+      if (!authService.isAuthenticated()) {
+        console.log('🔍 Usuário não autenticado, limpando estado');
+        setUser(null);
+        setLoading(false);
+        setInitialized(true);
+        return;
+      }
+      
       const userResponse = await authService.getCurrentUser();
       
       // Convertemos explicitamente para o formato esperado
@@ -92,15 +102,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('✅ Usuário atual carregado:', response.user.name);
       } else {
         console.error('❌ Falha ao carregar usuário:', response.message);
-        setError(response.message || 'Erro ao carregar usuário');
+        setUser(null);
+        // Don't set error for unauthenticated users
+        if (authService.isAuthenticated()) {
+          setError(response.message || 'Erro ao carregar usuário');
+        }
       }
     } catch (err: any) {
       console.error('❌ Erro ao carregar usuário:', err.message);
-      setError(err.message || 'Erro ao carregar usuário');
+      setUser(null);
+      // Don't set error for authentication errors
+      if (!err.message?.includes('401') && !err.message?.includes('não autenticado')) {
+        setError(err.message || 'Erro ao carregar usuário');
+      }
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   }, []);
+
+  // Initialize user on mount
+  useEffect(() => {
+    if (!initialized) {
+      fetchCurrentUser();
+    }
+  }, [initialized, fetchCurrentUser]);
 
   // Login
   const login = async (email: string, password: string) => {

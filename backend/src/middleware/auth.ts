@@ -27,7 +27,16 @@ export const validateJWT = async (
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as AuthTokenPayload;
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        console.error('❌ JWT_SECRET não configurado');
+        return res.status(500).json({
+          success: false,
+          message: 'Erro de configuração do servidor'
+        });
+      }
+
+      const decoded = jwt.verify(token, jwtSecret) as AuthTokenPayload;
       
       // Verifica se é uma sessão de fallback (criada quando Redis não está disponível)
       if (decoded.sessionId && decoded.sessionId.startsWith('fallback-')) {
@@ -43,19 +52,25 @@ export const validateJWT = async (
       
       return next();
     } catch (error) {
+      console.error('❌ Erro na validação do token:', error);
+      
       if (error instanceof jwt.JsonWebTokenError) {
         return res.status(401).json({
           success: false,
-          message: 'Sessão inválida. Por favor, faça login novamente.'
+          message: 'Token inválido. Por favor, faça login novamente.'
         });
       }
       if (error instanceof jwt.TokenExpiredError) {
         return res.status(401).json({
           success: false,
-          message: 'Sua sessão expirou. Por favor, faça login novamente.'
+          message: 'Token expirado. Por favor, faça login novamente.'
         });
       }
-      throw error;
+      
+      return res.status(401).json({
+        success: false,
+        message: 'Falha na autenticação. Por favor, faça login novamente.'
+      });
     }
   } catch (error) {
     console.error('Erro na autenticação:', error);

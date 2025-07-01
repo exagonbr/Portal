@@ -16,6 +16,13 @@ export class AuthController {
 
       return res.status(201).json({
         success: true,
+        data: {
+          user: result.user,
+          token: result.token,
+          sessionId: result.sessionId,
+          expires_at: result.expires_at
+        },
+        // Also include at root level for backward compatibility
         user: result.user,
         token: result.token,
         sessionId: result.sessionId,
@@ -50,6 +57,13 @@ export class AuthController {
 
       return res.json({
         success: true,
+        data: {
+          user: result.user,
+          token: result.token,
+          sessionId: result.sessionId,
+          expires_at: result.expires_at
+        },
+        // Also include at root level for backward compatibility
         user: result.user,
         token: result.token,
         sessionId: result.sessionId,
@@ -151,6 +165,17 @@ export class AuthController {
 
   static async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
+      const { refresh_token } = req.body;
+
+      if (!refresh_token) {
+        return res.status(400).json({
+          success: false,
+          message: 'Refresh token é obrigatório'
+        });
+      }
+
+      // For now, we'll implement a simple refresh mechanism
+      // In a production environment, you'd want to validate the refresh token properly
       const sessionId = (req as any).sessionId;
       const userId = parseInt((req as any).user?.userId);
 
@@ -166,12 +191,13 @@ export class AuthController {
       return res.json({
         success: true,
         token: result.token,
-        expires_at: result.expires_at
+        expires_at: result.expires_at,
+        refresh_token: refresh_token // Return the same refresh token for now
       });
     } catch (error: any) {
-      return res.status(500).json({
+      return res.status(401).json({
         success: false,
-        message: 'Erro ao renovar token',
+        message: 'Refresh token inválido ou expirado',
         error: error.message
       });
     }

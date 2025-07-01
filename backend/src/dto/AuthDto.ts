@@ -51,6 +51,7 @@ export interface AuthResponseDto {
   token: string;
   sessionId?: string;
   expires_at: string;
+  refresh_token?: string;
 }
 
 export interface UserResponseDto {

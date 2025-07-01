@@ -100,27 +100,34 @@ export class ApiClient {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`❌ Falha ao atualizar token (${response.status}):`, errorText);
+        
+        // If refresh fails, clear auth and don't retry
+        this.clearAuth();
         throw new Error(`Falha ao atualizar token: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
       
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token);
-        if (data.refresh_token) {
-          localStorage.setItem('refresh_token', data.refresh_token);
+      // Handle both nested and flat response formats
+      const tokenData = data.data || data;
+      
+      if (tokenData.token) {
+        localStorage.setItem('auth_token', tokenData.token);
+        if (tokenData.refresh_token) {
+          localStorage.setItem('refresh_token', tokenData.refresh_token);
           
           // Atualizar também o cookie
           const expiryDate = new Date();
           expiryDate.setDate(expiryDate.getDate() + 30); // Expira em 30 dias
-          document.cookie = `refresh_token=${data.refresh_token}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
+          document.cookie = `refresh_token=${tokenData.refresh_token}; expires=${expiryDate.toUTCString()}; path=/; secure; samesite=strict`;
         }
-        if (data.expires_at) {
-          localStorage.setItem('auth_expires_at', data.expires_at);
+        if (tokenData.expires_at) {
+          localStorage.setItem('auth_expires_at', tokenData.expires_at);
         }
         console.log('✅ Token atualizado com sucesso');
       } else {
         console.error('❌ Resposta inválida ao atualizar token:', data);
+        this.clearAuth();
         throw new Error('Resposta inválida ao atualizar token');
       }
     } catch (error) {
@@ -166,86 +173,106 @@ export class ApiClient {
   /**
    * Faz uma requisição HTTP
    */
-  private async makeRequest<T>(
-    endpoint: string,
-    options: RequestOptions = {}
-  ): Promise<ApiResponse<T>> {
-    const {
-      method = 'GET',
-      headers: customHeaders,
-      body,
-      params,
-      timeout = 30000,
-      skipAuthRefresh = false
-    } = options;
-
+  private async makeRequest<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+    const { method = 'GET', body, params, timeout = 30000, skipAuthRefresh = false } = options;
+    
     try {
       const url = this.buildURL(endpoint, params);
-      const headers = this.prepareHeaders(customHeaders);
+      const headers = this.prepareHeaders(options.headers);
 
-      // Remove Content-Type para FormData
-      if (body instanceof FormData) {
-        delete headers['Content-Type'];
-      }
-
-      const requestOptions: RequestInit = {
+      const config: RequestInit = {
         method,
         headers,
-        body: body instanceof FormData ? body : JSON.stringify(body),
+        signal: AbortSignal.timeout(timeout),
       };
 
-      // Implementa timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      if (body && method !== 'GET') {
+        if (body instanceof FormData) {
+          // Remove Content-Type header for FormData (browser will set it automatically)
+          delete headers['Content-Type'];
+          config.body = body;
+        } else {
+          config.body = JSON.stringify(body);
+        }
+      }
 
-      const response = await fetch(url, {
-        ...requestOptions,
-        signal: controller.signal,
-      });
+      console.log(`🌐 ${method} ${url}`);
+      const response = await fetch(url, config);
 
-      clearTimeout(timeoutId);
-
-      // Se receber 401 e não estiver tentando refresh, tenta atualizar o token
-      if (response.status === 401 && !skipAuthRefresh) {
-        if (!this.refreshPromise) {
-          this.refreshPromise = this.refreshAuthToken();
+      // Handle 401 errors with token refresh (but only for non-auth endpoints)
+      if (response.status === 401 && !skipAuthRefresh && !endpoint.includes('/auth/')) {
+        console.log('🔄 Token expirado, tentando renovar...');
+        
+        // Check if we have a refresh token before attempting refresh
+        const refreshToken = this.getRefreshToken();
+        if (!refreshToken) {
+          console.log('❌ Sem refresh token disponível, limpando autenticação');
+          this.clearAuth();
+          throw new ApiClientError('Sessão expirada. Por favor, faça login novamente.', 401);
         }
         
-        await this.refreshPromise;
-        this.refreshPromise = null;
+        // Prevent multiple simultaneous refresh attempts
+        if (!this.refreshPromise) {
+          this.refreshPromise = this.refreshAuthToken().catch((error) => {
+            this.refreshPromise = null;
+            throw error;
+          });
+        }
         
-        // Tenta a requisição novamente com o novo token
-        return this.makeRequest<T>(endpoint, {
-          ...options,
-          skipAuthRefresh: true
-        });
+        try {
+          await this.refreshPromise;
+          this.refreshPromise = null;
+          
+          // Retry the original request with new token (only once)
+          console.log('🔄 Tentando novamente com novo token...');
+          return this.makeRequest<T>(endpoint, { ...options, skipAuthRefresh: true });
+        } catch (refreshError) {
+          this.refreshPromise = null;
+          console.error('❌ Falha ao renovar token:', refreshError);
+          
+          // Clear auth data but don't redirect here - let the component handle it
+          this.clearAuth();
+          throw new ApiClientError('Sessão expirada. Por favor, faça login novamente.', 401);
+        }
       }
 
-      // Parse da resposta
-      let responseData: ApiResponse<T>;
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await response.json();
-      } else {
-        // Para respostas não-JSON, cria uma resposta padrão
-        responseData = {
-          success: response.ok,
-          data: (await response.text()) as any,
-          message: response.ok ? 'Success' : 'Request failed'
-        };
-      }
-
-      // Verifica se a resposta foi bem-sucedida
       if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+
         throw new ApiClientError(
-          responseData.message || `HTTP ${response.status}: ${response.statusText}`,
+          errorData.message || `HTTP ${response.status}: ${response.statusText}`,
           response.status,
-          responseData.errors
+          errorData.errors
         );
       }
 
-      return responseData;
+      const data = await response.json();
+      
+      // Normalize response format
+      if (data && typeof data === 'object') {
+        // If response has success field, return as is
+        if ('success' in data) {
+          return data as ApiResponse<T>;
+        }
+        
+        // Otherwise, wrap in success response
+        return {
+          success: true,
+          data: data as T
+        };
+      }
+
+      return {
+        success: true,
+        data: data as T
+      };
     } catch (error) {
       if (error instanceof ApiClientError) {
         throw error;

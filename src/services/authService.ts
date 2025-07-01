@@ -32,19 +32,33 @@ export class AuthService {
       
       const response = await apiClient.post<AuthResponseDto>(`${this.baseEndpoint}/login`, loginData);
 
-      // Verifica se a resposta tem o formato esperado
-      const responseData = (response.data || response) as AuthResponseDto;
-
-      if (!responseData.user || !responseData.token) {
-        console.error('❌ AuthService: Resposta de login incompleta:', responseData);
+      // Handle both new format (with data wrapper) and legacy format (direct properties)
+      let responseData: AuthResponseDto;
+      
+      if (response.success && response.data) {
+        // New format: { success: true, data: { user, token, ... } }
+        responseData = response.data;
+      } else if (response.user && response.token) {
+        // Legacy format: { success: true, user, token, ... }
+        responseData = response as any;
+      } else {
+        console.error('❌ AuthService: Resposta de login incompleta:', response);
         return {
           success: false,
           message: 'Resposta do servidor incompleta'
         };
       }
 
+      if (!responseData.user || !responseData.token) {
+        console.error('❌ AuthService: Dados de autenticação ausentes:', responseData);
+        return {
+          success: false,
+          message: 'Dados de autenticação incompletos'
+        };
+      }
+
       console.log('✅ AuthService: Login bem-sucedido, salvando dados do usuário');
-      console.log(`🔍 AuthService: Role recebida do backend: "${responseData.user.role}"`);
+      console.log(`🔍 AuthService: Role recebida do backend: "${responseData.user.role?.name || responseData.user.role}"`);
 
       // Salva o token e dados do usuário
       this.saveAuthData(
@@ -176,7 +190,7 @@ export class AuthService {
         return null;
       }
 
-      const response = await apiClient.get<UserWithRoleDto>('/users/me');
+      const response = await apiClient.get<UserWithRoleDto>(`${this.baseEndpoint}/profile`);
 
       if (!response.success || !response.data) {
         // Token pode estar expirado, limpa dados

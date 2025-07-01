@@ -47,7 +47,7 @@ export class AuthService {
       userId: user.id.toString(),
       email: user.email,
       permissions: user.role?.permissions || [],
-      role: user.role?.name?.toUpperCase() || 'USER',
+      role: user.role?.name || 'USER',
       sessionId: sessionId
     };
 
@@ -55,6 +55,20 @@ export class AuthService {
       payload,
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
+    );
+  }
+
+  static generateRefreshToken(userId: number, sessionId: string): string {
+    const payload = {
+      userId: userId.toString(),
+      sessionId: sessionId,
+      type: 'refresh'
+    };
+
+    return jwt.sign(
+      payload,
+      JWT_SECRET,
+      { expiresIn: '30d' } // Refresh tokens last 30 days
     );
   }
 
@@ -200,8 +214,9 @@ export class AuthService {
     // Create session
     const sessionId = await this.createSession(userWithRelations, clientInfo);
 
-    // Generate token
+    // Generate token and refresh token
     const token = this.generateToken(userWithRelations, sessionId);
+    const refreshToken = this.generateRefreshToken(userWithRelations.id, sessionId);
       
     // Calculate expiration
       const expiresAt = new Date();
@@ -211,7 +226,8 @@ export class AuthService {
       user: this.formatUserResponse(userWithRelations),
         token,
         sessionId,
-        expires_at: expiresAt.toISOString()
+        expires_at: expiresAt.toISOString(),
+        refresh_token: refreshToken
       };
   }
 
@@ -244,8 +260,9 @@ export class AuthService {
       sessionId = `fallback-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
     }
 
-    // Generate token
+    // Generate token and refresh token
     const token = this.generateToken(user, sessionId);
+    const refreshToken = this.generateRefreshToken(user.id, sessionId);
 
     // Calculate expiration
     const expiresAt = new Date();
@@ -255,7 +272,8 @@ export class AuthService {
       user: this.formatUserResponse(user),
       token,
       sessionId,
-      expires_at: expiresAt.toISOString()
+      expires_at: expiresAt.toISOString(),
+      refresh_token: refreshToken
     };
   }
 
