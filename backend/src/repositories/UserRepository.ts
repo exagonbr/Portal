@@ -10,7 +10,33 @@ export class UserRepository extends BaseRepository<User> {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.findOne({ email } as Partial<User>);
+    console.log(`🔍 [UserRepository] Buscando usuário por email: ${email}`);
+    
+    const result = await this.db(this.tableName)
+      .where({ email })
+      .select('*')
+      .first();
+    
+    if (!result) {
+      console.log(`❌ [UserRepository] Usuário não encontrado: ${email}`);
+      return null;
+    }
+    
+    // Mapear enabled para is_active para compatibilidade
+    const user = {
+      ...result,
+      is_active: result.enabled !== false // true se enabled for true ou null
+    };
+    
+    console.log(`✅ [UserRepository] Usuário encontrado:`, {
+      id: user.id,
+      email: user.email,
+      enabled: result.enabled,
+      is_active: user.is_active,
+      full_name: user.full_name
+    });
+    
+    return user as User;
   }
 
   async createUser(data: CreateUserData): Promise<User> {
@@ -42,14 +68,24 @@ export class UserRepository extends BaseRepository<User> {
 
     const { roleName, rolePermissions, ...userProps } = user;
     
-    return {
+    // Mapear enabled para is_active para compatibilidade
+    const mappedUser = {
       ...userProps,
+      is_active: userProps.enabled !== false, // true se enabled for true ou null
       role: {
         id: user.role_id,
         name: roleName,
         permissions: rolePermissions,
       },
-    } as unknown as User;
+    };
+    
+    console.log(`✅ [UserRepository] findById - Usuário mapeado:`, {
+      id: mappedUser.id,
+      enabled: userProps.enabled,
+      is_active: mappedUser.is_active
+    });
+    
+    return mappedUser as unknown as User;
   }
 
   async getUserWithRoleAndInstitution(id: string): Promise<any | null> {

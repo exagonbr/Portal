@@ -32,6 +32,8 @@ export class OptimizedAuthController {
         return;
       }
 
+      console.log(`🔐 [OptimizedAuthController] Tentando login para: ${email}`);
+
       // Realizar login
       const result = await OptimizedAuthService.login(email, password);
 
@@ -51,13 +53,27 @@ export class OptimizedAuthController {
 
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.log(`❌ Erro no login (${duration}ms):`, error.message);
+      console.log(`❌ [OptimizedAuthController] Erro no login (${duration}ms):`, {
+        email: req.body?.email,
+        errorMessage: error.message,
+        errorStack: error.stack
+      });
 
       if (error.message === 'Credenciais inválidas' || error.message === 'Email inválido') {
         res.status(401).json({
           success: false,
           message: error.message,
           code: 'INVALID_CREDENTIALS'
+        });
+        return;
+      }
+
+      if (error.message === 'Usuário inativo') {
+        console.log(`🚫 [OptimizedAuthController] Usuário inativo detectado: ${req.body?.email}`);
+        res.status(401).json({
+          success: false,
+          message: 'Usuário inativo',
+          code: 'USER_INACTIVE'
         });
         return;
       }

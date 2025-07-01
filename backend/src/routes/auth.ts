@@ -21,6 +21,11 @@ const router = Router();
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
+    console.log('🚨 [AUTH-ROUTE] Rota padrão /api/auth/login foi chamada!');
+    console.log('🚨 [AUTH-ROUTE] Email:', req.body?.email);
+    console.log('🚨 [AUTH-ROUTE] URL original:', req.originalUrl);
+    console.log('🚨 [AUTH-ROUTE] Headers:', req.headers);
+    
     const { email, password } = req.body;
 
     // Validar dados de entrada
@@ -31,8 +36,15 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
+    console.log('🔐 [AUTH-ROUTE] Processando login via AuthService para:', email);
+
     // Realizar login
     const result = await AuthService.login(email, password);
+
+    console.log('📊 [AUTH-ROUTE] Resultado do AuthService:', {
+      success: result.success,
+      message: result.message
+    });
 
     if (!result.success) {
       return res.status(401).json(result);
@@ -56,7 +68,7 @@ router.post('/login', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro na rota de login:', error);
+    console.error('❌ [AUTH-ROUTE] Erro na rota de login:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
