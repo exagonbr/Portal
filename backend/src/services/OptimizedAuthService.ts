@@ -76,13 +76,30 @@ export class OptimizedAuthService {
         )
         .leftJoin('institutions as i', 'u.institution_id', 'i.id')
         .where('u.email', email)
-        .where('u.enabled', true)
+        .where(function() {
+          this.where('u.enabled', true).orWhereNull('u.enabled');
+        })
         .first();
 
       if (!user) {
-        console.log(`❌ Usuário não encontrado ou inativo: ${email}`);
+        console.log(`❌ Usuário não encontrado: ${email}`);
         throw new Error('Credenciais inválidas');
       }
+
+      // Verificação explícita de status ativo
+      if (user.is_active === false) {
+        console.log(`❌ Usuário inativo: ${email} (enabled: ${user.is_active})`);
+        throw new Error('Usuário inativo');
+      }
+
+      console.log(`🔍 Status do usuário ${email}:`, {
+        id: user.id,
+        enabled: user.is_active,
+        is_admin: user.is_admin,
+        is_teacher: user.is_teacher,
+        is_student: user.is_student,
+        has_password: !!user.password
+      });
 
       // Determinar role e permissions baseado nos campos booleanos
       const { roleName, roleSlug, permissions } = OptimizedAuthService.mapUserRoleAndPermissions(user);
