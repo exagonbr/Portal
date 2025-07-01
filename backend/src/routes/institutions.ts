@@ -224,9 +224,7 @@ const validateCodeParam = [
  *       403:
  *         description: Forbidden
  */
-router.get('/', async (req: any, res: any) => {
-  return institutionController.getAll(req, res);
-});
+router.get('/', institutionController.getAll);
 
 /**
  * @swagger
@@ -253,9 +251,7 @@ router.get('/', async (req: any, res: any) => {
  *       404:
  *         description: Institution not found
  */
-router.get('/:id', validateIdParam, async (req: any, res: any) => {
-  return institutionController.getById(req, res);
-});
+router.get('/:id', validateIdParam, institutionController.getById);
 
 /**
  * @swagger
@@ -330,9 +326,7 @@ router.get(
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireAdmin, validateCreateInstitution, async (req, res) => {
-  return institutionController.create(req, res);
-});
+router.post('/', requireAdmin, validateCreateInstitution, institutionController.create);
 
 /**
  * @swagger
@@ -365,9 +359,7 @@ router.post('/', requireAdmin, validateCreateInstitution, async (req, res) => {
  *       404:
  *         description: Institution not found
  */
-router.put('/:id', requireAdmin, validateUpdateInstitution, async (req, res) => {
-  return institutionController.update(req, res);
-});
+router.put('/:id', requireAdmin, validateUpdateInstitution, institutionController.update);
 
 /**
  * @swagger
@@ -390,9 +382,7 @@ router.put('/:id', requireAdmin, validateUpdateInstitution, async (req, res) => 
  *       404:
  *         description: Institution not found
  */
-router.delete('/:id', requireAdmin, validateIdParam, async (req, res) => {
-  return institutionController.delete(req, res);
-});
+router.delete('/:id', requireAdmin, validateIdParam, institutionController.delete);
 
 // Helper para definir parâmetros reutilizáveis no Swagger (opcional, mas bom para DRY)
 /**

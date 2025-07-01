@@ -15,19 +15,7 @@ const groupController = new GroupController(groupService);
 // 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
 router.use(requireAuth);
 
-// Middleware para verificar role de professor ou administrador
-const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
-  const user = req.user;
-  
-  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
-    return res.status(403).json({
-      success: false,
-      message: 'Acesso negado - apenas professores e administradores podem gerenciar grupos'
-    });
-  }
-  
-  next();
-};
+
 
 // Rotas de grupos
 router.get('/stats', (req, res) => groupController.getGroupStats(req, res));

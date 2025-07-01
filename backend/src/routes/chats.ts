@@ -130,7 +130,7 @@ router.post('/', async (req, res) => {
   }
 
   // Implementation will be added in the controller
-  res.status(201).json({
+  return res.status(201).json({
     success: true,
     data: null,
     message: 'Create chat endpoint - implementation pending'
@@ -286,7 +286,7 @@ router.post('/:id/participants', async (req, res) => {
   }
 
   // Implementation will be added in the controller
-  res.json({
+  return res.json({
     success: true,
     message: 'Add participants endpoint - implementation pending'
   });

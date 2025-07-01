@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAuth } from '../middleware/requireAuth';
 import { usersService } from '../services/UsersService';
-import { usersCorsMiddleware, usersPublicCorsMiddleware, usersAdminCorsMiddleware } from '../middleware/corsUsers.middleware';
+import { usersCorsMiddleware, usersPublicCorsMiddleware } from '../middleware/corsUsers.middleware';
 
 const router = express.Router();
 

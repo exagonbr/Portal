@@ -3,8 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserEssentials, Permission } from '@/types/auth';
-import * as authService from '@/services/auth';
-import { getDashboardPath } from '@/utils/roleRedirect';
 import { jwtDecode } from 'jwt-decode';
 
 interface AuthContextType {
@@ -234,6 +232,90 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
   }, [router]);
 
   /**
+   * 🎯 LOGIN COM GOOGLE
+   */
+  const handleGoogleLogin = useCallback(async (token: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ token })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        // Salvar access token no localStorage
+        localStorage.setItem('accessToken', data.data.accessToken);
+        
+        // Definir usuário
+        setUser(data.data.user);
+        
+        console.log('✅ Login Google realizado com sucesso:', data.data.user.email);
+        
+        // Redirecionar baseado no role
+        const dashboardPath = getDashboardPath(data.data.user.role);
+        router.push(dashboardPath);
+      } else {
+        setError(data.message || 'Erro no login com Google');
+      }
+    } catch (err) {
+      console.error('❌ Erro no login Google:', err);
+      setError('Erro de conexão');
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  /**
+   * 📝 REGISTRO
+   */
+  const register = useCallback(async (name: string, email: string, password: string, type: 'student' | 'teacher') => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ name, email, password, type })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        // Salvar access token no localStorage
+        localStorage.setItem('accessToken', data.data.accessToken);
+        
+        // Definir usuário
+        setUser(data.data.user);
+        
+        console.log('✅ Registro realizado com sucesso:', data.data.user.email);
+        
+        // Redirecionar baseado no role
+        const dashboardPath = getDashboardPath(data.data.user.role);
+        router.push(dashboardPath);
+      } else {
+        setError(data.message || 'Erro no registro');
+      }
+    } catch (err) {
+      console.error('❌ Erro no registro:', err);
+      setError('Erro de conexão');
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  /**
    * 🚪 LOGOUT
    */
   const logout = useCallback(async () => {
@@ -299,7 +381,9 @@ export function AuthProvider({ children, isInitializing = false }: { children: R
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
-    hasRole
+    hasRole,
+    handleGoogleLogin,
+    register
   };
 
   return (
@@ -318,6 +402,15 @@ export function useAuth() {
     throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;
+}
+
+/**
+ * 🪝 Hook seguro para usar o contexto de autenticação
+ * Retorna undefined se o contexto não estiver disponível (útil para componentes que podem renderizar antes do provider)
+ */
+export function useAuthSafe() {
+  const context = useContext(AuthContext);
+  return context; // Retorna undefined se não estiver dentro do provider
 }
 
 /**

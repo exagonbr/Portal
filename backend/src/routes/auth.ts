@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import passport from 'passport';
 import AuthController from '../controllers/AuthController';
-import { OptimizedAuthController } from '../controllers/OptimizedAuthController';
 import AuthService from '../services/AuthService';
 import { requireAuth } from '../middleware/requireAuth';
 

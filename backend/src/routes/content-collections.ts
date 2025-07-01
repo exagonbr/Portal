@@ -143,7 +143,7 @@ router.post('/', async (req, res) => {
   }
 
   // Implementation will be added in the controller
-  res.status(201).json({
+  return res.status(201).json({
     success: true,
     data: null,
     message: 'Create content collection endpoint - implementation pending'
@@ -212,7 +212,7 @@ router.put('/:id', async (req, res) => {
   }
 
   // Implementation will be added in the controller
-  res.json({
+  return res.json({
     success: true,
     data: null,
     message: 'Update content collection endpoint - implementation pending'
@@ -254,7 +254,7 @@ router.delete('/:id', async (req, res) => {
   }
 
   // Implementation will be added in the controller
-  res.json({
+  return res.json({
     success: true,
     message: 'Delete content collection endpoint - implementation pending'
   });
@@ -351,7 +351,7 @@ router.post('/:id/videos', async (req, res) => {
   }
 
   // Implementation will be added in the controller
-  res.status(201).json({
+  return res.status(201).json({
     success: true,
     data: null,
     message: 'Add video to collection endpoint - implementation pending'

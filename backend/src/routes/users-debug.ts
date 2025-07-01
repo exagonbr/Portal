@@ -1,8 +1,6 @@
 import express from 'express';
-import {
-  optimizedAuthMiddleware,
-  requireAnyRole
-} from '../middleware/optimizedAuth.middleware';
+import { requireAuth } from '../middleware/requireAuth';
+import { requireRole } from '../middleware/auth';
 import { UserRepository } from '../repositories/UserRepository';
 import * as jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../config/jwt';
@@ -66,7 +64,7 @@ router.get('/generate-test-jwt', async (req, res) => {
 });
 
 // Rota para testar validação JWT
-router.get('/test-jwt-validation', optimizedAuthMiddleware, async (req, res) => {
+router.get('/test-jwt-validation', requireAuth, async (req, res) => {
   try {
     console.log('🧪 [DEBUG] Testando validação JWT...');
     console.log('🔍 [DEBUG] req.user:', req.user);
@@ -92,8 +90,8 @@ router.get('/test-jwt-validation', optimizedAuthMiddleware, async (req, res) => 
 
 // Rota para testar validação JWT + Role
 router.get('/test-jwt-and-role',
-  optimizedAuthMiddleware,
-  requireAnyRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']),
+  requireAuth,
+  requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']),
   async (req, res) => {
     try {
       console.log('🧪 [DEBUG] Testando JWT + Role...');
@@ -123,8 +121,8 @@ router.get('/test-jwt-and-role',
 
 // Rota para simular a mesma validação da rota /api/users original
 router.get('/simulate-users-route',
-  optimizedAuthMiddleware,
-  requireAnyRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']),
+  requireAuth,
+  requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']),
   async (req, res) => {
     try {
       console.log('🎭 [DEBUG] Simulando rota /api/users...');
@@ -279,7 +277,7 @@ router.get('/full-diagnosis', async (req, res) => {
 });
 
 // Rota de debug para verificar estrutura da tabela
-router.get('/debug-table', optimizedAuthMiddleware, requireAnyRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), async (req, res) => {
+router.get('/debug-table', requireAuth, requireRole(['SYSTEM_ADMIN', 'INSTITUTION_MANAGER']), async (req, res) => {
   try {
     console.log('🔍 [DEBUG-TABLE] Verificando estrutura da tabela users...');
     
