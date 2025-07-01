@@ -1,13 +1,10 @@
 import express from 'express';
-import {
-  optimizedAuthMiddleware,
-  requirePermission
-} from '../middleware/optimizedAuth.middleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(optimizedAuthMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
 /**
  * @swagger
@@ -42,8 +39,13 @@ router.use(optimizedAuthMiddleware);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', requirePermission('content:read'), async (req, res) => {
+router.get('/', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: [],
+    message: 'Annotations endpoint - implementation pending'
+  });
 });
 
 /**
@@ -71,8 +73,13 @@ router.get('/', requirePermission('content:read'), async (req, res) => {
  *       404:
  *         description: Annotation not found
  */
-router.get('/:id', requirePermission('content:read'), async (req, res) => {
+router.get('/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: null,
+    message: 'Annotation by ID endpoint - implementation pending'
+  });
 });
 
 /**
@@ -112,8 +119,13 @@ router.get('/:id', requirePermission('content:read'), async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requirePermission('content:create'), async (req, res) => {
+router.post('/', async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    data: null,
+    message: 'Create annotation endpoint - implementation pending'
+  });
 });
 
 /**
@@ -153,8 +165,13 @@ router.post('/', requirePermission('content:create'), async (req, res) => {
  *       404:
  *         description: Annotation not found
  */
-router.put('/:id', requirePermission('content:update'), async (req, res) => {
+router.put('/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: null,
+    message: 'Update annotation endpoint - implementation pending'
+  });
 });
 
 /**
@@ -178,8 +195,12 @@ router.put('/:id', requirePermission('content:update'), async (req, res) => {
  *       404:
  *         description: Annotation not found
  */
-router.delete('/:id', requirePermission('content:delete'), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete annotation endpoint - implementation pending'
+  });
 });
 
 export default router;

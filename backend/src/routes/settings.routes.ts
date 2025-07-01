@@ -1,21 +1,57 @@
-import { Router, Request, Response } from 'express';
-import { optimizedAuthMiddleware } from '../middleware/optimizedAuth.middleware';
+import express, { Request, Response } from 'express';
+import { requireAuth } from '../middleware/requireAuth';
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3';
 import nodemailer from 'nodemailer';
 import SystemSettingsService from '../services/SystemSettingsService';
 import { emailService } from '../services/emailService';
 import db from '../config/database';
 
-const router = Router();
+const router = express.Router();
 
-// GET - Buscar todas as configurações
-router.get('/settings', optimizedAuthMiddleware, async (req: Request, res: Response) => {
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar configurações'
+    });
+  }
+  
+  next();
+};
+
+/**
+ * @swagger
+ * /api/settings:
+ *   get:
+ *     summary: Get all settings
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: System settings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/settings', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Verificar se é admin
-    if (req.user?.role !== 'SYSTEM_ADMIN') {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
-
     const settings = await SystemSettingsService.getFormattedSettings();
 
     return res.json({
@@ -31,14 +67,26 @@ router.get('/settings', optimizedAuthMiddleware, async (req: Request, res: Respo
   }
 });
 
-// GET - Buscar configurações por categoria
-router.get('/settings/:category', optimizedAuthMiddleware, async (req: Request, res: Response) => {
+/**
+ * @swagger
+ * /api/settings/{category}:
+ *   get:
+ *     summary: Get settings by category
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: category
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Category settings
+ */
+router.get('/settings/:category', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Verificar se é admin
-    if (req.user?.role !== 'SYSTEM_ADMIN') {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
-
     const { category } = req.params;
     const settings = await SystemSettingsService.getSettingsByCategory(category, true);
 
@@ -55,14 +103,26 @@ router.get('/settings/:category', optimizedAuthMiddleware, async (req: Request, 
   }
 });
 
-// PUT - Atualizar configurações
-router.put('/settings', optimizedAuthMiddleware, async (req: Request, res: Response) => {
+/**
+ * @swagger
+ * /api/settings:
+ *   put:
+ *     summary: Update settings
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Settings updated
+ */
+router.put('/settings', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Verificar se é admin
-    if (req.user?.role !== 'SYSTEM_ADMIN') {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
-
     const updates = req.body;
 
     await SystemSettingsService.updateSettings(updates);
@@ -89,14 +149,20 @@ router.put('/settings', optimizedAuthMiddleware, async (req: Request, res: Respo
   }
 });
 
-// POST - Resetar configurações para padrão
-router.post('/settings/reset', optimizedAuthMiddleware, async (req: Request, res: Response) => {
+/**
+ * @swagger
+ * /api/settings/reset:
+ *   post:
+ *     summary: Reset settings to default
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Settings reset
+ */
+router.post('/settings/reset', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Verificar se é admin
-    if (req.user?.role !== 'SYSTEM_ADMIN') {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
-
     await SystemSettingsService.resetToDefaults();
 
     return res.json({ 
@@ -112,14 +178,20 @@ router.post('/settings/reset', optimizedAuthMiddleware, async (req: Request, res
   }
 });
 
-// POST - Testar conexão AWS
-router.post('/settings/test-aws', optimizedAuthMiddleware, async (req: Request, res: Response) => {
+/**
+ * @swagger
+ * /api/settings/test-aws:
+ *   post:
+ *     summary: Test AWS configuration
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: AWS test result
+ */
+router.post('/settings/test-aws', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Verificar se é admin
-    if (req.user?.role !== 'SYSTEM_ADMIN') {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
-
     const { accessKeyId, secretAccessKey, region } = req.body;
 
     if (!accessKeyId || !secretAccessKey || !region) {
@@ -166,14 +238,20 @@ router.post('/settings/test-aws', optimizedAuthMiddleware, async (req: Request, 
   }
 });
 
-// POST - Testar conexão de email
-router.post('/settings/test-email', optimizedAuthMiddleware, async (req: Request, res: Response) => {
+/**
+ * @swagger
+ * /api/settings/test-email:
+ *   post:
+ *     summary: Test email configuration
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Email test result
+ */
+router.post('/settings/test-email', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Verificar se é admin
-    if (req.user?.role !== 'SYSTEM_ADMIN') {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
-
     const { host, port, user, password, secure, fromAddress } = req.body;
 
     if (!host || !port || !user || !password) {
@@ -201,7 +279,7 @@ router.post('/settings/test-email', optimizedAuthMiddleware, async (req: Request
       // Enviar email de teste
       await transporter.sendMail({
         from: fromAddress || user,
-        to: req.user.email,
+        to: req.user?.email,
         subject: 'Teste de Configuração de Email - Portal Educacional',
         html: `
           <h2>Teste de Email Bem-sucedido!</h2>
@@ -232,14 +310,20 @@ router.post('/settings/test-email', optimizedAuthMiddleware, async (req: Request
   }
 });
 
-// POST - Reconfigurar serviço de email
-router.post('/settings/reconfigure-email', optimizedAuthMiddleware, async (req: Request, res: Response) => {
+/**
+ * @swagger
+ * /api/settings/reconfigure-email:
+ *   post:
+ *     summary: Reconfigure email settings
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Email reconfigured
+ */
+router.post('/settings/reconfigure-email', requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Verificar se é admin
-    if (req.user?.role !== 'SYSTEM_ADMIN') {
-      return res.status(403).json({ error: 'Acesso negado' });
-    }
-
     console.log('🔄 Reconfigurando serviço de email manualmente...');
     await emailService.reconfigure();
 
@@ -261,6 +345,5 @@ router.post('/settings/reconfigure-email', optimizedAuthMiddleware, async (req: 
     });
   }
 });
-
 
 export default router; 

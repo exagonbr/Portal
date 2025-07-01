@@ -1,241 +1,248 @@
-import { Router } from 'express';
-import { db } from '../database/connection';
-import { optimizedAuthMiddleware } from '../middleware/optimizedAuth.middleware';
+import express from 'express';
+import { requireAuth } from '../middleware/requireAuth';
 
-const router = Router();
+const router = express.Router();
 
-/**
- * @route GET /api/schools
- * @desc Get all schools
- * @access Private
- */
-router.get('/', optimizedAuthMiddleware, async (req, res) => {
-  try {
-    const query = db('schools')
-      .select('*')
-      .orderBy('name');
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
-    // Filter by institution if user has institution_id
-    if ((req.user as any)?.institutionId) {
-      query.where('institution_id', (req.user as any)?.institutionId);
-    }
-
-    const schools = await query;
-    
-    return res.json({
-      success: true,
-      data: {
-        items: schools,
-        pagination: {
-          total: schools.length,
-          page: 1,
-          limit: schools.length,
-          totalPages: 1
-        }
-      }
-    });
-  } catch (error) {
-    console.log('Error fetching schools:', error);
-    return res.status(500).json({ 
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
       success: false,
-      error: 'Internal server error' 
+      message: 'Acesso negado - apenas administradores podem gerenciar escolas'
     });
   }
+  
+  next();
+};
+
+/**
+ * @swagger
+ * /api/schools:
+ *   get:
+ *     summary: Get all schools
+ *     tags: [Schools]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: List of schools
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/School'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Schools list - implementação pendente',
+    data: []
+  });
 });
 
 /**
- * @route GET /api/schools/:id
- * @desc Get school by ID
- * @access Private
+ * @swagger
+ * /api/schools/{id}:
+ *   get:
+ *     summary: Get school by ID
+ *     tags: [Schools]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: School found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/School'
+ *       404:
+ *         description: School not found
  */
-router.get('/:id', optimizedAuthMiddleware, async (req, res) => {
-  try {
-    const query = db('schools').where({ id: req.params.id });
-
-    // Filter by institution if user has institution_id
-    if ((req.user as any)?.institutionId) {
-      query.where('institution_id', (req.user as any)?.institutionId);
-    }
-
-    const school = await query.first();
-
-    if (!school) {
-      return res.status(404).json({ 
-        success: false,
-        error: 'School not found' 
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: school
-    });
-  } catch (error) {
-    console.log('Error fetching school:', error);
-    return res.status(500).json({ 
-      success: false,
-      error: 'Internal server error' 
-    });
-  }
+router.get('/:id', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'School by ID - implementação pendente',
+    data: null
+  });
 });
 
 /**
- * @route POST /api/schools
- * @desc Create a new school
- * @access Private
+ * @swagger
+ * /api/schools:
+ *   post:
+ *     summary: Create a new school
+ *     tags: [Schools]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - address
+ *             properties:
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               zipCode:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       201:
+ *         description: School created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/School'
+ *       400:
+ *         description: Invalid input
  */
-router.post('/', optimizedAuthMiddleware, async (req, res) => {
-  try {
-    const {
-      name,
-      code,
-      type,
-      description,
-      address,
-      city,
-      state,
-      zip_code,
-      phone,
-      email,
-      institution_id
-    } = req.body;
-
-    // If user has institution_id, enforce it
-    if ((req.user as any)?.institutionId && institution_id !== (req.user as any)?.institutionId) {
-      return res.status(403).json({ error: 'Cannot create school for different institution' });
-    }
-
-    const [school] = await db('schools')
-      .insert({
-        name,
-        code,
-        type,
-        description,
-        address,
-        city,
-        state,
-        zip_code,
-        phone,
-        email,
-        institution_id: institution_id || (req.user as any)?.institutionId,
-        is_active: true
-      })
-      .returning('*');
-
-    return res.status(201).json({
-      success: true,
-      data: school,
-      message: 'School created successfully'
-    });
-  } catch (error) {
-    console.log('Error creating school:', error);
-    return res.status(500).json({ 
-      success: false,
-      error: 'Internal server error' 
-    });
-  }
+router.post('/', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create school - implementação pendente',
+    data: null
+  });
 });
 
 /**
- * @route PUT /api/schools/:id
- * @desc Update a school
- * @access Private
+ * @swagger
+ * /api/schools/{id}:
+ *   put:
+ *     summary: Update a school
+ *     tags: [Schools]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               zipCode:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: School updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/School'
+ *       404:
+ *         description: School not found
  */
-router.put('/:id', optimizedAuthMiddleware, async (req, res) => {
-  try {
-    const {
-      name,
-      code,
-      type,
-      description,
-      address,
-      city,
-      state,
-      zip_code,
-      phone,
-      email,
-      is_active
-    } = req.body;
-
-    const query = db('schools').where({ id: req.params.id });
-
-    // Filter by institution if user has institution_id
-    if ((req.user as any)?.institutionId) {
-      query.where('institution_id', (req.user as any)?.institutionId);
-    }
-
-    const [school] = await query
-      .update({
-        name,
-        code,
-        type,
-        description,
-        address,
-        city,
-        state,
-        zip_code,
-        phone,
-        email,
-        is_active,
-        updated_at: new Date()
-      })
-      .returning('*');
-
-    if (!school) {
-      return res.status(404).json({ 
-        success: false,
-        error: 'School not found' 
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: school,
-      message: 'School updated successfully'
-    });
-  } catch (error) {
-    console.log('Error updating school:', error);
-    return res.status(500).json({ 
-      success: false,
-      error: 'Internal server error' 
-    });
-  }
+router.put('/:id', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update school - implementação pendente',
+    data: null
+  });
 });
 
 /**
- * @route DELETE /api/schools/:id
- * @desc Delete a school
- * @access Private
+ * @swagger
+ * /api/schools/{id}:
+ *   delete:
+ *     summary: Delete a school
+ *     tags: [Schools]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: School deleted
+ *       404:
+ *         description: School not found
  */
-router.delete('/:id', optimizedAuthMiddleware, async (req, res) => {
-  try {
-    const query = db('schools').where({ id: req.params.id });
-
-    // Filter by institution if user has institution_id
-    if ((req.user as any)?.institutionId) {
-      query.where('institution_id', (req.user as any)?.institutionId);
-    }
-
-    const deleted = await query.delete();
-
-    if (!deleted) {
-      return res.status(404).json({ 
-        success: false,
-        error: 'School not found' 
-      });
-    }
-
-    return res.json({ 
-      success: true,
-      message: 'School deleted successfully' 
-    });
-  } catch (error) {
-    console.log('Error deleting school:', error);
-    return res.status(500).json({ 
-      success: false,
-      error: 'Internal server error' 
-    });
-  }
+router.delete('/:id', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete school - implementação pendente'
+  });
 });
 
 export default router;

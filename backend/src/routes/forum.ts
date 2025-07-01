@@ -1,13 +1,24 @@
 import express from 'express';
-import {
-  optimizedAuthMiddleware,
-  requireAnyRole
-} from '../middleware/optimizedAuth.middleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(optimizedAuthMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de professor/admin para ações administrativas
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas professores e administradores podem realizar esta ação'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -60,6 +71,11 @@ router.use(optimizedAuthMiddleware);
  */
 router.get('/threads', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Forum threads - implementação pendente',
+    data: []
+  });
 });
 
 /**
@@ -89,6 +105,11 @@ router.get('/threads', async (req, res) => {
  */
 router.get('/threads/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Forum thread by ID - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -135,6 +156,11 @@ router.get('/threads/:id', async (req, res) => {
  */
 router.post('/threads', async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create forum thread - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -216,76 +242,32 @@ router.delete('/threads/:id', async (req, res) => {
  * @swagger
  * /api/forum/threads/{id}/pin:
  *   post:
- *     summary: Pin/unpin a forum thread
+ *     summary: Pin a forum thread (teachers and admins only)
  *     tags: [Forum]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - pinned
- *             properties:
- *               pinned:
- *                 type: boolean
- *     responses:
- *       200:
- *         description: Thread pin status updated
- *       404:
- *         description: Thread not found
- *       403:
- *         description: Not authorized to pin threads
  */
-router.post('/threads/:id/pin', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
-  // Implementation will be added in the controller
+router.post('/threads/:id/pin', requireTeacherOrAdmin, async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Pin thread - implementação pendente'
+  });
 });
 
 /**
  * @swagger
  * /api/forum/threads/{id}/lock:
  *   post:
- *     summary: Lock/unlock a forum thread
+ *     summary: Lock a forum thread (teachers and admins only)
  *     tags: [Forum]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - locked
- *             properties:
- *               locked:
- *                 type: boolean
- *     responses:
- *       200:
- *         description: Thread lock status updated
- *       404:
- *         description: Thread not found
- *       403:
- *         description: Not authorized to lock threads
  */
-router.post('/threads/:id/lock', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
-  // Implementation will be added in the controller
+router.post('/threads/:id/lock', requireTeacherOrAdmin, async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Lock thread - implementação pendente'
+  });
 });
 
 /**

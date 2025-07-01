@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import NotificationController from '../controllers/NotificationController';
-import { authenticateToken as authMiddleware } from '../middleware/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 import {
   validateCreateNotification,
   validateUpdateNotification,
@@ -16,6 +16,9 @@ import {
 
 const router = Router();
 
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
 /**
  * @swagger
  * tags:
@@ -26,27 +29,23 @@ const router = Router();
 // Email verification routes
 router.get(
   '/email/verify',
-  authMiddleware,
   NotificationController.verifyEmailConfiguration
 );
 
 router.post(
   '/email/verify',
-  authMiddleware,
   NotificationController.sendVerificationEmail
 );
 
 // Core notification routes
 router.get(
   '/',
-  authMiddleware,
   validateNotificationQuery,
   NotificationController.getNotifications
 );
 
 router.get(
   '/sent',
-  authMiddleware,
   checkSentNotificationsPermissions,
   validateNotificationQuery,
   NotificationController.getSentNotifications
@@ -54,14 +53,12 @@ router.get(
 
 router.get(
   '/:id',
-  authMiddleware,
   validateNotificationId,
   NotificationController.getNotificationById
 );
 
 router.post(
   '/',
-  authMiddleware,
   checkNotificationPermissions,
   validateCreateNotification,
   NotificationController.createNotification
@@ -69,7 +66,6 @@ router.post(
 
 router.post(
   '/send',
-  authMiddleware,
   checkNotificationPermissions,
   validateSendNotification,
   NotificationController.sendNotification
@@ -77,7 +73,6 @@ router.post(
 
 router.patch(
   '/:id',
-  authMiddleware,
   checkNotificationPermissions,
   validateUpdateNotification,
   NotificationController.updateNotification
@@ -85,7 +80,6 @@ router.patch(
 
 router.delete(
   '/:id',
-  authMiddleware,
   validateNotificationId,
   NotificationController.deleteNotification
 );
@@ -93,34 +87,29 @@ router.delete(
 // Notification actions
 router.patch(
   '/:id/read',
-  authMiddleware,
   validateNotificationId,
   NotificationController.markAsRead
 );
 
 router.patch(
   '/bulk/read',
-  authMiddleware,
   validateBulkIds,
   NotificationController.markMultipleAsRead
 );
 
 router.patch(
   '/all/read',
-  authMiddleware,
   NotificationController.markAllAsRead
 );
 
 router.delete(
   '/bulk',
-  authMiddleware,
   validateBulkIds,
   NotificationController.deleteBulkNotifications
 );
 
 router.post(
   '/bulk/delete',
-  authMiddleware,
   validateBulkIds,
   NotificationController.deleteBulkNotifications
 );
@@ -128,7 +117,6 @@ router.post(
 // Notification stats and management
 router.get(
   '/:id/stats',
-  authMiddleware,
   checkSentNotificationsPermissions,
   validateNotificationId,
   NotificationController.getNotificationStats
@@ -136,7 +124,6 @@ router.get(
 
 router.patch(
   '/:id/cancel',
-  authMiddleware,
   checkNotificationPermissions,
   validateNotificationId,
   NotificationController.cancelScheduledNotification
@@ -144,7 +131,6 @@ router.patch(
 
 router.patch(
   '/:id/reschedule',
-  authMiddleware,
   checkNotificationPermissions,
   validateReschedule,
   NotificationController.rescheduleNotification
@@ -152,7 +138,6 @@ router.patch(
 
 router.post(
   '/:id/send-now',
-  authMiddleware,
   checkNotificationPermissions,
   validateNotificationId,
   NotificationController.sendDraftNotification
@@ -161,7 +146,6 @@ router.post(
 // Cleanup and maintenance
 router.post(
   '/cleanup',
-  authMiddleware,
   checkNotificationPermissions,
   validateCleanup,
   NotificationController.cleanupOldNotifications

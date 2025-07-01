@@ -1,13 +1,28 @@
 import express from 'express';
-import { validateTokenUltraSimple } from '../middleware/sessionMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 import { InstitutionController } from '../controllers/refactored/InstitutionController';
 import { body, param } from 'express-validator';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas (usando versão ultra-simples para debug)
-router.use((req, res, next) => validateTokenUltraSimple(req as any, res, next));
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
 const institutionController = new InstitutionController();
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar instituições'
+    });
+  }
+  
+  next();
+};
 
 const institutionTypesArray = ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER'];
 
@@ -52,7 +67,6 @@ const validateIdParam = [
 const validateCodeParam = [
   param('code').isString().notEmpty().withMessage('Code is required.'),
 ];
-
 
 /**
  * @swagger
@@ -140,7 +154,6 @@ const validateCodeParam = [
  *       bearerFormat: JWT
  */
 
-
 /**
  * @swagger
  * /api/institution:
@@ -182,7 +195,7 @@ const validateCodeParam = [
  *         name: sortBy
  *         schema:
  *           type: string
- *           enum: ['name', 'code', 'type', 'created_at'] # Adicionar mais campos se necessário
+ *           enum: ['name', 'code', 'type', 'created_at']
  *         description: Field to sort by
  *       - in: query
  *         name: sortOrder
@@ -205,14 +218,15 @@ const validateCodeParam = [
  *                   items:
  *                     $ref: '#/components/schemas/Institution'
  *                 pagination:
- *                   $ref: '#/components/schemas/PaginationResult' # Supondo que PaginationResult está definido
+ *                   type: object
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
-router.get(
-  '/',
-  institutionController.getAll
-);
+router.get('/', async (req: any, res: any) => {
+  return institutionController.getAll(req, res);
+});
 
 /**
  * @swagger
@@ -223,18 +237,25 @@ router.get(
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/idParam'
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Institution found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Institution'
  *       404:
  *         description: Institution not found
  */
-router.get(
-  '/:id',
-  validateIdParam,
-  institutionController.getById
-);
+router.get('/:id', validateIdParam, async (req: any, res: any) => {
+  return institutionController.getById(req, res);
+});
 
 /**
  * @swagger
@@ -302,14 +323,16 @@ router.get(
  *     responses:
  *       201:
  *         description: Institution created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Institution'
  *       400:
  *         description: Invalid input
  */
-router.post(
-  '/',
-  validateCreateInstitution,
-  institutionController.create
-);
+router.post('/', requireAdmin, validateCreateInstitution, async (req, res) => {
+  return institutionController.create(req, res);
+});
 
 /**
  * @swagger
@@ -320,7 +343,12 @@ router.post(
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/idParam'
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -330,16 +358,16 @@ router.post(
  *     responses:
  *       200:
  *         description: Institution updated
- *       400:
- *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Institution'
  *       404:
  *         description: Institution not found
  */
-router.put(
-  '/:id',
-  validateUpdateInstitution,
-  institutionController.update
-);
+router.put('/:id', requireAdmin, validateUpdateInstitution, async (req, res) => {
+  return institutionController.update(req, res);
+});
 
 /**
  * @swagger
@@ -350,18 +378,21 @@ router.put(
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - $ref: '#/components/parameters/idParam' # Reutilizando o parâmetro ID
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Institution deleted
  *       404:
  *         description: Institution not found
  */
-router.delete(
-  '/:id',
-  validateIdParam, // Apenas validação do ID é necessária para delete
-  institutionController.delete
-);
+router.delete('/:id', requireAdmin, validateIdParam, async (req, res) => {
+  return institutionController.delete(req, res);
+});
 
 // Helper para definir parâmetros reutilizáveis no Swagger (opcional, mas bom para DRY)
 /**

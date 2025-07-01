@@ -1,12 +1,56 @@
 import express from 'express';
-import { authenticateToken as authMiddleware, authorizeRoles as requireRole, authorizeInstitution as requireInstitution } from '../middleware/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 import { CourseController } from '../controllers/CourseController';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
 const courseController = new CourseController();
+
+// Middleware para verificar role de administrador/professor
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem gerenciar cursos'
+    });
+  }
+  
+  next();
+};
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem deletar cursos'
+    });
+  }
+  
+  next();
+};
+
+// Middleware para verificar instituição (implementação básica)
+const requireInstitution = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  // Verificar se usuário tem institutionId
+  if (!user.institutionId && user.role !== 'SYSTEM_ADMIN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Usuário deve estar associado a uma instituição'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -104,7 +148,7 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   return courseController.create(req, res);
 });
 
@@ -144,7 +188,7 @@ router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req
  *       404:
  *         description: Course not found
  */
-router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.put('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   return courseController.update(req, res);
 });
 
@@ -169,7 +213,7 @@ router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (r
  *       404:
  *         description: Course not found
  */
-router.delete('/:id', requireRole('admin', 'SYSTEM_ADMIN'), requireInstitution, async (req, res) => {
+router.delete('/:id', requireAdmin, requireInstitution, async (req, res) => {
   return courseController.delete(req, res);
 });
 
@@ -361,7 +405,7 @@ router.get('/:id/students', requireInstitution, async (req, res) => {
  *       404:
  *         description: Course or teacher not found
  */
-router.post('/:id/teachers', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.post('/:id/teachers', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   return courseController.addTeacher(req, res);
 });
 
@@ -398,7 +442,7 @@ router.post('/:id/teachers', requireRole('admin', 'teacher'), requireInstitution
  *       404:
  *         description: Course or student not found
  */
-router.post('/:id/students', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.post('/:id/students', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   return courseController.addStudent(req, res);
 });
 
@@ -429,7 +473,7 @@ router.post('/:id/students', requireRole('admin', 'teacher'), requireInstitution
  *       404:
  *         description: Course or teacher not found
  */
-router.delete('/:id/teachers/:userId', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.delete('/:id/teachers/:userId', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   return courseController.removeTeacher(req, res);
 });
 
@@ -460,7 +504,7 @@ router.delete('/:id/teachers/:userId', requireRole('admin', 'teacher'), requireI
  *       404:
  *         description: Course or student not found
  */
-router.delete('/:id/students/:userId', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.delete('/:id/students/:userId', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   return courseController.removeStudent(req, res);
 });
 

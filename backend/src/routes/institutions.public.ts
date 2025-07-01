@@ -1,12 +1,13 @@
 import express from 'express';
-import { optionalAuthMiddleware } from '../middleware/optionalAuth.middleware';
+import { requireAuth } from '../middleware/requireAuth';
 import { InstitutionController } from '../controllers/refactored/InstitutionController';
 import { param, query } from 'express-validator';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação opcional em todas as rotas
-router.use(optionalAuthMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
 const institutionController = new InstitutionController();
 
 const institutionTypesArray = ['SCHOOL', 'COLLEGE', 'UNIVERSITY', 'TECH_CENTER'];
@@ -134,5 +135,155 @@ router.get(
   validateCodeParam,
   institutionController.getByCode
 );
+
+/**
+ * @swagger
+ * /api/institutions-public:
+ *   get:
+ *     summary: Get public institution information
+ *     tags: [InstitutionsPublic]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Public institution data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/InstitutionPublic'
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Public institutions - implementação pendente',
+    data: []
+  });
+});
+
+/**
+ * @swagger
+ * /api/institutions-public/{id}:
+ *   get:
+ *     summary: Get public information for a specific institution
+ *     tags: [InstitutionsPublic]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Public institution information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/InstitutionPublic'
+ *       404:
+ *         description: Institution not found
+ */
+router.get('/:id', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Public institution by ID - implementação pendente',
+    data: null
+  });
+});
+
+/**
+ * @swagger
+ * /api/institutions-public/{id}/courses:
+ *   get:
+ *     summary: Get public courses for an institution
+ *     tags: [InstitutionsPublic]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Public courses for institution
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/CoursePublic'
+ */
+router.get('/:id/courses', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Public institution courses - implementação pendente',
+    data: []
+  });
+});
+
+/**
+ * @swagger
+ * /api/institutions-public/{id}/stats:
+ *   get:
+ *     summary: Get public statistics for an institution
+ *     tags: [InstitutionsPublic]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Public institution statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalCourses:
+ *                       type: integer
+ *                     totalStudents:
+ *                       type: integer
+ *                     establishedYear:
+ *                       type: integer
+ */
+router.get('/:id/stats', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Public institution stats - implementação pendente',
+    data: {
+      totalCourses: 0,
+      totalStudents: 0,
+      establishedYear: null
+    }
+  });
+});
 
 export default router;

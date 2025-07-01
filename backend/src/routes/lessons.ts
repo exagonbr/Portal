@@ -1,10 +1,39 @@
 import express from 'express';
-import { authenticateToken as authMiddleware, authorizeRoles as requireRole, authorizeInstitution as requireInstitution } from '../middleware/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de administrador/professor
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem gerenciar lições'
+    });
+  }
+  
+  next();
+};
+
+// Middleware para verificar instituição (implementação básica)
+const requireInstitution = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  // Verificar se usuário tem institutionId
+  if (!user.institutionId && user.role !== 'SYSTEM_ADMIN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Usuário deve estar associado a uma instituição'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -35,6 +64,11 @@ router.use(authMiddleware);
  */
 router.get('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Lessons list - implementação pendente',
+    data: []
+  });
 });
 
 /**
@@ -64,6 +98,11 @@ router.get('/', requireInstitution, async (req, res) => {
  */
 router.get('/:id', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Lesson by ID - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -106,8 +145,13 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create lesson - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -149,8 +193,13 @@ router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req
  *       404:
  *         description: Lesson not found
  */
-router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.put('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update lesson - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -174,8 +223,12 @@ router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (r
  *       404:
  *         description: Lesson not found
  */
-router.delete('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.delete('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete lesson - implementação pendente'
+  });
 });
 
 /**
@@ -199,34 +252,30 @@ router.delete('/:id', requireRole('admin', 'teacher'), requireInstitution, async
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - progress_percentage
  *             properties:
+ *               completed:
+ *                 type: boolean
  *               progress_percentage:
  *                 type: number
  *                 minimum: 0
  *                 maximum: 100
- *               completed:
- *                 type: boolean
  *     responses:
  *       200:
  *         description: Progress updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UserProgress'
- *       400:
- *         description: Invalid input
  */
-router.post('/:id/progress', requireInstitution, async (req, res) => {
+router.post('/:id/progress', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update lesson progress - implementação pendente'
+  });
 });
 
 /**
  * @swagger
  * /api/lessons/reorder:
  *   post:
- *     summary: Reorder lessons in a module
+ *     summary: Reorder lessons within a module
  *     tags: [Lessons]
  *     security:
  *       - bearerAuth: []
@@ -237,34 +286,28 @@ router.post('/:id/progress', requireInstitution, async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - module_id
- *               - lessonOrders
+ *               - lessons
  *             properties:
- *               module_id:
- *                 type: string
- *                 format: uuid
- *               lessonOrders:
+ *               lessons:
  *                 type: array
  *                 items:
  *                   type: object
- *                   required:
- *                     - id
- *                     - order
  *                   properties:
  *                     id:
  *                       type: string
  *                       format: uuid
  *                     order:
  *                       type: integer
- *                       minimum: 0
  *     responses:
  *       200:
  *         description: Lessons reordered successfully
- *       400:
- *         description: Invalid input
  */
-router.post('/reorder', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.post('/reorder', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Reorder lessons - implementação pendente'
+  });
 });
 
 export default router;

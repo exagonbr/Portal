@@ -1,10 +1,39 @@
 import express from 'express';
-import { authenticateToken as authMiddleware, authorizeRoles as requireRole, authorizeInstitution as requireInstitution } from '../middleware/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de administrador/professor
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem gerenciar vídeos'
+    });
+  }
+  
+  next();
+};
+
+// Middleware para verificar instituição (implementação básica)
+const requireInstitution = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  // Verificar se usuário tem institutionId
+  if (!user.institutionId && user.role !== 'SYSTEM_ADMIN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Usuário deve estar associado a uma instituição'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -35,6 +64,11 @@ router.use(authMiddleware);
  */
 router.get('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Videos list - implementação pendente',
+    data: []
+  });
 });
 
 /**
@@ -64,6 +98,11 @@ router.get('/', requireInstitution, async (req, res) => {
  */
 router.get('/:id', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Video by ID - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -105,8 +144,13 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create video - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -148,8 +192,13 @@ router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req
  *       404:
  *         description: Video not found
  */
-router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.put('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update video - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -173,8 +222,12 @@ router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (r
  *       404:
  *         description: Video not found
  */
-router.delete('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.delete('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete video - implementação pendente'
+  });
 });
 
 /**
@@ -199,30 +252,16 @@ router.delete('/:id', requireRole('admin', 'teacher'), requireInstitution, async
  *         description: Bytes range header for partial content
  *     responses:
  *       206:
- *         description: Partial Content
- *         headers:
- *           Content-Range:
- *             schema:
- *               type: string
- *             description: Content range info
- *           Content-Length:
- *             schema:
- *               type: integer
- *             description: Content length
- *           Content-Type:
- *             schema:
- *               type: string
- *             description: Video content type
- *         content:
- *           video/*:
- *             schema:
- *               type: string
- *               format: binary
+ *         description: Partial content (video stream)
  *       404:
  *         description: Video not found
  */
 router.get('/:id/stream', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Video streaming - implementação pendente'
+  });
 });
 
 /**

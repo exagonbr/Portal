@@ -1,18 +1,33 @@
-import { Router } from 'express';
+import express from 'express';
+import { requireAuth } from '../middleware/requireAuth';
 import { GroupController } from '../controllers/GroupController';
 import { GroupService } from '../services/GroupService';
 import { GroupRepository } from '../repositories/GroupRepository';
 import db from '../config/database';
 
-const router = Router();
+const router = express.Router();
 
 // Inicializar dependências
 const groupRepository = new GroupRepository(db);
 const groupService = new GroupService(groupRepository);
 const groupController = new GroupController(groupService);
 
-// Middleware de autenticação (implementar conforme necessário)
-// router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de professor ou administrador
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas professores e administradores podem gerenciar grupos'
+    });
+  }
+  
+  next();
+};
 
 // Rotas de grupos
 router.get('/stats', (req, res) => groupController.getGroupStats(req, res));

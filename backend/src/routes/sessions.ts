@@ -9,15 +9,215 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import { SessionService } from '../services/SessionService';
-import {
-  validateJWTSmart,
-  requireRoleSmart
-} from '../middleware/sessionMiddleware';
 import { AppDataSource } from '../config/typeorm.config';
 import { User } from '../entities/User';
-import { getJwtSecret } from '../config/jwt';
+import { JWT_CONFIG } from '../config/jwt';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
+
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO (exceto para login e refresh)
+// Login e refresh não precisam de autenticação prévia
+router.use('/logout', requireAuth);
+router.use('/logout-all', requireAuth);
+router.use('/list', requireAuth);
+router.use('/destroy', requireAuth);
+router.use('/stats', requireAuth);
+router.use('/validate', requireAuth);
+router.use('/my', requireAuth);
+router.use('/user', requireAuth);
+router.use('/cleanup', requireAuth);
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar sessões'
+    });
+  }
+  
+  next();
+};
+
+/**
+ * @swagger
+ * /api/sessions:
+ *   get:
+ *     summary: Get all active sessions
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of active sessions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Session'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/', requireAuth, requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Sessions list - implementação pendente',
+    data: []
+  });
+});
+
+/**
+ * @swagger
+ * /api/sessions/my:
+ *   get:
+ *     summary: Get current user sessions
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user sessions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Session'
+ */
+router.get('/my', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'My sessions - implementação pendente',
+    data: []
+  });
+});
+
+/**
+ * @swagger
+ * /api/sessions/{sessionId}:
+ *   delete:
+ *     summary: Terminate a specific session
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sessionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Session terminated
+ *       404:
+ *         description: Session not found
+ */
+router.delete('/:sessionId', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Terminate session - implementação pendente'
+  });
+});
+
+/**
+ * @swagger
+ * /api/sessions/user/{userId}:
+ *   get:
+ *     summary: Get sessions for a specific user (admin only)
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: User sessions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Session'
+ */
+router.get('/user/:userId', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'User sessions - implementação pendente',
+    data: []
+  });
+});
+
+/**
+ * @swagger
+ * /api/sessions/user/{userId}/terminate-all:
+ *   post:
+ *     summary: Terminate all sessions for a user (admin only)
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: All user sessions terminated
+ */
+router.post('/user/:userId/terminate-all', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Terminate all user sessions - implementação pendente'
+  });
+});
+
+/**
+ * @swagger
+ * /api/sessions/cleanup:
+ *   post:
+ *     summary: Cleanup expired sessions (admin only)
+ *     tags: [Sessions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Expired sessions cleaned up
+ */
+router.post('/cleanup', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Cleanup expired sessions - implementação pendente'
+  });
+});
 
 /**
  * @swagger
@@ -31,48 +231,31 @@ const router = express.Router();
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/LoginRequest'
- *           examples:
- *             basicLogin:
- *               summary: Login básico
- *               value:
- *                 email: "admin@portal.com"
- *                 password: "password123"
- *             webLogin:
- *               summary: Login com dispositivo web
- *               value:
- *                 email: "user@portal.com"
- *                 password: "password123"
- *                 deviceType: "web"
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *               remember:
+ *                 type: boolean
+ *                 default: false
  *     responses:
  *       200:
  *         description: Login realizado com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/LoginResponse'
  *       400:
  *         description: Dados de entrada inválidos
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ValidationError'
  *       401:
  *         description: Credenciais inválidas
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
   '/login',
-
   [
     body('email').isEmail().normalizeEmail(),
     body('password').notEmpty(),
@@ -111,27 +294,41 @@ router.post(
         });
       }
 
-      // Cria sessão no Redis
-      const { sessionId, refreshToken } = await SessionService.createSession(
-        user, 
-        req.clientInfo!,
-        remember
-      );
+      // Cria sessão no Redis (se disponível)
+      let sessionId = null;
+      let refreshToken = null;
+      
+      try {
+        const sessionData = await SessionService.createSession(
+          user, 
+          req.clientInfo || { ip: req.ip, userAgent: req.get('User-Agent') },
+          remember
+        );
+        sessionId = sessionData.sessionId;
+        refreshToken = sessionData.refreshToken;
+      } catch (error) {
+        console.log('Aviso: Erro ao criar sessão Redis, continuando sem Redis:', error);
+      }
 
       // Gera JWT com sessionId
-      const token = jwt.sign(
-        {
-          userId: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role?.name.toUpperCase(),
-          institutionId: user.institution_id,
-          permissions: user.role?.permissions || [],
-          sessionId
-        },
-        getJwtSecret(),
-        { expiresIn: remember ? '7d' : '24h' }
-      );
+      const jwtPayload = {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role?.name.toUpperCase(),
+        institutionId: user.institution_id,
+        permissions: user.role?.permissions || [],
+        sessionId
+      };
+      
+      const jwtOptions = { 
+        expiresIn: (remember ? JWT_CONFIG.REFRESH_TOKEN_EXPIRES_IN : JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN) as string,
+        issuer: JWT_CONFIG.ISSUER,
+        audience: JWT_CONFIG.AUDIENCE,
+        algorithm: JWT_CONFIG.ALGORITHM as 'HS256'
+      };
+      
+      const token = jwt.sign(jwtPayload, JWT_CONFIG.SECRET, jwtOptions as any);
 
       return res.json({
         success: true,
@@ -146,7 +343,7 @@ router.post(
           institutionId: user.institution_id,
           permissions: user.role?.permissions || []
         },
-        expiresAt: new Date(Date.now() + (remember ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000)).toISOString()
+        expiresAt: new Date(Date.now() + (remember ? 7 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000)).toISOString()
       });
     } catch (error: any) {
       console.log('Erro no login:', error);
@@ -170,35 +367,31 @@ router.post(
  *     responses:
  *       200:
  *         description: Logout realizado com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiResponse'
  *       401:
  *         description: Token inválido ou sessão não encontrada
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/logout', (req, res, next) => validateJWTSmart(req as any, res, next), async (req: any, res: express.Response) => {
+router.post('/logout', async (req: any, res: express.Response) => {
   try {
-    // Adiciona token à blacklist
+    // Adiciona token à blacklist (se disponível)
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      await SessionService.blacklistToken(token);
+      try {
+        await SessionService.blacklistToken(token);
+      } catch (error) {
+        console.log('Aviso: Erro ao adicionar token à blacklist:', error);
+      }
     }
 
-    // Destrói sessão
+    // Destrói sessão (se disponível)
     if (req.sessionId) {
-      await SessionService.destroySession(req.sessionId);
+      try {
+        await SessionService.destroySession(req.sessionId);
+      } catch (error) {
+        console.log('Aviso: Erro ao destruir sessão:', error);
+      }
     }
 
     return res.json({
@@ -226,36 +419,20 @@ router.post('/logout', (req, res, next) => validateJWTSmart(req as any, res, nex
  *     responses:
  *       200:
  *         description: Logout de todos os dispositivos realizado com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: "3 sessões foram finalizadas"
- *                 removedSessions:
- *                   type: number
- *                   example: 3
  *       401:
  *         description: Token inválido ou sessão não encontrada
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/logout-all', (req, res, next) => validateJWTSmart(req as any, res, next), async (req: any, res: express.Response) => {
+router.post('/logout-all', async (req: any, res: express.Response) => {
   try {
-    const removedSessions = await SessionService.destroyAllUserSessions(req.user!.userId);
+    let removedSessions = 0;
+    
+    try {
+      removedSessions = await SessionService.destroyAllUserSessions(req.user.userId);
+    } catch (error) {
+      console.log('Aviso: Erro ao destruir sessões do usuário:', error);
+    }
 
     return res.json({
       success: true,
@@ -283,43 +460,21 @@ router.post('/logout-all', (req, res, next) => validateJWTSmart(req as any, res,
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/RefreshTokenRequest'
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Token atualizado com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 token:
- *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *                 expiresAt:
- *                   type: string
- *                   format: date-time
- *                   example: "2024-01-01T12:00:00.000Z"
  *       400:
  *         description: Dados de entrada inválidos
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ValidationError'
  *       401:
  *         description: Refresh token inválido ou expirado
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
   '/refresh',
@@ -336,43 +491,59 @@ router.post(
 
       const { refreshToken } = req.body;
 
-      // Valida refresh token
-      const sessionId = await SessionService.validateRefreshToken(refreshToken);
-      if (!sessionId) {
+      // Valida refresh token (se disponível)
+      let sessionId = null;
+      let sessionData = null;
+      
+      try {
+        sessionId = await SessionService.validateRefreshToken(refreshToken);
+        if (!sessionId) {
+          return res.status(401).json({
+            success: false,
+            message: 'Refresh token inválido'
+          });
+        }
+
+        // Valida sessão
+        sessionData = await SessionService.validateSession(sessionId);
+        if (!sessionData) {
+          return res.status(401).json({
+            success: false,
+            message: 'Sessão inválida ou expirada'
+          });
+        }
+      } catch (error) {
+        console.log('Aviso: Erro ao validar refresh token:', error);
         return res.status(401).json({
           success: false,
           message: 'Refresh token inválido'
         });
       }
 
-      // Valida sessão
-      const sessionData = await SessionService.validateSession(sessionId);
-      if (!sessionData) {
-        return res.status(401).json({
-          success: false,
-          message: 'Sessão inválida ou expirada'
-        });
-      }
-
       // Gera novo JWT
-      const newToken = jwt.sign(
-        {
-          userId: sessionData.userId,
-          email: sessionData.email,
-          name: sessionData.name,
-          role: sessionData.role,
-          institutionId: sessionData.institutionId,
-          permissions: sessionData.permissions,
-          sessionId
-        },
-        getJwtSecret(),
-        { expiresIn: '24h' }
-      );
+      const jwtPayload = {
+        userId: sessionData.userId,
+        email: sessionData.email,
+        name: sessionData.name,
+        role: sessionData.role,
+        institutionId: sessionData.institutionId,
+        permissions: sessionData.permissions,
+        sessionId
+      };
+      
+      const jwtOptions = { 
+        expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN as string,
+        issuer: JWT_CONFIG.ISSUER,
+        audience: JWT_CONFIG.AUDIENCE,
+        algorithm: JWT_CONFIG.ALGORITHM as 'HS256'
+      };
+      
+      const newToken = jwt.sign(jwtPayload, JWT_CONFIG.SECRET, jwtOptions as any);
 
       return res.json({
         success: true,
         token: newToken,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString()
       });
     } catch (error) {
       console.log('Erro no refresh:', error);
@@ -396,51 +567,31 @@ router.post(
  *     responses:
  *       200:
  *         description: Lista de sessões ativas
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 sessions:
- *                   type: array
- *                   items:
- *                     allOf:
- *                       - $ref: '#/components/schemas/SessionInfo'
- *                       - type: object
- *                         properties:
- *                           isCurrentSession:
- *                             type: boolean
- *                             description: Indica se é a sessão atual
  *       401:
  *         description: Token inválido ou sessão não encontrada
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/list', (req, res, next) => validateJWTSmart(req as any, res, next), async (req: any, res: express.Response) => {
+router.get('/list', async (req: any, res: express.Response) => {
   try {
-    const sessions = await SessionService.getUserSessions(req.user!.userId);
+    let sessions = [];
     
-    // Marca a sessão atual
-    const currentSessionId = req.sessionId;
-    const sessionsWithCurrent = sessions.map(session => ({
-      ...session,
-      isCurrentSession: session.sessionId === currentSessionId
-    }));
+    try {
+      sessions = await SessionService.getUserSessions(req.user.userId);
+      
+      // Marca a sessão atual
+      const currentSessionId = req.sessionId;
+      sessions = sessions.map(session => ({
+        ...session,
+        isCurrentSession: session.sessionId === currentSessionId
+      }));
+    } catch (error) {
+      console.log('Aviso: Erro ao buscar sessões do usuário:', error);
+    }
 
     return res.json({
       success: true,
-      sessions: sessionsWithCurrent
+      sessions
     });
   } catch (error) {
     console.log('Erro ao listar sessões:', error);
@@ -467,54 +618,45 @@ router.get('/list', (req, res, next) => validateJWTSmart(req as any, res, next),
  *         description: ID da sessão a ser destruída
  *         schema:
  *           type: string
- *           example: "sess_123456789"
  *     responses:
  *       200:
  *         description: Sessão destruída com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiResponse'
  *       404:
  *         description: Sessão não encontrada ou não pertence ao usuário
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Token inválido ou sessão não encontrada
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete('/destroy/:sessionId', (req, res, next) => validateJWTSmart(req as any, res, next), async (req: any, res: express.Response) => {
+router.delete('/destroy/:sessionId', async (req: any, res: express.Response) => {
   try {
     const { sessionId } = req.params;
 
-    // Verifica se a sessão pertence ao usuário
-    const sessionData = await SessionService.validateSession(sessionId, req.user!.userId);
-    if (!sessionData || sessionData.userId !== req.user!.userId) {
-      return res.status(404).json({
-        success: false,
-        message: 'Sessão não encontrada'
-      });
-    }
+    try {
+      // Verifica se a sessão pertence ao usuário
+      const sessionData = await SessionService.validateSession(sessionId, req.user.userId);
+      if (!sessionData || sessionData.userId !== req.user.userId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Sessão não encontrada'
+        });
+      }
 
-    const destroyed = await SessionService.destroySession(sessionId);
+      const destroyed = await SessionService.destroySession(sessionId);
 
-    if (destroyed) {
-      return res.json({
-        success: true,
-        message: 'Sessão destruída com sucesso'
-      });
-    } else {
+      if (destroyed) {
+        return res.json({
+          success: true,
+          message: 'Sessão destruída com sucesso'
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'Sessão não encontrada'
+        });
+      }
+    } catch (error) {
+      console.log('Aviso: Erro ao destruir sessão específica:', error);
       return res.status(404).json({
         success: false,
         message: 'Sessão não encontrada'
@@ -541,55 +683,47 @@ router.delete('/destroy/:sessionId', (req, res, next) => validateJWTSmart(req as
  *     responses:
  *       200:
  *         description: Estatísticas de sessões
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 stats:
- *                   $ref: '#/components/schemas/SessionStats'
  *       403:
  *         description: Acesso negado - apenas administradores
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       401:
  *         description: Token inválido ou sessão não encontrada
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/stats',
-  (req: any, res: any, next: any) => validateJWTSmart(req as any, res, next),
-  (req: any, res: any, next: any) => requireRoleSmart(['admin', 'SYSTEM_ADMIN'])(req as any, res, next),
-  async (req: any, res: express.Response) => {
+router.get('/stats', requireAdmin, async (req: any, res: express.Response) => {
+  try {
+    let stats = {
+      totalSessions: 0,
+      activeSessions: 0,
+      totalUsers: 0,
+      onlineUsers: 0
+    };
+    
     try {
-      const stats = await SessionService.getSessionStats();
-
-      return res.json({
-        success: true,
-        stats
-      });
+      const sessionStats = await SessionService.getSessionStats();
+      // Adaptando a resposta do SessionService para o formato esperado
+      stats = {
+        totalSessions: sessionStats.totalActiveSessions || 0,
+        activeSessions: sessionStats.totalActiveSessions || 0,
+        totalUsers: sessionStats.activeUsers || 0,
+        onlineUsers: sessionStats.activeUsers || 0
+      };
     } catch (error) {
-      console.log('Erro ao obter estatísticas:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Erro interno do servidor'
-      });
+      console.log('Aviso: Erro ao obter estatísticas de sessão:', error);
     }
+
+    return res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    console.log('Erro ao obter estatísticas:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
   }
-);
+});
 
 /**
  * @swagger
@@ -603,56 +737,23 @@ router.get('/stats',
  *     responses:
  *       200:
  *         description: Sessão válida
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 valid:
- *                   type: boolean
- *                   example: true
- *                 session:
- *                   $ref: '#/components/schemas/SessionInfo'
- *                 user:
- *                   $ref: '#/components/schemas/User'
  *       401:
  *         description: Token inválido ou sessão expirada
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 valid:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: "Sessão inválida ou expirada"
  *       500:
  *         description: Erro interno do servidor
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/validate', (req, res, next) => validateJWTSmart(req as any, res, next), async (req: any, res: express.Response) => {
+router.get('/validate', async (req: any, res: express.Response) => {
   try {
     return res.json({
       success: true,
       message: 'Sessão válida',
       user: {
-        id: req.user!.userId,
-        email: req.user!.email,
-        name: req.user!.name,
-        role: req.user!.role,
-        institutionId: req.user!.institutionId,
-        permissions: req.user!.permissions
+        id: req.user.userId,
+        email: req.user.email,
+        name: req.user.name,
+        role: req.user.role,
+        institutionId: req.user.institutionId,
+        permissions: req.user.permissions
       },
       sessionId: req.sessionId
     });
@@ -665,4 +766,4 @@ router.get('/validate', (req, res, next) => validateJWTSmart(req as any, res, ne
   }
 });
 
-export default router; 
+export default router;

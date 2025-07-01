@@ -1,11 +1,26 @@
 import express from 'express';
-import { authenticateToken as authMiddleware } from '../middleware/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 import { CourseController } from '../controllers/CourseController';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de administrador/professor
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem gerenciar estudantes'
+    });
+  }
+  
+  next();
+};
+
 const courseController = new CourseController();
 
 /**
@@ -58,6 +73,122 @@ router.get('/:id/courses', async (req, res) => {
       error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
+});
+
+/**
+ * @swagger
+ * /api/students:
+ *   get:
+ *     summary: Get all students
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: course_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter students by course ID
+ *       - in: query
+ *         name: class_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter students by class ID
+ *     responses:
+ *       200:
+ *         description: List of students
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Student'
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/', requireTeacherOrAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Students list - implementação pendente',
+    data: []
+  });
+});
+
+/**
+ * @swagger
+ * /api/students/{id}:
+ *   get:
+ *     summary: Get student by ID
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Student found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Student'
+ *       404:
+ *         description: Student not found
+ */
+router.get('/:id', requireTeacherOrAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Student by ID - implementação pendente',
+    data: null
+  });
+});
+
+/**
+ * @swagger
+ * /api/students/{id}/progress:
+ *   get:
+ *     summary: Get student progress
+ *     tags: [Students]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: course_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Filter progress by course ID
+ *     responses:
+ *       200:
+ *         description: Student progress
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StudentProgress'
+ *       404:
+ *         description: Student not found
+ */
+router.get('/:id/progress', requireTeacherOrAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Student progress - implementação pendente',
+    data: null
+  });
 });
 
 export default router; 

@@ -1,6 +1,5 @@
 import express from 'express';
-import { authenticateToken as authMiddleware, authorizeRoles as requireRole, authorizePermissions as requireRoleSmart } from '../middleware/authMiddleware';
-import { validateJWTSmart, validateTokenUltraSimple } from '../middleware/sessionMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 import { usersService } from '../services/UsersService';
 import { usersCorsMiddleware, usersPublicCorsMiddleware, usersAdminCorsMiddleware } from '../middleware/corsUsers.middleware';
 
@@ -8,6 +7,23 @@ const router = express.Router();
 
 // Aplicar CORS específico para todas as rotas de usuários
 router.use(usersCorsMiddleware);
+
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar usuários'
+    });
+  }
+  
+  next();
+};
 
 // Rota de teste sem middleware para debug
 router.get('/stats-test', usersPublicCorsMiddleware, async (req, res) => {
@@ -66,7 +82,7 @@ router.get('/stats-test', usersPublicCorsMiddleware, async (req, res) => {
  *       403:
  *         description: Forbidden
  */
-router.get('/stats', (req, res, next) => validateTokenUltraSimple(req as any, res, next), async (req, res) => {
+router.get('/stats', requireAdmin, async (req, res) => {
   const startTime = Date.now();
   
   try {
@@ -217,7 +233,7 @@ router.get('/stats', (req, res, next) => validateTokenUltraSimple(req as any, re
  *       403:
  *         description: Forbidden
  */
-router.get('/', usersAdminCorsMiddleware, validateJWTSmart, requireRoleSmart('admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager'), async (req: any, res) => {
+router.get('/', requireAdmin, async (req: any, res) => {
   try {
     console.log('📋 [USERS/LIST] Iniciando listagem de usuários');
     console.log('📋 [USERS/LIST] Query params:', req.query);
@@ -305,7 +321,7 @@ router.get('/', usersAdminCorsMiddleware, validateJWTSmart, requireRoleSmart('ad
  *       200:
  *         description: Search results
  */
-router.get('/search', validateJWTSmart, async (req: any, res): Promise<void> => {
+router.get('/search', requireAdmin, async (req: any, res): Promise<void> => {
   try {
     const { q, page = 1, limit = 10 } = req.query;
 
@@ -365,7 +381,7 @@ router.get('/search', validateJWTSmart, async (req: any, res): Promise<void> => 
  *       401:
  *         description: Unauthorized
  */
-router.get('/me', validateJWTSmart, async (req: any, res) => {
+router.get('/me', requireAdmin, async (req: any, res) => {
   try {
     const userId = (req.user as any)?.id;
     
@@ -439,7 +455,7 @@ router.get('/me', validateJWTSmart, async (req: any, res) => {
  *       400:
  *         description: Invalid input
  */
-router.put('/me', validateJWTSmart, async (req: any, res) => {
+router.put('/me', requireAdmin, async (req: any, res) => {
   try {
     const userId = (req.user as any)?.id;
     
@@ -519,7 +535,7 @@ router.put('/me', validateJWTSmart, async (req: any, res) => {
  *       404:
  *         description: User not found
  */
-router.get('/:id', validateJWTSmart, async (req: any, res) => {
+router.get('/:id', requireAdmin, async (req: any, res) => {
   try {
     const { id } = req.params;
     
@@ -624,7 +640,7 @@ router.get('/:id', validateJWTSmart, async (req: any, res) => {
  *       409:
  *         description: Email already exists
  */
-router.post('/', usersAdminCorsMiddleware, authMiddleware, requireRole('admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'manager'), async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const userData = req.body;
 
@@ -713,7 +729,7 @@ router.post('/', usersAdminCorsMiddleware, authMiddleware, requireRole('admin', 
  *       404:
  *         description: User not found
  */
-router.put('/:id', usersAdminCorsMiddleware, authMiddleware, requireRole('admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'COORDINATOR', 'manager'), async (req, res) => {
+router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -781,7 +797,7 @@ router.put('/:id', usersAdminCorsMiddleware, authMiddleware, requireRole('admin'
  *       404:
  *         description: User not found
  */
-router.delete('/:id', usersAdminCorsMiddleware, authMiddleware, requireRole('admin', 'SYSTEM_ADMIN'), async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -847,7 +863,7 @@ router.delete('/:id', usersAdminCorsMiddleware, authMiddleware, requireRole('adm
  *       404:
  *         description: User not found
  */
-router.post('/:id/activate', usersAdminCorsMiddleware, authMiddleware, requireRole('admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager'), async (req, res) => {
+router.post('/:id/activate', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -898,7 +914,7 @@ router.post('/:id/activate', usersAdminCorsMiddleware, authMiddleware, requireRo
  *       404:
  *         description: User not found
  */
-router.post('/:id/deactivate', usersAdminCorsMiddleware, authMiddleware, requireRole('admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager'), async (req, res) => {
+router.post('/:id/deactivate', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -949,7 +965,7 @@ router.post('/:id/deactivate', usersAdminCorsMiddleware, authMiddleware, require
  *       404:
  *         description: User not found
  */
-router.post('/:id/reset-password', usersAdminCorsMiddleware, authMiddleware, requireRole('admin', 'SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'manager'), async (req, res) => {
+router.post('/:id/reset-password', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -998,7 +1014,7 @@ router.post('/:id/reset-password', usersAdminCorsMiddleware, authMiddleware, req
  *       200:
  *         description: Users found
  */
-router.get('/role/:roleId', validateJWTSmart, async (req: any, res) => {
+router.get('/role/:roleId', requireAdmin, async (req: any, res) => {
   try {
     const { roleId } = req.params;
 
@@ -1041,7 +1057,7 @@ router.get('/role/:roleId', validateJWTSmart, async (req: any, res) => {
  *       200:
  *         description: Users found
  */
-router.get('/institution/:institutionId', validateJWTSmart, async (req: any, res) => {
+router.get('/institution/:institutionId', requireAdmin, async (req: any, res) => {
   try {
     const { institutionId } = req.params;
 

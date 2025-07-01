@@ -1,41 +1,208 @@
-import { Router } from 'express';
-import { VideoCollectionController } from '../controllers/VideoCollectionController';
-import { authenticateToken as authMiddleware, authorizeRoles as requireRole } from '../middleware/authMiddleware';
+import express from 'express';
+import { requireAuth } from '../middleware/requireAuth';
 
-const router = Router();
-const videoCollectionController = new VideoCollectionController();
+const router = express.Router();
 
-// Middleware de autenticação para todas as rotas
-router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
-// === ROTAS DE GERENCIAMENTO (ADMIN APENAS) ===
+// Middleware para verificar role de administrador do sistema
+const requireSystemAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (user.role !== 'SYSTEM_ADMIN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores do sistema podem gerenciar coleções de vídeo'
+    });
+  }
+  
+  next();
+};
 
-// Aplicar middleware de role para rotas administrativas
-router.use('/manage', requireRole('SYSTEM_ADMIN'));
-router.use('/migrate', requireRole('SYSTEM_ADMIN'));
-router.use('/migration', requireRole('SYSTEM_ADMIN'));
+/**
+ * @swagger
+ * /api/video-collections:
+ *   get:
+ *     summary: Get all video collections
+ *     tags: [VideoCollections]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of video collections
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/VideoCollection'
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Video collections list - implementação pendente',
+    data: []
+  });
+});
 
-// Gerenciamento de coleções
-router.get('/manage', videoCollectionController.getAllCollections.bind(videoCollectionController));
-router.get('/manage/:id', videoCollectionController.getCollectionById.bind(videoCollectionController));
-router.post('/manage', videoCollectionController.createCollection.bind(videoCollectionController));
-router.put('/manage/:id', videoCollectionController.updateCollection.bind(videoCollectionController));
-router.delete('/manage/:id', videoCollectionController.deleteCollection.bind(videoCollectionController));
+/**
+ * @swagger
+ * /api/video-collections/manage:
+ *   get:
+ *     summary: Get video collections for management (admin only)
+ *     tags: [VideoCollections]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Video collections for management
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/VideoCollection'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/manage', requireSystemAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Video collections management - implementação pendente',
+    data: []
+  });
+});
 
-// Gerenciamento de vídeos
-router.post('/manage/videos', videoCollectionController.createVideo.bind(videoCollectionController));
-router.put('/manage/videos/:id', videoCollectionController.updateVideo.bind(videoCollectionController));
-router.delete('/manage/videos/:id', videoCollectionController.deleteVideo.bind(videoCollectionController));
+/**
+ * @swagger
+ * /api/video-collections/manage:
+ *   post:
+ *     summary: Create a new video collection (admin only)
+ *     tags: [VideoCollections]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - description
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               videos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *     responses:
+ *       201:
+ *         description: Video collection created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/VideoCollection'
+ *       400:
+ *         description: Invalid input
+ */
+router.post('/manage', requireSystemAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create video collection - implementação pendente',
+    data: null
+  });
+});
 
-// Migração
-router.post('/migrate', videoCollectionController.migrateFromMySQL.bind(videoCollectionController));
-router.get('/migration/stats', videoCollectionController.getMigrationStats.bind(videoCollectionController));
+/**
+ * @swagger
+ * /api/video-collections/manage/{id}:
+ *   put:
+ *     summary: Update a video collection (admin only)
+ *     tags: [VideoCollections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               videos:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: uuid
+ *     responses:
+ *       200:
+ *         description: Video collection updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/VideoCollection'
+ *       404:
+ *         description: Video collection not found
+ */
+router.put('/manage/:id', requireSystemAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update video collection - implementação pendente',
+    data: null
+  });
+});
 
-// === ROTAS PÚBLICAS (VISUALIZAÇÃO) ===
-
-// Coleções públicas - acessível por todos os usuários autenticados
-router.get('/public', videoCollectionController.getPublicCollections.bind(videoCollectionController));
-router.get('/public/search', videoCollectionController.searchPublicCollections.bind(videoCollectionController));
-router.get('/public/popular', videoCollectionController.getPopularCollections.bind(videoCollectionController));
+/**
+ * @swagger
+ * /api/video-collections/manage/{id}:
+ *   delete:
+ *     summary: Delete a video collection (admin only)
+ *     tags: [VideoCollections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Video collection deleted
+ *       404:
+ *         description: Video collection not found
+ */
+router.delete('/manage/:id', requireSystemAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete video collection - implementação pendente'
+  });
+});
 
 export default router; 

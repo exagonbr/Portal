@@ -1,13 +1,10 @@
 import express from 'express';
-import {
-  optimizedAuthMiddleware,
-  requireAnyRole
-} from '../middleware/optimizedAuth.middleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(optimizedAuthMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
 /**
  * @swagger
@@ -48,6 +45,11 @@ router.use(optimizedAuthMiddleware);
  */
 router.get('/', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: [],
+    message: 'Content collections endpoint - implementation pending'
+  });
 });
 
 /**
@@ -77,6 +79,11 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: null,
+    message: 'Content collection by ID endpoint - implementation pending'
+  });
 });
 
 /**
@@ -124,8 +131,23 @@ router.get('/:id', async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
+router.post('/', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é SYSTEM_ADMIN ou TEACHER
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem criar coleções de conteúdo'
+    });
+  }
+
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    data: null,
+    message: 'Create content collection endpoint - implementation pending'
+  });
 });
 
 /**
@@ -178,8 +200,23 @@ router.post('/', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) =
  *       403:
  *         description: Not authorized to edit this collection
  */
-router.put('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
+router.put('/:id', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é SYSTEM_ADMIN ou TEACHER
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem atualizar coleções de conteúdo'
+    });
+  }
+
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: null,
+    message: 'Update content collection endpoint - implementation pending'
+  });
 });
 
 /**
@@ -205,15 +242,29 @@ router.put('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res)
  *       403:
  *         description: Not authorized to delete this collection
  */
-router.delete('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é SYSTEM_ADMIN ou TEACHER
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem deletar coleções de conteúdo'
+    });
+  }
+
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete content collection endpoint - implementation pending'
+  });
 });
 
 /**
  * @swagger
- * /api/content-collections/{id}/modules:
+ * /api/content-collections/{id}/videos:
  *   get:
- *     summary: Get modules for a content collection
+ *     summary: Get videos in a content collection
  *     tags: [Content Collections]
  *     security:
  *       - bearerAuth: []
@@ -226,25 +277,30 @@ router.delete('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, r
  *           format: uuid
  *     responses:
  *       200:
- *         description: Collection modules
+ *         description: List of videos in collection
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/CollectionModule'
+ *                 $ref: '#/components/schemas/Video'
  *       404:
  *         description: Collection not found
  */
-router.get('/:id/modules', async (req, res) => {
+router.get('/:id/videos', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: [],
+    message: 'Collection videos endpoint - implementation pending'
+  });
 });
 
 /**
  * @swagger
- * /api/content-collections/{id}/modules:
+ * /api/content-collections/{id}/videos:
  *   post:
- *     summary: Add a module to a content collection
+ *     summary: Add video to content collection
  *     tags: [Content Collections]
  *     security:
  *       - bearerAuth: []
@@ -262,114 +318,44 @@ router.get('/:id/modules', async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - name
- *               - order
+ *               - title
+ *               - video_url
  *             properties:
- *               name:
+ *               title:
  *                 type: string
  *               description:
  *                 type: string
- *               cover_image:
+ *               video_url:
  *                 type: string
- *               video_ids:
- *                 type: array
- *                 items:
- *                   type: string
- *               order:
+ *               duration:
+ *                 type: integer
+ *               order_index:
  *                 type: integer
  *     responses:
  *       201:
- *         description: Module added to collection
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CollectionModule'
- *       400:
- *         description: Invalid input
+ *         description: Video added to collection
  *       404:
  *         description: Collection not found
  *       403:
  *         description: Not authorized to modify this collection
  */
-router.post('/:id/modules', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
-  // Implementation will be added in the controller
-});
+router.post('/:id/videos', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é SYSTEM_ADMIN ou TEACHER
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem adicionar vídeos'
+    });
+  }
 
-/**
- * @swagger
- * /api/content-collections/modules/{moduleId}:
- *   put:
- *     summary: Update a collection module
- *     tags: [Content Collections]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: moduleId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *               cover_image:
- *                 type: string
- *               video_ids:
- *                 type: array
- *                 items:
- *                   type: string
- *               order:
- *                 type: integer
- *     responses:
- *       200:
- *         description: Module updated
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/CollectionModule'
- *       404:
- *         description: Module not found
- *       403:
- *         description: Not authorized to modify this module
- */
-router.put('/modules/:moduleId', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
   // Implementation will be added in the controller
-});
-
-/**
- * @swagger
- * /api/content-collections/modules/{moduleId}:
- *   delete:
- *     summary: Delete a collection module
- *     tags: [Content Collections]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: moduleId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Module deleted
- *       404:
- *         description: Module not found
- *       403:
- *         description: Not authorized to delete this module
- */
-router.delete('/modules/:moduleId', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), async (req, res) => {
-  // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    data: null,
+    message: 'Add video to collection endpoint - implementation pending'
+  });
 });
 
 export default router;

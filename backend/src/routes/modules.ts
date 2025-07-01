@@ -1,10 +1,39 @@
 import express from 'express';
-import { authenticateToken as authMiddleware, authorizeRoles as requireRole, authorizeInstitution as requireInstitution } from '../middleware/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de administrador/professor
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem gerenciar módulos'
+    });
+  }
+  
+  next();
+};
+
+// Middleware para verificar instituição (implementação básica)
+const requireInstitution = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  // Verificar se usuário tem institutionId
+  if (!user.institutionId && user.role !== 'SYSTEM_ADMIN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Usuário deve estar associado a uma instituição'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -35,6 +64,11 @@ router.use(authMiddleware);
  */
 router.get('/', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Modules list - implementação pendente',
+    data: []
+  });
 });
 
 /**
@@ -64,6 +98,11 @@ router.get('/', requireInstitution, async (req, res) => {
  */
 router.get('/:id', requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Module by ID - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -81,12 +120,12 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - name
+ *               - title
  *               - description
  *               - course_id
  *               - order
  *             properties:
- *               name:
+ *               title:
  *                 type: string
  *               description:
  *                 type: string
@@ -106,8 +145,13 @@ router.get('/:id', requireInstitution, async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.post('/', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create module - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -132,7 +176,7 @@ router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               title:
  *                 type: string
  *               description:
  *                 type: string
@@ -149,8 +193,13 @@ router.post('/', requireRole('admin', 'teacher'), requireInstitution, async (req
  *       404:
  *         description: Module not found
  */
-router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.put('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update module - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -174,46 +223,19 @@ router.put('/:id', requireRole('admin', 'teacher'), requireInstitution, async (r
  *       404:
  *         description: Module not found
  */
-router.delete('/:id', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.delete('/:id', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
-});
-
-/**
- * @swagger
- * /api/modules/{id}/lessons:
- *   get:
- *     summary: Get all lessons for a module
- *     tags: [Modules, Lessons]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: List of lessons
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Lesson'
- *       404:
- *         description: Module not found
- */
-router.get('/:id/lessons', requireInstitution, async (req, res) => {
-  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete module - implementação pendente'
+  });
 });
 
 /**
  * @swagger
  * /api/modules/reorder:
  *   post:
- *     summary: Reorder modules in a course
+ *     summary: Reorder modules within a course
  *     tags: [Modules]
  *     security:
  *       - bearerAuth: []
@@ -224,34 +246,28 @@ router.get('/:id/lessons', requireInstitution, async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - course_id
- *               - moduleOrders
+ *               - modules
  *             properties:
- *               course_id:
- *                 type: string
- *                 format: uuid
- *               moduleOrders:
+ *               modules:
  *                 type: array
  *                 items:
  *                   type: object
- *                   required:
- *                     - id
- *                     - order
  *                   properties:
  *                     id:
  *                       type: string
  *                       format: uuid
  *                     order:
  *                       type: integer
- *                       minimum: 0
  *     responses:
  *       200:
  *         description: Modules reordered successfully
- *       400:
- *         description: Invalid input
  */
-router.post('/reorder', requireRole('admin', 'teacher'), requireInstitution, async (req, res) => {
+router.post('/reorder', requireTeacherOrAdmin, requireInstitution, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Reorder modules - implementação pendente'
+  });
 });
 
 export default router;

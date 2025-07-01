@@ -1,10 +1,38 @@
 import express from 'express';
-import { authenticateToken as authMiddleware, authorizeRoles as requireRole } from '../middleware/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de administrador/professor
+const requireTeacherOrAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem gerenciar quizzes'
+    });
+  }
+  
+  next();
+};
+
+// Middleware para verificar role de estudante
+const requireStudent = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['STUDENT'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas estudantes podem realizar quizzes'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -21,12 +49,6 @@ router.use(authMiddleware);
  *           type: string
  *           format: uuid
  *         description: Filter quizzes by course ID
- *       - in: query
- *         name: module_id
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Filter quizzes by module ID
  *     responses:
  *       200:
  *         description: List of quizzes
@@ -41,6 +63,11 @@ router.use(authMiddleware);
  */
 router.get('/', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Quizzes list - implementação pendente',
+    data: []
+  });
 });
 
 /**
@@ -70,6 +97,11 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Quiz by ID - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -88,33 +120,21 @@ router.get('/:id', async (req, res) => {
  *             type: object
  *             required:
  *               - title
- *               - passing_score
+ *               - description
  *               - course_id
+ *               - questions
  *             properties:
  *               title:
  *                 type: string
  *               description:
  *                 type: string
- *               time_limit:
- *                 type: integer
- *                 description: Time limit in minutes
- *               passing_score:
- *                 type: integer
- *                 minimum: 0
- *                 maximum: 100
- *               attempts:
- *                 type: integer
- *                 minimum: 1
- *                 default: 1
- *               is_graded:
- *                 type: boolean
- *                 default: true
  *               course_id:
  *                 type: string
  *                 format: uuid
- *               module_id:
- *                 type: string
- *                 format: uuid
+ *               questions:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/QuizQuestion'
  *     responses:
  *       201:
  *         description: Quiz created
@@ -125,8 +145,13 @@ router.get('/:id', async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireRole('admin', 'teacher'), async (req, res) => {
+router.post('/', requireTeacherOrAdmin, async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Create quiz - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -155,17 +180,10 @@ router.post('/', requireRole('admin', 'teacher'), async (req, res) => {
  *                 type: string
  *               description:
  *                 type: string
- *               time_limit:
- *                 type: integer
- *               passing_score:
- *                 type: integer
- *                 minimum: 0
- *                 maximum: 100
- *               attempts:
- *                 type: integer
- *                 minimum: 1
- *               is_graded:
- *                 type: boolean
+ *               questions:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/QuizQuestion'
  *     responses:
  *       200:
  *         description: Quiz updated
@@ -176,8 +194,13 @@ router.post('/', requireRole('admin', 'teacher'), async (req, res) => {
  *       404:
  *         description: Quiz not found
  */
-router.put('/:id', requireRole('admin', 'teacher'), async (req, res) => {
+router.put('/:id', requireTeacherOrAdmin, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Update quiz - implementação pendente',
+    data: null
+  });
 });
 
 /**
@@ -201,39 +224,12 @@ router.put('/:id', requireRole('admin', 'teacher'), async (req, res) => {
  *       404:
  *         description: Quiz not found
  */
-router.delete('/:id', requireRole('admin', 'teacher'), async (req, res) => {
+router.delete('/:id', requireTeacherOrAdmin, async (req, res) => {
   // Implementation will be added in the controller
-});
-
-/**
- * @swagger
- * /api/quizzes/{id}/questions:
- *   get:
- *     summary: Get questions for a quiz
- *     tags: [Quizzes]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Quiz questions
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Question'
- *       404:
- *         description: Quiz not found
- */
-router.get('/:id/questions', async (req, res) => {
-  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete quiz - implementação pendente'
+  });
 });
 
 /**
@@ -259,19 +255,22 @@ router.get('/:id/questions', async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/QuizAttempt'
  *       400:
- *         description: Maximum attempts reached or quiz not available
- *       404:
- *         description: Quiz not found
+ *         description: Invalid input
  */
-router.post('/:id/attempts', requireRole('student'), async (req, res) => {
+router.post('/:id/attempts', requireStudent, async (req, res) => {
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Start quiz attempt - implementação pendente',
+    data: null
+  });
 });
 
 /**
  * @swagger
  * /api/quizzes/{id}/attempts/{attemptId}/submit:
  *   post:
- *     summary: Submit quiz answers
+ *     summary: Submit quiz attempt
  *     tags: [Quizzes]
  *     security:
  *       - bearerAuth: []
@@ -298,22 +297,32 @@ router.post('/:id/attempts', requireRole('student'), async (req, res) => {
  *               - answers
  *             properties:
  *               answers:
- *                 type: object
- *                 description: Question ID to answer mapping
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     question_id:
+ *                       type: string
+ *                       format: uuid
+ *                     answer:
+ *                       type: string
  *     responses:
  *       200:
- *         description: Quiz submitted and graded
+ *         description: Quiz attempt submitted
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/QuizAttempt'
+ *               $ref: '#/components/schemas/QuizResult'
  *       400:
- *         description: Invalid answers or attempt already completed
- *       404:
- *         description: Quiz or attempt not found
+ *         description: Invalid input
  */
-router.post('/:id/attempts/:attemptId/submit', requireRole('student'), async (req, res) => {
+router.post('/:id/attempts/:attemptId/submit', requireStudent, async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Submit quiz attempt - implementação pendente',
+    data: null
+  });
 });
 
 export default router;

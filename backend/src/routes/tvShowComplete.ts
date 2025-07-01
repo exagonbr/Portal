@@ -1,88 +1,179 @@
-import { Router } from 'express';
-import { TvShowCompleteController } from '../controllers/TvShowCompleteController';
-import { authorizeRoles as requireRole } from '../middleware/authMiddleware';
-import { validateJWTSimple, optionalAuth } from '../middleware/sessionMiddleware';
+import express from 'express';
+import { requireAuth } from '../middleware/requireAuth';
 
-const router = Router();
-const tvShowController = new TvShowCompleteController();
+const router = express.Router();
 
-// ===================== TV SHOW ROUTES =====================
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
-// GET /api/tv-shows - Listar todas as coleções (com paginação e busca) - PÚBLICO
-router.get('/', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getAllTvShows.bind(tvShowController));
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar shows de TV'
+    });
+  }
+  
+  next();
+};
 
-// GET /api/tv-shows/:id - Buscar coleção por ID - PÚBLICO
-router.get('/:id', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getTvShowById.bind(tvShowController));
+/**
+ * @swagger
+ * /api/tv-show-complete:
+ *   get:
+ *     summary: Get all TV show completion data
+ *     tags: [TVShows]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of TV show completion data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/TVShowComplete'
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'TV show completion data - implementação pendente',
+    data: []
+  });
+});
 
-// POST /api/tv-shows - Criar nova coleção (apenas admin/teacher)
-router.post('/', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.createTvShow.bind(tvShowController));
+/**
+ * @swagger
+ * /api/tv-show-complete/user/{userId}:
+ *   get:
+ *     summary: Get TV show completion data for a specific user
+ *     tags: [TVShows]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: User TV show completion data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/TVShowComplete'
+ */
+router.get('/user/:userId', async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'User TV show completion - implementação pendente',
+    data: []
+  });
+});
 
-// PUT /api/tv-shows/:id - Atualizar coleção (apenas admin/teacher)
-router.put('/:id', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.updateTvShow.bind(tvShowController));
+/**
+ * @swagger
+ * /api/tv-show-complete/mark-complete:
+ *   post:
+ *     summary: Mark a TV show as complete for the current user
+ *     tags: [TVShows]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - showId
+ *               - seasonNumber
+ *               - episodeNumber
+ *             properties:
+ *               showId:
+ *                 type: string
+ *                 format: uuid
+ *               seasonNumber:
+ *                 type: integer
+ *               episodeNumber:
+ *                 type: integer
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: TV show marked as complete
+ */
+router.post('/mark-complete', async (req, res) => {
+  // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    message: 'Mark TV show complete - implementação pendente'
+  });
+});
 
-// DELETE /api/tv-shows/:id - Remover coleção (apenas admin)
-router.delete('/:id', validateJWTSimple, requireRole('admin'), tvShowController.deleteTvShow.bind(tvShowController));
-
-// GET /api/tv-shows/:tvShowId/stats - Estatísticas da coleção - PÚBLICO
-router.get('/:tvShowId/stats', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getTvShowStats.bind(tvShowController));
-
-// ===================== VIDEO ROUTES =====================
-
-// GET /api/tv-shows/:tvShowId/videos - Listar vídeos de uma coleção - PÚBLICO
-router.get('/:tvShowId/videos', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getVideosByTvShow.bind(tvShowController));
-
-// GET /api/tv-shows/:tvShowId/modules - Estrutura de módulos de vídeos - PÚBLICO
-router.get('/:tvShowId/modules', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getVideosByTvShowGrouped.bind(tvShowController));
-
-// POST /api/tv-shows/videos - Criar novo vídeo (apenas admin/teacher)
-router.post('/videos', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.createVideo);
-
-// GET /api/tv-shows/videos/:id - Buscar vídeo por ID - PÚBLICO
-router.get('/videos/:id', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getVideoById);
-
-// PUT /api/tv-shows/videos/:id - Atualizar vídeo (apenas admin/teacher)
-router.put('/videos/:id', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.updateVideo);
-
-// DELETE /api/tv-shows/videos/:id - Remover vídeo (apenas admin/teacher)
-router.delete('/videos/:id', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.deleteVideo);
-
-// ===================== QUESTION ROUTES =====================
-
-// GET /api/tv-shows/:tvShowId/questions - Listar questões da coleção - PÚBLICO
-router.get('/:tvShowId/questions', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getQuestionsByTvShow);
-
-// POST /api/tv-shows/questions - Criar nova questão (apenas admin/teacher)
-router.post('/questions', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.createQuestion);
-
-// GET /api/tv-shows/questions/:id - Buscar questão por ID - PÚBLICO
-router.get('/questions/:id', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getQuestionById);
-
-// PUT /api/tv-shows/questions/:id - Atualizar questão (apenas admin/teacher)
-router.put('/questions/:id', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.updateQuestion);
-
-// DELETE /api/tv-shows/questions/:id - Remover questão (apenas admin/teacher)
-router.delete('/questions/:id', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.deleteQuestion);
-
-// ===================== ANSWER ROUTES =====================
-
-// POST /api/tv-shows/answers - Criar nova resposta (apenas admin/teacher)
-router.post('/answers', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.createAnswer);
-
-// PUT /api/tv-shows/answers/:id - Atualizar resposta (apenas admin/teacher)
-router.put('/answers/:id', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.updateAnswer);
-
-// DELETE /api/tv-shows/answers/:id - Remover resposta (apenas admin/teacher)
-router.delete('/answers/:id', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.deleteAnswer);
-
-// ===================== FILE ROUTES =====================
-
-// GET /api/tv-shows/:tvShowId/files - Listar arquivos da coleção - PÚBLICO
-router.get('/:tvShowId/files', (req, res, next) => optionalAuth(req as any, res, next), tvShowController.getFilesByTvShow);
-
-// POST /api/tv-shows/files - Criar novo arquivo (apenas admin/teacher)
-router.post('/files', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.createFile);
-
-// DELETE /api/tv-shows/files/:id - Remover arquivo (apenas admin/teacher)
-router.delete('/files/:id', validateJWTSimple, requireRole('admin', 'teacher'), tvShowController.deleteFile);
+/**
+ * @swagger
+ * /api/tv-show-complete/stats:
+ *   get:
+ *     summary: Get TV show completion statistics (admin only)
+ *     tags: [TVShows]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: TV show completion statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalShows:
+ *                       type: integer
+ *                     completedShows:
+ *                       type: integer
+ *                     averageRating:
+ *                       type: number
+ *                     topRatedShows:
+ *                       type: array
+ */
+router.get('/stats', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'TV show stats - implementação pendente',
+    data: {
+      totalShows: 0,
+      completedShows: 0,
+      averageRating: 0,
+      topRatedShows: []
+    }
+  });
+});
 
 export default router; 

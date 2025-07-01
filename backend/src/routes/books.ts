@@ -1,14 +1,10 @@
 import express from 'express';
-import {
-  optimizedAuthMiddleware,
-  requireAnyRole,
-  requirePermission
-} from '../middleware/optimizedAuth.middleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(optimizedAuthMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
 /**
  * @swagger
@@ -37,8 +33,13 @@ router.use(optimizedAuthMiddleware);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', requirePermission('content:read'), async (req, res) => {
+router.get('/', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: [],
+    message: 'Books endpoint - implementation pending'
+  });
 });
 
 /**
@@ -66,8 +67,13 @@ router.get('/', requirePermission('content:read'), async (req, res) => {
  *       404:
  *         description: Book not found
  */
-router.get('/:id', requirePermission('content:read'), async (req, res) => {
+router.get('/:id', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: null,
+    message: 'Book by ID endpoint - implementation pending'
+  });
 });
 
 /**
@@ -113,8 +119,23 @@ router.get('/:id', requirePermission('content:read'), async (req, res) => {
  *       400:
  *         description: Invalid input
  */
-router.post('/', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermission('content:create'), async (req, res) => {
+router.post('/', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é SYSTEM_ADMIN ou TEACHER
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem criar livros'
+    });
+  }
+
   // Implementation will be added in the controller
+  res.status(201).json({
+    success: true,
+    data: null,
+    message: 'Create book endpoint - implementation pending'
+  });
 });
 
 /**
@@ -158,8 +179,23 @@ router.post('/', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermission(
  *       404:
  *         description: Book not found
  */
-router.put('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermission('content:update'), async (req, res) => {
+router.put('/:id', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é SYSTEM_ADMIN ou TEACHER
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem atualizar livros'
+    });
+  }
+
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: null,
+    message: 'Update book endpoint - implementation pending'
+  });
 });
 
 /**
@@ -183,8 +219,22 @@ router.put('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermissio
  *       404:
  *         description: Book not found
  */
-router.delete('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermission('content:delete'), async (req, res) => {
+router.delete('/:id', async (req, res) => {
+  const user = (req as any).user;
+  
+  // Verificar se é SYSTEM_ADMIN ou TEACHER
+  if (!['SYSTEM_ADMIN', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem deletar livros'
+    });
+  }
+
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Delete book endpoint - implementation pending'
+  });
 });
 
 /**
@@ -204,7 +254,7 @@ router.delete('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermis
  *           format: uuid
  *     responses:
  *       200:
- *         description: List of annotations
+ *         description: Book annotations
  *         content:
  *           application/json:
  *             schema:
@@ -214,8 +264,13 @@ router.delete('/:id', requireAnyRole(['SYSTEM_ADMIN', 'TEACHER']), requirePermis
  *       404:
  *         description: Book not found
  */
-router.get('/:id/annotations', requirePermission('content:read'), async (req, res) => {
+router.get('/:id/annotations', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: [],
+    message: 'Book annotations endpoint - implementation pending'
+  });
 });
 
 /**
@@ -245,8 +300,13 @@ router.get('/:id/annotations', requirePermission('content:read'), async (req, re
  *       404:
  *         description: Book not found
  */
-router.get('/:id/highlights', requirePermission('content:read'), async (req, res) => {
+router.get('/:id/highlights', async (req, res) => {
   // Implementation will be added in the controller
+  res.json({
+    success: true,
+    data: [],
+    message: 'Book highlights endpoint - implementation pending'
+  });
 });
 
 export default router;

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { CertificateCreateRequest, CertificateUpdateRequest } from '../models/Certificate';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = Router();
 
@@ -18,8 +19,22 @@ const initDB = () => {
   return db;
 };
 
-// GET /api/certificates - Listar certificados com filtros e paginação
-router.get('/', async (req: Request, res: Response) => {
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores e professores podem gerenciar certificados'
+    });
+  }
+  
+  next();
+};
+
+// GET /api/certificates - Listar certificados com filtros e paginação (PROTEGIDO)
+router.get('/', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
     const database = initDB();
     
@@ -150,7 +165,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/certificates/search - Buscar certificados para validação pública (sem autenticação)
+// GET /api/certificates/search - Buscar certificados para validação pública (SEM AUTENTICAÇÃO)
 router.get('/search', async (req: Request, res: Response) => {
   try {
     const database = initDB();
@@ -190,86 +205,116 @@ router.get('/search', async (req: Request, res: Response) => {
 
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-    // Query para buscar certificados com informações do usuário
+    // Query para buscar certificados com informações do usuário (dados públicos apenas)
     const query = `
       SELECT
         c.id,
         c.date_created,
-        c.path,
         c.score,
-        c.document,
         c.license_code,
         c.tv_show_name,
-        u.id as user_id,
-        u.full_name,
-        u.email
+        -- Mascarar dados sensíveis
+        CONCAT(LEFT(c.document, 3), '.***.***-**') as document_masked
       FROM certificate c
-      LEFT JOIN users u ON c.user_id = u.id
       ${whereClause}
       ORDER BY c.date_created DESC
-      LIMIT 50
+      LIMIT 10
     `;
 
     const result = await database.query(query, queryParams);
 
-    // Mapear resultados para incluir informações do usuário
-    const certificates = result.rows.map(row => ({
-      id: row.id,
-      license_code: row.license_code,
-      document: row.document,
-      tv_show_name: row.tv_show_name,
-      score: row.score,
-      date_created: row.date_created,
-      path: row.path,
-      user: {
-        id: row.user_id,
-        full_name: row.full_name,
-        email: row.email
-      }
-    }));
-
-    return res.json({
+    res.json({
       success: true,
-      data: certificates,
-      message: certificates.length > 0
-        ? `${certificates.length} certificado(s) encontrado(s)`
-        : 'Nenhum certificado encontrado'
+      data: result.rows,
+      message: result.rows.length > 0 ? 'Certificados encontrados' : 'Nenhum certificado encontrado'
     });
 
   } catch (error) {
-    console.log('Erro ao buscar certificados:', error);
-    return res.status(500).json({
+    console.log('Erro ao buscar certificados públicos:', error);
+    res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
   }
 });
 
-// GET /api/certificates/:id - Buscar certificado por ID
-router.get('/:id', async (req: Request, res: Response) => {
+// POST /api/certificates - Criar certificado (PROTEGIDO)
+router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const database = initDB();
+    const data: CertificateCreateRequest = req.body;
+
+    // Validações básicas
+    if (!data.user_id || !data.tv_show_id || !data.score) {
+      return res.status(400).json({
+        success: false,
+        message: 'Campos obrigatórios: user_id, tv_show_id, score'
+      });
+    }
+
+    // Gerar license_code único se não fornecido
+    if (!data.license_code) {
+      data.license_code = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    }
+
+    const query = `
+      INSERT INTO certificate (
+        user_id, tv_show_id, score, document, license_code, 
+        tv_show_name, path, recreate, date_created, last_updated, version
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), 1
+      ) RETURNING *
+    `;
+
+    const values = [
+      data.user_id,
+      data.tv_show_id,
+      data.score,
+      data.document || '',
+      data.license_code,
+      data.tv_show_name || '',
+      data.path || '',
+      data.recreate || false
+    ];
+
+    const result = await database.query(query, values);
+
+    res.status(201).json({
+      success: true,
+      data: result.rows[0],
+      message: 'Certificado criado com sucesso'
+    });
+
+  } catch (error) {
+    console.log('Erro ao criar certificado:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
+// GET /api/certificates/:id - Buscar certificado por ID (PROTEGIDO)
+router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
     const database = initDB();
     const { id } = req.params;
+    const user = (req as any).user;
 
-    const query = `
-      SELECT 
-        id,
-        version,
-        date_created,
-        last_updated,
-        path,
-        score,
-        tv_show_id,
-        user_id,
-        document,
-        license_code,
-        tv_show_name,
-        recreate
-      FROM certificate 
-      WHERE id = $1
+    // Admins podem ver qualquer certificado, usuários normais apenas os próprios
+    let query = `
+      SELECT * FROM certificate WHERE id = $1
     `;
+    
+    const queryParams = [id];
 
-    const result = await database.query(query, [Number(id)]);
+    // Se não é admin, adicionar filtro por user_id
+    if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER', 'TEACHER'].includes(user.role)) {
+      query += ` AND user_id = $2`;
+      queryParams.push(user.id);
+    }
+
+    const result = await database.query(query, queryParams);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -278,99 +323,31 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    return res.json({
+    res.json({
       success: true,
       data: result.rows[0]
     });
 
   } catch (error) {
     console.log('Erro ao buscar certificado:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
   }
 });
 
-// POST /api/certificates - Criar novo certificado
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const database = initDB();
-    const {
-      user_id,
-      tv_show_id,
-      path,
-      score,
-      document,
-      license_code,
-      tv_show_name,
-      recreate = true
-    }: CertificateCreateRequest = req.body;
-
-    const query = `
-      INSERT INTO certificate (
-        date_created,
-        user_id,
-        tv_show_id,
-        path,
-        score,
-        document,
-        license_code,
-        tv_show_name,
-        recreate
-      ) VALUES (
-        NOW(),
-        $1, $2, $3, $4, $5, $6, $7, $8
-      ) RETURNING *
-    `;
-
-    const values = [
-      user_id || null,
-      tv_show_id || null,
-      path || null,
-      score || null,
-      document || null,
-      license_code || null,
-      tv_show_name || null,
-      recreate
-    ];
-
-    const result = await database.query(query, values);
-
-    return res.status(201).json({
-      success: true,
-      data: result.rows[0],
-      message: 'Certificado criado com sucesso'
-    });
-
-  } catch (error) {
-    console.log('Erro ao criar certificado:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-});
-
-// PUT /api/certificates/:id - Atualizar certificado
-router.put('/:id', async (req: Request, res: Response) => {
+// PUT /api/certificates/:id - Atualizar certificado (PROTEGIDO)
+router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
     const database = initDB();
     const { id } = req.params;
-    const {
-      path,
-      score,
-      document,
-      license_code,
-      tv_show_name,
-      recreate
-    }: CertificateUpdateRequest = req.body;
+    const data: CertificateUpdateRequest = req.body;
 
-    // Verificar se o certificado existe
-    const checkQuery = 'SELECT id FROM certificate WHERE id = $1';
-    const checkResult = await database.query(checkQuery, [Number(id)]);
-
-    if (checkResult.rows.length === 0) {
+    // Verificar se certificado existe
+    const existsResult = await database.query('SELECT id FROM certificate WHERE id = $1', [id]);
+    
+    if (existsResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Certificado não encontrado'
@@ -379,60 +356,58 @@ router.put('/:id', async (req: Request, res: Response) => {
 
     // Construir query de update dinamicamente
     const updateFields: string[] = [];
-    const updateValues: any[] = [];
+    const queryParams: any[] = [];
     let paramIndex = 1;
 
-    if (path !== undefined) {
-      updateFields.push(`path = $${paramIndex++}`);
-      updateValues.push(path);
-    }
-
-    if (score !== undefined) {
+    if (data.score !== undefined) {
       updateFields.push(`score = $${paramIndex++}`);
-      updateValues.push(score);
+      queryParams.push(data.score);
     }
 
-    if (document !== undefined) {
+    if (data.document !== undefined) {
       updateFields.push(`document = $${paramIndex++}`);
-      updateValues.push(document);
+      queryParams.push(data.document);
     }
 
-    if (license_code !== undefined) {
-      updateFields.push(`license_code = $${paramIndex++}`);
-      updateValues.push(license_code);
-    }
-
-    if (tv_show_name !== undefined) {
+    if (data.tv_show_name !== undefined) {
       updateFields.push(`tv_show_name = $${paramIndex++}`);
-      updateValues.push(tv_show_name);
+      queryParams.push(data.tv_show_name);
     }
 
-    if (recreate !== undefined) {
+    if (data.path !== undefined) {
+      updateFields.push(`path = $${paramIndex++}`);
+      queryParams.push(data.path);
+    }
+
+    if (data.recreate !== undefined) {
       updateFields.push(`recreate = $${paramIndex++}`);
-      updateValues.push(recreate);
+      queryParams.push(data.recreate);
     }
 
     if (updateFields.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Nenhum campo para atualizar foi fornecido'
+        message: 'Nenhum campo para atualizar'
       });
     }
 
-    // Adicionar last_updated
+    // Adicionar campos automáticos
     updateFields.push(`last_updated = NOW()`);
-    updateValues.push(Number(id));
+    updateFields.push(`version = version + 1`);
 
-    const updateQuery = `
+    // Adicionar ID como último parâmetro
+    queryParams.push(id);
+
+    const query = `
       UPDATE certificate 
       SET ${updateFields.join(', ')}
       WHERE id = $${paramIndex}
       RETURNING *
     `;
 
-    const result = await database.query(updateQuery, updateValues);
+    const result = await database.query(query, queryParams);
 
-    return res.json({
+    res.json({
       success: true,
       data: result.rows[0],
       message: 'Certificado atualizado com sucesso'
@@ -440,42 +415,36 @@ router.put('/:id', async (req: Request, res: Response) => {
 
   } catch (error) {
     console.log('Erro ao atualizar certificado:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
   }
 });
 
-// DELETE /api/certificates/:id - Excluir certificado
-router.delete('/:id', async (req: Request, res: Response) => {
+// DELETE /api/certificates/:id - Deletar certificado (PROTEGIDO)
+router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
     const database = initDB();
     const { id } = req.params;
 
-    // Verificar se o certificado existe
-    const checkQuery = 'SELECT id FROM certificate WHERE id = $1';
-    const checkResult = await database.query(checkQuery, [Number(id)]);
+    const result = await database.query('DELETE FROM certificate WHERE id = $1 RETURNING id', [id]);
 
-    if (checkResult.rows.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Certificado não encontrado'
       });
     }
 
-    const deleteQuery = 'DELETE FROM certificate WHERE id = $1 RETURNING id';
-    const result = await database.query(deleteQuery, [Number(id)]);
-
-    return res.json({
+    res.json({
       success: true,
-      message: 'Certificado excluído com sucesso',
-      data: { id: result.rows[0].id }
+      message: 'Certificado deletado com sucesso'
     });
 
   } catch (error) {
-    console.log('Erro ao excluir certificado:', error);
-    return res.status(500).json({
+    console.log('Erro ao deletar certificado:', error);
+    res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });

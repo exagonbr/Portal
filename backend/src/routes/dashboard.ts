@@ -13,8 +13,26 @@ import {
   validateJWTSmart,
   requireRoleSmart
 } from '../middleware/sessionMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
+
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem acessar o dashboard'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -689,5 +707,86 @@ router.get('/health',
     }
   }
 );
+
+/**
+ * @swagger
+ * /api/dashboard/stats:
+ *   get:
+ *     summary: Get dashboard statistics
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/stats', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Dashboard stats - implementação pendente',
+    data: {
+      totalUsers: 0,
+      totalCourses: 0,
+      totalInstitutions: 0,
+      activeUsers: 0
+    }
+  });
+});
+
+/**
+ * @swagger
+ * /api/dashboard/overview:
+ *   get:
+ *     summary: Get dashboard overview
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard overview
+ */
+router.get('/overview', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Dashboard overview - implementação pendente',
+    data: {}
+  });
+});
+
+/**
+ * @swagger
+ * /api/dashboard/analytics:
+ *   get:
+ *     summary: Get dashboard analytics
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard analytics
+ */
+router.get('/analytics', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Dashboard analytics - implementação pendente',
+    data: {}
+  });
+});
 
 export default router; 

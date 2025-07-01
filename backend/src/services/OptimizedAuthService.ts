@@ -258,20 +258,19 @@ export class OptimizedAuthService {
    * Gerar Access Token JWT padrão
    */
   private static generateAccessToken(user: any, sessionId: string): string {
-    const tokenPayload: Omit<AccessTokenPayload, 'iat' | 'exp'> = {
+    const tokenPayload: AccessTokenPayload = {
       userId: user.id,
       email: user.email,
       name: user.name,
-      role: user.role_name || 'STUDENT',
+      role: (user.role_name || 'STUDENT').toUpperCase(),
       permissions: user.permissions || [],
       institutionId: user.institution_id,
-      sessionId,
-      type: 'access'
+      sessionId
     };
 
-    return jwt.sign(tokenPayload, JWT_CONFIG.JWT_SECRET, {
-      expiresIn: JWT_CONFIG.TOKEN_EXPIRY,
+    return jwt.sign(tokenPayload, JWT_CONFIG.SECRET, {
       algorithm: JWT_CONFIG.ALGORITHM,
+      expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN,
       issuer: JWT_CONFIG.ISSUER,
       audience: JWT_CONFIG.AUDIENCE
     });
@@ -281,15 +280,15 @@ export class OptimizedAuthService {
    * Gerar Refresh Token JWT padrão
    */
   private static generateRefreshToken(userId: string, sessionId: string): string {
-    const tokenPayload: Omit<RefreshTokenPayload, 'iat' | 'exp'> = {
+    const tokenPayload: RefreshTokenPayload = {
       userId,
       sessionId,
       type: 'refresh'
     };
 
-    return jwt.sign(tokenPayload, JWT_CONFIG.JWT_SECRET, {
-      expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRY,
+    return jwt.sign(tokenPayload, JWT_CONFIG.SECRET, {
       algorithm: JWT_CONFIG.ALGORITHM,
+      expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRES_IN,
       issuer: JWT_CONFIG.ISSUER,
       audience: JWT_CONFIG.AUDIENCE
     });
@@ -300,15 +299,11 @@ export class OptimizedAuthService {
    */
   static async validateAccessToken(token: string): Promise<AccessTokenPayload | null> {
     try {
-      const decoded = jwt.verify(token, JWT_CONFIG.JWT_SECRET, {
+      const decoded = jwt.verify(token, JWT_CONFIG.SECRET, {
         algorithms: [JWT_CONFIG.ALGORITHM],
         issuer: JWT_CONFIG.ISSUER,
         audience: JWT_CONFIG.AUDIENCE
       }) as AccessTokenPayload;
-      
-      if (decoded.type !== 'access') {
-        throw new Error('Token type inválido');
-      }
 
       // Verificar se o usuário ainda existe e está ativo
       const user = await db('users')
@@ -331,7 +326,7 @@ export class OptimizedAuthService {
    */
   static async validateRefreshToken(token: string): Promise<RefreshTokenPayload | null> {
     try {
-      const decoded = jwt.verify(token, JWT_CONFIG.JWT_SECRET, {
+      const decoded = jwt.verify(token, JWT_CONFIG.SECRET, {
         algorithms: [JWT_CONFIG.ALGORITHM],
         issuer: JWT_CONFIG.ISSUER,
         audience: JWT_CONFIG.AUDIENCE
@@ -375,21 +370,7 @@ export class OptimizedAuthService {
         return null;
       }
 
-      const newAccessToken = this.generateAccessToken({
-        userId: user.id,
-        id: user.id,
-        uuid: user.uuid,
-        email: user.email,
-        name: user.name,
-        role: (user.role_name || 'STUDENT').toUpperCase(),
-        role_id: user.role_id,
-        role_name: (user.role_name || 'STUDENT').toUpperCase(),
-        role_slug: user.role_slug || 'student',
-        permissions: user.permissions,
-        institutionId: user.institution_id,
-        institutionName: user.institution_name || '',
-        sessionId: decoded.sessionId
-      });
+      const newAccessToken = this.generateAccessToken(user, decoded.sessionId);
 
       return {
         token: newAccessToken,

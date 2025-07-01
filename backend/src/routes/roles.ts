@@ -1,12 +1,41 @@
 import express from 'express';
-import { authenticateToken as authMiddleware, authorizeRoles as requireRole } from '../middleware/authMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 import { RoleController } from '../controllers/refactored/RoleController';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
+
 const roleController = new RoleController();
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar roles'
+    });
+  }
+  
+  next();
+};
+
+// Middleware para verificar role de sistema admin
+const requireSystemAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (user.role !== 'SYSTEM_ADMIN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores do sistema podem criar/editar roles'
+    });
+  }
+  
+  next();
+};
 
 /**
  * @swagger
@@ -74,7 +103,7 @@ const roleController = new RoleController();
  *       403:
  *         description: Forbidden
  */
-router.get('/', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleController.getAll);
+router.get('/', requireAdmin, roleController.getAll);
 
 /**
  * @swagger
@@ -152,7 +181,7 @@ router.get('/', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleControll
  *                     totalPages:
  *                       type: integer
  */
-router.get('/search', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleController.search);
+router.get('/search', requireAdmin, roleController.search);
 
 /**
  * @swagger
@@ -179,7 +208,7 @@ router.get('/search', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleCo
  *       404:
  *         description: Role not found
  */
-router.get('/:id', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleController.getById);
+router.get('/:id', requireAdmin, roleController.getById);
 
 /**
  * @swagger
@@ -198,66 +227,71 @@ router.get('/:id', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleContr
  *               type: object
  *               properties:
  *                 totalRoles:
- *                   type: integer
- *                 systemRoles:
- *                   type: integer
- *                 customRoles:
- *                   type: integer
+ *                   type: number
  *                 activeRoles:
- *                   type: integer
- *                 inactiveRoles:
- *                   type: integer
- *                 totalUsers:
- *                   type: integer
+ *                   type: number
+ *                 customRoles:
+ *                   type: number
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
-router.get('/stats', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleController.getStats);
+router.get('/stats', requireAdmin, roleController.getStats);
 
 /**
  * @swagger
  * /api/roles/frontend:
  *   get:
- *     summary: Get roles formatted for frontend
+ *     summary: Get roles for frontend dropdown
  *     tags: [Roles]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Frontend formatted roles
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 systemRoles:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/ExtendedRole'
- *                 customRoles:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/CustomRole'
- */
-router.get('/frontend', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleController.getRolesForFrontend);
-
-/**
- * @swagger
- * /api/roles/permission-groups:
- *   get:
- *     summary: Get permission groups for frontend
- *     tags: [Roles]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Permission groups
+ *         description: List of roles for frontend
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/PermissionGroup'
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   name:
+ *                     type: string
+ *                   description:
+ *                     type: string
  */
-router.get('/permission-groups', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGER'), roleController.getPermissionGroups);
+router.get('/frontend', requireAdmin, roleController.getRolesForFrontend);
+
+/**
+ * @swagger
+ * /api/roles/permission-groups:
+ *   get:
+ *     summary: Get permission groups
+ *     tags: [Roles]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of permission groups
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   group:
+ *                     type: string
+ *                   permissions:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ */
+router.get('/permission-groups', requireAdmin, roleController.getPermissionGroups);
 
 /**
  * @swagger
@@ -275,24 +309,18 @@ router.get('/permission-groups', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGE
  *             type: object
  *             required:
  *               - name
- *               - type
+ *               - permissions
  *             properties:
  *               name:
  *                 type: string
  *               description:
  *                 type: string
- *               type:
- *                 type: string
- *                 enum: [system, custom]
- *               status:
- *                 type: string
- *                 enum: [active, inactive]
- *                 default: active
  *               permissions:
  *                 type: array
  *                 items:
  *                   type: string
- *                   format: uuid
+ *               active:
+ *                 type: boolean
  *     responses:
  *       201:
  *         description: Role created
@@ -302,10 +330,8 @@ router.get('/permission-groups', requireRole('SYSTEM_ADMIN', 'INSTITUTION_MANAGE
  *               $ref: '#/components/schemas/Role'
  *       400:
  *         description: Invalid input
- *       409:
- *         description: Role name already exists
  */
-router.post('/', requireRole('SYSTEM_ADMIN'), roleController.create);
+router.post('/', requireSystemAdmin, roleController.create);
 
 /**
  * @swagger
@@ -333,14 +359,12 @@ router.post('/', requireRole('SYSTEM_ADMIN'), roleController.create);
  *                 type: string
  *               description:
  *                 type: string
- *               status:
- *                 type: string
- *                 enum: [active, inactive]
  *               permissions:
  *                 type: array
  *                 items:
  *                   type: string
- *                   format: uuid
+ *               active:
+ *                 type: boolean
  *     responses:
  *       200:
  *         description: Role updated
@@ -351,7 +375,7 @@ router.post('/', requireRole('SYSTEM_ADMIN'), roleController.create);
  *       404:
  *         description: Role not found
  */
-router.put('/:id', requireRole('SYSTEM_ADMIN'), roleController.update);
+router.put('/:id', requireSystemAdmin, roleController.update);
 
 /**
  * @swagger
@@ -373,10 +397,8 @@ router.put('/:id', requireRole('SYSTEM_ADMIN'), roleController.update);
  *         description: Role deleted
  *       404:
  *         description: Role not found
- *       400:
- *         description: Cannot delete system role or role with users
  */
-router.delete('/:id', requireRole('SYSTEM_ADMIN'), roleController.delete);
+router.delete('/:id', requireSystemAdmin, roleController.delete);
 
 /**
  * @swagger
@@ -400,6 +422,6 @@ router.delete('/:id', requireRole('SYSTEM_ADMIN'), roleController.delete);
  *       404:
  *         description: TEACHER role not found
  */
-router.post('/assign-teacher-role', requireRole('SYSTEM_ADMIN'), roleController.assignTeacherRoleToImportedUsers);
+router.post('/assign-teacher-role', requireAdmin, roleController.assignTeacherRoleToImportedUsers);
 
 export default router;

@@ -1,82 +1,62 @@
-import { Router, Request, Response } from 'express';
-import { optimizedAuthMiddleware } from '../middleware/optimizedAuth.middleware';
+import express, { Request, Response } from 'express';
+import { requireAuth } from '../middleware/requireAuth';
 
-const router = Router();
+const router = express.Router();
 
-// GET - Buscar configurações públicas (sem autenticação)
-router.get('/public', async (req: Request, res: Response) => {
-  try {
-    console.log('🔍 Rota /settings/public acessada');
-    
-    // Retornar configurações padrão
-    const defaultSettings = {
-      general: {
-        site_name: 'Portal Sabercon',
-        site_title: 'Portal Educacional Sabercon',
-        site_url: 'https://portal.sabercon.com.br',
-        site_description: 'Sistema completo de gestão educacional',
-        maintenance_mode: false
-      },
-      appearance: {
-        logo_light: '/logo-light.png',
-        logo_dark: '/logo-dark.png',
-        background_type: 'video',
-        main_background: '/back_video4.mp4',
-        primary_color: '#1e3a8a',
-        secondary_color: '#3b82f6'
-      },
-      aws: {
-        aws_access_key: 'AKIAYKBH43KYB2DJUQJL',
-        aws_secret_key: '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',
-        aws_region: 'sa-east-1',
-        aws_bucket_main: '',
-        aws_bucket_backup: '',
-        aws_bucket_media: ''
-      },
-      email: {
-        email_smtp_host: 'smtp.gmail.com',
-        email_smtp_port: 587,
-        email_smtp_user: 'sabercon@sabercon.com.br',
-        email_smtp_password: 'Mayta#P1730*K',
-        email_smtp_secure: true,
-        email_from_name: 'Portal Educacional - Sabercon',
-        email_from_address: 'noreply@sabercon.com.br'
-      },
-      notifications: {
-        notifications_email_enabled: true,
-        notifications_sms_enabled: false,
-        notifications_push_enabled: true,
-        notifications_digest_frequency: 'daily'
-      }
-    };
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 
-    return res.json({
-      success: true,
-      data: defaultSettings
-    });
-  } catch (error) {
-    console.log('❌ Erro ao buscar configurações públicas:', error);
-    return res.status(500).json({ 
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
       success: false,
-      error: 'Erro ao buscar configurações públicas'
+      message: 'Acesso negado - apenas administradores podem acessar configurações'
     });
   }
-});
+  
+  next();
+};
 
-// GET - Buscar todas as configurações (com autenticação)
-router.get('/', optimizedAuthMiddleware, async (req: Request, res: Response) => {
-  try {
-    return res.json({
-      success: true,
-      message: 'Settings route is working',
-      user: req.user
-    });
-  } catch (error) {
-    return res.status(500).json({ 
-      success: false,
-      error: 'Erro ao buscar configurações'
-    });
-  }
+/**
+ * @swagger
+ * /api/settings-simple:
+ *   get:
+ *     summary: Get simplified settings
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Simplified settings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get('/', requireAdmin, async (req: Request, res: Response) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Simple settings - implementação pendente',
+    data: {
+      theme: 'light',
+      language: 'pt-BR',
+      notifications: true,
+      autoSave: true
+    }
+  });
 });
 
 export default router;

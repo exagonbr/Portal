@@ -1,55 +1,39 @@
 import { Router } from 'express';
 import { Knex } from 'knex';
 import { AwsSettingsController } from '../controllers/AwsSettingsController';
-import {
-  optimizedAuthMiddleware,
-  requireAnyRole
-} from '../middleware/optimizedAuth.middleware';
-import { validateJWTSimple } from '../middleware/sessionMiddleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 export function createAwsRoutes(db: Knex): Router {
   const router = Router();
   const awsController = new AwsSettingsController(db);
 
-  // Aplicar autenticação e autorização para todas as rotas (exceto stats)
-  router.use((req, res, next) => {
-    // Usar middleware simples para a rota stats para evitar loops
-    if (req.path === '/connection-logs/stats') {
-      return validateJWTSimple(req as any, res, next);
-    }
-    // Usar middleware normal para outras rotas
-    return optimizedAuthMiddleware(req as any, res, next);
-  });
+  // 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+  router.use(requireAuth);
 
-  // Middleware de role apenas para rotas que não são stats
-  router.use((req, res, next) => {
-    if (req.path === '/connection-logs/stats') {
-      // Verificação manual de role para stats
-      const user = req.user as any;
-      const userRole = user?.role?.toLowerCase() || user?.role_name?.toLowerCase();
-      
-      console.log('🔍 AWS stats - Verificando role:', {
-        email: user?.email,
-        role: user?.role,
-        role_name: user?.role_name,
-        userRole: userRole
+  // Middleware para verificar role de administrador
+  const requireAdmin = (req: any, res: any, next: any) => {
+    const user = req.user;
+    const userRole = user?.role?.toUpperCase();
+    
+    console.log('🔍 AWS routes - Verificando role:', {
+      email: user?.email,
+      role: userRole
+    });
+    
+    if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(userRole)) {
+      console.log('❌ Acesso negado para AWS. Role:', userRole);
+      return res.status(403).json({
+        success: false,
+        message: 'Acesso negado - apenas administradores podem acessar configurações AWS'
       });
-      
-      if (!userRole || !['admin', 'system_admin'].includes(userRole)) {
-        console.log('❌ Acesso negado para AWS stats. Role:', userRole);
-        return res.status(403).json({
-          success: false,
-          message: 'Acesso negado. Apenas administradores podem acessar estatísticas AWS.',
-          debug: { userRole, allowedRoles: ['admin', 'system_admin'] }
-        });
-      }
-      
-      console.log('✅ Acesso permitido para AWS stats. Role:', userRole);
-      return next();
     }
-    // Usar middleware normal para outras rotas
-    return requireAnyRole(['admin', 'SYSTEM_ADMIN'])(req, res, next);
-  });
+    
+    console.log('✅ Acesso permitido para AWS. Role:', userRole);
+    next();
+  };
+
+  // Aplicar verificação de role para todas as rotas
+  router.use(requireAdmin);
 
   // Configurações AWS
   router.get('/settings', (req, res) => awsController.getActiveSettings(req, res));
@@ -67,7 +51,7 @@ export function createAwsRoutes(db: Knex): Router {
   // Logs de conexão
   router.get('/connection-logs', (req, res) => awsController.getConnectionLogs(req, res));
   
-  // Rota stats com tratamento especial para evitar loops
+  // Estatísticas de conexão
   router.get('/connection-logs/stats', async (req, res) => {
     try {
       console.log('🔍 AWS connection-logs/stats acessado por:', (req.user as any)?.email);

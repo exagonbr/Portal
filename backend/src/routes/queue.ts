@@ -1,15 +1,26 @@
 import express from 'express';
-import {
-  optimizedAuthMiddleware,
-  requireAnyRole
-} from '../middleware/optimizedAuth.middleware';
+import { requireAuth } from '../middleware/requireAuth';
 // import { QueueService } from '../services/queueService';
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(optimizedAuthMiddleware);
+// 🔐 APLICAR MIDDLEWARE UNIFICADO DE AUTENTICAÇÃO
+router.use(requireAuth);
 // const queueService = QueueService.getInstance();
+
+// Middleware para verificar role de administrador
+const requireAdmin = (req: any, res: any, next: any) => {
+  const user = req.user;
+  
+  if (!['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acesso negado - apenas administradores podem gerenciar a fila'
+    });
+  }
+  
+  next();
+};
 
 // Endpoint /next removido - não é necessário no sistema atual
 
@@ -24,28 +35,41 @@ router.use(optimizedAuthMiddleware);
  *     responses:
  *       200:
  *         description: Queue statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pending:
+ *                       type: number
+ *                     processing:
+ *                       type: number
+ *                     completed:
+ *                       type: number
+ *                     failed:
+ *                       type: number
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
-router.get('/stats', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
-  try {
-    const stats = {
+router.get('/stats', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Queue stats - implementação pendente',
+    data: {
       pending: 0,
       processing: 0,
       completed: 0,
-      failed: 0,
-      total: 0
-    };
-
-    res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.log('Error fetching queue stats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
+      failed: 0
+    }
+  });
 });
 
 /**
@@ -58,21 +82,14 @@ router.get('/stats', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res)
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Queue paused
+ *         description: Queue paused successfully
  */
-router.post('/pause', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      message: 'Queue paused'
-    });
-  } catch (error) {
-    console.log('Error pausing queue:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
+router.post('/pause', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Queue pause - implementação pendente'
+  });
 });
 
 /**
@@ -85,21 +102,14 @@ router.post('/pause', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Queue resumed
+ *         description: Queue resumed successfully
  */
-router.post('/resume', requireAnyRole(['admin', 'SYSTEM_ADMIN']), async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      message: 'Queue resumed'
-    });
-  } catch (error) {
-    console.log('Error resuming queue:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
+router.post('/resume', requireAdmin, async (req, res) => {
+  // Implementation will be added in the controller
+  res.json({
+    success: true,
+    message: 'Queue resume - implementação pendente'
+  });
 });
 
 export default router; 

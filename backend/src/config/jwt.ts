@@ -1,23 +1,29 @@
 /**
- * Configuração JWT Centralizada - ÚNICA FONTE DE VERDADE
- * Compartilhada entre Frontend e Backend
+ * 🔐 CONFIGURAÇÃO JWT UNIFICADA
+ * 
+ * ✅ Um único secret compartilhado
+ * ✅ Tokens padrão JWT (sem fallback base64)
+ * ✅ Access token: 1 hora | Refresh token: 7 dias
+ * ✅ Algoritmo HS256 em todo lugar
  */
 
 export const JWT_CONFIG = {
-  // Secret único para toda aplicação
-  JWT_SECRET: 'SaberconPortal2025_SuperSecretKey_ProductionReady_XYZ789',
+  // Secret único para toda a aplicação
+  SECRET: process.env.JWT_SECRET || 'portal_sabercon_jwt_secret_2025',
   
-  // Tempos de expiração
-  TOKEN_EXPIRY: '1h',        // Access token: 1 hora
-  REFRESH_TOKEN_EXPIRY: '7d', // Refresh token: 7 dias
-  
-  // Algoritmo padrão
+  // Algoritmo de assinatura
   ALGORITHM: 'HS256' as const,
   
-  // Issuer e audience
+  // Tempos de expiração
+  ACCESS_TOKEN_EXPIRES_IN: '1h',
+  REFRESH_TOKEN_EXPIRES_IN: '7d',
+  
+  // Issuer da aplicação
   ISSUER: 'portal.sabercon.com.br',
-  AUDIENCE: 'portal.sabercon.com.br',
-} as const;
+  
+  // Audience
+  AUDIENCE: 'portal-users'
+};
 
 // Interface para payload do Access Token
 export interface AccessTokenPayload {
@@ -28,9 +34,11 @@ export interface AccessTokenPayload {
   permissions: string[];
   institutionId?: string;
   sessionId: string;
-  type: 'access';
+  type?: 'access';
   iat?: number;
   exp?: number;
+  iss?: string;
+  aud?: string;
 }
 
 // Interface para payload do Refresh Token
@@ -40,22 +48,31 @@ export interface RefreshTokenPayload {
   type: 'refresh';
   iat?: number;
   exp?: number;
+  iss?: string;
+  aud?: string;
 }
 
-// Função helper para obter o secret
-export const getJwtSecret = (): string => {
-  return JWT_CONFIG.JWT_SECRET;
-};
-
-// Função helper para obter configurações
-export const getJwtConfig = () => {
-  return {
-    secret: JWT_CONFIG.JWT_SECRET,
-    expiresIn: JWT_CONFIG.TOKEN_EXPIRY,
+// Validar configuração JWT
+export function validateJWTConfig(): void {
+  if (!JWT_CONFIG.SECRET) {
+    throw new Error('JWT_SECRET não está configurado nas variáveis de ambiente');
+  }
+  
+  if (JWT_CONFIG.SECRET.length < 32) {
+    console.warn('⚠️ JWT_SECRET deve ter pelo menos 32 caracteres para maior segurança');
+  }
+  
+  console.log('✅ Configuração JWT validada:', {
     algorithm: JWT_CONFIG.ALGORITHM,
+    accessTokenExpires: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN,
+    refreshTokenExpires: JWT_CONFIG.REFRESH_TOKEN_EXPIRES_IN,
     issuer: JWT_CONFIG.ISSUER,
-    audience: JWT_CONFIG.AUDIENCE
-  };
-};
+    audience: JWT_CONFIG.AUDIENCE,
+    secretLength: JWT_CONFIG.SECRET.length
+  });
+}
 
-export default JWT_CONFIG;
+// Função para compatibilidade com código existente
+export function getJwtSecret(): string {
+  return JWT_CONFIG.SECRET;
+}
