@@ -226,7 +226,7 @@ router.post('/set', requireAdmin, async (req, res) => {
     
     logger.info(`Cache set for key: ${key}`, { userId: (req.user as any)?.email });
     
-    res.json({
+    return res.json({
       success: true,
       message: 'Value cached successfully'
     });
@@ -237,7 +237,7 @@ router.post('/set', requireAdmin, async (req, res) => {
       userId: (req.user as any)?.email
     });
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
@@ -279,7 +279,7 @@ router.delete('/delete', requireAdmin, async (req, res) => {
     
     logger.info(`Cache delete for key: ${key}, deleted: ${deleted}`, { userId: (req.user as any)?.email });
     
-    res.json({
+    return res.json({
       success: true,
       message: deleted > 0 ? 'Value deleted successfully' : 'Key not found',
       deleted: deleted > 0
@@ -291,7 +291,7 @@ router.delete('/delete', requireAdmin, async (req, res) => {
       userId: (req.user as any)?.email
     });
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });

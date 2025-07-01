@@ -269,6 +269,28 @@ class AuthService {
   }
 
   /**
+   * 🔑 GERAR TOKEN PARA OAUTH (método público)
+   */
+  public async generateTokenForUser(user: User): Promise<string | null> {
+    try {
+      // Buscar role do usuário
+      const role = await this.roleRepository.findById(user.role_id);
+      if (!role) {
+        return null;
+      }
+
+      // Gerar sessionId único
+      const sessionId = `oauth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Gerar access token
+      return this.generateAccessToken(user, role as any, sessionId);
+    } catch (error) {
+      console.error('❌ Erro ao gerar token para usuário:', error);
+      return null;
+    }
+  }
+
+  /**
    * 🛠️ CRIAR ROLES PADRÃO (para setup inicial)
    */
   public async createDefaultRoles(): Promise<void> {

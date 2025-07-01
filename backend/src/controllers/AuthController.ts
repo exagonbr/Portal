@@ -14,13 +14,11 @@ class AuthController {
         return res.status(404).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=user_not_found`);
       }
 
-      // Assumindo que o objeto User tem a relação de Role carregada
-      const role = user.role;
-      if (!role) {
-        return res.status(500).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=role_not_found`);
+      // Gerar token para o usuário autenticado via Google OAuth
+      const token = await AuthService.generateTokenForUser(user);
+      if (!token) {
+        return res.status(500).redirect(`${process.env.FRONTEND_URL || 'https://portal.sabercon.com.br'}/auth/login?error=token_generation_failed`);
       }
-
-      const token = AuthService.generateToken(user, role);
       
       // Usar URL de produção ou fallback para desenvolvimento
       const frontendUrl = process.env.FRONTEND_URL || 'https://portal.sabercon.com.br';

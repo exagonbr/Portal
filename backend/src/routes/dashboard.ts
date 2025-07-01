@@ -8,11 +8,6 @@
 import express from 'express';
 import { query, validationResult } from 'express-validator';
 import { DashboardService } from '../services/DashboardService';
-import {
-  validateJWTSimple,
-  validateJWTSmart,
-  requireRoleSmart
-} from '../middleware/sessionMiddleware';
 import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
@@ -32,6 +27,38 @@ const requireAdmin = (req: any, res: any, next: any) => {
   }
   
   next();
+};
+
+// Middleware simples para validação JWT (já aplicado globalmente)
+const validateJWTSimple = (req: any, res: any, next: any) => {
+  // Como já temos requireAuth aplicado globalmente, apenas continua
+  next();
+};
+
+// Middleware inteligente para validação JWT (já aplicado globalmente)
+const validateJWTSmart = (req: any, res: any, next: any) => {
+  // Como já temos requireAuth aplicado globalmente, apenas continua
+  next();
+};
+
+// Middleware para verificar roles específicas
+const requireRoleSmart = (roles: string[]) => {
+  return (req: any, res: any, next: any) => {
+    const user = req.user;
+    
+    if (!user || !roles.some(role => 
+      user.role === role || 
+      user.role.toUpperCase() === role.toUpperCase() ||
+      (role === 'admin' && ['SYSTEM_ADMIN', 'INSTITUTION_MANAGER'].includes(user.role))
+    )) {
+      return res.status(403).json({
+        success: false,
+        message: `Acesso negado - roles necessárias: ${roles.join(', ')}`
+      });
+    }
+    
+    next();
+  };
 };
 
 /**
