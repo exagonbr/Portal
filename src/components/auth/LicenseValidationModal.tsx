@@ -281,7 +281,7 @@ const LicenseValidationModal: React.FC<LicenseValidationModalProps> = ({
           </div>
 
           {/* Content Area */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             <div className="p-4 sm:p-6 lg:p-8">
               {viewMode === 'grid' ? (
                 // Grid View
