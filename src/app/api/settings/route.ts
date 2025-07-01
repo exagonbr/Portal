@@ -29,19 +29,39 @@ export async function GET(request: NextRequest) {
         const backendUrl = getInternalApiUrl(endpoint)
         console.log('🌐 Tentando conectar com backend:', backendUrl)
         
+        // Criar AbortController para timeout manual
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 segundos
+        
         const backendResponse = await fetch(backendUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
           },
-          // Timeout de 5 segundos
-          signal: AbortSignal.timeout(5000)
+          signal: controller.signal
         })
+        
+        clearTimeout(timeoutId)
 
         console.log('🌐 Resposta do backend:', backendResponse.status, backendResponse.statusText)
 
         if (backendResponse.ok) {
-          const response = await backendResponse.json()
+          const responseText = await backendResponse.text()
+          console.log('📄 Raw response from backend:', responseText.substring(0, 200) + '...')
+          
+          // Verificar se a resposta não está vazia
+          if (!responseText.trim()) {
+            throw new Error('Empty response from backend')
+          }
+          
+          let response
+          try {
+            response = JSON.parse(responseText)
+          } catch (parseError) {
+            console.error('❌ JSON parse error:', parseError)
+            throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`)
+          }
+          
           console.log('✅ Dados recebidos do backend:', Object.keys(response))
           
           // Se a resposta tem sucesso e dados categorizados, achatar a estrutura
@@ -59,65 +79,94 @@ export async function GET(request: NextRequest) {
               success: true,
               data: flatData
             }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+              headers: getCorsHeaders(request.headers.get('origin') || undefined)
+            })
           }
           
           return NextResponse.json(response, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+            headers: getCorsHeaders(request.headers.get('origin') || undefined)
+          })
         }
         
-        lastError = `${backendResponse.status} - ${await backendResponse.text()}`
-      } catch (err) {
-        console.log(`❌ Erro ao tentar ${endpoint}:`, err)
-        lastError = err
+        const errorText = await backendResponse.text()
+        lastError = `${backendResponse.status} - ${errorText}`
+      } catch (err: any) {
+        console.log(`❌ Erro ao tentar ${endpoint}:`, err.message || err)
+        lastError = err.message || err.toString()
+        
+        // Se for erro de timeout/abort, tentar próximo endpoint rapidamente
+        if (err.name === 'AbortError' || err.message?.includes('timeout')) {
+          console.log('⏰ Timeout detectado, tentando próximo endpoint...')
+          continue
+        }
       }
     }
 
     throw new Error(`Todos os endpoints falharam. Último erro: ${lastError}`)
 
-  } catch (error) {
-    console.error('❌ Erro ao carregar configurações:', error)
+  } catch (error: any) {
+    console.error('❌ Erro ao carregar configurações:', error.message || error)
     
     // Fallback com configurações padrão expandidas
     console.log('🔄 Usando configurações padrão como fallback')
-    return NextResponse.json({
-      success: true,
-      fallback: true,
-      data: {
-        site_name: 'Portal Sabercon',
-        site_title: 'Portal Educacional Sabercon',
-        site_url: 'https://portal.sabercon.com.br',
-        site_description: 'Sistema completo de gestão educacional',
-        maintenance_mode: false,
-        logo_light: '/logo-light.png',
-        logo_dark: '/logo-dark.png',
-        background_type: 'video',
-        main_background: '/back_video4.mp4',
-        primary_color: '#1e3a8a',
-        secondary_color: '#3b82f6',
-        aws_access_key: 'AKIAYKBH43KYB2DJUQJL',
-        aws_secret_key: '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',
-        aws_region: 'sa-east-1',
-        aws_bucket_main: '',
-        aws_bucket_backup: '',
-        aws_bucket_media: '',
-        email_smtp_host: 'smtp.gmail.com',
-        email_smtp_port: 587,
-        email_smtp_user: 'sabercon@sabercon.com.br',
-        email_smtp_password: 'Mayta#P1730*K',
-        email_smtp_secure: true,
-        email_from_name: 'Portal Educacional - Sabercon',
-        email_from_address: 'noreply@sabercon.com.br',
-        notifications_email_enabled: true,
-        notifications_sms_enabled: false,
-        notifications_push_enabled: true,
-        notifications_digest_frequency: 'daily'
-      }
-    }, {
-      headers: getCorsHeaders(request.headers.get('origin') || undefined)
-    })
+    
+    try {
+      return NextResponse.json({
+        success: true,
+        fallback: true,
+        error: error.message || 'Erro desconhecido',
+        data: {
+          site_name: 'Portal Sabercon',
+          site_title: 'Portal Educacional Sabercon',
+          site_url: 'https://portal.sabercon.com.br',
+          site_description: 'Sistema completo de gestão educacional',
+          maintenance_mode: false,
+          logo_light: '/logo-light.png',
+          logo_dark: '/logo-dark.png',
+          background_type: 'video',
+          main_background: '/back_video4.mp4',
+          primary_color: '#1e3a8a',
+          secondary_color: '#3b82f6',
+          aws_access_key: 'AKIAYKBH43KYB2DJUQJL',
+          aws_secret_key: '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',
+          aws_region: 'sa-east-1',
+          aws_bucket_main: '',
+          aws_bucket_backup: '',
+          aws_bucket_media: '',
+          email_smtp_host: 'smtp.gmail.com',
+          email_smtp_port: 587,
+          email_smtp_user: 'sabercon@sabercon.com.br',
+          email_smtp_password: 'Mayta#P1730*K',
+          email_smtp_secure: true,
+          email_from_name: 'Portal Educacional - Sabercon',
+          email_from_address: 'noreply@sabercon.com.br',
+          notifications_email_enabled: true,
+          notifications_sms_enabled: false,
+          notifications_push_enabled: true,
+          notifications_digest_frequency: 'daily'
+        }
+      }, {
+        headers: getCorsHeaders(request.headers.get('origin') || undefined)
+      })
+    } catch (fallbackError: any) {
+      console.error('❌ Erro crítico no fallback:', fallbackError)
+      
+      // Último recurso - resposta JSON mínima
+      return new NextResponse(JSON.stringify({
+        success: false,
+        message: 'Erro interno do servidor',
+        details: {
+          error: error.message || 'Erro desconhecido',
+          fallbackError: fallbackError.message || 'Erro no fallback'
+        }
+      }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCorsHeaders(request.headers.get('origin') || undefined)
+        }
+      })
+    }
   }
 }
 

@@ -342,6 +342,65 @@ app.post('/api/notifications/send', simpleAuth, (req, res) => {
   });
 });
 
+// Endpoint específico para configurações públicas
+app.get('/api/settings/public', (req, res) => {
+  console.log('🔍 Endpoint /api/settings/public acessado');
+  res.json({
+    success: true,
+    data: {
+      site_name: 'Portal Sabercon',
+      site_title: 'Portal Educacional Sabercon',
+      site_url: 'https://portal.sabercon.com.br',
+      site_description: 'Sistema completo de gestão educacional',
+      maintenance_mode: false,
+      logo_light: '/logo-light.png',
+      logo_dark: '/logo-dark.png',
+      background_type: 'video',
+      main_background: '/back_video4.mp4',
+      primary_color: '#1e3a8a',
+      secondary_color: '#3b82f6',
+      aws_access_key: 'AKIAYKBH43KYB2DJUQJL',
+      aws_secret_key: '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',
+      aws_region: 'sa-east-1',
+      aws_bucket_main: '',
+      aws_bucket_backup: '',
+      aws_bucket_media: '',
+      email_smtp_host: 'smtp.gmail.com',
+      email_smtp_port: 587,
+      email_smtp_user: 'sabercon@sabercon.com.br',
+      email_smtp_password: 'Mayta#P1730*K',
+      email_smtp_secure: true,
+      email_from_name: 'Portal Educacional - Sabercon',
+      email_from_address: 'noreply@sabercon.com.br',
+      notifications_email_enabled: true,
+      notifications_sms_enabled: false,
+      notifications_push_enabled: true,
+      notifications_digest_frequency: 'daily'
+    }
+  });
+});
+
+// Endpoint alternativo para configurações do sistema
+app.get('/api/system-settings/public', (req, res) => {
+  console.log('🔍 Endpoint /api/system-settings/public acessado');
+  res.json({
+    success: true,
+    data: {
+      site_name: 'Portal Sabercon',
+      site_title: 'Portal Educacional Sabercon',
+      site_url: 'https://portal.sabercon.com.br',
+      site_description: 'Sistema completo de gestão educacional',
+      maintenance_mode: false,
+      logo_light: '/logo-light.png',
+      logo_dark: '/logo-dark.png',
+      background_type: 'video',
+      main_background: '/back_video4.mp4',
+      primary_color: '#1e3a8a',
+      secondary_color: '#3b82f6'
+    }
+  });
+});
+
 // Outras rotas da API retornam dados vazios mas válidos
 const apiRoutes = [
   '/api/courses',
@@ -352,8 +411,7 @@ const apiRoutes = [
   '/api/roles',
   '/api/permissions',
   '/api/notifications',
-  '/api/dashboard',
-  '/api/settings'
+  '/api/dashboard'
 ];
 
 apiRoutes.forEach(route => {
