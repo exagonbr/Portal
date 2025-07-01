@@ -3,10 +3,23 @@
 import React, { ReactNode } from 'react'
 import dynamic from 'next/dynamic'
 import { setupGlobalErrorHandler } from '@/utils/errorHandling'
-import { AuthProvider as AuthWrapper } from '../contexts/AuthContext'
 import { isDevelopment } from '@/utils/env'
 import { suppressHydrationWarnings } from '@/utils/suppressHydrationWarnings'
 import { ErrorBoundary } from 'react-error-boundary';
+
+// Dynamically import AuthProvider to ensure client-side rendering
+const AuthProvider = dynamic(() =>
+  import('../contexts/AuthContext')
+    .then(mod => mod.AuthProvider)
+    .catch(error => {
+      if (isDevelopment()) {
+        console.log('Error loading AuthProvider:', error);
+      }
+      return ({ children }: { children: ReactNode }) => <>{children}</>;
+    }), {
+  ssr: false,
+  loading: () => null
+})
 
 const ThemeProvider = dynamic(() =>
   import('@/contexts/ThemeContext')
@@ -85,7 +98,7 @@ function ErrorBoundaryFallback({ error }: { error: Error }) {
 export default function SimpleProviders({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-      <AuthWrapper>
+      <AuthProvider>
         <ThemeProvider>
           <GamificationProvider>
             <NavigationLoadingProvider>
@@ -97,7 +110,7 @@ export default function SimpleProviders({ children }: { children: ReactNode }) {
             </NavigationLoadingProvider>
           </GamificationProvider>
         </ThemeProvider>
-      </AuthWrapper>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

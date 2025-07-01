@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import apiClient from '../lib/authFetch';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-hot-toast';
+import { useIsClient, useLocalStorage } from '@/utils/ssr';
 
 // Tipagem para o usuário e o contexto
 interface User {
@@ -40,21 +41,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const isClient = useIsClient();
+  const { value: token, setValue: setToken, removeValue: removeToken } = useLocalStorage('accessToken');
 
   const isAuthenticated = !!user;
 
   // Função de logout centralizada
   const logout = useCallback(() => {
-    localStorage.removeItem('accessToken');
+    removeToken();
     setUser(null);
     apiClient.post('/auth/logout').catch(err => console.error("Logout API call failed:", err));
     router.push('/login');
     toast.success('Você foi desconectado.');
-  }, [router]);
+  }, [router, removeToken]);
 
   // Efeito para verificar o token no carregamento inicial
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    if (!isClient) {
+      setIsLoading(false);
+      return;
+    }
+
     if (token) {
       const decodedPayload = decodeToken(token);
       if (decodedPayload && decodedPayload.exp * 1000 > Date.now()) {
@@ -66,21 +73,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           permissions: decodedPayload.permissions || [],
         });
       } else {
-        localStorage.removeItem('accessToken');
+        removeToken();
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [isClient, token, removeToken]);
 
 
   // Função de login
   const login = async (email: string, password: string) => {
+    if (!isClient) return;
+    
     setIsLoading(true);
     try {
       const { data } = await apiClient.post('/auth/login', { email, password });
       const { accessToken } = data.data;
       
-      localStorage.setItem('accessToken', accessToken);
+      setToken(accessToken);
       const decodedPayload = decodeToken(accessToken);
       if (decodedPayload) {
         setUser({
@@ -91,7 +100,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           permissions: decodedPayload.permissions || [],
         });
       }
-
       
       toast.success('Login realizado com sucesso!');
       router.push('/dashboard'); // Redireciona para uma página padrão

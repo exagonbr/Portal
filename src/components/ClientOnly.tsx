@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
+import { useIsClient } from '@/utils/ssr';
 
 interface ClientOnlyProps {
   children: ReactNode;
@@ -8,19 +9,15 @@ interface ClientOnlyProps {
 }
 
 /**
- * Componente que garante que o conteúdo seja renderizado apenas no cliente,
- * evitando problemas de hidratação
+ * Component that only renders its children on the client side
+ * Prevents hydration mismatches by showing fallback during SSR
  */
 export default function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
-  const [hasMounted, setHasMounted] = useState(false);
+  const isClient = useIsClient();
 
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  if (!hasMounted) {
+  if (!isClient) {
     return <>{fallback}</>;
   }
 
   return <>{children}</>;
-} 
+}
