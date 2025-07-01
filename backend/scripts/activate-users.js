@@ -1,4 +1,23 @@
-const { db } = require('../src/database/connection');
+const knex = require('knex');
+const path = require('path');
+
+// Configuração do banco baseada no knexfile
+const knexConfig = {
+  client: 'pg',
+  connection: {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_NAME || 'portal_sabercon'
+  },
+  pool: {
+    min: 2,
+    max: 10
+  }
+};
+
+const db = knex(knexConfig);
 
 async function activateUsers() {
   try {
