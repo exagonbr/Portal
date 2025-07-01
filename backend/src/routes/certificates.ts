@@ -223,7 +223,7 @@ router.get('/search', async (req: Request, res: Response) => {
 
     const result = await database.query(query, queryParams);
 
-    res.json({
+    return res.json({
       success: true,
       data: result.rows,
       message: result.rows.length > 0 ? 'Certificados encontrados' : 'Nenhum certificado encontrado'
@@ -231,7 +231,7 @@ router.get('/search', async (req: Request, res: Response) => {
 
   } catch (error) {
     console.log('Erro ao buscar certificados públicos:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
@@ -279,7 +279,7 @@ router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) 
 
     const result = await database.query(query, values);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: result.rows[0],
       message: 'Certificado criado com sucesso'
@@ -287,7 +287,7 @@ router.post('/', requireAuth, requireAdmin, async (req: Request, res: Response) 
 
   } catch (error) {
     console.log('Erro ao criar certificado:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
@@ -323,14 +323,14 @@ router.get('/:id', requireAuth, async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: result.rows[0]
     });
 
   } catch (error) {
     console.log('Erro ao buscar certificado:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
@@ -407,7 +407,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response
 
     const result = await database.query(query, queryParams);
 
-    res.json({
+    return res.json({
       success: true,
       data: result.rows[0],
       message: 'Certificado atualizado com sucesso'
@@ -415,7 +415,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req: Request, res: Response
 
   } catch (error) {
     console.log('Erro ao atualizar certificado:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
@@ -437,14 +437,14 @@ router.delete('/:id', requireAuth, requireAdmin, async (req: Request, res: Respo
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Certificado deletado com sucesso'
     });
 
   } catch (error) {
     console.log('Erro ao deletar certificado:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });

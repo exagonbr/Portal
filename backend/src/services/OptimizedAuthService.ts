@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../database/connection';
@@ -268,12 +268,14 @@ export class OptimizedAuthService {
       sessionId
     };
 
-    return jwt.sign(tokenPayload, JWT_CONFIG.SECRET, {
-      algorithm: JWT_CONFIG.ALGORITHM,
-      expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN,
+    const options: SignOptions = {
+      algorithm: 'HS256',
+      expiresIn: '1h',
       issuer: JWT_CONFIG.ISSUER,
       audience: JWT_CONFIG.AUDIENCE
-    });
+    };
+    
+    return jwt.sign(tokenPayload, JWT_CONFIG.SECRET, options);
   }
 
   /**
@@ -286,12 +288,14 @@ export class OptimizedAuthService {
       type: 'refresh'
     };
 
-    return jwt.sign(tokenPayload, JWT_CONFIG.SECRET, {
-      algorithm: JWT_CONFIG.ALGORITHM,
-      expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRES_IN,
+    const options: SignOptions = {
+      algorithm: 'HS256',
+      expiresIn: '7d',
       issuer: JWT_CONFIG.ISSUER,
       audience: JWT_CONFIG.AUDIENCE
-    });
+    };
+    
+    return jwt.sign(tokenPayload, JWT_CONFIG.SECRET, options);
   }
 
   /**

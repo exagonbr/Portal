@@ -1,7 +1,7 @@
 import * as express from 'express';
 import { body, validationResult } from 'express-validator';
 import { OptimizedAuthController } from '../controllers/OptimizedAuthController';
-import { optimizedAuthMiddleware } from '../middleware/optimizedAuth.middleware';
+import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
@@ -156,7 +156,7 @@ router.post('/refresh', OptimizedAuthController.refreshToken);
  *       401:
  *         description: Token inválido ou expirado
  */
-router.get('/profile', (req: any, res: any, next: any) => optimizedAuthMiddleware(req as any, res, next), (req: any, res: any) => OptimizedAuthController.getProfile(req, res));
+router.get('/profile', requireAuth, (req: any, res: any) => OptimizedAuthController.getProfile(req, res));
 
 /**
  * @swagger
@@ -174,7 +174,7 @@ router.get('/profile', (req: any, res: any, next: any) => optimizedAuthMiddlewar
  *       401:
  *         description: Token inválido ou expirado
  */
-router.get('/validate', (req: any, res: any, next: any) => optimizedAuthMiddleware(req as any, res, next), (req: any, res: any) => OptimizedAuthController.validateToken(req, res));
+router.get('/validate', requireAuth, (req: any, res: any) => OptimizedAuthController.validateToken(req, res));
 
 /**
  * @swagger
@@ -199,7 +199,7 @@ router.get('/validate', (req: any, res: any, next: any) => optimizedAuthMiddlewa
  *       401:
  *         description: Token inválido ou expirado
  */
-router.get('/permission/:permission', (req: any, res: any, next: any) => optimizedAuthMiddleware(req as any, res, next), (req: any, res: any) => OptimizedAuthController.hasPermission(req, res));
+router.get('/permission/:permission', requireAuth, (req: any, res: any) => OptimizedAuthController.hasPermission(req, res));
 
 /**
  * @swagger
@@ -215,7 +215,7 @@ router.get('/permission/:permission', (req: any, res: any, next: any) => optimiz
  *       200:
  *         description: Logout realizado com sucesso
  */
-router.post('/logout', (req: any, res: any, next: any) => optimizedAuthMiddleware(req as any, res, next), (req: any, res: any) => OptimizedAuthController.logout(req, res));
+router.post('/logout', requireAuth, (req: any, res: any) => OptimizedAuthController.logout(req, res));
 
 /**
  * Rota de teste para debug do login

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { OptimizedAuthService } from '../services/OptimizedAuthService';
-import { AuthenticatedRequest } from '../middleware/optimizedAuth.middleware';
+import { AuthenticatedRequest } from '../middleware/requireAuth';
 
 export class OptimizedAuthController {
   /**
